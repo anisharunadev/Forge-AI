@@ -18,11 +18,11 @@ export default defineConfig({
       },
       favicon: '/favicon.svg',
       social: {
-        github: 'https://github.com/forge-ai/forge',
+        github: 'https://github.com/fora-platform/fora',
         slack: 'https://forge-ai.dev/slack',
       },
       editLink: {
-        baseUrl: 'https://github.com/forge-ai/forge/edit/main/docs-site/',
+        baseUrl: 'https://github.com/fora-platform/fora/edit/main/docs-site/',
       },
       sidebar: [
         {

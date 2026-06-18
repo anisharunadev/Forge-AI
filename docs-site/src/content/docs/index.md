@@ -2,7 +2,7 @@
 title: Forge AI — The Enterprise-Grade SDLC Agent
 description: Forge AI is the enterprise-grade SDLC agent from Knackforge. One platform that takes a product idea from a Slack message to a deployed, documented, audited change.
 draft: false
-last_generated_at: 2026-06-18T00:00:00Z
+last_generated_at: 2026-06-18T13:25:00Z
 source_sha: forareal-final
 source_path: workspace/project/PRD.md
 generator: readme
@@ -21,7 +21,7 @@ hero:
       icon: external
       variant: secondary
     - text: View on GitHub
-      link: https://github.com/forge-ai/forge
+      link: https://github.com/fora-platform/fora
       icon: github
       variant: minimal
 ---
@@ -127,7 +127,7 @@ Each stage has an **owner**, a **gate**, a **budget**, and a **log line**. See t
   <dl>
     <dt>Source SHA</dt><dd><code>forareal-final</code></dd>
     <dt>Source path</dt><dd><code>workspace/project/PRD.md</code></dd>
-    <dt>Last generated</dt><dd>2026-06-18T00:00:00Z</dd>
+    <dt>Last generated</dt><dd>2026-06-18T13:25:00Z</dd>
     <dt>Generator</dt><dd><code>readme</code> · DocAgent v1.0 ([FORA-298](/FORA/issues/FORA-298))</dd>
   </dl>
 </div>
