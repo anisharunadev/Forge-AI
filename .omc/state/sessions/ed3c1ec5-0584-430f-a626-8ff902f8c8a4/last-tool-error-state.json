@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"python3 <<'EOF'\\nimport json\\nfrom collections import Counter\\nfrom datetime import datetime, timezone\\nwith open('/tmp/issues.json') as f:\\n    items=json.load(f)\\nitems=[it for it in ite...",
+  "error": "Exit code 1\n=== TOP-10 BLOCKED (oldest updatedAt, no first-class blockedBy) ===\n  FORA-48 | upd=2026-06-16T18:56:10.181Z | assign=f4d4bf77-2a6b-41e0-b3c5-4a688e2913f0 | blockedBy=EMPTY | 0.3 MCP framework\n  FORA-72 | upd=2026-06-16T18:56:18.420Z | assign=f4d4bf77-2a6b-41e0-b3c5-4a688e2913f0 | blockedBy=EMPTY | Sub-goal 4.1 — Test generator\n  FORA-73 | upd=2026-06-16T18:56:18.604Z | assign=f4d4bf77-2a6b-41e0-b3c5-4a688e2913f0 | blockedBy=EMPTY | Sub-goal 4.2 — Self-healing agent\n  FORA-103 | upd=...",
+  "timestamp": "2026-06-17T21:34:47.823Z",
+  "retry_count": 1
+}

@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -s \\\"$PAPERCLIP_API_URL/api/issues/4f18cdfa-ab88-45d3-91de-a5b6598282e4/heartbeat-context\\\" \\\\\\n  -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\\\\n  -H \\\"X-Paperclip-Run-Id: $P...",
+  "error": "Exit code 1\nFAILED: curl {\"issue\":{\"id\":\"4f18cdfa-ab88-45d3-91de-a5b6598282e4\",\"identifier\":\"FORA-61\",\"title\":\"Sub-goal 1.3 — Epic generator (Epic + stories + acceptance criteria)\",\"description\":\"**Sub-goal 1.3** of [FORA-15](/FORA/issues/FORA-15) → [Epic 1 — Forge Ideation Agent](/FORA/issues/FORA-17)\\n\\n- **Title:** Epic generator\\n- **BMAD role:** PM\\n- **Key agent (proposed hire):** `epic-generator`\\n- **MCPs:** (in-memory)\\n- **Deliverable:** `epic_package.md` + `dependency_graph.json` + `r...",
+  "timestamp": "2026-06-17T11:01:21.472Z",
+  "retry_count": 2
+}

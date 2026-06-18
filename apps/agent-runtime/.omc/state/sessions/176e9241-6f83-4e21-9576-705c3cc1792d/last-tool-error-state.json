@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"./node_modules/.bin/tsc -p tsconfig.json --noEmit && echo \\\"typecheck OK\\\" && ./node_modules/.bin/tsc -p tsconfig.json && echo \\\"build OK\\\" && rtk ls -la dist/orchestrator/ 2>&1 | head -20...",
+  "error": "Exit code 2\nsrc/index.ts(37,3): error TS2300: Duplicate identifier 'IdempotencyKey'.\nsrc/index.ts(43,3): error TS2300: Duplicate identifier 'RunId'.\nsrc/index.ts(48,3): error TS2300: Duplicate identifier 'Stage'.\nsrc/index.ts(157,3): error TS2300: Duplicate identifier 'IdempotencyKey'.\nsrc/index.ts(168,3): error TS2300: Duplicate identifier 'RunId'.\nsrc/index.ts(171,3): error TS2300: Duplicate identifier 'Stage'.",
+  "timestamp": "2026-06-17T10:35:40.285Z",
+  "retry_count": 1
+}

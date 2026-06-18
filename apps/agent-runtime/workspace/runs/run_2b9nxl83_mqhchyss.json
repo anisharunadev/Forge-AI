@@ -1,0 +1,47 @@
+{
+  "runId": "run_2b9nxl83_mqhchyss",
+  "agentId": "echo-agent",
+  "tenantId": "t1",
+  "traceId": "tr-hint",
+  "startedAt": "2026-06-17T00:41:09.485Z",
+  "finishedAt": "2026-06-17T00:41:09.486Z",
+  "status": "succeeded",
+  "steps": [
+    {
+      "stepId": "s1",
+      "planId": "p1",
+      "tool": "echo",
+      "handlerId": "",
+      "startedAt": "2026-06-17T00:41:09.486Z",
+      "finishedAt": "2026-06-17T00:41:09.486Z",
+      "durationMs": 0,
+      "ok": true,
+      "stage": "act",
+      "output": {
+        "output": {
+          "echoed": {
+            "x": 1
+          }
+        },
+        "costHint": {
+          "tokens": 3,
+          "usd": 0.0001
+        }
+      }
+    }
+  ],
+  "replanCycles": 0,
+  "errors": [],
+  "budget": {
+    "ceiling": {},
+    "spent": {
+      "tokens": 3,
+      "usd": 0.0001,
+      "wallClockMs": 1
+    }
+  },
+  "finalReflection": {
+    "note": "done",
+    "done": true
+  }
+}

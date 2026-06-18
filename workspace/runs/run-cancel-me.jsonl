@@ -1,0 +1,16 @@
+{"kind":"stage.entered","runId":"run-cancel-me","stage":"plan","at":"2026-06-17T06:47:22.528Z"}
+{"kind":"plan.emitted","runId":"run-cancel-me","planId":"p1","stepCount":1,"at":"2026-06-17T06:47:22.528Z"}
+{"kind":"stage.entered","runId":"run-cancel-me","stage":"act","at":"2026-06-17T06:47:22.528Z"}
+{"kind":"observation","runId":"run-cancel-me","observation":{"stepId":"s1","tool":"echo","output":{"echoed":{"message":"cancel me"}},"ok":true,"durationMs":101,"idempotencyKey":"idem-key-1"},"at":"2026-06-17T06:47:22.629Z"}
+{"kind":"stage.entered","runId":"run-cancel-me","stage":"observe","at":"2026-06-17T06:47:22.636Z"}
+{"kind":"stage.entered","runId":"run-cancel-me","stage":"reflect","at":"2026-06-17T06:47:22.636Z"}
+{"kind":"reflection","runId":"run-cancel-me","done":true,"note":"done","at":"2026-06-17T06:47:22.637Z"}
+{"kind":"finished","runId":"run-cancel-me","status":"succeeded","at":"2026-06-17T06:47:22.638Z"}
+{"kind":"stage.entered","runId":"run-cancel-me","stage":"plan","at":"2026-06-17T10:47:56.458Z"}
+{"kind":"plan.emitted","runId":"run-cancel-me","planId":"p1","stepCount":1,"at":"2026-06-17T10:47:56.459Z"}
+{"kind":"stage.entered","runId":"run-cancel-me","stage":"act","at":"2026-06-17T10:47:56.459Z"}
+{"kind":"observation","runId":"run-cancel-me","observation":{"stepId":"s1","tool":"echo","output":{"echoed":{"message":"cancel me"}},"ok":true,"durationMs":100,"idempotencyKey":"idem-key-1"},"at":"2026-06-17T10:47:56.560Z"}
+{"kind":"stage.entered","runId":"run-cancel-me","stage":"observe","at":"2026-06-17T10:47:56.560Z"}
+{"kind":"stage.entered","runId":"run-cancel-me","stage":"reflect","at":"2026-06-17T10:47:56.560Z"}
+{"kind":"reflection","runId":"run-cancel-me","done":true,"note":"done","at":"2026-06-17T10:47:56.560Z"}
+{"kind":"finished","runId":"run-cancel-me","status":"succeeded","at":"2026-06-17T10:47:56.560Z"}

@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -sS -X PATCH \\\"$PAPERCLIP_API_URL/api/issues/a389bd7c-0adc-4b0b-8ba7-610152b92b24\\\" \\\\\\n  -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\\\\n  -H \\\"X-Paperclip-Run-Id: $PAPERCLIP...",
+  "error": "Exit code 5",
+  "timestamp": "2026-06-17T10:37:29.143Z",
+  "retry_count": 1
+}

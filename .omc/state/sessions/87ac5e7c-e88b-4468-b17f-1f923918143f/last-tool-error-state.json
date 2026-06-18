@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -s \\\"$PAPERCLIP_API_URL/api/companies/$PAPERCLIP_COMPANY_ID/issues?parentId=423a7bdc-9fb6-4309-8731-ec6631a0edb4&maxResults=100\\\" \\\\\\n  -H \\\"Authorization: Bearer $PAPERCLIP_API_K...",
+  "error": "Exit code 1\nFAILED: curl [{\"id\":\"d5a730e1-d5d3-4716-a862-d65a5c555902\",\"companyId\":\"3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9\",\"projectId\":\"bb09220b-5ed2-47b3-9c58-d3e05cefb413\",\"projectWorkspaceId\":null,\"goalId\":\"5a1e3325-6383-447e-a7b6-f4f383fbfb95\",\"parentId\":\"423a7bdc-9fb6-4309-8731-ec6631a0edb4\",\"title\":\"9.7 Slack/Teams MCP\",\"description\":\"9.7 Slack/Teams MCP (Priority 1, P1).\\n\\nBuild `@fora/mcp-chat` (Slack + Teams unified surface) by copying the `@fora/mcp-github` template ([FORA-4](/FORA/iss...",
+  "timestamp": "2026-06-16T18:59:27.142Z",
+  "retry_count": 4
+}

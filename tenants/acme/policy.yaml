@@ -1,0 +1,37 @@
+# tenants/acme/policy.yaml
+#
+# Acme's tenant policy (FORA-125 / 0.7.3).
+#
+# Narrows the platform default for tenant acme. The platform default is
+# deny; everything here is a *positive* grant. A grant that names a role
+# or MCP that the platform registry does not know about is rejected at
+# load time — the tenant cannot widen beyond the platform default.
+#
+# Acceptance scenarios for FORA-125:
+#   - developer + aws-deploy succeeds here (mcp_grants.developer['aws-deploy'] == true).
+#   - developer + aws-billing is denied (no grant; also aws-billing is not
+#     in developer's role mcps list, so it would be unbound_mcp).
+
+version: 1
+description: >
+  Acme Corp tenant policy. Grants developers the deploy MCP for
+  acme-prod only; denies billing for everyone; narrows ba-agent to
+  read-only on slack.
+
+mcp_grants:
+  developer:
+    aws-deploy: true        # explicit grant satisfies the FORA-125 acceptance bar
+  deploy-agent:
+    aws-deploy: true
+    customer-cloud-broker: true
+  security-engineer:
+    aws-deploy: true
+  audit:
+    aws-billing: true       # audit must see billing for compliance review
+
+deny:
+  - aws-billing            # nobody else can read billing; audit's grant above overrides only for the audit role
+
+scope_overrides:
+  ba-agent:
+    - read                  # drop nothing; ba-agent was already read-only

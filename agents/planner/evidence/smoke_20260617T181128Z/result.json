@@ -1,0 +1,140 @@
+{
+  "issue": "FORA-69",
+  "sub_goal": "3.1 \u2014 Story planner",
+  "smoke_utc": "20260617T181128Z",
+  "elapsed_ms": 6,
+  "passed": 21,
+  "failed": 0,
+  "ok": true,
+  "checks": [
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1] STORY-101 (crud_entity) emits required task types \u2014 got ['controller', 'migration', 'model', 'service', 'test']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#2] STORY-101 task AC refs are a subset of story ACs \u2014 got ['ac-1', 'ac-2', 'ac-3']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#3] STORY-101 every task declares \u22651 files_touched"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4a] STORY-101 depends_on has no missing or self-referential edges"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4b] STORY-101 depends_on respects canonical ordering (deps precede dependents)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#5] STORY-101 PlanOutput.validate() returns no errors \u2014 got []"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#6] STORY-101 plan markdown is byte-stable across two runs"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1] STORY-202 (api_endpoint) emits required task types \u2014 got ['controller', 'service', 'test']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#2] STORY-202 task AC refs are a subset of story ACs \u2014 got ['ac-1', 'ac-2', 'ac-3']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#3] STORY-202 every task declares \u22651 files_touched"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4a] STORY-202 depends_on has no missing or self-referential edges"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4b] STORY-202 depends_on respects canonical ordering (deps precede dependents)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#5] STORY-202 PlanOutput.validate() returns no errors \u2014 got []"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#6] STORY-202 plan markdown is byte-stable across two runs"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1] STORY-303 (migration_only) emits required task types \u2014 got ['migration', 'test']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#2] STORY-303 task AC refs are a subset of story ACs \u2014 got ['ac-1', 'ac-2']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#3] STORY-303 every task declares \u22651 files_touched"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4a] STORY-303 depends_on has no missing or self-referential edges"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4b] STORY-303 depends_on respects canonical ordering (deps precede dependents)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#5] STORY-303 PlanOutput.validate() returns no errors \u2014 got []"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#6] STORY-303 plan markdown is byte-stable across two runs"
+    }
+  ],
+  "per_shape": [
+    {
+      "story_id": "STORY-101",
+      "title": "Add User entity",
+      "inferred_shape": "crud_entity",
+      "task_count": 6,
+      "task_types": [
+        "controller",
+        "migration",
+        "model",
+        "service",
+        "test"
+      ],
+      "plan_id": "plan-c3d61fff62",
+      "plan_md_sha256": "01e79d6ede1c37ef8a002322e21c35345837a0acef2900c6bac1b0509b29bf4f",
+      "plan_path": "agents/planner/evidence/smoke_20260617T181128Z/plans/STORY-101.md"
+    },
+    {
+      "story_id": "STORY-202",
+      "title": "Implement auth login endpoint",
+      "inferred_shape": "api_endpoint",
+      "task_count": 4,
+      "task_types": [
+        "controller",
+        "service",
+        "test"
+      ],
+      "plan_id": "plan-53978af1da",
+      "plan_md_sha256": "61a5d14bfd8b669ea6c6cada68ebed728aea4a8a578d6d1fbb57b7e537e3f44d",
+      "plan_path": "agents/planner/evidence/smoke_20260617T181128Z/plans/STORY-202.md"
+    },
+    {
+      "story_id": "STORY-303",
+      "title": "Add created_by + updated_by audit columns",
+      "inferred_shape": "migration_only",
+      "task_count": 2,
+      "task_types": [
+        "migration",
+        "test"
+      ],
+      "plan_id": "plan-943e491fba",
+      "plan_md_sha256": "7b89a84c29728c6737aa26ed78f802aac0a643767e7d426646dff6314da0d076",
+      "plan_path": "agents/planner/evidence/smoke_20260617T181128Z/plans/STORY-303.md"
+    }
+  ]
+}

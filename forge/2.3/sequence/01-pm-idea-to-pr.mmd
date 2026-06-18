@@ -1,0 +1,101 @@
+---
+version: 0.1.0
+last-reviewed-by: cto
+last-reviewed-at: 2026-06-17
+parent-prd: workspace/project/PRD.md
+parent-issue: FORA-35
+sub-goal: "2.3 — Design generation (design-generator)"
+epic: FORA-18 (Epic 2 — Architecture Agent)
+journey: "PRD §6.1 — The 'feature from a Slack message' journey"
+related-hld: forge/2.3/hld.md
+related-lld: forge/2.3/lld.md
+related-adrs:
+  - forge/2.3/adr/0004-idempotency-key-envelope.md
+  - forge/2.3/adr/0005-plan-then-act-gate.md
+  - ../docs/architecture/adr-0001-master-orchestrator-sdlc-architecture.md
+  - ../docs/architecture/adr-0007-grpc-orchestrator-runtime.md
+---
+
+# Sequence 01 — PM's Slack message → merged PR (PRD §6.1)
+
+The end-to-end happy path: a PM drops a one-paragraph feature idea in Slack, the platform runs it through all seven stages with real human-approval gates, and the result is a merged PR. Every step has an owner, a gate, a budget, and a log line (PRD §6.1 final sentence).
+
+## Diagram
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor PM as PM (acme-corp)
+    actor CTO as CTO (acme-corp)
+    participant Slack as Slack MCP
+    participant Orch as Master Orchestrator
+    participant IdB as Identity Broker
+    participant IdP as acme IdP (OIDC)
+    participant BA as BA agent (ideation)
+    participant Arch as Architect agent
+    participant Dev as Developer agent
+    participant QA as QA agent
+    participant Sec as Security agent
+    participant DevOps as DevOps agent
+    participant Docs as Docs agent
+    participant Bus as NATS + event-bus-bridge
+    participant Audit as Audit Account (SQS + S3)
+
+    PM->>Slack: "Add SSO via Okta to acme/app"
+    Slack->>Orch: webhook (Slack MCP, plan-then-act validated)
+    Orch->>IdB: resolve tenant_id from channel mapping
+    IdB-->>Orch: tenant_id=acme-corp
+    Orch->>Orch: CreateRun(goal, project, trigger={kind:slack,actor:pm@acme})
+    Orch->>Bus: publish run.created
+    Bus->>Audit: ship audit row
+    Orch-->>BA: wake (stage=ideation)
+
+    BA->>Orch: GetRunContext (gRPC)
+    Orch-->>BA: RunContext{stage=ideation, allow_list=ideation, ...}
+    BA->>BA: emit Plan{tool_calls: [slack.read_thread, jira.create_epic, ...]}
+    BA->>Orch: AdvanceStage(decision=NEXT, artefact=draft_prd)
+    Orch->>Bus: publish gate.requested (ideation->architect, approver=ceo)
+    Bus->>Audit: ship audit row
+    Orch-->>CEO: request_confirmation(prompt="Approve draft PRD?")
+
+    CTO->>Orch: POST /v1/approvals/{id}/decisions {decision: accept}
+    Orch->>Orch: stage=architect, run.status=running
+    Orch-->>Arch: wake (stage=architect)
+    Arch->>Orch: AdvanceStage(decision=NEXT, artefact=adr-0011+hld+lld)
+    Orch->>Bus: publish gate.requested (architect->dev, approver=cto)
+
+    CTO->>Orch: POST /v1/approvals/{id}/decisions {decision: accept}
+    Orch-->>Dev: wake (stage=dev)
+    Dev->>Dev: Plan{tool_calls: [github.create_branch, code.write, github.open_pr]}
+    Dev->>Orch: AdvanceStage(decision=NEXT, artefact=pr_url)
+    Orch-->>QA: wake (stage=qa)
+
+    QA->>QA: integration + e2e + perf baseline
+    QA->>Orch: AdvanceStage(decision=NEXT, artefact=qa_verdict=pass)
+    Orch-->>Sec: wake (stage=security)
+    Sec->>Sec: OWASP scan, threat model, SBOM
+    Sec->>Orch: AdvanceStage(decision=NEXT, artefact=security_verdict=pass)
+    Orch-->>DevOps: wake (stage=devops)
+
+    DevOps->>DevOps: Terraform plan, Helm chart, ArgoCD app
+    DevOps->>Orch: AdvanceStage(decision=NEXT, artefact=deploy_plan)
+    Orch->>Bus: publish gate.requested (devops->docs, approver=ceo+cto)
+    CTO->>Orch: POST /v1/approvals/{id}/decisions {decision: accept}
+    Orch-->>Docs: wake (stage=docs)
+    Docs->>Docs: README, API ref, CHANGELOG, Confluence
+    Docs->>Orch: AdvanceStage(decision=NEXT, artefact=confluence_url)
+    Orch->>Orch: run.status=done, run.current_stage=done
+    Orch->>Bus: publish run.finished
+    Bus->>Audit: ship final audit row
+    Orch-->>PM: Slack notification (thread reply)
+
+    Note over Orch,Audit: Every action above is one audit_log row. Total: ~28 rows for this run. ~$3.20 in model spend (median PRD §8 budget).
+```
+
+## Notes
+
+- **Gates 1, 2, 7 are human-in-the-loop.** Gates 3, 4, 5, 6 are typed but auto-approved by the orchestrator when the stage emits a passing verdict; the CTO can still pause.
+- **Plan-then-act (ADR-0005)** runs on every agent invocation. Destructive tools (force-push, drop DB, post to a customer channel) carry `requires_approval: true` and pause the run.
+- **Idempotency-Key (ADR-0004)** is on every Orchestrator mutating call. A retry of any step is a no-op.
+- **Audit row count** is a proxy for cost — the Eval agent's dashboards expose per-stage token + USD so the Cost agent can flag overruns before the run finishes.
+- **Failure mode** at any gate: the agent returns `decision: RETURN` and the run loops back to the prior stage. A budget breach pauses the run and surfaces a "budget exceeded" state.

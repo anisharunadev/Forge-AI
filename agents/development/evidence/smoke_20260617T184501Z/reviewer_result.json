@@ -1,0 +1,408 @@
+{
+  "issue": "FORA-71",
+  "sub_goal": "3.3 \u2014 Reviewer",
+  "smoke_utc": "20260617T184501Z",
+  "elapsed_ms": 37,
+  "passed": 76,
+  "failed": 0,
+  "ok": true,
+  "checks": [
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1] clean_crud (STORY-401) produces a ReviewReport"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#2] clean_crud (STORY-401) report.validate() returns no errors \u2014 got []"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#9] clean_crud (STORY-401) every finding has a non-empty rule_id"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#10] clean_crud (STORY-401) every finding has at least one location"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#11] clean_crud (STORY-401) every finding carries a category from the 6-lens enum"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#12] clean_crud (STORY-401) every finding carries a severity from {BLOCKER, SUGGESTION, NIT}"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#13] clean_crud (STORY-401) summary counts match actual findings \u2014 B=0/0 S=0/0 N=6/6"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#3] clean_crud (STORY-401) verdict invariant: blockers=False \u2192 verdict=APPROVE (expected APPROVE)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#14] clean_crud (STORY-401) report_id derived from diff_id \u2014 got rev-69734949a2 expected rev-69734949a2"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#17] clean_crud (STORY-401) findings are sorted by (severity, rule_id, path, line)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#29] clean_crud (STORY-401) inline locations carry 1-indexed line numbers (or 0 for whole-file)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1] insecure_endpoint (STORY-402) produces a ReviewReport"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#2] insecure_endpoint (STORY-402) report.validate() returns no errors \u2014 got []"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#9] insecure_endpoint (STORY-402) every finding has a non-empty rule_id"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#10] insecure_endpoint (STORY-402) every finding has at least one location"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#11] insecure_endpoint (STORY-402) every finding carries a category from the 6-lens enum"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#12] insecure_endpoint (STORY-402) every finding carries a severity from {BLOCKER, SUGGESTION, NIT}"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#13] insecure_endpoint (STORY-402) summary counts match actual findings \u2014 B=4/4 S=0/0 N=0/0"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#3] insecure_endpoint (STORY-402) verdict invariant: blockers=True \u2192 verdict=REQUEST_CHANGES (expected REQUEST_CHANGES)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#14] insecure_endpoint (STORY-402) report_id derived from diff_id \u2014 got rev-046ebf2ba9 expected rev-046ebf2ba9"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#17] insecure_endpoint (STORY-402) findings are sorted by (severity, rule_id, path, line)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#29] insecure_endpoint (STORY-402) inline locations carry 1-indexed line numbers (or 0 for whole-file)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1] scaffold_only (STORY-201) produces a ReviewReport"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#2] scaffold_only (STORY-201) report.validate() returns no errors \u2014 got []"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#9] scaffold_only (STORY-201) every finding has a non-empty rule_id"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#10] scaffold_only (STORY-201) every finding has at least one location"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#11] scaffold_only (STORY-201) every finding carries a category from the 6-lens enum"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#12] scaffold_only (STORY-201) every finding carries a severity from {BLOCKER, SUGGESTION, NIT}"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#13] scaffold_only (STORY-201) summary counts match actual findings \u2014 B=0/0 S=0/0 N=16/16"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#3] scaffold_only (STORY-201) verdict invariant: blockers=False \u2192 verdict=APPROVE (expected APPROVE)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#14] scaffold_only (STORY-201) report_id derived from diff_id \u2014 got rev-2c50612466 expected rev-2c50612466"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#17] scaffold_only (STORY-201) findings are sorted by (severity, rule_id, path, line)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#29] scaffold_only (STORY-201) inline locations carry 1-indexed line numbers (or 0 for whole-file)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1] duplicate_files (STORY-403) produces a ReviewReport"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#2] duplicate_files (STORY-403) report.validate() returns no errors \u2014 got []"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#9] duplicate_files (STORY-403) every finding has a non-empty rule_id"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#10] duplicate_files (STORY-403) every finding has at least one location"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#11] duplicate_files (STORY-403) every finding carries a category from the 6-lens enum"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#12] duplicate_files (STORY-403) every finding carries a severity from {BLOCKER, SUGGESTION, NIT}"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#13] duplicate_files (STORY-403) summary counts match actual findings \u2014 B=0/0 S=1/1 N=0/0"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#3] duplicate_files (STORY-403) verdict invariant: blockers=False \u2192 verdict=APPROVE (expected APPROVE)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#14] duplicate_files (STORY-403) report_id derived from diff_id \u2014 got rev-f6054177d8 expected rev-f6054177d8"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#17] duplicate_files (STORY-403) findings are sorted by (severity, rule_id, path, line)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#29] duplicate_files (STORY-403) inline locations carry 1-indexed line numbers (or 0 for whole-file)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1] bad_paths (STORY-404) produces a ReviewReport"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#2] bad_paths (STORY-404) report.validate() returns no errors \u2014 got []"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#9] bad_paths (STORY-404) every finding has a non-empty rule_id"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#10] bad_paths (STORY-404) every finding has at least one location"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#11] bad_paths (STORY-404) every finding carries a category from the 6-lens enum"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#12] bad_paths (STORY-404) every finding carries a severity from {BLOCKER, SUGGESTION, NIT}"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#13] bad_paths (STORY-404) summary counts match actual findings \u2014 B=4/4 S=0/0 N=0/0"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#3] bad_paths (STORY-404) verdict invariant: blockers=True \u2192 verdict=REQUEST_CHANGES (expected REQUEST_CHANGES)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#14] bad_paths (STORY-404) report_id derived from diff_id \u2014 got rev-44703f9b79 expected rev-44703f9b79"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#17] bad_paths (STORY-404) findings are sorted by (severity, rule_id, path, line)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#29] bad_paths (STORY-404) inline locations carry 1-indexed line numbers (or 0 for whole-file)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4] clean_crud \u2192 APPROVE with 0 blockers (got verdict=APPROVE, blockers=0)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#5] insecure_endpoint \u2192 REQUEST_CHANGES with \u22653 SECURITY blockers (got verdict=REQUEST_CHANGES, blockers=4, sec_rules=['SEC001', 'SEC002', 'SEC003'])"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#6] scaffold_only \u2192 APPROVE (got verdict=APPROVE)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#7] duplicate_files \u2192 APPROVE with DUP001 suggestion (got verdict=APPROVE, rule_ids=['DUP001'])"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#8] bad_paths \u2192 REQUEST_CHANGES with ARC001 + ARC003 (got verdict=REQUEST_CHANGES, rule_ids=['ARC001', 'ARC003', 'TST001'])"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#25a] Reviewer module has no `subprocess` import (no-commit constraint)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#25b] Reviewer module has no `git` import (no-commit constraint)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#25c] Reviewer module has no LLM imports (no-LLM constraint)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#25d] Reviewer module has no HTTP imports (no-network constraint)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#15] review_diff is exposed as a callable"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#16] Reviewer is re-instantiable and produces stable bytes"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#26] every rule in the registry has a unique rule_id \u2014 18 rules, 18 unique"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#27a] Severity enum covers {BLOCKER, SUGGESTION, NIT}"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#27b] FindingCategory enum covers the 6-lens contract"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#28] derive_report_id joins diff_id to report_id (expected rev-59f8ab02f9, got rev-59f8ab02f9)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#18] ARC005 fires BLOCKER for model missing `id: uuid.UUID` (found: ['ARC005'])"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#19] TST001 fires BLOCKER for service without paired test (found: ['TST001'])"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#20/21/22] SEC001 + SEC002 + SEC003 fire on insecure_endpoint (found: ['SEC001', 'SEC002', 'SEC003'])"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#23] CLN002 (missing newline) + CLN003 (extra newline) fire (found: ['CLN002', 'CLN003'])"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#24] ARC002 (service path) + ARC004 (migration path) fire (found: ['ARC002', 'ARC004'])"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#30] report.to_dict() round-trips through JSON (keys=['diff_id', 'findings', 'generated_at', 'plan_id', 'report_id', 'schema_version'])"
+    }
+  ],
+  "per_fixture": [
+    {
+      "fixture_key": "clean_crud",
+      "story_id": "STORY-401",
+      "plan_id": "PLAN-401",
+      "diff_id": "diff-155266d31f",
+      "report_id": "rev-69734949a2",
+      "verdict": "APPROVE",
+      "findings": 6,
+      "blockers": 0,
+      "suggestions": 0,
+      "nits": 6,
+      "rule_ids": [
+        "CLN004"
+      ],
+      "files_reviewed": 5,
+      "report_path": "agents/development/evidence/smoke_20260617T184501Z/reports/clean_crud.json"
+    },
+    {
+      "fixture_key": "insecure_endpoint",
+      "story_id": "STORY-402",
+      "plan_id": "PLAN-402",
+      "diff_id": "diff-964e9a734c",
+      "report_id": "rev-046ebf2ba9",
+      "verdict": "REQUEST_CHANGES",
+      "findings": 4,
+      "blockers": 4,
+      "suggestions": 0,
+      "nits": 0,
+      "rule_ids": [
+        "SEC001",
+        "SEC002",
+        "SEC003",
+        "TST001"
+      ],
+      "files_reviewed": 1,
+      "report_path": "agents/development/evidence/smoke_20260617T184501Z/reports/insecure_endpoint.json"
+    },
+    {
+      "fixture_key": "scaffold_only",
+      "story_id": "STORY-201",
+      "plan_id": "plan-1a2ddb817b",
+      "diff_id": "diff-2d31f349d1",
+      "report_id": "rev-2c50612466",
+      "verdict": "APPROVE",
+      "findings": 16,
+      "blockers": 0,
+      "suggestions": 0,
+      "nits": 16,
+      "rule_ids": [
+        "CLN001",
+        "CLN004"
+      ],
+      "files_reviewed": 6,
+      "report_path": "agents/development/evidence/smoke_20260617T184501Z/reports/scaffold_only.json"
+    },
+    {
+      "fixture_key": "duplicate_files",
+      "story_id": "STORY-403",
+      "plan_id": "PLAN-403",
+      "diff_id": "diff-886a2bc1e7",
+      "report_id": "rev-f6054177d8",
+      "verdict": "APPROVE",
+      "findings": 1,
+      "blockers": 0,
+      "suggestions": 1,
+      "nits": 0,
+      "rule_ids": [
+        "DUP001"
+      ],
+      "files_reviewed": 2,
+      "report_path": "agents/development/evidence/smoke_20260617T184501Z/reports/duplicate_files.json"
+    },
+    {
+      "fixture_key": "bad_paths",
+      "story_id": "STORY-404",
+      "plan_id": "PLAN-404",
+      "diff_id": "diff-9519bf0b5a",
+      "report_id": "rev-44703f9b79",
+      "verdict": "REQUEST_CHANGES",
+      "findings": 4,
+      "blockers": 4,
+      "suggestions": 0,
+      "nits": 0,
+      "rule_ids": [
+        "ARC001",
+        "ARC003",
+        "TST001"
+      ],
+      "files_reviewed": 2,
+      "report_path": "agents/development/evidence/smoke_20260617T184501Z/reports/bad_paths.json"
+    }
+  ]
+}

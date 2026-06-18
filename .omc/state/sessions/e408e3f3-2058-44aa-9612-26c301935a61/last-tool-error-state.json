@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -sS -X POST \\\"http://127.0.0.1:3100/api/companies/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/issues\\\" \\\\\\n  -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\\\\n  -H \\\"X-Paperclip-Run-Id...",
+  "error": "Exit code 2\n/usr/bin/bash: eval: line 25: syntax error near unexpected token `('\n/usr/bin/bash: eval: line 25: `    \"description\": \"## Propose and onboard the doc-agent for Epic 7.\\n\\nPer [FORA-15#document-plan](/FORA/issues/FORA-15#document-plan) §Epic 7, Epic 7 (Documentation Agent) requires a `doc-agent` sub-agent. The agent will execute the contract defined in [FORA-54#document-spec](/FORA/issues/FORA-54#document-spec) (7.1.1 spec & prompt).\\n\\n### Scope of this hire\\n- Sub-goal owner for 7....",
+  "timestamp": "2026-06-16T19:00:15.432Z",
+  "retry_count": 1
+}

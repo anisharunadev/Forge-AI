@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"timeout 30 python3 -c \\\"\\nimport sys; sys.path.insert(0, '.')\\nfrom agents.architecture.smoke_test_publisher import FlakyClient\\nprint('FlakyClient exists:', FlakyClient)\\nimport inspect\\n...",
+  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 3, in <module>\nImportError: cannot import name 'FlakyClient' from 'agents.architecture.smoke_test_publisher' (/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/architecture/smoke_test_publisher.py)",
+  "timestamp": "2026-06-17T18:04:01.853Z",
+  "retry_count": 1
+}

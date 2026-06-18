@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -s \\\"$PAPERCLIP_API_URL/api/agents/f4d4bf77-2a6b-41e0-b3c5-4a688e2913f0/inbox-lite\\\" \\\\\\n  -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" | python3 -c \\\"import json, sys; d=json....",
+  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 3, in <module>\nKeyError: slice(None, 5, None)\nCTO inbox count: 1",
+  "timestamp": "2026-06-16T20:17:03.270Z",
+  "retry_count": 1
+}

@@ -1,0 +1,35 @@
+{
+  "name": "@fora/mcp-databricks",
+  "version": "0.1.0",
+  "description": "FORA Databricks MCP server — exposes list_jobs, get_job, run_job, get_run, cancel_run, list_clusters, get_cluster, execute_sql over MCP/stdio. Auth via a workspace-scoped service-principal PAT against the Databricks Jobs REST 2.1 + SQL Statement Execution APIs.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "fora-mcp-databricks": "bin/fora-mcp-databricks.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "docs"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build",
+    "start": "node bin/fora-mcp-databricks.mjs",
+    "smoke": "node test/smoke.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "typescript": "^5.6.0"
+  }
+}

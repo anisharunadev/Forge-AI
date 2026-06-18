@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -s -X POST \\\"$PAPERCLIP_API_URL/api/issues/FORA-36/comments\\\" \\\\\\n  -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\\\\n  -H \\\"X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID\\\" \\\\\\n  -H \\\"C...",
+  "error": "Exit code 2\n/usr/bin/bash: eval: line 49: syntax error near unexpected token `)'\n/usr/bin/bash: eval: line 49: `**Will post a follow-up with the PR link + a sample event payload once step 1-2 ship.**\")\" '{\"body\": $body}')\"'",
+  "timestamp": "2026-06-17T00:06:00.162Z",
+  "retry_count": 1
+}

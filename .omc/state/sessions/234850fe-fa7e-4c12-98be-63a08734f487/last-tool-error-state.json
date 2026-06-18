@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk read /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/package.json 2>&1 | hea...",
+  "error": "Exit code 1\ncat: /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/package.json: No such file or directory (os error 2)\n---\ncat: /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/pnpm-workspace.yaml: No such file or directory (os error 2)",
+  "timestamp": "2026-06-17T00:58:37.241Z",
+  "retry_count": 1
+}

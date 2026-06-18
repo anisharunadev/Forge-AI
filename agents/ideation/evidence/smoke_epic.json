@@ -1,0 +1,807 @@
+{
+  "status": "passed_to_architect",
+  "epic": {
+    "id": "EPIC-IDEATION-001",
+    "title": "Reduce EU checkout & fulfillment friction",
+    "problem_statement": "EU customers hit a higher-than-acceptable false-decline rate on checkout, and ~0.4% of retries produce duplicate orders because the idempotency window expires before the retry settles. EU delivery ETAs are off by 2-3 days because warehouse routing uses Haversine distance, not road-network distance, and the weighted score doesn't reflect intra-day capacity.",
+    "proposed_solution": "Introduce a region-aware checkout policy: per-region fraud thresholds, a 72h idempotency window, and a manual-review queue for low-confidence blocks. Replace Haversine distance with a road-network lookup for the EU region, and add intra-day warehouse capacity to the routing score. Add audit log coverage on every 3DS redirect outcome.",
+    "user_stories": [
+      {
+        "id": "US-1",
+        "role": "EU shopper",
+        "capability": "complete a checkout even when my bank triggers a soft decline",
+        "benefit": "I don't lose my cart and don't get a duplicate charge",
+        "priority": "must",
+        "story_points": 8
+      },
+      {
+        "id": "US-2",
+        "role": "merchant",
+        "capability": "see and resolve blocked payments before they become chargebacks",
+        "benefit": "my false-decline rate drops and my revenue recovers",
+        "priority": "must",
+        "story_points": 5
+      },
+      {
+        "id": "US-3",
+        "role": "platform operator",
+        "capability": "extend the idempotency window for a specific merchant",
+        "benefit": "retry-heavy tenants don't generate duplicate orders",
+        "priority": "should",
+        "story_points": 3
+      },
+      {
+        "id": "US-4",
+        "role": "EU shopper",
+        "capability": "see an accurate delivery ETA at checkout",
+        "benefit": "I can plan to be home and don't miss the drop-off",
+        "priority": "should",
+        "story_points": 5
+      },
+      {
+        "id": "US-5",
+        "role": "warehouse operator",
+        "capability": "see intra-day capacity reflected in the routing score",
+        "benefit": "I don't get over-allocated when a wave is incoming",
+        "priority": "could",
+        "story_points": 3
+      }
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-1",
+        "given": "a customer retries a checkout after a transient gateway timeout",
+        "when": "the retry lands within 72h",
+        "then": "the second attempt is rejected as a duplicate and no second order is created"
+      },
+      {
+        "id": "AC-2",
+        "given": "an EU debit card is flagged by the fraud rules",
+        "when": "the rules engine returns a low-confidence block",
+        "then": "the order is routed to a manual-review queue and the customer sees an estimated resolution time"
+      },
+      {
+        "id": "AC-3",
+        "given": "a customer checks out with a EU shipping address",
+        "when": "the warehouse router computes delivery ETA",
+        "then": "the ETA is within +/- 1 day of the carrier's published transit time"
+      }
+    ],
+    "dependencies": [
+      {
+        "type": "internal_repo",
+        "name": "checkout-api",
+        "note": "idempotency store changes"
+      },
+      {
+        "type": "internal_repo",
+        "name": "fulfillment-svc",
+        "note": "routing score refactor"
+      },
+      {
+        "type": "external_system",
+        "name": "3DS provider",
+        "note": "redirect outcome webhook required"
+      },
+      {
+        "type": "mcp",
+        "name": "github-mcp",
+        "note": "used by the Ideation Agent to harvest PRs and issues"
+      },
+      {
+        "type": "mcp",
+        "name": "jira-mcp",
+        "note": "used by the Ideation Agent to harvest issues"
+      }
+    ],
+    "effort": "M",
+    "effort_rationale": "24 story points across 5 stories. Touches checkout-api and fulfillment-svc; requires a fraud-rules config and a 3DS webhook. The 72h idempotency change is a small data-migration.",
+    "risk": "high",
+    "risk_summary": "Combined checkout + fulfillment + compliance changes touch revenue-critical flows. Mitigate with canary, shadow traffic, and a manual review queue.",
+    "tech_debt": [
+      {
+        "repo": "checkout-api",
+        "area": "services/checkout/src/idempotency.py",
+        "finding": "Idempotency TTL is hardcoded to 24h. Make this configurable.",
+        "severity": "major"
+      },
+      {
+        "repo": "fulfillment-svc",
+        "area": "services/fulfillment/src/routing.py",
+        "finding": "Cognitive complexity of weighted_score() is 18; refactor.",
+        "severity": "minor"
+      }
+    ],
+    "architecture_impact": {
+      "services": [
+        "checkout-api",
+        "fulfillment-svc"
+      ],
+      "data_model_changes": [
+        "idempotency.ttl: 24h -> 72h (configurable per tenant)",
+        "warehouse_routing: add road_distance_km column"
+      ],
+      "api_changes": [
+        "POST /v1/checkout/{id}/manual-review",
+        "GET /v1/routing/eta?region=EU"
+      ],
+      "cross_cutting": [
+        "Feature flag: checkout.eu_region_v2",
+        "Background job: refresh_road_distances (nightly)"
+      ],
+      "notes": "Primary blast radius: checkout-api and fulfillment-svc. No schema migrations to user-facing tables."
+    },
+    "sources": [
+      "confluence",
+      "github",
+      "jira",
+      "market_intel",
+      "sonarqube",
+      "zendesk"
+    ],
+    "generated_at": "2026-06-16T18:21:42Z"
+  },
+  "signals": {
+    "jira": {
+      "source": "jira",
+      "fetched_at": "2026-06-16T18:21:42Z",
+      "mode": "sample",
+      "items": [
+        {
+          "key": "FORA-6",
+          "fields": {
+            "summary": "Implement Stage 1 Ideation Agent (first concrete sub-agent)",
+            "status": {
+              "name": "In Progress"
+            },
+            "priority": {
+              "name": "High"
+            },
+            "assignee": {
+              "displayName": "CTO"
+            },
+            "labels": [
+              "agent",
+              "ideation",
+              "stage-1"
+            ],
+            "description": "Build the first end-to-end sub-agent of the SDLC pipeline.",
+            "created": "2026-06-16T18:11:05.000+0000",
+            "updated": "2026-06-16T18:11:07.000+0000"
+          }
+        },
+        {
+          "key": "CHECK-240",
+          "fields": {
+            "summary": "Idempotency window too short for retry-heavy customers",
+            "status": {
+              "name": "Open"
+            },
+            "priority": {
+              "name": "High"
+            },
+            "assignee": {
+              "displayName": "Alice"
+            },
+            "labels": [
+              "reliability",
+              "checkout"
+            ],
+            "description": "0.4% of checkout retries land after the 24h idempotency window. Need a longer TTL or two-phase commit.",
+            "created": "2026-06-09T08:00:00.000+0000",
+            "updated": "2026-06-15T12:00:00.000+0000"
+          }
+        },
+        {
+          "key": "CHECK-238",
+          "fields": {
+            "summary": "Fraud rules over-block EU debit cards",
+            "status": {
+              "name": "Open"
+            },
+            "priority": {
+              "name": "High"
+            },
+            "assignee": {
+              "displayName": "Alice"
+            },
+            "labels": [
+              "fraud",
+              "EU"
+            ],
+            "description": "False-positive rate 3.1% on EU debit cards. Need region tuning.",
+            "created": "2026-06-08T15:30:00.000+0000",
+            "updated": "2026-06-14T09:00:00.000+0000"
+          }
+        },
+        {
+          "key": "FUL-91",
+          "fields": {
+            "summary": "Road-network distance for EU warehouse routing",
+            "status": {
+              "name": "In Progress"
+            },
+            "priority": {
+              "name": "Medium"
+            },
+            "assignee": {
+              "displayName": "Bo"
+            },
+            "labels": [
+              "enhancement",
+              "fulfillment"
+            ],
+            "description": "Replace Haversine with road-network distance in EU region.",
+            "created": "2026-06-04T11:00:00.000+0000",
+            "updated": "2026-06-15T10:00:00.000+0000"
+          }
+        }
+      ],
+      "summary": "3 projects, 4 open issues"
+    },
+    "github": {
+      "source": "github",
+      "fetched_at": "2026-06-16T18:21:42Z",
+      "mode": "sample",
+      "items": {
+        "repos": [
+          {
+            "name": "checkout-api",
+            "full_name": "fora-labs/checkout-api",
+            "description": "Checkout service: cart, payment, fraud, orders",
+            "default_branch": "main",
+            "visibility": "private",
+            "open_issues_count": 17,
+            "forks_count": 2,
+            "stargazers_count": 0,
+            "updated_at": "2026-06-14T09:21:00Z"
+          },
+          {
+            "name": "fulfillment-svc",
+            "full_name": "fora-labs/fulfillment-svc",
+            "description": "Order fulfillment and warehouse routing",
+            "default_branch": "main",
+            "visibility": "private",
+            "open_issues_count": 9,
+            "forks_count": 0,
+            "stargazers_count": 0,
+            "updated_at": "2026-06-13T17:02:00Z"
+          },
+          {
+            "name": "merchant-portal",
+            "full_name": "fora-labs/merchant-portal",
+            "description": "Merchant-facing web app (Next.js)",
+            "default_branch": "main",
+            "visibility": "private",
+            "open_issues_count": 23,
+            "forks_count": 1,
+            "stargazers_count": 0,
+            "updated_at": "2026-06-15T11:48:00Z"
+          }
+        ],
+        "prs": [
+          {
+            "number": 481,
+            "title": "checkout: pre-auth hold on card capture",
+            "state": "open",
+            "user": {
+              "login": "alice"
+            },
+            "head": {
+              "ref": "feat/preauth-hold"
+            },
+            "base": {
+              "ref": "main"
+            },
+            "created_at": "2026-06-12T10:00:00Z",
+            "comments": 4,
+            "additions": 312,
+            "deletions": 41,
+            "body": "Adds a 5-second pre-auth hold before capturing the card. Reduces chargeback rate on retry-heavy customers.",
+            "repo": "checkout-api"
+          },
+          {
+            "number": 478,
+            "title": "fulfillment: weighted warehouse routing",
+            "state": "open",
+            "user": {
+              "login": "bo"
+            },
+            "head": {
+              "ref": "feat/weighted-routing"
+            },
+            "base": {
+              "ref": "main"
+            },
+            "created_at": "2026-06-10T14:00:00Z",
+            "comments": 7,
+            "additions": 580,
+            "deletions": 120,
+            "body": "Routes orders to warehouses using a weighted score (capacity, distance, SLA tier). Replaces the round-robin stub.",
+            "repo": "checkout-api"
+          },
+          {
+            "number": 481,
+            "title": "checkout: pre-auth hold on card capture",
+            "state": "open",
+            "user": {
+              "login": "alice"
+            },
+            "head": {
+              "ref": "feat/preauth-hold"
+            },
+            "base": {
+              "ref": "main"
+            },
+            "created_at": "2026-06-12T10:00:00Z",
+            "comments": 4,
+            "additions": 312,
+            "deletions": 41,
+            "body": "Adds a 5-second pre-auth hold before capturing the card. Reduces chargeback rate on retry-heavy customers.",
+            "repo": "fulfillment-svc"
+          },
+          {
+            "number": 478,
+            "title": "fulfillment: weighted warehouse routing",
+            "state": "open",
+            "user": {
+              "login": "bo"
+            },
+            "head": {
+              "ref": "feat/weighted-routing"
+            },
+            "base": {
+              "ref": "main"
+            },
+            "created_at": "2026-06-10T14:00:00Z",
+            "comments": 7,
+            "additions": 580,
+            "deletions": 120,
+            "body": "Routes orders to warehouses using a weighted score (capacity, distance, SLA tier). Replaces the round-robin stub.",
+            "repo": "fulfillment-svc"
+          },
+          {
+            "number": 481,
+            "title": "checkout: pre-auth hold on card capture",
+            "state": "open",
+            "user": {
+              "login": "alice"
+            },
+            "head": {
+              "ref": "feat/preauth-hold"
+            },
+            "base": {
+              "ref": "main"
+            },
+            "created_at": "2026-06-12T10:00:00Z",
+            "comments": 4,
+            "additions": 312,
+            "deletions": 41,
+            "body": "Adds a 5-second pre-auth hold before capturing the card. Reduces chargeback rate on retry-heavy customers.",
+            "repo": "merchant-portal"
+          },
+          {
+            "number": 478,
+            "title": "fulfillment: weighted warehouse routing",
+            "state": "open",
+            "user": {
+              "login": "bo"
+            },
+            "head": {
+              "ref": "feat/weighted-routing"
+            },
+            "base": {
+              "ref": "main"
+            },
+            "created_at": "2026-06-10T14:00:00Z",
+            "comments": 7,
+            "additions": 580,
+            "deletions": 120,
+            "body": "Routes orders to warehouses using a weighted score (capacity, distance, SLA tier). Replaces the round-robin stub.",
+            "repo": "merchant-portal"
+          }
+        ],
+        "issues": [
+          {
+            "number": 1240,
+            "title": "Idempotency keys expire before retries settle",
+            "state": "open",
+            "labels": [
+              {
+                "name": "bug"
+              },
+              {
+                "name": "checkout"
+              }
+            ],
+            "user": {
+              "login": "ops-bot"
+            },
+            "created_at": "2026-06-09T07:11:00Z",
+            "comments": 6,
+            "body": "We see ~0.4% of checkout retries land after the 24h idempotency window, producing duplicate orders. Need a longer TTL or a two-phase commit.",
+            "repo": "checkout-api"
+          },
+          {
+            "number": 1238,
+            "title": "Fraud rules block ~3% of legitimate EU cards",
+            "state": "open",
+            "labels": [
+              {
+                "name": "fraud"
+              },
+              {
+                "name": "EU"
+              }
+            ],
+            "user": {
+              "login": "alice"
+            },
+            "created_at": "2026-06-08T15:30:00Z",
+            "comments": 9,
+            "body": "False-positive rate on EU debit cards is 3.1%. Need a region-tuned rule set or a manual review path for low-confidence blocks.",
+            "repo": "checkout-api"
+          },
+          {
+            "number": 1229,
+            "title": "Warehouse routing: distance calc uses Haversine",
+            "state": "open",
+            "labels": [
+              {
+                "name": "enhancement"
+              },
+              {
+                "name": "fulfillment"
+              }
+            ],
+            "user": {
+              "login": "bo"
+            },
+            "created_at": "2026-06-04T11:00:00Z",
+            "comments": 4,
+            "body": "Replace Haversine with a road-network distance for the EU region to improve ETA accuracy.",
+            "repo": "checkout-api"
+          },
+          {
+            "number": 1240,
+            "title": "Idempotency keys expire before retries settle",
+            "state": "open",
+            "labels": [
+              {
+                "name": "bug"
+              },
+              {
+                "name": "checkout"
+              }
+            ],
+            "user": {
+              "login": "ops-bot"
+            },
+            "created_at": "2026-06-09T07:11:00Z",
+            "comments": 6,
+            "body": "We see ~0.4% of checkout retries land after the 24h idempotency window, producing duplicate orders. Need a longer TTL or a two-phase commit.",
+            "repo": "fulfillment-svc"
+          },
+          {
+            "number": 1238,
+            "title": "Fraud rules block ~3% of legitimate EU cards",
+            "state": "open",
+            "labels": [
+              {
+                "name": "fraud"
+              },
+              {
+                "name": "EU"
+              }
+            ],
+            "user": {
+              "login": "alice"
+            },
+            "created_at": "2026-06-08T15:30:00Z",
+            "comments": 9,
+            "body": "False-positive rate on EU debit cards is 3.1%. Need a region-tuned rule set or a manual review path for low-confidence blocks.",
+            "repo": "fulfillment-svc"
+          },
+          {
+            "number": 1229,
+            "title": "Warehouse routing: distance calc uses Haversine",
+            "state": "open",
+            "labels": [
+              {
+                "name": "enhancement"
+              },
+              {
+                "name": "fulfillment"
+              }
+            ],
+            "user": {
+              "login": "bo"
+            },
+            "created_at": "2026-06-04T11:00:00Z",
+            "comments": 4,
+            "body": "Replace Haversine with a road-network distance for the EU region to improve ETA accuracy.",
+            "repo": "fulfillment-svc"
+          },
+          {
+            "number": 1240,
+            "title": "Idempotency keys expire before retries settle",
+            "state": "open",
+            "labels": [
+              {
+                "name": "bug"
+              },
+              {
+                "name": "checkout"
+              }
+            ],
+            "user": {
+              "login": "ops-bot"
+            },
+            "created_at": "2026-06-09T07:11:00Z",
+            "comments": 6,
+            "body": "We see ~0.4% of checkout retries land after the 24h idempotency window, producing duplicate orders. Need a longer TTL or a two-phase commit.",
+            "repo": "merchant-portal"
+          },
+          {
+            "number": 1238,
+            "title": "Fraud rules block ~3% of legitimate EU cards",
+            "state": "open",
+            "labels": [
+              {
+                "name": "fraud"
+              },
+              {
+                "name": "EU"
+              }
+            ],
+            "user": {
+              "login": "alice"
+            },
+            "created_at": "2026-06-08T15:30:00Z",
+            "comments": 9,
+            "body": "False-positive rate on EU debit cards is 3.1%. Need a region-tuned rule set or a manual review path for low-confidence blocks.",
+            "repo": "merchant-portal"
+          },
+          {
+            "number": 1229,
+            "title": "Warehouse routing: distance calc uses Haversine",
+            "state": "open",
+            "labels": [
+              {
+                "name": "enhancement"
+              },
+              {
+                "name": "fulfillment"
+              }
+            ],
+            "user": {
+              "login": "bo"
+            },
+            "created_at": "2026-06-04T11:00:00Z",
+            "comments": 4,
+            "body": "Replace Haversine with a road-network distance for the EU region to improve ETA accuracy.",
+            "repo": "merchant-portal"
+          }
+        ]
+      },
+      "summary": "3 repos, 6 open PRs, 9 open issues"
+    },
+    "zendesk": {
+      "source": "zendesk",
+      "fetched_at": "2026-06-16T18:21:42Z",
+      "mode": "sample",
+      "items": [
+        {
+          "id": 4421,
+          "subject": "Card declined but order shows pending",
+          "priority": "high",
+          "tags": [
+            "checkout",
+            "false-decline"
+          ],
+          "created_at": "2026-06-11T09:12:00Z",
+          "description": "Customer reports the card was charged but the order is stuck in 'pending'. Need clearer state and an auto-recovery path."
+        },
+        {
+          "id": 4417,
+          "subject": "EU delivery ETA is off by 2-3 days",
+          "priority": "medium",
+          "tags": [
+            "fulfillment",
+            "EU"
+          ],
+          "created_at": "2026-06-10T14:38:00Z",
+          "description": "Warehouse routing for EU uses Haversine distance; real road distance gives 2-3 day ETAs."
+        }
+      ],
+      "summary": "2 tickets tagged checkout/fulfillment"
+    },
+    "confluence": {
+      "source": "confluence",
+      "fetched_at": "2026-06-16T18:21:42Z",
+      "mode": "sample",
+      "items": [
+        {
+          "id": "FORA-ARCH-3",
+          "title": "Checkout service architecture overview",
+          "space": "ENG",
+          "updated": "2026-05-30T12:00:00Z",
+          "excerpt": "Checkout is a Python service behind ALB. The payment gateway is abstracted behind a `PaymentProvider` interface. The idempotency store is Redis with a 24h TTL."
+        },
+        {
+          "id": "FORA-ARCH-7",
+          "title": "Warehouse routing: design and constraints",
+          "space": "ENG",
+          "updated": "2026-06-02T09:00:00Z",
+          "excerpt": "Routers compute a weighted score from capacity, distance, and SLA tier. Distance is Haversine; we plan to move to road-network distance for the EU region."
+        }
+      ],
+      "summary": "2 architecture pages"
+    },
+    "sonarqube": {
+      "source": "sonarqube",
+      "fetched_at": "2026-06-16T18:21:42Z",
+      "mode": "sample",
+      "items": [
+        {
+          "repo": "checkout-api",
+          "rule": "python:S5754",
+          "severity": "major",
+          "file": "services/checkout/src/idempotency.py",
+          "message": "Idempotency TTL is hardcoded to 24h. Make this configurable."
+        },
+        {
+          "repo": "fulfillment-svc",
+          "rule": "python:S3776",
+          "severity": "minor",
+          "file": "services/fulfillment/src/routing.py",
+          "message": "Cognitive complexity of weighted_score() is 18; refactor."
+        }
+      ],
+      "summary": "2 findings across 2 repos"
+    },
+    "market_intel": {
+      "source": "market_intel",
+      "fetched_at": "2026-06-16T18:21:42Z",
+      "mode": "sample",
+      "items": [
+        {
+          "headline": "EU PSD2 SCA friction cited as #1 checkout abandonment driver",
+          "source": "Baymard Q2 2026",
+          "date": "2026-05-15",
+          "implication": "Reducing false declines and 3DS redirects has direct revenue impact for EU."
+        },
+        {
+          "headline": "Same-day delivery now table-stakes in 3 EU metros",
+          "source": "Forrester",
+          "date": "2026-04-22",
+          "implication": "Warehouse routing must include road-network distance and intra-day capacity."
+        }
+      ],
+      "summary": "2 market signals"
+    }
+  },
+  "mcp_calls": [
+    {
+      "server": "github",
+      "tool": "list_repos",
+      "args": {},
+      "ok": true,
+      "error": null,
+      "duration_ms": 0.4
+    },
+    {
+      "server": "github",
+      "tool": "list_prs",
+      "args": {
+        "repo": "checkout-api",
+        "state": "open"
+      },
+      "ok": true,
+      "error": null,
+      "duration_ms": 0.2
+    },
+    {
+      "server": "github",
+      "tool": "list_issues",
+      "args": {
+        "repo": "checkout-api",
+        "state": "open"
+      },
+      "ok": true,
+      "error": null,
+      "duration_ms": 0.3
+    },
+    {
+      "server": "github",
+      "tool": "list_prs",
+      "args": {
+        "repo": "fulfillment-svc",
+        "state": "open"
+      },
+      "ok": true,
+      "error": null,
+      "duration_ms": 0.2
+    },
+    {
+      "server": "github",
+      "tool": "list_issues",
+      "args": {
+        "repo": "fulfillment-svc",
+        "state": "open"
+      },
+      "ok": true,
+      "error": null,
+      "duration_ms": 0.3
+    },
+    {
+      "server": "github",
+      "tool": "list_prs",
+      "args": {
+        "repo": "merchant-portal",
+        "state": "open"
+      },
+      "ok": true,
+      "error": null,
+      "duration_ms": 0.2
+    },
+    {
+      "server": "github",
+      "tool": "list_issues",
+      "args": {
+        "repo": "merchant-portal",
+        "state": "open"
+      },
+      "ok": true,
+      "error": null,
+      "duration_ms": 0.2
+    },
+    {
+      "server": "jira",
+      "tool": "list_projects",
+      "args": {},
+      "ok": true,
+      "error": null,
+      "duration_ms": 0.3
+    },
+    {
+      "server": "jira",
+      "tool": "list_issues",
+      "args": {
+        "jql": "project=FORA status!=Done"
+      },
+      "ok": true,
+      "error": null,
+      "duration_ms": 0.3
+    },
+    {
+      "server": "jira",
+      "tool": "list_issues",
+      "args": {
+        "jql": "project=CHECK status!=Done"
+      },
+      "ok": true,
+      "error": null,
+      "duration_ms": 0.3
+    },
+    {
+      "server": "jira",
+      "tool": "list_issues",
+      "args": {
+        "jql": "project=FUL status!=Done"
+      },
+      "ok": true,
+      "error": null,
+      "duration_ms": 0.3
+    }
+  ],
+  "approval_requests": 1,
+  "approval_decision": {
+    "approved": true,
+    "reviewer": "ceo",
+    "reason": "looks good",
+    "decided_at": "2026-06-16T18:21:42Z"
+  },
+  "validation_errors": [],
+  "error": null
+}

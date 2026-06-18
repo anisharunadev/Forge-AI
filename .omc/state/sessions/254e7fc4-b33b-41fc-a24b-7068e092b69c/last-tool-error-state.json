@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -s -X POST \\\"http://127.0.0.1:3100/api/issues/FORA-32/comments\\\" -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" -H \\\"Content-Type: application/json\\\" -d '{\\n  \\\"body\\\": \\\"## FORA...",
+  "error": "Exit code 2\n/usr/bin/bash: eval: line 4: syntax error near unexpected token `)'\n/usr/bin/bash: eval: line 4: `  \"body\": \"## FORA-32 — Memory MCP v1 acceptance test passed\\n\\nFixed a regression in `store.write`: it called `self.get_fact(fact_id)` without the tenant scope, so `_tenant_ok` denied the freshly-written non-memory fact and `write` returned `None` (then the audit mirror crashed on `fact.id`).\\n\\n**Fix** (`agents/memory_mcp/store.py`): pass `tenant_id=tenant_id` into the read-back.\\n\\n**...",
+  "timestamp": "2026-06-16T20:18:31.350Z",
+  "retry_count": 2
+}

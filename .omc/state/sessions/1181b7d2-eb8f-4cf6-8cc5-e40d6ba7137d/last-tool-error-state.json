@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"python -m agents.documentation.smoke_test 2>&1\",\"description\":\"Run the doc-agent smoke test suite\"}",
+  "error": "Exit code 127\n/usr/bin/bash: line 1: python: command not found",
+  "timestamp": "2026-06-16T20:29:53.930Z",
+  "retry_count": 1
+}

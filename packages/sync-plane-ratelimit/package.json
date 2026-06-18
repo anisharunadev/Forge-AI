@@ -1,0 +1,36 @@
+{
+  "name": "@fora/sync-plane-ratelimit",
+  "version": "0.1.0",
+  "description": "FORA Sync Plane outbound rate limiter + circuit breaker + composite-edit coalescer. Implements FORA-256 (Epic 11.6) per ADR-0010 §7.1 and §8.2 R-SYNC-03. Pattern reused from @fora/customer-cloud-broker (FORA-126.5).",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

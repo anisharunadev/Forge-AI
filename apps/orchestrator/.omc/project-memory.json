@@ -1,0 +1,183 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1781710429311,
+  "projectRoot": "/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/orchestrator",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": ">=20",
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "fastify",
+        "version": "5.0.0",
+        "category": "backend"
+      },
+      {
+        "name": "vitest",
+        "version": "2.1.0",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "pnpm",
+    "runtime": "Node.js 20"
+  },
+  "build": {
+    "buildCommand": "cd /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default && cd apps/orchestrator && rtk ls node_modules/.bin/tsc 2>/dev/null && node_modules/.bin/tsc -p tsconfig.json --noEmit 2>&1 | head -20",
+    "testCommand": "cat > /tmp/fora176_closeout.md <<'EOF'\n## FORA-134.1 — Gap 1 fix landed (CTO)\n\n**Reviewed:** [FORA-176](/FORA/issues/FORA-176) `repo.ts:417` cast finding.\n\n**Fix (apps/orchestrator/src/repo.ts):**\n- Added `triggerPayloadSchema = z.object({ type: z.enum([...]), actor: z.string().min(1), payload_ref: z.string().optional() })` mirroring `createRunBody.triggered_by` in `server.ts:99-103`.\n- Added `parseTriggerPayload(value: unknown): TriggerPayload` that `safeParse`s and throws a typed `TriggerPayloadParseError` on mismatch.\n- In `rowToRun`, replaced `triggered_by: row.triggered_by as unknown as TriggerPayload` with `triggered_by: parseTriggerPayload(row.triggered_by)`.\n- Removed the now-stale \"trust the DB\" comment; the new comment names the typed error and what triggers it (legacy data, hand-edited rows).\n\n`grep -rn 'as unknown as' src/repo.ts` now returns zero matches on the jsonb boundary (the only remaining cast in `repo.ts:263` is `STAGES_IN_ORDER as unknown as string[]` for the SQL `array_position` parameter — a SQL parameter type cast, not a jsonb cast, and out of scope for this issue).\n\n**Tests added (apps/orchestrator/test/lifecycle.test.ts):**\n- `parseTriggerPayload` direct unit tests (5 cases): accepts canonical `{type, actor}`; accepts with `payload_ref`; rejects unknown enum; rejects missing actor; rejects non-object input. All throw `TriggerPayloadParseError` on the negative paths.\n- Integration test: hand-edits a row in the MemoryPool shim to `{ type: 'pigeon', actor: '' }`, then asserts that `GET /v1/runs/{id}` returns `500` with `error.code === 'INTERNAL'` (the `setErrorHandler` safety net maps the typed parse error to the same envelope as any other unrecoverable DB shape mismatch).\n\n**Verification (locally in apps/orchestrator):**\n- `pnpm typecheck` — fully green, no errors.\n- `pnpm test` — 164 passed, 7 skipped (no regressions). `test/lifecycle.test.ts` alone: 40 passed (was 34; the 6 new cases are all green).\n- `grep -c 'as unknown as' src/repo.ts` — confirmed the jsonb cast is gone.\n\n**Gap 2 (rehydrate no-stage-rows test):** deliberately deferred — the reviewer marked it as a soft miss and the acceptance line is met with the current single-test coverage. Happy to fold it in if the cost is small at the next orchestrator PR; for this one the merge-blocking gap was the jsonb cast.\n\n**Disposition:** moving to `in_review` for SeniorEngineer re-review.\nEOF\nwc -c /tmp/fora176_closeout.md",
+    "lintCommand": null,
+    "devCommand": "pnpm dev",
+    "scripts": {
+      "build": "tsc -p tsconfig.json",
+      "typecheck": "tsc -p tsconfig.json --noEmit",
+      "start": "node bin/fora-orchestrator.mjs",
+      "dev": "node --watch bin/fora-orchestrator.mjs",
+      "test": "vitest run"
+    }
+  },
+  "conventions": {
+    "namingStyle": "camelCase/PascalCase",
+    "importStyle": null,
+    "testPattern": "*.test.ts",
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": true,
+    "workspaces": [],
+    "mainDirectories": [
+      "bin",
+      "src",
+      "test"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "bin": {
+      "path": "bin",
+      "purpose": "Executable scripts",
+      "fileCount": 2,
+      "lastAccessed": 1781710429297,
+      "keyFiles": [
+        "fora-orchestrator-worker.mjs",
+        "fora-orchestrator.mjs"
+      ]
+    },
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 54,
+      "lastAccessed": 1781710429299,
+      "keyFiles": [
+        "approvals-repo-pg.d.ts",
+        "approvals-repo-pg.js",
+        "approvals-repo-pg.js.map",
+        "config.d.ts",
+        "config.js"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 19,
+      "lastAccessed": 1781710429306,
+      "keyFiles": [
+        "approvals-repo-pg.ts",
+        "config.ts",
+        "gate_wiring.ts",
+        "gates.ts",
+        "idempotency.ts"
+      ]
+    },
+    "test": {
+      "path": "test",
+      "purpose": "Test files",
+      "fileCount": 15,
+      "lastAccessed": 1781710429308,
+      "keyFiles": [
+        "_debug.test.ts",
+        "_debug2.test.ts",
+        "approvals-repo-pg.live.test.ts",
+        "approvals-repo-pg.test.ts",
+        "approvals.test.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src/test-doubles.ts",
+      "accessCount": 8,
+      "lastAccessed": 1781710845282,
+      "type": "file"
+    },
+    {
+      "path": "test/gate-wiring.test.ts",
+      "accessCount": 4,
+      "lastAccessed": 1781710863261,
+      "type": "file"
+    },
+    {
+      "path": "src/index.ts",
+      "accessCount": 4,
+      "lastAccessed": 1781710974655,
+      "type": "file"
+    },
+    {
+      "path": "src/repo.ts",
+      "accessCount": 4,
+      "lastAccessed": 1781711003699,
+      "type": "file"
+    },
+    {
+      "path": "test/lifecycle.test.ts",
+      "accessCount": 3,
+      "lastAccessed": 1781711058720,
+      "type": "file"
+    },
+    {
+      "path": "src/ports.ts",
+      "accessCount": 2,
+      "lastAccessed": 1781710908506,
+      "type": "file"
+    },
+    {
+      "path": "src/types.ts",
+      "accessCount": 1,
+      "lastAccessed": 1781710437216,
+      "type": "file"
+    },
+    {
+      "path": "src/router.ts",
+      "accessCount": 1,
+      "lastAccessed": 1781710437711,
+      "type": "file"
+    },
+    {
+      "path": "src/gates.ts",
+      "accessCount": 1,
+      "lastAccessed": 1781710438148,
+      "type": "file"
+    },
+    {
+      "path": "src/gate_wiring.ts",
+      "accessCount": 1,
+      "lastAccessed": 1781710471594,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -sS -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" -H \\\"X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID\\\" \\\"$PAPERCLIP_API_URL/api/issues/FORA-61\\\" -X PATCH -H \\\"Content-Type: application/...",
+  "error": "Exit code 2\n/usr/bin/bash: eval: line 15: syntax error near unexpected token `('\n/usr/bin/bash: eval: line 15: `  \"comment\": \"Recovery disposition — closing FORA-61.\\n\\n**Cause of this wake:** `source_scoped_recovery_action` with `missingDisposition: clear_next_step`. Earlier CTO close-PATCHes were reverted by the wake-time state reset on the board auto-accept comment (per `feedback-paperclip-confirm-close-patch-with-comment.md`). The system then promoted the issue to `blocked` and opened this r...",
+  "timestamp": "2026-06-17T16:45:30.652Z",
+  "retry_count": 3
+}

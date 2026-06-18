@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"COMPANY_ID=\\\"3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9\\\"\\nFORA297_ID=307c7bbe-b568-4713-8935-5c258e866a1f\\n# Comment on FORA-297 with full disposition summary\\ncurl -sS -X POST -H \\\"Authorizati...",
+  "error": "Exit code 2\n/usr/bin/bash: eval: line 72: unexpected EOF while looking for matching ``'",
+  "timestamp": "2026-06-18T00:45:22.978Z",
+  "retry_count": 1
+}

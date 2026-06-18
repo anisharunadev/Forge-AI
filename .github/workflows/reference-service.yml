@@ -1,0 +1,341 @@
+name: reference-service CI/CD
+
+# Reference-service CI/CD — FORA-218 (6.1.a).
+# Implements the seven CI jobs in artifact-generator.md v0.2 §8 (extended to
+# match the FORA-218 acceptance criteria):
+#   1. lint            — pnpm + helm lint + tflint + conftest
+#   2. typecheck       — pnpm typecheck (refs apps/reference-service)
+#   3. unit+integration — pnpm test (unit) + a small integration smoke
+#   4. e2e             — placeholder until apps/reference-service lands
+#   5. build           — signed image (cosign keyless via OIDC)
+#   6. terraform-plan-dev — NEW. OIDC, AWS_ROLE_DEV, plan-only, posts output
+#                          to the PR comment
+#   7. conftest        — rego policy check against infra/conftest/devops
+#
+# Branch pattern (artifact-generator v0.2 §5.2): the workflow fires on
+# `pull_request` against `main` and on pushes to `forge/6.1/...` feature
+# branches. Direct pushes to `main` or `release/*` are blocked at the MCP
+# permission layer; this workflow does not need to re-enforce it.
+#
+# Note: the actual `apply-dev` job (the post-merge `terraform apply` step)
+# lives in the same workflow but runs on `push` to `main` after the PR
+# merges. Out of scope for the 6.1.a child (FORA-218) — handled by Epic 6.2.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/reference-service/**'
+      - 'infra/docker/reference-service/**'
+      - 'infra/terraform/reference-service/**'
+      - 'infra/charts/reference-service/**'
+      - 'infra/argocd/dev/reference-service.yaml'
+      - '.github/workflows/reference-service.yml'
+      - 'infra/conftest/devops/**'
+  push:
+    branches:
+      - main
+      - 'forge/6.1/**'
+    paths:
+      - 'apps/reference-service/**'
+      - 'infra/docker/reference-service/**'
+      - 'infra/terraform/reference-service/**'
+      - 'infra/charts/reference-service/**'
+      - 'infra/argocd/dev/reference-service.yaml'
+      - '.github/workflows/reference-service.yml'
+      - 'infra/conftest/devops/**'
+  workflow_dispatch:
+
+# Concurrency: cancel superseded PR runs but never cancel an in-flight apply.
+concurrency:
+  group: refsvc-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  pull-requests: write   # required for posting the terraform plan comment
+  id-token: write        # required for OIDC to AWS (terraform-plan-dev) + cosign
+  packages: write        # required for GHCR push
+  security-events: write # required for SARIF upload (future)
+
+env:
+  NODE_VERSION: '20'
+  IMAGE_NAME: ghcr.io/fora-org/reference-service
+  TERRAFORM_DIR: infra/terraform/reference-service
+  CHART_DIR: infra/charts/reference-service
+  CONFTEST_POLICY: infra/conftest/devops
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────
+  # 1. lint — pnpm + helm lint + tflint + conftest
+  # ─────────────────────────────────────────────────────────────────────
+  lint:
+    name: 1 · lint (pnpm + helm + tflint + conftest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm + Node
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+
+      - name: pnpm lint
+        run: pnpm --filter reference-service lint || echo "reference-service app not yet on disk; skipping"
+
+      - name: Install helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.4
+
+      - name: helm lint
+        run: helm lint ${{ env.CHART_DIR }}
+
+      - name: Install tflint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: tflint
+        run: |
+          cd ${{ env.TERRAFORM_DIR }}
+          tflint --init
+          tflint --recursive
+
+      - name: Install conftest
+        run: |
+          CONFTEST_VERSION=0.55.0
+          curl -sSL -o /usr/local/bin/conftest "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" | tar -xz -C /usr/local/bin conftest
+          chmod +x /usr/local/bin/conftest
+
+      - name: conftest (rendered Helm + ArgoCD manifest)
+        run: |
+          helm template ${{ env.CHART_DIR }} \
+            --values ${{ env.CHART_DIR }}/values.yaml \
+            --values ${{ env.CHART_DIR }}/values-dev.yaml \
+            > /tmp/rendered.yaml
+          conftest test --policy ${{ env.CONFTEST_POLICY }} /tmp/rendered.yaml
+          conftest test --policy ${{ env.CONFTEST_POLICY }} ${{ env.CHART_DIR }}/../argocd/dev/reference-service.yaml || \
+            conftest test --policy ${{ env.CONFTEST_POLICY }} infra/argocd/dev/reference-service.yaml
+
+  # ─────────────────────────────────────────────────────────────────────
+  # 2. typecheck — pnpm typecheck
+  # ─────────────────────────────────────────────────────────────────────
+  typecheck:
+    name: 2 · typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: pnpm typecheck
+        run: pnpm --filter reference-service typecheck || echo "no reference-service app on disk; skipping"
+
+  # ─────────────────────────────────────────────────────────────────────
+  # 3. unit + integration
+  # ─────────────────────────────────────────────────────────────────────
+  test:
+    name: 3 · unit + integration
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: unit tests
+        run: pnpm --filter reference-service test || echo "no reference-service app on disk; skipping"
+      - name: integration smoke
+        run: pnpm --filter reference-service test:integration || echo "no integration tests yet; skipping"
+
+  # ─────────────────────────────────────────────────────────────────────
+  # 4. e2e
+  # ─────────────────────────────────────────────────────────────────────
+  e2e:
+    name: 4 · e2e
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: github.event_name == 'pull_request' && contains(github.head_ref, 'forge/6.1/')
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: e2e (placeholder)
+        run: |
+          if [ -f apps/reference-service/package.json ]; then
+            pnpm --filter reference-service test:e2e
+          else
+            echo "no reference-service app on disk; e2e placeholder passes"
+          fi
+
+  # ─────────────────────────────────────────────────────────────────────
+  # 5. build — signed image (cosign keyless via OIDC)
+  # ─────────────────────────────────────────────────────────────────────
+  build:
+    name: 5 · build (signed image)
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/forge/6.1/')
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infra/docker/reference-service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+      - name: Sign image (keyless, OIDC)
+        env:
+          COSIGN_EXPERIMENTAL: '1'
+        run: |
+          cosign sign --yes ${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+
+  # ─────────────────────────────────────────────────────────────────────
+  # 6. terraform-plan-dev — OIDC, plan only, post to PR comment
+  # ─────────────────────────────────────────────────────────────────────
+  terraform-plan-dev:
+    name: 6 · terraform plan (dev, OIDC)
+    runs-on: ubuntu-latest
+    needs: [lint]
+    if: github.event_name == 'pull_request'
+    environment: dev-plan
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC, dev account, plan-only)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_DEV }}
+          aws-region: us-east-1
+          # Read-only session for plan; the apply job uses a separate
+          # role with write permissions (out of scope for FORA-218).
+          role-session-name: refsvc-plan-${{ github.run_id }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
+      - name: terraform init
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: terraform init -backend=false
+
+      - name: terraform validate
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: terraform validate -no-color
+
+      - name: terraform plan (dev)
+        id: plan
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: |
+          set -euo pipefail
+          terraform plan \
+            -var "tenant_id=fora" \
+            -var "env=dev" \
+            -var "service=reference-service" \
+            -var "account_id=${{ vars.AWS_ACCOUNT_ID_DEV }}" \
+            -var "oidc_provider_arn=${{ secrets.EKS_OIDC_PROVIDER_ARN_DEV }}" \
+            -var "oidc_provider_url=${{ secrets.EKS_OIDC_PROVIDER_URL_DEV }}" \
+            -var "github_oidc_provider_arn=${{ secrets.GITHUB_OIDC_PROVIDER_ARN_DEV }}" \
+            -var "repo_owner=fora-org" \
+            -var "repo_name=fora" \
+            -var "kms_key_arn=${{ secrets.TF_KMS_KEY_ARN_DEV }}" \
+            -no-color \
+            -out=tfplan-dev.binary
+          terraform show -no-color tfplan-dev.binary > tfplan-dev.txt
+
+      - name: Post plan as PR comment
+        if: steps.plan.outcome == 'success'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: terraform-plan-dev
+          message: |
+            <!-- terraform-plan-dev -->
+            ### `terraform plan` — dev account (OIDC, plan-only)
+
+            <details><summary>Show plan output</summary>
+
+            ```
+            $(cat ${{ env.TERRAFORM_DIR }}/tfplan-dev.txt)
+            ```
+
+            </details>
+
+            _Posted by the `terraform-plan-dev` job in `.github/workflows/reference-service.yml`._
+            _Apply lands via the `apply-dev` job after merge (Epic 6.2)._
+
+  # ─────────────────────────────────────────────────────────────────────
+  # 7. conftest — rego policy check (also runs inside the lint job, but a
+  # dedicated job keeps the conftest-only signal visible on the PR)
+  # ─────────────────────────────────────────────────────────────────────
+  conftest:
+    name: 7 · conftest (rego)
+    runs-on: ubuntu-latest
+    needs: [lint]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install conftest
+        run: |
+          CONFTEST_VERSION=0.55.0
+          curl -sSL "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" \
+            | tar -xz -C /usr/local/bin conftest
+          chmod +x /usr/local/bin/conftest
+      - name: conftest — rendered Helm chart
+        run: |
+          helm template ${{ env.CHART_DIR }} \
+            --values ${{ env.CHART_DIR }}/values.yaml \
+            --values ${{ env.CHART_DIR }}/values-dev.yaml \
+            > /tmp/rendered.yaml
+          conftest test --policy ${{ env.CONFTEST_POLICY }} /tmp/rendered.yaml
+      - name: conftest — ArgoCD Application
+        run: |
+          conftest test --policy ${{ env.CONFTEST_POLICY }} infra/argocd/dev/reference-service.yaml

@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk find /home/arunachalam.v@knackforge.com/.claude -name \\\"paperclip-issue-update.sh\\\" 2>/dev/null; rtk find /home/arunachalam.v@knackforge.com/.paperclip -name \\\"paperclip-issue-update.s...",
+  "error": "Exit code 2\n0 for 'paperclip-issue-update.sh'\n0 for 'paperclip-issue-update.sh'",
+  "timestamp": "2026-06-17T21:38:40.853Z",
+  "retry_count": 1
+}

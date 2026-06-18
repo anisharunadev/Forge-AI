@@ -1,0 +1,7 @@
+{
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"/home/arunachalam.v@knackforge.com/.claude/projects/-home-arunachalam-v-knackforge-com--paperclip-instances-default-projects-3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9-bb09220b-5ed2-47b3-9c58-...",
+  "error": "File does not exist. Note: your current working directory is /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/mcp-servers/github.",
+  "timestamp": "2026-06-16T18:21:10.038Z",
+  "retry_count": 1
+}

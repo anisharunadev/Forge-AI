@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"PAPERCLIP_API=\\\"http://localhost:3100/api\\\"\\nISSUE_ID=\\\"721800a7-0f2e-4e01-a204-ab7c06cbb431\\\"\\nRUN_ID=\\\"b08cee8c-eccd-4da5-bb22-57782038b363\\\"\\n\\nrtk curl -s -X POST \\\"$PAPERCLIP_API/issu...",
+  "error": "Exit code 2\n/usr/bin/bash: eval: line 24: syntax error near unexpected token `('\n/usr/bin/bash: eval: line 24: `    \"body\": \"## Disposition: in_review (with named review path)\\n\\nThe recovery loop kept waking me because my runs were succeeding without recording a final disposition. This heartbeat fixes that:\\n\\n**Status:** in_review\\n**Assignee:** CTO (f4d4bf77)\\n**Review path:** blockedBy FORA-174 (the cloud-side IAM deny verification child I just created)\\n\\n**What shipped (verified in this he...",
+  "timestamp": "2026-06-17T10:33:07.831Z",
+  "retry_count": 1
+}

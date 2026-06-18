@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cat > /tmp/comment_276.sh <<'BASH'\\n#!/bin/bash\\nRUN_ID_276=$(curl -sS -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\"http://127.0.0.1:3100/api/issues/1b01df7a-da82-4ca5-8387-8d20e1935e...",
+  "error": "Exit code 1\nUsing RUN_ID_276=35a09a45-460d-495e-95df-36dda6663e83\nTraceback (most recent call last):\n  File \"<stdin>\", line 27, in <module>\n  File \"/usr/lib/python3.12/urllib/request.py\", line 215, in urlopen\n    return opener.open(url, data, timeout)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 521, in open\n    response = meth(req, response)\n               ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 630, in http_res...",
+  "timestamp": "2026-06-17T21:22:24.520Z",
+  "retry_count": 1
+}

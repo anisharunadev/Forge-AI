@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"RUN_ID=\\\"34c2bfb2-5b3a-4fba-b347-e1ce7d57a28c\\\"\\nrtk curl -sS -X POST \\\"http://127.0.0.1:3100/api/issues/FORA-156/comments\\\" -H \\\"X-Paperclip-Run-Id: $RUN_ID\\\" -H \\\"Authorization: Bearer $...",
+  "error": "Exit code 2\n/usr/bin/bash: eval: line 4: syntax error near unexpected token `('\n/usr/bin/bash: eval: line 4: `rtk curl -sS -X POST \"http://127.0.0.1:3100/api/issues/FORA-156/comments\" -H \"X-Paperclip-Run-Id: $RUN_ID\" -H \"Authorization: Bearer ${PAPERCLIP_API_KEY}\" -H \"Content-Type: application/json\" -d '{\"body\":\"## CEO disposition — FORA-23 gate tracking\\n\\nFORA-23 (Epic 7) is correctly blocked at the FORA-142 / approval `e75494e5-50c3-4d77-a954-d82797d42c6e` gate. CTO has set FORA-142 → `in_rev...",
+  "timestamp": "2026-06-17T00:19:52.942Z",
+  "retry_count": 1
+}

@@ -1,0 +1,39 @@
+{
+  "name": "@fora/object-store",
+  "version": "0.1.0",
+  "description": "FORA object-store adapter. Forbids reads/writes that cross tenant boundaries by (1) refusing keys not matching ^tenants/{tenant_id}/... in-process and (2) signing the expected prefix into every presigned URL / signed request via a per-tenant session tag so the cloud-side IAM policy is the real gate. Covers S3, GCS, SQS, and OpenSearch. v1 implementation per FORA-124 acceptance bar #3.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.658.0",
+    "@aws-sdk/client-sqs": "^3.658.0",
+    "@aws-sdk/credential-provider-node": "^3.658.0",
+    "@aws-sdk/s3-request-presigner": "^3.658.0",
+    "@aws-sdk/client-sts": "^3.658.0",
+    "@opensearch-project/opensearch": "^2.13.0",
+    "@google-cloud/storage": "^7.13.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "aws-sdk-client-mock": "^4.0.1",
+    "aws-sdk-client-mock-vitest": "^4.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

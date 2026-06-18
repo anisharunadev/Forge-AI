@@ -1,0 +1,5 @@
+{"kind":"stage.entered","runId":"run_t9gtznlu","stage":"plan","at":"2026-06-17T06:47:22.788Z"}
+{"kind":"plan.emitted","runId":"run_t9gtznlu","planId":"p1","stepCount":1,"at":"2026-06-17T06:47:22.791Z"}
+{"kind":"stage.entered","runId":"run_t9gtznlu","stage":"act","at":"2026-06-17T06:47:22.794Z"}
+{"kind":"error","runId":"run_t9gtznlu","error":{"code":"Cancelled","message":"run cancelled: op cancel","runId":"run_t9gtznlu","reason":"op cancel"},"at":"2026-06-17T06:47:22.794Z"}
+{"kind":"finished","runId":"run_t9gtznlu","status":"cancelled","at":"2026-06-17T06:47:22.795Z"}

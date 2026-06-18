@@ -1,0 +1,33 @@
+{
+  "name": "@fora/db-pool",
+  "version": "0.1.0",
+  "description": "FORA Postgres connection pool wrapper that binds `SET LOCAL app.tenant_id` to the verified broker claim and refuses to lend a connection when the request envelope's tenant_id does not match the claim. Implements FORA-163 / ADR-0003 §4.2 / FORA-124 acceptance bar #2.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:integration": "FORA_DB_INTEGRATION=1 vitest run --config vitest.integration.config.ts",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "pg": "^8.13.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "@types/pg": "^8.11.10",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

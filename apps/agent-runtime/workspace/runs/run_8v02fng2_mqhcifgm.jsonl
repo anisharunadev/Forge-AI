@@ -1,0 +1,4 @@
+{"kind":"stage.entered","runId":"run_8v02fng2_mqhcifgm","stage":"plan","at":"2026-06-17T00:41:31.079Z"}
+{"kind":"plan.emitted","runId":"run_8v02fng2_mqhcifgm","planId":"plan-budget","stepCount":1,"at":"2026-06-17T00:41:31.080Z"}
+{"kind":"error","runId":"run_8v02fng2_mqhcifgm","error":{"code":"BudgetExceeded","message":"budget exceeded at stage \"act\": spent {\"tokens\":2,\"usd\":0,\"wallClockMs\":2} of {\"tokenCeiling\":1}","runId":"run_8v02fng2_mqhcifgm","stage":"act","ceiling":{"tokenCeiling":1},"spent":{"tokens":2,"usd":0,"wallClockMs":2}},"at":"2026-06-17T00:41:31.081Z"}
+{"kind":"finished","runId":"run_8v02fng2_mqhcifgm","status":"budget_exceeded","at":"2026-06-17T00:41:31.081Z"}

@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"timeout 90 node node_modules/vitest/vitest.mjs run test/gcp-credential-leak.test.ts --no-color 2>&1 | tail -80\",\"description\":\"Run GCP credential-leak test in foreground with timeout\"}",
+  "error": "Exit code 143\nCommand timed out after 2m 0s\nTerminated",
+  "timestamp": "2026-06-17T16:45:23.010Z",
+  "retry_count": 1
+}

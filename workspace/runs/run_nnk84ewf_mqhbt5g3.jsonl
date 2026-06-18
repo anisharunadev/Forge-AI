@@ -1,0 +1,8 @@
+{"kind":"stage.entered","runId":"run_nnk84ewf_mqhbt5g3","stage":"plan","at":"2026-06-17T00:21:51.700Z"}
+{"kind":"plan.emitted","runId":"run_nnk84ewf_mqhbt5g3","planId":"plan-smoke","stepCount":1,"at":"2026-06-17T00:21:51.701Z"}
+{"kind":"stage.entered","runId":"run_nnk84ewf_mqhbt5g3","stage":"act","at":"2026-06-17T00:21:51.701Z"}
+{"kind":"observation","runId":"run_nnk84ewf_mqhbt5g3","observation":{"stepId":"smoke-step-1","tool":"echo","output":{"echoed":{"message":"hello from the FORA v0 smoke harness","at":"2026-06-17T00:21:51.701Z"}},"ok":true,"durationMs":0},"at":"2026-06-17T00:21:51.701Z"}
+{"kind":"stage.entered","runId":"run_nnk84ewf_mqhbt5g3","stage":"observe","at":"2026-06-17T00:21:51.701Z"}
+{"kind":"stage.entered","runId":"run_nnk84ewf_mqhbt5g3","stage":"reflect","at":"2026-06-17T00:21:51.701Z"}
+{"kind":"reflection","runId":"run_nnk84ewf_mqhbt5g3","done":true,"note":"smoke done","at":"2026-06-17T00:21:51.702Z"}
+{"kind":"finished","runId":"run_nnk84ewf_mqhbt5g3","status":"succeeded","at":"2026-06-17T00:21:51.702Z"}

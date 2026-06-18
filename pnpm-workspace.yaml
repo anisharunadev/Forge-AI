@@ -1,0 +1,6 @@
+packages:
+  - "packages/*"
+  - "apps/*"
+  - "forge/sync-plane"
+allowBuilds:
+  protobufjs: set this to true or false

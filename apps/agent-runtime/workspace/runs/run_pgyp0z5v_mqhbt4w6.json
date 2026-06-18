@@ -1,0 +1,86 @@
+{
+  "runId": "run_pgyp0z5v_mqhbt4w6",
+  "agentId": "echo-agent",
+  "tenantId": "t1",
+  "traceId": "tr-budget",
+  "startedAt": "2026-06-17T00:21:50.982Z",
+  "finishedAt": "2026-06-17T00:21:50.985Z",
+  "status": "failed",
+  "steps": [
+    {
+      "stepId": "step-1",
+      "planId": "plan-1",
+      "tool": "echo",
+      "handlerId": "",
+      "startedAt": "2026-06-17T00:21:50.985Z",
+      "finishedAt": "2026-06-17T00:21:50.985Z",
+      "durationMs": 0,
+      "ok": true,
+      "stage": "act",
+      "output": {
+        "echoed": {
+          "message": "infinite"
+        }
+      }
+    },
+    {
+      "stepId": "step-1",
+      "planId": "plan-next",
+      "tool": "echo",
+      "handlerId": "",
+      "startedAt": "2026-06-17T00:21:50.985Z",
+      "finishedAt": "2026-06-17T00:21:50.985Z",
+      "durationMs": 0,
+      "ok": true,
+      "stage": "act",
+      "output": {
+        "echoed": {
+          "message": "infinite"
+        }
+      }
+    },
+    {
+      "stepId": "step-1",
+      "planId": "plan-next",
+      "tool": "echo",
+      "handlerId": "",
+      "startedAt": "2026-06-17T00:21:50.985Z",
+      "finishedAt": "2026-06-17T00:21:50.985Z",
+      "durationMs": 0,
+      "ok": true,
+      "stage": "act",
+      "output": {
+        "echoed": {
+          "message": "infinite"
+        }
+      }
+    }
+  ],
+  "replanCycles": 2,
+  "errors": [
+    {
+      "code": "ReplanBudgetExhausted",
+      "message": "replan cycle 3 exceeds maxReplans=2",
+      "runId": "run_pgyp0z5v_mqhbt4w6",
+      "maxReplans": 2
+    }
+  ],
+  "finalReflection": {
+    "note": "replan forever",
+    "done": false,
+    "nextPlan": {
+      "planId": "plan-next",
+      "intent": "infinite",
+      "steps": [
+        {
+          "stepId": "step-1",
+          "tool": "echo",
+          "handlerId": "echo.handler",
+          "input": {
+            "message": "infinite"
+          }
+        }
+      ]
+    }
+  }
+}

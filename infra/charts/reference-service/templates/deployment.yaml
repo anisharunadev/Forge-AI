@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "reference-service.fullname" . }}
+  labels:
+    {{- include "reference-service.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "reference-service.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "reference-service.selectorLabels" . | nindent 8 }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "reference-service.serviceAccountName" . }}
+      # §4.4 — non-root, read-only root filesystem. Enforced by conftest
+      # infra/conftest/devops/no_runas_root.rego.
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          # §4.3 — image tag must be a pinned tag or digest, never ":latest".
+          # Enforced by conftest infra/conftest/devops/no_latest_image.rego.
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          # §4.5 — secrets are pulled via valueFrom (Secret/ConfigMap) or via
+          # the IRSA-issued IAM role; never inlined. Enforced by conftest
+          # infra/conftest/devops/no_plaintext_secret.rego.
+          envFrom:
+            - secretRef:
+                name: {{ include "reference-service.fullname" . }}-secrets
+                optional: true
+            - configMapRef:
+                name: {{ include "reference-service.fullname" . }}-config
+                optional: true
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        # §4.4 — readOnlyRootFilesystem needs a writable scratch dir.
+        - name: tmp
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

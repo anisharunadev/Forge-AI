@@ -1,0 +1,74 @@
+{
+  "report_id": "rev-046ebf2ba9",
+  "diff_id": "diff-964e9a734c",
+  "story_id": "STORY-402",
+  "plan_id": "PLAN-402",
+  "findings": [
+    {
+      "severity": "blocker",
+      "category": "security",
+      "rule_id": "SEC001",
+      "message": "hardcoded_api_key detected in apps/auth/src/services/login_service.py:20. Load secrets via the secrets broker, never inline.",
+      "locations": [
+        {
+          "path": "apps/auth/src/services/login_service.py",
+          "line": 20
+        }
+      ],
+      "suggestion": "Replace the literal with a `secret.get(name)` call and wire the secret through the tenant policy."
+    },
+    {
+      "severity": "blocker",
+      "category": "security",
+      "rule_id": "SEC002",
+      "message": "eval_call detected in apps/auth/src/services/login_service.py:27. These bypass the agent audit boundary.",
+      "locations": [
+        {
+          "path": "apps/auth/src/services/login_service.py",
+          "line": 27
+        }
+      ],
+      "suggestion": "Refactor to an explicit API call that the audit log can capture."
+    },
+    {
+      "severity": "blocker",
+      "category": "security",
+      "rule_id": "SEC003",
+      "message": "possible SQL injection vector in apps/auth/src/services/login_service.py:22. SQL must use parameterized statements.",
+      "locations": [
+        {
+          "path": "apps/auth/src/services/login_service.py",
+          "line": 22
+        }
+      ],
+      "suggestion": "Use a parameterized statement (cursor.execute(sql, params)) or an ORM query."
+    },
+    {
+      "severity": "blocker",
+      "category": "test_quality",
+      "rule_id": "TST001",
+      "message": "no test file found for apps/auth/src/services/login_service.py. Implementation without tests blocks merge.",
+      "locations": [
+        {
+          "path": "apps/auth/src/services/login_service.py",
+          "line": 0
+        }
+      ],
+      "suggestion": "Add apps/<service>/test/unit/login_test.py with at least one happy-path test."
+    }
+  ],
+  "verdict": "REQUEST_CHANGES",
+  "summary": {
+    "total_findings": 4,
+    "blockers": 4,
+    "suggestions": 0,
+    "nits": 0,
+    "by_category": {
+      "security": 3,
+      "test_quality": 1
+    },
+    "files_reviewed": 1
+  },
+  "generated_at": "2026-06-17T18:39:18Z",
+  "schema_version": "0.1.0"
+}

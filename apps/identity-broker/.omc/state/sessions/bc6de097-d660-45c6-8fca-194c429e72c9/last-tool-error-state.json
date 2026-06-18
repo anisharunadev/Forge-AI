@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -sS -m 10 -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" -H \\\"X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID\\\" -H \\\"Content-Type: application/json\\\" -X POST \\\"http://127.0.0.1:3100/api/co...",
+  "error": "Exit code 2\n/usr/bin/bash: eval: line 4: syntax error near unexpected token `)'\n/usr/bin/bash: eval: line 4: `  \"body\": \"## Heartbeat 4 — disposition check\\n\\nBroker implementation is stable:\\n- `apps/identity-broker/test/broker.test.ts` — 8/8 passing\\n- `packages/oidc-clients/test/oidc-clients.test.ts` — 5/5 passing\\n- `packages/session-tokens/test/session-tokens.test.ts` — 8/8 passing\\n- Original 4 bugs (monorepo wiring, @fastify/cookie, mock IdP nonce, revocation time units) still fixed\\n\\nCh...",
+  "timestamp": "2026-06-17T00:46:46.530Z",
+  "retry_count": 1
+}

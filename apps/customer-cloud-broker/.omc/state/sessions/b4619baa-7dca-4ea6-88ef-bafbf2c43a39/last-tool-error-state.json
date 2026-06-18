@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"timeout 60 ./node_modules/.bin/vitest run --reporter=basic test/azure-adapter.test.ts test/gcp-credential-leak.test.ts 2>&1 | tail -20\",\"timeout\":90000,\"description\":\"Run azure and gcp tes...",
+  "error": "Exit code 143\nCommand timed out after 1m 30s\nTerminated",
+  "timestamp": "2026-06-17T16:56:48.876Z",
+  "retry_count": 1
+}

@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cat > /tmp/revert-fora-344.md <<'MD'\\n## Reverting premature done → in_progress (auth boundary on FORA-337)\\n\\nI closed this task without satisfying AC #4. On retry, `POST /api/issues/FORA...",
+  "error": "Exit code 5\njq: parse error: Invalid numeric literal at line 3, column 0\n{\n  \"id\": \"0059a647-ed71-41c5-b330-3b9ebeb88ca8\",\n  \"identifier\": \"FORA-344\",\n  \"status\": \"in_progress\",\n  \"priority\": \"high\"\n}",
+  "timestamp": "2026-06-18T08:33:10.062Z",
+  "retry_count": 1
+}

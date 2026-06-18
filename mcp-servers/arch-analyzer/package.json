@@ -1,0 +1,36 @@
+{
+  "name": "@fora/mcp-arch-analyzer",
+  "version": "0.1.0",
+  "description": "FORA arch-analyzer MCP server — deterministic codebase graph extraction for TypeScript, Python, Go, and Java. Produces codebase-graph.json + summary.md with cycle and high-fanout detection. No LLM in the inner loop, so cost stays under the $0.50 budget on a 50k LOC repo.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/cli.js",
+  "bin": {
+    "fora-mcp-arch-analyzer": "bin/fora-mcp-arch-analyzer.mjs",
+    "fora-arch-analyzer": "bin/fora-arch-analyzer.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "docs"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node bin/fora-mcp-arch-analyzer.mjs",
+    "analyze": "node bin/fora-arch-analyzer.mjs",
+    "smoke": "node test/smoke.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "typescript": "^5.6.0"
+  }
+}

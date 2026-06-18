@@ -1,0 +1,35 @@
+{
+  "name": "@fora/mcp-jira",
+  "version": "0.1.0",
+  "description": "FORA Jira MCP server — exposes list_projects, list_issues, get_issue, create_issue, update_issue, add_comment, transition_issue over MCP/stdio. Auth via Atlassian API token scoped to a single site (cloudId).",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "fora-mcp-jira": "bin/fora-mcp-jira.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "docs"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build",
+    "start": "node bin/fora-mcp-jira.mjs",
+    "smoke": "node test/smoke.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "typescript": "^5.6.0"
+  }
+}

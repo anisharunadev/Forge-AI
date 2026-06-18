@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"API=\\\"http://127.0.0.1:3100\\\"\\nKEY=\\\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmMWZhM2NiOC03YWM2LTRmMDgtYTBmYS1jOGJiYjcyYzIyYWUiLCJjb21wYW55X2lkIjoiM2ZkZTM5NDUtOWRjYi00YzQzLTk1YjMtNG...",
+  "error": "Exit code 1\n=== FORA-294 latest comments ===\nTraceback (most recent call last):\n  File \"<string>\", line 8, in <module>\nTypeError: 'NoneType' object is not subscriptable\n\n=== FORA-295 latest comments ===\nTraceback (most recent call last):\n  File \"<string>\", line 7, in <module>\nTypeError: 'NoneType' object is not subscriptable",
+  "timestamp": "2026-06-18T01:07:44.598Z",
+  "retry_count": 1
+}

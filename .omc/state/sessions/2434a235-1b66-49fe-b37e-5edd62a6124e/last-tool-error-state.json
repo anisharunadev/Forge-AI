@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"echo \\\"=== Create FORA-287 — CEO coord: reassign FORA-23 + sequence cascade ===\\\"\\ncurl -s -X POST -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" -H \\\"X-Paperclip-Run-Id: $PAPERCLIP_RUN_I...",
+  "error": "Exit code 2\n=== Create FORA-287 — CEO coord: reassign FORA-23 + sequence cascade ===\n/usr/bin/bash: eval: line 23: syntax error near unexpected token `)'\n/usr/bin/bash: eval: line 23: `    \"description\": \"CTO is auth-locked out of FORA-23 (CEO-owned, symmetric boundary 403). CEO must take the PATCH action; this coord child carries the exact PATCHes the CEO needs to apply per the [FORA-284](/FORA/issues/FORA-284) post-pass report.\\n\\n### CTO cannot do this — CEO must\\n\\nPer the symmetric auth bou...",
+  "timestamp": "2026-06-17T21:35:14.578Z",
+  "retry_count": 1
+}

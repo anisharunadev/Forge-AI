@@ -1,0 +1,493 @@
+{
+  "failures": [],
+  "summary": {
+    "acme": {
+      "byRun": {
+        "run-acme-000": {
+          "byStage": {
+            "architect": {
+              "byTool": {},
+              "calls": 1,
+              "costCents": 10,
+              "runCount": 0,
+              "stage": "architect"
+            },
+            "dev": {
+              "byTool": {},
+              "calls": 1,
+              "costCents": 10,
+              "runCount": 0,
+              "stage": "dev"
+            },
+            "ideation": {
+              "byTool": {},
+              "calls": 1,
+              "costCents": 10,
+              "runCount": 0,
+              "stage": "ideation"
+            }
+          },
+          "byTool": {
+            "github.createPr": {
+              "calls": 1,
+              "completionTokens": 5,
+              "costCents": 10,
+              "errorCount": 0,
+              "promptTokens": 10,
+              "tool": "github.createPr",
+              "wallMs": 10
+            },
+            "jira.createIssue": {
+              "calls": 1,
+              "completionTokens": 5,
+              "costCents": 10,
+              "errorCount": 0,
+              "promptTokens": 10,
+              "tool": "jira.createIssue",
+              "wallMs": 10
+            },
+            "llm.invoke": {
+              "calls": 1,
+              "completionTokens": 5,
+              "costCents": 10,
+              "errorCount": 0,
+              "promptTokens": 10,
+              "tool": "llm.invoke",
+              "wallMs": 10
+            }
+          },
+          "completionTokens": 15,
+          "costCents": 30,
+          "eventCount": 3,
+          "promptTokens": 30,
+          "runId": "run-acme-000",
+          "wallMs": 30
+        },
+        "run-acme-001": {
+          "byStage": {
+            "architect": {
+              "byTool": {},
+              "calls": 1,
+              "costCents": 10,
+              "runCount": 0,
+              "stage": "architect"
+            },
+            "dev": {
+              "byTool": {},
+              "calls": 1,
+              "costCents": 10,
+              "runCount": 0,
+              "stage": "dev"
+            },
+            "ideation": {
+              "byTool": {},
+              "calls": 1,
+              "costCents": 10,
+              "runCount": 0,
+              "stage": "ideation"
+            }
+          },
+          "byTool": {
+            "github.createPr": {
+              "calls": 1,
+              "completionTokens": 5,
+              "costCents": 10,
+              "errorCount": 0,
+              "promptTokens": 10,
+              "tool": "github.createPr",
+              "wallMs": 10
+            },
+            "jira.createIssue": {
+              "calls": 1,
+              "completionTokens": 5,
+              "costCents": 10,
+              "errorCount": 0,
+              "promptTokens": 10,
+              "tool": "jira.createIssue",
+              "wallMs": 10
+            },
+            "llm.invoke": {
+              "calls": 1,
+              "completionTokens": 5,
+              "costCents": 10,
+              "errorCount": 0,
+              "promptTokens": 10,
+              "tool": "llm.invoke",
+              "wallMs": 10
+            }
+          },
+          "completionTokens": 15,
+          "costCents": 30,
+          "eventCount": 3,
+          "promptTokens": 30,
+          "runId": "run-acme-001",
+          "wallMs": 30
+        }
+      },
+      "byStage": {
+        "architect": {
+          "byTool": {
+            "jira.createIssue": {
+              "calls": 2,
+              "completionTokens": 10,
+              "costCents": 20,
+              "errorCount": 0,
+              "promptTokens": 20,
+              "tool": "jira.createIssue",
+              "wallMs": 20
+            }
+          },
+          "calls": 2,
+          "costCents": 20,
+          "runCount": 2,
+          "stage": "architect"
+        },
+        "dev": {
+          "byTool": {
+            "github.createPr": {
+              "calls": 2,
+              "completionTokens": 10,
+              "costCents": 20,
+              "errorCount": 0,
+              "promptTokens": 20,
+              "tool": "github.createPr",
+              "wallMs": 20
+            }
+          },
+          "calls": 2,
+          "costCents": 20,
+          "runCount": 2,
+          "stage": "dev"
+        },
+        "ideation": {
+          "byTool": {
+            "llm.invoke": {
+              "calls": 2,
+              "completionTokens": 10,
+              "costCents": 20,
+              "errorCount": 0,
+              "promptTokens": 20,
+              "tool": "llm.invoke",
+              "wallMs": 20
+            }
+          },
+          "calls": 2,
+          "costCents": 20,
+          "runCount": 2,
+          "stage": "ideation"
+        }
+      },
+      "byTool": {
+        "github.createPr": {
+          "calls": 2,
+          "completionTokens": 10,
+          "costCents": 20,
+          "errorCount": 0,
+          "promptTokens": 20,
+          "tool": "github.createPr",
+          "wallMs": 20
+        },
+        "jira.createIssue": {
+          "calls": 2,
+          "completionTokens": 10,
+          "costCents": 20,
+          "errorCount": 0,
+          "promptTokens": 20,
+          "tool": "jira.createIssue",
+          "wallMs": 20
+        },
+        "llm.invoke": {
+          "calls": 2,
+          "completionTokens": 10,
+          "costCents": 20,
+          "errorCount": 0,
+          "promptTokens": 20,
+          "tool": "llm.invoke",
+          "wallMs": 20
+        }
+      },
+      "eventCount": 6,
+      "monthKey": "2026-06",
+      "runCount": 2,
+      "tenantId": "acme",
+      "totalCompletionTokens": 30,
+      "totalCostCents": 60,
+      "totalPromptTokens": 60,
+      "totalWallMs": 60
+    },
+    "globex": {
+      "byRun": {
+        "run-globex-000": {
+          "byStage": {
+            "architect": {
+              "byTool": {},
+              "calls": 1,
+              "costCents": 10,
+              "runCount": 0,
+              "stage": "architect"
+            },
+            "dev": {
+              "byTool": {},
+              "calls": 1,
+              "costCents": 10,
+              "runCount": 0,
+              "stage": "dev"
+            },
+            "ideation": {
+              "byTool": {},
+              "calls": 1,
+              "costCents": 10,
+              "runCount": 0,
+              "stage": "ideation"
+            }
+          },
+          "byTool": {
+            "github.createPr": {
+              "calls": 1,
+              "completionTokens": 5,
+              "costCents": 10,
+              "errorCount": 0,
+              "promptTokens": 10,
+              "tool": "github.createPr",
+              "wallMs": 10
+            },
+            "jira.createIssue": {
+              "calls": 1,
+              "completionTokens": 5,
+              "costCents": 10,
+              "errorCount": 0,
+              "promptTokens": 10,
+              "tool": "jira.createIssue",
+              "wallMs": 10
+            },
+            "llm.invoke": {
+              "calls": 1,
+              "completionTokens": 5,
+              "costCents": 10,
+              "errorCount": 0,
+              "promptTokens": 10,
+              "tool": "llm.invoke",
+              "wallMs": 10
+            }
+          },
+          "completionTokens": 15,
+          "costCents": 30,
+          "eventCount": 3,
+          "promptTokens": 30,
+          "runId": "run-globex-000",
+          "wallMs": 30
+        },
+        "run-globex-001": {
+          "byStage": {
+            "architect": {
+              "byTool": {},
+              "calls": 1,
+              "costCents": 10,
+              "runCount": 0,
+              "stage": "architect"
+            },
+            "dev": {
+              "byTool": {},
+              "calls": 1,
+              "costCents": 10,
+              "runCount": 0,
+              "stage": "dev"
+            },
+            "ideation": {
+              "byTool": {},
+              "calls": 1,
+              "costCents": 10,
+              "runCount": 0,
+              "stage": "ideation"
+            }
+          },
+          "byTool": {
+            "github.createPr": {
+              "calls": 1,
+              "completionTokens": 5,
+              "costCents": 10,
+              "errorCount": 0,
+              "promptTokens": 10,
+              "tool": "github.createPr",
+              "wallMs": 10
+            },
+            "jira.createIssue": {
+              "calls": 1,
+              "completionTokens": 5,
+              "costCents": 10,
+              "errorCount": 0,
+              "promptTokens": 10,
+              "tool": "jira.createIssue",
+              "wallMs": 10
+            },
+            "llm.invoke": {
+              "calls": 1,
+              "completionTokens": 5,
+              "costCents": 10,
+              "errorCount": 0,
+              "promptTokens": 10,
+              "tool": "llm.invoke",
+              "wallMs": 10
+            }
+          },
+          "completionTokens": 15,
+          "costCents": 30,
+          "eventCount": 3,
+          "promptTokens": 30,
+          "runId": "run-globex-001",
+          "wallMs": 30
+        },
+        "run-globex-002": {
+          "byStage": {
+            "architect": {
+              "byTool": {},
+              "calls": 1,
+              "costCents": 10,
+              "runCount": 0,
+              "stage": "architect"
+            },
+            "dev": {
+              "byTool": {},
+              "calls": 1,
+              "costCents": 10,
+              "runCount": 0,
+              "stage": "dev"
+            },
+            "ideation": {
+              "byTool": {},
+              "calls": 1,
+              "costCents": 10,
+              "runCount": 0,
+              "stage": "ideation"
+            }
+          },
+          "byTool": {
+            "github.createPr": {
+              "calls": 1,
+              "completionTokens": 5,
+              "costCents": 10,
+              "errorCount": 0,
+              "promptTokens": 10,
+              "tool": "github.createPr",
+              "wallMs": 10
+            },
+            "jira.createIssue": {
+              "calls": 1,
+              "completionTokens": 5,
+              "costCents": 10,
+              "errorCount": 0,
+              "promptTokens": 10,
+              "tool": "jira.createIssue",
+              "wallMs": 10
+            },
+            "llm.invoke": {
+              "calls": 1,
+              "completionTokens": 5,
+              "costCents": 10,
+              "errorCount": 0,
+              "promptTokens": 10,
+              "tool": "llm.invoke",
+              "wallMs": 10
+            }
+          },
+          "completionTokens": 15,
+          "costCents": 30,
+          "eventCount": 3,
+          "promptTokens": 30,
+          "runId": "run-globex-002",
+          "wallMs": 30
+        }
+      },
+      "byStage": {
+        "architect": {
+          "byTool": {
+            "jira.createIssue": {
+              "calls": 3,
+              "completionTokens": 15,
+              "costCents": 30,
+              "errorCount": 0,
+              "promptTokens": 30,
+              "tool": "jira.createIssue",
+              "wallMs": 30
+            }
+          },
+          "calls": 3,
+          "costCents": 30,
+          "runCount": 3,
+          "stage": "architect"
+        },
+        "dev": {
+          "byTool": {
+            "github.createPr": {
+              "calls": 3,
+              "completionTokens": 15,
+              "costCents": 30,
+              "errorCount": 0,
+              "promptTokens": 30,
+              "tool": "github.createPr",
+              "wallMs": 30
+            }
+          },
+          "calls": 3,
+          "costCents": 30,
+          "runCount": 3,
+          "stage": "dev"
+        },
+        "ideation": {
+          "byTool": {
+            "llm.invoke": {
+              "calls": 3,
+              "completionTokens": 15,
+              "costCents": 30,
+              "errorCount": 0,
+              "promptTokens": 30,
+              "tool": "llm.invoke",
+              "wallMs": 30
+            }
+          },
+          "calls": 3,
+          "costCents": 30,
+          "runCount": 3,
+          "stage": "ideation"
+        }
+      },
+      "byTool": {
+        "github.createPr": {
+          "calls": 3,
+          "completionTokens": 15,
+          "costCents": 30,
+          "errorCount": 0,
+          "promptTokens": 30,
+          "tool": "github.createPr",
+          "wallMs": 30
+        },
+        "jira.createIssue": {
+          "calls": 3,
+          "completionTokens": 15,
+          "costCents": 30,
+          "errorCount": 0,
+          "promptTokens": 30,
+          "tool": "jira.createIssue",
+          "wallMs": 30
+        },
+        "llm.invoke": {
+          "calls": 3,
+          "completionTokens": 15,
+          "costCents": 30,
+          "errorCount": 0,
+          "promptTokens": 30,
+          "tool": "llm.invoke",
+          "wallMs": 30
+        }
+      },
+      "eventCount": 9,
+      "monthKey": "2026-06",
+      "runCount": 3,
+      "tenantId": "globex",
+      "totalCompletionTokens": 45,
+      "totalCostCents": 90,
+      "totalPromptTokens": 90,
+      "totalWallMs": 90
+    }
+  }
+}

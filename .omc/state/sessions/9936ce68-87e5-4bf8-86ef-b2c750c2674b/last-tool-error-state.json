@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -s -X POST -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" -H \\\"X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID\\\" -H \\\"Content-Type: application/json\\\" \\\"http://127.0.0.1:3100/api/companies...",
+  "error": "Exit code 2\n/usr/bin/bash: eval: line 20: syntax error near unexpected token `('\n/usr/bin/bash: eval: line 20: `  \"description\": \"Secrets resolve at call time from a tenant-scoped secret manager. The agent references a `secret_ref`; the broker materialises the value at the last hop and returns a redacted envelope to the agent. No raw secret value ever crosses into the agent's prompt, memory, or audit detail payload.\\n\\n**Owner (planned hire):** `auth-engineer`\\n**Parent:** [FORA-38 0.7](/FORA/is...",
+  "timestamp": "2026-06-16T19:00:11.350Z",
+  "retry_count": 4
+}

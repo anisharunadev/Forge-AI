@@ -1,0 +1,35 @@
+{
+  "name": "@fora/mcp-zendesk",
+  "version": "0.1.0",
+  "description": "FORA Zendesk MCP server — exposes list_tickets, get_ticket, search_tickets, create_ticket, update_ticket, add_comment, list_macros, apply_macro over MCP/stdio. Auth via Zendesk API token (Basic auth, base64(email/token:apitoken)). Pinned to a single Zendesk subdomain on startup.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "fora-mcp-zendesk": "bin/fora-mcp-zendesk.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "docs"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build",
+    "start": "node bin/fora-mcp-zendesk.mjs",
+    "smoke": "node test/smoke.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "typescript": "^5.6.0"
+  }
+}

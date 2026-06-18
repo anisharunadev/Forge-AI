@@ -1,0 +1,49 @@
+> node test/smoke.mjs
+[smoke] mock: listening at http://127.0.0.1:43431
+[smoke] ok: list_projects returns at least 1 project
+[smoke] ok: list_projects includes 'Forge'
+[smoke] ok: list_repos returns 2 repos
+[smoke] ok: list_repos includes 'forge-app'
+[smoke] ok: list_pipelines returns 2 pipelines
+[smoke] ok: list_pipelines includes forge-ci (id 12)
+[smoke] ok: run_pipeline returns a run id
+[smoke] ok: run_pipeline state is Queued
+[smoke] ok: run_pipeline echoes pipelineId
+[smoke] ok: get_pipeline_run returns same run id
+[smoke] ok: get_pipeline_run state is Queued
+[smoke] ok: list_work_items returns at least 1 work item
+[smoke] ok: list_work_items includes work item 101
+[smoke] ok: get_work_item returns id 101
+[smoke] ok: get_work_item returns correct title
+[smoke] ok: get_work_item has fields.System.Title
+[smoke] ok: create_work_item returns a new id
+[smoke] ok: create_work_item returns correct title
+[smoke] ok: create_work_item returns correct type
+[smoke] ok: add_work_item_comment returns an id
+[smoke] ok: add_work_item_comment returns the text
+[smoke] ok: run_pipeline rejects confirm: false (Zod literal)
+[smoke] ok: run_pipeline with confirm:false made zero HTTP calls (rejected at validation)
+[smoke] http: recorded 10 requests
+[smoke] http: GET /_apis/projects
+  GET /_apis/git/repositories
+  GET /_apis/pipelines
+  POST /_apis/pipelines/12/runs
+  GET /_apis/pipelines/12/runs/9001
+  POST /_apis/wit/wiql
+  GET /_apis/wit/workitems
+  GET /_apis/wit/workitems/101
+  POST /_apis/wit/workitems/$Task
+  POST /_apis/wit/workitems/101/comments
+[smoke] ok: HTTP: list_projects hit /_apis/projects
+[smoke] ok: HTTP: list_repos hit /_apis/git/repositories
+[smoke] ok: HTTP: list_pipelines hit /_apis/pipelines
+[smoke] ok: HTTP: run_pipeline hit POST /_apis/pipelines/12/runs
+[smoke] ok: HTTP: get_pipeline_run hit /_apis/pipelines/12/runs/{runId}
+[smoke] ok: HTTP: list_work_items hit POST /_apis/wit/wiql
+[smoke] ok: HTTP: list_work_items batch-fetched /_apis/wit/workitems?ids=...
+[smoke] ok: HTTP: get_work_item hit /_apis/wit/workitems/101
+[smoke] ok: HTTP: create_work_item hit POST /_apis/wit/workitems/$Task
+[smoke] ok: HTTP: add_work_item_comment hit /_apis/wit/workitems/101/comments
+[smoke] ok: all HTTP calls carried a Basic auth header
+[smoke] done: all 9 tools smoke-tested green
+[smoke][server] [fora-mcp-azure-devops] starting — pinned to project='forge', org='https://dev.azure.example/forge', api='http://127.0.0.1:43431', api-version='7.1'

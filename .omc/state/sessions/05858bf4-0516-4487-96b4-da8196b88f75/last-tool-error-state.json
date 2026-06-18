@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -sS -X POST \\\"http://127.0.0.1:3100/api/issues/9ab4e974-38a1-47d5-abf4-5f1e99847f07/comments\\\" -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" -H \\\"X-Paperclip-Company-Id: $PAPERC...",
+  "error": "Exit code 2\n/usr/bin/bash: eval: line 4: syntax error near unexpected token `('\n/usr/bin/bash: eval: line 4: `  \"body\": \"## FORA-252 / 11.1 — Skeleton inventory (Architect wake, 2026-06-18)\\n\\nResume trigger ack: FORA-333 root cause is a wake-on-demand silent-drop on CTO-driven assignee swap (per CTO disposition comment `18b42309`). This is the Architect first action; **no `done` PATCH from this wake**.\\n\\n### (a) What already exists\\n\\nSkeleton is **already shipped** in run `0037d956` (2026-06-...",
+  "timestamp": "2026-06-18T03:14:30.552Z",
+  "retry_count": 1
+}

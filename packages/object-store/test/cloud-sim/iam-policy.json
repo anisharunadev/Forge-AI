@@ -1,0 +1,100 @@
+{
+  "_source": "infra/object-store/iam.tf (hand-rendered for the cloud-sim because terraform is not installed in this env; rendered to match the exact statements defined in the .tf file)",
+  "_rendered_template_for_tenant_id": "{{TENANT_ID}}",
+  "_bucket_arn_template": "arn:aws:s3:::fora-test",
+  "_bucket_name": "fora-test",
+  "_sqs_queue_arn_template": "arn:aws:sqs:us-east-1:123456789012:fora-test-{{TENANT_ID}}.fifo",
+  "_opensearch_domain_arn": "arn:aws:es:us-east-1:123456789012:fora-docs",
+  "_agent_runtime_principal_arn": "arn:aws:iam::123456789012:role/fora-agent-runtime",
+
+  "trust_policy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "AllowAgentRuntimeToAssume",
+        "Effect": "Allow",
+        "Action": "sts:AssumeRole",
+        "Principal": {
+          "AWS": "arn:aws:iam::123456789012:role/fora-agent-runtime"
+        },
+        "Condition": {
+          "StringEquals": {
+            "sts:ExternalId": "{{TENANT_ID}}"
+          },
+          "Bool": {
+            "sts:TagSession": "true"
+          }
+        }
+      }
+    ]
+  },
+
+  "permission_policy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "S3ObjectsTenantPrefix",
+        "Effect": "Allow",
+        "Action": [
+          "s3:GetObject",
+          "s3:GetObjectVersion",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:DeleteObjectVersion",
+          "s3:AbortMultipartUpload"
+        ],
+        "Resource": "arn:aws:s3:::fora-test/tenants/{{TENANT_ID}}/*"
+      },
+      {
+        "Sid": "S3ListBucketTenantPrefix",
+        "Effect": "Allow",
+        "Action": "s3:ListBucket",
+        "Resource": "arn:aws:s3:::fora-test",
+        "Condition": {
+          "StringLike": {
+            "s3:prefix": "tenants/{{TENANT_ID}}/*"
+          }
+        }
+      },
+      {
+        "Sid": "S3DenyOtherTenants",
+        "Effect": "Deny",
+        "Action": "s3:*",
+        "Resource": "arn:aws:s3:::fora-test/tenants/*",
+        "Condition": {
+          "StringNotEquals": {
+            "aws:PrincipalTag/TenantID": "{{TENANT_ID}}"
+          }
+        }
+      },
+      {
+        "Sid": "SqsTenantQueue",
+        "Effect": "Allow",
+        "Action": [
+          "sqs:SendMessage",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes"
+        ],
+        "Resource": "arn:aws:sqs:us-east-1:123456789012:fora-test-{{TENANT_ID}}.fifo"
+      },
+      {
+        "Sid": "OpenSearchTenantDomain",
+        "Effect": "Allow",
+        "Action": [
+          "es:ESHttpGet",
+          "es:ESHttpPost",
+          "es:ESHttpPut",
+          "es:ESHttpDelete",
+          "es:ESHttpHead"
+        ],
+        "Resource": "arn:aws:es:us-east-1:123456789012:fora-docs",
+        "Condition": {
+          "StringEquals": {
+            "aws:PrincipalTag/TenantID": "{{TENANT_ID}}"
+          }
+        }
+      }
+    ]
+  }
+}

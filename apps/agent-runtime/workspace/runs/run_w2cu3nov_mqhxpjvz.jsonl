@@ -1,0 +1,8 @@
+{"kind":"stage.entered","runId":"run_w2cu3nov_mqhxpjvz","stage":"plan","at":"2026-06-17T10:34:55.343Z"}
+{"kind":"plan.emitted","runId":"run_w2cu3nov_mqhxpjvz","planId":"p1","stepCount":1,"at":"2026-06-17T10:34:55.343Z"}
+{"kind":"stage.entered","runId":"run_w2cu3nov_mqhxpjvz","stage":"act","at":"2026-06-17T10:34:55.344Z"}
+{"kind":"observation","runId":"run_w2cu3nov_mqhxpjvz","observation":{"stepId":"s1","tool":"echo","output":{"ok":true,"count":3},"ok":true,"durationMs":3,"idempotencyKey":"idem-key-1"},"at":"2026-06-17T10:34:55.348Z"}
+{"kind":"stage.entered","runId":"run_w2cu3nov_mqhxpjvz","stage":"observe","at":"2026-06-17T10:34:55.348Z"}
+{"kind":"stage.entered","runId":"run_w2cu3nov_mqhxpjvz","stage":"reflect","at":"2026-06-17T10:34:55.348Z"}
+{"kind":"reflection","runId":"run_w2cu3nov_mqhxpjvz","done":true,"note":"done","at":"2026-06-17T10:34:55.348Z"}
+{"kind":"finished","runId":"run_w2cu3nov_mqhxpjvz","status":"succeeded","at":"2026-06-17T10:34:55.348Z"}

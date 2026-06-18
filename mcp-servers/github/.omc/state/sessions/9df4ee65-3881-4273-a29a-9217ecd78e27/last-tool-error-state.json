@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"# Create follow-up FORA-12 for the issues POST deprecation\\ncurl -sS -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" -H \\\"X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID\\\" \\\\\\n  -H \\\"Content-Type: a...",
+  "error": "Exit code 2\n/usr/bin/bash: eval: line 19: syntax error near unexpected token `('\n/usr/bin/bash: eval: line 19: `    \"description\": \"Discovered during the FORA-11 live E2E run. GitHub has scheduled the REST `POST /repos/{owner}/{repo}/issues` endpoint for removal on Fri, 10 Mar 2028. Octokit logs the deprecation warning on every create_issue call against the real API today.\\n\\nThe MCP server's create_issue tool still works, but the warning is noise to operators and the endpoint will go away. Migr...",
+  "timestamp": "2026-06-16T18:33:32.814Z",
+  "retry_count": 1
+}

@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk ls apps/identity-broker/src/ 2>&1 | head -15 && echo \\\"---\\\" && rtk ls apps/agent-runtime/sql 2>&1\",\"description\":\"Confirm we did not lose identity-broker or create extra agent-runtime...",
+  "error": "Exit code 2\naudit.ts  9.1K\nconfig.ts  7.4K\nindex.ts  651B\nprovisioning.ts  4.4K\nrevocation.ts  2.2K\nserver.ts  20.3K\nstart.ts  2.0K\nstate.ts  2.0K\n---\n/usr/bin/ls: cannot access 'apps/agent-runtime/sql': No such file or directory",
+  "timestamp": "2026-06-17T10:49:29.757Z",
+  "retry_count": 1
+}

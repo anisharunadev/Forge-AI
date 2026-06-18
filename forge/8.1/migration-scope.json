@@ -1,0 +1,1629 @@
+{
+  "analyzer_runtime_ms": 1.228,
+  "analyzer_version": "code-analyzer/0.1.0",
+  "categorizations": [
+    {
+      "category": "keep_as_is",
+      "evidence": [
+        {
+          "description": "Role 'infra' is a non-source artifact.",
+          "kind": "category",
+          "metric": "role",
+          "paths": [
+            "Dockerfile"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "Dockerfile",
+      "rationale": "Role 'infra' is config/test/doc/infra; no migration needed."
+    },
+    {
+      "category": "keep_as_is",
+      "evidence": [
+        {
+          "description": "Role 'doc' is a non-source artifact.",
+          "kind": "category",
+          "metric": "role",
+          "paths": [
+            "README.md"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "README.md",
+      "rationale": "Role 'doc' is config/test/doc/infra; no migration needed."
+    },
+    {
+      "category": "keep_as_is",
+      "evidence": [
+        {
+          "description": "Role 'config' is a non-source artifact.",
+          "kind": "category",
+          "metric": "role",
+          "paths": [
+            "config/application.yml"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "config/application.yml",
+      "rationale": "Role 'config' is config/test/doc/infra; no migration needed."
+    },
+    {
+      "category": "keep_as_is",
+      "evidence": [
+        {
+          "description": "Role 'infra' is a non-source artifact.",
+          "kind": "category",
+          "metric": "role",
+          "paths": [
+            "helm/Chart.yaml"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "helm/Chart.yaml",
+      "rationale": "Role 'infra' is config/test/doc/infra; no migration needed."
+    },
+    {
+      "category": "refactor_in_place",
+      "evidence": [
+        {
+          "description": "Default category: first-party source, no rewrite/replace signal.",
+          "kind": "category",
+          "metric": "default",
+          "paths": [
+            "lambdas/notify_customer.py"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "lambdas/notify_customer.py",
+      "rationale": "First-party source that needs API renames / version bumps; not large enough to rewrite."
+    },
+    {
+      "category": "refactor_in_place",
+      "evidence": [
+        {
+          "description": "Default category: first-party source, no rewrite/replace signal.",
+          "kind": "category",
+          "metric": "default",
+          "paths": [
+            "src/main/java/com/billingcorp/api/BillingController.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/api/BillingController.java",
+      "rationale": "First-party source that needs API renames / version bumps; not large enough to rewrite."
+    },
+    {
+      "category": "refactor_in_place",
+      "evidence": [
+        {
+          "description": "Default category: first-party source, no rewrite/replace signal.",
+          "kind": "category",
+          "metric": "default",
+          "paths": [
+            "src/main/java/com/billingcorp/jobs/MonthlyRollup.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/jobs/MonthlyRollup.java",
+      "rationale": "First-party source that needs API renames / version bumps; not large enough to rewrite."
+    },
+    {
+      "category": "refactor_in_place",
+      "evidence": [
+        {
+          "description": "Default category: first-party source, no rewrite/replace signal.",
+          "kind": "category",
+          "metric": "default",
+          "paths": [
+            "src/main/java/com/billingcorp/models/rds/LegacyInvoiceRow.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/models/rds/LegacyInvoiceRow.java",
+      "rationale": "First-party source that needs API renames / version bumps; not large enough to rewrite."
+    },
+    {
+      "category": "rewrite",
+      "evidence": [
+        {
+          "description": "High fan-in + high LoC relative to repo.",
+          "kind": "category",
+          "metric": "fan_in_ratio",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/BillingService.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "Large file by repo-relative size.",
+          "kind": "category",
+          "metric": "loc",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/BillingService.java"
+          ],
+          "value": 480
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/monolith/BillingService.java",
+      "rationale": "God-module: top-100% fan-in, top-100% size, 480 LoC. Needs decomposition before re-platforming."
+    },
+    {
+      "category": "refactor_in_place",
+      "evidence": [
+        {
+          "description": "Default category: first-party source, no rewrite/replace signal.",
+          "kind": "category",
+          "metric": "default",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/Customer.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/monolith/Customer.java",
+      "rationale": "First-party source that needs API renames / version bumps; not large enough to rewrite."
+    },
+    {
+      "category": "refactor_in_place",
+      "evidence": [
+        {
+          "description": "Default category: first-party source, no rewrite/replace signal.",
+          "kind": "category",
+          "metric": "default",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/Invoice.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/monolith/Invoice.java",
+      "rationale": "First-party source that needs API renames / version bumps; not large enough to rewrite."
+    },
+    {
+      "category": "remove",
+      "evidence": [
+        {
+          "description": "No inbound imports and not a known entrypoint/test/config.",
+          "kind": "category",
+          "metric": "imported_by",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/ReportsService.java"
+          ],
+          "value": 0.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/monolith/ReportsService.java",
+      "rationale": "No importers and not an entrypoint; appears to be dead code."
+    },
+    {
+      "category": "remove",
+      "evidence": [
+        {
+          "description": "No inbound imports and not a known entrypoint/test/config.",
+          "kind": "category",
+          "metric": "imported_by",
+          "paths": [
+            "src/main/java/com/billingcorp/pipeline/InvoicePipeline.java"
+          ],
+          "value": 0.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/pipeline/InvoicePipeline.java",
+      "rationale": "No importers and not an entrypoint; appears to be dead code."
+    },
+    {
+      "category": "refactor_in_place",
+      "evidence": [
+        {
+          "description": "Default category: first-party source, no rewrite/replace signal.",
+          "kind": "category",
+          "metric": "default",
+          "paths": [
+            "src/main/java/com/billingcorp/util/LegacyDb.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/util/LegacyDb.java",
+      "rationale": "First-party source that needs API renames / version bumps; not large enough to rewrite."
+    },
+    {
+      "category": "remove",
+      "evidence": [
+        {
+          "description": "No inbound imports and not a known entrypoint/test/config.",
+          "kind": "category",
+          "metric": "imported_by",
+          "paths": [
+            "src/main/java/com/billingcorp/util/UnusedHelper.java"
+          ],
+          "value": 0.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/util/UnusedHelper.java",
+      "rationale": "No importers and not an entrypoint; appears to be dead code."
+    },
+    {
+      "category": "replace",
+      "evidence": [
+        {
+          "description": "Legacy runtime hint in path (java).",
+          "kind": "category",
+          "metric": "runtime-hint",
+          "paths": [
+            "src/main/java/com/billingcorp/util/weblogic/BillingBridge.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/util/weblogic/BillingBridge.java",
+      "rationale": "Path 'src/main/java/com/billingcorp/util/weblogic/BillingBridge.java' references a legacy runtime (java); replace with managed equivalent."
+    },
+    {
+      "category": "keep_as_is",
+      "evidence": [
+        {
+          "description": "Role 'test' is a non-source artifact.",
+          "kind": "category",
+          "metric": "role",
+          "paths": [
+            "src/test/java/com/billingcorp/monolith/BillingServiceTest.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/test/java/com/billingcorp/monolith/BillingServiceTest.java",
+      "rationale": "Role 'test' is config/test/doc/infra; no migration needed."
+    },
+    {
+      "category": "keep_as_is",
+      "evidence": [
+        {
+          "description": "Role 'test' is a non-source artifact.",
+          "kind": "category",
+          "metric": "role",
+          "paths": [
+            "src/test/java/com/billingcorp/monolith/InvoiceTest.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/test/java/com/billingcorp/monolith/InvoiceTest.java",
+      "rationale": "Role 'test' is config/test/doc/infra; no migration needed."
+    },
+    {
+      "category": "remove",
+      "evidence": [
+        {
+          "description": "Matched a generated/vendored path fragment.",
+          "kind": "category",
+          "metric": "path-fragment-match",
+          "paths": [
+            "target/classes/com/billingcorp/monolith/BillingService.class"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "target/classes/com/billingcorp/monolith/BillingService.class",
+      "rationale": "Generated or vendored artifact at 'target/classes/com/billingcorp/monolith/BillingService.class'; will be re-derived on build."
+    },
+    {
+      "category": "remove",
+      "evidence": [
+        {
+          "description": "No inbound imports and not a known entrypoint/test/config.",
+          "kind": "category",
+          "metric": "imported_by",
+          "paths": [
+            "web/app.js"
+          ],
+          "value": 0.0
+        }
+      ],
+      "path": "web/app.js",
+      "rationale": "No importers and not an entrypoint; appears to be dead code."
+    },
+    {
+      "category": "remove",
+      "evidence": [
+        {
+          "description": "No inbound imports and not a known entrypoint/test/config.",
+          "kind": "category",
+          "metric": "imported_by",
+          "paths": [
+            "web/index.html"
+          ],
+          "value": 0.0
+        }
+      ],
+      "path": "web/index.html",
+      "rationale": "No importers and not an entrypoint; appears to be dead code."
+    },
+    {
+      "category": "remove",
+      "evidence": [
+        {
+          "description": "Matched a deprecated top-level directory.",
+          "kind": "category",
+          "metric": "path-fragment-match",
+          "paths": [
+            "zzz_legacy/old_reporting/ReportAggregator.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "zzz_legacy/old_reporting/ReportAggregator.java",
+      "rationale": "Path 'zzz_legacy/old_reporting/ReportAggregator.java' lives in a deprecated directory; safe to drop."
+    }
+  ],
+  "cost_usd": 0.0,
+  "deterministic": true,
+  "evidence": [
+    {
+      "description": "Repo scope projected to 22 files (2425 LoC) across 7 services / modules.",
+      "kind": "summary",
+      "metric": "total_files",
+      "paths": [],
+      "value": 22.0
+    },
+    {
+      "description": "Dominant transform tier T3 covers 6 files.",
+      "kind": "summary",
+      "metric": "dominant_tier",
+      "paths": [],
+      "value": 2.0
+    },
+    {
+      "description": "Total estimated migration effort: 4.87 person-days.",
+      "kind": "summary",
+      "metric": "estimated_effort_days",
+      "paths": [],
+      "value": 4.868
+    }
+  ],
+  "generated_at": "2026-06-18T00:00:00Z",
+  "notes": [
+    "Analyzer is pure-Python; no LLM, no network. Same input -> same output.",
+    "Cost bound: < 10 s, $0 spend. The smoke test asserts both.",
+    "v0.1 ships a transparent rule-based mapper. v0.2 will add an LLM-backed reviewer pass for low-confidence categorizations; see /FORA/issues/FORA-71 for the pattern."
+  ],
+  "repo_fingerprint": "c6cac1a26669eddf",
+  "report_id": "cd5db7fa-0e6f-48dd-b336-ed5c94d87fe1",
+  "risk_assessments": [
+    {
+      "estimated_effort_days": 0.015,
+      "evidence": [
+        {
+          "description": "15 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "Dockerfile"
+          ],
+          "value": 15.0
+        }
+      ],
+      "factors": [
+        "loc=15"
+      ],
+      "path": "Dockerfile",
+      "risk_level": "low",
+      "score": 0.075
+    },
+    {
+      "estimated_effort_days": 0.05,
+      "evidence": [
+        {
+          "description": "50 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "README.md"
+          ],
+          "value": 50.0
+        }
+      ],
+      "factors": [
+        "loc=50"
+      ],
+      "path": "README.md",
+      "risk_level": "low",
+      "score": 0.25
+    },
+    {
+      "estimated_effort_days": 0.03,
+      "evidence": [
+        {
+          "description": "30 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "config/application.yml"
+          ],
+          "value": 30.0
+        }
+      ],
+      "factors": [
+        "loc=30"
+      ],
+      "path": "config/application.yml",
+      "risk_level": "low",
+      "score": 0.15
+    },
+    {
+      "estimated_effort_days": 0.01,
+      "evidence": [
+        {
+          "description": "10 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "helm/Chart.yaml"
+          ],
+          "value": 10.0
+        }
+      ],
+      "factors": [
+        "loc=10"
+      ],
+      "path": "helm/Chart.yaml",
+      "risk_level": "low",
+      "score": 0.05
+    },
+    {
+      "estimated_effort_days": 0.045,
+      "evidence": [
+        {
+          "description": "40 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "lambdas/notify_customer.py"
+          ],
+          "value": 40.0
+        },
+        {
+          "description": "Role 'service' implies business logic.",
+          "kind": "risk",
+          "metric": "role",
+          "paths": [
+            "lambdas/notify_customer.py"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "File is an entrypoint (publicly reachable).",
+          "kind": "risk",
+          "metric": "entrypoint",
+          "paths": [
+            "lambdas/notify_customer.py"
+          ],
+          "value": 1.0
+        }
+      ],
+      "factors": [
+        "loc=40",
+        "role=service",
+        "entrypoint"
+      ],
+      "path": "lambdas/notify_customer.py",
+      "risk_level": "medium",
+      "score": 5.2
+    },
+    {
+      "estimated_effort_days": 0.288,
+      "evidence": [
+        {
+          "description": "1 outbound imports (log-dampened).",
+          "kind": "risk",
+          "metric": "fan_out",
+          "paths": [
+            "src/main/java/com/billingcorp/api/BillingController.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "120 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "src/main/java/com/billingcorp/api/BillingController.java"
+          ],
+          "value": 120.0
+        },
+        {
+          "description": "Role 'controller' implies business logic.",
+          "kind": "risk",
+          "metric": "role",
+          "paths": [
+            "src/main/java/com/billingcorp/api/BillingController.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "File is an entrypoint (publicly reachable).",
+          "kind": "risk",
+          "metric": "entrypoint",
+          "paths": [
+            "src/main/java/com/billingcorp/api/BillingController.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "factors": [
+        "fan_out=1",
+        "loc=120",
+        "role=controller",
+        "entrypoint"
+      ],
+      "path": "src/main/java/com/billingcorp/api/BillingController.java",
+      "risk_level": "high",
+      "score": 6.64
+    },
+    {
+      "estimated_effort_days": 0.432,
+      "evidence": [
+        {
+          "description": "1 outbound imports (log-dampened).",
+          "kind": "risk",
+          "metric": "fan_out",
+          "paths": [
+            "src/main/java/com/billingcorp/jobs/MonthlyRollup.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "180 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "src/main/java/com/billingcorp/jobs/MonthlyRollup.java"
+          ],
+          "value": 180.0
+        },
+        {
+          "description": "Role 'service' implies business logic.",
+          "kind": "risk",
+          "metric": "role",
+          "paths": [
+            "src/main/java/com/billingcorp/jobs/MonthlyRollup.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "File is an entrypoint (publicly reachable).",
+          "kind": "risk",
+          "metric": "entrypoint",
+          "paths": [
+            "src/main/java/com/billingcorp/jobs/MonthlyRollup.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "Business-logic file without test coverage.",
+          "kind": "risk",
+          "metric": "has_tests",
+          "paths": [
+            "src/main/java/com/billingcorp/jobs/MonthlyRollup.java"
+          ],
+          "value": 0.0
+        }
+      ],
+      "factors": [
+        "fan_out=1",
+        "loc=180",
+        "role=service",
+        "entrypoint",
+        "no_tests"
+      ],
+      "path": "src/main/java/com/billingcorp/jobs/MonthlyRollup.java",
+      "risk_level": "high",
+      "score": 8.94
+    },
+    {
+      "estimated_effort_days": 0.168,
+      "evidence": [
+        {
+          "description": "1 inbound imports (log-dampened).",
+          "kind": "risk",
+          "metric": "fan_in",
+          "paths": [
+            "src/main/java/com/billingcorp/models/rds/LegacyInvoiceRow.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "70 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "src/main/java/com/billingcorp/models/rds/LegacyInvoiceRow.java"
+          ],
+          "value": 70.0
+        },
+        {
+          "description": "Role 'model' implies business logic.",
+          "kind": "risk",
+          "metric": "role",
+          "paths": [
+            "src/main/java/com/billingcorp/models/rds/LegacyInvoiceRow.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "Business-logic file without test coverage.",
+          "kind": "risk",
+          "metric": "has_tests",
+          "paths": [
+            "src/main/java/com/billingcorp/models/rds/LegacyInvoiceRow.java"
+          ],
+          "value": 0.0
+        }
+      ],
+      "factors": [
+        "fan_in=1",
+        "loc=70",
+        "role=model",
+        "no_tests"
+      ],
+      "path": "src/main/java/com/billingcorp/models/rds/LegacyInvoiceRow.java",
+      "risk_level": "high",
+      "score": 6.083
+    },
+    {
+      "estimated_effort_days": 1.152,
+      "evidence": [
+        {
+          "description": "3 inbound imports (log-dampened).",
+          "kind": "risk",
+          "metric": "fan_in",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/BillingService.java"
+          ],
+          "value": 3.0
+        },
+        {
+          "description": "3 outbound imports (log-dampened).",
+          "kind": "risk",
+          "metric": "fan_out",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/BillingService.java"
+          ],
+          "value": 3.0
+        },
+        {
+          "description": "480 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/BillingService.java"
+          ],
+          "value": 480.0
+        },
+        {
+          "description": "Role 'service' implies business logic.",
+          "kind": "risk",
+          "metric": "role",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/BillingService.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "Business-logic file without test coverage.",
+          "kind": "risk",
+          "metric": "has_tests",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/BillingService.java"
+          ],
+          "value": 0.0
+        }
+      ],
+      "factors": [
+        "fan_in=3",
+        "fan_out=3",
+        "loc=480",
+        "role=service",
+        "no_tests"
+      ],
+      "path": "src/main/java/com/billingcorp/monolith/BillingService.java",
+      "risk_level": "high",
+      "score": 10.0
+    },
+    {
+      "estimated_effort_days": 0.101,
+      "evidence": [
+        {
+          "description": "1 inbound imports (log-dampened).",
+          "kind": "risk",
+          "metric": "fan_in",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/Customer.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "60 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/Customer.java"
+          ],
+          "value": 60.0
+        },
+        {
+          "description": "Role 'model' implies business logic.",
+          "kind": "risk",
+          "metric": "role",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/Customer.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "factors": [
+        "fan_in=1",
+        "loc=60",
+        "role=model"
+      ],
+      "path": "src/main/java/com/billingcorp/monolith/Customer.java",
+      "risk_level": "medium",
+      "score": 4.033
+    },
+    {
+      "estimated_effort_days": 0.134,
+      "evidence": [
+        {
+          "description": "1 inbound imports (log-dampened).",
+          "kind": "risk",
+          "metric": "fan_in",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/Invoice.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "80 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/Invoice.java"
+          ],
+          "value": 80.0
+        },
+        {
+          "description": "Role 'model' implies business logic.",
+          "kind": "risk",
+          "metric": "role",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/Invoice.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "factors": [
+        "fan_in=1",
+        "loc=80",
+        "role=model"
+      ],
+      "path": "src/main/java/com/billingcorp/monolith/Invoice.java",
+      "risk_level": "medium",
+      "score": 4.133
+    },
+    {
+      "estimated_effort_days": 0.235,
+      "evidence": [
+        {
+          "description": "1 outbound imports (log-dampened).",
+          "kind": "risk",
+          "metric": "fan_out",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/ReportsService.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "140 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/ReportsService.java"
+          ],
+          "value": 140.0
+        },
+        {
+          "description": "Role 'service' implies business logic.",
+          "kind": "risk",
+          "metric": "role",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/ReportsService.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "factors": [
+        "fan_out=1",
+        "loc=140",
+        "role=service"
+      ],
+      "path": "src/main/java/com/billingcorp/monolith/ReportsService.java",
+      "risk_level": "medium",
+      "score": 3.74
+    },
+    {
+      "estimated_effort_days": 0.192,
+      "evidence": [
+        {
+          "description": "1 outbound imports (log-dampened).",
+          "kind": "risk",
+          "metric": "fan_out",
+          "paths": [
+            "src/main/java/com/billingcorp/pipeline/InvoicePipeline.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "160 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "src/main/java/com/billingcorp/pipeline/InvoicePipeline.java"
+          ],
+          "value": 160.0
+        }
+      ],
+      "factors": [
+        "fan_out=1",
+        "loc=160"
+      ],
+      "path": "src/main/java/com/billingcorp/pipeline/InvoicePipeline.java",
+      "risk_level": "low",
+      "score": 1.84
+    },
+    {
+      "estimated_effort_days": 0.48,
+      "evidence": [
+        {
+          "description": "1 inbound imports (log-dampened).",
+          "kind": "risk",
+          "metric": "fan_in",
+          "paths": [
+            "src/main/java/com/billingcorp/util/LegacyDb.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "200 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "src/main/java/com/billingcorp/util/LegacyDb.java"
+          ],
+          "value": 200.0
+        },
+        {
+          "description": "Role 'service' implies business logic.",
+          "kind": "risk",
+          "metric": "role",
+          "paths": [
+            "src/main/java/com/billingcorp/util/LegacyDb.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "Business-logic file without test coverage.",
+          "kind": "risk",
+          "metric": "has_tests",
+          "paths": [
+            "src/main/java/com/billingcorp/util/LegacyDb.java"
+          ],
+          "value": 0.0
+        }
+      ],
+      "factors": [
+        "fan_in=1",
+        "loc=200",
+        "role=service",
+        "no_tests"
+      ],
+      "path": "src/main/java/com/billingcorp/util/LegacyDb.java",
+      "risk_level": "high",
+      "score": 6.733
+    },
+    {
+      "estimated_effort_days": 0.084,
+      "evidence": [
+        {
+          "description": "50 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "src/main/java/com/billingcorp/util/UnusedHelper.java"
+          ],
+          "value": 50.0
+        },
+        {
+          "description": "Role 'service' implies business logic.",
+          "kind": "risk",
+          "metric": "role",
+          "paths": [
+            "src/main/java/com/billingcorp/util/UnusedHelper.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "Business-logic file without test coverage.",
+          "kind": "risk",
+          "metric": "has_tests",
+          "paths": [
+            "src/main/java/com/billingcorp/util/UnusedHelper.java"
+          ],
+          "value": 0.0
+        }
+      ],
+      "factors": [
+        "loc=50",
+        "role=service",
+        "no_tests"
+      ],
+      "path": "src/main/java/com/billingcorp/util/UnusedHelper.java",
+      "risk_level": "medium",
+      "score": 4.25
+    },
+    {
+      "estimated_effort_days": 0.432,
+      "evidence": [
+        {
+          "description": "180 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "src/main/java/com/billingcorp/util/weblogic/BillingBridge.java"
+          ],
+          "value": 180.0
+        },
+        {
+          "description": "Role 'service' implies business logic.",
+          "kind": "risk",
+          "metric": "role",
+          "paths": [
+            "src/main/java/com/billingcorp/util/weblogic/BillingBridge.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "File is an entrypoint (publicly reachable).",
+          "kind": "risk",
+          "metric": "entrypoint",
+          "paths": [
+            "src/main/java/com/billingcorp/util/weblogic/BillingBridge.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "Business-logic file without test coverage.",
+          "kind": "risk",
+          "metric": "has_tests",
+          "paths": [
+            "src/main/java/com/billingcorp/util/weblogic/BillingBridge.java"
+          ],
+          "value": 0.0
+        }
+      ],
+      "factors": [
+        "loc=180",
+        "role=service",
+        "entrypoint",
+        "no_tests"
+      ],
+      "path": "src/main/java/com/billingcorp/util/weblogic/BillingBridge.java",
+      "risk_level": "high",
+      "score": 7.9
+    },
+    {
+      "estimated_effort_days": 0.144,
+      "evidence": [
+        {
+          "description": "120 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "src/test/java/com/billingcorp/monolith/BillingServiceTest.java"
+          ],
+          "value": 120.0
+        }
+      ],
+      "factors": [
+        "loc=120"
+      ],
+      "path": "src/test/java/com/billingcorp/monolith/BillingServiceTest.java",
+      "risk_level": "low",
+      "score": 0.6
+    },
+    {
+      "estimated_effort_days": 0.048,
+      "evidence": [
+        {
+          "description": "40 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "src/test/java/com/billingcorp/monolith/InvoiceTest.java"
+          ],
+          "value": 40.0
+        }
+      ],
+      "factors": [
+        "loc=40"
+      ],
+      "path": "src/test/java/com/billingcorp/monolith/InvoiceTest.java",
+      "risk_level": "low",
+      "score": 0.2
+    },
+    {
+      "estimated_effort_days": 0.034,
+      "evidence": [
+        {
+          "description": "20 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "target/classes/com/billingcorp/monolith/BillingService.class"
+          ],
+          "value": 20.0
+        },
+        {
+          "description": "Role 'service' implies business logic.",
+          "kind": "risk",
+          "metric": "role",
+          "paths": [
+            "target/classes/com/billingcorp/monolith/BillingService.class"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "Business-logic file without test coverage.",
+          "kind": "risk",
+          "metric": "has_tests",
+          "paths": [
+            "target/classes/com/billingcorp/monolith/BillingService.class"
+          ],
+          "value": 0.0
+        }
+      ],
+      "factors": [
+        "loc=20",
+        "role=service",
+        "no_tests"
+      ],
+      "path": "target/classes/com/billingcorp/monolith/BillingService.class",
+      "risk_level": "medium",
+      "score": 4.1
+    },
+    {
+      "estimated_effort_days": 0.054,
+      "evidence": [
+        {
+          "description": "60 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "web/app.js"
+          ],
+          "value": 60.0
+        }
+      ],
+      "factors": [
+        "loc=60"
+      ],
+      "path": "web/app.js",
+      "risk_level": "low",
+      "score": 0.3
+    },
+    {
+      "estimated_effort_days": 0.02,
+      "evidence": [
+        {
+          "description": "20 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "web/index.html"
+          ],
+          "value": 20.0
+        }
+      ],
+      "factors": [
+        "loc=20"
+      ],
+      "path": "web/index.html",
+      "risk_level": "low",
+      "score": 0.1
+    },
+    {
+      "estimated_effort_days": 0.72,
+      "evidence": [
+        {
+          "description": "300 LoC in the file.",
+          "kind": "risk",
+          "metric": "loc",
+          "paths": [
+            "zzz_legacy/old_reporting/ReportAggregator.java"
+          ],
+          "value": 300.0
+        },
+        {
+          "description": "Role 'service' implies business logic.",
+          "kind": "risk",
+          "metric": "role",
+          "paths": [
+            "zzz_legacy/old_reporting/ReportAggregator.java"
+          ],
+          "value": 1.0
+        },
+        {
+          "description": "Business-logic file without test coverage.",
+          "kind": "risk",
+          "metric": "has_tests",
+          "paths": [
+            "zzz_legacy/old_reporting/ReportAggregator.java"
+          ],
+          "value": 0.0
+        },
+        {
+          "description": "File lives in a deprecated path.",
+          "kind": "risk",
+          "metric": "deprecated_path",
+          "paths": [
+            "zzz_legacy/old_reporting/ReportAggregator.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "factors": [
+        "loc=300",
+        "role=service",
+        "no_tests",
+        "deprecated_path"
+      ],
+      "path": "zzz_legacy/old_reporting/ReportAggregator.java",
+      "risk_level": "high",
+      "score": 8.5
+    }
+  ],
+  "schema_version": 1,
+  "source": "github:legacy-corp/billing-monolith@main",
+  "summary": {
+    "category_counts": {
+      "keep_as_is": 6,
+      "refactor_in_place": 7,
+      "remove": 7,
+      "replace": 1,
+      "rewrite": 1
+    },
+    "estimated_effort_days": 4.868,
+    "languages": {
+      "dockerfile": 1,
+      "html": 1,
+      "java": 15,
+      "javascript": 1,
+      "markdown": 1,
+      "python": 1,
+      "yaml": 2
+    },
+    "risk_counts": {
+      "high": 7,
+      "low": 9,
+      "medium": 6
+    },
+    "risk_level": "low",
+    "services": 7,
+    "tier_counts": {
+      "T1": 5,
+      "T2": 4,
+      "T3": 6,
+      "T4": 1,
+      "skip": 6
+    },
+    "total_files": 22,
+    "total_loc": 2425,
+    "transform_tier": "T3",
+    "unit_counts": {
+      "api_gateway": 1,
+      "aurora": 2,
+      "cloudfront": 2,
+      "container": 5,
+      "ec2": 3,
+      "lambda": 1,
+      "rds": 1,
+      "s3": 2,
+      "skip": 4,
+      "step_functions": 1
+    }
+  },
+  "target_root": "/repo",
+  "transform_mappings": [
+    {
+      "evidence": [
+        {
+          "description": "Infra (Dockerfile, helm, terraform) ships as IaC; S3 is the canonical target for asset packaging.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "Dockerfile"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "Dockerfile",
+      "rationale": "Infra (Dockerfile, helm, terraform) ships as IaC; S3 is the canonical target for asset packaging.",
+      "tier": "skip",
+      "unit": "s3"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Documentation does not require Transform units.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "README.md"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "README.md",
+      "rationale": "Documentation does not require Transform units.",
+      "tier": "skip",
+      "unit": "skip"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Config/schema/migration files do not require Transform units.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "config/application.yml"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "config/application.yml",
+      "rationale": "Config/schema/migration files do not require Transform units.",
+      "tier": "skip",
+      "unit": "skip"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Infra (Dockerfile, helm, terraform) ships as IaC; S3 is the canonical target for asset packaging.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "helm/Chart.yaml"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "helm/Chart.yaml",
+      "rationale": "Infra (Dockerfile, helm, terraform) ships as IaC; S3 is the canonical target for asset packaging.",
+      "tier": "skip",
+      "unit": "s3"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Entry points in light runtimes re-platform to Lambda via API Gateway.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "lambdas/notify_customer.py"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "lambdas/notify_customer.py",
+      "rationale": "Entry points in light runtimes re-platform to Lambda via API Gateway.",
+      "tier": "T2",
+      "unit": "lambda"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Controllers / handlers decompose to API Gateway + Lambda at T3.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "src/main/java/com/billingcorp/api/BillingController.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/api/BillingController.java",
+      "rationale": "Controllers / handlers decompose to API Gateway + Lambda at T3.",
+      "tier": "T3",
+      "unit": "api_gateway"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Entry points in JVM/.NET runtimes lift-and-shift to EC2 in T1.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "src/main/java/com/billingcorp/jobs/MonthlyRollup.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/jobs/MonthlyRollup.java",
+      "rationale": "Entry points in JVM/.NET runtimes lift-and-shift to EC2 in T1.",
+      "tier": "T1",
+      "unit": "ec2"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Legacy model path; lands on RDS (managed Postgres/MySQL) at T2.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "src/main/java/com/billingcorp/models/rds/LegacyInvoiceRow.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/models/rds/LegacyInvoiceRow.java",
+      "rationale": "Legacy model path; lands on RDS (managed Postgres/MySQL) at T2.",
+      "tier": "T2",
+      "unit": "rds"
+    },
+    {
+      "evidence": [
+        {
+          "description": "God-module: high fan-in + high LoC relative to repo. T4 re-imagine \u2014 rewrite from scratch against managed primitives.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/BillingService.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/monolith/BillingService.java",
+      "rationale": "God-module: high fan-in + high LoC relative to repo. T4 re-imagine \u2014 rewrite from scratch against managed primitives.",
+      "tier": "T4",
+      "unit": "container"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Domain models land on Aurora (managed Postgres-compatible) at T2.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/Customer.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/monolith/Customer.java",
+      "rationale": "Domain models land on Aurora (managed Postgres-compatible) at T2.",
+      "tier": "T2",
+      "unit": "aurora"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Domain models land on Aurora (managed Postgres-compatible) at T2.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/Invoice.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/monolith/Invoice.java",
+      "rationale": "Domain models land on Aurora (managed Postgres-compatible) at T2.",
+      "tier": "T2",
+      "unit": "aurora"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Service / use-case roles land on ECS / Fargate containers at T3.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "src/main/java/com/billingcorp/monolith/ReportsService.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/monolith/ReportsService.java",
+      "rationale": "Service / use-case roles land on ECS / Fargate containers at T3.",
+      "tier": "T3",
+      "unit": "container"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Pipeline / workflow roles decompose to Step Functions at T3.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "src/main/java/com/billingcorp/pipeline/InvoicePipeline.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/pipeline/InvoicePipeline.java",
+      "rationale": "Pipeline / workflow roles decompose to Step Functions at T3.",
+      "tier": "T3",
+      "unit": "step_functions"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Service / use-case roles land on ECS / Fargate containers at T3.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "src/main/java/com/billingcorp/util/LegacyDb.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/util/LegacyDb.java",
+      "rationale": "Service / use-case roles land on ECS / Fargate containers at T3.",
+      "tier": "T3",
+      "unit": "container"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Service / use-case roles land on ECS / Fargate containers at T3.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "src/main/java/com/billingcorp/util/UnusedHelper.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/util/UnusedHelper.java",
+      "rationale": "Service / use-case roles land on ECS / Fargate containers at T3.",
+      "tier": "T3",
+      "unit": "container"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Entry points in JVM/.NET runtimes lift-and-shift to EC2 in T1.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "src/main/java/com/billingcorp/util/weblogic/BillingBridge.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/main/java/com/billingcorp/util/weblogic/BillingBridge.java",
+      "rationale": "Entry points in JVM/.NET runtimes lift-and-shift to EC2 in T1.",
+      "tier": "T1",
+      "unit": "ec2"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Test/fixture files do not ship to AWS.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "src/test/java/com/billingcorp/monolith/BillingServiceTest.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/test/java/com/billingcorp/monolith/BillingServiceTest.java",
+      "rationale": "Test/fixture files do not ship to AWS.",
+      "tier": "skip",
+      "unit": "skip"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Test/fixture files do not ship to AWS.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "src/test/java/com/billingcorp/monolith/InvoiceTest.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "src/test/java/com/billingcorp/monolith/InvoiceTest.java",
+      "rationale": "Test/fixture files do not ship to AWS.",
+      "tier": "skip",
+      "unit": "skip"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Service / use-case roles land on ECS / Fargate containers at T3.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "target/classes/com/billingcorp/monolith/BillingService.class"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "target/classes/com/billingcorp/monolith/BillingService.class",
+      "rationale": "Service / use-case roles land on ECS / Fargate containers at T3.",
+      "tier": "T3",
+      "unit": "container"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Static UI / asset files land in S3 + CloudFront with no code change.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "web/app.js"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "web/app.js",
+      "rationale": "Static UI / asset files land in S3 + CloudFront with no code change.",
+      "tier": "T1",
+      "unit": "cloudfront"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Static UI / asset files land in S3 + CloudFront with no code change.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "web/index.html"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "web/index.html",
+      "rationale": "Static UI / asset files land in S3 + CloudFront with no code change.",
+      "tier": "T1",
+      "unit": "cloudfront"
+    },
+    {
+      "evidence": [
+        {
+          "description": "Deprecated paths are lifted to EC2 in T1 to be retired post-migration.",
+          "kind": "transform",
+          "metric": "rule",
+          "paths": [
+            "zzz_legacy/old_reporting/ReportAggregator.java"
+          ],
+          "value": 1.0
+        }
+      ],
+      "path": "zzz_legacy/old_reporting/ReportAggregator.java",
+      "rationale": "Deprecated paths are lifted to EC2 in T1 to be retired post-migration.",
+      "tier": "T1",
+      "unit": "ec2"
+    }
+  ]
+}

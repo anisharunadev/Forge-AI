@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -sS -i -X POST \\\"$PAPERCLIP_API_URL/api/issues\\\" \\\\\\n  -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\\\\n  -H \\\"X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID\\\" \\\\\\n  -H \\\"Content-Type: ...",
+  "error": "Exit code 2\n/usr/bin/bash: eval: line 25: unexpected EOF while looking for matching ``'",
+  "timestamp": "2026-06-17T21:35:42.945Z",
+  "retry_count": 1
+}

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fora.local/schemas/tenants/policy.schema.json",
+  "title": "FORA Tenant Policy",
+  "description": "Per-tenant IAM policy (FORA-125 / 0.7.3). Narrows the platform role registry; never widens it.",
+  "type": "object",
+  "required": ["version", "mcp_grants"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version. Bumped only on a breaking shape change."
+    },
+    "description": {
+      "type": "string",
+      "description": "Free-form human-readable description of the policy."
+    },
+    "mcp_grants": {
+      "type": "object",
+      "description": "Per-role, per-MCP positive grant list. The platform default is deny; a grant here authorises the role to call the MCP for this tenant.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "boolean",
+          "description": "true grants the MCP to the role; false is a redundant no-op (use `deny` instead)."
+        }
+      }
+    },
+    "scope_overrides": {
+      "type": "object",
+      "description": "Per-role scope narrowing. A scope listed here MUST already be in the role's `scopes` in roles.yaml; the tenant can drop a scope but never add a new one.",
+      "additionalProperties": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": { "type": "string", "pattern": "^[a-z]+(:[a-z0-9-]+)?$" }
+      }
+    },
+    "deny": {
+      "type": "array",
+      "description": "Tenant-wide deny list. Any MCP listed here is denied to every role, even if the role is otherwise allowed by the platform registry and a per-role grant.",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$" }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "failures": [],
+  "summary": {
+    "agents": [
+      [
+        "agent-0",
+        120
+      ],
+      [
+        "agent-1",
+        90
+      ],
+      [
+        "agent-2",
+        90
+      ]
+    ]
+  }
+}

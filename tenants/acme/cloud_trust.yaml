@@ -1,0 +1,27 @@
+# tenants/acme/cloud_trust.yaml
+#
+# Acme's customer-cloud IAM trust onboarding (FORA-126 / 0.7.4).
+#
+# Each entry names one cloud Acme has granted Forge access to. The
+# broker's trust probe verifies the role ARN parses, the expected
+# issuer/audience match what the broker mints, and (in phase 2) the
+# customer's trust policy actually accepts a canary assume. A tenant
+# with a probe failure is in `cloud_disabled` state until the entry
+# is fixed and re-probed.
+#
+# The full onboarding procedure (how to set up the IAM role, the
+# trust policy JSON, the OIDC IdP registration) lives in
+# apps/customer-cloud-broker/docs/onboarding.md.
+
+version: 1
+description: >
+  Acme grants Forge brokered access to a single AWS account.
+  Azure / GCP entries are absent — the broker returns
+  cloud_disabled for those until Acme onboards them.
+
+clouds:
+  - cloud: aws
+    account: "111122223333"                       # Acme's prod AWS account
+    role_ref: "arn:aws:iam::111122223333:role/ForgeBrokeredDeployRole"
+    expected_issuer: "https://identity-broker.fora.local/auth"
+    expected_audience: "customer-cloud-broker"

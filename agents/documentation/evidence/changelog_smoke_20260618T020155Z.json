@@ -1,0 +1,26 @@
+{
+  "spec": "FORA-122",
+  "sub_goal": "7.1.4 Changelog & Release Notes generator",
+  "ran_at": "2026-06-17T20:31:55.658259+00:00",
+  "tests_run": 15,
+  "assertions_failed": 0,
+  "failures": [],
+  "acceptance": {
+    "sample_run": "PASS",
+    "idempotency": "PASS",
+    "keep_a_changelog_format": "PASS",
+    "breaking_change_callout": "PASS",
+    "cross_linking_refs": "PASS",
+    "approval_routing": "PASS",
+    "missing_input_sha": "PASS",
+    "ambiguous_conventional_commit": "PASS",
+    "oversized_diff": "PASS",
+    "dry_run": "PASS",
+    "storage_contract": "PASS",
+    "renderer_pure": "PASS",
+    "no_wall_clock_in_body": "PASS",
+    "parse_conventional": "PASS",
+    "build_entry_categorization": "PASS",
+    "multiple_releases_preserved": "PASS"
+  }
+}

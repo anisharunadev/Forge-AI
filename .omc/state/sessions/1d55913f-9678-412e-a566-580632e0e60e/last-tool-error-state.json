@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"echo \\\"---FORA-225 (dispatch epic)---\\\"\\ncurl -s -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\"http://127.0.0.1:3100/api/issues/FORA-225\\\" 2>/dev/null | python3 -c \\\"\\nimport json, sys...",
+  "error": "Exit code 1\n---FORA-225 (dispatch epic)---\nStatus: done\nTitle: FORA-217 coord: close FORA-133 (7.1.2 README generator Epic package, awaiting Board approval de9aa1b7)\nAssignee: 040a8e3b-0b6d-44a3-a122-09f61f838d96\nLatest comment count via cursor:\n\n---FORA-225 LATEST COMMENTS---\nTraceback (most recent call last):\n  File \"<string>\", line 6, in <module>\nTypeError: can only concatenate str (not \"NoneType\") to str\nTotal: 4\n--- 8361673e-48b5-4ab4-b4ff-35aa2e165cb4 2026-06-17T21:05:26.348Z by 040a8e3b-0...",
+  "timestamp": "2026-06-17T21:05:53.237Z",
+  "retry_count": 1
+}

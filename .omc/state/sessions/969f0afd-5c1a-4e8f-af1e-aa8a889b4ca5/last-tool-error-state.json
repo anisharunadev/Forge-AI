@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk ls -la /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/HIRING_PLAN.md 2>&1\\n...",
+  "error": "Exit code 1\n/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/HIRING_PLAN.md  7.1K\n---\nwc: /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9e05cefb413/_default/HIRING_PLAN.md: No such file or directory",
+  "timestamp": "2026-06-16T18:09:55.707Z",
+  "retry_count": 1
+}

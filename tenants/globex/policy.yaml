@@ -1,0 +1,23 @@
+# tenants/globex/policy.yaml
+#
+# Globex's tenant policy (FORA-125 / 0.7.3).
+#
+# Globex does NOT grant `aws-deploy` to the developer role. This is the
+# negative case for the FORA-125 acceptance bar: a `developer` agent
+# calling `aws-deploy` here must be rejected with `403 unbound_mcp` and
+# emit an `iam.unbound_mcp` audit event.
+
+version: 1
+description: >
+  Globex tenant policy. Devs do not deploy directly; the deploy-agent
+  MCP path is the only one. Customer-cloud-broker is enabled for the
+  deploy-agent role only.
+
+mcp_grants:
+  deploy-agent:
+    customer-cloud-broker: true
+  audit:
+    aws-billing: true
+
+deny:
+  - aws-deploy             # nobody in Globex can call aws-deploy directly; the deploy-agent path is the broker route

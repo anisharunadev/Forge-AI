@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"python3 -m agents.documentation.api_docs_smoke_test 2>&1\",\"description\":\"Run the API docs smoke test\"}",
+  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<frozen runpy>\", line 198, in _run_module_as_main\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/documentation/api_docs_smoke_test.py\", line 754, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/pro...",
+  "timestamp": "2026-06-17T17:14:27.568Z",
+  "retry_count": 1
+}

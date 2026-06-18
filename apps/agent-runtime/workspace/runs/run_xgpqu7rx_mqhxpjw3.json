@@ -1,0 +1,51 @@
+{
+  "runId": "run_xgpqu7rx_mqhxpjw3",
+  "agentId": "echo-agent",
+  "tenantId": "t1",
+  "traceId": "tr-not-allowed",
+  "startedAt": "2026-06-17T10:34:55.347Z",
+  "finishedAt": "2026-06-17T10:34:55.347Z",
+  "status": "failed",
+  "steps": [
+    {
+      "stepId": "step-bad",
+      "planId": "plan-bad",
+      "tool": "forbidden-echo",
+      "handlerId": "",
+      "startedAt": "2026-06-17T10:34:55.347Z",
+      "finishedAt": "2026-06-17T10:34:55.347Z",
+      "durationMs": 0,
+      "ok": false,
+      "stage": "act",
+      "errorOutput": {
+        "code": "NotAllowed",
+        "message": "tool \"forbidden-echo\" is not in stage \"act\" allow-list",
+        "tool": "forbidden-echo",
+        "stage": "act",
+        "runId": "run_xgpqu7rx_mqhxpjw3"
+      }
+    }
+  ],
+  "replanCycles": 0,
+  "errors": [
+    {
+      "code": "NotAllowed",
+      "message": "tool \"forbidden-echo\" is not in stage \"act\" allow-list",
+      "tool": "forbidden-echo",
+      "stage": "act",
+      "runId": "run_xgpqu7rx_mqhxpjw3"
+    }
+  ],
+  "budget": {
+    "ceiling": {},
+    "spent": {
+      "tokens": 0,
+      "usd": 0,
+      "wallClockMs": 0
+    }
+  },
+  "finalReflection": {
+    "note": "echo done",
+    "done": true
+  }
+}

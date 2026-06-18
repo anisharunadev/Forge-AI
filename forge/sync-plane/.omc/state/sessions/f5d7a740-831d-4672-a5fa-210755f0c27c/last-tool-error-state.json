@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"env | grep -iE 'paperclip|api|host|port' 2>&1 | head -20\",\"description\":\"Find Paperclip API endpoint env vars\"}",
+  "error": "Exit code 137\nPAPERCLIP_API_URL=http://127.0.0.1:3100\nPAPERCLIP_API_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjdiODE1Mi1mZjE1LTQyMmYtYWRjZC04MDU0NDVmYjlmZDciLCJjb21wYW55X2lkIjoiM2ZkZTM5NDUtOWRjYi00YzQzLTk1YjMtNGU0ZTlkYjZmZmU5IiwiYWRhcHRlcl90eXBlIjoiY2xhdWRlX2xvY2FsIiwicnVuX2lkIjoiZTYzMmVlZGEtODg0Yy00OWY4LWI3NzMtMGUxMjVkMzQwMmE4IiwiaWF0IjoxNzgxNzMwNjc3LCJleHAiOjE3ODE5MDM0NzcsImlzcyI6InBhcGVyY2xpcCIsImF1ZCI6InBhcGVyY2xpcC1hcGkifQ.gZnoeZcAickjfseKzwiaB2vQBC1K7uYBeKL8AQJJDik\nPAPERCLIP_WO...",
+  "timestamp": "2026-06-17T21:26:19.513Z",
+  "retry_count": 1
+}

@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"mkdir -p src/assets docs-site/src/assets 2>&1; cp /home/arunachalam.v@knackforge.com/Downloads/KNACKFORGE.svg src/assets/logo.svg && cp /home/arunachalam.v@knackforge.com/Downloads/KNACKFO...",
+  "error": "Exit code 1\ncp: cannot create regular file 'public/favicon.svg': No such file or directory",
+  "timestamp": "2026-06-18T07:49:55.950Z",
+  "retry_count": 1
+}

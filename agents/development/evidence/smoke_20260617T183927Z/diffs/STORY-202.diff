@@ -1,0 +1,318 @@
+--- /dev/null
++++ b/apps/api/src/services/add_login_endpoint_service.py
+@@ -0,0 +1,42 @@
++"""
+
++Auto-generated scaffold — DO NOT COMMIT without review.
+
++
+
++plan_id: plan-53978af1da
+
++story_id: STORY-202
+
++task_id: t-001
+
++ac_refs: ac-1, ac-2
+
++
+
++description: Implement the add_login_endpoint business logic — the function or small set of functions the controller will call.
+
++"""
+
++
+
++from __future__ import annotations
+
++
+
++import uuid
+
++from typing import Any, Dict, List, Optional
+
++
+
++
+
++class ImplementAddLoginEndpointServiceService:
+
++    """CRUD + business logic for ImplementAddLoginEndpointService. v0.1 scaffold."""
+
++
+
++    def __init__(self, db):  # db is wired in v0.2
+
++        self._db = db
+
++
+
++    async def create(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+
++        # TODO[3.2/v0.2]: validate, persist, return created entity
+
++        raise NotImplementedError
+
++
+
++    async def get(self, entity_id: uuid.UUID) -> Optional[Dict[str, Any]]:
+
++        # TODO[3.2/v0.2]
+
++        raise NotImplementedError
+
++
+
++    async def list(self, *, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+
++        # TODO[3.2/v0.2]
+
++        raise NotImplementedError
+
++
+
++    async def update(self, entity_id: uuid.UUID, payload: Dict[str, Any]) -> Dict[str, Any]:
+
++        # TODO[3.2/v0.2]
+
++        raise NotImplementedError
+
++
+
++    async def delete(self, entity_id: uuid.UUID) -> None:
+
++        # TODO[3.2/v0.2]
+
++        raise NotImplementedError
+
+
+--- /dev/null
++++ b/apps/api/src/controllers/add_login_endpoint_controller.py
+@@ -0,0 +1,50 @@
++"""
+
++Auto-generated scaffold — DO NOT COMMIT without review.
+
++
+
++plan_id: plan-53978af1da
+
++story_id: STORY-202
+
++task_id: t-002
+
++ac_refs: ac-1, ac-2
+
++
+
++description: Expose add_login_endpoint over the HTTP surface. Define the route, request schema, response schema, and typed error envelope.
+
++"""
+
++
+
++from __future__ import annotations
+
++
+
++import uuid
+
++from typing import Any, Dict, List, Optional
+
++
+
++from fastapi import APIRouter, HTTPException, status
+
++from pydantic import BaseModel
+
++
+
++
+
++router = APIRouter(prefix="/wireaddloginendpointcontroller", tags=["wireaddloginendpointcontroller"])
+
++
+
++
+
++class WireAddLoginEndpointControllerCreateRequest(BaseModel):
+
++    # TODO[3.2/v0.2]: derive request fields from AC descriptions
+
++    pass
+
++
+
++
+
++class WireAddLoginEndpointControllerResponse(BaseModel):
+
++    id: uuid.UUID
+
++    created_at: str
+
++    updated_at: str
+
++
+
++
+
++@router.post("/", response_model=WireAddLoginEndpointControllerResponse, status_code=status.HTTP_201_CREATED)
+
++async def create_wireaddloginendpointcontroller(payload: WireAddLoginEndpointControllerCreateRequest) -> WireAddLoginEndpointControllerResponse:
+
++        # TODO[3.2/v0.2]
+
++        raise HTTPException(status_code=501, detail="not implemented")
+
++
+
++
+
++@router.get("/{entity_id}", response_model=WireAddLoginEndpointControllerResponse)
+
++async def get_wireaddloginendpointcontroller(entity_id: uuid.UUID) -> WireAddLoginEndpointControllerResponse:
+
++        # TODO[3.2/v0.2]
+
++        raise HTTPException(status_code=501, detail="not implemented")
+
++
+
++
+
++@router.get("/", response_model=List[WireAddLoginEndpointControllerResponse])
+
++async def list_wireaddloginendpointcontroller(limit: int = 50, offset: int = 0) -> List[WireAddLoginEndpointControllerResponse]:
+
++        # TODO[3.2/v0.2]
+
++        raise HTTPException(status_code=501, detail="not implemented")
+
+
+--- /dev/null
++++ b/apps/api/test/unit/add_login_endpoint/test_smoke.py
+@@ -0,0 +1,30 @@
++"""
+
++Auto-generated scaffold — DO NOT COMMIT without review.
+
++
+
++plan_id: plan-53978af1da
+
++story_id: STORY-202
+
++task_id: t-003
+
++ac_refs: ac-1, ac-2
+
++
+
++description: Unit tests for add_login_endpoint service and controller — happy path plus every AC failure case.
+
++"""
+
++
+
++from __future__ import annotations
+
++
+
++import pytest
+
++
+
++
+
++class TestAddAddLoginEndpointUnitTests:
+
++    """Unit tests for AddAddLoginEndpointUnitTests. v0.1 scaffold — fill bodies in v0.2."""
+
++
+
++    def test_constructor_happy_path(self):
+
++        # TODO[3.2/v0.2]: construct a valid AddAddLoginEndpointUnitTests and assert fields
+
++        pytest.skip("scaffold-only — body in v0.2")
+
++
+
++    def test_validate_rejects_invalid_input(self):
+
++        # TODO[3.2/v0.2]: assert validate() raises on bad input
+
++        pytest.skip("scaffold-only — body in v0.2")
+
++
+
++    def test_to_dict_round_trip(self):
+
++        # TODO[3.2/v0.2]: assert to_dict → from_row is identity
+
++        pytest.skip("scaffold-only — body in v0.2")
+
+
+--- /dev/null
++++ b/apps/api/test/integration/add_login_endpoint/test_smoke.py
+@@ -0,0 +1,30 @@
++"""
+
++Auto-generated scaffold — DO NOT COMMIT without review.
+
++
+
++plan_id: plan-53978af1da
+
++story_id: STORY-202
+
++task_id: t-004
+
++ac_refs: ac-1, ac-2
+
++
+
++description: Integration tests for add_login_endpoint — POST/GET flow against a test server. Includes auth header handling where relevant.
+
++"""
+
++
+
++from __future__ import annotations
+
++
+
++import pytest
+
++
+
++
+
++class TestAddAddLoginEndpointIntegrationTests:
+
++    """Unit tests for AddAddLoginEndpointIntegrationTests. v0.1 scaffold — fill bodies in v0.2."""
+
++
+
++    def test_constructor_happy_path(self):
+
++        # TODO[3.2/v0.2]: construct a valid AddAddLoginEndpointIntegrationTests and assert fields
+
++        pytest.skip("scaffold-only — body in v0.2")
+
++
+
++    def test_validate_rejects_invalid_input(self):
+
++        # TODO[3.2/v0.2]: assert validate() raises on bad input
+
++        pytest.skip("scaffold-only — body in v0.2")
+
++
+
++    def test_to_dict_round_trip(self):
+
++        # TODO[3.2/v0.2]: assert to_dict → from_row is identity
+
++        pytest.skip("scaffold-only — body in v0.2")

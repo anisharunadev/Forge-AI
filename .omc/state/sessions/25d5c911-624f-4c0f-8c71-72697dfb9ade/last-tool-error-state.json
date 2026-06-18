@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"python3 -c \\\"\\nimport sys\\nsys.path.insert(0, '.')\\nfrom agents.sync_plane.service_accounts import (\\n    provision_tenant_accounts, provision_agent_account,\\n    service_account_for, expe...",
+  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 14, in <module>\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/sync_plane/service_accounts.py\", line 235, in provision_tenant_accounts\n    row = table.append(\n          ^^^^^^^^^^^^^\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09...",
+  "timestamp": "2026-06-17T21:19:57.107Z",
+  "retry_count": 1
+}

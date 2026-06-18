@@ -1,0 +1,65 @@
+{
+  "runId": "run_rhyzepny_mqhbv28e",
+  "agentId": "echo-agent",
+  "tenantId": "t1",
+  "traceId": "tr-replan",
+  "startedAt": "2026-06-17T00:23:20.846Z",
+  "finishedAt": "2026-06-17T00:23:20.850Z",
+  "status": "succeeded",
+  "steps": [
+    {
+      "stepId": "step-1",
+      "planId": "plan-1",
+      "tool": "echo",
+      "handlerId": "",
+      "startedAt": "2026-06-17T00:23:20.850Z",
+      "finishedAt": "2026-06-17T00:23:20.850Z",
+      "durationMs": 0,
+      "ok": true,
+      "stage": "act",
+      "output": {
+        "echoed": {
+          "message": "replan-me"
+        }
+      }
+    },
+    {
+      "stepId": "step-1",
+      "planId": "plan-2",
+      "tool": "echo",
+      "handlerId": "",
+      "startedAt": "2026-06-17T00:23:20.850Z",
+      "finishedAt": "2026-06-17T00:23:20.850Z",
+      "durationMs": 0,
+      "ok": true,
+      "stage": "act",
+      "output": {
+        "echoed": {
+          "message": "replan-me"
+        }
+      }
+    },
+    {
+      "stepId": "step-1",
+      "planId": "plan-3",
+      "tool": "echo",
+      "handlerId": "",
+      "startedAt": "2026-06-17T00:23:20.850Z",
+      "finishedAt": "2026-06-17T00:23:20.850Z",
+      "durationMs": 0,
+      "ok": true,
+      "stage": "act",
+      "output": {
+        "echoed": {
+          "message": "replan-me"
+        }
+      }
+    }
+  ],
+  "replanCycles": 2,
+  "errors": [],
+  "finalReflection": {
+    "note": "done",
+    "done": true
+  }
+}

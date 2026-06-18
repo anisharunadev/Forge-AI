@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"timeout 60 ./node_modules/.bin/vitest run 2>&1 | tail -40\",\"timeout\":90000,\"description\":\"Run full vitest suite\"}",
+  "error": "Exit code 143\nCommand timed out after 1m 30s\nTerminated",
+  "timestamp": "2026-06-17T16:46:35.482Z",
+  "retry_count": 1
+}

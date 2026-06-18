@@ -1,0 +1,37 @@
+{
+  "name": "@fora/mcp-github",
+  "version": "0.1.0",
+  "description": "FORA GitHub MCP server — exposes list_repos, get_pr, list_prs, create_pr_comment, list_issues, create_issue, search_code over MCP/stdio. Auth via GitHub App or PAT scoped to a single org.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "fora-mcp-github": "bin/fora-mcp-github.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "docs"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build",
+    "start": "node bin/fora-mcp-github.mjs",
+    "smoke": "node test/smoke.mjs",
+    "smoke:live": "node test/live-smoke.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@octokit/rest": "^21.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "typescript": "^5.6.0"
+  }
+}

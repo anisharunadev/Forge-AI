@@ -1,0 +1,41 @@
+{
+  "runId": "run_3v7m34jz",
+  "agentId": "cancel-echo",
+  "tenantId": "t1",
+  "traceId": "tr-cancel",
+  "startedAt": "2026-06-17T00:40:18.753Z",
+  "finishedAt": "2026-06-17T00:40:18.808Z",
+  "status": "succeeded",
+  "steps": [
+    {
+      "stepId": "s1",
+      "planId": "p1",
+      "tool": "echo",
+      "handlerId": "",
+      "startedAt": "2026-06-17T00:40:18.757Z",
+      "finishedAt": "2026-06-17T00:40:18.808Z",
+      "durationMs": 51,
+      "ok": true,
+      "stage": "act",
+      "output": {
+        "echoed": {
+          "message": "cancel me"
+        }
+      }
+    }
+  ],
+  "replanCycles": 0,
+  "errors": [],
+  "budget": {
+    "ceiling": {},
+    "spent": {
+      "tokens": 0,
+      "usd": 0,
+      "wallClockMs": 55
+    }
+  },
+  "finalReflection": {
+    "note": "done",
+    "done": true
+  }
+}

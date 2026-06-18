@@ -1,0 +1,375 @@
+{
+  "ac_checks": {
+    "ac1_all_artefacts_present": true,
+    "ac2_xrefs_rewritten": true,
+    "ac3_adr_index_sortable": true,
+    "ac4_idempotent": true,
+    "ac5_per_artefact_isolation": true,
+    "ac6_cost_bounded": true
+  },
+  "confluence_base_url": "http://127.0.0.1:39259",
+  "confluence_call_count": 131,
+  "cost_usd": 0.0,
+  "elapsed_ms_publisher": 146.323,
+  "forge_dir": "/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/forge/2.3",
+  "forge_sha256": "68d66e63748535a0c58c64f5a9fd2a10917961c9ba26cb51657853807df96494",
+  "index_summary": "FORA-18 architecture docs published: 14 artefacts (HLD, LLD, ADRs, sequence diagrams, OpenAPI). Index: /wiki/spaces/ENG/pages/<index-page-id>. All cross-references resolved.",
+  "plan_adr_count": 5,
+  "plan_page_count": 16,
+  "results": [
+    {
+      "action": "created",
+      "artefact_rel_path": "index.md",
+      "elapsed_ms": 37.85010600404348,
+      "error": null,
+      "page_id": "20001",
+      "page_title": "index",
+      "version": 1
+    },
+    {
+      "action": "created",
+      "artefact_rel_path": "adr/0001-soft-delete-audit-invariant.md",
+      "elapsed_ms": 4.136528994422406,
+      "error": null,
+      "page_id": "20002",
+      "page_title": "ADR-0001 \u2014 soft delete audit invariant",
+      "version": 1
+    },
+    {
+      "action": "created",
+      "artefact_rel_path": "adr/0002-dual-bus-nats-sqs.md",
+      "elapsed_ms": 2.653029005159624,
+      "error": null,
+      "page_id": "20003",
+      "page_title": "ADR-0002 \u2014 dual bus nats sqs",
+      "version": 1
+    },
+    {
+      "action": "created",
+      "artefact_rel_path": "adr/0003-pgvector-tenant-rls.md",
+      "elapsed_ms": 2.669060995685868,
+      "error": null,
+      "page_id": "20004",
+      "page_title": "ADR-0003 \u2014 pgvector tenant rls",
+      "version": 1
+    },
+    {
+      "action": "created",
+      "artefact_rel_path": "adr/0004-idempotency-key-envelope.md",
+      "elapsed_ms": 2.972962989588268,
+      "error": null,
+      "page_id": "20005",
+      "page_title": "ADR-0004 \u2014 idempotency key envelope",
+      "version": 1
+    },
+    {
+      "action": "created",
+      "artefact_rel_path": "adr/0005-plan-then-act-gate.md",
+      "elapsed_ms": 2.721985991229303,
+      "error": null,
+      "page_id": "20006",
+      "page_title": "ADR-0005 \u2014 plan then act gate",
+      "version": 1
+    },
+    {
+      "action": "created",
+      "artefact_rel_path": "erd.mmd",
+      "elapsed_ms": 2.762613003142178,
+      "error": null,
+      "page_id": "20007",
+      "page_title": "erd",
+      "version": 1
+    },
+    {
+      "action": "created",
+      "artefact_rel_path": "hld.md",
+      "elapsed_ms": 2.804187999572605,
+      "error": null,
+      "page_id": "20008",
+      "page_title": "hld",
+      "version": 1
+    },
+    {
+      "action": "created",
+      "artefact_rel_path": "lld.md",
+      "elapsed_ms": 3.191819996573031,
+      "error": null,
+      "page_id": "20009",
+      "page_title": "lld",
+      "version": 1
+    },
+    {
+      "action": "created",
+      "artefact_rel_path": "openapi.yaml",
+      "elapsed_ms": 5.6093650055117905,
+      "error": null,
+      "page_id": "20010",
+      "page_title": "openapi",
+      "version": 1
+    },
+    {
+      "action": "created",
+      "artefact_rel_path": "sequence/01-pm-idea-to-pr.mmd",
+      "elapsed_ms": 3.0922029982320964,
+      "error": null,
+      "page_id": "20011",
+      "page_title": "Sequence 01 \u2014 pm idea to pr",
+      "version": 1
+    },
+    {
+      "action": "created",
+      "artefact_rel_path": "sequence/02-incident-response.mmd",
+      "elapsed_ms": 3.2376019953517243,
+      "error": null,
+      "page_id": "20012",
+      "page_title": "Sequence 02 \u2014 incident response",
+      "version": 1
+    },
+    {
+      "action": "created",
+      "artefact_rel_path": "sequence/03-ciso-audit-export.mmd",
+      "elapsed_ms": 2.9857119952794164,
+      "error": null,
+      "page_id": "20013",
+      "page_title": "Sequence 03 \u2014 ciso audit export",
+      "version": 1
+    },
+    {
+      "action": "created",
+      "artefact_rel_path": "sequence/04-tenant-cloud-broker.mmd",
+      "elapsed_ms": 3.0189280078047886,
+      "error": null,
+      "page_id": "20014",
+      "page_title": "Sequence 04 \u2014 tenant cloud broker",
+      "version": 1
+    },
+    {
+      "action": "created",
+      "artefact_rel_path": "sequence/05-cost-ceiling-pause.mmd",
+      "elapsed_ms": 3.0477260006591678,
+      "error": null,
+      "page_id": "20015",
+      "page_title": "Sequence 05 \u2014 cost ceiling pause",
+      "version": 1
+    },
+    {
+      "action": "created",
+      "artefact_rel_path": "adr-index.md",
+      "elapsed_ms": 2.92715200339444,
+      "error": null,
+      "page_id": "20016",
+      "page_title": "ADR index",
+      "version": 1
+    },
+    {
+      "action": "updated",
+      "artefact_rel_path": "index.md",
+      "elapsed_ms": 3.333216009195894,
+      "error": null,
+      "page_id": "20001",
+      "page_title": "index",
+      "version": 1
+    },
+    {
+      "action": "updated",
+      "artefact_rel_path": "adr/0001-soft-delete-audit-invariant.md",
+      "elapsed_ms": 3.147363997413777,
+      "error": null,
+      "page_id": "20002",
+      "page_title": "ADR-0001 \u2014 soft delete audit invariant",
+      "version": 1
+    },
+    {
+      "action": "updated",
+      "artefact_rel_path": "adr/0002-dual-bus-nats-sqs.md",
+      "elapsed_ms": 3.2847940019564703,
+      "error": null,
+      "page_id": "20003",
+      "page_title": "ADR-0002 \u2014 dual bus nats sqs",
+      "version": 1
+    },
+    {
+      "action": "updated",
+      "artefact_rel_path": "adr/0003-pgvector-tenant-rls.md",
+      "elapsed_ms": 3.3116319973487407,
+      "error": null,
+      "page_id": "20004",
+      "page_title": "ADR-0003 \u2014 pgvector tenant rls",
+      "version": 1
+    },
+    {
+      "action": "updated",
+      "artefact_rel_path": "adr/0004-idempotency-key-envelope.md",
+      "elapsed_ms": 3.7241739919409156,
+      "error": null,
+      "page_id": "20005",
+      "page_title": "ADR-0004 \u2014 idempotency key envelope",
+      "version": 1
+    },
+    {
+      "action": "updated",
+      "artefact_rel_path": "adr/0005-plan-then-act-gate.md",
+      "elapsed_ms": 3.4710679901763797,
+      "error": null,
+      "page_id": "20006",
+      "page_title": "ADR-0005 \u2014 plan then act gate",
+      "version": 1
+    },
+    {
+      "action": "updated",
+      "artefact_rel_path": "erd.mmd",
+      "elapsed_ms": 4.101982005522586,
+      "error": null,
+      "page_id": "20007",
+      "page_title": "erd",
+      "version": 1
+    },
+    {
+      "action": "updated",
+      "artefact_rel_path": "hld.md",
+      "elapsed_ms": 3.5391629935475066,
+      "error": null,
+      "page_id": "20008",
+      "page_title": "hld",
+      "version": 1
+    },
+    {
+      "action": "updated",
+      "artefact_rel_path": "lld.md",
+      "elapsed_ms": 4.110517009394243,
+      "error": null,
+      "page_id": "20009",
+      "page_title": "lld",
+      "version": 1
+    },
+    {
+      "action": "updated",
+      "artefact_rel_path": "openapi.yaml",
+      "elapsed_ms": 7.196904000011273,
+      "error": null,
+      "page_id": "20010",
+      "page_title": "openapi",
+      "version": 1
+    },
+    {
+      "action": "updated",
+      "artefact_rel_path": "sequence/01-pm-idea-to-pr.mmd",
+      "elapsed_ms": 3.5589400067692623,
+      "error": null,
+      "page_id": "20011",
+      "page_title": "Sequence 01 \u2014 pm idea to pr",
+      "version": 1
+    },
+    {
+      "action": "updated",
+      "artefact_rel_path": "sequence/02-incident-response.mmd",
+      "elapsed_ms": 3.4250090102432296,
+      "error": null,
+      "page_id": "20012",
+      "page_title": "Sequence 02 \u2014 incident response",
+      "version": 1
+    },
+    {
+      "action": "updated",
+      "artefact_rel_path": "sequence/03-ciso-audit-export.mmd",
+      "elapsed_ms": 3.9394490013364702,
+      "error": null,
+      "page_id": "20013",
+      "page_title": "Sequence 03 \u2014 ciso audit export",
+      "version": 1
+    },
+    {
+      "action": "updated",
+      "artefact_rel_path": "sequence/04-tenant-cloud-broker.mmd",
+      "elapsed_ms": 3.2278839935315773,
+      "error": null,
+      "page_id": "20014",
+      "page_title": "Sequence 04 \u2014 tenant cloud broker",
+      "version": 1
+    },
+    {
+      "action": "updated",
+      "artefact_rel_path": "sequence/05-cost-ceiling-pause.mmd",
+      "elapsed_ms": 3.5055090120295063,
+      "error": null,
+      "page_id": "20015",
+      "page_title": "Sequence 05 \u2014 cost ceiling pause",
+      "version": 1
+    },
+    {
+      "action": "updated",
+      "artefact_rel_path": "adr-index.md",
+      "elapsed_ms": 3.4907499939436093,
+      "error": null,
+      "page_id": "20016",
+      "page_title": "ADR index",
+      "version": 1
+    }
+  ],
+  "run_stamp": "20260617T180530Z",
+  "slack_base_url": "http://127.0.0.1:39515",
+  "slack_call_count": 5,
+  "slack_first": {
+    "action": "posted",
+    "channel": "C002",
+    "error": null,
+    "permalink": null,
+    "text": "FORA-39 arch-publish\nFORA-18 architecture docs published: 14 artefacts (HLD, LLD, ADRs, sequence diagrams, OpenAPI). Index: /wiki/spaces/ENG/pages/<index-page-id>. All cross-references resolved.",
+    "ts": "1700002000.000700"
+  },
+  "slack_second": {
+    "action": "updated",
+    "channel": "C002",
+    "error": null,
+    "permalink": "https://acme.slack.com/archives/C002/p",
+    "text": "FORA-39 arch-publish\nFORA-18 architecture docs published: 14 artefacts (HLD, LLD, ADRs, sequence diagrams, OpenAPI). Index: /wiki/spaces/ENG/pages/<index-page-id>. All cross-references resolved. (re-run)",
+    "ts": "1700002000.000700"
+  },
+  "tiny_failure_isolation": [
+    {
+      "action": "created",
+      "artefact_rel_path": "a.md",
+      "elapsed_ms": 0.012667995179072022,
+      "error": null,
+      "page_id": "9001",
+      "page_title": "page-a",
+      "version": 1
+    },
+    {
+      "action": "failed",
+      "artefact_rel_path": "b.md",
+      "elapsed_ms": 0.014268996892496943,
+      "error": "RuntimeError: flaky: simulated outage",
+      "page_id": null,
+      "page_title": "flaky-page",
+      "version": null
+    },
+    {
+      "action": "created",
+      "artefact_rel_path": "c.md",
+      "elapsed_ms": 0.0070389942266047,
+      "error": null,
+      "page_id": "9002",
+      "page_title": "page-c",
+      "version": 1
+    },
+    {
+      "action": "updated",
+      "artefact_rel_path": "a.md",
+      "elapsed_ms": 0.011393000022508204,
+      "error": null,
+      "page_id": "9001",
+      "page_title": "page-a",
+      "version": 2
+    },
+    {
+      "action": "updated",
+      "artefact_rel_path": "c.md",
+      "elapsed_ms": 0.005840993253514171,
+      "error": null,
+      "page_id": "9002",
+      "page_title": "page-c",
+      "version": 2
+    }
+  ]
+}

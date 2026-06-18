@@ -1,0 +1,7 @@
+{
+  "tool_name": "mcp__plugin_atlassian_atlassian__getJiraIssue",
+  "tool_input_preview": "{\"cloudId\":\"37e1df59-b7dc-4439-8f9c-eba94e504dac\",\"issueIdOrKey\":\"FORA-285\",\"fields\":[\"*all\"]}",
+  "error": "{\"error\":true,\"message\":\"{\\\"errorMessages\\\":[\\\"Issue does not exist or you do not have permission to see it.\\\"],\\\"errors\\\":{}}\",\"rateLimit\":{\"limit\":400,\"remaining\":399,\"headers\":{\"x-ratelimit-limit\":\"400\",\"x-ratelimit-remaining\":\"399\"}}}",
+  "timestamp": "2026-06-17T21:26:48.472Z",
+  "retry_count": 6
+}

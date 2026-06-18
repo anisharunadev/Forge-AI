@@ -1,0 +1,2 @@
+{"kind":"error","runId":"run-pre-cancel","error":{"code":"Cancelled","message":"run cancelled: pre-cancel","runId":"run-pre-cancel","reason":"pre-cancel"},"at":"2026-06-17T00:38:07.004Z"}
+{"kind":"finished","runId":"run-pre-cancel","status":"cancelled","at":"2026-06-17T00:38:07.004Z"}

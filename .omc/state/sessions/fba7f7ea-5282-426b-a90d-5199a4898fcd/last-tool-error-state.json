@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -s -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\"http://127.0.0.1:3100/api/issues/FORA-322/comments?order=asc\\\" | jq '[.comments[] | {id, authorType, authorAgentId, authorUser...",
+  "error": "Exit code 5\njq: error (at <stdin>:1): Cannot index array with string \"comments\"",
+  "timestamp": "2026-06-18T00:30:54.125Z",
+  "retry_count": 1
+}

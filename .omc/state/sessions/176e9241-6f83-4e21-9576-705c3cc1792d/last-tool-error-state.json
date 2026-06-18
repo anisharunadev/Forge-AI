@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk ls -la apps/ 2>/dev/null; echo \\\"---\\\"; rtk find . -maxdepth 4 -type d \\\\( -name \\\"orchestrator*\\\" -o -name \\\"fora-orchestrator*\\\" -o -name \\\"master*\\\" \\\\) -not -path \\\"*/node_modules/...",
+  "error": "Exit code 1\nagent-runtime/\nidentity-broker/\n---",
+  "timestamp": "2026-06-17T10:04:36.782Z",
+  "retry_count": 1
+}

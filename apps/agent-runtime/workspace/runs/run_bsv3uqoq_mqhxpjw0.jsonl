@@ -1,0 +1,21 @@
+{"kind":"stage.entered","runId":"run_bsv3uqoq_mqhxpjw0","stage":"plan","at":"2026-06-17T10:34:55.344Z"}
+{"kind":"plan.emitted","runId":"run_bsv3uqoq_mqhxpjw0","planId":"plan-1","stepCount":1,"at":"2026-06-17T10:34:55.344Z"}
+{"kind":"stage.entered","runId":"run_bsv3uqoq_mqhxpjw0","stage":"act","at":"2026-06-17T10:34:55.344Z"}
+{"kind":"observation","runId":"run_bsv3uqoq_mqhxpjw0","observation":{"stepId":"step-1","tool":"echo","output":{"echoed":{"message":"infinite"}},"ok":true,"durationMs":0},"at":"2026-06-17T10:34:55.344Z"}
+{"kind":"stage.entered","runId":"run_bsv3uqoq_mqhxpjw0","stage":"observe","at":"2026-06-17T10:34:55.344Z"}
+{"kind":"stage.entered","runId":"run_bsv3uqoq_mqhxpjw0","stage":"reflect","at":"2026-06-17T10:34:55.344Z"}
+{"kind":"reflection","runId":"run_bsv3uqoq_mqhxpjw0","done":false,"note":"replan forever","at":"2026-06-17T10:34:55.344Z"}
+{"kind":"replan","runId":"run_bsv3uqoq_mqhxpjw0","cycle":1,"at":"2026-06-17T10:34:55.345Z"}
+{"kind":"stage.entered","runId":"run_bsv3uqoq_mqhxpjw0","stage":"act","at":"2026-06-17T10:34:55.345Z"}
+{"kind":"observation","runId":"run_bsv3uqoq_mqhxpjw0","observation":{"stepId":"step-1","tool":"echo","output":{"echoed":{"message":"infinite"}},"ok":true,"durationMs":0},"at":"2026-06-17T10:34:55.345Z"}
+{"kind":"stage.entered","runId":"run_bsv3uqoq_mqhxpjw0","stage":"observe","at":"2026-06-17T10:34:55.345Z"}
+{"kind":"stage.entered","runId":"run_bsv3uqoq_mqhxpjw0","stage":"reflect","at":"2026-06-17T10:34:55.345Z"}
+{"kind":"reflection","runId":"run_bsv3uqoq_mqhxpjw0","done":false,"note":"replan forever","at":"2026-06-17T10:34:55.345Z"}
+{"kind":"replan","runId":"run_bsv3uqoq_mqhxpjw0","cycle":2,"at":"2026-06-17T10:34:55.345Z"}
+{"kind":"stage.entered","runId":"run_bsv3uqoq_mqhxpjw0","stage":"act","at":"2026-06-17T10:34:55.345Z"}
+{"kind":"observation","runId":"run_bsv3uqoq_mqhxpjw0","observation":{"stepId":"step-1","tool":"echo","output":{"echoed":{"message":"infinite"}},"ok":true,"durationMs":0},"at":"2026-06-17T10:34:55.345Z"}
+{"kind":"stage.entered","runId":"run_bsv3uqoq_mqhxpjw0","stage":"observe","at":"2026-06-17T10:34:55.346Z"}
+{"kind":"stage.entered","runId":"run_bsv3uqoq_mqhxpjw0","stage":"reflect","at":"2026-06-17T10:34:55.346Z"}
+{"kind":"reflection","runId":"run_bsv3uqoq_mqhxpjw0","done":false,"note":"replan forever","at":"2026-06-17T10:34:55.346Z"}
+{"kind":"error","runId":"run_bsv3uqoq_mqhxpjw0","error":{"code":"ReplanBudgetExhausted","message":"replan cycle 3 exceeds maxReplans=2","runId":"run_bsv3uqoq_mqhxpjw0","maxReplans":2},"at":"2026-06-17T10:34:55.346Z"}
+{"kind":"finished","runId":"run_bsv3uqoq_mqhxpjw0","status":"failed","at":"2026-06-17T10:34:55.346Z"}

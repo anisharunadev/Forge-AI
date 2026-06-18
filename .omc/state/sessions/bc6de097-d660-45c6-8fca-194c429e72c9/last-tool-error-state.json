@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"API=\\\"http://127.0.0.1:3100\\\"\\nKEY=\\\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmMWZhM2NiOC03YWM2LTRmMDgtYTBmYS1jOGJiYjcyYzIyYWUiLCJjb21wYW55X2lkIjoiM2ZkZTM5NDUtOWRjYi00YzQzLTk1YjMtNG...",
+  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 4, in <module>\n  File \"/usr/lib/python3.12/urllib/request.py\", line 215, in urlopen\n    return opener.open(url, data, timeout)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 521, in open\n    response = meth(req, response)\n               ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 630, in http_response\n    response = self.parent.error(\n              ...",
+  "timestamp": "2026-06-17T00:41:18.775Z",
+  "retry_count": 2
+}

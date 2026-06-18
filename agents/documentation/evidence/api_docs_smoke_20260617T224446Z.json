@@ -1,0 +1,29 @@
+{
+  "spec": "FORA-119",
+  "sub_goal": "7.1.3 API docs generator",
+  "ran_at": "2026-06-17T17:14:46.056877+00:00",
+  "tests_run": 19,
+  "assertions_failed": 0,
+  "failures": [],
+  "acceptance": {
+    "sample_run": "PASS",
+    "openapi_structural_validation": "PASS",
+    "graphql_sdl": "PASS",
+    "asyncapi": "PASS",
+    "idempotency": "PASS",
+    "doc_diff_new": "PASS",
+    "doc_diff_identical": "PASS",
+    "approval_routing": "PASS",
+    "empty_surface_todo": "PASS",
+    "dry_run": "PASS",
+    "storage_contract": "PASS",
+    "crosslink_adrs": "PASS",
+    "crosslink_missing_adr": "PASS",
+    "missing_input_sha": "PASS",
+    "renderer_pure_openapi": "PASS",
+    "renderer_pure_graphql": "PASS",
+    "renderer_pure_asyncapi": "PASS",
+    "renderer_pure_readme": "PASS",
+    "no_wall_clock": "PASS"
+  }
+}

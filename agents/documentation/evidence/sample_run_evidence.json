@@ -1,0 +1,81 @@
+{
+  "spec": "FORA-117",
+  "run_id": "smoke-5cb1e624",
+  "input_sha": "abc1234567",
+  "status": "ok",
+  "artifacts": [
+    {
+      "path": "readme.md",
+      "kind": "readme",
+      "content_sha": "c00d6600e9c4eacce03767732c94b283fcfdc0efd4243f2839abb182c001f5f6",
+      "freshness_timestamp": "2026-06-17T17:14:53.984324+00:00",
+      "source_sha": "abc1234567",
+      "approval_required": false
+    },
+    {
+      "path": "changelog.md",
+      "kind": "changelog",
+      "content_sha": "c00d6600e9c4eacce03767732c94b283fcfdc0efd4243f2839abb182c001f5f6",
+      "freshness_timestamp": "2026-06-17T17:14:53.984347+00:00",
+      "source_sha": "abc1234567",
+      "approval_required": false
+    },
+    {
+      "path": "adr.md",
+      "kind": "adr",
+      "content_sha": "c00d6600e9c4eacce03767732c94b283fcfdc0efd4243f2839abb182c001f5f6",
+      "freshness_timestamp": "2026-06-17T17:14:53.984351+00:00",
+      "source_sha": "abc1234567",
+      "approval_required": true
+    }
+  ],
+  "doc_index_version": "1.0",
+  "doc_index_entries": [
+    {
+      "path": "readme.md",
+      "kind": "readme",
+      "title": "Sample readme",
+      "source_commit": "abc1234567",
+      "approval_required": false
+    },
+    {
+      "path": "changelog.md",
+      "kind": "changelog",
+      "title": "Sample changelog",
+      "source_commit": "abc1234567",
+      "approval_required": false
+    },
+    {
+      "path": "adr.md",
+      "kind": "adr",
+      "title": "Sample adr",
+      "source_commit": "abc1234567",
+      "approval_required": true
+    }
+  ],
+  "adr_registry_version": "1.0",
+  "adr_registry_entries": [
+    {
+      "number": 42,
+      "title": "Use Postgres for checkout store",
+      "status": "proposed",
+      "architecture_area": "knowledge-layer"
+    }
+  ],
+  "freshness_warnings": [],
+  "cost_record": {
+    "prompt_hash": "0151620b927a79f7658d3efc4572e3566a92546d",
+    "model": "claude-sonnet-4-6",
+    "tokens_in": 1234,
+    "tokens_out": 567,
+    "usd": 0.011,
+    "duration_ms": 850,
+    "fallback_used": false
+  },
+  "freshness_metadata": {
+    "docs_index_sha": "didx-cccc",
+    "generated_at": "2026-06-17T17:14:53.984354+00:00",
+    "oldest_artifact_source_sha": "0000001",
+    "newest_artifact_source_sha": "abc1234"
+  }
+}

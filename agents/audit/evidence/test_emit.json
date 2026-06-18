@@ -1,0 +1,35 @@
+{
+  "scenarios": {
+    "AC1 one tool call emits one event with the correct schema": {
+      "eventId": "evt-2441a1d6bc254d55",
+      "schemaVersion": "0.1.0",
+      "eventType": "tool_call",
+      "timestamp": "2026-06-17T00:35:24.277066Z",
+      "runId": "run-1",
+      "agentId": "agent-1",
+      "tenantId": "tenant-1",
+      "stage": "act",
+      "tool": "noop",
+      "inputDigest": "0b549edd218c251f511934cc2f3bc5c7f4780e27af6b8ab4ae8d92cd94121b4a",
+      "outputDigest": "1aad36b0fb02621b951649811957ba7ad67d4838c2932d02088f7d6e8db74313",
+      "costCents": 4,
+      "promptTokens": 10,
+      "completionTokens": 5,
+      "wallMs": 42.0,
+      "callId": "call-abc",
+      "stepId": "s1",
+      "idempotencyKey": "idem-1",
+      "prevHash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "recordHash": "d5fb0577d0b10d52a05a4abaf608cacf43b469283c0e2edecb5b265f3f477b89"
+    },
+    "AC1 boundary events chain on the (tenant, run) pair": {
+      "eventCount": 3
+    },
+    "AC1 disk persistence round-trip preserves the chain head": {
+      "replayed": 5
+    },
+    "AC1 canonical JSON is stable across key orderings": {
+      "stable": true
+    }
+  }
+}

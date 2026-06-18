@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk ls node_modules/.bin/vitest && echo \\\"vitest exists\\\" && rtk read ../../.npmrc 2>/dev/null && rtk read /home/arunachalam.v@knackforge.com/.npmrc 2>/dev/null\",\"description\":\"Check vites...",
+  "error": "Exit code 1\nnode_modules/.bin/vitest  2.1K\nvitest exists",
+  "timestamp": "2026-06-17T00:45:52.256Z",
+  "retry_count": 3
+}

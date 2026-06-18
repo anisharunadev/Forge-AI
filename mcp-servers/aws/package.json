@@ -1,0 +1,38 @@
+{
+  "name": "@fora/mcp-aws",
+  "version": "0.1.0",
+  "description": "FORA AWS MCP server — exposes list_stacks, get_stack, list_stack_resources, get_resource, list_change_sets, get_change_set, describe_change_set over MCP/stdio. Auth via the standard AWS SDK credential chain, pinned to one account+region.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "fora-mcp-aws": "bin/fora-mcp-aws.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "docs"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build",
+    "start": "node bin/fora-mcp-aws.mjs",
+    "smoke": "node test/smoke.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cloudcontrol": "^3.658.0",
+    "@aws-sdk/client-cloudformation": "^3.658.0",
+    "@aws-sdk/client-sts": "^3.658.0",
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "typescript": "^5.6.0"
+  }
+}

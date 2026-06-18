@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -sf -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\"$PAPERCLIP_API_URL/api/companies/$PAPERCLIP_COMPANY_ID/issues?parentId=137f5454-94b5-412f-ac89-db7e93cb5102\\\" 2>&1 | python3 ...",
+  "error": "Exit code 1\n  File \"<string>\", line 5\n    print(f'FORA-81 children at {2026-06-17T20:25Z}:')\n                                      ^\nSyntaxError: leading zeros in decimal integer literals are not permitted; use an 0o prefix for octal integers",
+  "timestamp": "2026-06-17T20:25:15.653Z",
+  "retry_count": 1
+}

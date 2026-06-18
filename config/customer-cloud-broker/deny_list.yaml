@@ -1,0 +1,128 @@
+# Global deny-list for the customer-cloud-broker.
+#
+# Every entry is `(cloud, action_regex)`. The broker checks the action
+# against the deny-list *before* it ever contacts the cloud — the
+# federation token is never minted, the action is never executed.
+# Failures are logged as `cloud.brokered` audit events with
+# `response_code = deny_listed`.
+#
+# Format: `actions` is a list of `{ cloud, action }` pairs where
+# `action` is a regex anchored to the full action string.
+# Match means deny; partial means deny too (regex is full-match
+# with start/end anchors applied at check time, see `src/deny-list.ts`).
+#
+# This list is the second line of defence after IAM permissions on the
+# customer's role. The customer might grant overly broad permissions; the
+# deny-list catches actions the platform refuses to perform *regardless*
+# of tenant policy. Adding an entry is a one-line PR; removing one needs
+# CEO + Security sign-off (per ADR-0003 §6.3).
+
+version: 1
+
+actions:
+  # ---------------------------------------------------------------------------
+  # AWS — the highest-volume cloud. `iam:*` and `sts:*` are universally
+  # dangerous: a misconfigured grant could delete a customer's IAM users.
+  # ---------------------------------------------------------------------------
+  - cloud: aws
+    action: "^iam:DeleteUser$"
+  - cloud: aws
+    action: "^iam:CreateUser$"
+  - cloud: aws
+    action: "^iam:CreateAccessKey$"
+  - cloud: aws
+    action: "^iam:DeleteAccessKey$"
+  - cloud: aws
+    action: "^iam:AttachUserPolicy$"
+  - cloud: aws
+    action: "^iam:DetachUserPolicy$"
+  - cloud: aws
+    action: "^iam:PutUserPolicy$"
+  - cloud: aws
+    action: "^iam:DeleteUserPolicy$"
+  - cloud: aws
+    action: "^iam:CreateRole$"
+  - cloud: aws
+    action: "^iam:DeleteRole$"
+  - cloud: aws
+    action: "^iam:PassRole$"          # privilege escalation primitive
+  - cloud: aws
+    action: "^iam:AssumeRole$"        # broker is the only legitimate assumer
+  - cloud: aws
+    action: "^sts:AssumeRole$"
+  - cloud: aws
+    action: "^account:DisableRegion$"
+  - cloud: aws
+    action: "^account:CloseAccount$"
+
+  # ---------------------------------------------------------------------------
+  # Azure — analogous dangerous operations. ARM roles and assignments are
+  # the privilege-escalation primitive; deny writes to them.
+  # ---------------------------------------------------------------------------
+  - cloud: azure
+    action: "^authorization/roleAssignments/write$"
+  - cloud: azure
+    action: "^authorization/roleDefinitions/write$"
+  - cloud: azure
+    action: "^authorization/roleDefinitions/delete$"
+  - cloud: azure
+    action: "^Microsoft.Authorization/roleAssignments/write$"
+  - cloud: azure
+    action: "^Microsoft.Authorization/roleDefinitions/write$"
+
+  # ---------------------------------------------------------------------------
+  # GCP — IAM bindings and service account key creation.
+  # ---------------------------------------------------------------------------
+  - cloud: gcp
+    action: "^iam.serviceAccounts.actAs$"
+  - cloud: gcp
+    action: "^iam.serviceAccountKeys.create$"
+  - cloud: gcp
+    action: "^iam.serviceAccounts.create$"
+  - cloud: gcp
+    action: "^iam.serviceAccounts.delete$"
+  - cloud: gcp
+    action: "^resourcemanager.projects.setIamPolicy$"
+
+  # ---------------------------------------------------------------------------
+  # SonarQube (FORA-321) — read-only mandate from FORA-290. The
+  # `perform()` dispatcher is GET-only, so the only defence here is the
+  # action string itself (which the broker matches before the
+  # dispatcher is reached). Anything that looks like a write path is
+  # denied by name; the positive allowlist in
+  # `src/adapters/sonarqube.ts::SERVICE_OPS` is the source of truth.
+  # ---------------------------------------------------------------------------
+  - cloud: sonarqube
+    action: "^projects\\.create$"
+  - cloud: sonarqube
+    action: "^projects\\.delete$"
+  - cloud: sonarqube
+    action: "^projects\\.update$"
+  - cloud: sonarqube
+    action: "^issues\\.transition$"
+  - cloud: sonarqube
+    action: "^issues\\.assign$"
+  - cloud: sonarqube
+    action: "^issues\\.add_comment$"
+  - cloud: sonarqube
+    action: "^qualitygates\\.create$"
+  - cloud: sonarqube
+    action: "^qualitygates\\.delete$"
+  - cloud: sonarqube
+    action: "^qualitygates\\.update$"
+  - cloud: sonarqube
+    action: "^webhooks\\.create$"
+  - cloud: sonarqube
+    action: "^webhooks\\.delete$"
+  - cloud: sonarqube
+    action: "^webhooks\\.update$"
+  - cloud: sonarqube
+    action: "^user_tokens\\.generate$"
+  - cloud: sonarqube
+    action: "^user_tokens\\.revoke$"
+  - cloud: sonarqube
+    action: "^user_tokens\\.search$"
+  - cloud: sonarqube
+    action: "^settings\\.set$"
+  - cloud: sonarqube
+    action: "^permissions\\.(add|remove)_(user|group)$"

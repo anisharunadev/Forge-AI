@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -s -X PATCH \\\\\\n  -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\\\\n  -H \\\"Content-Type: application/json\\\" \\\\\\n  -H \\\"X-Paperclip-Run-Id: 8ba32b5b-ee58-49d0-af21-2ded5442a216\\\"...",
+  "error": "Exit code 1\nFAILED: curl {\"id\":\"ffd299a6-781a-4e9f-87ac-d5319103f0ad\",\"companyId\":\"3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9\",\"projectId\":\"bb09220b-5ed2-47b3-9c58-d3e05cefb413\",\"projectWorkspaceId\":null,\"goalId\":\"5a1e3325-6383-447e-a7b6-f4f383fbfb95\",\"parentId\":\"24c6d820-44d4-47f2-bd43-02cbfa38b605\",\"title\":\"[FORA-324] Architect — mirror CTO close-out comment on FORA-224 disposition (auth boundary)\",\"description\":\"**Source:** FORA-327 (CTO dispatch).\\n\\n**Why:** CTO attempted to post the FORA-324 clo...",
+  "timestamp": "2026-06-18T00:50:06.771Z",
+  "retry_count": 1
+}

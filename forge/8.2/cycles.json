@@ -1,0 +1,11 @@
+{
+  "cycle_count": 0,
+  "cycles": [],
+  "files_in_cycles": [],
+  "generated_at": "2026-06-18T00:00:00Z",
+  "graph_version": "dep-graph/0.1.0",
+  "repo_fingerprint": "c6cac1a26669eddf",
+  "report_id": "e7032361-09cf-489b-8fd4-936cea64c656",
+  "schema_version": 1,
+  "source": "github:legacy-corp/billing-monolith@main"
+}

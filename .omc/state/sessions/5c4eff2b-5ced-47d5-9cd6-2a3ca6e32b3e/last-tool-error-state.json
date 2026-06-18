@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk read /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/mcp-servers/jira/packag...",
+  "error": "Exit code 1\n{\n  \"name\": \"@fora/mcp-jira\",\n  \"version\": \"0.1.0\",\n  \"description\": \"FORA Jira MCP server — exposes list_projects, list_issues, get_issue, create_issue, update_issue, add_comment, transition_issue over MCP/stdio. Auth via Atlassian API token scoped to a single site (cloudId).\",\n  \"license\": \"UNLICENSED\",\n  \"type\": \"module\",\n  \"main\": \"dist/index.js\",\n  \"bin\": {\n    \"fora-mcp-jira\": \"bin/fora-mcp-jira.mjs\"\n  },\n  \"files\": [\n    \"dist\",\n    \"bin\",\n    \"README.md\",\n    \"docs\"\n  ],\n  \"s...",
+  "timestamp": "2026-06-16T20:24:43.622Z",
+  "retry_count": 2
+}

@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: reference-service-dev
+  namespace: argocd
+  labels:
+    tenant: fora
+    service: reference-service
+    env: dev
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/fora-org/fora.git
+    # §5.2 — must be a forge/6.1/<tenant>/<service>/art-… branch, NOT main
+    # or release/*. Conftest infra/conftest/devops/branch_pattern.rego blocks
+    # any other value at the lint job.
+    targetRevision: forge/6.1/fora/reference-service/art-0000000
+    path: infra/charts/reference-service
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-dev.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+    retry:
+      limit: 3
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m

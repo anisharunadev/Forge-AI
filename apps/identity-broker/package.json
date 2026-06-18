@@ -1,0 +1,44 @@
+{
+  "name": "@fora/identity-broker",
+  "version": "0.1.0",
+  "description": "FORA identity-broker service — terminates OIDC for Okta, Azure AD/Entra, Google Workspace, mints FORA-issued session cookies + access tokens, and emits the four auth.* audit events per ADR-0003 §3 / §8.1.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "fora-identity-broker": "bin/fora-identity-broker.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "docs"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node bin/fora-identity-broker.mjs",
+    "dev": "node --watch bin/fora-identity-broker.mjs",
+    "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "smoke": "node test/smoke.mjs",
+    "lint:iam": "node bin/lint-unbound-mcps.mjs --roles ../../config/agent-iam/roles.yaml"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fora/oidc-clients": "workspace:*",
+    "@fora/session-tokens": "workspace:*",
+    "fastify": "^5.0.0",
+    "jose": "^5.9.6",
+    "yaml": "^2.5.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

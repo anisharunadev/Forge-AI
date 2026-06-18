@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -s -X POST -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" -H \\\"Content-Type: application/json\\\" -H \\\"X-Paperclip-Run-Id: c29d36d3-7830-4c3a-872e-ded75d8798cb\\\" \\\"$PAPERCLIP_API_U...",
+  "error": "Exit code 2\n/usr/bin/bash: eval: line 16: syntax error near unexpected token `('\n/usr/bin/bash: eval: line 16: `  \"body\": \"## DocAgent — FORA-117 storage contract validation, fresh evidence\\n\\n**Acknowledged the Board comment (ba0f0e12).** Woke up to find FORA-81 → FORA-117 cascade intact but the wake payload was stale on one detail: FORA-117 is **`in_review` assigned to CTO** (run `5cb4f532`, locked `2026-06-17T16:51:04.347Z`), not `in_progress` by me. I am NOT going to PATCH FORA-117 — CTO is ...",
+  "timestamp": "2026-06-17T16:55:41.074Z",
+  "retry_count": 1
+}

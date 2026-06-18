@@ -1,0 +1,83 @@
+# reference-service default values.
+# image.tag MUST be a pinned tag or digest per artifact-generator v0.2 §4.3.
+# Conftest (infra/conftest/devops/no_latest_image.rego) blocks :latest and empty.
+#
+# Values are intentionally minimal. The deploy overlay (values-dev.yaml,
+# values-staging.yaml, values-prod.yaml) sets env-specific values.
+
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 2
+
+image:
+  repository: ghcr.io/fora-org/reference-service
+  pullPolicy: IfNotPresent
+  # Default to chart appVersion; the stage-handoff MUST override this with a
+  # pinned tag (or digest) at apply time. Never ":latest".
+  tag: ""
+
+serviceAccount:
+  create: true
+  name: "reference-service-sa"
+  annotations: {}
+  # Populated by Terraform output (infra/terraform/reference-service/outputs.tf#iam_role_arn)
+  # via the values-<env>.yaml overlay. The EKS OIDC trust on the role matches
+  # system:serviceaccount:<namespace>:<serviceAccount.name>.
+  irsaRoleArn: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 1000
+  runAsNonRoot: true  # §4.4
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true  # §4.4
+  runAsNonRoot: true             # §4.4
+  runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+# §4.5 — non-secret config only. Populated by values-<env>.yaml.
+config:
+  logLevel: info
+
+# §4.5 — Secrets Manager ARN (NOT inlined values). Populated by
+# values-<env>.yaml from `terraform output -raw secrets_manager_secret_arn`.
+secrets:
+  secretArn: ""
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts: []
+  tls: []
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

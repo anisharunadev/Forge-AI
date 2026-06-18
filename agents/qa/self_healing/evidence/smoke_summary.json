@@ -1,0 +1,90 @@
+{
+  "smoke_test": "agents.qa.self_healing.smoke_test",
+  "issue": "FORA-37",
+  "started_at": "2026-06-17T21:09:30.568833+00:00",
+  "checks": [
+    {
+      "name": "feature_flag_disabled",
+      "passed": true,
+      "expected": {
+        "enabled": false,
+        "mode": "v1_dry_run"
+      },
+      "actual": {
+        "enabled": false,
+        "mode": "v1_dry_run"
+      }
+    },
+    {
+      "name": "proposal_mode_is_dry_run",
+      "passed": true,
+      "expected": "dry_run",
+      "actual": "dry_run"
+    },
+    {
+      "name": "dataclass_validate_clean",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "name": "json_schema_validate_clean",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "name": "payload_feature_flag_block",
+      "passed": true,
+      "expected": {
+        "enabled": false,
+        "self_healing": "v1_dry_run"
+      },
+      "actual": {
+        "self_healing": "v1_dry_run",
+        "enabled": false
+      }
+    },
+    {
+      "name": "detected_drift_kinds",
+      "passed": true,
+      "expected": [
+        "attribute_value_changed",
+        "selector_ambiguous",
+        "selector_missing"
+      ],
+      "actual": [
+        "attribute_value_changed",
+        "selector_ambiguous",
+        "selector_missing"
+      ]
+    },
+    {
+      "name": "all_repairs_validate_clean",
+      "passed": true,
+      "repair_count": 2
+    },
+    {
+      "name": "proposal_id_is_stable",
+      "passed": true,
+      "expected": "prop-4b8783115df7b6ac",
+      "actual": "prop-4b8783115df7b6ac"
+    },
+    {
+      "name": "protected_dirs_unchanged",
+      "passed": true,
+      "protected_dirs": [
+        "/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/qa/self_healing/fixtures",
+        "/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/qa/self_healing/schemas"
+      ]
+    },
+    {
+      "name": "apply_repair_refused_in_v1",
+      "passed": true,
+      "error": "Self-Healing Agent apply path is disabled in v1. See feature_flag.py and the Phase 4 flip runbook in README.md."
+    }
+  ],
+  "evidence_path": "/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/qa/self_healing/evidence/repair_proposal.json",
+  "finished_at": "2026-06-17T21:09:30.756295+00:00",
+  "contract_version": "0.1.0",
+  "passed": true,
+  "failures": []
+}

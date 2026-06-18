@@ -1,0 +1,64 @@
+---
+version: 0.1.0
+last-reviewed-by: cto
+last-reviewed-at: 2026-06-17
+parent-prd: workspace/project/PRD.md
+parent-issue: FORA-35
+sub-goal: "2.3 — Design generation (design-generator)"
+epic: FORA-18 (Epic 2 — Architecture Agent)
+journey: "PRD §6.3 — The 'audit' journey"
+related-hld: forge/2.3/hld.md
+related-lld: forge/2.3/lld.md
+---
+
+# Sequence 03 — CISO's audit export (PRD §6.3)
+
+The "audit" journey. The customer CISO opens the audit view in the Forge console, filters by tenant + date range + actor, and exports a SOC 2-friendly artefact. The platform's job is to make the query fast, the data complete, and the export redaction-safe.
+
+## Diagram
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor CISO as Customer CISO
+    participant Console as Forge Console (Next.js)
+    participant Orch as Master Orchestrator
+    participant ReadAPI as Audit Read API (Postgres replica in audit account)
+    participant AuditDB as Audit account Postgres
+    participant S3 as Audit account S3 (object_store)
+    participant Bus as NATS + event-bus-bridge
+    participant AuditBus as Audit SQS
+
+    CISO->>Console: open Audit view (tenant=acme-corp)
+    Console->>Orch: GET /v1/tenants/acme-corp/audit/runs?date_range=2026-06-01..2026-06-17&actor=agent
+    Orch->>Orch: validate JWT (aud=forge-runtime, tenant_id=acme-corp, role=ciso)
+    Orch->>ReadAPI: forward query (read-only, replica-bound)
+    ReadAPI->>AuditDB: SELECT tenant_id, event_id, ts, run_id, stage, actor, tool, result FROM audit_log WHERE tenant_id=acme-corp AND ts BETWEEN ... AND actor LIKE 'agent:%' ORDER BY ts DESC LIMIT 500
+    AuditDB-->>ReadAPI: 500 rows
+    ReadAPI-->>Orch: rows
+    Orch-->>Console: JSON { runs: [...], next_page_token }
+
+    CISO->>Console: filter tool=github.create_pull_request, click "Export"
+    Console->>Orch: POST /v1/tenants/acme-corp/audit/exports {filters, format=csv}
+    Orch->>Orch: idempotency_key=export-01J7Z...
+    Orch->>ReadAPI: stream rows to S3 (signed URL, KMS-encrypted, expiry=1h)
+    ReadAPI->>S3: PUT s3://fora-audit-acct/exports/acme-corp/2026-06-17/<export_id>.csv.gpg
+    ReadAPI-->>Orch: export_id, size_bytes, row_count
+    Orch-->>Console: {export_id, status=ready, signed_url}
+
+    CISO->>Console: download .csv.gpg
+    Console->>S3: GET (signed URL)
+    S3-->>Console: gpg-encrypted CSV
+    Note over CISO,S3: Customer decrypts with the GPG key delivered out-of-band at onboarding. The platform never sees the customer's private key.
+
+    Note over Bus,AuditBus: Every event the CISO sees was shipped by the bridge from the runtime account. The runtime account has no IAM grant to read the audit account; a runtime compromise cannot rewrite history.
+```
+
+## Notes
+
+- **Read replica in the audit account.** The CISO's query never hits the runtime account's primary. The replica is a streaming replica of the runtime's `audit_log` table (read-only, BYPASSRLS for the replica's `audit_reader` role only).
+- **Redaction is at-write.** The runtime redacts PII + secrets on write (security memory §7.1). The CISO sees redacted rows by default; a "view redaction reason" action is audited and joinable.
+- **GPG encryption on export.** The export is encrypted with the customer's GPG public key (delivered at onboarding, never stored in the platform). The platform can write the export; only the customer can read it.
+- **Idempotency** on `POST /exports` — a network blip on the "Export" click is a no-op (ADR-0004). The export id is stable.
+- **Audit export of the audit export.** Every read of the audit view is itself an audit row (`audit.audit_viewed`, `actor=ciso@acme-corp`, `filters=...`). The CISO can ask "who looked at this?" with one query.
+- **SOC 2 control mapping** in `docs/runbooks/soc2-audit-export.md` (forthcoming) — the export is the artefact the auditor signs off on.

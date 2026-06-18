@@ -1,0 +1,33 @@
+{
+  "runId": "run_j36oekrp_mqhbypzj",
+  "agentId": "echo-agent",
+  "tenantId": "t1",
+  "traceId": "tr-1",
+  "startedAt": "2026-06-17T00:26:11.599Z",
+  "finishedAt": "2026-06-17T00:26:11.603Z",
+  "status": "succeeded",
+  "steps": [
+    {
+      "stepId": "step-1",
+      "planId": "plan-1",
+      "tool": "echo",
+      "handlerId": "",
+      "startedAt": "2026-06-17T00:26:11.603Z",
+      "finishedAt": "2026-06-17T00:26:11.603Z",
+      "durationMs": 0,
+      "ok": true,
+      "stage": "act",
+      "output": {
+        "echoed": {
+          "message": "hello"
+        }
+      }
+    }
+  ],
+  "replanCycles": 0,
+  "errors": [],
+  "finalReflection": {
+    "note": "echo done",
+    "done": true
+  }
+}

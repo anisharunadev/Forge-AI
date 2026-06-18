@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -sS -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\"$PAPERCLIP_API_URL/api/companies/$PAPERCLIP_COMPANY_ID/agents?limit=200\\\" -o /tmp/agents.json 2>&1 | head -1\\npython3 -c \\\"\\n...",
+  "error": "Exit code 1\n\nTraceback (most recent call last):\n  File \"<string>\", line 6, in <module>\nTypeError: string indices must be integers, not 'str'",
+  "timestamp": "2026-06-17T21:35:24.672Z",
+  "retry_count": 1
+}

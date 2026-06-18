@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"echo \\\"=== FORA-17 final disposition check ===\\\"\\ncurl -sS \\\"$PAPERCLIP_API_URL/api/issues/$PAPERCLIP_TASK_ID\\\" -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" | python3 -c \\\"\\nimport json...",
+  "error": "Exit code 1\n=== FORA-17 final disposition check ===\nstatus=in_review  assignee=f4d4bf77  updatedAt=2026-06-17T16:26:25.023Z\n\n=== Sub-goal status snapshot ===\n  FORA-59    status=done         assignee=99b34c5d  updatedAt=2026-06-17T10:27:18.394Z\n  FORA-60    status=done         assignee=99b34c5d  updatedAt=2026-06-17T10:40:59.702Z\n  FORA-61    status=in_review    assignee=99b34c5d  updatedAt=2026-06-17T11:00:40.949Z\n  FORA-62    status=blocked      assignee=99b34c5d  updatedAt=2026-06-17T15:58:34...",
+  "timestamp": "2026-06-17T16:27:19.261Z",
+  "retry_count": 1
+}

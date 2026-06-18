@@ -1,0 +1,147 @@
+{
+  "report_id": "rev-69734949a2",
+  "diff_id": "diff-155266d31f",
+  "story_id": "STORY-401",
+  "plan_id": "PLAN-401",
+  "findings": [
+    {
+      "severity": "nit",
+      "category": "test_quality",
+      "rule_id": "CLN004",
+      "message": "apps/users/src/controllers/user_controller.py contains 3 `TODO[3.2/v0.2]` marker(s) \u2014 expected for v0.1 scaffold; resolved in v0.2",
+      "locations": [
+        {
+          "path": "apps/users/src/controllers/user_controller.py",
+          "line": 28
+        },
+        {
+          "path": "apps/users/src/controllers/user_controller.py",
+          "line": 34
+        },
+        {
+          "path": "apps/users/src/controllers/user_controller.py",
+          "line": 40
+        }
+      ],
+      "suggestion": "Fill in the bodies per the plan task's AC descriptions."
+    },
+    {
+      "severity": "nit",
+      "category": "test_quality",
+      "rule_id": "CLN004",
+      "message": "apps/users/src/controllers/user_controller.py contains 3 `TODO[3.2/v0.2]` marker(s) \u2014 expected for v0.1 scaffold; resolved in v0.2",
+      "locations": [
+        {
+          "path": "apps/users/src/controllers/user_controller.py",
+          "line": 28
+        },
+        {
+          "path": "apps/users/src/controllers/user_controller.py",
+          "line": 34
+        },
+        {
+          "path": "apps/users/src/controllers/user_controller.py",
+          "line": 40
+        }
+      ],
+      "suggestion": "Fill in the bodies per the plan task's AC descriptions."
+    },
+    {
+      "severity": "nit",
+      "category": "test_quality",
+      "rule_id": "CLN004",
+      "message": "apps/users/src/services/user_service.py contains 5 `TODO[3.2/v0.2]` marker(s) \u2014 expected for v0.1 scaffold; resolved in v0.2",
+      "locations": [
+        {
+          "path": "apps/users/src/services/user_service.py",
+          "line": 18
+        },
+        {
+          "path": "apps/users/src/services/user_service.py",
+          "line": 22
+        },
+        {
+          "path": "apps/users/src/services/user_service.py",
+          "line": 26
+        }
+      ],
+      "suggestion": "Fill in the bodies per the plan task's AC descriptions."
+    },
+    {
+      "severity": "nit",
+      "category": "test_quality",
+      "rule_id": "CLN004",
+      "message": "apps/users/src/services/user_service.py contains 5 `TODO[3.2/v0.2]` marker(s) \u2014 expected for v0.1 scaffold; resolved in v0.2",
+      "locations": [
+        {
+          "path": "apps/users/src/services/user_service.py",
+          "line": 18
+        },
+        {
+          "path": "apps/users/src/services/user_service.py",
+          "line": 22
+        },
+        {
+          "path": "apps/users/src/services/user_service.py",
+          "line": 26
+        }
+      ],
+      "suggestion": "Fill in the bodies per the plan task's AC descriptions."
+    },
+    {
+      "severity": "nit",
+      "category": "test_quality",
+      "rule_id": "CLN004",
+      "message": "apps/users/test/unit/user_test.py contains 3 `TODO[3.2/v0.2]` marker(s) \u2014 expected for v0.1 scaffold; resolved in v0.2",
+      "locations": [
+        {
+          "path": "apps/users/test/unit/user_test.py",
+          "line": 11
+        },
+        {
+          "path": "apps/users/test/unit/user_test.py",
+          "line": 15
+        },
+        {
+          "path": "apps/users/test/unit/user_test.py",
+          "line": 19
+        }
+      ],
+      "suggestion": "Fill in the bodies per the plan task's AC descriptions."
+    },
+    {
+      "severity": "nit",
+      "category": "test_quality",
+      "rule_id": "CLN004",
+      "message": "apps/users/test/unit/user_test.py contains 3 `TODO[3.2/v0.2]` marker(s) \u2014 expected for v0.1 scaffold; resolved in v0.2",
+      "locations": [
+        {
+          "path": "apps/users/test/unit/user_test.py",
+          "line": 11
+        },
+        {
+          "path": "apps/users/test/unit/user_test.py",
+          "line": 15
+        },
+        {
+          "path": "apps/users/test/unit/user_test.py",
+          "line": 19
+        }
+      ],
+      "suggestion": "Fill in the bodies per the plan task's AC descriptions."
+    }
+  ],
+  "verdict": "APPROVE",
+  "summary": {
+    "total_findings": 6,
+    "blockers": 0,
+    "suggestions": 0,
+    "nits": 6,
+    "by_category": {
+      "test_quality": 6
+    },
+    "files_reviewed": 5
+  },
+  "generated_at": "2026-06-17T20:12:00Z",
+  "schema_version": "0.1.0"
+}

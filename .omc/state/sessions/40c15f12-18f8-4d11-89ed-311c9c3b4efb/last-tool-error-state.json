@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk ls -la /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/documentation/...",
+  "error": "Exit code 1\nsmoke_20260617T020005Z.json  1.8K\nsmoke_20260617T053334Z.json  1.8K\nsmoke_20260617T221641Z.json  4.0K\nsmoke_20260617T221651Z.json  4.0K\n---",
+  "timestamp": "2026-06-17T16:47:02.293Z",
+  "retry_count": 1
+}

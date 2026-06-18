@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -s -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\"$PAPERCLIP_API_URL/api/companies/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/issues?maxResults=3&identifier=FORA-153\\\" 2>&1 | python3...",
+  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 6, in <module>\nTypeError: 'NoneType' object is not subscriptable\nFORA-218 | assignee=f4d4bf77-2a6b-41e0-b3c5- | createdBy=None | createdByAgent=f4d4bf77-2a6b-41e0-b3c5-4a688e2913f0\n  title: FORA-212 — 6.1.a Reference-service PR (lint + terraform plan against dev)\n---\nTraceback (most recent call last):\n  File \"<string>\", line 6, in <module>\nTypeError: 'NoneType' object is not subscriptable\nFORA-218 | assignee=f4d4bf77-2a6b-41e...",
+  "timestamp": "2026-06-17T20:33:30.811Z",
+  "retry_count": 1
+}

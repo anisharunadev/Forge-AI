@@ -1,0 +1,21 @@
+{
+  "failures": [],
+  "summary": {
+    "alerts": [
+      {
+        "alertId": "alert-a6236939c03c4393",
+        "alertKey": "soft:acme:2026-06",
+        "ceilingCents": 300,
+        "kind": "soft_threshold",
+        "metadata": {},
+        "monthKey": "2026-06",
+        "softThresholdCents": 150,
+        "spendCentsAtAlert": 170,
+        "tenantId": "acme",
+        "timestamp": "2026-06-17T00:50:03.010997Z"
+      }
+    ],
+    "spendCents": 170,
+    "state": "soft_breach"
+  }
+}

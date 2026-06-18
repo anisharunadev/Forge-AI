@@ -1,0 +1,52 @@
+{
+  "name": "@fora/sync-plane",
+  "version": "0.1.0",
+  "description": "FORA Cross-Platform Sync Plane — Tier-1 field-ownership resolver + Tier-2 HLC LWW + parked-Tier-3 divergence queue. Implements the conflict-resolution surface from ADR-0010 §4. Sub-task #4 of the Forge Integration Layer Epic (FORA-265).",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./hlc": {
+      "import": "./dist/hlc.js",
+      "types": "./dist/hlc.d.ts"
+    },
+    "./ownership": {
+      "import": "./dist/ownership.js",
+      "types": "./dist/ownership.d.ts"
+    },
+    "./resolver": {
+      "import": "./dist/resolver.js",
+      "types": "./dist/resolver.d.ts"
+    },
+    "./divergence-queue": {
+      "import": "./dist/divergence-queue.js",
+      "types": "./dist/divergence-queue.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "tenants",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "yaml": "^2.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

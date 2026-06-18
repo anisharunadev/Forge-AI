@@ -1,0 +1,35 @@
+{
+  "name": "@fora/mcp-azure-devops",
+  "version": "0.1.0",
+  "description": "FORA Azure DevOps MCP server — exposes list_projects, list_repos, list_pipelines, run_pipeline, get_pipeline_run, list_work_items, get_work_item, create_work_item, add_work_item_comment over MCP/stdio. Auth via project-scoped PAT. Pinned to a single Azure DevOps org + project on startup.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "fora-mcp-azure-devops": "bin/fora-mcp-azure-devops.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "docs"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build",
+    "start": "node bin/fora-mcp-azure-devops.mjs",
+    "smoke": "node test/smoke.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "typescript": "^5.6.0"
+  }
+}

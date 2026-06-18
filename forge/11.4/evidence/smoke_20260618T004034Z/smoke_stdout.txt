@@ -1,0 +1,15 @@
+[PASS] HLC monotonicity + tick()/observe()
+[PASS] Field ownership table (11 default fields)
+[PASS] Tier 1 paperclip-owned reject
+[PASS] Tier 1 remote-owned accept
+[PASS] Tier 2 LWW: inbound beats canonical
+[PASS] Tier 2 LWW: canonical beats inbound
+[PASS] Tier 2 LWW: precedence on HLC tie
+[PASS] Tier 3 auto-degrade on >5s skew
+[PASS] Per-tenant override (config flag, not code change)
+[PASS] Audit row carries winner_hlc, loser_hlc, reason=hlc_lww
+[PASS] Clock monitor trips on >5s skew
+[PASS] Clock-monitor audit row carries skew_ms
+[PASS] Forged-HLC end-to-end smoke (AC #6)
+
+13/13 smoke tests PASS in 0.4 ms

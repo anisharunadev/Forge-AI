@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/ && for f in agents/architect...",
+  "error": "Exit code 2\n/usr/bin/bash: eval: line 10: syntax error near unexpected token `;'\n/usr/bin/bash: eval: line 10: `    http* |https*|/FORA/*|*/FORA/*|\\#*) echo \"EXT:  $link\"; continue; ; esac'",
+  "timestamp": "2026-06-17T21:38:03.270Z",
+  "retry_count": 1
+}

@@ -1,0 +1,18 @@
+# reference-service dev overlay.
+# Populated by `terraform output -raw` at the apply step.
+
+replicaCount: 1
+
+image:
+  tag: "dev-abcdef0"  # pin; NEVER ":latest"
+
+serviceAccount:
+  # Populated by CI from `terraform output -raw iam_role_arn`.
+  irsaRoleArn: "REPLACE_WITH_dev_iam_role_arn"
+
+secrets:
+  # Populated by CI from `terraform output -raw secrets_manager_secret_arn`.
+  secretArn: "REPLACE_WITH_dev_secrets_manager_secret_arn"
+
+config:
+  logLevel: debug

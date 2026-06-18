@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -sS -w \\\"\\\\n[HTTP %{http_code}]\\\\n\\\" -X PATCH \\\\\\n  -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\\\\n  -H \\\"X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID\\\" \\\\\\n  -H \\\"Content-Type: app...",
+  "error": "Exit code 1\nfallback parse\n---\nTraceback (most recent call last):\n  File \"<string>\", line 6, in <module>\nKeyError: 'commentCursor'\nstatus: blocked\nblockedBy: ['FORA-128 (in_review)']",
+  "timestamp": "2026-06-17T20:21:53.532Z",
+  "retry_count": 1
+}

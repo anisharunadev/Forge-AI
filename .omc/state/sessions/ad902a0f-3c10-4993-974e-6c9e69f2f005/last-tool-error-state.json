@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"python3 -c \\\"\\nimport sys\\nsys.path.insert(0, '.')\\nfrom agents.sync_plane import (\\n    PollingBackstop, PollingTick, RemoteEvent, FetcherError, FetcherErrorKind,\\n    InMemoryAuditLog, I...",
+  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 4, in <module>\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/sync_plane/__init__.py\", line 39, in <module>\n    from .resolver import (\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agent...",
+  "timestamp": "2026-06-17T21:17:50.756Z",
+  "retry_count": 1
+}

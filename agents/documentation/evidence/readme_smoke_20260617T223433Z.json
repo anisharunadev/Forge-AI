@@ -1,0 +1,19 @@
+{
+  "spec": "FORA-120",
+  "sub_goal": "7.1.2 README generator",
+  "ran_at": "2026-06-17T17:04:33.408108+00:00",
+  "tests_run": 9,
+  "assertions_failed": 0,
+  "failures": [],
+  "acceptance": {
+    "sample_run": "PASS",
+    "idempotency": "PASS",
+    "approval_routing": "PASS",
+    "missing_memory_todo": "PASS",
+    "dry_run": "PASS",
+    "storage_contract": "PASS",
+    "missing_input_sha": "PASS",
+    "renderer_pure": "PASS",
+    "no_wall_clock_in_body": "PASS"
+  }
+}

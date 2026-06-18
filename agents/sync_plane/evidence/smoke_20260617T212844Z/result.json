@@ -1,0 +1,21 @@
+{
+  "ac_checks": {
+    "ac1_cursor_persists_across_restart": true,
+    "ac1_polling_per_platform": true,
+    "ac2_idempotent_replay": true,
+    "ac3_seven_day_clean": true,
+    "ac4_audit_divergence_p0": true,
+    "additional_backpressure_pauses": true,
+    "additional_retry_after_honored": true,
+    "pt1_reorder_ticks_no_double_emit": true
+  },
+  "deliverables": {
+    "alert_channel": "agents/sync_plane/alerting.py",
+    "cursor_store": "agents/sync_plane/cursor.py",
+    "divergence_detector": "agents/sync_plane/divergence.py",
+    "polling_backstop": "agents/sync_plane/polling.py",
+    "public_surface": "agents/sync_plane/__init__.py"
+  },
+  "elapsed_ms": 7.927,
+  "run_stamp": "20260617T212844Z"
+}

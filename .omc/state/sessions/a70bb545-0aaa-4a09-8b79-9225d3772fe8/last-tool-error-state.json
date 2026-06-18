@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -sS -X POST \\\"$PAPERCLIP_API_URL/api/issues/a1fe46f5-0537-4861-bb8a-20973695f41d/comments\\\" \\\\\\n  -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\\\\n  -H \\\"Content-Type: applicat...",
+  "error": "Exit code 26\nFAILED: curl curl: option -d: error encountered when reading a file\ncurl: try 'curl --help' or 'curl --manual' for more information",
+  "timestamp": "2026-06-17T21:13:45.023Z",
+  "retry_count": 1
+}

@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd mcp-servers/azure-devops && rtk npm run build 2>&1 | tail -20\",\"timeout\":120000,\"description\":\"Rebuild after fix\"}",
+  "error": "Exit code 1\n/usr/bin/bash: line 1: cd: mcp-servers/azure-devops: No such file or directory",
+  "timestamp": "2026-06-17T20:45:05.416Z",
+  "retry_count": 1
+}

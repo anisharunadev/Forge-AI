@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk curl -sS \\\"$PAPERCLIP_API_URL/api/companies/$PAPERCLIP_COMPANY_ID/issues\\\" -X OPTIONS -w \\\"\\\\nHTTP=%{http_code}\\\\n\\\" 2>&1 | tail -10\\necho \\\"---v1---\\\"\\ncurl -sS \\\"$PAPERCLIP_API_URL/a...",
+  "error": "Exit code 1\nGET, HEAD, POST\nHTTP=200\n---v1---\n{\"error\":\"API route not found\"}\nHTTP=404\n---no-company---\n{\"id\":\"af701c5a-8a26-49cd-b5a1-9455a98de65f\",\"companyId\":\"3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9\",\"projectId\":null,\"projectWorkspaceId\":null,\"goalId\":\"5a1e3325-6383-447e-a7b6-f4f383fbfb95\",\"parentId\":\"b2cf3555-7a78-44cc-9700-c0f793112261\",\"title\":\"FORA-218.1 — Open reference-service PR via GitHub MCP (artifact-generator)\",\"description\":\"## Objective\\n\\nOpen the actual GitHub PR for the reference...",
+  "timestamp": "2026-06-18T00:04:55.906Z",
+  "retry_count": 1
+}

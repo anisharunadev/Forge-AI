@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk read /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/packages/oidc-clients/p...",
+  "error": "Exit code 1\n{\n  \"name\": \"@fora/oidc-clients\",\n  \"version\": \"0.1.0\",\n  \"description\": \"FORA OIDC client config and JWKS cache for Okta, Azure AD/Entra, Google Workspace. v1 implementation per ADR-0003 §3.3.\",\n  \"license\": \"UNLICENSED\",\n  \"type\": \"module\",\n  \"main\": \"dist/index.js\",\n  \"types\": \"dist/index.d.ts\",\n  \"files\": [\n    \"dist\",\n    \"README.md\"\n  ],\n  \"scripts\": {\n    \"build\": \"tsc -p tsconfig.json\",\n    \"typecheck\": \"tsc -p tsconfig.json --noEmit\",\n    \"test\": \"vitest run\",\n    \"test:watc...",
+  "timestamp": "2026-06-17T01:02:03.887Z",
+  "retry_count": 1
+}

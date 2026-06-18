@@ -1,0 +1,310 @@
+{
+  "report_id": "rev-2c50612466",
+  "diff_id": "diff-2d31f349d1",
+  "story_id": "STORY-201",
+  "plan_id": "plan-1a2ddb817b",
+  "findings": [
+    {
+      "severity": "nit",
+      "category": "clean_code",
+      "rule_id": "CLN001",
+      "message": "3 line(s) in apps/api/src/controllers/add_user_entity_controller.py exceed 120 chars (first few: L9, 36, 48)",
+      "locations": [
+        {
+          "path": "apps/api/src/controllers/add_user_entity_controller.py",
+          "line": 9
+        },
+        {
+          "path": "apps/api/src/controllers/add_user_entity_controller.py",
+          "line": 36
+        },
+        {
+          "path": "apps/api/src/controllers/add_user_entity_controller.py",
+          "line": 48
+        }
+      ],
+      "suggestion": "Wrap long lines (strings, signatures, comments)."
+    },
+    {
+      "severity": "nit",
+      "category": "clean_code",
+      "rule_id": "CLN001",
+      "message": "1 line(s) in apps/api/src/models/add_user_entity.py exceed 120 chars (first few: L9)",
+      "locations": [
+        {
+          "path": "apps/api/src/models/add_user_entity.py",
+          "line": 9
+        }
+      ],
+      "suggestion": "Wrap long lines (strings, signatures, comments)."
+    },
+    {
+      "severity": "nit",
+      "category": "clean_code",
+      "rule_id": "CLN001",
+      "message": "1 line(s) in apps/api/test/integration/add_user_entity/test_smoke.py exceed 120 chars (first few: L9)",
+      "locations": [
+        {
+          "path": "apps/api/test/integration/add_user_entity/test_smoke.py",
+          "line": 9
+        }
+      ],
+      "suggestion": "Wrap long lines (strings, signatures, comments)."
+    },
+    {
+      "severity": "nit",
+      "category": "clean_code",
+      "rule_id": "CLN001",
+      "message": "1 line(s) in apps/api/test/unit/add_user_entity/test_smoke.py exceed 120 chars (first few: L9)",
+      "locations": [
+        {
+          "path": "apps/api/test/unit/add_user_entity/test_smoke.py",
+          "line": 9
+        }
+      ],
+      "suggestion": "Wrap long lines (strings, signatures, comments)."
+    },
+    {
+      "severity": "nit",
+      "category": "test_quality",
+      "rule_id": "CLN004",
+      "message": "apps/api/src/controllers/add_user_entity_controller.py contains 4 `TODO[3.2/v0.2]` marker(s) \u2014 expected for v0.1 scaffold; resolved in v0.2",
+      "locations": [
+        {
+          "path": "apps/api/src/controllers/add_user_entity_controller.py",
+          "line": 25
+        },
+        {
+          "path": "apps/api/src/controllers/add_user_entity_controller.py",
+          "line": 37
+        },
+        {
+          "path": "apps/api/src/controllers/add_user_entity_controller.py",
+          "line": 43
+        }
+      ],
+      "suggestion": "Fill in the bodies per the plan task's AC descriptions."
+    },
+    {
+      "severity": "nit",
+      "category": "test_quality",
+      "rule_id": "CLN004",
+      "message": "apps/api/src/controllers/add_user_entity_controller.py contains 4 `TODO[3.2/v0.2]` marker(s) \u2014 expected for v0.1 scaffold; resolved in v0.2",
+      "locations": [
+        {
+          "path": "apps/api/src/controllers/add_user_entity_controller.py",
+          "line": 25
+        },
+        {
+          "path": "apps/api/src/controllers/add_user_entity_controller.py",
+          "line": 37
+        },
+        {
+          "path": "apps/api/src/controllers/add_user_entity_controller.py",
+          "line": 43
+        }
+      ],
+      "suggestion": "Fill in the bodies per the plan task's AC descriptions."
+    },
+    {
+      "severity": "nit",
+      "category": "test_quality",
+      "rule_id": "CLN004",
+      "message": "apps/api/src/db/migrations/add_user_entity_table.sql contains 1 `TODO[3.2/v0.2]` marker(s) \u2014 expected for v0.1 scaffold; resolved in v0.2",
+      "locations": [
+        {
+          "path": "apps/api/src/db/migrations/add_user_entity_table.sql",
+          "line": 8
+        }
+      ],
+      "suggestion": "Fill in the bodies per the plan task's AC descriptions."
+    },
+    {
+      "severity": "nit",
+      "category": "test_quality",
+      "rule_id": "CLN004",
+      "message": "apps/api/src/db/migrations/add_user_entity_table.sql contains 1 `TODO[3.2/v0.2]` marker(s) \u2014 expected for v0.1 scaffold; resolved in v0.2",
+      "locations": [
+        {
+          "path": "apps/api/src/db/migrations/add_user_entity_table.sql",
+          "line": 8
+        }
+      ],
+      "suggestion": "Fill in the bodies per the plan task's AC descriptions."
+    },
+    {
+      "severity": "nit",
+      "category": "test_quality",
+      "rule_id": "CLN004",
+      "message": "apps/api/src/models/add_user_entity.py contains 2 `TODO[3.2/v0.2]` marker(s) \u2014 expected for v0.1 scaffold; resolved in v0.2",
+      "locations": [
+        {
+          "path": "apps/api/src/models/add_user_entity.py",
+          "line": 25
+        },
+        {
+          "path": "apps/api/src/models/add_user_entity.py",
+          "line": 45
+        }
+      ],
+      "suggestion": "Fill in the bodies per the plan task's AC descriptions."
+    },
+    {
+      "severity": "nit",
+      "category": "test_quality",
+      "rule_id": "CLN004",
+      "message": "apps/api/src/models/add_user_entity.py contains 2 `TODO[3.2/v0.2]` marker(s) \u2014 expected for v0.1 scaffold; resolved in v0.2",
+      "locations": [
+        {
+          "path": "apps/api/src/models/add_user_entity.py",
+          "line": 25
+        },
+        {
+          "path": "apps/api/src/models/add_user_entity.py",
+          "line": 45
+        }
+      ],
+      "suggestion": "Fill in the bodies per the plan task's AC descriptions."
+    },
+    {
+      "severity": "nit",
+      "category": "test_quality",
+      "rule_id": "CLN004",
+      "message": "apps/api/src/services/add_user_entity_service.py contains 5 `TODO[3.2/v0.2]` marker(s) \u2014 expected for v0.1 scaffold; resolved in v0.2",
+      "locations": [
+        {
+          "path": "apps/api/src/services/add_user_entity_service.py",
+          "line": 25
+        },
+        {
+          "path": "apps/api/src/services/add_user_entity_service.py",
+          "line": 29
+        },
+        {
+          "path": "apps/api/src/services/add_user_entity_service.py",
+          "line": 33
+        }
+      ],
+      "suggestion": "Fill in the bodies per the plan task's AC descriptions."
+    },
+    {
+      "severity": "nit",
+      "category": "test_quality",
+      "rule_id": "CLN004",
+      "message": "apps/api/src/services/add_user_entity_service.py contains 5 `TODO[3.2/v0.2]` marker(s) \u2014 expected for v0.1 scaffold; resolved in v0.2",
+      "locations": [
+        {
+          "path": "apps/api/src/services/add_user_entity_service.py",
+          "line": 25
+        },
+        {
+          "path": "apps/api/src/services/add_user_entity_service.py",
+          "line": 29
+        },
+        {
+          "path": "apps/api/src/services/add_user_entity_service.py",
+          "line": 33
+        }
+      ],
+      "suggestion": "Fill in the bodies per the plan task's AC descriptions."
+    },
+    {
+      "severity": "nit",
+      "category": "test_quality",
+      "rule_id": "CLN004",
+      "message": "apps/api/test/integration/add_user_entity/test_smoke.py contains 3 `TODO[3.2/v0.2]` marker(s) \u2014 expected for v0.1 scaffold; resolved in v0.2",
+      "locations": [
+        {
+          "path": "apps/api/test/integration/add_user_entity/test_smoke.py",
+          "line": 21
+        },
+        {
+          "path": "apps/api/test/integration/add_user_entity/test_smoke.py",
+          "line": 25
+        },
+        {
+          "path": "apps/api/test/integration/add_user_entity/test_smoke.py",
+          "line": 29
+        }
+      ],
+      "suggestion": "Fill in the bodies per the plan task's AC descriptions."
+    },
+    {
+      "severity": "nit",
+      "category": "test_quality",
+      "rule_id": "CLN004",
+      "message": "apps/api/test/integration/add_user_entity/test_smoke.py contains 3 `TODO[3.2/v0.2]` marker(s) \u2014 expected for v0.1 scaffold; resolved in v0.2",
+      "locations": [
+        {
+          "path": "apps/api/test/integration/add_user_entity/test_smoke.py",
+          "line": 21
+        },
+        {
+          "path": "apps/api/test/integration/add_user_entity/test_smoke.py",
+          "line": 25
+        },
+        {
+          "path": "apps/api/test/integration/add_user_entity/test_smoke.py",
+          "line": 29
+        }
+      ],
+      "suggestion": "Fill in the bodies per the plan task's AC descriptions."
+    },
+    {
+      "severity": "nit",
+      "category": "test_quality",
+      "rule_id": "CLN004",
+      "message": "apps/api/test/unit/add_user_entity/test_smoke.py contains 3 `TODO[3.2/v0.2]` marker(s) \u2014 expected for v0.1 scaffold; resolved in v0.2",
+      "locations": [
+        {
+          "path": "apps/api/test/unit/add_user_entity/test_smoke.py",
+          "line": 21
+        },
+        {
+          "path": "apps/api/test/unit/add_user_entity/test_smoke.py",
+          "line": 25
+        },
+        {
+          "path": "apps/api/test/unit/add_user_entity/test_smoke.py",
+          "line": 29
+        }
+      ],
+      "suggestion": "Fill in the bodies per the plan task's AC descriptions."
+    },
+    {
+      "severity": "nit",
+      "category": "test_quality",
+      "rule_id": "CLN004",
+      "message": "apps/api/test/unit/add_user_entity/test_smoke.py contains 3 `TODO[3.2/v0.2]` marker(s) \u2014 expected for v0.1 scaffold; resolved in v0.2",
+      "locations": [
+        {
+          "path": "apps/api/test/unit/add_user_entity/test_smoke.py",
+          "line": 21
+        },
+        {
+          "path": "apps/api/test/unit/add_user_entity/test_smoke.py",
+          "line": 25
+        },
+        {
+          "path": "apps/api/test/unit/add_user_entity/test_smoke.py",
+          "line": 29
+        }
+      ],
+      "suggestion": "Fill in the bodies per the plan task's AC descriptions."
+    }
+  ],
+  "verdict": "APPROVE",
+  "summary": {
+    "total_findings": 16,
+    "blockers": 0,
+    "suggestions": 0,
+    "nits": 16,
+    "by_category": {
+      "clean_code": 4,
+      "test_quality": 12
+    },
+    "files_reviewed": 6
+  },
+  "generated_at": "2026-06-17T20:12:00Z",
+  "schema_version": "0.1.0"
+}

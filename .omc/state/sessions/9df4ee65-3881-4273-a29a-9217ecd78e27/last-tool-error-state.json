@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"# Create a branch with a commit, then open a PR\\n# First get the default branch SHA\\nDEFAULT_SHA=$(gh api /repos/KnackForge-Inc/fora-mcp-e2e-test 2>&1 | jq -r '.default_branch')\\necho \\\"de...",
+  "error": "Exit code 5\ndefault branch: main\njq: parse error: Invalid numeric literal at line 1, column 132\nbase ref sha: null\njq: parse error: Invalid numeric literal at line 1, column 189\ncreated branch: null\ncreated file on branch: README.md\njq: parse error: Invalid numeric literal at line 1, column 204\nopened PR #null: null",
+  "timestamp": "2026-06-16T18:25:25.619Z",
+  "retry_count": 3
+}

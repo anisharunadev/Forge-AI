@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk vitest test/lifecycle.test.ts -t \\\"Crash recovery\\\" 2>&1 | tee /tmp/vt.log | tail -20; echo \\\"---\\\"; rtk grep DEBUG /tmp/vt.log\",\"timeout\":60000,\"description\":\"Capture and grep test ou...",
+  "error": "Exit code 1\nPASS (0) FAIL (1) skipped (26)\n\n1. Crash recovery — acceptance #4 builds a resume ticket per active run, with the right current stage\n   AssertionError: expected [] to have a length of 1 but got +0\n       at Proxy.<anonymous> (file:///home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/orchestrator/node_modules/.pnpm/@vitest+expect@2.1.9/node_modules/@vitest/expect/dist/index.j...",
+  "timestamp": "2026-06-17T10:29:36.626Z",
+  "retry_count": 1
+}

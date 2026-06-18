@@ -1,0 +1,35 @@
+{
+  "name": "@fora/mcp-slack",
+  "version": "0.1.0",
+  "description": "FORA Slack MCP server — exposes list_channels, list_threads, get_thread, post_message, update_message, add_reaction, search_messages over MCP/stdio. Auth via Slack bot token (xoxb-…) pinned to a single workspace.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "fora-mcp-slack": "bin/fora-mcp-slack.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "docs"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build",
+    "start": "node bin/fora-mcp-slack.mjs",
+    "smoke": "node test/smoke.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "typescript": "^5.6.0"
+  }
+}
