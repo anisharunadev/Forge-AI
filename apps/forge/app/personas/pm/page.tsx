@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { listRuns, OrchestratorError } from '@/lib/api';
+import { getRunsView, seedAliasFor } from '@/lib/api';
+import { OrchestratorUnreachable } from '@/components/OrchestratorNotice';
 import { RunStatusBadge } from '@/components/RunStatusBadge';
 import { SEED_TENANT_NAME } from '@/lib/auth';
 
@@ -12,12 +13,16 @@ export const dynamic = 'force-dynamic';
  * with its current stage and cost; the richer PRD feed is owned by
  * the DocAgent (FORA-23). The roadmap timeline is a static Q-by-Q
  * placeholder until the Goal/Project metadata API ships.
+ *
+ * FORA-379: the active-runs table now renders real rows from the
+ * orchestrator's `GET /v1/runs` index (backed by the seed run id
+ * `demo-run-001` after `scripts/dev-up.sh`). The "No runs yet"
+ * fallback only appears when the orchestrator is reachable and
+ * returns an empty list — when the orchestrator is unreachable, an
+ * explicit `OrchestratorUnreachable` notice replaces it.
  */
 export default async function PmDashboard() {
-  const runs = await listRuns().catch((err) => {
-    if (err instanceof OrchestratorError) return [];
-    throw err;
-  });
+  const view = await getRunsView();
 
   return (
     <div className="space-y-8" data-testid="pm-dashboard">
@@ -31,14 +36,13 @@ export default async function PmDashboard() {
         </div>
       </header>
 
+      {view.state === 'unreachable' ? (
+        <OrchestratorUnreachable view={view} />
+      ) : null}
+
       <section className="card" aria-labelledby="runs-h">
         <h2 id="runs-h" className="text-lg font-semibold">Active runs</h2>
-        {runs.length === 0 ? (
-          <p className="mt-2 text-sm text-forge-200">
-            No runs yet. The seed tenant has no demo-run-001 — start one from the
-            Engineering Lead dashboard or POST to <code>/v1/runs</code>.
-          </p>
-        ) : (
+        {view.state === 'ok' ? (
           <table className="mt-4 w-full text-sm" data-testid="runs-table">
             <thead className="text-left text-xs uppercase text-forge-300">
               <tr>
@@ -51,9 +55,16 @@ export default async function PmDashboard() {
               </tr>
             </thead>
             <tbody>
-              {runs.map((r) => (
-                <tr key={r.id} className="border-t border-forge-200/40">
-                  <td className="py-2 font-mono text-xs">{r.id}</td>
+              {view.runs.map((r) => {
+                const alias = seedAliasFor(r.id);
+                return (
+                <tr key={r.id} className="border-t border-forge-200/40" data-testid="run-row">
+                  <td className="py-2 font-mono text-xs">
+                    {r.id}
+                    {alias ? (
+                      <span className="ml-2 text-forge-300" data-testid="seed-alias">({alias})</span>
+                    ) : null}
+                  </td>
                   <td className="py-2 font-mono text-xs">{r.goal_id}</td>
                   <td className="py-2"><RunStatusBadge status={r.status} /></td>
                   <td className="py-2">{r.current_stage}</td>
@@ -64,9 +75,21 @@ export default async function PmDashboard() {
                     </Link>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
+        ) : view.state === 'empty' ? (
+          <p className="mt-2 text-sm text-forge-200" data-testid="runs-empty">
+            No runs yet. The orchestrator is reachable but returned an empty list — start
+            a run from the Engineering Lead dashboard or POST to <code>/v1/runs</code>.
+          </p>
+        ) : (
+          // unreachable: surface handled above; keep the table empty so the
+          // smoke probe cannot match a stray "No runs yet" string.
+          <p className="mt-2 text-sm text-forge-300" data-testid="runs-suppressed">
+            Active-runs data unavailable — see notice above.
+          </p>
         )}
       </section>
 

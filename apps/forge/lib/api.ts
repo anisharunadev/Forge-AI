@@ -19,6 +19,14 @@ const PUBLIC_BASE =
   process.env.FORA_FORGE_API_URL ??
   'http://localhost:4000';
 
+// In dev the orchestrator is single-tenant: the demo tenant is the
+// 00000000-0000-0000-0000-000000000ace UUID seeded by scripts/dev-up.sh
+// step 6b. The forge app sends that as `x-fora-tenant-id` on every
+// orchestrator call so the gateway's tenant extractor accepts the
+// request (FORA-50 §4.2). Production wires this through the identity
+// broker's JWT claim — see FORA-123.
+const DEV_TENANT_UUID = '00000000-0000-0000-0000-000000000ace';
+
 function base(): string {
   return typeof window === 'undefined' ? SERVER_BASE : PUBLIC_BASE;
 }
@@ -39,6 +47,11 @@ async function request<T>(
   init: RequestInit & { idempotencyKey?: string } = {},
 ): Promise<T> {
   const headers = new Headers(init.headers);
+  // Single-tenant dev: every orchestrator call carries the demo
+  // tenant UUID. Production: gateway injects this from the broker JWT.
+  if (!headers.has('x-fora-tenant-id')) {
+    headers.set('x-fora-tenant-id', DEV_TENANT_UUID);
+  }
   if (init.idempotencyKey) headers.set('Idempotency-Key', init.idempotencyKey);
   if (init.body && !headers.has('content-type')) {
     headers.set('content-type', 'application/json');
@@ -84,24 +97,94 @@ export async function getRun(id: RunId): Promise<RunRecord> {
 
 /** GET /v1/runs/{id}/stages — list the seven stage rows in canonical order. */
 export async function getRunStages(id: RunId): Promise<ReadonlyArray<StageRecord>> {
-  return request<ReadonlyArray<StageRecord>>(`/v1/runs/${encodeURIComponent(id)}/stages`);
+  // Orchestrator returns `{stages: StageRecord[]}` per FORA-50 §4.1;
+  // unwrap the array so the Timeline's `indexStages` consumer sees a
+  // flat list.
+  const body = await request<{ stages: ReadonlyArray<StageRecord> }>(
+    `/v1/runs/${encodeURIComponent(id)}/stages`,
+  );
+  return body.stages;
 }
 
 /**
- * Best-effort run listing. The 0.1.x orchestrator does not expose a
- * `GET /v1/runs` index endpoint, so the persona views fall back to a
- * known seed id (`demo-run-001`) when no runs are visible. If a real
- * index lands later, swap this for `request<RunRecord[]>('/v1/runs')`.
+ * Tenant-scoped index of every non-deleted run. FORA-378 ships the
+ * `GET /v1/runs` endpoint on the orchestrator; the persona dashboards
+ * call this instead of probing a single seed id so the empty state
+ * ("No runs yet") only appears for tenants that genuinely have no runs.
+ *
+ * `FORA_SEED_RUN_ID` is retained as an override: a downstream caller
+ * (e.g. a doc screenshot, a one-off smoke probe) can pin the list to a
+ * specific run id by setting the env var. The default is the orchestrator's
+ * full tenant index.
  */
 export async function listRuns(): Promise<ReadonlyArray<RunRecord>> {
-  const seedId = process.env.FORA_SEED_RUN_ID ?? 'demo-run-001';
+  const seedOverride = process.env.FORA_SEED_RUN_ID;
+  if (seedOverride && seedOverride.length > 0) {
+    try {
+      const run = await getRun(seedOverride);
+      return [run];
+    } catch (err) {
+      if (err instanceof OrchestratorError && err.status === 404) {
+        return request<ReadonlyArray<RunRecord>>('/v1/runs');
+      }
+      throw err;
+    }
+  }
+  return request<ReadonlyArray<RunRecord>>('/v1/runs');
+}
+
+/**
+ * FORA-379: discriminated "orchestrator health" view that the persona
+ * dashboards render against. Replaces the previous pattern of catching
+ * `OrchestratorError` and silently returning `[]`, which made every
+ * page render the misleading "No runs yet" empty state when the real
+ * problem was a 5xx / ECONNREFUSED.
+ *
+ * Three states:
+ *   - `unreachable` — the orchestrator call failed (5xx, ECONNREFUSED,
+ *     DNS, missing tenant, etc). The page should render an explicit
+ *     "Orchestrator unreachable" notice with `error.message`, and not
+ *     the misleading "No runs yet" string.
+ *   - `ok` — orchestrator responded, with at least one run. The page
+ *     renders the real metrics against `runs`.
+ *   - `empty` — orchestrator responded with `[]`. The page renders the
+ *     honest "No runs yet" empty state (and only here).
+ */
+export type RunsView =
+  | { state: 'unreachable'; error: string; status: number }
+  | { state: 'ok'; runs: ReadonlyArray<RunRecord> }
+  | { state: 'empty' };
+
+export async function getRunsView(): Promise<RunsView> {
   try {
-    const run = await getRun(seedId);
-    return [run];
+    const runs = await listRuns();
+    return runs.length === 0 ? { state: 'empty' } : { state: 'ok', runs };
   } catch (err) {
-    if (err instanceof OrchestratorError && err.status === 404) return [];
+    if (err instanceof OrchestratorError) {
+      return {
+        state: 'unreachable',
+        error: err.message,
+        status: err.status,
+      };
+    }
     throw err;
   }
+}
+
+/**
+ * Canonical seed run id written by `scripts/dev-up.sh` step 6c. The
+ * orchestrator maps the human-friendly alias `demo-run-001` to this
+ * UUID on `GET /v1/runs/{id}` and `GET /v1/runs/{id}/stages` (see
+ * `DEMO_RUN_ALIAS` in apps/orchestrator/src/server.ts). Persona pages
+ * render the alias next to the UUID so the smoke gate's
+ * `grep 'demo-run-001'` and the human operator's
+ * "where is the seeded run?" question both resolve to the same row.
+ */
+export const SEED_RUN_UUID = '00000000-0000-4000-8000-000000000001';
+export const SEED_RUN_ALIAS = 'demo-run-001';
+
+export function seedAliasFor(id: string): string | null {
+  return id === SEED_RUN_UUID ? SEED_RUN_ALIAS : null;
 }
 
 /**

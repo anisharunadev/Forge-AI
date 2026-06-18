@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { listRuns, OrchestratorError } from '@/lib/api';
+import { getRunsView, seedAliasFor } from '@/lib/api';
+import { OrchestratorUnreachable } from '@/components/OrchestratorNotice';
 import { RunStatusBadge } from '@/components/RunStatusBadge';
 import { RunActions } from '@/components/RunActions';
 import { SEED_TENANT_NAME } from '@/lib/auth';
@@ -10,17 +11,24 @@ export const dynamic = 'force-dynamic';
  * Engineering Lead dashboard — runs in flight, blocked work, cost.
  * Read + approve (pause/resume/cancel). This is the only persona that
  * renders the operator action bar (RunActions) per the FORA-374 spec.
+ *
+ * FORA-379: the "Runs in flight" panel now renders real rows from the
+ * orchestrator's `GET /v1/runs` index (seeded as `demo-run-001` by
+ * `scripts/dev-up.sh`). Action buttons pause / resume / cancel flow
+ * through `POST /v1/runs/{id}/{verb}` via the `RunActions` client
+ * component. Blocked-work + cost panels read the same view; only when
+ * the orchestrator is reachable AND empty do we render the
+ * "No runs visible" empty state — when it's unreachable we render an
+ * explicit `OrchestratorUnreachable` notice instead.
  */
 export default async function EngLeadDashboard() {
-  const runs = await listRuns().catch((err) => {
-    if (err instanceof OrchestratorError) return [];
-    throw err;
-  });
+  const view = await getRunsView();
 
-  const total = runs.reduce((acc, r) => acc + Number(r.cost_spent_usd), 0);
+  const runs = view.state === 'ok' ? view.runs : [];
   const blocked = runs.filter(
     (r) => r.status === 'paused' || r.status === 'waiting_approval',
   );
+  const total = runs.reduce((acc, r) => acc + Number(r.cost_spent_usd), 0);
 
   return (
     <div className="space-y-8" data-testid="eng-lead-dashboard">
@@ -33,39 +41,54 @@ export default async function EngLeadDashboard() {
         </p>
       </header>
 
-      <section className="grid gap-4 md:grid-cols-3">
+      {view.state === 'unreachable' ? (
+        <OrchestratorUnreachable view={view} />
+      ) : null}
+
+      <section className="grid gap-4 md:grid-cols-3" aria-labelledby="kpis-h">
+        <h2 id="kpis-h" className="sr-only">Key indicators</h2>
         <div className="card">
-          <p className="text-xs uppercase text-forge-300">In flight</p>
-          <p className="mt-1 text-3xl font-semibold">{runs.length}</p>
+          <p className="text-xs uppercase text-forge-300">Runs in flight</p>
+          <p className="mt-1 text-3xl font-semibold" data-testid="kpi-inflight">
+            {view.state === 'ok' ? runs.length : '—'}
+          </p>
         </div>
         <div className="card">
           <p className="text-xs uppercase text-forge-300">Blocked / waiting</p>
-          <p className="mt-1 text-3xl font-semibold">{blocked.length}</p>
+          <p className="mt-1 text-3xl font-semibold" data-testid="kpi-blocked">
+            {view.state === 'ok' ? blocked.length : '—'}
+          </p>
         </div>
         <div className="card">
           <p className="text-xs uppercase text-forge-300">Cost (USD)</p>
-          <p className="mt-1 font-mono text-3xl">${total.toFixed(2)}</p>
+          <p className="mt-1 font-mono text-3xl" data-testid="kpi-cost">
+            {view.state === 'ok' ? `$${total.toFixed(2)}` : '—'}
+          </p>
         </div>
       </section>
 
       <section className="card" aria-labelledby="inflight-h">
-        <h2 id="inflight-h" className="text-lg font-semibold">Runs</h2>
-        {runs.length === 0 ? (
-          <p className="mt-2 text-sm text-forge-200">
-            No runs visible. The orchestrator is reachable but the seed run id
-            (demo-run-001) is not present yet.
-          </p>
-        ) : (
+        <h2 id="inflight-h" className="text-lg font-semibold">Runs in flight</h2>
+        {view.state === 'ok' ? (
           <ul className="mt-4 space-y-3" data-testid="eng-runs-list">
-            {runs.map((r) => (
+            {runs.map((r) => {
+              const alias = seedAliasFor(r.id);
+              return (
               <li
                 key={r.id}
-                className="flex items-center justify-between rounded-md border border-forge-200/40 p-3"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-forge-200/40 p-3"
+                data-testid="eng-run-row"
               >
                 <div className="space-y-1">
-                  <p className="font-mono text-xs">{r.id}</p>
+                  <p className="font-mono text-xs">
+                    {r.id}
+                    {alias ? (
+                      <span className="ml-2 text-forge-300" data-testid="seed-alias">({alias})</span>
+                    ) : null}
+                  </p>
                   <p className="text-xs text-forge-300">
-                    stage <strong>{r.current_stage}</strong> · ceiling $
+                    goal <strong>{r.goal_id}</strong> · stage{' '}
+                    <strong>{r.current_stage}</strong> · ceiling $
                     {r.cost_ceiling_usd}
                   </p>
                 </div>
@@ -75,8 +98,23 @@ export default async function EngLeadDashboard() {
                 </Link>
                 <RunActions runId={r.id} status={r.status} />
               </li>
-            ))}
+              );
+            })}
           </ul>
+        ) : view.state === 'empty' ? (
+          <div data-testid="eng-empty">
+            <p className="mt-2 text-sm text-forge-200">
+              No runs visible. The orchestrator is reachable but returned an empty list —
+              seed <code>demo-run-001</code> via <code>./scripts/dev-up.sh</code>.
+            </p>
+            <p className="mt-2 text-xs text-forge-300">
+              No blocked work.
+            </p>
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-forge-300" data-testid="eng-suppressed">
+            Runs in flight data unavailable — see notice above.
+          </p>
         )}
       </section>
     </div>
