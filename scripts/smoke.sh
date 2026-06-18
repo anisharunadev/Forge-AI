@@ -102,13 +102,77 @@ run_check "customer-cloud-broker  :$CCB_PORT  GET /healthz" \
 run_check "forge (AI console)    :$FORGE_PORT  GET /healthz" \
   "[[ -n \"\$(curl -fsS --max-time 10 http://localhost:$FORGE_PORT/healthz 2>/dev/null)\" ]]"
 
-run_check "forge                 :$FORGE_PORT  GET /personas/pm (PM dashboard)" \
-  "[[ -n \"\$(curl -fsS --max-time 15 http://localhost:$FORGE_PORT/personas/pm 2>/dev/null | grep -E 'Product Manager|Active runs')\" ]]"
+run_check "forge                 :$FORGE_PORT  GET /personas/pm (PM dashboard + seed run row)" \
+  "BODY=\$(curl -fsS --max-time 15 http://localhost:$FORGE_PORT/personas/pm 2>/dev/null) && echo \"\$BODY\" | grep -q 'Product Manager' && echo \"\$BODY\" | grep -q 'demo-goal-forge' && ! echo \"\$BODY\" | grep -q 'No runs yet'"
+
+# FORA-382 clean-laptop AC #1: the home page must show the persona
+# switcher with all three persona cards visible. The persona switcher
+# is the on-ramp for FORA-379 (persona dashboards) and the Board
+# asked for proof the switcher is live, not just the PM page.
+run_check "forge                 :$FORGE_PORT  GET / persona switcher (3 cards)" \
+  "HOME=\$(curl -fsS --max-time 15 http://localhost:$FORGE_PORT/ 2>/dev/null) && echo \"\$HOME\" | grep -q 'data-persona-card=\"pm\"' && echo \"\$HOME\" | grep -q 'data-persona-card=\"eng-lead\"' && echo \"\$HOME\" | grep -q 'data-persona-card=\"cto\"'"
+
+# Persona round-trip probes (FORA-380). The Board wanted proof that
+# switching persona actually swaps the view, not just that the empty
+# state heading renders. Each probe POSTs /api/persona (cookie set),
+# then GETs the matching /personas/<id> page with the cookie jar and
+# asserts both the persona-specific heading AND a demo-run marker so
+# the empty state can't satisfy the grep.
+#
+# FORA_SEED_RUN_ID in .env can be either the friendly alias
+# `demo-run-001` (forge env, line 90) or the canonical seed UUID
+# (line 141 — wins on duplicate). Accept either so the gate stays
+# green across the two configurations; the Board concern was
+# "does the persona route swap to a real seeded run?" not the
+# exact id form.
+run_check "forge PM round-trip   :$FORGE_PORT  POST /api/persona + GET /personas/pm" \
+  "JAR=\$(mktemp) && POST=\$(curl -sS -c \"\$JAR\" --max-time 5 -X POST -H 'content-type: application/json' -d '{\"persona\":\"pm\"}' http://localhost:$FORGE_PORT/api/persona 2>&1) && PAGE=\$(curl -sS -b \"\$JAR\" --max-time 15 http://localhost:$FORGE_PORT/personas/pm 2>&1) && echo \"\$POST\" | grep -q '\"persona\":\"pm\"' && echo \"\$PAGE\" | grep -q 'Product Manager' && echo \"\$PAGE\" | grep -q 'demo-goal-forge' && echo \"\$PAGE\" | grep -qE 'demo-run-001|00000000-0000-4000-8000-000000000001' && ! echo \"\$PAGE\" | grep -q 'No runs yet'"
+
+run_check "forge EngLead round-trip :$FORGE_PORT  POST /api/persona + GET /personas/eng-lead" \
+  "JAR=\$(mktemp) && POST=\$(curl -sS -c \"\$JAR\" --max-time 5 -X POST -H 'content-type: application/json' -d '{\"persona\":\"eng-lead\"}' http://localhost:$FORGE_PORT/api/persona 2>&1) && PAGE=\$(curl -sS -b \"\$JAR\" --max-time 15 http://localhost:$FORGE_PORT/personas/eng-lead 2>&1) && echo \"\$POST\" | grep -q '\"persona\":\"eng-lead\"' && echo \"\$PAGE\" | grep -q 'Runs in flight' && echo \"\$PAGE\" | grep -qE 'demo-run-001|00000000-0000-4000-8000-000000000001' && echo \"\$PAGE\" | grep -q 'data-action=\"pause\"' && ! echo \"\$PAGE\" | grep -q 'No runs visible'"
+
+run_check "forge CTO round-trip   :$FORGE_PORT  POST /api/persona + GET /personas/cto" \
+  "JAR=\$(mktemp) && POST=\$(curl -sS -c \"\$JAR\" --max-time 5 -X POST -H 'content-type: application/json' -d '{\"persona\":\"cto\"}' http://localhost:$FORGE_PORT/api/persona 2>&1) && PAGE=\$(curl -sS -b \"\$JAR\" --max-time 15 http://localhost:$FORGE_PORT/personas/cto 2>&1) && echo \"\$POST\" | grep -q '\"persona\":\"cto\"' && echo \"\$PAGE\" | grep -q 'Throughput' && echo \"\$PAGE\" | grep -q 'MTTR' && echo \"\$PAGE\" | grep -q 'Audit log' && echo \"\$PAGE\" | grep -q 'demo-goal-forge' && ! echo \"\$PAGE\" | grep -q 'awaits metrics endpoint'"
 
 # ---------------------------------------------------------------------------
 # stateful checks
 # ---------------------------------------------------------------------------
 [[ "$JSON" -eq 0 ]] && echo "[smoke] stateful checks"
+
+# Demo-run seed (FORA-378). The persona dashboards fall back to "No
+# runs yet" unless the seed run is present and the orchestrator's
+# tenant-scoped reads can see it. The probe asserts the seven canonical
+# stage rows exist and are returned in canonical order — the count
+# check is the smoke gate for the GET /v1/runs/{id}/stages endpoint.
+DEMO_RUN_TENANT_UUID="00000000-0000-0000-0000-000000000ace"
+run_check "orchestrator  :$ORCH_PORT  GET /v1/runs/demo-run-001/stages count=7" \
+  "STAGES=\$(curl -fsS --max-time 5 -H 'x-fora-tenant-id: $DEMO_RUN_TENANT_UUID' http://localhost:$ORCH_PORT/v1/runs/demo-run-001/stages 2>/dev/null) && echo \"\$STAGES\" | grep -q '\"stages\"' && COUNT=\$(echo \"\$STAGES\" | grep -oE '\"stage\":\"[a-z]+\"' | wc -l) && [[ \"\$COUNT\" -eq 7 ]]"
+
+run_check "orchestrator  :$ORCH_PORT  GET /v1/runs contains demo-run-001" \
+  "RUNS=\$(curl -fsS --max-time 5 -H 'x-fora-tenant-id: $DEMO_RUN_TENANT_UUID' http://localhost:$ORCH_PORT/v1/runs 2>/dev/null) && echo \"\$RUNS\" | grep -q '\"goal_id\":\"demo-goal-forge\"'"
+
+# Forge run-detail timeline (FORA-381). The orchestrator's
+# /v1/runs/{id}/stages check above proves the data is in the right
+# shape; the four checks below prove the forge UI actually renders
+# the seven rows with the spec-mandated status vocabulary, the
+# current-stage marker on `architect`, and the empty-state for runs
+# with no stages yet. This is the smoke gate FORA-381 promised; the
+# previous close on FORA-374 claimed a "seven-stage run timeline"
+# without proving the HTML output.
+#
+# FORA-381 AC: 7 stages, ≥3 status badges, current-stage marker,
+# "Stages not yet written" empty-state.
+run_check "forge         :$FORGE_PORT  GET /runs/demo-run-001 7 stage rows" \
+  "PAGE=\$(curl -fsS --max-time 15 http://localhost:$FORGE_PORT/runs/demo-run-001 2>/dev/null) && for STAGE in ideation architect dev qa security devops docs; do echo \"\$PAGE\" | grep -q \"data-stage=\\\"\$STAGE\\\"\" || exit 1; done"
+
+run_check "forge         :$FORGE_PORT  GET /runs/demo-run-001 >=3 status badges" \
+  "PAGE=\$(curl -fsS --max-time 15 http://localhost:$FORGE_PORT/runs/demo-run-001 2>/dev/null) && BADGES=\$(echo \"\$PAGE\" | grep -oE 'data-status=\"(in_progress|succeeded|pending)\"' | wc -l) && [[ \"\$BADGES\" -ge 3 ]]"
+
+run_check "forge         :$FORGE_PORT  GET /runs/demo-run-001 architect current-stage marker" \
+  "PAGE=\$(curl -fsS --max-time 15 http://localhost:$FORGE_PORT/runs/demo-run-001 2>/dev/null) && echo \"\$PAGE\" | grep -qE 'data-stage=\"architect\"[^>]*data-current-stage=\"true\"' && echo \"\$PAGE\" | grep -q 'data-testid=\"current-stage-marker\"'"
+
+run_check "forge         :$FORGE_PORT  GET /runs/unknown-run empty-state" \
+  "PAGE=\$(curl -fsS --max-time 15 http://localhost:$FORGE_PORT/runs/unknown-run 2>/dev/null) && echo \"\$PAGE\" | grep -q 'Stages not yet written'"
 
 # Seeded tenant visible in Postgres. The migrator creates the
 # `tenants` table on first run; `scripts/dev-up.sh` does the
