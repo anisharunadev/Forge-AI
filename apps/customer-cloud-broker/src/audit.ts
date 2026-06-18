@@ -26,6 +26,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { appendFile } from 'node:fs/promises';
 import type { BrokeredResult, Cloud } from './types.js';
 
 // ---------------------------------------------------------------------------
@@ -340,11 +341,9 @@ export class JsonlAuditSink implements AuditSink {
 function defaultWrite(path: string): { write: (line: string) => Promise<void> } {
   // Minimal append-only file writer. Real deployments swap this for a
   // structured sink (Kafka, Cloud Logging). For tests we pass a stub.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const fs = require('node:fs/promises') as typeof import('node:fs/promises');
   return {
     async write(line: string): Promise<void> {
-      await fs.appendFile(path, line, 'utf-8');
+      await appendFile(path, line, 'utf-8');
     },
   };
 }

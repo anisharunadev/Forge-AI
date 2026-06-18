@@ -1,0 +1,21 @@
+{
+  "name": "fora",
+  "version": "0.0.0",
+  "private": true,
+  "description": "FORA monorepo — Enterprise AI SDLC Operating System. Root package: dev tooling only; the actual work happens in apps/* and packages/*.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev:up": "./scripts/dev-up.sh",
+    "dev:down": "./scripts/dev-up.sh --down",
+    "smoke": "./scripts/smoke.sh",
+    "build": "pnpm -r build",
+    "migrate": "pnpm -r migrate",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

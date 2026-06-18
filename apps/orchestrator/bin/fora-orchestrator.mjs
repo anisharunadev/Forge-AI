@@ -82,8 +82,9 @@ const pager = pagerDutyRoutingKey
     };
 
 const paperclip = new PaperclipHttpClient({
-  apiKey: process.env['PAPERCLIP_API_KEY'] ?? 'dummy',
-  baseUrl: process.env['PAPERCLIP_API_URL'] ?? 'http://localhost:3000',
+  apiKey: process.env['PAPERCLIP_API_KEY'] ?? 'dev-dummy',
+  apiUrl: process.env['PAPERCLIP_API_URL'] ?? 'http://localhost:3000',
+  runId: process.env['FORA_ORCHESTRATOR_RUN_ID'] ?? `dev-${process.pid}`,
 });
 
 let bus;

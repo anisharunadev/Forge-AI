@@ -17,7 +17,8 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "smoke": "node bin/fora-agent-runtime-smoke.mjs"
+    "smoke": "node bin/fora-agent-runtime-smoke.mjs",
+    "dev": "node bin/fora-agent-runtime-dev.mjs"
   },
   "engines": {
     "node": ">=20"

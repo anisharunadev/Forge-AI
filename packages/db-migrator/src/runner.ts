@@ -20,6 +20,9 @@
  * a `tenant_isolation` policy shows up in `pg_policies` on next run.
  */
 
+import { isAbsolute, resolve as resolvePath, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import type { Pool, PoolClient } from 'pg';
 
 import { assertAllowListDirs, auditBypassRls } from './bypass-audit.js';
@@ -31,10 +34,17 @@ import {
 } from './rls.js';
 import type { BypassRlsAllowList, TenantScopedModel } from './types.js';
 
-/** The default allow-list paths. The runner reads these from the repo root. */
+/**
+ * The default allow-list paths. The runner resolves them relative to
+ * the migrator package's own location (the parent of `dist/`), NOT
+ * the caller's CWD — otherwise an app like `apps/orchestrator` running
+ * with CWD=apps/orchestrator would fail with "BYPASSRLS allow-list
+ * directory does not exist". Callers that pass an absolute path
+ * through `opts.allowList` bypass this resolution and are used as-is.
+ */
 export const DEFAULT_ALLOW_LIST: BypassRlsAllowList = {
-  migrationsDir: 'packages/db-migrator/migrations',
-  auditDir: 'packages/db-migrator/audit',
+  migrationsDir: 'migrations',
+  auditDir: 'audit',
 };
 
 /** The bookkeeping table the runner uses to track applied migrations. */
@@ -59,7 +69,26 @@ export async function runMigrations(
   pool: Pool,
   opts: { projectRoot?: string; allowList?: BypassRlsAllowList } = {},
 ): Promise<RunResult> {
-  const allowList = opts.allowList ?? DEFAULT_ALLOW_LIST;
+  // The default allow-list uses paths relative to the migrator package's
+  // own location, not the caller's CWD — otherwise a caller like
+  // `apps/orchestrator/bin/...` running with CWD=apps/orchestrator would
+  // resolve to a non-existent directory. Absolute paths in the
+  // allow-list are passed through unchanged.
+  // The migrator root is `packages/db-migrator/` (the parent of `dist/`,
+  // where this file lives at runtime).
+  const migratorRoot = resolvePath(dirname(fileURLToPath(import.meta.url)), '..');
+  const resolveAllowListPath = (p: string): string =>
+    isAbsolute(p) ? p : resolvePath(migratorRoot, p);
+  const resolvedAllowList: BypassRlsAllowList = {
+    migrationsDir: resolveAllowListPath(DEFAULT_ALLOW_LIST.migrationsDir),
+    auditDir: resolveAllowListPath(DEFAULT_ALLOW_LIST.auditDir),
+  };
+  const allowList: BypassRlsAllowList = opts.allowList
+    ? {
+        migrationsDir: resolveAllowListPath(opts.allowList.migrationsDir),
+        auditDir: resolveAllowListPath(opts.allowList.auditDir),
+      }
+    : resolvedAllowList;
   await assertAllowListDirs(allowList);
   if (opts.projectRoot) {
     const findings = await auditBypassRls(opts.projectRoot, allowList);

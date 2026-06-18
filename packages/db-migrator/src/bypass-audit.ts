@@ -86,6 +86,13 @@ export async function auditBypassRls(
   for await (const file of walk(projectRoot)) {
     const abs = resolve(file);
     const isInAllowList = allowedRoots.some((root) => isUnder(abs, root));
+    // Test fixtures under `test/fixtures/` are intentionally outside the
+    // migrations/audit allow-list — they exist to exercise the audit itself
+    // and the tenancy-lint rule (FORA-165). They are never applied to a real
+    // database because the migrator only walks `migrationsDir`. The lint
+    // rule already exempts them via its own `migrations/...` regex; the
+    // runtime audit now matches.
+    const isTestFixture = /[/\\]test[/\\]fixtures[/\\]/.test(abs);
     const text = await readFile(file, 'utf8');
     const lines = text.split('\n');
     for (let i = 0; i < lines.length; i++) {
@@ -93,6 +100,7 @@ export async function auditBypassRls(
       BYPASSRLS_RE.lastIndex = 0;
       if (!BYPASSRLS_RE.test(line)) continue;
       if (isInAllowList) continue; // allow-list path; expected
+      if (isTestFixture) continue; // test fixtures; expected
       findings.push({
         file: abs,
         relPath: relative(projectRoot, abs),

@@ -1,0 +1,30 @@
+# Local dev .env (FORA-371). Contains ANTHROPIC_API_KEY.
+# Never commit.
+.env
+.env.*
+!.env.example
+
+# Local dev runtime state (logs, pids, evidence)
+.fora/logs/
+.fora/pids/
+
+# Tooling scratch
+.omc/
+.serena/
+
+# Node build artefacts
+node_modules/
+**/dist/
+**/node_modules/
+**/.vite/
+
+# Python artefacts
+__pycache__/
+*.pyc
+
+# Smoke runs / dev artefacts
+**/workspace/runs/*.json
+**/workspace/runs/*.jsonl
+
+# Vitest results
+**/vitest/results.json

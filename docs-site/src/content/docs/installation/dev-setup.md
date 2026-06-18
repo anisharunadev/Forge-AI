@@ -11,14 +11,53 @@ approval_required: false
 
 This is the contributor-friendly guide. If you want to **run Forge AI** as a user, jump to [Quickstart →](/quickstart/). If you want to **hack on Forge AI** (build a new agent, add a new MCP integration, ship a fix), read on.
 
-## Bootstrap
+## First-time bootstrap
+
+The single entry point for local dev is `./scripts/dev-up.sh`. It does the equivalent of the four steps below in one command, then runs `./scripts/smoke.sh` and exits non-zero on any failure.
 
 ```bash
 git clone https://github.com/fora-platform/fora.git
 cd fora
-pnpm install --frozen-lockfile        # ~2 min on a cold cache
-pnpm -r build                         # builds every package once
-docker compose up -d                  # Postgres + Redis + LocalStack
+cp .env.example .env                  # edit ANTHROPIC_API_KEY
+./scripts/dev-up.sh                   # boots infra + apps + smoke gate
+```
+
+`./scripts/dev-up.sh` wraps, in order:
+
+1. `docker compose up -d` — Postgres 16 + Redis 7 + LocalStack (S3, IAM, STS, Secrets Manager)
+2. `pnpm install --no-frozen-lockfile`
+3. `pnpm -r build`
+4. `pnpm -r migrate` — applies the db-migrator migrations (idempotent)
+5. `pnpm --filter @fora/agent-runtime dev` (port 4001) — the dev HTTP shim
+6. `pnpm --filter @fora/orchestrator dev` (port 4000)
+7. `pnpm --filter @fora/customer-cloud-broker dev` (port 4003)
+8. `./scripts/smoke.sh` — the health gate
+
+To re-verify after a fix, just run `./scripts/smoke.sh` again — it's idempotent. To tear down: `./scripts/dev-up.sh --down`. Named volumes for postgres / redis / localstack are preserved, so a re-up keeps the demo tenant and dev bucket.
+
+## What the seed data looks like
+
+The first time `./scripts/dev-up.sh` runs, the migrator applies the schema, then the agent-runtime seed path inserts one tenant so the dashboard has something to render:
+
+- **Tenant:** `acme-corp` (`FORA_SEED_TENANT_ID`) — policy `public-preview`
+- **S3 bucket:** `fora-dev-bucket` (`OBJECT_STORE_BUCKET`) — created by `scripts/localstack-init.sh` on LocalStack boot
+- **Secrets Manager:** `fora/probe-signing-key` — placeholder for FORA-126.4 canary probe
+
+The seed is idempotent. Re-running `./scripts/dev-up.sh` is a no-op for the data tier; the volume-backed state is reused.
+
+## Bootstrap (manual, without the wrapper)
+
+If you want to drive each step by hand (e.g. CI), the four commands are:
+
+```bash
+git clone https://github.com/fora-platform/fora.git
+cd fora
+cp .env.example .env                  # edit ANTHROPIC_API_KEY
+pnpm install --no-frozen-lockfile     # ~2 min on a cold cache
+pnpm -r build                          # builds every package once
+docker compose up -d                   # Postgres + Redis + LocalStack
+pnpm -r migrate                        # apply the db-migrator migrations
+pnpm -r dev                            # starts each app's dev script
 ```
 
 The first `pnpm -r build` is slow (TypeScript + Python wheel builds). Subsequent builds are incremental.

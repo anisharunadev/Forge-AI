@@ -25,24 +25,17 @@ Get Forge AI running locally in under 5 minutes. This is the dev-mode quickstart
 ```bash
 git clone https://github.com/fora-platform/fora.git
 cd fora
-pnpm install --frozen-lockfile
+cp .env.example .env                  # edit ANTHROPIC_API_KEY
+./scripts/dev-up.sh                   # boots infra + apps + runs the smoke gate
 ```
 
-The monorepo has 6 apps and 12 packages. The install takes ~2 minutes on a cold cache.
+`scripts/dev-up.sh` wraps `pnpm install`, `docker compose up -d`, `pnpm -r build`, `pnpm -r migrate`, and the three `pnpm --filter @fora/*-dev` runs into one command. It also runs the smoke test at the end and exits non-zero on any failure, so the boot is a single green-or-red signal. Re-run `./scripts/smoke.sh` any time to re-verify the stack.
 
-## 2. Boot the local stack
-
-```bash
-# from the repo root
-docker compose up -d                  # Postgres 16 + Redis 7 + LocalStack (AWS mocks)
-pnpm --filter @fora/agent-runtime dev # Python agent runtime on :4001
-pnpm --filter @fora/orchestrator dev  # TypeScript orchestrator on :4000
-pnpm --filter @fora/forge dev         # Next.js Forge console on :3000
-```
+The first boot takes ~2 minutes on a cold cache; subsequent boots are under 30 seconds because the pnpm store, docker layer cache, and named volumes (postgres, redis, localstack) are warm.
 
 The first boot seeds the local DB with one demo tenant (`acme-corp`) and one demo run (`demo-run-001`) so you can click around without writing data.
 
-## 3. Open the Forge console
+## 2. Open the Forge console
 
 Open <http://localhost:3000> in your browser.
 
@@ -53,6 +46,8 @@ You'll see three views:
 | **Product Manager** | PRDs, roadmaps, capacity | Read-mostly dashboards |
 | **Engineering Lead** | Runs in flight, blocked work, cost | Read + approve |
 | **CTO / VP Eng** | Throughput, MTTR, audit, cost by team | Read-only |
+
+If you don't see the Forge console at <http://localhost:3000>, run `./scripts/smoke.sh` to confirm the orchestrator (:4000), agent-runtime (:4001), and customer-cloud-broker (:4003) are all up. The smoke script is the green-or-red gate — if it's red, the stack is not fully booted and no Forge console will render.
 
 Switch personas via the avatar menu in the top-right.
 

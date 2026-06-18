@@ -1,0 +1,122 @@
+# Root docker-compose for FORA local dev (FORA-371).
+#
+# Scope: developer laptop only. NOT production — no TLS, no secrets
+# manager, no IAM roles. Production lives in `infra/terraform/`.
+#
+# This stack boots the three stateful dependencies every FORA app
+# reads at boot:
+#   - postgres  (apps/orchestrator, packages/db-migrator, packages/db-pool)
+#   - redis     (packages/cache-broker, packages/session-tokens,
+#                packages/sync-plane-ratelimit)
+#   - localstack (packages/object-store, apps/customer-cloud-broker,
+#                 apps/identity-broker — S3, IAM, STS, Secrets Manager)
+#
+# The three FORA HTTP services (agent-runtime, orchestrator,
+# customer-cloud-broker) are NOT started by Compose — `scripts/dev-up.sh`
+# starts them via `pnpm -r dev` once the infra is healthy. This keeps
+# the Compose surface small and matches the AC: "exit 0 on green,
+# non-zero on any failure."
+#
+# Usage:
+#   cp .env.example .env       # edit ANTHROPIC_API_KEY
+#   ./scripts/dev-up.sh        # boots infra + apps + runs smoke
+#   ./scripts/smoke.sh         # re-runs the health gate
+#   docker compose down        # tears down the infra (named volumes preserved)
+
+name: fora-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fora-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fora}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fora}
+      POSTGRES_DB: ${POSTGRES_DB:-fora}
+      # FORA apps trust the gateway to set `app.tenant_id`; the
+      # migrator runs as a non-superuser role that can BYPASSRLS only
+      # in the allow-listed migration paths.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - fora-postgres-data:/var/lib/postgresql/data
+      # Migration files are mounted read-only; the db-migrator package
+      # is the *only* path that creates tables, so we never want a
+      # shell-driven `psql` to drift the schema in dev.
+      - ./migrations:/docker-entrypoint-initdb.d/migrations:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fora} -d ${POSTGRES_DB:-fora}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    networks:
+      - fora-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: fora-redis
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - "256mb"
+      - --maxmemory-policy
+      - "allkeys-lru"
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - fora-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    networks:
+      - fora-net
+
+  localstack:
+    image: localstack/localstack:3.8
+    container_name: fora-localstack
+    restart: unless-stopped
+    environment:
+      SERVICES: s3,iam,sts,secretsmanager
+      DEBUG: ${LOCALSTACK_DEBUG:-0}
+      # LocalStack is single-node, single-account dev. The dummy
+      # credentials below are baked in by the image — the @aws-sdk
+      # clients FORA uses pick them up via AWS_ENDPOINT_URL +
+      # AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY.
+      AWS_DEFAULT_REGION: ${AWS_REGION:-us-east-1}
+    ports:
+      - "${LOCALSTACK_PORT:-4566}:4566"
+    volumes:
+      - fora-localstack-data:/var/lib/localstack
+      # Init script: creates the dev S3 bucket + a starter secrets
+      # manager entry so the smoke test has something to assert.
+      - ./scripts/localstack-init.sh:/etc/localstack/init/ready.d/init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "awslocal s3 ls >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+    networks:
+      - fora-net
+
+volumes:
+  fora-postgres-data:
+    name: fora-postgres-data
+  fora-redis-data:
+    name: fora-redis-data
+  fora-localstack-data:
+    name: fora-localstack-data
+
+networks:
+  fora-net:
+    name: fora-net
+    driver: bridge

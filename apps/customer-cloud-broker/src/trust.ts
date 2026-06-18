@@ -38,8 +38,8 @@
  * lives in `audit.ts::CloudProbeAuditEvent`.
  */
 
-import { readFileSync, existsSync } from 'node:fs';
-import { dirname, isAbsolute, resolve } from 'node:path';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import { dirname, isAbsolute, resolve, join } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { z } from 'zod';
 import type {
@@ -452,14 +452,11 @@ export interface DiscoveredTenantTrust {
 export function discoverTenantTrusts(rootDir: string): DiscoveredTenantTrust[] {
   // Minimal directory walk — `tenants/*/cloud_trust.yaml`. Avoids the
   // node_modules-style deep walk; the layout is shallow.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const fs = require('node:fs') as typeof import('node:fs');
-  const path = require('node:path') as typeof import('node:path');
   if (!existsSync(rootDir)) return [];
   const out: DiscoveredTenantTrust[] = [];
-  for (const entry of fs.readdirSync(rootDir, { withFileTypes: true })) {
+  for (const entry of readdirSync(rootDir, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
-    const file = path.join(rootDir, entry.name, 'cloud_trust.yaml');
+    const file = join(rootDir, entry.name, 'cloud_trust.yaml');
     if (existsSync(file)) {
       out.push({ tenant_id: entry.name, source: file });
     }
