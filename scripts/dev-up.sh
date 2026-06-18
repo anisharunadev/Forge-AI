@@ -203,6 +203,24 @@ start_app "customer-cloud-broker" \
   "pnpm --filter @fora/customer-cloud-broker dev" \
   "${FORA_CCB_LISTEN_PORT:-4003}"
 
+# Forge AI console (apps/forge, FORA-374). Next.js 15 dev server;
+# the smoke gate asserts :3000 /healthz once it has had time to bind.
+start_app "forge" \
+  "pnpm --filter @fora/forge dev" \
+  "${FORA_FORGE_PORT:-3000}"
+
+# Next.js dev does its first compile on the first HTTP request, not on
+# bind. Wait until /healthz is actually responsive before the smoke
+# gate runs so the forge probe isn't racing a cold compile.
+FORGE_PORT="${FORA_FORGE_PORT:-3000}"
+echo "[dev-up] waiting for forge :$FORGE_PORT (next.js first compile)…"
+for _ in $(seq 1 60); do
+  if curl -fsS --max-time 3 "http://localhost:$FORGE_PORT/healthz" >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
+
 # ---------------------------------------------------------------------------
 # 8. print URLs
 # ---------------------------------------------------------------------------
@@ -218,6 +236,7 @@ FORA dev stack is up
   agent-runtime          :${FORA_RUNTIME_PORT:-4001}  http://localhost:${FORA_RUNTIME_PORT:-4001}/health
   orchestrator           :${FORA_ORCHESTRATOR_PORT:-4000}  http://localhost:${FORA_ORCHESTRATOR_PORT:-4000}/healthz
   customer-cloud-broker  :${FORA_CCB_LISTEN_PORT:-4003}  http://localhost:${FORA_CCB_LISTEN_PORT:-4003}/healthz
+  forge (AI console)     :${FORA_FORGE_PORT:-3000}  http://localhost:${FORA_FORGE_PORT:-3000}/healthz
 ------------------------------------------------------------
   Logs: $LOG_DIR
   Pids: $PID_DIR

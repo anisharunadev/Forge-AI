@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 17 23 42;
+  --foreground: 245 247 251;
+}
+
+html,
+body {
+  background-color: rgb(var(--background));
+  color: rgb(var(--foreground));
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-md border border-transparent px-3 py-1.5 text-sm font-medium shadow-sm transition focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn-primary {
+  @apply bg-forge-500 text-white hover:bg-forge-600 focus:ring-forge-400;
+}
+
+.btn-secondary {
+  @apply border-forge-300 bg-forge-50 text-forge-800 hover:bg-forge-100 focus:ring-forge-300 dark:bg-forge-800 dark:text-forge-50 dark:hover:bg-forge-700;
+}
+
+.card {
+  @apply rounded-lg border border-forge-200 bg-white p-4 shadow-sm dark:border-forge-700 dark:bg-forge-900;
+}
+
+.badge {
+  @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium;
+}

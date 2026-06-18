@@ -1,0 +1,8 @@
+# apps/forge has no @fora/* workspace deps; the console only talks to
+# the orchestrator over HTTP. Keep this file present so the workspace
+# recognises apps/forge as a package root (per OMC's pnpm-workspace
+# pkg-not-found memory note).
+packages: []
+allowBuilds:
+  esbuild: true
+  sharp: true

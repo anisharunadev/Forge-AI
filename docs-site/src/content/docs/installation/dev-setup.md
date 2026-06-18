@@ -31,7 +31,8 @@ cp .env.example .env                  # edit ANTHROPIC_API_KEY
 5. `pnpm --filter @fora/agent-runtime dev` (port 4001) — the dev HTTP shim
 6. `pnpm --filter @fora/orchestrator dev` (port 4000)
 7. `pnpm --filter @fora/customer-cloud-broker dev` (port 4003)
-8. `./scripts/smoke.sh` — the health gate
+8. `pnpm --filter @fora/forge dev` (port 3000) — the Forge AI console ([FORA-374](/FORA/issues/FORA-374))
+9. `./scripts/smoke.sh` — the health gate (now 8/8 checks: three healthz, three stateful, two forge probes)
 
 To re-verify after a fix, just run `./scripts/smoke.sh` again — it's idempotent. To tear down: `./scripts/dev-up.sh --down`. Named volumes for postgres / redis / localstack are preserved, so a re-up keeps the demo tenant and dev bucket.
 
@@ -43,7 +44,33 @@ The first time `./scripts/dev-up.sh` runs, the migrator applies the schema, then
 - **S3 bucket:** `fora-dev-bucket` (`OBJECT_STORE_BUCKET`) — created by `scripts/localstack-init.sh` on LocalStack boot
 - **Secrets Manager:** `fora/probe-signing-key` — placeholder for FORA-126.4 canary probe
 
+The Forge console does **not** seed a demo run; the persona dashboards fall back to the seed run id `demo-run-001` (override with `FORA_SEED_RUN_ID`). If that run is not present yet, the dashboards render the empty state. Create one with:
+
+```bash
+curl -fsS -X POST http://localhost:4000/v1/runs \
+  -H 'content-type: application/json' \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -d '{"goal_id":"demo","project_id":"demo","triggered_by":{"type":"manual","actor":"dev-setup"}}'
+```
+
 The seed is idempotent. Re-running `./scripts/dev-up.sh` is a no-op for the data tier; the volume-backed state is reused.
+
+## Forge console (apps/forge, FORA-374)
+
+The Forge console is a Next.js 15 (App Router) UI shell over the orchestrator REST API. Default port is **3000** (`FORA_FORGE_PORT`); the orchestrator URL defaults to `http://localhost:4000` (`FORA_FORGE_API_URL` and `NEXT_PUBLIC_FORGE_API_URL`). The single-tenant auth stub uses a `forge.persona` cookie — pick a persona via the avatar menu in the top-right (PM / Engineering Lead / CTO).
+
+```
+apps/forge/
+├── app/
+│   ├── layout.tsx                 # top bar + persona switcher
+│   ├── page.tsx                   # persona picker
+│   ├── personas/{pm,eng-lead,cto}/page.tsx
+│   ├── runs/[id]/page.tsx         # run detail + Timeline
+│   └── api/{healthz,persona,runs/[id]/[verb]}/route.ts
+├── components/{Timeline,PersonaSwitcher,RunActions,RunStatusBadge}.tsx
+├── lib/{api,types,auth}.ts
+└── tests/                         # Vitest + Playwright
+```
 
 ## Bootstrap (manual, without the wrapper)
 

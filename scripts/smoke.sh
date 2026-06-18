@@ -43,6 +43,7 @@ fi
 RUNTIME_PORT="${FORA_RUNTIME_PORT:-4001}"
 ORCH_PORT="${FORA_ORCHESTRATOR_PORT:-4000}"
 CCB_PORT="${FORA_CCB_LISTEN_PORT:-4003}"
+FORGE_PORT="${FORA_FORGE_PORT:-3000}"
 PG_URL="${FORA_DATABASE_URL:-postgres://fora:fora@localhost:5432/fora}"
 REDIS_URL_LOCAL="${REDIS_URL:-redis://localhost:6379}"
 LS_URL="${AWS_ENDPOINT_URL:-http://localhost:4566}"
@@ -94,6 +95,15 @@ run_check "orchestrator           :$ORCH_PORT  GET /healthz" \
 
 run_check "customer-cloud-broker  :$CCB_PORT  GET /healthz" \
   "[[ -n \"\$(curl -fsS --max-time 5 http://localhost:$CCB_PORT/healthz 2>/dev/null)\" ]]"
+
+# Forge AI console (apps/forge, FORA-374). The /healthz probe proves
+# Next.js is alive; the persona probe renders the PM dashboard to text
+# to assert the persona routing and orchestrator client are wired up.
+run_check "forge (AI console)    :$FORGE_PORT  GET /healthz" \
+  "[[ -n \"\$(curl -fsS --max-time 10 http://localhost:$FORGE_PORT/healthz 2>/dev/null)\" ]]"
+
+run_check "forge                 :$FORGE_PORT  GET /personas/pm (PM dashboard)" \
+  "[[ -n \"\$(curl -fsS --max-time 15 http://localhost:$FORGE_PORT/personas/pm 2>/dev/null | grep -E 'Product Manager|Active runs')\" ]]"
 
 # ---------------------------------------------------------------------------
 # stateful checks
