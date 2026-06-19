@@ -1,8 +1,38 @@
-# QA Agent (FORA-43)
+# QA Agent (FORA-43, FORA-72)
 
 Stage 4 of the FORA SDLC pipeline. Sits between the Dev stage (PR
 merged, CI green) and the Security stage. Produces a runnable test
 suite for a merged PR and a coverage report, then hands off.
+
+Stage 4 actually has two sub-stages wired by this directory:
+
+- **FORA-72 — Test generator** (`test_generator.py`): a deterministic
+  `CodeDiff` (from FORA-70) → `TestPlan` + emitted test files. v0.1
+  is rule-based; the same diff + the same signals always produces
+  the same plan + the same bytes. Supports jest / phpunit / pytest
+  / playwright / cypress / pact across the four tiers
+  (unit / integration / e2e / contract).
+- **FORA-43 — QA runner** (`agent.py`): takes a `TestPlan` (which may
+  have been produced by FORA-72, or hand-built by the DevOps
+  orchestrator) and runs it through the per-tier generators
+  (`generators.py`), producing a `TestRun` and a `CoverageReport`.
+
+The pipeline is:
+
+```
+Dev (CodeDiff from FORA-70)
+       │
+       ▼
+  TestGenerator (FORA-72)            ◀── this directory, test_generator.py
+       │
+       │ TestPlan + emitted test files
+       ▼
+  QaAgent.run() (FORA-43)            ◀── this directory, agent.py
+       │
+       │ TestRun.verdict ∈ {pass, fail, needs_attention}
+       ▼
+  Security stage
+```
 
 ## What it does
 
@@ -281,3 +311,52 @@ Memory cross-cutting agent gates writes.
 - Posting emitted tests to GitHub (separate issue).
 - Mutation score (placeholder tier, not_implemented).
 - Real coverage numbers (stub returns zeros).
+
+## FORA-72 — Test generator (sub-stage 4.1)
+
+v0.1 lives in `agents/qa/test_generator.py` and is exercised by
+`agents/qa/smoke_test_test_generator.py`. Public surface:
+
+```python
+from agents.qa.test_generator import TestGenerator, generate_tests
+
+result = generate_tests(code_diff, out_dir="agents/qa/evidence/test_generator/<plan_id>/")
+# result.test_plan         -> TestPlan (consumable by QaAgent.run() below)
+# result.generated_files   -> list[GeneratedTestFile] (one per emitted test)
+# result.selection_trace   -> list[SelectionTrace] (per-tier rationale)
+# result.framework_warnings -> list[str] (no-renderer, unknown-language)
+# result.warnings          -> list[str] (no test files generated, etc.)
+```
+
+Selection rules (per `workspace/memory/qa.md` §2):
+
+| Tier         | Required | Selection rule                                                        |
+| ------------ | -------- | --------------------------------------------------------------------- |
+| unit         | yes      | every source file in the diff                                         |
+| integration  | yes      | every file under `service/`, `api/`, `mcp/`, `src/server/`            |
+| e2e          | no       | only files with a UI extension (`.tsx`/`.jsx`/`.vue`/`.svelte`/`.html`) or under `e2e/`, `pages/`, `routes/`, `critical/` |
+| contract     | yes      | only files matching `mcp/**/tools*.json`, `openapi*`, `swagger*`, `api/v*/...` |
+
+Framework resolution (path-extension-driven, not `FileChange.language`-driven):
+
+| Language     | unit / integration  | e2e            | contract  |
+| ------------ | ------------------- | -------------- | --------- |
+| python       | pytest              | playwright     | pact      |
+| typescript   | jest                | playwright     | pact      |
+| javascript   | jest                | playwright     | pact      |
+| php          | phpunit             | cypress        | pact      |
+| (fallback)   | pytest              | playwright     | pact      |
+
+The renderers are pure functions (`(target, symbol) -> str`); the
+only I/O is the file write under `out_dir`. v0.1 carries no
+`subprocess`, `git`, LLM, or HTTP imports.
+
+Run the smoke test:
+
+```bash
+python3 -m agents.qa.smoke_test_test_generator
+```
+
+It produces a JSON evidence file at
+`agents/qa/evidence/smoke_<UTC>/test_generator.json` and 30+
+assertions across 7 fixtures.
