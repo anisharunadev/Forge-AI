@@ -139,6 +139,13 @@ run_check "forge CTO round-trip   :$FORGE_PORT  POST /api/persona + GET /persona
 # ---------------------------------------------------------------------------
 [[ "$JSON" -eq 0 ]] && echo "[smoke] stateful checks"
 
+# Knowledge Layer production-bar lint gate (FORA-408, sub-goal 0.8.1).
+# Runs `python -m agents.workspace.lint` over workspace/{memory,customer,project}
+# and fails the smoke gate on any violation. Non-skippable by design: a bad
+# knowledge file must never reach the seed.
+run_check "workspace lint        workspace/  no production-bar violations" \
+  "python3 -m agents.workspace.lint --root workspace/ >/dev/null 2>&1"
+
 # Demo-run seed (FORA-378). The persona dashboards fall back to "No
 # runs yet" unless the seed run is present and the orchestrator's
 # tenant-scoped reads can see it. The probe asserts the seven canonical
