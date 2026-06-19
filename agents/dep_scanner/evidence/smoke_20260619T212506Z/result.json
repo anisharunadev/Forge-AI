@@ -1,0 +1,210 @@
+{
+  "schema_version": "1.0.0",
+  "summary": {
+    "total": 50,
+    "passed": 50,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1.a] decision == 'block' on HIGH-CVE PR \u2014 got 'block'"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1.b] at least one HIGH finding \u2014 got 1"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1.c] every HIGH finding has fixed_version \u2014 got ['3.2.10']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1.d] at least one CRITICAL finding \u2014 got 1"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1.e] HIGH finding has a CVE-* id \u2014 got ['CVE-2022-22818']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1.f] both scanners ran \u2014 got ['trivy', 'dependabot']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1.g] CVE-2022-22818 dedupes across Trivy + Dependabot \u2014 got 1"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1.h] PR comment posted on BLOCK \u2014 got True"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1.i] evidence_audit_id is set \u2014 got 'evidence-ba5bea7650b9'"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1.j] verdict and decision both == 'block' (alias invariant)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#2.a] decision == 'pass' on patched PR \u2014 got 'pass'"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#2.b] finding_count == 0 \u2014 got 0"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#2.c] findings list is empty \u2014 got 0 finding(s)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#2.d] PR comment NOT posted on PASS \u2014 got False"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#2.e] severity_counts empty on PASS \u2014 got {}"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#2.f] SBOM attached on PASS \u2014 got SbomRef(artifact_id='sbom-f42df1549bdd', format='CycloneDX', spec_version='1.5', sha256='a2f8c7aea59787a26e1f4d742fb9e8e03ab32688051068fa03656bff0f67b405', byte_size=452, component_count=0, storage_key='memory://dep_scanner/depscan-30e09f744a/sbom.cdx.json')"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#3.a] schema_version == '1.0.0' \u2014 got '1.0.0'"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#3.b] validate_handoff_output(block) is clean \u2014 got []"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#3.c] validate_handoff_output(pass) is clean \u2014 got []"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#3.d] validator catches decision=PASS with findings \u2014 got [\"schema_version '0.0.0' != '1.0.0'\", \"decision is 'pass' but findings is non-empty \u2014 must be 'block'\", \"finding 'f1' is HIGH/CRITICAL but decision is 'pass' \u2014 FORA-76 hard rule violated\", 'evidence_audit_id is required (audit replay)', 'scanners_used must be non-empty (no scanner ran)']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#3.e] validator catches HIGH/PASS FORA-76 violation \u2014 got [\"schema_version '0.0.0' != '1.0.0'\", \"decision is 'pass' but findings is non-empty \u2014 must be 'block'\", \"finding 'f1' is HIGH/CRITICAL but decision is 'pass' \u2014 FORA-76 hard rule violated\", 'evidence_audit_id is required (audit replay)', 'scanners_used must be non-empty (no scanner ran)']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#3.f] validator catches missing SBOM \u2014 got ['sbom is required (AC #4 \u2014 SBOM attached to every run)', 'evidence_audit_id is required (audit replay)', 'scanners_used must be non-empty (no scanner ran)']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#3.g] validator catches malformed SBOM sha256 \u2014 got [\"sbom.sha256 must be 64-char lowercase hex \u2014 got 'not-hex'\", 'evidence_audit_id is required (audit replay)', 'scanners_used must be non-empty (no scanner ran)']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4.a] SBOM format == 'CycloneDX' \u2014 got 'CycloneDX'"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4.b] SBOM spec_version == '1.5' \u2014 got '1.5'"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4.c] SBOM sha256 is 64-char hex \u2014 got '8b1183eddcefcc350598e535c9a35f84470a1a9915446d75db278c4acba8c032'"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4.d] SBOM component_count >= 2 (django + minimatch) \u2014 got 3"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4.e] SBOM sha256 == sha256(bytes) \u2014 recorded 8b1183eddcefcc35..., computed 8b1183eddcefcc35..."
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4.f] parsed SBOM bomFormat == 'CycloneDX' \u2014 got 'CycloneDX'"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4.g] parsed SBOM specVersion == '1.5' \u2014 got '1.5'"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4.h] SBOM carries >= 3 vulnerabilities \u2014 got 4"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4.i] SBOM sha256 is stable across re-emission \u2014 got 8b1183eddcefcc35... vs 8b1183eddcefcc35..."
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#5.a] audit recorder has >= 6 rows \u2014 got 15"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#5.b] no audit row is off-allow-list \u2014 got []"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#5.c] no audit row touches a developer-context token \u2014 got []"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#5.d] all tools used are in ALLOWED_TOOLS \u2014 got ['read_lockfile', 'read_pr_diff', 'write_handoff_artifact', 'write_pr_comment', 'write_sbom', 'write_scan_evidence']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#5.e] audit covers all 6 stages \u2014 got ['read_lockfile', 'read_pr_diff', 'write_handoff_artifact', 'write_pr_comment', 'write_sbom', 'write_scan_evidence']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#5.f] ToolAllowList.check raises IsolationError on a forbidden tool"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#5.g] on_violation callback fired \u2014 got ['read_developer_prompt']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [comment.a] comment_for_block passes assert_comment_has_no_secret \u2014 "
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [comment.b] comment_for_pass passes assert_comment_has_no_secret"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [comment.c] PR comment does NOT echo lockfile marker 'CVE-2022-22818 (HIGH)'"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [comment.d] PR comment includes the fixed_version '3.2.10'"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [comment.e] PR comment includes the CVE id"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [extra.a] ALLOWED_TOOLS is exactly the six documented tools \u2014 got ['read_lockfile', 'read_pr_diff', 'write_handoff_artifact', 'write_pr_comment', 'write_sbom', 'write_scan_evidence']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [extra.b] second scan produces same decision + finding_count"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [extra.c] first scan result scanner is trivy \u2014 got {<ScannerKind.DEPENDABOT: 'dependabot'>, <ScannerKind.TRIVY: 'trivy'>}"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [extra.d] severity_counts matches finding distribution \u2014 got {'critical': 1, 'high': 1, 'medium': 2} vs {'critical': 1, 'high': 1, 'medium': 2}"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [extra.e] SBOM bytes round-trip through json.loads"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [extra.f] write_sbom audit rows recorded \u2014 got 2"
+    }
+  ]
+}
