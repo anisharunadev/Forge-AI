@@ -1,5 +1,5 @@
 """
-Refactor Agent (FORA-82 / 8.1 + FORA-83 / 8.2).
+Refactor Agent (FORA-82 / 8.1 + FORA-83 / 8.2 + FORA-84 / 8.3).
 
 Public surface:
 
@@ -20,6 +20,12 @@ Sub-goal 8.2 (FORA-83 — dependency graph):
   - `build_graph(scope) -> DependencyGraph`  — the canonical call
   - `render_mermaid(graph)`                  — Mermaid flowchart
   - `attach_risk_and_tier_to_services(graph, scope)`
+
+Sub-goal 8.3 (FORA-84 — AWS Transform orchestration):
+  - `WavePlan`, `TransformWave`, `WaveCommand`,
+    `WaveGate`, `WaveBreak`, `WaveSummary`   — output shapes
+  - `plan_waves(scope, graph) -> WavePlan`   — the canonical call
+  - `render_wave_plan(plan) -> str`          — Markdown wave plan
 """
 
 from .analyzer import (
@@ -42,6 +48,10 @@ from .schemas import (
     RISK_LEVELS,
     TRANSFORM_TIERS,
     TRANSFORM_UNITS,
+    UNIT_TO_AWS_SERVICES,
+    WAVE_GATE_KINDS,
+    WAVE_KINDS,
+    WAVE_SEAMS,
     CategoryAssignment,
     CycleReport,
     DependencyGraph,
@@ -58,8 +68,19 @@ from .schemas import (
     ServiceGraphEdge,
     ServiceGraphNode,
     TransformMapping,
+    TransformWave,
+    WaveBreak,
+    WaveCommand,
+    WaveGate,
+    WavePlan,
+    WaveSummary,
 )
 from .transform_mapper import map_transform
+from .transform_orchestrator import (
+    PLANNER_VERSION,
+    plan_waves,
+    render_wave_plan,
+)
 
 
 __all__ = [
@@ -100,6 +121,21 @@ __all__ = [
     "ServiceGraph",
     "ServiceGraphEdge",
     "ServiceGraphNode",
+    # Schemas (8.3)
+    "UNIT_TO_AWS_SERVICES",
+    "WAVE_GATE_KINDS",
+    "WAVE_KINDS",
+    "WAVE_SEAMS",
+    "TransformWave",
+    "WaveBreak",
+    "WaveCommand",
+    "WaveGate",
+    "WavePlan",
+    "WaveSummary",
+    # Wave planner (8.3)
+    "PLANNER_VERSION",
+    "plan_waves",
+    "render_wave_plan",
     # Fixtures
     "sample_legacy_monolith",
 ]

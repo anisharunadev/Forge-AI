@@ -463,3 +463,206 @@ class DependencyGraph:
             self.nodes,
             key=lambda n_: (-n_.blast_radius, n_.path),
         )[:n]
+
+
+# ---------------------------------------------------------------------------
+# Wave plan (FORA-84, sub-goal 8.3)
+# ---------------------------------------------------------------------------
+#
+# Schema v1 is closed; the same extension rules as 8.1 / 8.2 apply:
+# bump `schemaVersion` and extend the dataclasses in a single place
+# on breaking changes.
+#
+# `WavePlan` is the deliverable that the downstream sub-goal consumes:
+#
+#   - 8.4 migration planner + Jira — emits one Jira epic per wave,
+#     one story per gate, and one release ticket per (tier, service)
+#     group. The planner does not call AWS; it calls the Jira MCP.
+#
+# v0.1 of the planner is pure: it does not execute any command. v0.2
+# (post `aws-transform-agent` hire) routes the `WaveCommand` lists
+# through the customer-cloud-broker dispatch (FORA-126 / FORA-126.5).
+
+# Closed-set wave kinds. Ordered roughly by lifecycle phase so the
+# `kind` value alone tells you where in the plan the wave sits.
+WAVE_KINDS: List[str] = [
+    "preflight",
+    "cycle_break",
+    "cluster_break",
+    "tier_wave",
+    "cutover",
+    "validation",
+]
+
+# Closed-set gate kinds. v0.1 emits these; v0.2 wires the executor.
+WAVE_GATE_KINDS: List[str] = [
+    "canary_probe",          # FORA-194 canary probe via CCB
+    "compile",               # run the project's build
+    "unit_test",             # run the smoke test
+    "lint",
+    "dep_check",
+    "secret_rotate_check",   # FORA-128 secrets MCP
+    "audit_completeness_check",  # FORA-36 audit schema
+]
+
+# Mapping from `unit` (8.1 vocabulary) to the AWS service(s) the wave
+# touches. Closed-set so plans are easy to diff.
+UNIT_TO_AWS_SERVICES: Dict[str, List[str]] = {
+    "lambda":         ["lambda", "apigateway"],
+    "container":      ["ecs", "fargate", "ecr"],
+    "ec2":            ["mgn", "ec2", "migrationhub"],
+    "aurora":         ["dms", "aurora", "migrationhub"],
+    "rds":            ["dms", "rds", "migrationhub"],
+    "s3":             ["s3", "migrationhub"],
+    "cloudfront":     ["cloudfront", "s3", "migrationhub"],
+    "api_gateway":    ["apigateway", "lambda"],
+    "step_functions": ["stepfunctions", "lambda"],
+    "skip":           [],
+}
+
+# Closed-set of seams the orchestrator may reference. Each wave's
+# `commands[*].via` and each `gates[*].seam` must be one of these.
+WAVE_SEAMS: List[str] = [
+    "customer-cloud-broker/audit",
+    "customer-cloud-broker/dispatch:ec2",
+    "customer-cloud-broker/dispatch:ecs",
+    "customer-cloud-broker/dispatch:lambda",
+    "customer-cloud-broker/dispatch:apigateway",
+    "customer-cloud-broker/dispatch:stepfunctions",
+    "customer-cloud-broker/dispatch:dms",
+    "customer-cloud-broker/dispatch:refactor-spaces",
+    "customer-cloud-broker/dispatch:route53",
+    "customer-cloud-broker/probe-signer",
+    "mcp-servers/secrets",
+    "mcp-servers/jira",
+    "forge/build-publish",
+]
+
+
+@dataclass
+class WaveGate:
+    """A pre-flight or post-flight gate on a wave."""
+    gate_id: str
+    kind: str                                # one of WAVE_GATE_KINDS
+    description: str
+    seam: str                                # one of WAVE_SEAMS
+    blocking: bool = True                    # blocking gates stop the wave
+    timeout_s: int = 60
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class WaveCommand:
+    """A single AWS action in a wave. v0.1 emits; v0.2 executes via the seam."""
+    command_id: str
+    service: str                              # AWS service (e.g. "ec2", "dms")
+    action: str                               # AWS API call (e.g. "MGN.start_replication")
+    params: Dict[str, Any] = field(default_factory=dict)
+    audit_action: str = ""                    # audit event name emitted on completion
+    via: str = ""                             # one of WAVE_SEAMS
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class WaveBreak:
+    """A summary of a cycle or cluster break, surfaced for 8.4 to size Jira epics."""
+    break_id: str                             # "cycle-<id>" or "cluster-<id>"
+    kind: str                                 # "cycle" | "cluster"
+    members: List[str]                        # sorted; for cycle: file paths, for cluster: service names
+    rationale: str
+    wave_id: int                              # the wave this break lives in
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class TransformWave:
+    """A single wave in the WavePlan. Ordered topologically by `wave_id`."""
+    wave_id: int
+    wave_name: str                            # human-readable, used in render_wave_plan
+    tier: str                                 # one of TRANSFORM_TIERS
+    kind: str                                 # one of WAVE_KINDS
+    target_aws_services: List[str] = field(default_factory=list)
+    files: List[str] = field(default_factory=list)  # sorted
+    prerequisites: List[int] = field(default_factory=list)  # wave_ids
+    gates: List[WaveGate] = field(default_factory=list)
+    commands: List[WaveCommand] = field(default_factory=list)
+    audit_action: str = ""
+    estimated_effort_days: float = 0.0
+    rationale: str = ""
+    service: str = ""                         # service tag for tier_wave; empty otherwise
+
+    def to_dict(self) -> Dict[str, Any]:
+        d = asdict(self)
+        d["gates"] = [g.to_dict() for g in self.gates]
+        d["commands"] = [c.to_dict() for c in self.commands]
+        return d
+
+
+@dataclass
+class WaveSummary:
+    """Top-line numbers for the wave plan."""
+    total_waves: int
+    total_files: int                          # files that appear in some wave (skip files excluded)
+    skipped_files: int                        # files in `skip` tier — never scheduled
+    cycle_breaks: int                         # number of cycle_break waves
+    cluster_breaks: int                       # number of cluster_break waves
+    high_risk_waves: int                      # waves that carry a canary_probe gate
+    total_estimated_effort_days: float
+    tier_counts: Dict[str, int]               # tier -> wave count
+    unit_counts: Dict[str, int]               # unit -> file count (across waves)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class WavePlan:
+    """Top-level deliverable: the sequenced AWS Transform orchestration plan.
+
+    Produced by `plan_waves(scope, graph)` from a `MigrationScope` (8.1)
+    and a `DependencyGraph` (8.2). Pure function of the inputs;
+    deterministic.
+    """
+    schema_version: int
+    report_id: str
+    generated_at: str
+    source: str
+    planner_version: str                      # "wave-planner/0.1.0"
+    repo_fingerprint: str
+    deterministic: bool
+    planner_runtime_ms: float
+    cost_usd: float                           # always 0 — pure-Python
+    waves: List[TransformWave]
+    cycle_breaks: List[WaveBreak]
+    cluster_breaks: List[WaveBreak]
+    summary: WaveSummary
+    notes: List[str] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        d = asdict(self)
+        d["waves"] = [w.to_dict() for w in self.waves]
+        d["cycle_breaks"] = [b.to_dict() for b in self.cycle_breaks]
+        d["cluster_breaks"] = [b.to_dict() for b in self.cluster_breaks]
+        d["summary"] = self.summary.to_dict()
+        return d
+
+    def wave_by_id(self, wave_id: int) -> Optional[TransformWave]:
+        for w in self.waves:
+            if w.wave_id == wave_id:
+                return w
+        return None
+
+    def high_risk_waves(self) -> List[TransformWave]:
+        """Waves that carry a `canary_probe` gate (i.e. are high-risk)."""
+        return [w for w in self.waves if any(g.kind == "canary_probe" for g in w.gates)]
+
+
+# ---------------------------------------------------------------------------
+# End of wave plan section (FORA-84, sub-goal 8.3).
+# ---------------------------------------------------------------------------
