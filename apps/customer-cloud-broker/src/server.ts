@@ -4,6 +4,8 @@
  * Routes:
  *   POST /broker/action       Broker a single ToolCall envelope
  *   POST /broker/probe        Re-probe a tenant's cloud trust
+ *   POST /credentials/resolve Per-(tenant, server) credential material
+ *                             (FORA-48 §3.5 / FORA-448 — scope guard)
  *   GET  /healthz             Liveness
  *   GET  /readyz              Readiness (deny-list + trust store + audit sink healthy)
  *   GET  /metrics             Prometheus text exposition
@@ -121,6 +123,77 @@ export async function buildServer(deps: BuildServerDeps): Promise<FastifyInstanc
     // v1 returns the trust record directly; the canary assume lands
     // in FORA-126.4.
     return trust;
+  });
+
+  // ---- /credentials/resolve (FORA-48 §3.5 / FORA-448) ------------------
+  //
+  // Per-tenant scope-guard chokepoint for the mcp-router. The router calls
+  // this after the identity-broker validates the tenant and before the
+  // upstream MCP process is spawned. We mint the per-(tenant, server)
+  // credential material the transport will hand to the MCP server. The
+  // credential is opaque to the router; the transport reads it from
+  // `ctx.credential` and forwards it upstream.
+  //
+  // v1 mints a stub `{kind: 'stub', server_name, tenant_id, issued_at_ms,
+  // expires_at_ms}` with a 5-minute TTL. The contract for the response
+  // shape is the broker's; a future ADR lands the real federation token.
+  // The stub is enough to prove the wire path and AC #3.
+  //
+  // Failure modes:
+  //   - tenant has no trust record on any cloud → `{ok:false, reason:
+  //     'cloud_disabled'}` (HTTP 200, so the router can shape it as
+  //     `credential_denied`).
+  //   - trust record exists but is in a non-active state → same shape.
+  //   - malformed body → 400 (treated by the adapter as
+  //     `client_error_400`).
+  //
+  // The route does NOT emit a `cloud.brokered` audit event (that contract
+  // is for /broker/action). It emits nothing for v1; a future follow-up
+  // adds a `credential.minted` event for observability.
+  const CredentialsResolveSchema = z
+    .object({
+      tenant_id: z.string().min(1),
+      server_name: z.string().min(1),
+      trace_id: z.string().min(1).optional(),
+    })
+    .strict();
+  const CREDENTIAL_TTL_MS = 5 * 60 * 1000;
+  app.post<{ Body: unknown }>('/credentials/resolve', async (req, reply) => {
+    const parsed = CredentialsResolveSchema.safeParse(req.body);
+    if (!parsed.success) {
+      reply.code(400);
+      return { ok: false, reason: 'malformed_request' };
+    }
+    const { tenant_id, server_name } = parsed.data;
+    // The trust store is keyed by (tenant, cloud). A scope-guard call
+    // doesn't carry a cloud discriminator; the v1 contract is "the tenant
+    // must have at least one active trust record". If none, deny.
+    const clouds: readonly Cloud[] = ['aws', 'azure', 'gcp', 'sonarqube'];
+    const active = clouds
+      .map((c) => deps.trust_store.get(tenant_id, c))
+      .find((t) => t && t.trust_state === 'active');
+    if (!active) {
+      return reply.send({
+        ok: false,
+        reason: 'cloud_disabled',
+        tenant_id,
+        server_name,
+      });
+    }
+    const issued_at_ms = Date.now();
+    return reply.send({
+      ok: true,
+      tenant_id,
+      server_name,
+      credential: {
+        kind: 'stub',
+        server_name,
+        tenant_id,
+        issued_at_ms,
+        expires_at_ms: issued_at_ms + CREDENTIAL_TTL_MS,
+        role_fingerprint: active.role_ref,
+      },
+    });
   });
 
   return app;

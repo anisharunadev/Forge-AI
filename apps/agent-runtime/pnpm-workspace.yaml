@@ -1,2 +1,7 @@
+packages:
+  - ../../packages/mcp-router
+  - ../../apps/identity-broker
+  - ../../apps/customer-cloud-broker
 allowBuilds:
-  esbuild: set this to true or false
+  esbuild: true
+  protobufjs: true

@@ -175,3 +175,14 @@ export type {
   TransitionCase,
   TransitionVerdict,
 } from './orchestrator/index.js';
+
+// ---- 0.3.5 surface (FORA-48 §3.5 / FORA-448 — per-tenant scope guard) -
+//
+// The production wire-up for the per-tenant scope guard. Consumers
+// construct the `McpRouter` via `buildProductionMcpRouter`; the two
+// adapters fail closed on transport failure so a cross-tenant
+// request never reaches the upstream MCP.
+export {
+  buildProductionMcpRouter,
+  type BuildProductionMcpRouterOptions,
+} from './mcp_scope_guard.js';

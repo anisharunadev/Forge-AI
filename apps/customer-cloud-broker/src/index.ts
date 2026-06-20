@@ -28,3 +28,14 @@ export {
   type SonarQubeDispatchFn,
   type SonarQubeReleaseFn,
 } from './adapters/sonarqube.js';
+// Per-tenant scope guard adapter (FORA-48 §3.5 / FORA-448). Implements
+// the `CredentialResolver` port from `@fora/mcp-router` against the
+// `POST /credentials/resolve` route. Fails closed on transport failure.
+export {
+  HttpCredentialResolver,
+  type HttpCredentialResolverOptions,
+  type CredentialResolutionDenial,
+  type CredentialResolutionOk,
+  type CredentialResolutionResult,
+  type CredentialResolverLike,
+} from './credential_resolver.js';
