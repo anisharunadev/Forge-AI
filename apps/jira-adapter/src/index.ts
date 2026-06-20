@@ -43,3 +43,20 @@ export {
   type OutboundIssueResult,
   type InboundIssueResult,
 } from './issue-mirror.js';
+export {
+  mirrorCommentOutbound,
+  mirrorCommentInbound,
+  resolveInboundAuthor,
+  AuthorMappingError,
+  EnvBackedJiraAuthorMapper,
+  type AuthorKind,
+  type MappedPaperclipAuthor,
+  type JiraCommentClient,
+  type JiraAuthorMapper,
+  type PaperclipCommentEvent,
+  type JiraCommentCreatedWebhook,
+  type CommentInboundInput,
+  type OutboundCommentResult,
+  type InboundCommentResult,
+  type AuthorResolution,
+} from './comment-mirror.js';
