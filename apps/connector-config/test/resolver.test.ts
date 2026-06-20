@@ -15,6 +15,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   ConnectorConfigResolver,
   InProcessConnectorConfigCache,
+  cacheKey,
   createInMemoryAuditSink,
 } from '../src/index.js';
 import {
@@ -352,5 +353,225 @@ describe('connector-config/resolver', () => {
     );
     expect(result.step).toBe('miss');
     expect(result.binding).toBeNull();
+  });
+
+  // -------------------------------------------------------------------------
+  // FORA-544 — cache key contract + cross-tenant leak guard
+  //
+  // AC #3: "Cache key matches spec; integration test confirms no
+  // cross-tenant leak." The spec names the 4-tuple
+  // (connector_id, tenant_id, project_id, auth_method); the tests
+  // below pin the string form and prove a populated cache for
+  // tenant A does not leak into tenant B's resolution.
+  // -------------------------------------------------------------------------
+
+  describe('cache key contract', () => {
+    it('cacheKey string contains all four fields in the spec order', () => {
+      const key = cacheKey({
+        tenant_id: TENANT_A as TenantId,
+        project_id: PROJECT_X,
+        connector_id: 'github',
+        auth_method: 'pat',
+      });
+      // Order: tenant_id|project_id|connector_id|auth_method per Plan 4 §2.
+      expect(key).toBe(`${TENANT_A}|${PROJECT_X}|github|pat`);
+      expect(key).toContain(TENANT_A);
+      expect(key).toContain(PROJECT_X);
+      expect(key).toContain('github');
+      expect(key).toContain('pat');
+    });
+
+    it('cacheKey projects the tenant-default sentinel when project_id is null', () => {
+      const key = cacheKey({
+        tenant_id: TENANT_A as TenantId,
+        project_id: null,
+        connector_id: 'github',
+        auth_method: 'pat',
+      });
+      // The sentinel must NOT collide with a real project_id value
+      // (project UUIDs are v4-shaped, never '<tenant-default>').
+      expect(key).toBe(`${TENANT_A}|<tenant-default>|github|pat`);
+    });
+
+    it('same 4-tuple produces identical key (deterministic)', () => {
+      const a = cacheKey({
+        tenant_id: TENANT_A as TenantId,
+        project_id: PROJECT_X,
+        connector_id: 'github',
+        auth_method: 'pat',
+      });
+      const b = cacheKey({
+        tenant_id: TENANT_A as TenantId,
+        project_id: PROJECT_X,
+        connector_id: 'github',
+        auth_method: 'pat',
+      });
+      expect(a).toBe(b);
+    });
+
+    it('different tenant_id produces a different key (cross-tenant guard)', () => {
+      const a = cacheKey({
+        tenant_id: TENANT_A as TenantId,
+        project_id: null,
+        connector_id: 'github',
+        auth_method: 'pat',
+      });
+      const b = cacheKey({
+        tenant_id: TENANT_B as TenantId,
+        project_id: null,
+        connector_id: 'github',
+        auth_method: 'pat',
+      });
+      expect(a).not.toBe(b);
+    });
+
+    it('different auth_method produces a different key', () => {
+      const a = cacheKey({
+        tenant_id: TENANT_A as TenantId,
+        project_id: PROJECT_X,
+        connector_id: 'github',
+        auth_method: 'pat',
+      });
+      const b = cacheKey({
+        tenant_id: TENANT_A as TenantId,
+        project_id: PROJECT_X,
+        connector_id: 'github',
+        auth_method: 'oauth2',
+      });
+      expect(a).not.toBe(b);
+    });
+
+    it('different connector_id produces a different key', () => {
+      const a = cacheKey({
+        tenant_id: TENANT_A as TenantId,
+        project_id: PROJECT_X,
+        connector_id: 'github',
+        auth_method: 'pat',
+      });
+      const b = cacheKey({
+        tenant_id: TENANT_A as TenantId,
+        project_id: PROJECT_X,
+        connector_id: 'gitlab',
+        auth_method: 'pat',
+      });
+      expect(a).not.toBe(b);
+    });
+  });
+
+  describe('cross-tenant cache leak guard', () => {
+    it('does NOT return a tenant A cached binding to a tenant B resolution', async () => {
+      // Tenant A has an active tenant-default binding for github/pat.
+      seedBinding(client, {
+        binding_id: 'binding-A',
+        tenant_id: TENANT_A,
+        project_id: null,
+        connector_id: 'github',
+        auth_method: 'pat',
+        status: 'active',
+      });
+      const resolver = new ConnectorConfigResolver({
+        client,
+        audit,
+        cache,
+      });
+      // Warm the cache with tenant A's resolution.
+      const aResult = await resolver.resolve(makeInput());
+      expect(aResult.step).toBe('tenant_default');
+      expect(aResult.binding?.binding_id).toBe('binding-A');
+      expect(aResult.cache_hit).toBe(false);
+
+      // Resolve again for tenant A — cache_hit flips to true.
+      const aCached = await resolver.resolve(makeInput());
+      expect(aCached.cache_hit).toBe(true);
+      expect(aCached.binding?.binding_id).toBe('binding-A');
+
+      // Tenant B with the same connector_id / project_id / auth_method
+      // must NOT see tenant A's binding. No binding is seeded for
+      // tenant B; tenant B's resolver must walk to step 5 and MISS.
+      // The cache lookup is keyed on tenant_id first, so a cache
+      // hit for tenant A does NOT short-circuit tenant B.
+      const bResult = await resolver.resolve(
+        makeInput({ tenant_id: TENANT_B as TenantId }),
+      );
+      expect(bResult.step).toBe('miss');
+      expect(bResult.binding).toBeNull();
+      expect(bResult.cache_hit).toBe(false);
+      // One connector.binding.missing event was emitted for tenant
+      // B's MISS. Tenant A's first resolve did not emit (it
+      // resolved); the second cache hit did not emit either.
+      expect(audit.events).toHaveLength(1);
+      expect(audit.events[0]?.event_type).toBe('connector.binding.missing');
+      expect(audit.events[0]?.tenant_id).toBe(TENANT_B);
+    });
+
+    it('a populated cache for one auth_method does not leak to a different auth_method', async () => {
+      seedBinding(client, {
+        binding_id: 'binding-pat',
+        tenant_id: TENANT_A,
+        project_id: null,
+        connector_id: 'github',
+        auth_method: 'pat',
+        status: 'active',
+      });
+      const resolver = new ConnectorConfigResolver({
+        client,
+        audit,
+        cache,
+      });
+      // Warm cache for github/pat.
+      const patResult = await resolver.resolve(makeInput());
+      expect(patResult.step).toBe('tenant_default');
+      expect(patResult.binding?.binding_id).toBe('binding-pat');
+
+      // github/oauth2 is a separate cache key. Tenant A has no row
+      // for that auth_method → MISS.
+      const oauthResult = await resolver.resolve(
+        makeInput({ auth_method: 'oauth2' }),
+      );
+      expect(oauthResult.step).toBe('miss');
+      expect(oauthResult.binding).toBeNull();
+      expect(oauthResult.cache_hit).toBe(false);
+    });
+
+    it('invalidatePrefix evicts only entries for the named (tenant_id, connector_id)', async () => {
+      seedBinding(client, {
+        binding_id: 'binding-A',
+        tenant_id: TENANT_A,
+        project_id: null,
+        connector_id: 'github',
+        auth_method: 'pat',
+        status: 'active',
+      });
+      seedBinding(client, {
+        binding_id: 'binding-B',
+        tenant_id: TENANT_B,
+        project_id: null,
+        connector_id: 'github',
+        auth_method: 'pat',
+        status: 'active',
+      });
+      const resolver = new ConnectorConfigResolver({
+        client,
+        audit,
+        cache,
+      });
+      // Warm both tenants' caches.
+      await resolver.resolve(makeInput());
+      await resolver.resolve(makeInput({ tenant_id: TENANT_B as TenantId }));
+      // Invalidate only tenant A's github entries.
+      cache.invalidatePrefix({
+        tenant_id: TENANT_A as TenantId,
+        connector_id: 'github',
+      });
+      // Tenant A re-resolves from the repo (cache_hit=false).
+      const a = await resolver.resolve(makeInput());
+      expect(a.cache_hit).toBe(false);
+      // Tenant B still hits the cache.
+      const b = await resolver.resolve(
+        makeInput({ tenant_id: TENANT_B as TenantId }),
+      );
+      expect(b.cache_hit).toBe(true);
+      expect(b.binding?.binding_id).toBe('binding-B');
+    });
   });
 });
