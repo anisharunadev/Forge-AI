@@ -1358,6 +1358,303 @@ def scenario_422_divergence_signal() -> Dict[str, Any]:
 # -- Runner ----------------------------------------------------------------
 
 
+def scenario_idempotent_re_call() -> Dict[str, Any]:
+    """S8 — FORA-431 (FORA-201.1) AC #1 acceptance bar.
+
+    The same Paperclip issue is mirrored twice; the second
+    call MUST PATCH the existing GitHub issue rather than
+    POST a duplicate. The scenario also asserts the
+    `target_issue_ok` audit fires on both calls (operation
+    `create` then `update`) and the `remote_refs["github"]`
+    stored by the caller after the first call round-trips
+    correctly on the second.
+
+    Acceptance bar (FORA-431 AC #1):
+
+      1. First `apply_mirror` POSTs a new issue and the
+         returned `number` is "17".
+      2. Second `apply_mirror` with `remote_refs["github"]="17"`
+         PATCHes `/repos/.../issues/17` (no second POST).
+      3. Both calls emit `target_issue_ok` with the
+         correct `operation` (`create` then `update`).
+      4. Audit payload carries the AC-required fields
+         `{tenant, paperclip_id, github_number}`.
+    """
+    transport = InMemoryGitHubTransport(
+        script=[
+            (
+                "POST",
+                "/repos/fora-labs/sync-plane-fixture/issues",
+                {
+                    "id": 1001,
+                    "number": 17,
+                    "state": "open",
+                    "state_reason": None,
+                    "html_url":
+                        "https://github.com/fora-labs/sync-plane-fixture/issues/17",
+                },
+                201,
+            ),
+            (
+                "PATCH",
+                "/repos/fora-labs/sync-plane-fixture/issues/17",
+                {
+                    "id": 1001,
+                    "number": 17,
+                    "state": "open",
+                    "state_reason": None,
+                    "html_url":
+                        "https://github.com/fora-labs/sync-plane-fixture/issues/17",
+                },
+                200,
+            ),
+        ],
+    )
+    audit = _IssueRecordingAuditHook()
+    adapter = GitHubIssuesAdapter(
+        auth=_StaticAuth(),
+        transport=transport,
+        audit=audit,
+        default_repo="fora-labs/sync-plane-fixture",
+    )
+    entity = _entity()
+    # First call — the entity has no remote_refs, so the
+    # adapter POSTs a new issue.
+    r1 = adapter.apply_mirror("acme-co", entity)
+    # Second call — the entity now has the GitHub number
+    # the caller persisted from `r1.remote_id`. The adapter
+    # MUST PATCH the same issue, not POST a duplicate.
+    entity_with_ref = _entity(remote_refs={"github": r1.remote_id})
+    r2 = adapter.apply_mirror("acme-co", entity_with_ref)
+
+    failures: List[str] = []
+    # Transport shape: 1 POST + 1 PATCH, in that order, no
+    # extra POST.
+    methods = [r.method for r in transport.recorded]
+    if methods != ["POST", "PATCH"]:
+        failures.append(
+            f"idempotent: transport methods={methods!r} != ['POST', 'PATCH']"
+        )
+    # The PATCH path must be `/issues/17`, not a new POST.
+    patch_reqs = [
+        r for r in transport.recorded
+        if r.method == "PATCH" and r.path.endswith("/issues/17")
+    ]
+    if len(patch_reqs) != 1:
+        failures.append(
+            f"idempotent: PATCH /issues/17 count={len(patch_reqs)} != 1"
+        )
+    # No duplicate POST to /issues (the script only has 1).
+    post_reqs = [
+        r for r in transport.recorded
+        if r.method == "POST" and r.path.endswith("/issues")
+    ]
+    if len(post_reqs) != 1:
+        failures.append(
+            f"idempotent: POST /issues count={len(post_reqs)} != 1"
+        )
+    # Audit shape: 2 target_issue_ok calls (create then update).
+    if len(audit.target_calls) != 2:
+        failures.append(
+            f"idempotent: target_issue_ok calls="
+            f"{len(audit.target_calls)} != 2"
+        )
+    else:
+        c1, c2 = audit.target_calls
+        if c1.operation != "create":
+            failures.append(
+                f"idempotent: call#1 operation={c1.operation!r} != 'create'"
+            )
+        if c2.operation != "update":
+            failures.append(
+                f"idempotent: call#2 operation={c2.operation!r} != 'update'"
+            )
+        for idx, c in enumerate((c1, c2), start=1):
+            if c.tenant_id != "acme-co":
+                failures.append(
+                    f"idempotent: call#{idx} tenant={c.tenant_id!r}"
+                )
+            if c.entity_id != "iss-001":
+                failures.append(
+                    f"idempotent: call#{idx} entity_id={c.entity_id!r}"
+                )
+            if c.github_number != "17":
+                failures.append(
+                    f"idempotent: call#{idx} github_number="
+                    f"{c.github_number!r} != '17'"
+                )
+            # The AC requires `{tenant, paperclip_id,
+            # github_number}` on the audit payload. tenant
+            # is the top-level argument; paperclip_id and
+            # github_number live in `metadata`.
+            md = c.metadata
+            if md.get("github_number") != "17":
+                failures.append(
+                    f"idempotent: call#{idx} metadata.github_number="
+                    f"{md.get('github_number')!r} != '17'"
+                )
+    return {
+        "name": "idempotent_re_call",
+        "data": {
+            "transport_methods": methods,
+            "transport_count": len(transport.recorded),
+            "target_audit_calls": len(audit.target_calls),
+            "first_operation": (
+                audit.target_calls[0].operation
+                if audit.target_calls else None
+            ),
+            "second_operation": (
+                audit.target_calls[1].operation
+                if len(audit.target_calls) > 1 else None
+            ),
+            "r1_remote_id": r1.remote_id,
+            "r2_remote_id": r2.remote_id,
+        },
+        "duration_ms": 0,
+        "failures": failures,
+    }
+
+
+def scenario_inbound_issue_opened() -> Dict[str, Any]:
+    """S9 — FORA-431 (FORA-201.1) AC #1 inbound side.
+
+    Normalize a GitHub `issues.opened` webhook payload
+    into a canonical `ReceivedEvent` per ADR-0006 §3.1.
+    Assert the event body, the audit emission
+    (`source_issue_ok`), and the canonical subject naming.
+
+    Acceptance bar (FORA-431 AC #1):
+
+      1. The returned event has subject
+         `fora.events.<tenant>.issue.created.v1`.
+      2. `event_type` is `issue.created.v1`.
+      3. `payload["paperclip_id"]` matches the caller-supplied
+         Paperclip issue id.
+      4. `payload["github_number"]` matches the
+         webhook's `issue.number`.
+      5. `sync.source.issue.ok` audit fires with
+         `{tenant, paperclip_id, github_number}` payload
+         and `action="opened"`.
+    """
+    audit = _IssueRecordingAuditHook()
+    transport = InMemoryGitHubTransport(
+        script=[],
+    )
+    adapter = GitHubIssuesAdapter(
+        auth=_StaticAuth(),
+        transport=transport,
+        audit=audit,
+        default_repo="fora-labs/sync-plane-fixture",
+    )
+    webhook_payload = {
+        "action": "opened",
+        "issue": {
+            "number": 42,
+            "title": "Ship sync-plane service skeleton",
+            "body": (
+                "Implement the Sync Plane service skeleton "
+                "per FORA-252."
+            ),
+            "state": "open",
+            "state_reason": None,
+        },
+        "repository": {
+            "full_name": "fora-labs/sync-plane-fixture",
+        },
+    }
+    event = adapter.normalize_issue_webhook(
+        "acme-co", webhook_payload,
+        paperclip_id="iss-252",
+    )
+    failures: List[str] = []
+    # Subject naming per ADR-0006 §3.1.
+    expected_subject = "fora.events.acme-co.issue.created.v1"
+    if event.subject != expected_subject:
+        failures.append(
+            f"inbound: subject={event.subject!r} != {expected_subject!r}"
+        )
+    if event.event_type != "issue.created.v1":
+        failures.append(
+            f"inbound: event_type={event.event_type!r} != "
+            f"'issue.created.v1'"
+        )
+    if event.tenant_id != "acme-co":
+        failures.append(
+            f"inbound: tenant_id={event.tenant_id!r} != 'acme-co'"
+        )
+    if event.payload.get("paperclip_id") != "iss-252":
+        failures.append(
+            f"inbound: payload.paperclip_id="
+            f"{event.payload.get('paperclip_id')!r} != 'iss-252'"
+        )
+    if event.payload.get("github_number") != "42":
+        failures.append(
+            f"inbound: payload.github_number="
+            f"{event.payload.get('github_number')!r} != '42'"
+        )
+    if event.payload.get("github_action") != "opened":
+        failures.append(
+            f"inbound: payload.github_action="
+            f"{event.payload.get('github_action')!r} != 'opened'"
+        )
+    if event.payload.get("github_repo") != "fora-labs/sync-plane-fixture":
+        failures.append(
+            f"inbound: payload.github_repo="
+            f"{event.payload.get('github_repo')!r} != "
+            f"'fora-labs/sync-plane-fixture'"
+        )
+    # The event_id must be stable + dedupe-friendly.
+    if not event.event_id.startswith("evt-github-issue-42-opened-"):
+        failures.append(
+            f"inbound: event_id={event.event_id!r} does not start "
+            f"with 'evt-github-issue-42-opened-'"
+        )
+    # Audit emission — `source_issue_ok` fires once with
+    # the AC-required fields.
+    if len(audit.source_calls) != 1:
+        failures.append(
+            f"inbound: source_issue_ok calls="
+            f"{len(audit.source_calls)} != 1"
+        )
+    else:
+        c = audit.source_calls[0]
+        if c.tenant_id != "acme-co":
+            failures.append(
+                f"inbound: audit tenant_id={c.tenant_id!r} != 'acme-co'"
+            )
+        if c.entity_id != "iss-252":
+            failures.append(
+                f"inbound: audit entity_id={c.entity_id!r} != 'iss-252'"
+            )
+        if c.github_number != "42":
+            failures.append(
+                f"inbound: audit github_number="
+                f"{c.github_number!r} != '42'"
+            )
+        if c.operation != "opened":
+            failures.append(
+                f"inbound: audit action={c.operation!r} != 'opened'"
+            )
+    return {
+        "name": "inbound_issue_opened",
+        "data": {
+            "subject": event.subject,
+            "event_type": event.event_type,
+            "event_id": event.event_id,
+            "payload_keys": sorted(event.payload.keys()),
+            "paperclip_id": event.payload.get("paperclip_id"),
+            "github_number": event.payload.get("github_number"),
+            "source_audit_calls": len(audit.source_calls),
+            "source_audit_action": (
+                audit.source_calls[0].operation
+                if audit.source_calls else None
+            ),
+        },
+        "duration_ms": 0,
+        "failures": failures,
+    }
+
+
 SCENARIOS: List[Callable[[], Dict[str, Any]]] = [
     scenario_create,
     scenario_comment_round_trip,
@@ -1366,6 +1663,8 @@ SCENARIOS: List[Callable[[], Dict[str, Any]]] = [
     scenario_rate_limit_window,
     scenario_divergence_signal,
     scenario_422_divergence_signal,
+    scenario_idempotent_re_call,
+    scenario_inbound_issue_opened,
 ]
 
 
