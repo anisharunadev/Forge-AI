@@ -7,7 +7,35 @@ consumes.  A change to any field name or type is a breaking change:
 bump `AUDIT_SCHEMA_VERSION` and update the worked example in the ADR
 together.
 
-Versioning: 0.1.0 (initial).  See FORA-36 acceptance criteria.
+Versioning
+----------
+* 0.1.0  — initial (FORA-36 acceptance criteria).
+* 0.2.0  — Phase 3 §D (FORA-495). Adds two merge-block event types,
+           ``artifact.rejected.merge`` and ``artifact.cleared.merge``,
+           plus the merge-block metadata contract documented below.
+           The event envelope is unchanged; the new event kinds carry
+           merge-specific fields in the ``metadata`` dict and reuse
+           the existing ``run_id`` for the Audit join key.
+
+Merge-block event metadata contract (FORA-495 / Phase 3 §D)
+---------------------------------------------------------
+Both ``REJECTED_MERGE`` and ``CLEARED_MERGE`` carry the following
+fields in the event's ``metadata`` dict (so the envelope shape stays
+single-purpose and the chain hash stays stable across kinds):
+
+    ruleId           (str)   — the MergeBlockRule.ruleId from the rule set.
+    clearUrl         (str)   — human-clear URL: the Paperclip approval
+                               surface for the originating rule, or the
+                               record URL once cleared.
+    clearRole        (str)   — role-of-record for the clear path
+                               (qa_lead, security_lead, devops_lead,
+                               cto, board, …).  For CLEARED events this
+                               is the role that actually cleared.
+    clearSlaHours    (number)— SLA from the rule. Sticky rules use 0.
+
+The reader helper ``AuditReader.merge_block_log`` joins every merge
+event for a run into a chronological block/clear log per FORA-495
+acceptance criteria.
 """
 
 from __future__ import annotations
@@ -18,10 +46,40 @@ import json
 import uuid
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 
-AUDIT_SCHEMA_VERSION = "0.1.0"
+AUDIT_SCHEMA_VERSION = "0.2.0"
+
+
+# ---------------------------------------------------------------------------
+# Merge-block metadata contract (Phase 3 §D / FORA-495)
+# ---------------------------------------------------------------------------
+# Both REJECTED_MERGE and CLEARED_MERGE carry these metadata fields.
+# Defined as module-level constants so other modules can reference the
+# canonical key names without re-typing them.
+
+MERGE_BLOCK_METADATA_KEYS = ("ruleId", "clearUrl", "clearRole", "clearSlaHours")
+
+MERGE_BLOCK_EVENT_TYPES = ("artifact.rejected.merge", "artifact.cleared.merge")
+
+
+def merge_block_metadata(
+    *,
+    rule_id: str,
+    clear_url: str,
+    clear_role: str,
+    clear_sla_hours: float,
+) -> Dict[str, Any]:
+    """Build the merge-block metadata dict for a REJECTED_MERGE or
+    CLEARED_MERGE event.  Field names are camelCase to match the
+    envelope's canonical form (``metadata`` survives ``to_dict``)."""
+    return {
+        "ruleId": rule_id,
+        "clearUrl": clear_url,
+        "clearRole": clear_role,
+        "clearSlaHours": float(clear_sla_hours),
+    }
 
 
 class AuditEventType(str, Enum):
@@ -32,6 +90,11 @@ class AuditEventType(str, Enum):
     RUN_FINISHED = "run_finished"       # boundary; emitted after the last step
     ADMIN_OVERRIDE = "admin_override"   # the admin-override path was used
     EVENT_REDACTED = "event_redacted"   # an event was redacted/deleted (synthetic)
+    SAMPLE_RUN_COMPLETE = "sample_run_complete"  # FORA-210: daily audit sample finished
+    # Phase 3 §D (FORA-495).  Emitted by the merge-block evaluator.  The
+    # `metadata` field carries ruleId, clearUrl, clearRole, clearSlaHours.
+    REJECTED_MERGE = "artifact.rejected.merge"   # rule fired; merge blocked
+    CLEARED_MERGE = "artifact.cleared.merge"     # human cleared the block
 
 
 @dataclass

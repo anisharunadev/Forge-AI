@@ -10,10 +10,15 @@ writes; the only mutation is the synthetic `event_redacted` from
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from .chain import ChainBreak, HashChain
-from .schema import AuditEvent
+from .schema import (
+    AuditEvent,
+    AuditEventType,
+    MERGE_BLOCK_EVENT_TYPES,
+    MERGE_BLOCK_METADATA_KEYS,
+)
 from .store import AuditStore
 
 
@@ -73,6 +78,41 @@ class AuditReader:
         if ev is None or ev.tenant_id != tenant_id:
             return None
         return ev
+
+    def merge_block_log(self, tenant_id: str, run_id: str) -> List[Dict[str, Any]]:
+        """Return a chronological block/clear log for the run.
+
+        Phase 3 §D (FORA-495) acceptance criterion: the Audit reader's
+        ``read_run``-adjacent surface must produce a chronological
+        log of every REJECTED_MERGE and CLEARED_MERGE event for the
+        given run.  Each entry is a flat dict with the event id,
+        timestamp, kind, and the merge-block metadata fields
+        (``ruleId``, ``clearUrl``, ``clearRole``, ``clearSlaHours``).
+        Ordering is by append order (which matches the chain order
+        for a healthy chain).
+        """
+        events = self._store.list_for_run(tenant_id, run_id)
+        out: List[Dict[str, Any]] = []
+        for ev in events:
+            kind = (
+                ev.event_type.value
+                if isinstance(ev.event_type, AuditEventType)
+                else ev.event_type
+            )
+            if kind not in MERGE_BLOCK_EVENT_TYPES:
+                continue
+            entry: Dict[str, Any] = {
+                "eventId": ev.event_id,
+                "timestamp": ev.timestamp,
+                "kind": kind,
+                "runId": ev.run_id,
+            }
+            md = ev.metadata or {}
+            for k in MERGE_BLOCK_METADATA_KEYS:
+                if k in md:
+                    entry[k] = md[k]
+            out.append(entry)
+        return out
 
     def cost_summary(self, tenant_id: str, run_id: str) -> dict:
         """The shape FORA-75 cost tracking reads.  Returns totals

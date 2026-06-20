@@ -31,8 +31,11 @@ from .schema import (
     AUDIT_SCHEMA_VERSION,
     AuditEvent,
     AuditEventType,
+    MERGE_BLOCK_EVENT_TYPES,
+    MERGE_BLOCK_METADATA_KEYS,
     canonical_json,
     digest_of,
+    merge_block_metadata,
 )
 from .chain import HashChain, ChainBreak, GENESIS_HASH
 from .store import AuditStore, InMemoryStore
@@ -45,8 +48,11 @@ __all__ = [
     "AUDIT_SCHEMA_VERSION",
     "AuditEvent",
     "AuditEventType",
+    "MERGE_BLOCK_EVENT_TYPES",
+    "MERGE_BLOCK_METADATA_KEYS",
     "canonical_json",
     "digest_of",
+    "merge_block_metadata",
     "HashChain",
     "ChainBreak",
     "GENESIS_HASH",

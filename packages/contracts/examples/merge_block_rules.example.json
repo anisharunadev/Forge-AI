@@ -1,0 +1,160 @@
+{
+  "contractId": "agents.devops.merge_block_rules",
+  "contractVersion": "1.0.0",
+  "issuedAt": "2026-06-20T05:30:00.000Z",
+  "issuedBy": "agent:devops",
+  "supersedes": null,
+  "notes": "Initial v1.0.0 default rule set for Phase 3 §D. 9 source rules from FORA-394 §5.2 plus the pinned convention.no_autonomous_clears synthetic rule.",
+  "rules": [
+    {
+      "ruleId": "qa.test.verdict.fail",
+      "description": "TestReport verdict is fail — one or more required tiers failed.",
+      "severity": "high",
+      "source": "testReport",
+      "predicate": {
+        "kind": "equals",
+        "expression": "$.verdict",
+        "value": "fail"
+      },
+      "blocks": true,
+      "escalation": ["qa_lead"],
+      "slaHours": 4,
+      "auditEventType": "artifact.rejected.merge"
+    },
+    {
+      "ruleId": "qa.tier.not_implemented.critical_path",
+      "description": "A critical-path tier (auth, billing, pii) is not_implemented on this run.",
+      "severity": "critical",
+      "source": "testReport",
+      "predicate": {
+        "kind": "contains",
+        "expression": "$.tierNotImplemented",
+        "value": ["auth", "billing", "pii"]
+      },
+      "blocks": true,
+      "escalation": ["qa_lead", "cto"],
+      "slaHours": 4,
+      "auditEventType": "artifact.rejected.merge"
+    },
+    {
+      "ruleId": "security.finding.high",
+      "description": "SecurityReport contains one or more high-severity findings.",
+      "severity": "high",
+      "source": "securityReport",
+      "predicate": {
+        "kind": "jsonpath",
+        "expression": "$.findings[?(@.severity == 'high')]"
+      },
+      "blocks": true,
+      "escalation": ["security_lead"],
+      "slaHours": 4,
+      "auditEventType": "artifact.rejected.merge"
+    },
+    {
+      "ruleId": "security.finding.critical",
+      "description": "SecurityReport contains one or more critical-severity findings.",
+      "severity": "critical",
+      "source": "securityReport",
+      "predicate": {
+        "kind": "jsonpath",
+        "expression": "$.findings[?(@.severity == 'critical')]"
+      },
+      "blocks": true,
+      "escalation": ["security_lead", "cto"],
+      "slaHours": 2,
+      "auditEventType": "artifact.rejected.merge"
+    },
+    {
+      "ruleId": "compliance.gap.high",
+      "description": "ComplianceReport carries one or more high-severity gaps.",
+      "severity": "high",
+      "source": "complianceReport",
+      "predicate": {
+        "kind": "jsonpath",
+        "expression": "$.gaps[?(@.severity == 'high')]"
+      },
+      "blocks": true,
+      "escalation": ["cto"],
+      "slaHours": 4,
+      "auditEventType": "artifact.rejected.merge"
+    },
+    {
+      "ruleId": "convention.branch_protection",
+      "description": "BranchProtectionPolicy (FORA-245) reports the branch violates the rule set.",
+      "severity": "medium",
+      "source": "convention",
+      "predicate": {
+        "kind": "jsonpath",
+        "expression": "$.violations[?(@.kind == 'branch_protection')]"
+      },
+      "blocks": true,
+      "escalation": ["devops_lead"],
+      "slaHours": 1,
+      "auditEventType": "artifact.rejected.merge",
+      "externalPolicyRef": "fora://mcp-github/BranchProtectionPolicy/v1"
+    },
+    {
+      "ruleId": "dependency.high_cve",
+      "description": "Dependency scan reports a high or critical CVE (Snyk, npm audit, pip-audit).",
+      "severity": "high",
+      "source": "dependencyScan",
+      "predicate": {
+        "kind": "jsonpath",
+        "expression": "$.findings[?(@.severity in ['high','critical'])]"
+      },
+      "blocks": true,
+      "escalation": ["security_lead"],
+      "slaHours": 4,
+      "auditEventType": "artifact.rejected.merge"
+    },
+    {
+      "ruleId": "secrets.detected",
+      "description": "gitleaks or trufflehog detected a secret in the diff. Sticky block: no clearing path.",
+      "severity": "critical",
+      "source": "secretsScan",
+      "predicate": {
+        "kind": "jsonpath",
+        "expression": "$.findings[?(@.kind == 'secret')]"
+      },
+      "blocks": true,
+      "escalation": ["security_lead", "cto"],
+      "slaHours": 0,
+      "auditEventType": "artifact.rejected.merge"
+    },
+    {
+      "ruleId": "coverage.regression",
+      "description": "CoverageReport drops ≥ 5% vs project median on changed files. Warn-only; never blocks.",
+      "severity": "medium",
+      "source": "coverageReport",
+      "predicate": {
+        "kind": "gte",
+        "expression": "$.deltaPct",
+        "value": 0.05
+      },
+      "blocks": false,
+      "warnOnly": true,
+      "escalation": ["qa_lead"],
+      "slaHours": 24,
+      "auditEventType": "artifact.rejected.merge"
+    },
+    {
+      "ruleId": "convention.no_autonomous_clears",
+      "description": "Pinned rule. Asserts that no rule in the v1 set may auto-clear. Relaxing this rule requires a major version bump AND a request_board_approval (ADR-0008).",
+      "severity": "critical",
+      "source": "convention",
+      "predicate": {
+        "kind": "always",
+        "expression": "$"
+      },
+      "blocks": true,
+      "escalation": ["board"],
+      "slaHours": 0,
+      "auditEventType": "artifact.rejected.merge",
+      "metadata": {
+        "pinned": true,
+        "rationale": "Phase 3 §D invariant: every block is human-clearable; no autonomous clears. Encoded as a synthetic rule so any relaxation requires (a) a major version bump and (b) a request_board_approval.",
+        "owner": "cto"
+      }
+    }
+  ]
+}
