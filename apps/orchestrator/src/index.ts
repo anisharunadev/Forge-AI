@@ -96,6 +96,7 @@ export {
 export {
   type ApprovalsRepo,
   type Clock,
+  type CostBudget,
   type EventBus,
   type Pager,
   type PaperclipClient,
@@ -152,12 +153,19 @@ export {
 // Paperclip HTTP) are follow-up sub-tasks.
 export {
   InMemoryApprovalsRepo,
+  InMemoryCostBudget,
   InMemoryStageEngine,
   RecordingEventBus,
   RecordingPaperclipClient,
   RecordingPager,
   TestClock,
 } from './test-doubles.js';
+
+// 0.1.b — Active cost-ceiling check (FORA-528 / FORA-110). The
+// v0.1 seam adapter reads `FORA_DEFAULT_COST_CEILING_USD` and
+// reports `spentUsd = 0`. v0.2 replaces it with the live Cost
+// agent MCP server adapter (FORA-149 / FORA-150).
+export { createEnvCostBudget } from './cost-budget-env.js';
 
 // 0.1.4.c — NATS adapter for the approval-event slice of the bus (FORA-170).
 // Per ADR-0006 §3.1 the adapter publishes to
