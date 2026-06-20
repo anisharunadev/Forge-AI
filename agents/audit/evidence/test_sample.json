@@ -1,0 +1,51 @@
+{
+  "scenarios": {
+    "AC #4 happy path: 10/10 complete, sample event emitted with metadata.sync.*": {
+      "sampled": 10,
+      "completeness": 1.0,
+      "p0": 0,
+      "sampleEvents": 1
+    },
+    "Invariant #1 completeness: missing platform records = P0": {
+      "completenessRate": 0.5,
+      "p0": 1
+    },
+    "Invariant #1 completeness: missing audit rows = P0 (audit IS the trail)": {
+      "completenessRate": 0.0
+    },
+    "Invariant #2 schema: missing required metadata.sync.* keys = P0 per key": {
+      "schemaP0s": 4
+    },
+    "Invariant #3 per-tenant namespace: authored_for_tenant mismatch = P0 cross-tenant leak": {
+      "leakFindings": 1
+    },
+    "Invariant #4 actor: invalid actor_type + missing four-field invariant = P0": {
+      "actorP0s": 2
+    },
+    "Invariant #5 credential: unknown credential_ref = P0 (R-X1)": {
+      "credP0s": 1
+    },
+    "Invariant #5 credential: rotation overdue = P0": {
+      "rotationP0s": 1
+    },
+    "Out-of-scope #3: small-tenant cohort sampled exhaustively + flagged": {
+      "sampled": 3,
+      "smallTenant": true
+    },
+    "Edge: empty pool yields vacuous completeness + sample event emitted": {
+      "completeness": 1.0
+    },
+    "Sample event metadata lists every target_platform it touched": {
+      "platforms": [
+        "clipup",
+        "github",
+        "jira"
+      ]
+    }
+  },
+  "summary": {
+    "totalScenarios": 11,
+    "failed": 0,
+    "passed": 11
+  }
+}
