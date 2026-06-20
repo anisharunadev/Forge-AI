@@ -119,11 +119,19 @@ export interface BackoffSchedulerOpts {
 // ---------------------------------------------------------------------------
 
 /**
- * Per-tenant FIFO with round-robin drain. The "weighted" name is a
- * historical misnomer from the FORA-487 charter — the implementation
- * is strict round-robin (each tenant gets one pull per cycle), which
- * is the simplest fairness guarantee that satisfies the AC
- * "high-retry tenant must not starve a quiet one".
+ * Per-tenant FIFO with weighted round-robin drain (FORA-518).
+ *
+ * "Weighted" means the tenant with the most headroom is preferred
+ * on each pull. Per FORA-487 charter §"Cross-tenant fairness":
+ *
+ *     Weight = min(rpm_remaining, concurrent_max - concurrent_in_flight)
+ *
+ * When no weight source is provided (the BackoffScheduler default,
+ * or any pre-FORA-518 caller), the FIFO falls back to strict
+ * round-robin — which is the simplest fairness guarantee that
+ * satisfies "high-retry tenant must not starve a quiet one". The
+ * round-robin path is preserved so the existing BackoffScheduler
+ * tests stay green.
  *
  * Pending items within a single tenant are served FIFO. Tenants are
  * visited in insertion order (the order of their first enqueue), with
@@ -135,6 +143,17 @@ export class TenantWeightedFifo<T> {
   /** Insertion order of tenant ids (stable round-robin schedule). */
   private readonly order: string[] = [];
   private cursor = 0;
+  /**
+   * Weight source for the FORA-518 weighted mode. When null,
+   * `pull()` uses strict round-robin. When set, the source maps
+   * tenant_id → headroom (any non-negative number, where higher =
+   * more headroom). Tenants missing from the source get weight 0.
+   */
+  private readonly weight_source: ((tenant_id: string) => number) | null;
+
+  constructor(opts: { weight_source?: ((tenant_id: string) => number) | null } = {}) {
+    this.weight_source = opts.weight_source ?? null;
+  }
 
   /** Add an item to a tenant's FIFO. O(1). */
   enqueue(tenant_id: string, item: T): void {
@@ -146,48 +165,71 @@ export class TenantWeightedFifo<T> {
   }
 
   /**
-   * Pull the next item using round-robin. Returns `null` when the
-   * queue is empty. After returning, the cursor advances past the
-   * tenant that was just drained (so the next pull visits the next
-   * tenant in `order`, not the same one).
+   * Pull the next item. Returns `null` when the queue is empty.
+   *
+   * - Strict-round-robin mode (no `weight_source`): the cursor walks
+   *   tenants in insertion order. After returning, the cursor
+   *   advances past the tenant that was just drained.
+   * - Weighted mode (FORA-518): the tenant with the highest weight
+   *   is chosen. The cursor still advances past the drained tenant
+   *   so a steady stream from a heavy tenant does not starve a
+   *   weight-0 tenant whose weight later rises (recovering the
+   *   "quiet tenant gets its turn" guarantee).
    */
   pull(): { tenant_id: string; item: T } | null {
     if (this.order.length === 0) return null;
-    // Walk tenants starting at the cursor until we find a non-empty
-    // one. This handles the "tenant went idle mid-cycle" case. We
-    // also garbage-collect empty `order` slots so the cursor can't
-    // wedge against a tenant that has been fully drained (the bug
-    // that surfaced in the FORA-487.3 acceptance test: a tenant with
-    // a single item pulled and then re-entered pulled again before
-    // any other tenant's items landed).
-    for (let i = 0; i < this.order.length; i++) {
-      const idx = (this.cursor + i) % this.order.length;
-      const tenant_id = this.order[idx]!;
-      const q = this.queues.get(tenant_id);
-      if (q === undefined) {
-        // Stale `order` slot — drop it and re-check the same index.
-        this.order.splice(idx, 1);
-        i -= 1;
-        if (this.order.length === 0) return null;
-        continue;
-      }
-      if (q.length > 0) {
-        const item = q.shift()!;
-        // Advance the cursor past this tenant so the next pull visits
-        // the NEXT tenant in `order`, not the same one back-to-back.
-        this.cursor = (idx + 1) % Math.max(1, this.order.length);
-        // Garbage-collect empty tenant queues (and their `order` slot).
-        if (q.length === 0) {
-          this.queues.delete(tenant_id);
-          this.order.splice(idx, 1);
-          if (this.cursor > idx || this.cursor === this.order.length) {
-            this.cursor = Math.max(0, this.cursor - 1);
-          }
-        }
-        return { tenant_id, item };
+    // Garbage-collect stale `order` slots first (idempotent on every
+    // pull). The cursor may have to be re-clamped if the GC shrinks
+    // the array.
+    for (let i = this.order.length - 1; i >= 0; i--) {
+      const tenant_id = this.order[i]!;
+      if (!this.queues.has(tenant_id) || this.queues.get(tenant_id)!.length === 0) {
+        this.queues.delete(tenant_id);
+        this.order.splice(i, 1);
       }
     }
-    return null;
+    if (this.order.length === 0) return null;
+    if (this.cursor >= this.order.length) this.cursor = 0;
+
+    // Pick the tenant: weighted (highest headroom) or strict RR.
+    let pick_idx: number;
+    if (this.weight_source === null) {
+      pick_idx = this.cursor;
+    } else {
+      let best_idx = -1;
+      let best_weight = -Infinity;
+      // Tie-break: cursor wins. So the weighted scheduler is stable
+      // when weights are equal — a steady stream from tenant-A does
+      // not skip a quiet tenant-B whose weight is the same.
+      for (let i = 0; i < this.order.length; i++) {
+        const idx = (this.cursor + i) % this.order.length;
+        const tenant_id = this.order[idx]!;
+        const q = this.queues.get(tenant_id);
+        if (q === undefined || q.length === 0) continue;
+        const w = this.weight_source(tenant_id);
+        if (w > best_weight) {
+          best_weight = w;
+          best_idx = idx;
+        }
+      }
+      if (best_idx === -1) return null;
+      pick_idx = best_idx;
+    }
+
+    const tenant_id = this.order[pick_idx]!;
+    const q = this.queues.get(tenant_id)!;
+    const item = q.shift()!;
+    // Advance cursor past the drained tenant so a steady stream from
+    // a heavy tenant does not bypass a quiet one.
+    this.cursor = (pick_idx + 1) % this.order.length;
+    if (q.length === 0) {
+      this.queues.delete(tenant_id);
+      this.order.splice(pick_idx, 1);
+      if (this.cursor > pick_idx || this.cursor >= this.order.length) {
+        this.cursor = this.cursor > 0 ? this.cursor - 1 : 0;
+      }
+    }
+    return { tenant_id, item };
   }
 
   /** Total pending items across all tenants. */

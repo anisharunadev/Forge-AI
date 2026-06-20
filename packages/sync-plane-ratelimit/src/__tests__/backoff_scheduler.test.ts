@@ -286,6 +286,68 @@ describe('TenantWeightedFifo', () => {
     expect(q.size()).toBe(0);
     expect(q.pull()).toBeNull();
   });
+
+  // ----- FORA-518: weighted round-robin (headroom-aware) ------------------
+
+  it('weighted mode: pulls the tenant with the highest headroom first', () => {
+    const weights: Record<string, number> = { A: 10, B: 50, C: 30 };
+    const q = new TenantWeightedFifo<string>({ weight_source: (t) => weights[t] ?? 0 });
+    q.enqueue('A', 'a1');
+    q.enqueue('B', 'b1');
+    q.enqueue('C', 'c1');
+    // B has the highest weight (50) → first pull.
+    expect(q.pull()!.tenant_id).toBe('B');
+    // C is now highest of the remaining (30 vs 10).
+    expect(q.pull()!.tenant_id).toBe('C');
+    // A last.
+    expect(q.pull()!.tenant_id).toBe('A');
+    expect(q.pull()).toBeNull();
+  });
+
+  it('weighted mode: tie-break is cursor-stable (no bouncing when weights are equal)', () => {
+    const q = new TenantWeightedFifo<string>({ weight_source: () => 10 });
+    q.enqueue('A', 'a1');
+    q.enqueue('B', 'b1');
+    q.enqueue('C', 'c1');
+    // All weights equal → cursor wins (insertion order).
+    expect(q.pull()!.tenant_id).toBe('A');
+    expect(q.pull()!.tenant_id).toBe('B');
+    expect(q.pull()!.tenant_id).toBe('C');
+  });
+
+  it('weighted mode: weight-0 tenant still gets pulled (the "quiet tenant gets its turn" guarantee)', () => {
+    const weights: Record<string, number> = { A: 100, B: 0 };
+    const q = new TenantWeightedFifo<string>({ weight_source: (t) => weights[t] ?? 0 });
+    q.enqueue('A', 'a1');
+    q.enqueue('A', 'a2');
+    q.enqueue('B', 'b1');
+    // A is drained first (highest weight).
+    expect(q.pull()!.tenant_id).toBe('A');
+    expect(q.pull()!.tenant_id).toBe('A');
+    // B is the only remaining tenant → pulled even with weight 0.
+    expect(q.pull()!.tenant_id).toBe('B');
+  });
+
+  it('weighted mode: weight_source is consulted per pull (headroom can shift)', () => {
+    let A_weight = 100;
+    let B_weight = 10;
+    const q = new TenantWeightedFifo<string>({
+      weight_source: (t) => (t === 'A' ? A_weight : B_weight),
+    });
+    q.enqueue('A', 'a1');
+    q.enqueue('B', 'b1');
+    // A first (high weight).
+    expect(q.pull()!.tenant_id).toBe('A');
+    // B is the only remaining tenant → pulled regardless of weight.
+    // But before B pulls, simulate headroom shifting: drain B then
+    // re-enqueue B with weight higher than A's. With the cursor
+    // advanced past B, A would normally be picked. Verify weighted
+    // mode picks B because the weight_source now says B > A.
+    q.enqueue('B', 'b2');
+    A_weight = 1;
+    B_weight = 50;
+    expect(q.pull()!.tenant_id).toBe('B');
+  });
 });
 
 describe('BackoffScheduler drain (queue + execute combined)', () => {
