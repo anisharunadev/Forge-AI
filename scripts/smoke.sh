@@ -146,6 +146,14 @@ run_check "forge CTO round-trip   :$FORGE_PORT  POST /api/persona + GET /persona
 run_check "workspace lint        workspace/  no production-bar violations" \
   "python3 -m agents.workspace.lint --root workspace/ >/dev/null 2>&1"
 
+# Knowledge Layer per-tenant materialize gate (FORA-409, sub-goal 0.8.3).
+# Runs the workspace:materialize smoke test against a synthetic 50-file
+# seed in a tempdir. The test asserts: <60s materialize, byte-identical
+# tenant tree, 0.4 memory index primed, tenant-scoped recall, idempotent
+# bootstrap_if_missing, audit row, CLI entry. Non-skippable by design.
+run_check "workspace materialize  agents/workspace_materialize/smoke_test.py 7 ACs green" \
+  "PYTHONPATH=. python3 -m agents.workspace_materialize.smoke_test >/dev/null 2>&1"
+
 # Demo-run seed (FORA-378). The persona dashboards fall back to "No
 # runs yet" unless the seed run is present and the orchestrator's
 # tenant-scoped reads can see it. The probe asserts the seven canonical
