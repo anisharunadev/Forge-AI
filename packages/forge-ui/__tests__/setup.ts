@@ -1,5 +1,13 @@
 import "@testing-library/jest-dom/vitest";
 import "vitest-axe/extend-expect";
+import { cleanup } from "@testing-library/react";
+import { afterEach } from "vitest";
+
+// Auto-cleanup the DOM between tests so `screen.*` doesn't see leftover
+// renders from prior cases (matches create-react-app / Vitest defaults).
+afterEach(() => {
+  cleanup();
+});
 
 /**
  * jsdom does not implement `window.matchMedia` (used by ThemeProvider to read

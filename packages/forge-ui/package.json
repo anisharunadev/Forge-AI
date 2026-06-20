@@ -1,6 +1,6 @@
 {
   "name": "@fora/forge-ui",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "FORA Forge UI — design system tokens, Shadcn-wrapped primitives, accessibility harness, and typed-artifact renderers per FORA-393 Plan 3 + Plan 4.",
   "license": "UNLICENSED",
   "type": "module",
@@ -11,6 +11,14 @@
     "./tokens": "./src/tokens/index.ts",
     "./primitives": "./src/primitives/index.ts",
     "./a11y": "./src/a11y/index.ts",
+    "./typed-artifacts": "./src/typed-artifacts/index.ts",
+    "./shell": "./src/shell/index.ts",
+    "./forms": "./src/forms/index.ts",
+    "./charts": "./src/charts/index.ts",
+    "./tree": "./src/tree/index.ts",
+    "./lists": "./src/lists/index.ts",
+    "./graph": "./src/graph/index.ts",
+    "./testing": "./src/testing/index.ts",
     "./styles.css": "./src/styles.css"
   },
   "files": [
@@ -36,10 +44,15 @@
     "@radix-ui/react-select": "^2.1.2",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-toast": "^1.2.2",
+    "@tanstack/react-table": "^8.20.5",
+    "@types/dagre": "^0.7.52",
+    "@xyflow/react": "^12.3.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "dagre": "^0.8.5",
     "lucide-react": "^0.460.0",
     "react-hook-form": "^7.53.2",
+    "recharts": "^2.13.0",
     "tailwind-merge": "^2.5.4",
     "zod": "^3.23.8"
   },
