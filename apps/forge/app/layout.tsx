@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { PersonaSwitcher } from '@/components/PersonaSwitcher';
 import { PERSONAS } from '@/lib/types';
 import { SEED_TENANT_ID, SEED_TENANT_NAME, defaultPersona, isPersona } from '@/lib/auth';
+import { canAccessConnectorCenter } from '@/lib/connectors/rbac';
 
 export const metadata: Metadata = {
   title: 'Forge AI Console',
@@ -45,6 +46,22 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   </Link>
                 ))}
               </nav>
+              {canAccessConnectorCenter(persona) ? (
+                <nav
+                  className="flex gap-4 text-sm text-forge-200"
+                  aria-label="centers"
+                  data-testid="centers-nav"
+                >
+                  <Link
+                    href="/connector-center"
+                    className="inline-flex items-center gap-1 hover:text-white"
+                    data-testid="nav-connector-center"
+                  >
+                    <span aria-hidden="true">🔧</span>
+                    Connector Center
+                  </Link>
+                </nav>
+              ) : null}
               <span className="hidden text-xs text-forge-300 md:inline" title="Tenant">
                 tenant · {SEED_TENANT_NAME} ({SEED_TENANT_ID})
               </span>
