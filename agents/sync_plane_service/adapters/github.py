@@ -92,6 +92,7 @@ from ..ports import (
 from ..schema import (
     CanonicalComment,
     EntityKind,
+    ReceivedEvent,
     SyncEntity,
 )
 from ._transport import (
@@ -1376,6 +1377,160 @@ class GitHubIssuesAdapter(PlatformAdapter):
                 "mapped_author_id": mapped.author_id,
                 "comment_id": canonical.comment_id,
             },
+        )
+        return canonical
+
+    def normalize_issue_webhook(
+        self,
+        tenant_id: str,
+        payload: Dict[str, Any],
+        *,
+        paperclip_id: str,
+    ) -> ReceivedEvent:
+        """Normalize a GitHub `issues.opened` / `issues.reopened` /
+        `issues.edited` webhook payload into a canonical
+        `ReceivedEvent` per FORA-253 §6.1 + ADR-0006 §3.1.
+
+        The adapter is the only inbound event source for
+        GitHub issues; the webhook subscriber hands the raw
+        payload in, the adapter returns the canonical event
+        that the Sync Plane service can dispatch to the
+        resolver (`SyncPlaneService.apply`).
+
+        Subject naming per ADR-0006 §3.1:
+        `fora.events.<tenant>.issue.created.v1` — a new
+        GitHub Issue is the source of a new Paperclip issue
+        the resolver will upsert. `reopened` / `edited` reuse
+        the same subject (the service's LWW resolution is
+        the same; the event body carries the `action` field
+        for downstream filtering).
+
+        Steps:
+
+          1. Pull `issue.number`, `issue.title`,
+             `issue.body`, `issue.state`,
+             `issue.state_reason`, `repository.full_name`,
+             and `action` out of the payload. Missing fields
+             raise `ValueError`.
+          2. Synthesize `event_id` as
+             `evt-github-issue-<number>` so the dedupe path
+             in the subscriber (FORA-401) can recognise a
+             redelivered webhook on the bus.
+          3. Emit `sync.source.issue.ok` audit on success.
+          4. Return the `ReceivedEvent` ready to publish.
+
+        The Paperclip `issue_id` is provided by the caller
+        (`paperclip_id` kwarg); the resolver will use it as
+        the canonical `entity_id`. Day-one: the caller
+        (the subscriber) maps GitHub Issue -> Paperclip
+        issue via the
+        `forge:tenant:<slug>` label, the Paperclip-issued
+        deep-link field, or a follow-up `forge:issue_id`
+        custom field on the GitHub issue. Phase 2 wires
+        a per-tenant config table that maps both ways.
+        """
+        issue_obj = payload.get("issue") or {}
+        repo_obj = payload.get("repository") or {}
+        action = str(payload.get("action") or "")
+        if action not in ("opened", "reopened", "edited"):
+            raise ValueError(
+                f"github webhook: action {action!r} is not in "
+                f"('opened', 'reopened', 'edited') — refusing "
+                f"to normalize"
+            )
+        gh_issue_number = issue_obj.get("number")
+        if gh_issue_number is None:
+            raise ValueError(
+                "github webhook: issue.number is missing; "
+                "refusing to normalize"
+            )
+        gh_state = str(issue_obj.get("state") or "")
+        gh_state_reason = str(issue_obj.get("state_reason") or "")
+        gh_title = str(issue_obj.get("title") or "")
+        gh_body = str(issue_obj.get("body") or "")
+        repo_full_name = str(repo_obj.get("full_name") or "")
+        if not repo_full_name:
+            raise ValueError(
+                "github webhook: repository.full_name is empty; "
+                "refusing to normalize"
+            )
+        # The canonical subject per ADR-0006 §3.1.
+        subject = f"fora.events.{tenant_id}.issue.created.v1"
+        # Synthesize the dedupe key. The (number, action)
+        # pair is unique per webhook delivery; a redelivered
+        # webhook carries the same pair and the bus-side
+        # dedupe + the adapter's id synthesis both keep
+        # the canonical state stable.
+        event_id = (
+            f"evt-github-issue-{gh_issue_number}-"
+            f"{action}-{tenant_id.replace('-', '_')}"
+        )
+        # Map GitHub state to Paperclip status (inverse of
+        # the outbound mapping). Falls back to `in_progress`
+        # when the state is unknown — the service treats
+        # unknown inbound status as a Tier 3 divergence
+        # and routes it through the workbench.
+        paperclip_status = map_status_github_to_paperclip(
+            gh_state, gh_state_reason,
+        )
+        from ..schema import now_iso  # local import to avoid cycle
+        canonical = ReceivedEvent(
+            event_id=event_id,
+            tenant_id=tenant_id,
+            subject=subject,
+            event_type="issue.created.v1",
+            occurred_at=now_iso(),
+            hlc=now_iso(),
+            payload={
+                "paperclip_id": paperclip_id,
+                "github_number": str(gh_issue_number),
+                "github_repo": repo_full_name,
+                "github_action": action,
+                "github_state": gh_state,
+                "github_state_reason": gh_state_reason,
+                "github_title": gh_title,
+                "github_body": gh_body,
+                "paperclip_status": paperclip_status,
+                "actor": "system:github_webhook",
+            },
+        )
+        # Emit `sync.source.issue.ok` through both the local
+        # `_audit` hook (the day-one recording path) and the
+        # canonical `AuditForwarder` (the FORA-36 pipeline).
+        # Both are best-effort — a transient audit outage
+        # must not roll back a successful normalization.
+        source_metadata = {
+            "github_repo": repo_full_name,
+            "github_number": str(gh_issue_number),
+            "github_action": action,
+            "github_state": gh_state,
+            "github_state_reason": gh_state_reason,
+            "paperclip_status": paperclip_status,
+            "event_id": event_id,
+        }
+        try:
+            self._audit.source_issue_ok(
+                tenant_id,
+                paperclip_id,
+                github_number=str(gh_issue_number),
+                action=action,
+                metadata=source_metadata,
+            )
+        except Exception:  # pragma: no cover - audit is best-effort
+            _log.exception(
+                "github.adapters.source_issue_audit_failed",
+                extra={
+                    "tenant_id": tenant_id,
+                    "entity_id": paperclip_id,
+                    "github_number": gh_issue_number,
+                },
+            )
+        self._emit_audit_forward(
+            event_type="sync.source.issue.ok",
+            tenant_id=tenant_id,
+            actor="system:sync_plane.github_webhook_reader",
+            entity_id=paperclip_id,
+            metadata=source_metadata,
         )
         return canonical
 
