@@ -22,12 +22,13 @@ import {
   InvalidStageTransitionError,
   type ApprovalsRepo,
   type Clock,
+  type CostBudget,
   type EventBus,
   type Pager,
   type PaperclipClient,
   type StageEngine,
 } from './ports.js';
-import type { ApprovalEvent } from './ports.js';
+import type { ApprovalEvent, RunLifecycleEvent } from './ports.js';
 import type {
   ApprovalRecord,
   ApprovalStatus,
@@ -325,9 +326,55 @@ export class RecordingPaperclipClient implements PaperclipClient {
 }
 
 export class RecordingEventBus implements EventBus {
-  events: ApprovalEvent[] = [];
-  async emit(event: ApprovalEvent): Promise<void> {
+  /**
+   * Every emitted event — both router-owned `ApprovalEvent`s and
+   * stage-engine-owned `RunLifecycleEvent`s. The orchestrator is
+   * the only writer (architecture.md §2.1), so the bus is the audit
+   * boundary; tests assert on the union to catch vocabulary drift
+   * (e.g. the FORA-528 `gate_failed_cost_ceiling` variant).
+   */
+  events: Array<ApprovalEvent | RunLifecycleEvent> = [];
+  async emit(event: ApprovalEvent | RunLifecycleEvent): Promise<void> {
     this.events.push(event);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// InMemoryCostBudget — the CostBudget port test double for FORA-528
+// ---------------------------------------------------------------------------
+
+/**
+ * Configurable in-memory `CostBudget` adapter for tests. The default
+ * is `{ spentUsd: 0, ceilingUsd: 100 }` (under-budget, the v0.1
+ * EnvCostBudget behaviour). Tests override `spentUsd` per tenant to
+ * exercise the over-budget refusal path.
+ *
+ * The double records every query so a test can assert the wiring
+ * called the port (vs. skipped the check).
+ */
+export class InMemoryCostBudget implements CostBudget {
+  /** Per-tenant spend + ceiling. Tests mutate this directly. */
+  budgets: Map<string, { spentUsd: number; ceilingUsd: number }> = new Map();
+  /** Every `currentSpendUsd` query, in order. */
+  queries: Array<{ tenantId: string; at: string }> = [];
+
+  constructor(defaultBudget: { spentUsd: number; ceilingUsd: number } = {
+    spentUsd: 0,
+    ceilingUsd: 100,
+  }) {
+    this.budgets.set('*', defaultBudget);
+  }
+
+  /** Test helper: set the per-tenant budget. */
+  set(tenantId: string, budget: { spentUsd: number; ceilingUsd: number }): void {
+    this.budgets.set(tenantId, budget);
+  }
+
+  async currentSpendUsd(args: {
+    tenantId: import('./types.js').TenantId;
+  }): Promise<{ spentUsd: number; ceilingUsd: number }> {
+    this.queries.push({ tenantId: args.tenantId, at: new Date().toISOString() });
+    return this.budgets.get(args.tenantId) ?? this.budgets.get('*') ?? { spentUsd: 0, ceilingUsd: 100 };
   }
 }
 

@@ -3,6 +3,7 @@ import { getRunsView, seedAliasFor } from '@/lib/api';
 import { OrchestratorUnreachable } from '@/components/OrchestratorNotice';
 import { RunStatusBadge } from '@/components/RunStatusBadge';
 import { RunActions } from '@/components/RunActions';
+import { RealtimeRunsList } from '@/components/RealtimeRunsList';
 import { SEED_TENANT_NAME } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -70,37 +71,13 @@ export default async function EngLeadDashboard() {
       <section className="card" aria-labelledby="inflight-h">
         <h2 id="inflight-h" className="text-lg font-semibold">Runs in flight</h2>
         {view.state === 'ok' ? (
-          <ul className="mt-4 space-y-3" data-testid="eng-runs-list">
-            {runs.map((r) => {
-              const alias = seedAliasFor(r.id);
-              return (
-              <li
-                key={r.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-forge-200/40 p-3"
-                data-testid="eng-run-row"
-              >
-                <div className="space-y-1">
-                  <p className="font-mono text-xs">
-                    {r.id}
-                    {alias ? (
-                      <span className="ml-2 text-forge-300" data-testid="seed-alias">({alias})</span>
-                    ) : null}
-                  </p>
-                  <p className="text-xs text-forge-300">
-                    goal <strong>{r.goal_id}</strong> · stage{' '}
-                    <strong>{r.current_stage}</strong> · ceiling $
-                    {r.cost_ceiling_usd}
-                  </p>
-                </div>
-                <RunStatusBadge status={r.status} />
-                <Link className="text-forge-300 underline" href={`/runs/${r.id}`}>
-                  timeline
-                </Link>
-                <RunActions runId={r.id} status={r.status} />
-              </li>
-              );
-            })}
-          </ul>
+          <RealtimeRunsList
+            initialRuns={runs}
+            fetcher={async () => {
+              const next = await getRunsView();
+              return next.state === 'ok' ? next.runs : [];
+            }}
+          />
         ) : view.state === 'empty' ? (
           <div data-testid="eng-empty">
             <p className="mt-2 text-sm text-forge-200">

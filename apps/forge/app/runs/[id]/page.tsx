@@ -7,7 +7,7 @@ import {
 } from '@/lib/api';
 import { RunStatusBadge } from '@/components/RunStatusBadge';
 import { RunActions } from '@/components/RunActions';
-import { Timeline } from '@/components/Timeline';
+import { RealtimeTimeline } from '@/components/RealtimeTimeline';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,7 +47,15 @@ export default async function RunDetailPage({
           </div>
         </header>
 
-        <Timeline runId={run.id} currentStage={run.current_stage} stages={stages} />
+        <RealtimeTimeline
+          runId={run.id}
+          initialCurrentStage={run.current_stage}
+          initialStages={stages}
+          fetcher={async () => {
+            const [r, s] = await Promise.all([getRun(params.id), getRunStages(params.id)]);
+            return { currentStage: r.current_stage, stages: s };
+          }}
+        />
 
         <p className="text-sm">
           <Link href="/personas/eng-lead" className="underline">

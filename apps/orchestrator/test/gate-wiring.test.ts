@@ -45,6 +45,7 @@ import {
 } from '../src/router.js';
 import {
   InMemoryApprovalsRepo,
+  InMemoryCostBudget,
   InMemoryStageEngine,
   RecordingEventBus,
   RecordingPaperclipClient,
@@ -71,6 +72,7 @@ function makeDeps(): {
   repo: InMemoryApprovalsRepo;
   pager: RecordingPager;
   clock: TestClock;
+  costBudget: InMemoryCostBudget;
 } {
   const clock = new TestClock();
   const repo = new InMemoryApprovalsRepo(clock);
@@ -78,7 +80,11 @@ function makeDeps(): {
   const bus = new RecordingEventBus();
   const pager = new RecordingPager();
   const deps: RouterDeps = { repo, paperclip, bus, pager, clock };
-  return { deps, bus, paperclip, repo, pager, clock };
+  // Default under-budget: $0 spent of $100 ceiling. Matches the v0.1
+  // EnvCostBudget behaviour (FORA-528 0.1.b). Tests override per-tenant
+  // to exercise the over-budget refusal path.
+  const costBudget = new InMemoryCostBudget({ spentUsd: 0, ceilingUsd: 100 });
+  return { deps, bus, paperclip, repo, pager, clock, costBudget };
 }
 
 function ctxArgs() {
@@ -104,7 +110,7 @@ const STAGE_SPINE: ReadonlyArray<import('../src/types.js').Stage> = [
 
 describe('gate_wiring — forward path: stage_completed → routeGate', () => {
   it('issues a confirmation for every stage transition in the spine', async () => {
-    const { deps, bus, paperclip, repo } = makeDeps();
+    const { deps, bus, paperclip, repo, costBudget } = makeDeps();
     const engine = new InMemoryStageEngine();
     engine.seed({ tenantId: TENANT, runId: RUN, currentStage: 'ideation' });
 
@@ -112,7 +118,7 @@ describe('gate_wiring — forward path: stage_completed → routeGate', () => {
       const from = STAGE_SPINE[i]!;
       const to = STAGE_SPINE[i + 1]!;
       const result = await onStageCompleted(
-        { router: deps, bus },
+        { router: deps, bus, costBudget },
         {
           tenantId: TENANT,
           runId: RUN,
@@ -140,13 +146,13 @@ describe('gate_wiring — forward path: stage_completed → routeGate', () => {
   });
 
   it('returns null when toStage is "done" (launch gate is not routed here)', async () => {
-    const { deps, bus, paperclip } = makeDeps();
+    const { deps, bus, paperclip, costBudget } = makeDeps();
     const engine = new InMemoryStageEngine();
     engine.seed({ tenantId: TENANT, runId: RUN, currentStage: 'docs' });
     void engine;
 
     const result = await onStageCompleted(
-      { router: deps, bus },
+      { router: deps, bus, costBudget },
       {
         tenantId: TENANT,
         runId: RUN,
@@ -163,7 +169,7 @@ describe('gate_wiring — forward path: stage_completed → routeGate', () => {
 
 describe('gate_wiring — reverse path: accept → engine.advance', () => {
   it('walks ideation → docs and the engine advances through the spine', async () => {
-    const { deps, bus, repo } = makeDeps();
+    const { deps, bus, repo, costBudget } = makeDeps();
     const engine = new InMemoryStageEngine();
     engine.seed({ tenantId: TENANT, runId: RUN, currentStage: 'ideation' });
 
@@ -173,7 +179,7 @@ describe('gate_wiring — reverse path: accept → engine.advance', () => {
 
       // Forward: engine emits stage_completed; router issues a gate.
       await onStageCompleted(
-        { router: deps, bus },
+        { router: deps, bus, costBudget },
         {
           tenantId: TENANT,
           runId: RUN,
@@ -226,12 +232,12 @@ describe('gate_wiring — reverse path: accept → engine.advance', () => {
   });
 
   it('advances to "done" when the docs->done gate accepts', async () => {
-    const { deps, bus, repo } = makeDeps();
+    const { deps, bus, repo, costBudget } = makeDeps();
     const engine = new InMemoryStageEngine();
     engine.seed({ tenantId: TENANT, runId: RUN, currentStage: 'docs' });
 
     await onStageCompleted(
-      { router: deps, bus },
+      { router: deps, bus, costBudget },
       {
         tenantId: TENANT,
         runId: RUN,
@@ -279,13 +285,13 @@ describe('gate_wiring — reverse path: accept → engine.advance', () => {
 
 describe('gate_wiring — reverse path: request_changes → engine.reEnter', () => {
   it('returns a run to a prior stage and is idempotent on replay', async () => {
-    const { deps, bus, repo } = makeDeps();
+    const { deps, bus, repo, costBudget } = makeDeps();
     const engine = new InMemoryStageEngine();
     engine.seed({ tenantId: TENANT, runId: RUN, currentStage: 'dev' });
 
     // Issue the dev→qa gate.
     await onStageCompleted(
-      { router: deps, bus },
+      { router: deps, bus, costBudget },
       {
         tenantId: TENANT,
         runId: RUN,
@@ -334,12 +340,12 @@ describe('gate_wiring — reverse path: request_changes → engine.reEnter', () 
 
 describe('gate_wiring — reverse path: reject → engine.pauseRun', () => {
   it('pauses the run when a gate is rejected', async () => {
-    const { deps, bus, repo } = makeDeps();
+    const { deps, bus, repo, costBudget } = makeDeps();
     const engine = new InMemoryStageEngine();
     engine.seed({ tenantId: TENANT, runId: RUN, currentStage: 'dev' });
 
     await onStageCompleted(
-      { router: deps, bus },
+      { router: deps, bus, costBudget },
       {
         tenantId: TENANT,
         runId: RUN,
@@ -372,7 +378,7 @@ describe('gate_wiring — reverse path: reject → engine.pauseRun', () => {
 
 describe('gate_wiring — reverse path: approval_expired → engine.pauseRun + run_paused', () => {
   it('pauses the run and emits run_paused', async () => {
-    const { bus } = makeDeps();
+    const { bus, costBudget } = makeDeps();
     const engine = new InMemoryStageEngine();
     engine.seed({ tenantId: TENANT, runId: RUN, currentStage: 'qa' });
 
@@ -398,7 +404,7 @@ describe('gate_wiring — reverse path: approval_expired → engine.pauseRun + r
   });
 
   it('resume after expiry: re-issue + accept advances the engine', async () => {
-    const { deps, bus, repo } = makeDeps();
+    const { deps, bus, repo, costBudget } = makeDeps();
     const engine = new InMemoryStageEngine();
     engine.seed({ tenantId: TENANT, runId: RUN, currentStage: 'qa' });
 
@@ -423,7 +429,7 @@ describe('gate_wiring — reverse path: approval_expired → engine.pauseRun + r
     // for the same gate. The engine accepts the advance from its
     // current stage (qa) → security.
     await onStageCompleted(
-      { router: deps, bus },
+      { router: deps, bus, costBudget },
       {
         tenantId: TENANT,
         runId: RUN,
@@ -457,12 +463,12 @@ describe('gate_wiring — reverse path: approval_expired → engine.pauseRun + r
 
 describe('gate_wiring — idempotency on engine.advance replay', () => {
   it('a duplicate approval_decided event does not double-advance', async () => {
-    const { deps, bus, repo } = makeDeps();
+    const { deps, bus, repo, costBudget } = makeDeps();
     const engine = new InMemoryStageEngine();
     engine.seed({ tenantId: TENANT, runId: RUN, currentStage: 'ideation' });
 
     await onStageCompleted(
-      { router: deps, bus },
+      { router: deps, bus, costBudget },
       {
         tenantId: TENANT,
         runId: RUN,
@@ -520,7 +526,7 @@ describe('gateForStageTransition', () => {
 
 describe('end-to-end: full seven-stage walk with one request_changes + one expire', () => {
   it('produces a run that ends at docs with a clean audit chain', async () => {
-    const { deps, bus, repo } = makeDeps();
+    const { deps, bus, repo, costBudget } = makeDeps();
     const engine = new InMemoryStageEngine();
     engine.seed({ tenantId: TENANT, runId: RUN, currentStage: 'ideation' });
 
@@ -530,7 +536,7 @@ describe('end-to-end: full seven-stage walk with one request_changes + one expir
       ['architect', 'dev'],
     ] as const) {
       await onStageCompleted(
-        { router: deps, bus },
+        { router: deps, bus, costBudget },
         {
           tenantId: TENANT,
           runId: RUN,
@@ -560,7 +566,7 @@ describe('end-to-end: full seven-stage walk with one request_changes + one expir
 
     // dev→qa: request_changes back to architect.
     await onStageCompleted(
-      { router: deps, bus },
+      { router: deps, bus, costBudget },
       {
         tenantId: TENANT,
         runId: RUN,
@@ -591,7 +597,7 @@ describe('end-to-end: full seven-stage walk with one request_changes + one expir
 
     // Walk architect → dev again (accept).
     await onStageCompleted(
-      { router: deps, bus },
+      { router: deps, bus, costBudget },
       {
         tenantId: TENANT,
         runId: RUN,
@@ -622,7 +628,7 @@ describe('end-to-end: full seven-stage walk with one request_changes + one expir
 
     // dev→qa again — this time expire.
     await onStageCompleted(
-      { router: deps, bus },
+      { router: deps, bus, costBudget },
       {
         tenantId: TENANT,
         runId: RUN,
@@ -663,5 +669,175 @@ describe('end-to-end: full seven-stage walk with one request_changes + one expir
     expect(decided.length).toBe(4);
     const runPaused = bus.events.filter((e) => e.type === 'run_paused');
     expect(runPaused.length).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// FORA-528 (0.1.b) — Active cost-ceiling check.
+// ---------------------------------------------------------------------------
+
+describe('gate_wiring — active cost-ceiling check (FORA-528 / 0.1.b)', () => {
+  it('under-budget: routeGate is called and the gate is issued', async () => {
+    const { deps, bus, paperclip, repo, costBudget } = makeDeps();
+    const engine = new InMemoryStageEngine();
+    engine.seed({ tenantId: TENANT, runId: RUN, currentStage: 'ideation' });
+
+    // Default { spentUsd: 0, ceilingUsd: 100 } → under-budget.
+    const result = await onStageCompleted(
+      { router: deps, bus, costBudget },
+      {
+        tenantId: TENANT,
+        runId: RUN,
+        fromStage: 'ideation',
+        toStage: 'architect',
+        artefactRefs: [{ kind: 'pr', url: 'https://example/pr/0' }],
+        ctx: ctxArgs(),
+      },
+    );
+
+    expect(result, 'under-budget gate should produce a result').not.toBeNull();
+    expect(result!.gateKind).toBe('ideation->architect');
+    // The cost-budget port was queried exactly once.
+    expect(costBudget.queries.length).toBe(1);
+    expect(costBudget.queries[0]!.tenantId).toBe(TENANT);
+    // The gate was issued: Paperclip interaction recorded, row inserted,
+    // approval_requested event emitted.
+    expect(paperclip.issued.length).toBe(1);
+    expect(repo.all().length).toBe(1);
+    expect(bus.events.filter((e) => e.type === 'approval_requested').length).toBe(1);
+    // No gate_failed_cost_ceiling event was emitted.
+    expect(bus.events.filter((e) => e.type === 'gate_failed_cost_ceiling').length).toBe(0);
+  });
+
+  it('over-budget: gate is refused, gate_failed_cost_ceiling is emitted, no approval row', async () => {
+    const { deps, bus, paperclip, repo, costBudget } = makeDeps();
+    const engine = new InMemoryStageEngine();
+    engine.seed({ tenantId: TENANT, runId: RUN, currentStage: 'ideation' });
+    void engine;
+
+    // Force the over-budget path: $120 spent of $100 ceiling.
+    costBudget.set(TENANT, { spentUsd: 120, ceilingUsd: 100 });
+
+    const result = await onStageCompleted(
+      { router: deps, bus, costBudget },
+      {
+        tenantId: TENANT,
+        runId: RUN,
+        fromStage: 'ideation',
+        toStage: 'architect',
+        artefactRefs: [{ kind: 'pr', url: 'https://example/pr/0' }],
+        ctx: ctxArgs(),
+      },
+    );
+
+    // Wiring returned null — no gate was routed.
+    expect(result).toBeNull();
+    // The port was queried exactly once.
+    expect(costBudget.queries.length).toBe(1);
+    // No Paperclip interaction was issued, no approval row inserted.
+    expect(paperclip.issued.length).toBe(0);
+    expect(repo.all().length).toBe(0);
+    // No approval_requested event was emitted.
+    expect(bus.events.filter((e) => e.type === 'approval_requested').length).toBe(0);
+    // gate_failed_cost_ceiling was emitted exactly once with the right shape.
+    const failed = bus.events.filter((e) => e.type === 'gate_failed_cost_ceiling');
+    expect(failed.length).toBe(1);
+    const ev = failed[0] as Extract<typeof failed[number], { type: 'gate_failed_cost_ceiling' }>;
+    expect(ev.tenantId).toBe(TENANT);
+    expect(ev.runId).toBe(RUN);
+    expect(ev.fromStage).toBe('ideation');
+    expect(ev.toStage).toBe('architect');
+    expect(ev.gateKind).toBe('ideation->architect');
+    expect(ev.spentUsd).toBe(120);
+    expect(ev.ceilingUsd).toBe(100);
+    expect(ev.reason).toBe('over_budget');
+    expect(typeof ev.emittedAt).toBe('string');
+    // The run stays in the originating stage — the engine was NOT
+    // advanced because routeGate was never called.
+    expect(engine.state(RUN)!.currentStage).toBe('ideation');
+  });
+
+  it('boundary: spentUsd === ceilingUsd refuses (over-budget is inclusive)', async () => {
+    const { deps, bus, paperclip, repo, costBudget } = makeDeps();
+    const engine = new InMemoryStageEngine();
+    engine.seed({ tenantId: TENANT, runId: RUN, currentStage: 'dev' });
+    void engine;
+
+    // Exactly at ceiling — the >= comparison refuses.
+    costBudget.set(TENANT, { spentUsd: 100, ceilingUsd: 100 });
+
+    const result = await onStageCompleted(
+      { router: deps, bus, costBudget },
+      {
+        tenantId: TENANT,
+        runId: RUN,
+        fromStage: 'dev',
+        toStage: 'qa',
+        artefactRefs: [],
+        ctx: ctxArgs(),
+      },
+    );
+
+    expect(result).toBeNull();
+    expect(paperclip.issued.length).toBe(0);
+    expect(repo.all().length).toBe(0);
+    expect(bus.events.filter((e) => e.type === 'gate_failed_cost_ceiling').length).toBe(1);
+  });
+
+  it('one cent under ceiling advances (under-budget is inclusive)', async () => {
+    const { deps, bus, paperclip, repo, costBudget } = makeDeps();
+    const engine = new InMemoryStageEngine();
+    engine.seed({ tenantId: TENANT, runId: RUN, currentStage: 'dev' });
+
+    costBudget.set(TENANT, { spentUsd: 99.99, ceilingUsd: 100 });
+
+    const result = await onStageCompleted(
+      { router: deps, bus, costBudget },
+      {
+        tenantId: TENANT,
+        runId: RUN,
+        fromStage: 'dev',
+        toStage: 'qa',
+        artefactRefs: [{ kind: 'pr', url: 'https://example/pr/2' }],
+        ctx: ctxArgs(),
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.gateKind).toBe('dev->qa');
+    expect(paperclip.issued.length).toBe(1);
+    expect(repo.all().length).toBe(1);
+    expect(bus.events.filter((e) => e.type === 'gate_failed_cost_ceiling').length).toBe(0);
+  });
+
+  it('EnvCostBudget adapter (v0.1 seam) reports permissive under-budget by default', async () => {
+    // Verify the v0.1 fallback adapter (FORA-528 AC#2): reads
+    // FORA_DEFAULT_COST_CEILING_USD and returns spentUsd=0. With no env
+    // var set, the fallback is $100 spent of $100 ceiling — under-budget
+    // because spentUsd (0) < ceilingUsd (100).
+    const { createEnvCostBudget } = await import('../src/cost-budget-env.js');
+    const cb = createEnvCostBudget({});
+    const result = await cb.currentSpendUsd({ tenantId: TENANT });
+    expect(result.spentUsd).toBe(0);
+    expect(result.ceilingUsd).toBe(100);
+  });
+
+  it('EnvCostBudget adapter honours FORA_DEFAULT_COST_CEILING_USD override', async () => {
+    const { createEnvCostBudget } = await import('../src/cost-budget-env.js');
+    const cb = createEnvCostBudget({ FORA_DEFAULT_COST_CEILING_USD: '250.50' });
+    const result = await cb.currentSpendUsd({ tenantId: TENANT });
+    expect(result.spentUsd).toBe(0);
+    expect(result.ceilingUsd).toBe(250.5);
+  });
+
+  it('EnvCostBudget adapter rejects malformed ceiling (fail loud at boot)', async () => {
+    // The adapter eagerly parses FORA_DEFAULT_COST_CEILING_USD at
+    // construction so a malformed env var crashes the service at
+    // boot rather than at the first gate. The test asserts the
+    // throw fires synchronously when the factory is called.
+    const { createEnvCostBudget } = await import('../src/cost-budget-env.js');
+    expect(() =>
+      createEnvCostBudget({ FORA_DEFAULT_COST_CEILING_USD: 'not-a-number' }),
+    ).toThrow(/not a finite number/);
   });
 });

@@ -37,7 +37,12 @@ import {
   type StageTransition,
 } from './gates.js';
 import { routeGate, type RouterContext, type RouterDeps } from './router.js';
-import type { ApprovalEvent, EventBus, StageEngine } from './ports.js';
+import type {
+  ApprovalEvent,
+  CostBudget,
+  EventBus,
+  StageEngine,
+} from './ports.js';
 import { type RunId, type Stage, type TenantId } from './types.js';
 
 /**
@@ -69,12 +74,20 @@ export function gateForStageTransition(
  * with `toStage = 'done'` has no following gate (the run reached
  * `done`); the wiring is a no-op in that case.
  *
+ * FORA-528 (0.1.b): before `routeGate` is called, the wiring asks
+ * the `CostBudget` port for the tenant's current spend + ceiling.
+ * If `spentUsd >= ceilingUsd`, the wiring emits
+ * `gate_failed_cost_ceiling` on the bus and returns `null` (no
+ * gate, no approval row, no `approval_requested` event). The run
+ * stays in `args.fromStage`; the operator must wait for the next
+ * billing cycle or raise the ceiling to resume.
+ *
  * Returns the `{ approvalId, interactionId, gateKind }` from
  * `routeGate` so the caller (the NATS consumer) can stamp the audit
  * log.
  */
 export async function onStageCompleted(
-  deps: { router: RouterDeps; bus: EventBus },
+  deps: { router: RouterDeps; bus: EventBus; costBudget: CostBudget },
   args: {
     tenantId: TenantId;
     runId: RunId;
@@ -100,6 +113,31 @@ export async function onStageCompleted(
     throw new Error(
       `onStageCompleted: no gate for transition ${args.fromStage} → ${args.toStage}`,
     );
+  }
+
+  // Active cost-ceiling check (FORA-528 / FORA-110 0.1.b). The
+  // Cost agent owns the underlying spend aggregation; this is
+  // the policy boundary that refuses to advance. A null
+  // `spentUsd` is impossible — the port returns a number.
+  const { spentUsd, ceilingUsd } = await deps.costBudget.currentSpendUsd({
+    tenantId: args.tenantId,
+  });
+  if (spentUsd >= ceilingUsd) {
+    await deps.bus.emit({
+      type: 'gate_failed_cost_ceiling',
+      tenantId: args.tenantId,
+      runId: args.runId,
+      fromStage: args.fromStage,
+      toStage: args.toStage,
+      gateKind,
+      spentUsd,
+      ceilingUsd,
+      reason: 'over_budget',
+      emittedAt: new Date().toISOString(),
+    });
+    // No routeGate, no approval row, no approval_requested event.
+    // The run stays in `args.fromStage`.
+    return null;
   }
 
   const ctx: RouterContext = {
