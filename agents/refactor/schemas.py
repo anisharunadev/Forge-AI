@@ -664,5 +664,179 @@ class WavePlan:
 
 
 # ---------------------------------------------------------------------------
-# End of wave plan section (FORA-84, sub-goal 8.3).
+# Migration plan section (FORA-85, sub-goal 8.4).
+#
+# `MigrationPlan` is the deliverable that the Jira sync adapter consumes
+# to materialise the plan in the customer's sprint. The plan is a pure
+# function of `(WavePlan, DependencyGraph)`; it emits:
+#
+#   * one Jira epic per WavePlan (the "Refactor" or "Modernization" epic);
+#   * one Jira story per TransformWave, ordered by `wave_id`;
+#   * one Jira story per WaveBreak (cycle or cluster), referencing the
+#     break's wave so the SDLC pipeline picks the break up before the
+#     wave that depends on it;
+#   * one `JiraMutation` per planned write, tagged with an `idempotency_key`
+#     so the Jira MCP can dedupe re-runs on the same `plan_sha`.
+#
+# The migration planner does NOT call Jira directly. It emits the plan +
+# the ordered mutation list, and a thin adapter (v0.2, dispatched as a
+# child issue) routes the mutations through `mcp-servers/jira/`.
+# ---------------------------------------------------------------------------
+
+# Closed-set story kinds. Each emitted story is one of these.
+MIGRATION_STORY_KINDS: List[str] = [
+    "epic",          # the single epic
+    "wave",          # a TransformWave
+    "cycle_break",   # a cycle WaveBreak
+    "cluster_break", # a cluster WaveBreak
+]
+
+# Priority bands the migration planner emits. Mapped to Jira priority
+# values by the Jira adapter; kept as a closed set so plans diff cleanly.
+MIGRATION_PRIORITIES: List[str] = [
+    "highest",   # cycle breaks + cluster breaks (block downstream waves)
+    "high",      # high-risk tier waves (canary_probe gate)
+    "medium",    # standard tier waves
+    "low",       # cutover + validation waves
+]
+
+# Story kind rank — used to sort the emitted stories. Lower = emitted
+# earlier. The epic always comes first; cycle/cluster breaks come
+# before the waves they unblock; cutover + validation waves come last.
+STORY_KIND_RANK: Dict[str, int] = {
+    "epic":           0,
+    "cycle_break":    1,
+    "cluster_break":  2,
+    "wave":           3,
+}
+
+
+@dataclass
+class JiraStory:
+    """One story in the migration plan.
+
+    `idempotency_key` is the seam the Jira MCP uses to dedupe re-runs:
+    it MUST be stable for a given `(plan_sha, story_kind, story_ref)`
+    triple. The Jira adapter passes it through to `jira.create_issue`
+    as `external_ref`; re-runs on the same plan hit the existing issue
+    and update it instead of creating a duplicate.
+    """
+    story_id: str                       # "story-<ordinal>" (display only; not a Jira key)
+    kind: str                           # one of MIGRATION_STORY_KINDS
+    title: str
+    body: str                           # Markdown; the Jira adapter converts to ADF
+    epic_ref: str                       # story_ref of the parent epic story
+    idempotency_key: str                # stable hash; Jira adapter dedupes on this
+    priority: str                       # one of MIGRATION_PRIORITIES
+    effort_days: float
+    source_wave_id: Optional[int] = None     # the TransformWave this story implements
+    source_break_id: Optional[str] = None    # the WaveBreak this story implements
+    source_module: str = ""                  # service tag, when known
+    target_sprint: str = ""                  # e.g. "SPRINT-42"; empty if not yet assigned
+    acceptance_criteria: List[str] = field(default_factory=list)
+    links: Dict[str, str] = field(default_factory=dict)  # url-by-rel: {aws_transform: "...", dep_graph: "..."}
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class JiraEpic:
+    """The single epic emitted per WavePlan."""
+    story_id: str                       # "story-0" (epic is a JiraStory of kind="epic")
+    title: str
+    body: str
+    idempotency_key: str
+    target_sprint: str = ""
+    links: Dict[str, str] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class JiraMutation:
+    """One mutating call the Jira adapter should issue.
+
+    v0.1 emits the mutation list; v0.2 dispatches it through
+    `mcp-servers/jira/`. The shape mirrors the Jira MCP's tool
+    surface: `create_issue`, `update_issue`, `link_issues`.
+    """
+    mutation_id: str                    # "mut-<ordinal>"
+    kind: str                           # "create_epic" | "create_story" | "update_story" | "link_issues"
+    payload: Dict[str, Any]             # the args to pass to the Jira MCP
+    idempotency_key: str                # must match the story's idempotency_key
+    depends_on: List[str] = field(default_factory=list)  # mutation_ids this op must run after
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class MigrationPlanSummary:
+    """Top-line numbers for the migration plan (8.4).
+
+    NOTE: distinct from `MigrationSummary` (8.1) which describes the
+    MigrationScope. We cannot reuse the same name without shadowing
+    the 8.1 dataclass; `MigrationPlanSummary` keeps the two namespaces
+    separate.
+    """
+    total_stories: int
+    wave_stories: int
+    cycle_break_stories: int
+    cluster_break_stories: int
+    total_effort_days: float
+    priority_counts: Dict[str, int]     # priority -> story count
+    cycle_breaks_blocked: int           # cycle breaks that gate >= 1 wave
+    cluster_breaks_blocked: int         # cluster breaks that gate >= 1 wave
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class MigrationPlan:
+    """Top-level deliverable: the ordered set of Jira stories + the
+    mutation list that creates them in the customer's sprint.
+
+    Produced by `build_migration_plan(plan, graph)` from a `WavePlan`
+    (8.3) and a `DependencyGraph` (8.2). Pure function of the inputs;
+    deterministic. v0.1 emits the plan; v0.2 routes the mutations
+    through the Jira MCP.
+    """
+    schema_version: int
+    report_id: str
+    generated_at: str
+    source: str                                  # mirrors WavePlan.source
+    planner_version: str                         # "migration-planner/0.1.0"
+    wave_plan_id: str                            # mirrors WavePlan.report_id
+    repo_fingerprint: str                        # mirrors WavePlan.repo_fingerprint
+    plan_sha: str                                # sha256 of canonicalized inputs
+    source_sha: str                              # sha256 of the WavePlan JSON (input fingerprint)
+    deterministic: bool
+    planner_runtime_ms: float
+    cost_usd: float                              # always 0 — pure-Python
+    epic: JiraEpic
+    stories: List[JiraStory]                     # ordered; epic first, then by (kind_rank, source_wave_id, story_id)
+    mutations: List[JiraMutation]                # ordered; safe-to-execute in order
+    summary: MigrationPlanSummary
+    notes: List[str] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        d = asdict(self)
+        d["epic"] = self.epic.to_dict()
+        d["stories"] = [s.to_dict() for s in self.stories]
+        d["mutations"] = [m.to_dict() for m in self.mutations]
+        d["summary"] = self.summary.to_dict()
+        return d
+
+    def story_by_idempotency_key(self, key: str) -> Optional[JiraStory]:
+        for s in self.stories:
+            if s.idempotency_key == key:
+                return s
+        return None
+
+
+# ---------------------------------------------------------------------------
+# End of migration plan section (FORA-85, sub-goal 8.4).
 # ---------------------------------------------------------------------------

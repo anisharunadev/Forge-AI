@@ -1,5 +1,5 @@
 """
-Refactor Agent (FORA-82 / 8.1 + FORA-83 / 8.2 + FORA-84 / 8.3).
+Refactor Agent (FORA-82 / 8.1 + FORA-83 / 8.2 + FORA-84 / 8.3 + FORA-85 / 8.4).
 
 Public surface:
 
@@ -26,6 +26,12 @@ Sub-goal 8.3 (FORA-84 — AWS Transform orchestration):
     `WaveGate`, `WaveBreak`, `WaveSummary`   — output shapes
   - `plan_waves(scope, graph) -> WavePlan`   — the canonical call
   - `render_wave_plan(plan) -> str`          — Markdown wave plan
+
+Sub-goal 8.4 (FORA-85 — migration planner + Jira sync):
+  - `MigrationPlan`, `JiraEpic`, `JiraStory`,
+    `JiraMutation`, `MigrationSummary`       — output shapes
+  - `build_migration_plan(plan, graph) -> MigrationPlan` — canonical call
+  - `render_migration_plan(migration) -> str`             — Markdown plan
 """
 
 from .analyzer import (
@@ -41,11 +47,20 @@ from .dependency_graph import (
     build_graph,
     render_mermaid,
 )
+from .migration_planner import (
+    MIGRATION_PLAN_SCHEMA_VERSION,
+    PLANNER_VERSION as MIGRATION_PLANNER_VERSION,
+    build_migration_plan,
+    render_migration_plan,
+)
 from .mock_fixtures import sample_legacy_monolith
 from .risk_scorer import assess_risks, repo_risk_score
 from .schemas import (
     CATEGORIES,
+    MIGRATION_PRIORITIES,
+    MIGRATION_STORY_KINDS,
     RISK_LEVELS,
+    STORY_KIND_RANK,
     TRANSFORM_TIERS,
     TRANSFORM_UNITS,
     UNIT_TO_AWS_SERVICES,
@@ -59,6 +74,11 @@ from .schemas import (
     FileRecord,
     GraphEdge,
     GraphNode,
+    JiraEpic,
+    JiraMutation,
+    JiraStory,
+    MigrationPlan,
+    MigrationPlanSummary,
     MigrationScope,
     MigrationSummary,
     RepoScope,
@@ -136,6 +156,21 @@ __all__ = [
     "PLANNER_VERSION",
     "plan_waves",
     "render_wave_plan",
+    # Schemas (8.4)
+    "MIGRATION_PLAN_SCHEMA_VERSION",
+    "MIGRATION_PLANNER_VERSION",
+    "MIGRATION_PRIORITIES",
+    "MIGRATION_STORY_KINDS",
+    "STORY_KIND_RANK",
+    "JiraEpic",
+    "JiraMutation",
+    "JiraStory",
+    "MigrationPlan",
+    "MigrationPlanSummary",
+    "MigrationSummary",
+    # Migration planner (8.4)
+    "build_migration_plan",
+    "render_migration_plan",
     # Fixtures
     "sample_legacy_monolith",
 ]
