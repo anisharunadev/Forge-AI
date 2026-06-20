@@ -9,7 +9,7 @@ src/
 ├── tokens/          # CSS variables (brand, typography, icon) + conventions override
 ├── primitives/      # Shadcn-wrapped Button, Input, Select, Dialog, DropdownMenu, …
 ├── shell/           # top bar / left rail / main / right panel layout
-├── typed-artifacts/ # the 10 typed-artifact renderers (Plan 4 §3)
+├── typed-artifacts/ # the typed-artifact renderers (Plan 4 §3 + Connector Center types)
 ├── a11y/            # focus-visible, skip-link, live-region helpers
 ├── charts/          # Recharts typed wrappers + Sparkline (Plan 4 §5)
 ├── forms/           # React Hook Form + Zod typed helpers (Plan 4 §4)
@@ -28,6 +28,13 @@ src/
 - **Charts** (`@fora/forge-ui/charts`): `LineChart`, `BarChart`, `StackedAreaChart`, `Heatmap`, `Sparkline` — each with an accessible `<details>` table fallback.
 - **Tree** (`@fora/forge-ui/tree`): `Tree<T>`, `OrgTree`, `FileTree` — keyboard-navigable, role="tree".
 - **Lists** (`@fora/forge-ui/lists`): `TypedTable<T>`, `TypedTableToolbar`, `TypedTableEmptyState`, `toCsv` helper.
+
+## v0.3.0 changelog (FORA-393-5a — Connector Center foundation)
+
+- **Connector Center types** (`@fora/forge-ui/typed-artifacts/types.ts`): `McpConnector`, `ConnectorHealth`, `ConnectorScope`, `CredentialEnvelope`, `ToolCallStatus`, `ConnectorTier` — the renderer mirror of the runtime contract from `@fora/connector-config` + the redacted envelope from FORA-128 + the audit-log `tool_call_status` enum from FORA-125. The `CredentialEnvelope.redacted` field is the literal `true`; the renderer never displays a raw value.
+- **`McpConnectorRenderer`** — Plan 1 §3.2 typed-artifact surface with three variants: `summary-card` (list page), `detail-panel` (detail page), `row` (inline lists in other centers). Header + health snapshot + scope grant + credential envelope.
+- **`ConnectorStatusPill`** — the canonical health indicator. Maps `ToolCallStatus` to brand tokens per Plan 3 §7.1: `success` → `--brand-success`, `degraded` → `--brand-warn`, `error` → `--brand-danger`. Color is always paired with text + `aria-label` per WCAG 1.4.1.
+- **Tests** — `__tests__/typed-artifacts-connector.test.tsx` (10 tests, all green): the three `McpConnectorRenderer` variants + the three `ConnectorStatusPill` tones + a no-raw-credential regression test that fails if any forbidden raw-credential substring (`secret_value`, `apiKey`, `token=`, `password=`, `bearer `) ever appears in the rendered HTML or ARIA label.
 - New dependencies: `@tanstack/react-table ^8.20.5`, `recharts ^2.13.0`.
 
 ## Usage

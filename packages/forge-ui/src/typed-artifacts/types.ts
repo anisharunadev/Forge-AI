@@ -274,3 +274,101 @@ export interface BaseRendererProps<T> {
   readonly variant?: RendererVariant;
   readonly className?: string;
 }
+
+// ---------------------------------------------------------------------------
+// MCP Connector — Plan 1 §3.2 typed-artifact surface
+//   * `McpConnector` / `ConnectorHealth` / `ConnectorScope` / `CredentialEnvelope`
+//   * `ToolCallStatus` — the audit-log enum that pins the status-pill colors
+//     per Plan 3 §7.1. Owned by the IAM broker (FORA-125).
+//   * The renderer mirror of the runtime contract; the canonical types
+//     live in `@fora/connector-config` and `@fora/secrets-mcp`.
+//   * `CredentialEnvelope.redacted` is the literal `true` — any other
+//     value on the wire is a contract violation. The runtime raises a
+//     typed `CredentialEnvelopeViolationError`; the renderer never
+//     displays a raw value and the regression test in
+//     `__tests__/typed-artifacts-connector.test.tsx` enforces that.
+// ---------------------------------------------------------------------------
+
+/**
+ * The audit log's tool_call_status enum, owned by the IAM broker (FORA-125).
+ * Plan 3 §7.1 pins the Connector Center status colors to this enum:
+ * `success` → --brand-success, `degraded` → --brand-warn, `error` → --brand-danger.
+ */
+export type ToolCallStatus = "success" | "degraded" | "error";
+
+/**
+ * Health snapshot for a connector — Plan 1 §3.2 typed artifact.
+ * p50 / p95 are computed over the last 24h by the health-check worker
+ * (see @fora/connector-config `recordHealthCheck`); errorRate is the
+ * ratio of failed tool calls to total tool calls over the same window.
+ */
+export interface ConnectorHealth {
+  readonly lastCallAt?: string;
+  readonly p50Ms?: number;
+  readonly p95Ms?: number;
+  readonly errorRate?: number; // 0..1
+  readonly callCount24h: number;
+}
+
+/**
+ * Scope grant for a connector — the per-tenant MCP scopes the IAM broker
+ * (FORA-125) granted to the binding. `deniedScopes` are scopes the
+ * Architect/tenant explicitly revoked; `roleBinding` is the agent role
+ * that owns this grant.
+ */
+export interface ConnectorScope {
+  readonly grantedScopes: ReadonlyArray<string>;
+  readonly deniedScopes?: ReadonlyArray<string>;
+  readonly roleBinding: string;
+}
+
+/**
+ * Redacted credential envelope per the FORA-128 secrets-mcp v0 contract.
+ * The raw secret value NEVER crosses the wire or the DOM. The renderer
+ * displays `secretRef`, `fingerprint`, `expiresAt`, `lastRotatedAt`,
+ * and `valueLen`; the runtime's secrets-mcp returns this shape from
+ * `resolve(secret_ref)` and the new shape from `rotate(secret_ref)`.
+ *
+ * `redacted` is the literal `true`; any other value is a contract
+ * violation and a typed `CredentialEnvelopeViolationError` will be
+ * raised by the consumer.
+ */
+export interface CredentialEnvelope {
+  /** `tenants/{tenant_id}/secrets/{name}@{version}` per FORA-128. */
+  readonly secretRef: string;
+  /** Always the literal `true` on the wire; see FORA-128. */
+  readonly redacted: true;
+  /** Length of the raw value, for size sanity; not the value itself. */
+  readonly valueLen?: number;
+  /** sha256[:12] of the raw value — the only stable identifier. */
+  readonly fingerprint: string;
+  /** Optional rotation deadline; renderer surfaces a callout within 14d. */
+  readonly expiresAt?: string;
+  /** Timestamp of the last successful rotate action. */
+  readonly lastRotatedAt?: string;
+}
+
+/** Tier 1 = tech-stack.md §10 priority-1; Tier 2 = priority-2. */
+export type ConnectorTier = 1 | 2;
+
+/**
+ * The McpConnector typed artifact (Plan 1 §3.2). Mirrors the
+ * @fora/connector-config `ConnectorId` closed enum.
+ */
+export interface McpConnector {
+  /** Connector id; matches the ConnectorId closed enum. */
+  readonly id: string;
+  /** Stable machine name: 'jira', 'github', 'slack', ... */
+  readonly name: string;
+  /** Human label: 'Jira', 'GitHub', 'Slack', ... */
+  readonly displayName: string;
+  readonly tenantId: string;
+  readonly status: ToolCallStatus;
+  readonly tier: ConnectorTier;
+  readonly health: ConnectorHealth;
+  readonly scope: ConnectorScope;
+  /** ALWAYS redacted. Renderers must never display the raw value. */
+  readonly credential: CredentialEnvelope;
+  readonly lastUsedAt?: string;
+  readonly lastAuditEntryId?: string;
+}

@@ -9,3 +9,5 @@ export * from "./security-report";
 export * from "./deployment-plan";
 export * from "./audit-entry";
 export * from "./approval-request";
+export * from "./connector-status-pill";
+export * from "./mcp-connector";
