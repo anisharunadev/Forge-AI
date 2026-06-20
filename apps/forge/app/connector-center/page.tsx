@@ -2,64 +2,116 @@
  * Connector Center — list page (FORA-578).
  *
  * The operator view of every MCP integration the tenant uses. Server
- * fetches the typed-mock connector list, applies the persona gate,
- * and renders a card per connector. Per-tenant, RBAC-gated:
- *   * Eng Lead, CTO — full Tier-1 + Tier-2 list.
- *   * PM — read-only subset (no infra credentials surfaced).
+ * fetches the typed-mock connector list, applies the RBAC gate, and
+ * renders one card per connector. Per-tenant, persona-gated:
  *
- * Reconciles with FORA-128 (redacted credential envelope; raw value
- * NEVER on the wire or in the DOM) and Plan 3 §7.1 (status colors
- * map to the audit log's `tool_call_status` enum).
+ *   * Eng Lead, CTO — full Tier-1 + Tier-2 list of <ConnectorCard />.
+ *   * PM — typed-artifact empty-state (cards never render); the empty
+ *     state names the persona to ask.
+ *
+ * Reconciles with:
+ *   * FORA-128 — credential envelope is always redacted; raw values
+ *     never appear on the wire or in the DOM.
+ *   * FORA-125 — status colors map to the audit-log `tool_call_status`
+ *     enum (success / degraded / error → green / amber / red).
+ *   * Plan 3 §7.1 — ConnectorStatusPill is the single canonical
+ *     connector-health indicator.
+ *   * Plan 4 §3.2 — every card is a typed-artifact render of the
+ *     `McpConnector` shape.
+ *
+ * The "(centers)" route group is reserved for the future Center
+ * layout (a shared shell that wraps /connector-center, /audit-center,
+ * /run-center, etc.). Today the page still renders under the root
+ * layout so the URL resolves to `/connector-center` exactly.
  */
 
-import Link from "next/link";
 import { cookies } from "next/headers";
 import {
   listConnectors,
-  pmPersonaSubset,
+  TIER_1_CONNECTORS,
   type McpConnector,
 } from "@/lib/connectors/mock-data";
 import { SEED_TENANT_ID, readPersonaFromCookieHeader } from "@/lib/auth";
-import { ConnectorStatusPill } from "@/components/ConnectorStatusPill";
+import {
+  canAccessConnectorCenter,
+  escalationPersonaLabel,
+  type ConnectorCenterPersona,
+} from "@/lib/connectors/rbac";
+import { ConnectorCard } from "@/components/ConnectorCard";
 
 export const dynamic = "force-dynamic";
 
-type Persona = "pm" | "eng-lead" | "cto";
-
-const PERSONA_LABEL: Record<Persona, string> = {
+const PERSONA_LABEL: Record<ConnectorCenterPersona, string> = {
   pm: "Product Manager",
   "eng-lead": "Engineering Lead",
   cto: "CTO",
 };
 
-function fmtPct(n: number | undefined): string {
-  if (n === undefined) return "—";
-  return `${(n * 100).toFixed(1)}%`;
-}
-
-function isPMOnly(p: Persona): boolean {
-  return p === "pm";
-}
-
-function scopeSummary(c: McpConnector): { granted: number; denied: number } {
-  return {
-    granted: c.scope.grantedScopes.length,
-    denied: c.scope.deniedScopes?.length ?? 0,
-  };
+function tierOneCoverage(rows: ReadonlyArray<McpConnector>): {
+  present: ReadonlyArray<string>;
+  missing: ReadonlyArray<string>;
+} {
+  const present = TIER_1_CONNECTORS.filter((id) => rows.some((r) => r.id === id));
+  const missing = TIER_1_CONNECTORS.filter((id) => !rows.some((r) => r.id === id));
+  return { present, missing };
 }
 
 export default async function ConnectorCenterPage() {
-  // Read the persona cookie server-side. The forge console uses a
-  // dev-only cookie-based persona switcher (see apps/forge/lib/auth.ts).
   const cookieStore = await cookies();
   const cookieHeader = cookieStore
     .getAll()
     .map((c) => `${c.name}=${c.value}`)
     .join("; ");
-  const persona: Persona = readPersonaFromCookieHeader(cookieHeader);
+  const persona: ConnectorCenterPersona = readPersonaFromCookieHeader(
+    cookieHeader,
+  );
 
-  const all = await listConnectors(SEED_TENANT_ID);
-  const rows = isPMOnly(persona) ? pmPersonaSubset(all) : all;
+  if (!canAccessConnectorCenter(persona)) {
+    return (
+      <div className="space-y-6" data-testid="connector-center">
+        <header className="space-y-1">
+          <p className="text-xs uppercase tracking-wider text-forge-300">
+            Center
+          </p>
+          <h1 className="text-2xl font-semibold">Connector Center</h1>
+          <p className="text-sm text-forge-200">
+            Operator view of every MCP integration {PERSONA_LABEL[persona]} can audit.
+            Credentials are redacted (FORA-128); rotate a credential from the per-connector
+            detail page.
+          </p>
+        </header>
+
+        <section
+          aria-labelledby="empty-h"
+          className="card flex flex-col items-start gap-3 border-amber-500/40 bg-amber-500/5"
+          data-testid="connector-empty-state"
+          data-empty-kind="rbac-denied"
+        >
+          <p
+            className="inline-flex rounded-sm border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-amber-200"
+            data-testid="connector-empty-pill"
+          >
+            Access restricted
+          </p>
+          <h2 id="empty-h" className="text-lg font-semibold text-amber-100">
+            Connector Center is restricted to Engineering Lead and CTO personas.
+          </h2>
+          <p className="text-sm text-amber-200">
+            The <span className="font-mono">{persona}</span> persona cannot audit MCP
+            connectors or rotate credentials. Ask the{" "}
+            <span className="font-mono">
+              {escalationPersonaLabel(persona).toLowerCase()}
+            </span>{" "}
+            to operate the Connector Center for tenant{" "}
+            <span className="font-mono">{SEED_TENANT_ID}</span>.
+          </p>
+        </section>
+      </div>
+    );
+  }
+
+  const rows = await listConnectors(SEED_TENANT_ID);
+  const coverage = tierOneCoverage(rows);
 
   return (
     <div className="space-y-6" data-testid="connector-center">
@@ -73,22 +125,6 @@ export default async function ConnectorCenterPage() {
         </p>
       </header>
 
-      {isPMOnly(persona) ? (
-        <div
-          role="status"
-          aria-live="polite"
-          className="card border-amber-500/40 bg-amber-500/5"
-          data-testid="pm-read-only"
-        >
-          <p className="text-sm text-amber-200">
-            Product Manager view — the persona sees the customer-facing connectors
-            (Jira, GitHub, GitLab, Slack, Teams, Figma) and cannot rotate credentials.
-            Ask the <span className="font-mono">eng-lead</span> persona to operate AWS,
-            SonarQube, Azure DevOps, Zendesk, or Databricks.
-          </p>
-        </div>
-      ) : null}
-
       <section aria-labelledby="connectors-h" className="space-y-3">
         <div className="flex items-baseline justify-between">
           <h2 id="connectors-h" className="text-lg font-semibold">
@@ -100,8 +136,34 @@ export default async function ConnectorCenterPage() {
           </p>
         </div>
 
+        {coverage.missing.length > 0 ? (
+          <p
+            className="text-xs text-rose-300"
+            data-testid="tier-one-coverage"
+            data-present={coverage.present.join(",")}
+            data-missing={coverage.missing.join(",")}
+          >
+            Tier-1 coverage: {coverage.present.length}/{TIER_1_CONNECTORS.length} —
+            missing {coverage.missing.join(", ")}.
+          </p>
+        ) : (
+          <p
+            className="text-xs text-forge-300"
+            data-testid="tier-one-coverage"
+            data-present={coverage.present.join(",")}
+            data-missing=""
+          >
+            Tier-1 coverage: {coverage.present.length}/{TIER_1_CONNECTORS.length} (all
+            present).
+          </p>
+        )}
+
         {rows.length === 0 ? (
-          <div className="card" data-testid="connector-empty">
+          <div
+            className="card"
+            data-testid="connector-empty"
+            data-empty-kind="no-connectors"
+          >
             <p className="text-sm text-forge-200">
               No connectors provisioned for this persona. Ask the Eng Lead to onboard a
               connector in the tenant settings.
@@ -113,76 +175,9 @@ export default async function ConnectorCenterPage() {
             aria-label="MCP connectors"
             data-testid="connector-list"
           >
-            {rows.map((c) => {
-              const scope = scopeSummary(c);
-              return (
-                <li key={c.id} className="card space-y-3" data-testid="connector-row">
-                  <header className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs uppercase tracking-wider text-forge-300">
-                        Tier {c.tier} · {c.scope.roleBinding}
-                      </p>
-                      <h3 className="text-lg font-semibold" id={`connector-${c.id}-h`}>
-                        {c.displayName}
-                      </h3>
-                      <p className="font-mono text-xs text-forge-300">{c.id}</p>
-                    </div>
-                    <ConnectorStatusPill status={c.status} />
-                  </header>
-
-                  <dl
-                    className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs"
-                    aria-label="Health summary"
-                  >
-                    <dt className="text-forge-300">Last call</dt>
-                    <dd className="font-mono text-forge-100">
-                      {c.health.lastCallAt ?? "—"}
-                    </dd>
-                    <dt className="text-forge-300">p50 / p95</dt>
-                    <dd className="font-mono text-forge-100">
-                      {c.health.p50Ms ?? "—"} / {c.health.p95Ms ?? "—"} ms
-                    </dd>
-                    <dt className="text-forge-300">Error rate (24h)</dt>
-                    <dd className="font-mono text-forge-100">
-                      {fmtPct(c.health.errorRate)}
-                    </dd>
-                    <dt className="text-forge-300">Calls (24h)</dt>
-                    <dd className="font-mono text-forge-100">
-                      {c.health.callCount24h}
-                    </dd>
-                  </dl>
-
-                  <div
-                    className="flex flex-wrap items-center gap-2 text-xs"
-                    aria-label="Scope grant"
-                  >
-                    <span className="text-forge-300">Scope:</span>
-                    <span className="rounded-sm border border-forge-700 bg-forge-800 px-2 py-0.5 font-mono">
-                      {scope.granted} granted
-                    </span>
-                    {scope.denied > 0 ? (
-                      <span className="rounded-sm border border-rose-500/40 bg-rose-500/10 px-2 py-0.5 font-mono text-rose-200">
-                        {scope.denied} denied
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <footer className="flex items-center justify-between gap-3 border-t border-forge-800 pt-3 text-xs">
-                    <span className="text-forge-300" data-testid="credential-redacted">
-                      Credential · redacted
-                    </span>
-                    <Link
-                      href={`/connector-center/${c.id}`}
-                      className="rounded-sm border border-forge-700 bg-forge-800 px-3 py-1 font-medium text-forge-50 hover:border-forge-500"
-                      data-testid="connector-open"
-                      aria-label={`Open ${c.displayName} connector details`}
-                    >
-                      Open →
-                    </Link>
-                  </footer>
-                </li>
-              );
-            })}
+            {rows.map((c) => (
+              <ConnectorCard key={c.id} connector={c} />
+            ))}
           </ul>
         )}
       </section>

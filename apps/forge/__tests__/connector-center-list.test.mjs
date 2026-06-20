@@ -1,6 +1,6 @@
 /**
  * FORA-578 acceptance smoke — exercises the typed mock data source +
- * the persona gate logic. Runs under node without vitest setup so it
+ * the page-level RBAC. Runs under node without vitest setup so it
  * works in any CI that has the workspace checked out.
  *
  * Acceptance criteria covered:
@@ -9,12 +9,20 @@
  *   AC3 — Credentials NEVER raw: every credential envelope has
  *          `redacted: true` and no string contains the forbidden
  *          raw-credential patterns.
- *   AC4 — Persona gate: PM sees a Tier-1 subset, eng-lead/cto see all.
+ *   AC4 — Page-level RBAC: PM is denied, Eng Lead / CTO are allowed
+ *          (the page renders the empty-state for PM, the connector
+ *          list for the others). `pmPersonaSubset` remains a
+ *          data-layer utility for future PM-tier-1 slices.
  *   AC5 — Per-tenant seam: a wrong tenant returns zero rows.
  *   AC6 — Sort order: Tier-1 first, then displayName asc.
  */
 
 import { listConnectors, pmPersonaSubset, getConnector, TIER_1_CONNECTORS } from "../lib/connectors/mock-data.ts";
+import {
+  canAccessConnectorCenter,
+  escalationPersona,
+  escalationPersonaLabel,
+} from "../lib/connectors/rbac.ts";
 
 const FORBIDDEN_RAW_FIELDS = [
   "secret_value",
@@ -61,14 +69,16 @@ const tenant = "acme-corp";
     }
   }
 
-  // AC4: persona gate.
-  const pm = pmPersonaSubset(rows);
-  assert(pm.every((r) => r.tier === 1), "AC4 — PM subset is Tier-1 only");
-  assert(pm.length < rows.length, "AC4 — PM sees fewer rows than eng-lead");
-  assert(!pm.some((r) => r.id === "aws"), "AC4 — PM does not see AWS");
-  assert(!pm.some((r) => r.id === "sonarqube"), "AC4 — PM does not see SonarQube");
-  assert(pm.some((r) => r.id === "jira"), "AC4 — PM sees Jira");
-  assert(pm.some((r) => r.id === "slack"), "AC4 — PM sees Slack");
+  // AC4: page-level RBAC.
+  assert(canAccessConnectorCenter("pm") === false, "AC4 — page denies PM persona");
+  assert(canAccessConnectorCenter("eng-lead") === true, "AC4 — page allows Eng Lead persona");
+  assert(canAccessConnectorCenter("cto") === true, "AC4 — page allows CTO persona");
+  assert(escalationPersona("pm") === "eng-lead", "AC4 — PM escalates to eng-lead");
+  assert(escalationPersonaLabel("pm") === "Engineering Lead", "AC4 — escalation label is human-readable");
+  // pmPersonaSubset remains as a data-layer utility for future PM-tier-1 slices.
+  const pmSubset = pmPersonaSubset(rows);
+  assert(pmSubset.every((r) => r.tier === 1), "AC4 — pmPersonaSubset still Tier-1 only (utility)");
+  assert(!pmSubset.some((r) => r.id === "aws"), "AC4 — pmPersonaSubset excludes AWS (utility)");
 
   // AC5: wrong tenant returns zero rows.
   const wrong = await listConnectors("nonexistent-tenant");
