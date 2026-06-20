@@ -60,3 +60,21 @@ export {
   type InboundCommentResult,
   type AuthorResolution,
 } from './comment-mirror.js';
+export {
+  resolveJiraTransitionName,
+  DEFAULT_STAGE_TRANSITIONS,
+  PRIMARY_STATUSES,
+  stageOverrideEnvVar,
+  mirrorStageOutbound,
+  mirrorStageInbound,
+  makeClaimDeps as makeStageClaimDeps,
+  type PaperclipStatus,
+  type StageTransitionMap,
+  type JiraStageClient,
+  type StageSyncPlanePublisher,
+  type PaperclipStageEvent,
+  type JiraIssueUpdatedWebhook,
+  type StageInboundInput,
+  type OutboundStageResult,
+  type InboundStageResult,
+} from './workflow-mapping.js';

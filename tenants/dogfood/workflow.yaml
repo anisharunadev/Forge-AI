@@ -1,0 +1,85 @@
+# FORA tenant workflow configuration — dogfood (FORA-200.3 / FORA-405)
+#
+# This is the first tenant-level workflow config. It declares
+# the Paperclip ↔ Jira stage transition table for the dogfood
+# tenant (FORA's own internal usage, against the FORA Jira
+# project).
+#
+# **Inheritance:** when this file is present, the resolver
+# reads it as a positive override on top of the closed-set
+# default in `apps/jira-adapter/src/workflow-mapping.ts`
+# (the `DEFAULT_STAGE_TRANSITIONS` const). When absent for a
+# given status, the default wins. A per-process env var
+# (`sync.stage.<status>.v1.jira_status`) wins over BOTH this
+# YAML and the default — see `stageOverrideEnvVar()` in
+# `apps/jira-adapter/src/workflow-mapping.ts`.
+#
+# **Schema:** every key under `transitions` MUST be one of the
+# six v0.1 primary Paperclip statuses from
+# `PaperclipStatus` (`approved`, `in_progress`, `in_review`,
+# `blocked`, `done`, `cancelled`). The value is the literal
+# Jira-side transition name as the customer's Jira workflow
+# exposes it (e.g. "Approved", "In Progress"). Case matters —
+# Jira Cloud's transition lookup is case-sensitive.
+#
+# **Audit:** every resolution is reflected in the
+# `sync.source.stage.ok` / `sync.target.stage.ok` audit
+# event's `metadata.transition_name` field, so an operator
+# can verify post-hoc which row of this YAML was used for a
+# given transition.
+#
+# Reference: FORA-200 plan §3 "Status-transition config" +
+# §2 AC#3. CTO-approved default `approved → "Approved"`
+# (comment `8abb9965-…`).
+
+version: 1
+# Free-form human-readable description; surfaces in the
+# `tenants/dogfood/workflow.yaml` row of the FORA runbooks
+# index. Update when the mapping changes shape.
+description: >
+  FORA dogfood tenant — Paperclip ↔ Jira status transition table.
+  Mirrors the Jira Software default workflow's display names
+  (Approved / In Progress / In Review / Blocked / Done /
+  Cancelled). Inherits defaults from
+  apps/jira-adapter/src/workflow-mapping.ts when this file
+  does not list a status.
+
+transitions:
+  # CTO-approved default (comment 8abb9965-…). The dogfood
+  # project's Jira workflow has the "Approved" transition
+  # between "In Review" and "Done".
+  approved: "Approved"
+
+  # Paperclip "in_progress" maps to Jira "In Progress" — the
+  # most common transition the adapter drives. Listed
+  # explicitly here so a future rename on the Jira side
+  # surfaces as a YAML diff in PR review (rather than a
+  # silent fallthrough to the default).
+  in_progress: "In Progress"
+
+  # Paperclip "in_review" maps to Jira "In Review". Distinct
+  # from "in_progress" — Paperclip uses "in_review" for the
+  # human review gate, Jira uses the same display name.
+  in_review: "In Review"
+
+  # Paperclip "blocked" maps to Jira "Blocked". Note: this
+  # is the Jira *transition* name, not the Jira *status*
+  # name — Jira Cloud treats them as the same string in the
+  # default workflow, but a customer with a custom workflow
+  # could have "Blocked" as a status with a different
+  # transition name. The adapter calls
+  # `JiraStageClient.transitionIssue({ transitionName })`
+  # which resolves the name to the project-local id.
+  blocked: "Blocked"
+
+  # Paperclip "done" maps to Jira "Done". The terminal
+  # state on both sides.
+  done: "Done"
+
+  # Paperclip "cancelled" maps to Jira "Cancelled". The
+  # other terminal state. Note: the FORA-200 v0.1 day-one
+  # scope does NOT drive the Jira "Done" → "Cancelled"
+  # transition automatically (that's a Jira-side workflow
+  # concern); the adapter fires the transition when
+  # Paperclip side transitions to "cancelled".
+  cancelled: "Cancelled"

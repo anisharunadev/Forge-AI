@@ -18,6 +18,10 @@
     "./audit": {
       "import": "./dist/audit.js",
       "types": "./dist/audit.d.ts"
+    },
+    "./workflow-mapping": {
+      "import": "./dist/workflow-mapping.js",
+      "types": "./dist/workflow-mapping.d.ts"
     }
   },
   "files": [
