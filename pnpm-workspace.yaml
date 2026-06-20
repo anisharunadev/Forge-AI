@@ -1,6 +1,7 @@
 packages:
   - "packages/*"
   - "apps/*"
+  - "mcp-servers/*"
   - "forge/sync-plane"
 allowBuilds:
   protobufjs: set this to true or false

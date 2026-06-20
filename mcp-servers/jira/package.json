@@ -19,17 +19,22 @@
     "prepare": "npm run build",
     "start": "node bin/fora-mcp-jira.mjs",
     "smoke": "node test/smoke.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "engines": {
     "node": ">=18.17"
   },
   "dependencies": {
+    "@fora/mcp-router": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.0.4",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^22.5.0",
-    "typescript": "^5.6.0"
+    "@vitest/coverage-v8": "2.1.9",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.9"
   }
 }
