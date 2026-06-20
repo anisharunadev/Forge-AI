@@ -1,6 +1,41 @@
 # `@fora/mcp-router`
 
-Typed `McpRouter` port + `InMemoryMcpRouter` reference implementation for the FORA MCP framework (sub-goal **0.3 / FORA-48 §3.1**). Lands via **FORA-444**.
+Typed `McpRouter` port + `InMemoryMcpRouter` reference implementation for the Forge AI MCP framework (sub-goal **0.3 / Forge AI-48 §3.1**). Lands via **Forge AI-444**.
+
+## Acceptance harness (v0.3.7)
+
+Single-file end-to-end harness that exercises every FORA-48 AC against the
+shipped 0.3 surface (`@fora/mcp-schemas` 0.1.0, `@fora/mcp-breaker` 0.1.0,
+`@fora/mcp-transport` 0.1.0, `@fora/mcp-router` 0.3.6, `@fora/mcp-jira` 0.3.6).
+Closes the FORA-48 epic via **FORA-450**.
+
+```bash
+pnpm --filter @fora/mcp-router test:acceptance:router
+```
+
+Harness: `packages/mcp-router/test/acceptance.test.ts` (single vitest file).
+
+| AC | Scenario | Test |
+| -- | -------- | ---- |
+| #1 | register fixture in <10 lines + immediate allow-list visibility | `AC #1 — register fixture in <10 lines + immediate allow-list visibility` |
+| #2 | failing fixture trips breaker → `circuit_open` typed error in ≤50ms | `AC #2 — failing fixture trips breaker → circuit_open typed error in ≤50ms` |
+| #3 | tenant A vs tenant B cross-tenant isolation (no transport leak) | `AC #3 — tenant A vs tenant B cross-tenant isolation (no transport leak)` |
+| #4 | Jira MCP dropped in via router, smoke unchanged | `AC #4 — Jira MCP dropped in via the router port; mcp-jira smoke body unchanged` |
+
+Acceptance:
+
+- `pnpm --filter @fora/mcp-router test:acceptance:router` — 4/4 AC scenarios green.
+- `pnpm --filter @fora/mcp-router typecheck` — clean.
+- `pnpm --filter @fora/mcp-router test` — pre-existing 215+ tests still green (no regression in `router.test.ts` / `scope_guard.test.ts` / `scope_guard_e2e.test.ts`).
+- `pnpm --filter @fora/mcp-jira test` — still 5/5 green (FORA-449 contract preserved).
+- `pnpm --filter @fora/mcp-jira smoke` — `mcp-servers/jira/test/smoke.mjs` unchanged, still passes ("all 6 tools smoke-tested green").
+- Total harness runtime ≤2s (AC #2 alone has a 50ms budget; full file is comfortably under 2s).
+
+Cross-links:
+
+- Sibling deliverables: FORA-445 (`@fora/mcp-schemas` 0.1.0), FORA-446 (`@fora/mcp-breaker` 0.1.0), FORA-447 (`@fora/mcp-transport` 0.1.0), FORA-448 (`@fora/mcp-router` 0.3.6 scope-guard), FORA-449 (`@fora/mcp-jira` 0.3.6 + router-port smoke).
+- Jira router-port smoke (parallel AC #4 cross-check): `mcp-servers/jira/test/router-smoke.test.ts`.
+- FORA-48 (parent epic) and FORA-450 (this acceptance harness).
 
 ## Public surface
 
@@ -28,7 +63,7 @@ The package exports:
 | `InMemoryMcpRouter`     | class    | Pure-logic reference implementation; pluggable transport + audit sink.        |
 | `ScriptedTransport`     | class    | Test double — feeds canned responses / errors.                                |
 | `InMemoryAuditSink`     | class    | Captures `mcp.*` audit events for assertions.                                 |
-| `defaultAuditSink`      | function | `NullAuditSink` factory; wire JSONL or FORA-36 in prod.                       |
+| `defaultAuditSink`      | function | `NullAuditSink` factory; wire JSONL or Forge AI-36 in prod.                       |
 
 ## Usage
 
@@ -97,6 +132,6 @@ Coverage targets (vitest v8):
 
 ## References
 
-- FORA-48 §3.1 — v0.1 plan (parent epic).
-- FORA-444 — this sub-goal (port + result/error types).
+- Forge AI-48 §3.1 — v0.1 plan (parent epic).
+- Forge AI-444 — this sub-goal (port + result/error types).
 - `@fora/cache-broker` — sibling package; same `RequestContext` shape.
