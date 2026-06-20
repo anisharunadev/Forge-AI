@@ -1,0 +1,29 @@
+{
+  "name": "@fora/mcp-router",
+  "version": "0.1.0",
+  "description": "Typed McpRouter port + InMemoryMcpRouter reference implementation for FORA MCP framework 0.3. Discriminated McpError union, ServerManifest schema, per-server circuit breaker, tenant scope gate. See FORA-48 §3.1 / FORA-444.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "@vitest/coverage-v8": "2.1.9",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.9"
+  }
+}
