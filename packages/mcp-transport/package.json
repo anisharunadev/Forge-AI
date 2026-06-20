@@ -1,0 +1,38 @@
+{
+  "name": "@fora/mcp-transport",
+  "version": "0.1.0",
+  "description": "FORA MCP stdio transport — StdioChildProcessTransport for FORA MCP framework 0.3. Spawns `bin/fora-mcp-<name>.mjs` per (tenantId, serverName), LRU pool with idle eviction, exponential-backoff retry, idempotency-key passthrough, streaming tool support. See FORA-48 §3.4 / FORA-447 / ADR-0011.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "smoke": "node bin/transport-smoke.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@fora/mcp-router": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.9"
+  }
+}
