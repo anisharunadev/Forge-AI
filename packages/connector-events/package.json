@@ -1,0 +1,38 @@
+{
+  "name": "@fora/connector-events",
+  "version": "0.1.1",
+  "description": "FORA connector event taxonomy — universal audit envelope, hash-chained per-(tenant, binding) emit pipeline, Tier-1 family event catalogs (Jira / Confluence / GitHub / Slack / Teams), cross-connector lifecycle events, and typed-artifact generation rule engine with RBAC gating. Implements FORA-391 Plan 3 (FORA-484).",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "@vitest/coverage-v8": "2.1.9",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.9"
+  }
+}
