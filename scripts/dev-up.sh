@@ -159,13 +159,47 @@ pnpm -r migrate >"$LOG_DIR/migrate.log" 2>&1 || {
 # ---------------------------------------------------------------------------
 SEED_TENANT_ID="${FORA_SEED_TENANT_ID:-acme-corp}"
 SEED_TENANT_NAME="${FORA_SEED_TENANT_NAME:-Acme Corp (Dev Demo)}"
-SEED_TENANT_UUID="00000000-0000-0000-0000-000000000ace"
+SEED_TENANT_UUID="00000000-0000-4000-8000-000000000ace"
 
 echo "[dev-up] seeding demo tenant '$SEED_TENANT_ID'"
 docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 <<SQL >"$LOG_DIR/seed.log" 2>&1
 INSERT INTO tenants (id, tenant_id, slug, name)
 VALUES ('$SEED_TENANT_UUID', '$SEED_TENANT_UUID', '$SEED_TENANT_ID', '$SEED_TENANT_NAME')
 ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO agent_runs (id, tenant_id, goal_id, project_id, status, current_stage, triggered_by, cost_ceiling_usd, cost_spent_usd, started_at)
+VALUES (
+  '00000000-0000-4000-8000-000000000001',
+  '$SEED_TENANT_UUID',
+  'demo-goal-forge',
+  'demo-project',
+  'running',
+  'architect',
+  '{"type":"manual","actor":"demo-user"}',
+  100.00,
+  0,
+  now()
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO agent_run_stages (id, tenant_id, run_id, stage, status, started_at, finished_at)
+SELECT * FROM (VALUES 
+  (gen_random_uuid(), '$SEED_TENANT_UUID'::uuid, '00000000-0000-4000-8000-000000000001'::uuid, 'ideation', 'approved', now(), now()),
+  (gen_random_uuid(), '$SEED_TENANT_UUID'::uuid, '00000000-0000-4000-8000-000000000001'::uuid, 'architect', 'running', now(), null::timestamp with time zone),
+  (gen_random_uuid(), '$SEED_TENANT_UUID'::uuid, '00000000-0000-4000-8000-000000000001'::uuid, 'dev', 'pending', null::timestamp with time zone, null::timestamp with time zone),
+  (gen_random_uuid(), '$SEED_TENANT_UUID'::uuid, '00000000-0000-4000-8000-000000000001'::uuid, 'qa', 'pending', null::timestamp with time zone, null::timestamp with time zone),
+  (gen_random_uuid(), '$SEED_TENANT_UUID'::uuid, '00000000-0000-4000-8000-000000000001'::uuid, 'security', 'pending', null::timestamp with time zone, null::timestamp with time zone),
+  (gen_random_uuid(), '$SEED_TENANT_UUID'::uuid, '00000000-0000-4000-8000-000000000001'::uuid, 'devops', 'pending', null::timestamp with time zone, null::timestamp with time zone),
+  (gen_random_uuid(), '$SEED_TENANT_UUID'::uuid, '00000000-0000-4000-8000-000000000001'::uuid, 'docs', 'pending', null::timestamp with time zone, null::timestamp with time zone)
+) AS t(id, tenant_id, run_id, stage, status, started_at, finished_at)
+WHERE NOT EXISTS (
+  SELECT 1 FROM agent_run_stages WHERE run_id = '00000000-0000-4000-8000-000000000001'
+);
+
+UPDATE agent_runs SET status = 'running', current_stage = 'architect' WHERE id = '00000000-0000-4000-8000-000000000001';
+UPDATE agent_run_stages SET status = 'approved' WHERE run_id = '00000000-0000-4000-8000-000000000001' AND stage = 'ideation';
+UPDATE agent_run_stages SET status = 'running' WHERE run_id = '00000000-0000-4000-8000-000000000001' AND stage = 'architect';
+UPDATE agent_run_stages SET status = 'pending' WHERE run_id = '00000000-0000-4000-8000-000000000001' AND stage NOT IN ('ideation', 'architect');
 SQL
 
 # ---------------------------------------------------------------------------
@@ -200,11 +234,12 @@ start_app "orchestrator" \
   "${FORA_ORCHESTRATOR_PORT:-4000}"
 
 start_app "customer-cloud-broker" \
-  "pnpm --filter @fora/customer-cloud-broker dev" \
+  "FORA_CCB_DENY_LIST_PATH=\"\$PWD/config/customer-cloud-broker/deny_list.yaml\" pnpm --filter @fora/customer-cloud-broker dev" \
   "${FORA_CCB_LISTEN_PORT:-4003}"
 
 # Forge AI console (apps/forge, FORA-374). Next.js 15 dev server;
 # the smoke gate asserts :3000 /healthz once it has had time to bind.
+rm -rf apps/forge/.next
 start_app "forge" \
   "pnpm --filter @fora/forge dev" \
   "${FORA_FORGE_PORT:-3000}"

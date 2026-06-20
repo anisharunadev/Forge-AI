@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-17T10:48:15.733Z",
+  "generated_at": "2026-06-20T16:47:37.524Z",
   "iam_policy_source": "infra/object-store/iam.tf (rendered)",
   "fixture": "test/cloud-sim/iam-policy.json",
   "verdicts": [

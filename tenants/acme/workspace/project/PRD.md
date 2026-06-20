@@ -17,23 +17,23 @@ content_hash: sha256:b1fa28e3248ff00d671ef74fa7ae48eb1d23ebad0bb411c6233840a6c8d
 pii_markers:
   - none
 ---
-# FORA — Product Requirements Document (PRD)
+# Forge AI — Product Requirements Document (PRD)
 
 **Status:** v1.0 (production bar, 2026-06-17) — meets the Knowledge Layer bar in [README §3](../README.md#3-the-acceptance-bar)
 **Owner:** CEO owns §1, §2, §3, §4, §6.1, §8, §10. CTO owns §5, §6.2–6.3, §7, §9. Both sign §10. CTO is the merge gate.
 **Stage gate:** This PRD is the input contract for the [Architect stage](../memory/architecture.md#3-the-staged-workflow-the-spine). It must be accepted before the Architect sub-agent picks it up.
 **Glossary:** Every acronym below (MCP, OIDC, SSO, MFA, MTTR, SOC 2, OWASP, WCAG, FedRAMP, HIPAA, PCI-DSS, pgvector, LLM01–LLM10, BMAD, PII, DPIA, etc.) is defined in [customer/glossary.md](../customer/glossary.md). If you find a term used here that is not in the glossary, file a glossary PR; do not redefine it in this file.
 **Linked Paperclip issues:**
-- Parent Epic: [FORA-26](/FORA/issues/FORA-26) — Epic 10 — Knowledge Layer
-- Sub-goal: [FORA-100](/FORA/issues/FORA-100) — 10.3 Project folder hardening
-- Plan of record: [FORA-15](/FORA/issues/FORA-15#document-plan) — BMAD → Paperclip Hierarchy Plan
+- Parent Epic: [Forge AI-26](/Forge AI/issues/Forge AI-26) — Epic 10 — Knowledge Layer
+- Sub-goal: [Forge AI-100](/Forge AI/issues/Forge AI-100) — 10.3 Project folder hardening
+- Plan of record: [Forge AI-15](/Forge AI/issues/Forge AI-15#document-plan) — BMAD → Paperclip Hierarchy Plan
 **Related:** [roadmap.md](./roadmap.md), [tech-stack.md](./tech-stack.md), [memory/architecture.md](../memory/architecture.md)
 
 ---
 
 ## 1. Vision
 
-FORA is the **Enterprise AI SDLC Operating System**: a single platform that takes a product idea from a one-line prompt to a deployed, documented, audited change in a customer's SDLC. It runs on top of Paperclip (the agent runtime) and BMAD (the staged workflow), and it orchestrates the tools the customer's engineering org already uses — Jira, GitHub, Confluence, SonarQube, Figma, AWS, Slack — without replacing them.
+Forge AI is the **Enterprise AI SDLC Operating System**: a single platform that takes a product idea from a one-line prompt to a deployed, documented, audited change in a customer's SDLC. It runs on top of Paperclip (the agent runtime) and BMAD (the staged workflow), and it orchestrates the tools the customer's engineering org already uses — Jira, GitHub, Confluence, SonarQube, Figma, AWS, Slack — without replacing them.
 
 The customer does not get a new tool to log into. The customer gets a team of sub-agents that work the way a founding engineering team would: one PRD, one ADR, one PR, one deploy, one Confluence page, one audit row per action.
 
@@ -65,7 +65,7 @@ Existing solutions fragment the problem: code-review bots that do not see the PR
 
 ## 4. Core value propositions
 
-| Value prop | What it replaces | How FORA delivers |
+| Value prop | What it replaces | How Forge AI delivers |
 | --- | --- | --- |
 | **One source of truth per fact** | Spreadsheet of spreadsheets | Knowledge Layer (the workspace) + agent reads, not writes (v1) |
 | **Auditable AI actions** | "What did the bot do?" | Audit log, append-only, cross-account |

@@ -1,9 +1,9 @@
-# FORA-164 — Object-store adapter (0.7.2c) — Ship summary
+# Forge AI-164 — Object-store adapter (0.7.2c) — Ship summary
 
 **Status:** ready for review (done).
-**Issue:** FORA-164.
-**Parent:** FORA-124 (bar #3).
-**Blocks:** FORA-124 #3, FORA-103 (0.8 workspace materialisation).
+**Issue:** Forge AI-164.
+**Parent:** Forge AI-124 (bar #3).
+**Blocks:** Forge AI-124 #3, Forge AI-103 (0.8 workspace materialisation).
 
 ## What shipped
 

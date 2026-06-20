@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk ls -la packages/event-bus/src/ packages/event-bus/test/ apps/event-bus-bridge/src/ apps/event-bus-bridge/test/ 2>&1\",\"description\":\"List all files created for FORA-136\"}",
-  "error": "Exit code 2\n/usr/bin/ls: cannot access 'packages/event-bus/src/': No such file or directory\n/usr/bin/ls: cannot access 'packages/event-bus/test/': No such file or directory\n/usr/bin/ls: cannot access 'apps/event-bus-bridge/src/': No such file or directory\n/usr/bin/ls: cannot access 'apps/event-bus-bridge/test/': No such file or directory",
-  "timestamp": "2026-06-17T10:39:39.096Z",
-  "retry_count": 1
-}

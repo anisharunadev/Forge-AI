@@ -1,6 +1,6 @@
-# FORA — Knowledge Layer
+# Forge AI — Knowledge Layer
 
-The Knowledge Layer is the customer-owned source of truth that every FORA sub-agent reads to do its job. The CTO can wake a future sub-agent, inject only the relevant files per stage, and the agent can complete a task from the Knowledge Layer alone.
+The Knowledge Layer is the customer-owned source of truth that every Forge AI sub-agent reads to do its job. The CTO can wake a future sub-agent, inject only the relevant files per stage, and the agent can complete a task from the Knowledge Layer alone.
 
 **Owner:** CTO
 **Status:** v0.1 (proposed, 2026-06-16)
@@ -24,7 +24,7 @@ workspace/
 │   ├── standards.md            # SOC 2, ISO 27001, NIST SSDF, OWASP, WCAG, GDPR inheritance
 │   ├── conventions.md          # naming, repo layout, delivery norms, override model
 │   └── glossary.md             # terms, vocabulary, acronyms, anti-glossary
-└── project/                    # this specific project (FORA itself)
+└── project/                    # this specific project (Forge AI itself)
     ├── PRD.md                  # the product requirements
     ├── roadmap.md              # the sequenced milestones
     └── tech-stack.md           # the concrete tech
@@ -69,10 +69,10 @@ A file fails the bar if it is a placeholder, a TODO, or a copy-paste from anothe
 
 When new knowledge arrives (from a postmortem, a customer conversation, an incident retro, a quarterly offsite), the writer asks:
 
-1. **Is it about FORA the product, or about this customer's product?**
-   - FORA → `project/`
+1. **Is it about Forge AI the product, or about this customer's product?**
+   - Forge AI → `project/`
    - Customer → `engagements/<customer-slug>/` (in the monorepo) or a customer-specific override file in `customer/`
-2. **Is it about how every project at FORA should be built, or about how this one project is built?**
+2. **Is it about how every project at Forge AI should be built, or about how this one project is built?**
    - Every project → `memory/` (and probably an ADR if it's a one-way door)
    - This project → `project/`
 3. **Is it about the customer surface (what the customer sees, signs, pays for) or the engineering surface (what we build with)?**

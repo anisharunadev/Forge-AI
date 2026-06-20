@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -sS -X POST \\\"http://127.0.0.1:3100/api/issues/40094133-bc5e-438d-8295-3adbbedb2d58/comments\\\" \\\\\\n  -H \\\"Authorization: Bearer ${PAPERCLIP_API_KEY}\\\" \\\\\\n  -H \\\"Content-Type: app...",
-  "error": "Exit code 2\n/usr/bin/bash: eval: line 18: unexpected EOF while looking for matching `)'",
-  "timestamp": "2026-06-17T21:23:25.905Z",
-  "retry_count": 1
-}

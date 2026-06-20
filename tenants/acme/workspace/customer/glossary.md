@@ -1,6 +1,6 @@
 # Customer Glossary
 
-**Scope:** FORA-specific terms, SDLC vocabulary, and the agent-platform jargon that appears in customer-facing material and in the Knowledge Layer.
+**Scope:** Forge AI-specific terms, SDLC vocabulary, and the agent-platform jargon that appears in customer-facing material and in the Knowledge Layer.
 **Audience:** Every engineer, sub-agent, and customer-facing role. This is the dictionary that lets a cold-started agent (or a new customer) read the rest of the workspace and the product.
 **Stage injection:** Inject into **every** sub-agent at boot. If an agent does not have a glossary and a sub-agent-specific memory file, it is not ready to work (per [README §2](../README.md#2-the-injection-model)).
 
@@ -19,7 +19,7 @@
 
 | Term | Definition |
 | --- | --- |
-| **FORA** | The company. The Enterprise AI SDLC Operating System. |
+| **Forge AI** | The company. The Enterprise AI SDLC Operating System. |
 | **Forge** | The customer-facing console. Where product managers, engineering leads, and CTOs interact with the platform. |
 | **The Orchestrator** | The Master Orchestrator — the top of the agent-of-agents tree. Owns run lifecycle, tenant context, and budget enforcement. |
 | **The Runtime** | The agent execution layer. Runs the staged workflow, holds the audit log, brokers MCP calls. |
@@ -52,7 +52,7 @@
 | **Tool** | One callable function exposed by an MCP server. The agent's allow-list is the list of tools it can call. |
 | **Allow-list** | The set of tools a given agent (or run) is permitted to call. The default is empty. |
 | **Plan-then-act** | The pattern where the agent emits a structured plan, the runtime validates the plan against the allow-list, and only then are tool calls executed. |
-| **StageEngine** | The typed runtime port that loads a [Handoff Contract](#handoff-contract), enforces the gate between stages, and invokes the stage handler. Two implementations ship: an in-process `InMemoryStageEngine` (tests, local dev) and a gRPC adapter (production target). Wired in [FORA-173](/FORA/issues/FORA-173). |
+| **StageEngine** | The typed runtime port that loads a [Handoff Contract](#handoff-contract), enforces the gate between stages, and invokes the stage handler. Two implementations ship: an in-process `InMemoryStageEngine` (tests, local dev) and a gRPC adapter (production target). Wired in [Forge AI-173](/Forge AI/issues/Forge AI-173). |
 | **Tool Output Sanitisation** | Wrapping tool results in `<tool_output source="...">` and passing them back to the model as data, not instructions. |
 | **Eval Case** | A golden input/output pair used to regression-test a prompt, tool schema, or agent contract. |
 | **Golden Trace** | A recorded run used to regression-test the staged workflow end-to-end. |
@@ -76,7 +76,7 @@
 | **PII** | Personally Identifiable Information. Marked with `pii: true` in the DB schema. |
 | **PHI** | Protected Health Information. Out of scope for v1. Requires a separate, isolated deployment. |
 | **SSO** | Single Sign-On. We integrate via OIDC or SAML; we do not store customer passwords. |
-| **MFA** | Multi-Factor Authentication. Required for every FORA staff account. |
+| **MFA** | Multi-Factor Authentication. Required for every Forge AI staff account. |
 
 ## 5. Engineering and SDLC
 
@@ -162,7 +162,7 @@
 | **"AI magic"** | Hand-waving. We describe what the agent did, how, and at what cost. |
 | **"Just works"** | Marketing copy. We describe the contract, the test, and the failure mode. |
 | **"Eventually consistent"** | Lazy thinking. We say "read-after-write" or "max staleness X seconds." |
-| **"Temporary"** | A lie. We say "ticket FORA-NNN, owner X, retire by date Y." |
+| **"Temporary"** | A lie. We say "ticket Forge AI-NNN, owner X, retire by date Y." |
 | **"Best effort"** | A non-SLA. We say "p99 X ms, error budget Y." |
 | **"Just a small change"** | The most expensive sentence in engineering. We measure, then we call it. |
 | **"We'll fix it later"** | A promise we will not keep. We file a ticket the same day. |

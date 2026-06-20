@@ -72,7 +72,7 @@ pii_markers: []
 | Constants | `SCREAMING_SNAKE_CASE` | `MAX_TOOL_RETRIES = 3` |
 | Booleans | `is_/has_/should_` prefix | `is_idempotent`, `has_audit_log` |
 | DB tables | `snake_case`, plural | `agent_runs`, `audit_events` |
-| Env vars | `FORA_<SCOPE>_<NAME>` | `FORA_AGENT_RUNTIME_URL` |
+| Env vars | `Forge AI_<SCOPE>_<NAME>` | `Forge AI_AGENT_RUNTIME_URL` |
 | Log keys | `snake_case` | `agent.run.id`, `stage.duration_ms` |
 
 ## 5. Testing discipline
@@ -107,7 +107,7 @@ The test pyramid is the law, not a suggestion.
 - **Structured JSON logs only.** `pino` (TS) / `structlog` (Python). Never `console.log` in a service.
 - **Every log line carries** `run_id`, `stage`, `agent_id`, `tool`, `attempt`, `duration_ms`.
 - **Use log levels deliberately.** `debug` = noise that helps the next debugger. `info` = state changes (run started, run completed, tool called). `warn` = recovered error. `error` = unrecovered error that needs a human.
-- **No PII or secrets in logs.** Scan with `gitleaks` pre-commit and `detect-secrets` in CI. LLM prompt/response bodies are logged only when `FORA_LOG_LLM=1` (dev only).
+- **No PII or secrets in logs.** Scan with `gitleaks` pre-commit and `detect-secrets` in CI. LLM prompt/response bodies are logged only when `Forge AI_LOG_LLM=1` (dev only).
 - **Metrics, not strings.** A stage completing is a counter (`stage.completed{stage="qa"}`) and a histogram (`stage.duration_ms{stage="qa"}`). Dashboards are written in PromQL, not in grep.
 
 ## 8. Dependency policy

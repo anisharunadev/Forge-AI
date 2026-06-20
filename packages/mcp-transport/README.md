@@ -1,7 +1,7 @@
 # @fora/mcp-transport
 
-FORA MCP stdio transport — the `StdioChildProcessTransport` that plugs
-into [`@fora/mcp-router`](../mcp-router) per FORA-48 §3.4 / ADR-0011.
+Forge AI MCP stdio transport — the `StdioChildProcessTransport` that plugs
+into [`@fora/mcp-router`](../mcp-router) per Forge AI-48 §3.4 / ADR-0011.
 
 ## What it does
 
@@ -52,7 +52,7 @@ const transport = new StdioChildProcessTransport({
   envFor: async (manifest, ctx) => {
     // Mint per-tenant credentials. Returned values are injected into
     // the child's environment.
-    return { FORA_CREDENTIAL: JSON.stringify(await mintCredential(manifest, ctx)) };
+    return { Forge AI_CREDENTIAL: JSON.stringify(await mintCredential(manifest, ctx)) };
   },
 });
 
@@ -71,14 +71,14 @@ await transport.close();                        // kill every child
 
 | Env var | Source | Notes |
 | --- | --- | --- |
-| `FORA_TENANT_ID` | `ctx.tenant_id` | always set |
-| `FORA_SERVER_NAME` | `manifest.name` | always set |
-| `FORA_ACTOR` | `ctx.actor` | when present |
-| `FORA_TRACE_ID` | `ctx.trace_id` | when present |
-| `FORA_CREDENTIAL` | `ctx.credential` | when present, JSON-encoded |
+| `Forge AI_TENANT_ID` | `ctx.tenant_id` | always set |
+| `Forge AI_SERVER_NAME` | `manifest.name` | always set |
+| `Forge AI_ACTOR` | `ctx.actor` | when present |
+| `Forge AI_TRACE_ID` | `ctx.trace_id` | when present |
+| `Forge AI_CREDENTIAL` | `ctx.credential` | when present, JSON-encoded |
 | (custom) | `envFor(manifest, ctx)` | whatever the resolver returns |
 
-The transport only forwards the whitelisted `FORA_*` vars and whatever
+The transport only forwards the whitelisted `Forge AI_*` vars and whatever
 `envFor` returns; the rest of `process.env` is intentionally **not**
 inherited. Use `envFor` to mint and inject per-tenant credentials.
 
@@ -111,8 +111,8 @@ retry / streaming / health / LRU end-to-end against the same fixture.
 
 ## See also
 
-- Plan: [FORA-48 §3.4](/FORA/issues/FORA-48#document-plan)
+- Plan: [Forge AI-48 §3.4](/Forge AI/issues/Forge AI-48#document-plan)
 - ADR: ADR-0011 (stdio transport)
-- Sub-goal: [FORA-447](/FORA/issues/FORA-447)
+- Sub-goal: [Forge AI-447](/Forge AI/issues/Forge AI-447)
 - Sibling: [@fora/mcp-router](../mcp-router) — port + in-memory router
 - Sibling: [@fora/mcp-jira](../mcp-jira) — Jira MCP (drop-in server)

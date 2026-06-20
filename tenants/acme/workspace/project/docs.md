@@ -1,7 +1,7 @@
 ---
 name: doc-index
 version: 1.0
-spec: FORA-117
+spec: Forge AI-117
 owner: doc-agent
 status: production
 description: |
@@ -11,9 +11,9 @@ description: |
   Release Notes generators). Same shape as `agents/documentation/schemas.py:DocIndexEntry`.
 ---
 
-# Doc Index — FORA Project
+# Doc Index — Forge AI Project
 
-This file is the **doc index** (storage contract for [FORA-117](/FORA/issues/FORA-117), sub-goal 7.1.6). Every doc-generation run appends or refreshes one entry per artifact. The Memory Agent reads this file; the Audit Agent audits writes to it; the Master Orchestrator consults `docs.freshness_check` before the release stage.
+This file is the **doc index** (storage contract for [Forge AI-117](/Forge AI/issues/Forge AI-117), sub-goal 7.1.6). Every doc-generation run appends or refreshes one entry per artifact. The Memory Agent reads this file; the Audit Agent audits writes to it; the Master Orchestrator consults `docs.freshness_check` before the release stage.
 
 The agents that *write* to this file are: `readme`, `api_docs`, `changelog`, `release_notes`, `adr` (matches `GeneratorType` 1:1). The agents that *read* it are: Memory Agent, Audit Agent, and the Documentation Agent itself on the next run.
 
@@ -25,7 +25,7 @@ The file is frontmatter + a fenced JSON block. The JSON shape is the contract; t
 ┌──────────────────────────────────────────────┐
 │ --- (YAML frontmatter: name/version/spec)    │  ← handle
 ├──────────────────────────────────────────────┤
-│ # Doc Index — FORA Project                   │  ← human prose
+│ # Doc Index — Forge AI Project                   │  ← human prose
 │ <this section>                               │
 ├──────────────────────────────────────────────┤
 │ ```json                                      │
@@ -94,7 +94,7 @@ Same `input_sha` + `source_commit` + `content_sha` → byte-identical `DocIndexE
 - **Cross-tenant data.** A doc index is per-tenant. The Memory Agent refuses to merge indexes across tenants.
 - **A vector index.** Out of scope for v1. The Memory Agent uses this file for keyword + structured queries; embeddings are a v1.1 conversation.
 
-## Sample run (FORA-117 acceptance)
+## Sample run (Forge AI-117 acceptance)
 
 `python -m agents.documentation.smoke_test` produces four entries in this file from a stub run: one README, one CHANGELOG, one API doc, and one ADR. The smoke-test evidence is written to `agents/documentation/evidence/smoke_<timestamp>.json` and the index entries match the artifacts the stub generator produced.
 
@@ -109,7 +109,7 @@ Same `input_sha` + `source_commit` + `content_sha` → byte-identical `DocIndexE
     {
       "path": "README.md",
       "kind": "readme",
-      "title": "FORA",
+      "title": "Forge AI",
       "last_generated_at": "2026-06-17T17:06:38.977536+00:00",
       "source_commit": "forareal-final",
       "generator": "readme",
@@ -125,7 +125,7 @@ Same `input_sha` + `source_commit` + `content_sha` → byte-identical `DocIndexE
     {
       "path": "CHANGELOG.md",
       "kind": "changelog",
-      "title": "FORA Changelog",
+      "title": "Forge AI Changelog",
       "last_generated_at": "2026-06-17T16:00:00Z",
       "source_commit": "0000001",
       "generator": "changelog",
@@ -141,7 +141,7 @@ Same `input_sha` + `source_commit` + `content_sha` → byte-identical `DocIndexE
     {
       "path": "docs/api/openapi.yaml",
       "kind": "api_docs",
-      "title": "FORA Public API (OpenAPI 3.1)",
+      "title": "Forge AI Public API (OpenAPI 3.1)",
       "last_generated_at": "2026-06-17T16:00:00Z",
       "source_commit": "0000001",
       "generator": "api_docs",
@@ -181,5 +181,5 @@ Same `input_sha` + `source_commit` + `content_sha` → byte-identical `DocIndexE
 - The on-disk contract: [agents/documentation/schemas.py DocIndexEntry](../../agents/documentation/schemas.py)
 - The query interface: [agents/documentation/docs_query.py](../../agents/documentation/docs_query.py)
 - The smoke test: `python -m agents.documentation.smoke_test`
-- The doc-generation spec: [FORA-81](/FORA/issues/FORA-81#document-doc-generation-spec)
+- The doc-generation spec: [Forge AI-81](/Forge AI/issues/Forge AI-81#document-doc-generation-spec)
 - The Knowledge Layer bar: [README §3](../README.md#3-the-acceptance-bar)

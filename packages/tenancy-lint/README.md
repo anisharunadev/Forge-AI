@@ -1,10 +1,10 @@
 # `@fora/tenancy-lint`
 
-Build-time lint for FORA's tenancy invariants. Wired into the CI Tier 1
+Build-time lint for Forge AI's tenancy invariants. Wired into the CI Tier 1
 (static) step; red on every push.
 
 Per **ADR-0003 §4.2** (RLS only via the migration runner, no `BYPASSRLS`
-exception path) and **FORA-124 acceptance bar #5** and **FORA-165** (0.7.2d).
+exception path) and **Forge AI-124 acceptance bar #5** and **Forge AI-165** (0.7.2d).
 
 ## Rules
 
@@ -46,5 +46,5 @@ Coverage:
 - Multi-tenant tables without `ENABLE ROW LEVEL SECURITY` warn (rule 3)
 - Multi-tenant tables without `tenant_isolation` policy warn (rule 4)
 - Commented-out `CREATE TABLE` / `BYPASSRLS` are ignored
-- All four FORA-165 acceptance fixtures (red × 2, green × 2) match their
+- All four Forge AI-165 acceptance fixtures (red × 2, green × 2) match their
   expected lint outcome

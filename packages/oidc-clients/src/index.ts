@@ -18,6 +18,8 @@
 
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyResult, type JWTPayload } from 'jose';
 import { z } from 'zod';
+import type { IncomingMessage, ServerResponse } from 'node:http';
+import type { AddressInfo } from 'node:net';
 
 // ---- Discovery schema (RFC 8414) ------------------------------------------
 
@@ -353,8 +355,7 @@ export async function startMockIdP(opts: {
 } = {}): Promise<MockIdpHandle> {
   // Use Node's built-in crypto + jose so we don't pull in another dep.
   const { generateKeyPair, exportJWK, SignJWT, calculateJwkThumbprint } = await import('jose');
-  const { createServer, IncomingMessage, ServerResponse } = await import('node:http');
-  const { AddressInfo } = await import('node:net');
+  const { createServer } = await import('node:http');
 
   const { publicKey, privateKey } = await generateKeyPair('RS256', { modulusLength: 2048 });
   const jwk = await exportJWK(publicKey);

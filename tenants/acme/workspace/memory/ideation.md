@@ -31,7 +31,7 @@ with StdioMcpClient("github", [sys.executable, "-m", "agents.github_mcp.server"]
      StdioMcpClient("jira",   [sys.executable, "-m", "agents.jira_mcp.server"],   env=jira_env)   as ji:
     gate = PaperclipApprovalGate(
         api_url=PAPERCLIP_API_URL, api_key=PAPERCLIP_API_KEY,
-        issue_id=FORA_6_ISSUE_ID, run_id=PAPERCLIP_RUN_ID,
+        issue_id=Forge AI_6_ISSUE_ID, run_id=PAPERCLIP_RUN_ID,
     )
     agent = IdeationAgent(github_client=gh, jira_client=ji, approval_gate=gate)
     result = agent.run(input_brief=...)
@@ -70,9 +70,9 @@ with StdioMcpClient("github", [sys.executable, "-m", "agents.github_mcp.server"]
 
 ## Owners
 
-- [FORA-6](/FORA/issues/FORA-6) — Ideation Agent (CTO, done 2026-06-16)
-- [FORA-4](/FORA/issues/FORA-4) — GitHub MCP (CTO, done 2026-06-16)
-- [FORA-8](/FORA/issues/FORA-8) — Jira MCP (CTO, done 2026-06-16)
+- [Forge AI-6](/Forge AI/issues/Forge AI-6) — Ideation Agent (CTO, done 2026-06-16)
+- [Forge AI-4](/Forge AI/issues/Forge AI-4) — GitHub MCP (CTO, done 2026-06-16)
+- [Forge AI-8](/Forge AI/issues/Forge AI-8) — Jira MCP (CTO, done 2026-06-16)
 
 ## Related
 

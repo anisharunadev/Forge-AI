@@ -171,7 +171,6 @@ export class OidcClientImpl {
                 algorithms: ['RS256', 'ES256'],
             });
             const payload = result.payload;
-            process.stderr.write(`[oidc] verifyIdToken idp=${this.config.idp_id} expected=${expectedNonce} got=${payload.nonce}\n`);
             if (payload.nonce !== expectedNonce) {
                 throw new Error(`OIDC id_token nonce mismatch for ${this.config.idp_id} (possible replay)`);
             }
@@ -222,8 +221,7 @@ export function createOidcClient(config, fetcher) {
 export async function startMockIdP(opts = {}) {
     // Use Node's built-in crypto + jose so we don't pull in another dep.
     const { generateKeyPair, exportJWK, SignJWT, calculateJwkThumbprint } = await import('jose');
-    const { createServer, IncomingMessage, ServerResponse } = await import('node:http');
-    const { AddressInfo } = await import('node:net');
+    const { createServer } = await import('node:http');
     const { publicKey, privateKey } = await generateKeyPair('RS256', { modulusLength: 2048 });
     const jwk = await exportJWK(publicKey);
     jwk.kid = 'mock-key-1';
@@ -284,7 +282,6 @@ export async function startMockIdP(opts = {}) {
                 lastCode = params.code;
             const nonce = lastNonce ?? 'mock-nonce';
             const now = Math.floor(Date.now() / 1000);
-            process.stderr.write(`[mock-idp] /token signing with nonce=${nonce} lastNonce=${lastNonce}\n`);
             const token = await new SignJWT({
                 sub,
                 email,

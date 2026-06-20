@@ -1,6 +1,6 @@
 # ACME customer standards
 
-Tenant-owned override (FORA-411 / 0.8.4). This file shadows the seed
+Tenant-owned override (Forge AI-411 / 0.8.4). This file shadows the seed
 customer/standards.md for tenant acme. Tenant globex (which has
 not overridden this file) continues to see the seed.
 

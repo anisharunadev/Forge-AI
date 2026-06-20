@@ -16,7 +16,7 @@ The combination means: even if an attacker bypasses the in-process check, the cl
 
 ## Bar #3 reference
 
-Implements FORA-124 acceptance bar #3: an object key written to `tenants/tnt_A/...` is unreadable from a session bound to `tnt_B`, even with the full S3 client.
+Implements Forge AI-124 acceptance bar #3: an object key written to `tenants/tnt_A/...` is unreadable from a session bound to `tnt_B`, even with the full S3 client.
 
 ## Tests
 
@@ -36,5 +36,5 @@ For an end-to-end LocalStack run that proves the cloud-side gate against real S3
 
 - `infra/object-store/iam.tf` — the per-tenant IAM policy (the cloud-side gate).
 - `docs/runbooks/object-store-tenant-isolation.md` — LocalStack recipe for the end-to-end test.
-- FORA-124 — the parent epic.
-- FORA-123 — claim format (this package's context is constructed from it).
+- Forge AI-124 — the parent epic.
+- Forge AI-123 — claim format (this package's context is constructed from it).

@@ -167,7 +167,7 @@ run_check "workspace resolve     agents/workspace_resolve/smoke_test.py 9 ACs gr
 # tenant-scoped reads can see it. The probe asserts the seven canonical
 # stage rows exist and are returned in canonical order — the count
 # check is the smoke gate for the GET /v1/runs/{id}/stages endpoint.
-DEMO_RUN_TENANT_UUID="00000000-0000-0000-0000-000000000ace"
+DEMO_RUN_TENANT_UUID="00000000-0000-4000-8000-000000000ace"
 run_check "orchestrator  :$ORCH_PORT  GET /v1/runs/demo-run-001/stages count=7" \
   "STAGES=\$(curl -fsS --max-time 5 -H 'x-fora-tenant-id: $DEMO_RUN_TENANT_UUID' http://localhost:$ORCH_PORT/v1/runs/demo-run-001/stages 2>/dev/null) && echo \"\$STAGES\" | grep -q '\"stages\"' && COUNT=\$(echo \"\$STAGES\" | grep -oE '\"stage\":\"[a-z]+\"' | wc -l) && [[ \"\$COUNT\" -eq 7 ]]"
 

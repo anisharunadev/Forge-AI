@@ -1,19 +1,19 @@
 ---
 name: adr-registry
 version: 1.0
-spec: FORA-117
+spec: Forge AI-117
 owner: doc-agent
 status: production
 description: |
   The v1 knowledge-layer surface that mirrors `docs/adr/NNNN-*.md` as a
   queryable index. Storage contract for the Documentation Agent's ADR
-  generator (FORA-121, sub-goal 7.1.5). Same shape as
+  generator (Forge AI-121, sub-goal 7.1.5). Same shape as
   `agents/documentation/schemas.py:AdrRegistryEntry`.
 ---
 
-# ADR Registry — FORA Project
+# ADR Registry — Forge AI Project
 
-This file is the **ADR registry** (storage contract for [FORA-117](/FORA/issues/FORA-117), sub-goal 7.1.6). The ADR generator refreshes one row per ADR on every run; the Memory Agent reads this file for `adr.list(...)` queries; the Audit Agent audits writes. The authoritative ADR text lives at `docs/adr/NNNN-*.md`; this file is a typed index, not a copy of the content.
+This file is the **ADR registry** (storage contract for [Forge AI-117](/Forge AI/issues/Forge AI-117), sub-goal 7.1.6). The ADR generator refreshes one row per ADR on every run; the Memory Agent reads this file for `adr.list(...)` queries; the Audit Agent audits writes. The authoritative ADR text lives at `docs/adr/NNNN-*.md`; this file is a typed index, not a copy of the content.
 
 The shape and conventions follow [memory/architecture.md §5](../memory/architecture.md#5-adrs-architecture-decision-records). The Doc Agent never edits an accepted ADR; if the decision changes, a new ADR supersedes it.
 
@@ -95,7 +95,7 @@ The CTO is the only agent that may flip `proposed` → `accepted`. The Doc Agent
     },
     {
       "number": 4,
-      "title": "Test generator handoff (FORA-160)",
+      "title": "Test generator handoff (Forge AI-160)",
       "path": "docs/adr/0004-test-generator-handoff.md",
       "status": "proposed",
       "date": "2026-06-17",
