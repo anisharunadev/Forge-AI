@@ -37,6 +37,20 @@ src/
 - **Tests** — `__tests__/typed-artifacts-connector.test.tsx` (10 tests, all green): the three `McpConnectorRenderer` variants + the three `ConnectorStatusPill` tones + a no-raw-credential regression test that fails if any forbidden raw-credential substring (`secret_value`, `apiKey`, `token=`, `password=`, `bearer `) ever appears in the rendered HTML or ARIA label.
 - New dependencies: `@tanstack/react-table ^8.20.5`, `recharts ^2.13.0`.
 
+## v0.4.0 changelog (FORA-393-8 — Governance Center foundation)
+
+- **Governance Center types** (`@fora/forge-ui/typed-artifacts/types.ts`): `Policy`, `RbacRole`, `BoardConfirmation`, `RbacToken` (discriminated union: `board` | `agent` | `user`), and the pure `evaluateBoardAccess(token, request)` gate that mirrors the server-side Board-token check byte-for-byte.
+- **`ApprovalRequestRenderer` Accept/Decline** — Plan 4 §3.10 wired through the Board-token gate. An `agent` token surfaces "Board access required" via both the button's `title` and a visually-hidden live region so screen readers hear the reason. `ask_user_questions` + `suggest_tasks` are NOT Board-gated (any signed-in token may act).
+- **`PolicyList`** — Plan 1 §3.11 surface. `active` → `--brand-primary`, `archived` → neutral grey per Plan 3 §7.2. `TypedTable`-backed; supports the existing empty state.
+- **`RbacRoleViewer`** — read-only in v1.0 per Plan 1 §5.1. Surfaces a "Read-only view — the role editor ships in v1.1" note; never exposes edit affordances. System roles get a `system` Badge for accessibility.
+- **`BoardConfirmationHistory`** — per-tenant Board Confirmation log. `accepted` → `--brand-success`, `declined` → `--brand-danger`, `pending` → neutral per Plan 3 §7.2.
+- **`GovernanceCenter`** — Plan 1 §3.11 center composition. Composes the four typed-artifact surfaces above; memoized headline-approval selection; "N more pending" disclosure for the inline-banner overflow; empty-state when the Board is caught up.
+- **Tests** — `__tests__/typed-artifacts-governance.test.tsx` (28 tests, all green): `evaluateBoardAccess` (6 cases — no token, non-pending, Board, agent, user, non-Board-gated kinds), `ApprovalRequestRenderer` Accept/Decline UX + state-tone brand mapping (pending → brand-primary, accepted → brand-success, declined → brand-danger), `PolicyList` (active/archived tone), `RbacRoleViewer` (system badge + read-only note), `BoardConfirmationHistory` (outcome tone), and `GovernanceCenter` composition (section headers, empty state, Board-token gate, additional-pending disclosure).
+- Reconciles with `workspace/plan/fora-393/01-core-ui-module-map.md` §3.11, `03-design-system-spec.md` §7.2, `04-component-library-plan.md` §3.10, and the FORA-399 Governance Center plan.
+- Companion changes in `apps/forge`:
+  - `apps/forge/lib/governance/mock-data.ts` — typed seam (matches the connector-center pattern in `lib/connectors/mock-data.ts`).
+  - `apps/forge/app/governance-center/page.tsx` — read-only v1.0 GA center page. Persona-aware; surfaces a "Board token present" vs "Board access required" callout so the operator understands why Accept is enabled or disabled.
+
 ## Usage
 
 ```tsx
