@@ -1,0 +1,112 @@
+{
+  "spec": "FORA-121",
+  "sub_goal": "7.1.5 ADR generator",
+  "ran_at": "2026-06-19T21:18:47.471165+00:00",
+  "input_sha": "sample-2026-06-20",
+  "status": "ok",
+  "run_id": "adr-8f9863a9",
+  "artifacts": [
+    {
+      "path": "docs/adr/0001-use-postgres-for-the-run-db.md",
+      "kind": "adr",
+      "content_sha": "803f781182215c32e1d044e8413254b70f01a2b8aef9325f310fc4645dcc2073",
+      "freshness_timestamp": "2026-06-19T21:18:46.961337+00:00",
+      "source_sha": "sample-2026-06-20",
+      "approval_required": true,
+      "body_length_bytes": 1070
+    },
+    {
+      "path": "docs/adr/0002-use-redis-for-the-cache-layer.md",
+      "kind": "adr",
+      "content_sha": "c78d9ea09f6524947f52264a0152903571adc2a6fbafcac7b22c3992e7af98f8",
+      "freshness_timestamp": "2026-06-19T21:18:46.961337+00:00",
+      "source_sha": "sample-2026-06-20",
+      "approval_required": true,
+      "body_length_bytes": 963
+    },
+    {
+      "path": "docs/adr/README.md",
+      "kind": "adr",
+      "content_sha": "c74a7b64ee8232a8de91b3e6b760645bb087e6a05513c8695f7154ac03631287",
+      "freshness_timestamp": "2026-06-19T21:18:46.961337+00:00",
+      "source_sha": "sample-2026-06-20",
+      "approval_required": false,
+      "body_length_bytes": 869
+    }
+  ],
+  "doc_index_version": "1.0",
+  "doc_index_entries": [
+    {
+      "path": "docs/adr/README.md",
+      "kind": "adr",
+      "title": "ADR Index",
+      "source_commit": "sample-2026-06-20",
+      "approval_required": false,
+      "last_generated_at": "2026-06-19T21:18:46.961337+00:00",
+      "content_sha": "c74a7b64ee8232a8de91b3e6b760645bb087e6a05513c8695f7154ac03631287",
+      "architecture_area": "knowledge-layer"
+    },
+    {
+      "path": "docs/adr/0001-use-postgres-for-the-run-db.md",
+      "kind": "adr",
+      "title": "Use Postgres for the run DB",
+      "source_commit": "sample-2026-06-20",
+      "approval_required": true,
+      "last_generated_at": "2026-06-19T21:18:46.961337+00:00",
+      "content_sha": "803f781182215c32e1d044e8413254b70f01a2b8aef9325f310fc4645dcc2073",
+      "architecture_area": "general"
+    },
+    {
+      "path": "docs/adr/0002-use-redis-for-the-cache-layer.md",
+      "kind": "adr",
+      "title": "Use Redis for the cache layer",
+      "source_commit": "sample-2026-06-20",
+      "approval_required": true,
+      "last_generated_at": "2026-06-19T21:18:46.961337+00:00",
+      "content_sha": "c78d9ea09f6524947f52264a0152903571adc2a6fbafcac7b22c3992e7af98f8",
+      "architecture_area": "general"
+    }
+  ],
+  "adr_registry_version": "1.0",
+  "adr_registry_entries": [
+    {
+      "number": 1,
+      "title": "Use Postgres for the run DB",
+      "path": "docs/adr/0001-use-postgres-for-the-run-db.md",
+      "status": "proposed",
+      "date": "2026-06-19",
+      "architecture_area": "general",
+      "source_commit": "sample-2026-06-20"
+    },
+    {
+      "number": 2,
+      "title": "Use Redis for the cache layer",
+      "path": "docs/adr/0002-use-redis-for-the-cache-layer.md",
+      "status": "proposed",
+      "date": "2026-06-19",
+      "architecture_area": "general",
+      "source_commit": "sample-2026-06-20"
+    }
+  ],
+  "freshness_warnings": [],
+  "cost_record": {
+    "prompt_hash": "8f9863a9df48d60a1354f6da2d32fe486c86d348",
+    "model": "claude-sonnet-4-6",
+    "tokens_in": 0,
+    "tokens_out": 0,
+    "usd": 0.0,
+    "duration_ms": 0,
+    "fallback_used": false
+  },
+  "freshness_metadata": {
+    "docs_index_sha": "didx-cccc",
+    "generated_at": "2026-06-19T21:18:46.961337+00:00",
+    "oldest_artifact_source_sha": "0000001",
+    "newest_artifact_source_sha": "abc1234"
+  },
+  "errors": [],
+  "approval_routing_decision": {
+    "rule": "New ADRs are non-routine per prompt.md \u00a7Hard constraints #3 \u2014 the human (CTO) signs off on the new ADR. The ADR index (`docs/adr/README.md`) is a derived view and is auto-merge.",
+    "reasoning": "Run produced 2 new ADR(s) and 1 index refresh. All new ADRs are approval_required=True; index is approval_required=False. Numbering is monotonic: numbers used = [1, 2]."
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "issue": "FORA-256",
+  "run_at": "2026-06-17T21:20:14.766Z",
+  "package": "@fora/sync-plane-ratelimit",
+  "ac": {
+    "AC #1a per-tenant bucket": {
+      "ok": true
+    },
+    "AC #1b per-(tenant,platform) bucket": {
+      "ok": true
+    },
+    "AC #1c tenant isolation": {
+      "ok": true
+    },
+    "AC #2 circuit breaker trips + half-open": {
+      "ok": true
+    },
+    "AC #2 audit sync.platform.degraded": {
+      "ok": true
+    },
+    "AC #3 coalescer N→1 + audit": {
+      "ok": false,
+      "error": "expected 5 sync.outbound.coalesced audit events, got 4"
+    },
+    "AC #4 3x load test (scaled 30s)": null,
+    "AC #5 sync.platform.degraded event": {
+      "ok": true
+    },
+    "AC #6 X-RateLimit-Remaining < 10% pause": null
+  },
+  "ok": false,
+  "notes": [],
+  "error": "AC #3 coalescer N→1 + audit: expected 5 sync.outbound.coalesced audit events, got 4"
+}

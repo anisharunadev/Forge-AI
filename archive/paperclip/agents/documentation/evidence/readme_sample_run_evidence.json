@@ -1,0 +1,52 @@
+{
+  "spec": "FORA-120",
+  "sub_goal": "7.1.2 README generator",
+  "ran_at": "2026-06-17T17:06:38.978349+00:00",
+  "input_sha": "forareal-final",
+  "status": "ok",
+  "run_id": "readme-67e539ac",
+  "artifacts": [
+    {
+      "path": "README.md",
+      "kind": "readme",
+      "content_sha": "1342571d631a488bfb44018bfc3a3bef440cb2695de8345ad37f1d3a90450848",
+      "freshness_timestamp": "2026-06-17T17:06:38.977536+00:00",
+      "source_sha": "forareal-final",
+      "approval_required": true,
+      "body_length_bytes": 5243
+    }
+  ],
+  "doc_index_version": "1.0",
+  "doc_index_entries": [
+    {
+      "path": "README.md",
+      "kind": "readme",
+      "title": "FORA",
+      "source_commit": "forareal-final",
+      "approval_required": true,
+      "last_generated_at": "2026-06-17T17:06:38.977536+00:00"
+    }
+  ],
+  "adr_registry_version": "1.0",
+  "adr_registry_entries_count": 0,
+  "freshness_warnings": [],
+  "cost_record": {
+    "prompt_hash": "67e539acc641b6677060a9d1326f9cba01382538",
+    "model": "claude-sonnet-4-6",
+    "tokens_in": 0,
+    "tokens_out": 0,
+    "usd": 0.0,
+    "duration_ms": 0,
+    "fallback_used": false
+  },
+  "freshness_metadata": {
+    "docs_index_sha": "v1-initial-seed",
+    "generated_at": "2026-06-17T17:06:38.977536+00:00",
+    "oldest_artifact_source_sha": "0000001",
+    "newest_artifact_source_sha": "forareal-final"
+  },
+  "approval_routing_decision": {
+    "rule": "README rewrite (first generation) -> approval_required=True",
+    "reasoning": "No README.md existed prior to this run; the spec treats README rewrites as non-trivial and requires human approval. Routine re-runs that produce byte-identical content are approval_required=False (no-op)."
+  }
+}

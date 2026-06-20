@@ -1,4 +1,0 @@
-{"kind":"stage.entered","runId":"run_jejplmth_mqhy6al6","stage":"plan","at":"1970-01-01T00:00:00.020Z"}
-{"kind":"plan.emitted","runId":"run_jejplmth_mqhy6al6","planId":"plan","stepCount":0,"at":"1970-01-01T00:00:00.025Z"}
-{"kind":"error","runId":"run_jejplmth_mqhy6al6","error":{"code":"BudgetExceeded","message":"budget exceeded at stage \"act\": spent {\"tokens\":0,\"usd\":0,\"wallClockMs\":25} of {\"wallClockCeilingMs\":7}","runId":"run_jejplmth_mqhy6al6","stage":"act","ceiling":{"wallClockCeilingMs":7},"spent":{"tokens":0,"usd":0,"wallClockMs":25}},"at":"1970-01-01T00:00:00.040Z"}
-{"kind":"finished","runId":"run_jejplmth_mqhy6al6","status":"budget_exceeded","at":"1970-01-01T00:00:00.045Z"}

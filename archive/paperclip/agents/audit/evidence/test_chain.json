@@ -1,0 +1,23 @@
+{
+  "scenarios": {
+    "AC clean chain verifies end-to-end": {
+      "events": 5,
+      "ok": true
+    },
+    "AC first event prev_hash is GENESIS, links are valid": {
+      "genesis_used": true
+    },
+    "AC tampered content -> self_hash_mismatch break": {
+      "breaks": 2,
+      "ok": false
+    },
+    "AC broken chain link -> prev_hash_mismatch break": {
+      "breaks": 2,
+      "ok": false
+    },
+    "AC admin override continues the chain (redact + admin_override events)": {
+      "afterOverride": 5,
+      "ok": true
+    }
+  }
+}

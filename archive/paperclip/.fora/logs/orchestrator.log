@@ -1,0 +1,786 @@
+
+> @fora/orchestrator@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/orchestrator
+> node --watch bin/fora-orchestrator.mjs
+
+{"level":"info","msg":"migrations applied","applied":[],"verified":5}
+{"level":40,"time":1781987198984,"pid":3047701,"hostname":"arunachalam-v-C23276","jwt_required":false,"fallback_header":"x-fora-tenant-id","msg":"FORA_REQUIRE_JWT=false — JWT verification disabled, honouring legacy x-fora-tenant-id header (LOCAL DEV ONLY)"}
+{"level":"info","msg":"orchestrator listening","port":4000,"host":"0.0.0.0"}
+{"level":30,"time":1781987199012,"pid":3047701,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4000"}
+{"level":30,"time":1781987199012,"pid":3047701,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4000"}
+{"level":30,"time":1781987199012,"pid":3047701,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4000"}
+{"level":30,"time":1781987199012,"pid":3047701,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4000"}
+{"level":30,"time":1781987205907,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":48056},"msg":"incoming request"}
+{"level":30,"time":1781987205922,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":13.693746984004974,"msg":"request completed"}
+{"level":30,"time":1781987216620,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-2","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39294},"msg":"incoming request"}
+{"level":30,"time":1781987216658,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-2","res":{"statusCode":200},"responseTime":37.90932697057724,"msg":"request completed"}
+{"level":30,"time":1781987218038,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-3","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39294},"msg":"incoming request"}
+{"level":30,"time":1781987218042,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-3","res":{"statusCode":200},"responseTime":4.224645972251892,"msg":"request completed"}
+{"level":30,"time":1781987219206,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-4","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39294},"msg":"incoming request"}
+{"level":30,"time":1781987219210,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-4","res":{"statusCode":200},"responseTime":3.730292022228241,"msg":"request completed"}
+{"level":30,"time":1781987220057,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-5","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39294},"msg":"incoming request"}
+{"level":30,"time":1781987220061,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-5","res":{"statusCode":200},"responseTime":3.577943980693817,"msg":"request completed"}
+{"level":30,"time":1781987220075,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-6","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39308},"msg":"incoming request"}
+{"level":30,"time":1781987220080,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-6","res":{"statusCode":200},"responseTime":4.786869943141937,"msg":"request completed"}
+{"level":30,"time":1781987221567,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-7","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53164},"msg":"incoming request"}
+{"level":30,"time":1781987221571,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-7","res":{"statusCode":200},"responseTime":3.7536189556121826,"msg":"request completed"}
+{"level":30,"time":1781987221600,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-8","req":{"method":"GET","url":"/v1/runs","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53174},"msg":"incoming request"}
+{"level":30,"time":1781987221607,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-8","res":{"statusCode":200},"responseTime":6.283657014369965,"msg":"request completed"}
+{"level":30,"time":1781987223127,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-9","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39294},"msg":"incoming request"}
+{"level":30,"time":1781987223129,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-a","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39308},"msg":"incoming request"}
+{"level":30,"time":1781987223132,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-9","res":{"statusCode":200},"responseTime":5.40066796541214,"msg":"request completed"}
+{"level":30,"time":1781987223150,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-a","res":{"statusCode":200},"responseTime":21.711369037628174,"msg":"request completed"}
+{"level":30,"time":1781987223346,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-b","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39294},"msg":"incoming request"}
+{"level":30,"time":1781987223347,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-c","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39308},"msg":"incoming request"}
+{"level":30,"time":1781987223350,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-b","res":{"statusCode":200},"responseTime":3.533324956893921,"msg":"request completed"}
+{"level":30,"time":1781987223351,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-c","res":{"statusCode":200},"responseTime":3.5080270171165466,"msg":"request completed"}
+{"level":30,"time":1781987223439,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-d","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39294},"msg":"incoming request"}
+{"level":30,"time":1781987223440,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-e","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39308},"msg":"incoming request"}
+{"level":30,"time":1781987223442,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-d","res":{"statusCode":200},"responseTime":2.4819300174713135,"msg":"request completed"}
+{"level":30,"time":1781987223443,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-e","res":{"statusCode":200},"responseTime":2.9258000254631042,"msg":"request completed"}
+{"level":30,"time":1781987223525,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-f","req":{"method":"GET","url":"/v1/runs/unknown-run","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39294},"msg":"incoming request"}
+{"level":30,"time":1781987223527,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-f","res":{"statusCode":400},"responseTime":1.373127043247223,"msg":"request completed"}
+{"level":30,"time":1781987223527,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-g","req":{"method":"GET","url":"/v1/runs/unknown-run/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39308},"msg":"incoming request"}
+{"level":30,"time":1781987223528,"pid":3047701,"hostname":"arunachalam-v-C23276","reqId":"req-g","res":{"statusCode":400},"responseTime":0.453357994556427,"msg":"request completed"}
+
+> @fora/orchestrator@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/orchestrator
+> node --watch bin/fora-orchestrator.mjs
+
+{"level":"info","msg":"migrations applied","applied":[],"verified":5}
+{"level":40,"time":1781987557620,"pid":3061560,"hostname":"arunachalam-v-C23276","jwt_required":false,"fallback_header":"x-fora-tenant-id","msg":"FORA_REQUIRE_JWT=false — JWT verification disabled, honouring legacy x-fora-tenant-id header (LOCAL DEV ONLY)"}
+{"level":"info","msg":"orchestrator listening","port":4000,"host":"0.0.0.0"}
+{"level":30,"time":1781987557650,"pid":3061560,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4000"}
+{"level":30,"time":1781987557650,"pid":3061560,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4000"}
+{"level":30,"time":1781987557651,"pid":3061560,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4000"}
+{"level":30,"time":1781987557651,"pid":3061560,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4000"}
+{"level":30,"time":1781987559923,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56288},"msg":"incoming request"}
+{"level":30,"time":1781987559930,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":6.363097012042999,"msg":"request completed"}
+{"level":30,"time":1781987560540,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-2","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56290},"msg":"incoming request"}
+{"level":30,"time":1781987560550,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-2","res":{"statusCode":200},"responseTime":9.386902987957,"msg":"request completed"}
+{"level":30,"time":1781987561666,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-3","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56290},"msg":"incoming request"}
+{"level":30,"time":1781987561669,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-3","res":{"statusCode":200},"responseTime":3.1802679896354675,"msg":"request completed"}
+{"level":30,"time":1781987562888,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-4","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56290},"msg":"incoming request"}
+{"level":30,"time":1781987562892,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-4","res":{"statusCode":200},"responseTime":4.191937983036041,"msg":"request completed"}
+{"level":30,"time":1781987564051,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-5","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56290},"msg":"incoming request"}
+{"level":30,"time":1781987564054,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-5","res":{"statusCode":200},"responseTime":2.860596001148224,"msg":"request completed"}
+{"level":30,"time":1781987564086,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-6","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":57480},"msg":"incoming request"}
+{"level":30,"time":1781987564092,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-6","res":{"statusCode":200},"responseTime":5.538075029850006,"msg":"request completed"}
+{"level":30,"time":1781987565694,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-7","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":57486},"msg":"incoming request"}
+{"level":30,"time":1781987565712,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-7","res":{"statusCode":200},"responseTime":16.939926981925964,"msg":"request completed"}
+{"level":30,"time":1781987565761,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-8","req":{"method":"GET","url":"/v1/runs","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":57498},"msg":"incoming request"}
+{"level":30,"time":1781987565768,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-8","res":{"statusCode":200},"responseTime":6.608449995517731,"msg":"request completed"}
+{"level":30,"time":1781987566862,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-9","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56290},"msg":"incoming request"}
+{"level":30,"time":1781987566865,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-a","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":57480},"msg":"incoming request"}
+{"level":30,"time":1781987566870,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-9","res":{"statusCode":200},"responseTime":7.191525995731354,"msg":"request completed"}
+{"level":30,"time":1781987566889,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-a","res":{"statusCode":200},"responseTime":24.32405596971512,"msg":"request completed"}
+{"level":30,"time":1781987566983,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-b","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56290},"msg":"incoming request"}
+{"level":30,"time":1781987566984,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-c","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":57480},"msg":"incoming request"}
+{"level":30,"time":1781987566987,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-b","res":{"statusCode":200},"responseTime":3.3168609738349915,"msg":"request completed"}
+{"level":30,"time":1781987566988,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-c","res":{"statusCode":200},"responseTime":3.6891210079193115,"msg":"request completed"}
+{"level":30,"time":1781987567089,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-d","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56290},"msg":"incoming request"}
+{"level":30,"time":1781987567090,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-e","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":57480},"msg":"incoming request"}
+{"level":30,"time":1781987567093,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-d","res":{"statusCode":200},"responseTime":4.447268009185791,"msg":"request completed"}
+{"level":30,"time":1781987567095,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-e","res":{"statusCode":200},"responseTime":4.641951024532318,"msg":"request completed"}
+{"level":30,"time":1781987567162,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-f","req":{"method":"GET","url":"/v1/runs/unknown-run","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56290},"msg":"incoming request"}
+{"level":30,"time":1781987567163,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-f","res":{"statusCode":400},"responseTime":1.710666000843048,"msg":"request completed"}
+{"level":30,"time":1781987567164,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-g","req":{"method":"GET","url":"/v1/runs/unknown-run/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":57480},"msg":"incoming request"}
+{"level":30,"time":1781987567168,"pid":3061560,"hostname":"arunachalam-v-C23276","reqId":"req-g","res":{"statusCode":400},"responseTime":0.7762340307235718,"msg":"request completed"}
+
+> @fora/orchestrator@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/orchestrator
+> node --watch bin/fora-orchestrator.mjs
+
+{"level":"info","msg":"migrations applied","applied":[],"verified":5}
+{"level":40,"time":1781987775955,"pid":3070746,"hostname":"arunachalam-v-C23276","jwt_required":false,"fallback_header":"x-fora-tenant-id","msg":"FORA_REQUIRE_JWT=false — JWT verification disabled, honouring legacy x-fora-tenant-id header (LOCAL DEV ONLY)"}
+{"level":"info","msg":"orchestrator listening","port":4000,"host":"0.0.0.0"}
+{"level":30,"time":1781987775981,"pid":3070746,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4000"}
+{"level":30,"time":1781987775981,"pid":3070746,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4000"}
+{"level":30,"time":1781987775981,"pid":3070746,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4000"}
+{"level":30,"time":1781987775981,"pid":3070746,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4000"}
+{"level":30,"time":1781987841036,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39192},"msg":"incoming request"}
+{"level":30,"time":1781987841050,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":12.273603975772858,"msg":"request completed"}
+{"level":30,"time":1781987841736,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-2","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39194},"msg":"incoming request"}
+{"level":30,"time":1781987841774,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-2","res":{"statusCode":200},"responseTime":38.04645097255707,"msg":"request completed"}
+{"level":30,"time":1781987842922,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-3","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39194},"msg":"incoming request"}
+{"level":30,"time":1781987842937,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-3","res":{"statusCode":200},"responseTime":14.572068989276886,"msg":"request completed"}
+{"level":30,"time":1781987843914,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-4","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39194},"msg":"incoming request"}
+{"level":30,"time":1781987843917,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-4","res":{"statusCode":200},"responseTime":3.185061991214752,"msg":"request completed"}
+{"level":30,"time":1781987844817,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-5","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39194},"msg":"incoming request"}
+{"level":30,"time":1781987844820,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-5","res":{"statusCode":200},"responseTime":3.1648290157318115,"msg":"request completed"}
+{"level":30,"time":1781987844842,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-6","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39210},"msg":"incoming request"}
+{"level":30,"time":1781987844849,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-6","res":{"statusCode":200},"responseTime":6.66779899597168,"msg":"request completed"}
+{"level":30,"time":1781987846412,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-7","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39226},"msg":"incoming request"}
+{"level":30,"time":1781987846416,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-7","res":{"statusCode":200},"responseTime":3.117955982685089,"msg":"request completed"}
+{"level":30,"time":1781987846447,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-8","req":{"method":"GET","url":"/v1/runs","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39240},"msg":"incoming request"}
+{"level":30,"time":1781987846453,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-8","res":{"statusCode":200},"responseTime":5.302190005779266,"msg":"request completed"}
+{"level":30,"time":1781987847486,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-9","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39194},"msg":"incoming request"}
+{"level":30,"time":1781987847497,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-a","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39210},"msg":"incoming request"}
+{"level":30,"time":1781987847506,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-9","res":{"statusCode":200},"responseTime":19.829159021377563,"msg":"request completed"}
+{"level":30,"time":1781987847553,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-a","res":{"statusCode":200},"responseTime":55.65208500623703,"msg":"request completed"}
+{"level":30,"time":1781987847676,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-b","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39194},"msg":"incoming request"}
+{"level":30,"time":1781987847678,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-c","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39210},"msg":"incoming request"}
+{"level":30,"time":1781987847681,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-b","res":{"statusCode":200},"responseTime":4.786565959453583,"msg":"request completed"}
+{"level":30,"time":1781987847683,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-c","res":{"statusCode":200},"responseTime":4.350708961486816,"msg":"request completed"}
+{"level":30,"time":1781987847767,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-d","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39194},"msg":"incoming request"}
+{"level":30,"time":1781987847768,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-e","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39210},"msg":"incoming request"}
+{"level":30,"time":1781987847769,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-d","res":{"statusCode":200},"responseTime":2.0031530261039734,"msg":"request completed"}
+{"level":30,"time":1781987847770,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-e","res":{"statusCode":200},"responseTime":2.2833980321884155,"msg":"request completed"}
+{"level":30,"time":1781987847837,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-f","req":{"method":"GET","url":"/v1/runs/unknown-run","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39194},"msg":"incoming request"}
+{"level":30,"time":1781987847837,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-f","res":{"statusCode":400},"responseTime":0.7834179997444153,"msg":"request completed"}
+{"level":30,"time":1781987847838,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-g","req":{"method":"GET","url":"/v1/runs/unknown-run/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":39210},"msg":"incoming request"}
+{"level":30,"time":1781987847838,"pid":3070746,"hostname":"arunachalam-v-C23276","reqId":"req-g","res":{"statusCode":400},"responseTime":0.2604849934577942,"msg":"request completed"}
+
+> @fora/orchestrator@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/orchestrator
+> node --watch bin/fora-orchestrator.mjs
+
+{"level":"info","msg":"migrations applied","applied":[],"verified":5}
+{"level":40,"time":1781988066309,"pid":3083352,"hostname":"arunachalam-v-C23276","jwt_required":false,"fallback_header":"x-fora-tenant-id","msg":"FORA_REQUIRE_JWT=false — JWT verification disabled, honouring legacy x-fora-tenant-id header (LOCAL DEV ONLY)"}
+node:net:1941
+    const ex = new UVExceptionWithHostPort(err, 'listen', address, port);
+               ^
+
+Error: listen EADDRINUSE: address already in use 0.0.0.0:4000
+    at Server.setupListenHandle [as _listen2] (node:net:1941:16)
+    at listenInCluster (node:net:1998:12)
+    at node:net:2207:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 4000
+}
+
+Node.js v22.23.0
+Failed running 'bin/fora-orchestrator.mjs'. Waiting for file changes before restarting...
+
+> @fora/orchestrator@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/orchestrator
+> node --watch bin/fora-orchestrator.mjs
+
+{"level":"info","msg":"migrations applied","applied":[],"verified":5}
+{"level":40,"time":1781988212274,"pid":3090499,"hostname":"arunachalam-v-C23276","jwt_required":false,"fallback_header":"x-fora-tenant-id","msg":"FORA_REQUIRE_JWT=false — JWT verification disabled, honouring legacy x-fora-tenant-id header (LOCAL DEV ONLY)"}
+{"level":"info","msg":"orchestrator listening","port":4000,"host":"0.0.0.0"}
+{"level":30,"time":1781988212305,"pid":3090499,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4000"}
+{"level":30,"time":1781988212305,"pid":3090499,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4000"}
+{"level":30,"time":1781988212305,"pid":3090499,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4000"}
+{"level":30,"time":1781988212305,"pid":3090499,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4000"}
+{"level":30,"time":1781988222693,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53086},"msg":"incoming request"}
+{"level":30,"time":1781988222702,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":7.339433968067169,"msg":"request completed"}
+{"level":30,"time":1781988229145,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-2","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53094},"msg":"incoming request"}
+{"level":30,"time":1781988229174,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-2","res":{"statusCode":200},"responseTime":27.817973017692566,"msg":"request completed"}
+{"level":30,"time":1781988230847,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-3","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53094},"msg":"incoming request"}
+{"level":30,"time":1781988230851,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-3","res":{"statusCode":200},"responseTime":3.979481041431427,"msg":"request completed"}
+{"level":30,"time":1781988231917,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-4","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53094},"msg":"incoming request"}
+{"level":30,"time":1781988231922,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-4","res":{"statusCode":200},"responseTime":4.494266986846924,"msg":"request completed"}
+{"level":30,"time":1781988232843,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-5","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53094},"msg":"incoming request"}
+{"level":30,"time":1781988232848,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-5","res":{"statusCode":200},"responseTime":4.139831006526947,"msg":"request completed"}
+{"level":30,"time":1781988232872,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-6","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":40700},"msg":"incoming request"}
+{"level":30,"time":1781988232880,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-6","res":{"statusCode":200},"responseTime":7.747542023658752,"msg":"request completed"}
+{"level":30,"time":1781988234599,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-7","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":40706},"msg":"incoming request"}
+{"level":30,"time":1781988234607,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-7","res":{"statusCode":200},"responseTime":7.162432014942169,"msg":"request completed"}
+{"level":30,"time":1781988234663,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-8","req":{"method":"GET","url":"/v1/runs","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":40710},"msg":"incoming request"}
+{"level":30,"time":1781988234669,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-8","res":{"statusCode":200},"responseTime":5.435045003890991,"msg":"request completed"}
+{"level":30,"time":1781988237154,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-9","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53094},"msg":"incoming request"}
+{"level":30,"time":1781988237157,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-a","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":40700},"msg":"incoming request"}
+{"level":30,"time":1781988237165,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-9","res":{"statusCode":200},"responseTime":10.455802023410797,"msg":"request completed"}
+{"level":30,"time":1781988237190,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-a","res":{"statusCode":200},"responseTime":32.83068299293518,"msg":"request completed"}
+{"level":30,"time":1781988237376,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-b","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53094},"msg":"incoming request"}
+{"level":30,"time":1781988237377,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-c","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":40700},"msg":"incoming request"}
+{"level":30,"time":1781988237380,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-b","res":{"statusCode":200},"responseTime":3.7185980081558228,"msg":"request completed"}
+{"level":30,"time":1781988237381,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-c","res":{"statusCode":200},"responseTime":3.313246011734009,"msg":"request completed"}
+{"level":30,"time":1781988237495,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-d","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53094},"msg":"incoming request"}
+{"level":30,"time":1781988237498,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-e","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":40700},"msg":"incoming request"}
+{"level":30,"time":1781988237502,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-d","res":{"statusCode":200},"responseTime":6.199276983737946,"msg":"request completed"}
+{"level":30,"time":1781988237503,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-e","res":{"statusCode":200},"responseTime":4.789376974105835,"msg":"request completed"}
+{"level":30,"time":1781988237632,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-f","req":{"method":"GET","url":"/v1/runs/unknown-run","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53094},"msg":"incoming request"}
+{"level":30,"time":1781988237634,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-f","res":{"statusCode":400},"responseTime":1.227620005607605,"msg":"request completed"}
+{"level":30,"time":1781988237634,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-g","req":{"method":"GET","url":"/v1/runs/unknown-run/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":40700},"msg":"incoming request"}
+{"level":30,"time":1781988237635,"pid":3090499,"hostname":"arunachalam-v-C23276","reqId":"req-g","res":{"statusCode":400},"responseTime":0.5488079786300659,"msg":"request completed"}
+
+> @fora/orchestrator@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/orchestrator
+> node --watch bin/fora-orchestrator.mjs
+
+{"level":"info","msg":"migrations applied","applied":[],"verified":5}
+{"level":40,"time":1781988401688,"pid":3102578,"hostname":"arunachalam-v-C23276","jwt_required":false,"fallback_header":"x-fora-tenant-id","msg":"FORA_REQUIRE_JWT=false — JWT verification disabled, honouring legacy x-fora-tenant-id header (LOCAL DEV ONLY)"}
+{"level":"info","msg":"orchestrator listening","port":4000,"host":"0.0.0.0"}
+{"level":30,"time":1781988401707,"pid":3102578,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4000"}
+{"level":30,"time":1781988401708,"pid":3102578,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4000"}
+{"level":30,"time":1781988401708,"pid":3102578,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4000"}
+{"level":30,"time":1781988401708,"pid":3102578,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4000"}
+{"level":30,"time":1781988413716,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":57032},"msg":"incoming request"}
+{"level":30,"time":1781988413724,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":7.053471028804779,"msg":"request completed"}
+{"level":30,"time":1781988421231,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-2","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":51862},"msg":"incoming request"}
+{"level":30,"time":1781988421255,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-2","res":{"statusCode":200},"responseTime":24.394022047519684,"msg":"request completed"}
+{"level":30,"time":1781988422492,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-3","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":51862},"msg":"incoming request"}
+{"level":30,"time":1781988422495,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-3","res":{"statusCode":200},"responseTime":3.1161540150642395,"msg":"request completed"}
+{"level":30,"time":1781988423438,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-4","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":51862},"msg":"incoming request"}
+{"level":30,"time":1781988423441,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-4","res":{"statusCode":200},"responseTime":3.072631001472473,"msg":"request completed"}
+{"level":30,"time":1781988424048,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-5","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":51862},"msg":"incoming request"}
+{"level":30,"time":1781988424051,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-5","res":{"statusCode":200},"responseTime":2.6854569911956787,"msg":"request completed"}
+{"level":30,"time":1781988424064,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-6","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":51864},"msg":"incoming request"}
+{"level":30,"time":1781988424070,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-6","res":{"statusCode":200},"responseTime":6.023581027984619,"msg":"request completed"}
+{"level":30,"time":1781988425449,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-7","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":51874},"msg":"incoming request"}
+{"level":30,"time":1781988425455,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-7","res":{"statusCode":200},"responseTime":6.470242977142334,"msg":"request completed"}
+{"level":30,"time":1781988425488,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-8","req":{"method":"GET","url":"/v1/runs","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":51882},"msg":"incoming request"}
+{"level":30,"time":1781988425495,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-8","res":{"statusCode":200},"responseTime":6.388872027397156,"msg":"request completed"}
+{"level":30,"time":1781988427207,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-9","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":51862},"msg":"incoming request"}
+{"level":30,"time":1781988427209,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-a","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":51864},"msg":"incoming request"}
+{"level":30,"time":1781988427213,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-9","res":{"statusCode":200},"responseTime":5.322966992855072,"msg":"request completed"}
+{"level":30,"time":1781988427232,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-a","res":{"statusCode":200},"responseTime":22.29117900133133,"msg":"request completed"}
+{"level":30,"time":1781988427403,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-b","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":51862},"msg":"incoming request"}
+{"level":30,"time":1781988427405,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-c","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":51864},"msg":"incoming request"}
+{"level":30,"time":1781988427411,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-b","res":{"statusCode":200},"responseTime":7.541624009609222,"msg":"request completed"}
+{"level":30,"time":1781988427412,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-c","res":{"statusCode":200},"responseTime":7.509597957134247,"msg":"request completed"}
+{"level":30,"time":1781988427580,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-d","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":51862},"msg":"incoming request"}
+{"level":30,"time":1781988427583,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-e","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":51864},"msg":"incoming request"}
+{"level":30,"time":1781988427585,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-d","res":{"statusCode":200},"responseTime":4.5762819647789,"msg":"request completed"}
+{"level":30,"time":1781988427587,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-e","res":{"statusCode":200},"responseTime":2.9526230096817017,"msg":"request completed"}
+{"level":30,"time":1781988427680,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-f","req":{"method":"GET","url":"/v1/runs/unknown-run","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":51862},"msg":"incoming request"}
+{"level":30,"time":1781988427681,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-f","res":{"statusCode":400},"responseTime":1.5964179635047913,"msg":"request completed"}
+{"level":30,"time":1781988427682,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-g","req":{"method":"GET","url":"/v1/runs/unknown-run/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":51864},"msg":"incoming request"}
+{"level":30,"time":1781988427682,"pid":3102578,"hostname":"arunachalam-v-C23276","reqId":"req-g","res":{"statusCode":400},"responseTime":0.5423329472541809,"msg":"request completed"}
+
+> @fora/orchestrator@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/orchestrator
+> node --watch bin/fora-orchestrator.mjs
+
+{"level":"info","msg":"migrations applied","applied":[],"verified":5}
+{"level":40,"time":1781988929711,"pid":3120918,"hostname":"arunachalam-v-C23276","jwt_required":false,"fallback_header":"x-fora-tenant-id","msg":"FORA_REQUIRE_JWT=false — JWT verification disabled, honouring legacy x-fora-tenant-id header (LOCAL DEV ONLY)"}
+{"level":"info","msg":"orchestrator listening","port":4000,"host":"0.0.0.0"}
+{"level":30,"time":1781988929763,"pid":3120918,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4000"}
+{"level":30,"time":1781988929763,"pid":3120918,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4000"}
+{"level":30,"time":1781988929763,"pid":3120918,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4000"}
+{"level":30,"time":1781988929763,"pid":3120918,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4000"}
+{"level":30,"time":1781988946044,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":35408},"msg":"incoming request"}
+{"level":30,"time":1781988946061,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":14.400442004203796,"msg":"request completed"}
+{"level":30,"time":1781988953769,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-2","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":49992},"msg":"incoming request"}
+{"level":30,"time":1781988953806,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-2","res":{"statusCode":200},"responseTime":36.36208498477936,"msg":"request completed"}
+{"level":30,"time":1781988955446,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-3","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":49992},"msg":"incoming request"}
+{"level":30,"time":1781988955450,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-3","res":{"statusCode":200},"responseTime":3.7455700039863586,"msg":"request completed"}
+{"level":30,"time":1781988956925,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-4","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":49992},"msg":"incoming request"}
+{"level":30,"time":1781988956929,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-4","res":{"statusCode":200},"responseTime":3.3993020057678223,"msg":"request completed"}
+{"level":30,"time":1781988958215,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-5","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":49992},"msg":"incoming request"}
+{"level":30,"time":1781988958220,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-5","res":{"statusCode":200},"responseTime":4.736528992652893,"msg":"request completed"}
+{"level":30,"time":1781988958268,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-6","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":50000},"msg":"incoming request"}
+{"level":30,"time":1781988958279,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-6","res":{"statusCode":200},"responseTime":10.754878997802734,"msg":"request completed"}
+{"level":30,"time":1781988960186,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-7","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":50010},"msg":"incoming request"}
+{"level":30,"time":1781988960197,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-7","res":{"statusCode":200},"responseTime":10.462249994277954,"msg":"request completed"}
+{"level":30,"time":1781988960243,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-8","req":{"method":"GET","url":"/v1/runs","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":50016},"msg":"incoming request"}
+{"level":30,"time":1781988960250,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-8","res":{"statusCode":200},"responseTime":6.540386974811554,"msg":"request completed"}
+{"level":30,"time":1781988964717,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-9","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":49992},"msg":"incoming request"}
+{"level":30,"time":1781988964721,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-a","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":50000},"msg":"incoming request"}
+{"level":30,"time":1781988964729,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-9","res":{"statusCode":200},"responseTime":11.48938399553299,"msg":"request completed"}
+{"level":30,"time":1781988964766,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-a","res":{"statusCode":200},"responseTime":44.03084897994995,"msg":"request completed"}
+{"level":30,"time":1781988965281,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-b","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":49992},"msg":"incoming request"}
+{"level":30,"time":1781988965285,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-c","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":50000},"msg":"incoming request"}
+{"level":30,"time":1781988965342,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-b","res":{"statusCode":200},"responseTime":60.43421196937561,"msg":"request completed"}
+{"level":30,"time":1781988965344,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-c","res":{"statusCode":200},"responseTime":58.820887982845306,"msg":"request completed"}
+{"level":30,"time":1781988965618,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-d","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":49992},"msg":"incoming request"}
+{"level":30,"time":1781988965620,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-e","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":50000},"msg":"incoming request"}
+{"level":30,"time":1781988965623,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-d","res":{"statusCode":200},"responseTime":4.29945695400238,"msg":"request completed"}
+{"level":30,"time":1781988965625,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-e","res":{"statusCode":200},"responseTime":4.7602099776268005,"msg":"request completed"}
+{"level":30,"time":1781988965887,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-f","req":{"method":"GET","url":"/v1/runs/unknown-run","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":49992},"msg":"incoming request"}
+{"level":30,"time":1781988965895,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-f","res":{"statusCode":400},"responseTime":7.879430949687958,"msg":"request completed"}
+{"level":30,"time":1781988965897,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-g","req":{"method":"GET","url":"/v1/runs/unknown-run/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":50000},"msg":"incoming request"}
+{"level":30,"time":1781988965898,"pid":3120918,"hostname":"arunachalam-v-C23276","reqId":"req-g","res":{"statusCode":400},"responseTime":1.6828360557556152,"msg":"request completed"}
+
+> @fora/orchestrator@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/orchestrator
+> node --watch bin/fora-orchestrator.mjs
+
+{"level":"info","msg":"migrations applied","applied":[],"verified":5}
+{"level":40,"time":1781989340327,"pid":3136144,"hostname":"arunachalam-v-C23276","jwt_required":false,"fallback_header":"x-fora-tenant-id","msg":"FORA_REQUIRE_JWT=false — JWT verification disabled, honouring legacy x-fora-tenant-id header (LOCAL DEV ONLY)"}
+node:net:1941
+    const ex = new UVExceptionWithHostPort(err, 'listen', address, port);
+               ^
+
+Error: listen EADDRINUSE: address already in use 0.0.0.0:4000
+    at Server.setupListenHandle [as _listen2] (node:net:1941:16)
+    at listenInCluster (node:net:1998:12)
+    at node:net:2207:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 4000
+}
+
+Node.js v22.23.0
+Failed running 'bin/fora-orchestrator.mjs'. Waiting for file changes before restarting...
+
+> @fora/orchestrator@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/orchestrator
+> node --watch bin/fora-orchestrator.mjs
+
+{"level":"info","msg":"migrations applied","applied":[],"verified":5}
+{"level":40,"time":1781989615360,"pid":3144543,"hostname":"arunachalam-v-C23276","jwt_required":false,"fallback_header":"x-fora-tenant-id","msg":"FORA_REQUIRE_JWT=false — JWT verification disabled, honouring legacy x-fora-tenant-id header (LOCAL DEV ONLY)"}
+node:net:1941
+    const ex = new UVExceptionWithHostPort(err, 'listen', address, port);
+               ^
+
+Error: listen EADDRINUSE: address already in use 0.0.0.0:4000
+    at Server.setupListenHandle [as _listen2] (node:net:1941:16)
+    at listenInCluster (node:net:1998:12)
+    at node:net:2207:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 4000
+}
+
+Node.js v22.23.0
+Failed running 'bin/fora-orchestrator.mjs'. Waiting for file changes before restarting...
+
+> @fora/orchestrator@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/orchestrator
+> node --watch bin/fora-orchestrator.mjs
+
+{"level":"info","msg":"migrations applied","applied":[],"verified":5}
+{"level":40,"time":1781989844278,"pid":3152288,"hostname":"arunachalam-v-C23276","jwt_required":false,"fallback_header":"x-fora-tenant-id","msg":"FORA_REQUIRE_JWT=false — JWT verification disabled, honouring legacy x-fora-tenant-id header (LOCAL DEV ONLY)"}
+{"level":"info","msg":"orchestrator listening","port":4000,"host":"0.0.0.0"}
+{"level":30,"time":1781989844285,"pid":3152288,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4000"}
+{"level":30,"time":1781989844285,"pid":3152288,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4000"}
+{"level":30,"time":1781989844285,"pid":3152288,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4000"}
+{"level":30,"time":1781989844285,"pid":3152288,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4000"}
+{"level":30,"time":1781989851347,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38654},"msg":"incoming request"}
+{"level":30,"time":1781989851355,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":7.53847998380661,"msg":"request completed"}
+{"level":30,"time":1781989856690,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-2","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38658},"msg":"incoming request"}
+{"level":30,"time":1781989856710,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-2","res":{"statusCode":200},"responseTime":20.46415001153946,"msg":"request completed"}
+{"level":30,"time":1781989857438,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-3","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38658},"msg":"incoming request"}
+{"level":30,"time":1781989857440,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-3","res":{"statusCode":200},"responseTime":2.4452290534973145,"msg":"request completed"}
+{"level":30,"time":1781989858025,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-4","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38658},"msg":"incoming request"}
+{"level":30,"time":1781989858027,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-4","res":{"statusCode":200},"responseTime":2.1654160022735596,"msg":"request completed"}
+{"level":30,"time":1781989858676,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-5","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38658},"msg":"incoming request"}
+{"level":30,"time":1781989858678,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-5","res":{"statusCode":200},"responseTime":2.3605799674987793,"msg":"request completed"}
+{"level":30,"time":1781989858691,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-6","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38672},"msg":"incoming request"}
+{"level":30,"time":1781989858695,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-6","res":{"statusCode":200},"responseTime":3.8853789567947388,"msg":"request completed"}
+{"level":30,"time":1781989859563,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-7","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38678},"msg":"incoming request"}
+{"level":30,"time":1781989859566,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-7","res":{"statusCode":200},"responseTime":2.996661961078644,"msg":"request completed"}
+{"level":30,"time":1781989859585,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-8","req":{"method":"GET","url":"/v1/runs","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38680},"msg":"incoming request"}
+{"level":30,"time":1781989859587,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-8","res":{"statusCode":200},"responseTime":1.9684860110282898,"msg":"request completed"}
+{"level":30,"time":1781989860566,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-9","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38658},"msg":"incoming request"}
+{"level":30,"time":1781989860568,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-a","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38672},"msg":"incoming request"}
+{"level":30,"time":1781989860571,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-9","res":{"statusCode":200},"responseTime":4.7601370215415955,"msg":"request completed"}
+{"level":30,"time":1781989860587,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-a","res":{"statusCode":200},"responseTime":18.88000398874283,"msg":"request completed"}
+{"level":30,"time":1781989860702,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-b","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38658},"msg":"incoming request"}
+{"level":30,"time":1781989860703,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-c","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38672},"msg":"incoming request"}
+{"level":30,"time":1781989860705,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-b","res":{"statusCode":200},"responseTime":2.753396987915039,"msg":"request completed"}
+{"level":30,"time":1781989860706,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-c","res":{"statusCode":200},"responseTime":2.6122530102729797,"msg":"request completed"}
+{"level":30,"time":1781989860782,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-d","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38658},"msg":"incoming request"}
+{"level":30,"time":1781989860783,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-e","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38672},"msg":"incoming request"}
+{"level":30,"time":1781989860784,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-d","res":{"statusCode":200},"responseTime":1.7595959901809692,"msg":"request completed"}
+{"level":30,"time":1781989860785,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-e","res":{"statusCode":200},"responseTime":1.7968740463256836,"msg":"request completed"}
+{"level":30,"time":1781989860842,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-f","req":{"method":"GET","url":"/v1/runs/unknown-run","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38658},"msg":"incoming request"}
+{"level":30,"time":1781989860843,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-f","res":{"statusCode":400},"responseTime":0.8670950531959534,"msg":"request completed"}
+{"level":30,"time":1781989860844,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-g","req":{"method":"GET","url":"/v1/runs/unknown-run/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38672},"msg":"incoming request"}
+{"level":30,"time":1781989860844,"pid":3152288,"hostname":"arunachalam-v-C23276","reqId":"req-g","res":{"statusCode":400},"responseTime":0.3121799826622009,"msg":"request completed"}
+
+> @fora/orchestrator@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/orchestrator
+> node --watch bin/fora-orchestrator.mjs
+
+{"level":"info","msg":"migrations applied","applied":[],"verified":5}
+{"level":40,"time":1781990017479,"pid":3161174,"hostname":"arunachalam-v-C23276","jwt_required":false,"fallback_header":"x-fora-tenant-id","msg":"FORA_REQUIRE_JWT=false — JWT verification disabled, honouring legacy x-fora-tenant-id header (LOCAL DEV ONLY)"}
+{"level":"info","msg":"orchestrator listening","port":4000,"host":"0.0.0.0"}
+{"level":30,"time":1781990017487,"pid":3161174,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4000"}
+{"level":30,"time":1781990017487,"pid":3161174,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4000"}
+{"level":30,"time":1781990017487,"pid":3161174,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4000"}
+{"level":30,"time":1781990017487,"pid":3161174,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4000"}
+{"level":30,"time":1781990023096,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36696},"msg":"incoming request"}
+{"level":30,"time":1781990023100,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":3.4118680357933044,"msg":"request completed"}
+{"level":30,"time":1781990029112,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-2","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36700},"msg":"incoming request"}
+{"level":30,"time":1781990029129,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-2","res":{"statusCode":200},"responseTime":16.44197702407837,"msg":"request completed"}
+{"level":30,"time":1781990029978,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-3","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36700},"msg":"incoming request"}
+{"level":30,"time":1781990029981,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-3","res":{"statusCode":200},"responseTime":2.3513749837875366,"msg":"request completed"}
+{"level":30,"time":1781990030503,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-4","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36700},"msg":"incoming request"}
+{"level":30,"time":1781990030506,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-4","res":{"statusCode":200},"responseTime":2.244741976261139,"msg":"request completed"}
+{"level":30,"time":1781990030909,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-5","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36700},"msg":"incoming request"}
+{"level":30,"time":1781990030911,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-5","res":{"statusCode":200},"responseTime":2.2896130084991455,"msg":"request completed"}
+{"level":30,"time":1781990030922,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-6","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36708},"msg":"incoming request"}
+{"level":30,"time":1781990030928,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-6","res":{"statusCode":200},"responseTime":5.099651992321014,"msg":"request completed"}
+{"level":30,"time":1781990031793,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-7","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":37034},"msg":"incoming request"}
+{"level":30,"time":1781990031798,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-7","res":{"statusCode":200},"responseTime":4.2420729994773865,"msg":"request completed"}
+{"level":30,"time":1781990031818,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-8","req":{"method":"GET","url":"/v1/runs","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":37046},"msg":"incoming request"}
+{"level":30,"time":1781990031821,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-8","res":{"statusCode":200},"responseTime":3.2594709992408752,"msg":"request completed"}
+{"level":30,"time":1781990032849,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-9","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36700},"msg":"incoming request"}
+{"level":30,"time":1781990032851,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-a","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36708},"msg":"incoming request"}
+{"level":30,"time":1781990032853,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-9","res":{"statusCode":200},"responseTime":3.939300000667572,"msg":"request completed"}
+{"level":30,"time":1781990032868,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-a","res":{"statusCode":200},"responseTime":16.78767502307892,"msg":"request completed"}
+{"level":30,"time":1781990032970,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-b","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36700},"msg":"incoming request"}
+{"level":30,"time":1781990032970,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-c","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36708},"msg":"incoming request"}
+{"level":30,"time":1781990032972,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-b","res":{"statusCode":200},"responseTime":2.202620029449463,"msg":"request completed"}
+{"level":30,"time":1781990032972,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-c","res":{"statusCode":200},"responseTime":2.054874002933502,"msg":"request completed"}
+{"level":30,"time":1781990033008,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-d","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36700},"msg":"incoming request"}
+{"level":30,"time":1781990033009,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-e","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36708},"msg":"incoming request"}
+{"level":30,"time":1781990033010,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-d","res":{"statusCode":200},"responseTime":1.7092440128326416,"msg":"request completed"}
+{"level":30,"time":1781990033011,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-e","res":{"statusCode":200},"responseTime":1.8585660457611084,"msg":"request completed"}
+{"level":30,"time":1781990033051,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-f","req":{"method":"GET","url":"/v1/runs/unknown-run","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36700},"msg":"incoming request"}
+{"level":30,"time":1781990033053,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-f","res":{"statusCode":400},"responseTime":1.5815289616584778,"msg":"request completed"}
+{"level":30,"time":1781990033053,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-g","req":{"method":"GET","url":"/v1/runs/unknown-run/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36708},"msg":"incoming request"}
+{"level":30,"time":1781990033054,"pid":3161174,"hostname":"arunachalam-v-C23276","reqId":"req-g","res":{"statusCode":400},"responseTime":0.4719099998474121,"msg":"request completed"}
+
+> @fora/orchestrator@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/orchestrator
+> node --watch bin/fora-orchestrator.mjs
+
+{"level":"info","msg":"migrations applied","applied":[],"verified":5}
+{"level":40,"time":1781990158679,"pid":3169544,"hostname":"arunachalam-v-C23276","jwt_required":false,"fallback_header":"x-fora-tenant-id","msg":"FORA_REQUIRE_JWT=false — JWT verification disabled, honouring legacy x-fora-tenant-id header (LOCAL DEV ONLY)"}
+{"level":"info","msg":"orchestrator listening","port":4000,"host":"0.0.0.0"}
+{"level":30,"time":1781990158711,"pid":3169544,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4000"}
+{"level":30,"time":1781990158711,"pid":3169544,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4000"}
+{"level":30,"time":1781990158711,"pid":3169544,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4000"}
+{"level":30,"time":1781990158711,"pid":3169544,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4000"}
+{"level":30,"time":1781990165898,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":45834},"msg":"incoming request"}
+{"level":30,"time":1781990165907,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":8.036880016326904,"msg":"request completed"}
+{"level":30,"time":1781990173421,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-2","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56528},"msg":"incoming request"}
+{"level":30,"time":1781990173439,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-2","res":{"statusCode":200},"responseTime":17.100976049900055,"msg":"request completed"}
+{"level":30,"time":1781990174341,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-3","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56528},"msg":"incoming request"}
+{"level":30,"time":1781990174344,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-3","res":{"statusCode":200},"responseTime":2.984421968460083,"msg":"request completed"}
+{"level":30,"time":1781990175146,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-4","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56528},"msg":"incoming request"}
+{"level":30,"time":1781990175148,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-4","res":{"statusCode":200},"responseTime":2.1588510274887085,"msg":"request completed"}
+{"level":30,"time":1781990175652,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-5","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56528},"msg":"incoming request"}
+{"level":30,"time":1781990175654,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-5","res":{"statusCode":200},"responseTime":2.1372100114822388,"msg":"request completed"}
+{"level":30,"time":1781990175665,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-6","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56538},"msg":"incoming request"}
+{"level":30,"time":1781990175668,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-6","res":{"statusCode":200},"responseTime":3.2955769896507263,"msg":"request completed"}
+{"level":30,"time":1781990176684,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-7","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56540},"msg":"incoming request"}
+{"level":30,"time":1781990176687,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-7","res":{"statusCode":200},"responseTime":3.275534987449646,"msg":"request completed"}
+{"level":30,"time":1781990176707,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-8","req":{"method":"GET","url":"/v1/runs","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56554},"msg":"incoming request"}
+{"level":30,"time":1781990176711,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-8","res":{"statusCode":200},"responseTime":3.926433026790619,"msg":"request completed"}
+{"level":30,"time":1781990178437,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-9","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56528},"msg":"incoming request"}
+{"level":30,"time":1781990178438,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-a","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56538},"msg":"incoming request"}
+{"level":30,"time":1781990178442,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-9","res":{"statusCode":200},"responseTime":4.656832993030548,"msg":"request completed"}
+{"level":30,"time":1781990178460,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-a","res":{"statusCode":200},"responseTime":21.02149200439453,"msg":"request completed"}
+{"level":30,"time":1781990178596,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-b","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56528},"msg":"incoming request"}
+{"level":30,"time":1781990178597,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-c","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56538},"msg":"incoming request"}
+{"level":30,"time":1781990178600,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-b","res":{"statusCode":200},"responseTime":3.1304309964179993,"msg":"request completed"}
+{"level":30,"time":1781990178600,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-c","res":{"statusCode":200},"responseTime":2.918820023536682,"msg":"request completed"}
+{"level":30,"time":1781990178670,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-d","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56528},"msg":"incoming request"}
+{"level":30,"time":1781990178671,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-e","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56538},"msg":"incoming request"}
+{"level":30,"time":1781990178672,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-d","res":{"statusCode":200},"responseTime":2.336155951023102,"msg":"request completed"}
+{"level":30,"time":1781990178674,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-e","res":{"statusCode":200},"responseTime":2.5148620009422302,"msg":"request completed"}
+{"level":30,"time":1781990178749,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-f","req":{"method":"GET","url":"/v1/runs/unknown-run","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56528},"msg":"incoming request"}
+{"level":30,"time":1781990178751,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-f","res":{"statusCode":400},"responseTime":1.2138359546661377,"msg":"request completed"}
+{"level":30,"time":1781990178751,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-g","req":{"method":"GET","url":"/v1/runs/unknown-run/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":56538},"msg":"incoming request"}
+{"level":30,"time":1781990178752,"pid":3169544,"hostname":"arunachalam-v-C23276","reqId":"req-g","res":{"statusCode":400},"responseTime":0.5372830033302307,"msg":"request completed"}
+
+> @fora/orchestrator@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/orchestrator
+> node --watch bin/fora-orchestrator.mjs
+
+{"level":"info","msg":"migrations applied","applied":[],"verified":5}
+{"level":40,"time":1781990340006,"pid":3179609,"hostname":"arunachalam-v-C23276","jwt_required":false,"fallback_header":"x-fora-tenant-id","msg":"FORA_REQUIRE_JWT=false — JWT verification disabled, honouring legacy x-fora-tenant-id header (LOCAL DEV ONLY)"}
+{"level":"info","msg":"orchestrator listening","port":4000,"host":"0.0.0.0"}
+{"level":30,"time":1781990340015,"pid":3179609,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4000"}
+{"level":30,"time":1781990340015,"pid":3179609,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4000"}
+{"level":30,"time":1781990340015,"pid":3179609,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4000"}
+{"level":30,"time":1781990340015,"pid":3179609,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4000"}
+{"level":30,"time":1781990346989,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":35730},"msg":"incoming request"}
+{"level":30,"time":1781990346993,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":3.4656479954719543,"msg":"request completed"}
+{"level":30,"time":1781990354362,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-2","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36948},"msg":"incoming request"}
+{"level":30,"time":1781990354381,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-2","res":{"statusCode":200},"responseTime":18.770494997501373,"msg":"request completed"}
+{"level":30,"time":1781990355303,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-3","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36948},"msg":"incoming request"}
+{"level":30,"time":1781990355306,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-3","res":{"statusCode":200},"responseTime":2.4191120266914368,"msg":"request completed"}
+{"level":30,"time":1781990355908,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-4","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36948},"msg":"incoming request"}
+{"level":30,"time":1781990355911,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-4","res":{"statusCode":200},"responseTime":2.6065849661827087,"msg":"request completed"}
+{"level":30,"time":1781990356440,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-5","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36948},"msg":"incoming request"}
+{"level":30,"time":1781990356442,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-5","res":{"statusCode":200},"responseTime":2.0794039964675903,"msg":"request completed"}
+{"level":30,"time":1781990356454,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-6","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36960},"msg":"incoming request"}
+{"level":30,"time":1781990356460,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-6","res":{"statusCode":200},"responseTime":6.01769894361496,"msg":"request completed"}
+{"level":30,"time":1781990357505,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-7","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36974},"msg":"incoming request"}
+{"level":30,"time":1781990357508,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-7","res":{"statusCode":200},"responseTime":2.86667001247406,"msg":"request completed"}
+{"level":30,"time":1781990357526,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-8","req":{"method":"GET","url":"/v1/runs","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36988},"msg":"incoming request"}
+{"level":30,"time":1781990357530,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-8","res":{"statusCode":200},"responseTime":3.483094036579132,"msg":"request completed"}
+{"level":30,"time":1781990358659,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-9","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36948},"msg":"incoming request"}
+{"level":30,"time":1781990358660,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-a","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36960},"msg":"incoming request"}
+{"level":30,"time":1781990358663,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-9","res":{"statusCode":200},"responseTime":4.186285972595215,"msg":"request completed"}
+{"level":30,"time":1781990358677,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-a","res":{"statusCode":200},"responseTime":17.133624017238617,"msg":"request completed"}
+{"level":30,"time":1781990358787,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-b","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36948},"msg":"incoming request"}
+{"level":30,"time":1781990358789,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-c","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36960},"msg":"incoming request"}
+{"level":30,"time":1781990358793,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-b","res":{"statusCode":200},"responseTime":5.364178955554962,"msg":"request completed"}
+{"level":30,"time":1781990358794,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-c","res":{"statusCode":200},"responseTime":5.37773197889328,"msg":"request completed"}
+{"level":30,"time":1781990358880,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-d","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36948},"msg":"incoming request"}
+{"level":30,"time":1781990358881,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-e","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36960},"msg":"incoming request"}
+{"level":30,"time":1781990358882,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-d","res":{"statusCode":200},"responseTime":1.7033680081367493,"msg":"request completed"}
+{"level":30,"time":1781990358883,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-e","res":{"statusCode":200},"responseTime":1.7959679961204529,"msg":"request completed"}
+{"level":30,"time":1781990358934,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-f","req":{"method":"GET","url":"/v1/runs/unknown-run","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36948},"msg":"incoming request"}
+{"level":30,"time":1781990358935,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-f","res":{"statusCode":400},"responseTime":0.8844450116157532,"msg":"request completed"}
+{"level":30,"time":1781990358935,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-g","req":{"method":"GET","url":"/v1/runs/unknown-run/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36960},"msg":"incoming request"}
+{"level":30,"time":1781990358936,"pid":3179609,"hostname":"arunachalam-v-C23276","reqId":"req-g","res":{"statusCode":400},"responseTime":0.4612009525299072,"msg":"request completed"}
+
+> @fora/orchestrator@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/orchestrator
+> node --watch bin/fora-orchestrator.mjs
+
+{"level":"info","msg":"migrations applied","applied":[],"verified":5}
+{"level":40,"time":1781990609595,"pid":3191662,"hostname":"arunachalam-v-C23276","jwt_required":false,"fallback_header":"x-fora-tenant-id","msg":"FORA_REQUIRE_JWT=false — JWT verification disabled, honouring legacy x-fora-tenant-id header (LOCAL DEV ONLY)"}
+{"level":"info","msg":"orchestrator listening","port":4000,"host":"0.0.0.0"}
+{"level":30,"time":1781990609602,"pid":3191662,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4000"}
+{"level":30,"time":1781990609602,"pid":3191662,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4000"}
+{"level":30,"time":1781990609602,"pid":3191662,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4000"}
+{"level":30,"time":1781990609602,"pid":3191662,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4000"}
+{"level":30,"time":1781990616772,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":47002},"msg":"incoming request"}
+{"level":30,"time":1781990616778,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":6.004299998283386,"msg":"request completed"}
+{"level":30,"time":1781990622834,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-2","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36228},"msg":"incoming request"}
+{"level":30,"time":1781990622851,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-2","res":{"statusCode":200},"responseTime":16.308427035808563,"msg":"request completed"}
+{"level":30,"time":1781990623870,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-3","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36228},"msg":"incoming request"}
+{"level":30,"time":1781990623872,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-3","res":{"statusCode":200},"responseTime":2.49720698595047,"msg":"request completed"}
+{"level":30,"time":1781990624463,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-4","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36228},"msg":"incoming request"}
+{"level":30,"time":1781990624466,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-4","res":{"statusCode":200},"responseTime":2.2532559633255005,"msg":"request completed"}
+{"level":30,"time":1781990624887,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-5","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36228},"msg":"incoming request"}
+{"level":30,"time":1781990624889,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-5","res":{"statusCode":200},"responseTime":2.0353809595108032,"msg":"request completed"}
+{"level":30,"time":1781990624901,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-6","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36236},"msg":"incoming request"}
+{"level":30,"time":1781990624906,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-6","res":{"statusCode":200},"responseTime":4.8793739676475525,"msg":"request completed"}
+{"level":30,"time":1781990626024,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-7","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36252},"msg":"incoming request"}
+{"level":30,"time":1781990626026,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-7","res":{"statusCode":401},"responseTime":1.457077980041504,"msg":"request completed"}
+{"level":30,"time":1781990626047,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-8","req":{"method":"GET","url":"/v1/runs","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36254},"msg":"incoming request"}
+{"level":30,"time":1781990626052,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-8","res":{"statusCode":401},"responseTime":1.4300879836082458,"msg":"request completed"}
+{"level":30,"time":1781990626923,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-9","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36228},"msg":"incoming request"}
+{"level":30,"time":1781990626924,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-a","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36236},"msg":"incoming request"}
+{"level":30,"time":1781990626927,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-9","res":{"statusCode":200},"responseTime":3.733334004878998,"msg":"request completed"}
+{"level":30,"time":1781990626942,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-a","res":{"statusCode":200},"responseTime":17.282285034656525,"msg":"request completed"}
+{"level":30,"time":1781990627062,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-b","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36228},"msg":"incoming request"}
+{"level":30,"time":1781990627062,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-c","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36236},"msg":"incoming request"}
+{"level":30,"time":1781990627064,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-b","res":{"statusCode":200},"responseTime":2.2035579681396484,"msg":"request completed"}
+{"level":30,"time":1781990627066,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-c","res":{"statusCode":200},"responseTime":3.56912499666214,"msg":"request completed"}
+{"level":30,"time":1781990627133,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-d","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36228},"msg":"incoming request"}
+{"level":30,"time":1781990627134,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-e","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36236},"msg":"incoming request"}
+{"level":30,"time":1781990627135,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-d","res":{"statusCode":200},"responseTime":2.0866640210151672,"msg":"request completed"}
+{"level":30,"time":1781990627136,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-e","res":{"statusCode":200},"responseTime":2.1622989773750305,"msg":"request completed"}
+{"level":30,"time":1781990627195,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-f","req":{"method":"GET","url":"/v1/runs/unknown-run","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36228},"msg":"incoming request"}
+{"level":30,"time":1781990627196,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-f","res":{"statusCode":400},"responseTime":0.8988040089607239,"msg":"request completed"}
+{"level":30,"time":1781990627197,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-g","req":{"method":"GET","url":"/v1/runs/unknown-run/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36236},"msg":"incoming request"}
+{"level":30,"time":1781990627197,"pid":3191662,"hostname":"arunachalam-v-C23276","reqId":"req-g","res":{"statusCode":400},"responseTime":0.31564801931381226,"msg":"request completed"}
+
+> @fora/orchestrator@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/orchestrator
+> node --watch bin/fora-orchestrator.mjs
+
+{"level":"info","msg":"migrations applied","applied":[],"verified":5}
+{"level":40,"time":1781990840899,"pid":3202682,"hostname":"arunachalam-v-C23276","jwt_required":false,"fallback_header":"x-fora-tenant-id","msg":"FORA_REQUIRE_JWT=false — JWT verification disabled, honouring legacy x-fora-tenant-id header (LOCAL DEV ONLY)"}
+{"level":"info","msg":"orchestrator listening","port":4000,"host":"0.0.0.0"}
+{"level":30,"time":1781990840907,"pid":3202682,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4000"}
+{"level":30,"time":1781990840907,"pid":3202682,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4000"}
+{"level":30,"time":1781990840907,"pid":3202682,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4000"}
+{"level":30,"time":1781990840907,"pid":3202682,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4000"}
+{"level":30,"time":1781990849476,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":36824},"msg":"incoming request"}
+{"level":30,"time":1781990849481,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":3.9358450174331665,"msg":"request completed"}
+{"level":30,"time":1781990855645,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-2","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":45656},"msg":"incoming request"}
+defaultExtractTenant headers: {
+  host: 'localhost:4000',
+  connection: 'keep-alive',
+  'x-fora-tenant-id': '00000000-0000-4000-8000-000000000ace',
+  accept: '*/*',
+  'accept-language': '*',
+  'sec-fetch-mode': 'cors',
+  'user-agent': 'node',
+  pragma: 'no-cache',
+  'cache-control': 'no-cache',
+  'accept-encoding': 'gzip, deflate'
+}
+defaultExtractTenant TENANT_HEADER value: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant trimmed: 00000000-0000-4000-8000-000000000ace
+{"level":30,"time":1781990855665,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-2","res":{"statusCode":200},"responseTime":19.379800021648407,"msg":"request completed"}
+{"level":30,"time":1781990856707,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-3","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":45656},"msg":"incoming request"}
+defaultExtractTenant headers: {
+  host: 'localhost:4000',
+  connection: 'keep-alive',
+  'x-fora-tenant-id': '00000000-0000-4000-8000-000000000ace',
+  accept: '*/*',
+  'accept-language': '*',
+  'sec-fetch-mode': 'cors',
+  'user-agent': 'node',
+  pragma: 'no-cache',
+  'cache-control': 'no-cache',
+  'accept-encoding': 'gzip, deflate'
+}
+defaultExtractTenant TENANT_HEADER value: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant trimmed: 00000000-0000-4000-8000-000000000ace
+{"level":30,"time":1781990856710,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-3","res":{"statusCode":200},"responseTime":2.817003011703491,"msg":"request completed"}
+{"level":30,"time":1781990857272,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-4","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":45656},"msg":"incoming request"}
+defaultExtractTenant headers: {
+  host: 'localhost:4000',
+  connection: 'keep-alive',
+  'x-fora-tenant-id': '00000000-0000-4000-8000-000000000ace',
+  accept: '*/*',
+  'accept-language': '*',
+  'sec-fetch-mode': 'cors',
+  'user-agent': 'node',
+  pragma: 'no-cache',
+  'cache-control': 'no-cache',
+  'accept-encoding': 'gzip, deflate'
+}
+defaultExtractTenant TENANT_HEADER value: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant trimmed: 00000000-0000-4000-8000-000000000ace
+{"level":30,"time":1781990857275,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-4","res":{"statusCode":200},"responseTime":2.616379976272583,"msg":"request completed"}
+{"level":30,"time":1781990857728,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-5","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":45656},"msg":"incoming request"}
+defaultExtractTenant headers: {
+  host: 'localhost:4000',
+  connection: 'keep-alive',
+  'x-fora-tenant-id': '00000000-0000-4000-8000-000000000ace',
+  accept: '*/*',
+  'accept-language': '*',
+  'sec-fetch-mode': 'cors',
+  'user-agent': 'node',
+  pragma: 'no-cache',
+  'cache-control': 'no-cache',
+  'accept-encoding': 'gzip, deflate'
+}
+defaultExtractTenant TENANT_HEADER value: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant trimmed: 00000000-0000-4000-8000-000000000ace
+{"level":30,"time":1781990857731,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-5","res":{"statusCode":200},"responseTime":2.287357985973358,"msg":"request completed"}
+{"level":30,"time":1781990857743,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-6","req":{"method":"GET","url":"/v1/runs/00000000-0000-4000-8000-000000000001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":45660},"msg":"incoming request"}
+defaultExtractTenant headers: {
+  host: 'localhost:4000',
+  connection: 'keep-alive',
+  'x-fora-tenant-id': '00000000-0000-4000-8000-000000000ace',
+  accept: '*/*',
+  'accept-language': '*',
+  'sec-fetch-mode': 'cors',
+  'user-agent': 'node',
+  pragma: 'no-cache',
+  'cache-control': 'no-cache',
+  'accept-encoding': 'gzip, deflate'
+}
+defaultExtractTenant TENANT_HEADER value: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant trimmed: 00000000-0000-4000-8000-000000000ace
+{"level":30,"time":1781990857747,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-6","res":{"statusCode":200},"responseTime":4.820344984531403,"msg":"request completed"}
+{"level":30,"time":1781990940354,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-7","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":40312},"msg":"incoming request"}
+defaultExtractTenant headers: {
+  host: 'localhost:4000',
+  'user-agent': 'curl/8.5.0',
+  accept: '*/*',
+  'x-fora-tenant-id': '00000000-0000-4000-8000-000000000ace'
+}
+defaultExtractTenant TENANT_HEADER value: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant trimmed: 00000000-0000-4000-8000-000000000ace
+{"level":30,"time":1781990940368,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-7","res":{"statusCode":200},"responseTime":14.25703901052475,"msg":"request completed"}
+{"level":30,"time":1781990940385,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-8","req":{"method":"GET","url":"/v1/runs","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":40326},"msg":"incoming request"}
+defaultExtractTenant headers: {
+  host: 'localhost:4000',
+  'user-agent': 'curl/8.5.0',
+  accept: '*/*',
+  'x-fora-tenant-id': '00000000-0000-4000-8000-000000000ace'
+}
+defaultExtractTenant TENANT_HEADER value: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant trimmed: 00000000-0000-4000-8000-000000000ace
+{"level":30,"time":1781990940388,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-8","res":{"statusCode":200},"responseTime":2.6367940306663513,"msg":"request completed"}
+{"level":30,"time":1781990941473,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-9","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38492},"msg":"incoming request"}
+defaultExtractTenant headers: {
+  host: 'localhost:4000',
+  connection: 'keep-alive',
+  'x-fora-tenant-id': '00000000-0000-4000-8000-000000000ace',
+  accept: '*/*',
+  'accept-language': '*',
+  'sec-fetch-mode': 'cors',
+  'user-agent': 'node',
+  pragma: 'no-cache',
+  'cache-control': 'no-cache',
+  'accept-encoding': 'gzip, deflate'
+}
+defaultExtractTenant TENANT_HEADER value: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant trimmed: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant headers: {
+  host: 'localhost:4000',
+  connection: 'keep-alive',
+  'x-fora-tenant-id': '00000000-0000-4000-8000-000000000ace',
+  accept: '*/*',
+  'accept-language': '*',
+  'sec-fetch-mode': 'cors',
+  'user-agent': 'node',
+  pragma: 'no-cache',
+  'cache-control': 'no-cache',
+  'accept-encoding': 'gzip, deflate'
+}
+defaultExtractTenant TENANT_HEADER value: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant trimmed: 00000000-0000-4000-8000-000000000ace
+{"level":30,"time":1781990941632,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-a","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38500},"msg":"incoming request"}
+{"level":30,"time":1781990941634,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-9","res":{"statusCode":200},"responseTime":161.45851600170135,"msg":"request completed"}
+{"level":30,"time":1781990941649,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-a","res":{"statusCode":200},"responseTime":16.90049695968628,"msg":"request completed"}
+{"level":30,"time":1781990941971,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-b","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38492},"msg":"incoming request"}
+defaultExtractTenant headers: {
+  host: 'localhost:4000',
+  connection: 'keep-alive',
+  'x-fora-tenant-id': '00000000-0000-4000-8000-000000000ace',
+  accept: '*/*',
+  'accept-language': '*',
+  'sec-fetch-mode': 'cors',
+  'user-agent': 'node',
+  pragma: 'no-cache',
+  'cache-control': 'no-cache',
+  'accept-encoding': 'gzip, deflate'
+}
+defaultExtractTenant TENANT_HEADER value: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant trimmed: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant headers: {
+  host: 'localhost:4000',
+  connection: 'keep-alive',
+  'x-fora-tenant-id': '00000000-0000-4000-8000-000000000ace',
+  accept: '*/*',
+  'accept-language': '*',
+  'sec-fetch-mode': 'cors',
+  'user-agent': 'node',
+  pragma: 'no-cache',
+  'cache-control': 'no-cache',
+  'accept-encoding': 'gzip, deflate'
+}
+defaultExtractTenant TENANT_HEADER value: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant trimmed: 00000000-0000-4000-8000-000000000ace
+{"level":30,"time":1781990941972,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-c","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38500},"msg":"incoming request"}
+{"level":30,"time":1781990941974,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-b","res":{"statusCode":200},"responseTime":2.3401920199394226,"msg":"request completed"}
+{"level":30,"time":1781990941975,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-c","res":{"statusCode":200},"responseTime":2.2118079662323,"msg":"request completed"}
+{"level":30,"time":1781990942006,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-d","req":{"method":"GET","url":"/v1/runs/demo-run-001","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38492},"msg":"incoming request"}
+defaultExtractTenant headers: {
+  host: 'localhost:4000',
+  connection: 'keep-alive',
+  'x-fora-tenant-id': '00000000-0000-4000-8000-000000000ace',
+  accept: '*/*',
+  'accept-language': '*',
+  'sec-fetch-mode': 'cors',
+  'user-agent': 'node',
+  pragma: 'no-cache',
+  'cache-control': 'no-cache',
+  'accept-encoding': 'gzip, deflate'
+}
+defaultExtractTenant TENANT_HEADER value: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant trimmed: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant headers: {
+  host: 'localhost:4000',
+  connection: 'keep-alive',
+  'x-fora-tenant-id': '00000000-0000-4000-8000-000000000ace',
+  accept: '*/*',
+  'accept-language': '*',
+  'sec-fetch-mode': 'cors',
+  'user-agent': 'node',
+  pragma: 'no-cache',
+  'cache-control': 'no-cache',
+  'accept-encoding': 'gzip, deflate'
+}
+defaultExtractTenant TENANT_HEADER value: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant trimmed: 00000000-0000-4000-8000-000000000ace
+{"level":30,"time":1781990942007,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-e","req":{"method":"GET","url":"/v1/runs/demo-run-001/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38500},"msg":"incoming request"}
+{"level":30,"time":1781990942008,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-d","res":{"statusCode":200},"responseTime":1.6444090008735657,"msg":"request completed"}
+{"level":30,"time":1781990942009,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-e","res":{"statusCode":200},"responseTime":1.539256989955902,"msg":"request completed"}
+{"level":30,"time":1781990942038,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-f","req":{"method":"GET","url":"/v1/runs/unknown-run","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38492},"msg":"incoming request"}
+defaultExtractTenant headers: {
+  host: 'localhost:4000',
+  connection: 'keep-alive',
+  'x-fora-tenant-id': '00000000-0000-4000-8000-000000000ace',
+  accept: '*/*',
+  'accept-language': '*',
+  'sec-fetch-mode': 'cors',
+  'user-agent': 'node',
+  pragma: 'no-cache',
+  'cache-control': 'no-cache',
+  'accept-encoding': 'gzip, deflate'
+}
+defaultExtractTenant TENANT_HEADER value: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant trimmed: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant headers: {
+  host: 'localhost:4000',
+  connection: 'keep-alive',
+  'x-fora-tenant-id': '00000000-0000-4000-8000-000000000ace',
+  accept: '*/*',
+  'accept-language': '*',
+  'sec-fetch-mode': 'cors',
+  'user-agent': 'node',
+  pragma: 'no-cache',
+  'cache-control': 'no-cache',
+  'accept-encoding': 'gzip, deflate'
+}
+defaultExtractTenant TENANT_HEADER value: 00000000-0000-4000-8000-000000000ace
+defaultExtractTenant trimmed: 00000000-0000-4000-8000-000000000ace
+{"level":30,"time":1781990942039,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-f","res":{"statusCode":400},"responseTime":1.008221983909607,"msg":"request completed"}
+{"level":30,"time":1781990942040,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-g","req":{"method":"GET","url":"/v1/runs/unknown-run/stages","host":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":38500},"msg":"incoming request"}
+{"level":30,"time":1781990942040,"pid":3202682,"hostname":"arunachalam-v-C23276","reqId":"req-g","res":{"statusCode":400},"responseTime":0.407988965511322,"msg":"request completed"}

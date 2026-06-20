@@ -1,0 +1,170 @@
+=== FORA-382 clean-laptop curl evidence (2026-06-18T17:12:39Z) ===
+
+------------------------------------------------------------
+[curl] GET http://localhost:3000/personas/pm
+------------------------------------------------------------
+* Host localhost:3000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:3000...
+* connect to ::1 port 3000 from ::1 port 33706 failed: Connection refused
+*   Trying 127.0.0.1:3000...
+* Connected to localhost (127.0.0.1) port 3000
+> GET /personas/pm HTTP/1.1
+> Host: localhost:3000
+> User-Agent: curl/8.5.0
+> Accept: */*
+> 
+< HTTP/1.1 200 OK
+< Vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch, Accept-Encoding
+< link: </_next/static/css/app/layout.css?v=1781802759997>; rel=preload; as="style"
+< Cache-Control: no-store, must-revalidate
+< X-Powered-By: Next.js
+< Content-Type: text/html; charset=utf-8
+< Date: Thu, 18 Jun 2026 17:12:40 GMT
+< Connection: keep-alive
+< Keep-Alive: timeout=5
+< Transfer-Encoding: chunked
+< 
+{ [4589 bytes data]
+* Connection #0 to host localhost left intact
+
+------------------------------------------------------------
+[curl] GET http://localhost:3000/personas/eng-lead
+------------------------------------------------------------
+* Host localhost:3000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:3000...
+* connect to ::1 port 3000 from ::1 port 33712 failed: Connection refused
+*   Trying 127.0.0.1:3000...
+* Connected to localhost (127.0.0.1) port 3000
+> GET /personas/eng-lead HTTP/1.1
+> Host: localhost:3000
+> User-Agent: curl/8.5.0
+> Accept: */*
+> 
+< HTTP/1.1 200 OK
+< Vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch, Accept-Encoding
+< link: </_next/static/css/app/layout.css?v=1781802760871>; rel=preload; as="style"
+< Cache-Control: no-store, must-revalidate
+< X-Powered-By: Next.js
+< Content-Type: text/html; charset=utf-8
+< Date: Thu, 18 Jun 2026 17:12:40 GMT
+< Connection: keep-alive
+< Keep-Alive: timeout=5
+< Transfer-Encoding: chunked
+< 
+{ [4280 bytes data]
+* Connection #0 to host localhost left intact
+
+------------------------------------------------------------
+[curl] GET http://localhost:3000/personas/cto
+------------------------------------------------------------
+* Host localhost:3000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:3000...
+* connect to ::1 port 3000 from ::1 port 33726 failed: Connection refused
+*   Trying 127.0.0.1:3000...
+* Connected to localhost (127.0.0.1) port 3000
+> GET /personas/cto HTTP/1.1
+> Host: localhost:3000
+> User-Agent: curl/8.5.0
+> Accept: */*
+> 
+< HTTP/1.1 200 OK
+< Vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch, Accept-Encoding
+< link: </_next/static/css/app/layout.css?v=1781802761685>; rel=preload; as="style"
+< Cache-Control: no-store, must-revalidate
+< X-Powered-By: Next.js
+< Content-Type: text/html; charset=utf-8
+< Date: Thu, 18 Jun 2026 17:12:41 GMT
+< Connection: keep-alive
+< Keep-Alive: timeout=5
+< Transfer-Encoding: chunked
+< 
+{ [4222 bytes data]
+* Connection #0 to host localhost left intact
+
+------------------------------------------------------------
+[curl] GET http://localhost:3000/runs/00000000-0000-4000-8000-000000000001
+------------------------------------------------------------
+* Host localhost:3000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:3000...
+* connect to ::1 port 3000 from ::1 port 33730 failed: Connection refused
+*   Trying 127.0.0.1:3000...
+* Connected to localhost (127.0.0.1) port 3000
+> GET /runs/00000000-0000-4000-8000-000000000001 HTTP/1.1
+> Host: localhost:3000
+> User-Agent: curl/8.5.0
+> Accept: */*
+> 
+< HTTP/1.1 200 OK
+< Vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch, Accept-Encoding
+< link: </_next/static/css/app/layout.css?v=1781802761789>; rel=preload; as="style"
+< Cache-Control: no-store, must-revalidate
+< X-Powered-By: Next.js
+< Content-Type: text/html; charset=utf-8
+< Date: Thu, 18 Jun 2026 17:12:41 GMT
+< Connection: keep-alive
+< Keep-Alive: timeout=5
+< Transfer-Encoding: chunked
+< 
+{ [7642 bytes data]
+* Connection #0 to host localhost left intact
+
+------------------------------------------------------------
+[curl] orchestrator backing: GET /v1/runs (tenant index)
+------------------------------------------------------------
+* Host localhost:4000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:4000...
+* connect to ::1 port 4000 from ::1 port 39146 failed: Connection refused
+*   Trying 127.0.0.1:4000...
+* Connected to localhost (127.0.0.1) port 4000
+> GET /v1/runs HTTP/1.1
+> Host: localhost:4000
+> User-Agent: curl/8.5.0
+> Accept: */*
+> x-fora-tenant-id: 00000000-0000-0000-0000-000000000ace
+> 
+< HTTP/1.1 200 OK
+< content-type: application/json; charset=utf-8
+< content-length: 402
+< Date: Thu, 18 Jun 2026 17:12:41 GMT
+< Connection: keep-alive
+< Keep-Alive: timeout=72
+< 
+{ [402 bytes data]
+* Connection #0 to host localhost left intact
+[{"id":"00000000-0000-4000-8000-000000000001","tenant_id":"00000000-0000-0000-0000-000000000ace","goal_id":"demo-goal-forge","project_id":"forge-demo","status":"running","current_stage":"architect","triggered_by":{"type":"manual","actor":"dev-up-seed"},"cost_ceiling_usd":"100.00","cost_spent_usd":"0.00","started_at":"2026-06-18T16:41:11.237Z","finished_at":null,"deleted_at":null,"archived_at":null}]
+------------------------------------------------------------
+[curl] orchestrator backing: GET /v1/runs/00000000-0000-4000-8000-000000000001/stages
+------------------------------------------------------------
+* Host localhost:4000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:4000...
+* connect to ::1 port 4000 from ::1 port 39158 failed: Connection refused
+*   Trying 127.0.0.1:4000...
+* Connected to localhost (127.0.0.1) port 4000
+> GET /v1/runs/00000000-0000-4000-8000-000000000001/stages HTTP/1.1
+> Host: localhost:4000
+> User-Agent: curl/8.5.0
+> Accept: */*
+> x-fora-tenant-id: 00000000-0000-0000-0000-000000000ace
+> 
+< HTTP/1.1 200 OK
+< content-type: application/json; charset=utf-8
+< content-length: 1453
+< Date: Thu, 18 Jun 2026 17:12:41 GMT
+< Connection: keep-alive
+< Keep-Alive: timeout=72
+< 
+{ [1453 bytes data]
+* Connection #0 to host localhost left intact
+{"stages":[{"id":"ce6fb763-3cb6-42c1-86b5-3b851a0b020d","run_id":"00000000-0000-4000-8000-000000000001","stage":"ideation","status":"approved","decision":{"at":"2026-06-18T16:44:11.237Z","by":"system:ideation","reason":"demo seed"},"started_at":"2026-06-18T16:41:11.237Z","finished_at":"2026-06-18T16:44:11.237Z"},{"id":"6b502177-44ee-41fc-9b2c-2164fad3a107","run_id":"00000000-0000-4000-8000-000000000001","stage":"architect","status":"running","decision":null,"started_at":"2026-06-18T16:46:11.237Z","finished_at":null},{"id":"846dc4ff-d3f9-46ec-9e83-f2eaa46dff36","run_id":"00000000-0000-4000-8000-000000000001","stage":"dev","status":"running","decision":null,"started_at":"2026-06-18T16:51:11.237Z","finished_at":null},{"id":"456a6543-a615-4264-ae7e-a0b58da0e9b2","run_id":"00000000-0000-4000-8000-000000000001","stage":"qa","status":"pending","decision":null,"started_at":null,"finished_at":null},{"id":"f654ebc5-ea60-46e0-ae0f-406b7f595736","run_id":"00000000-0000-4000-8000-000000000001","stage":"security","status":"pending","decision":null,"started_at":null,"finished_at":null},{"id":"bd9e1c27-c9f2-47b4-8a02-c61808ad15a3","run_id":"00000000-0000-4000-8000-000000000001","stage":"devops","status":"pending","decision":null,"started_at":null,"finished_at":null},{"id":"7517f5f0-8896-4a80-b7e1-5a0e2480d872","run_id":"00000000-0000-4000-8000-000000000001","stage":"docs","status":"pending","decision":null,"started_at":null,"finished_at":null}]}

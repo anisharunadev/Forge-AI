@@ -1,0 +1,13 @@
+{
+  "failures": [],
+  "summary": {
+    "eventCount": 30,
+    "runCount": 10,
+    "stages": [
+      "architect",
+      "dev",
+      "ideation"
+    ],
+    "totalCostCents": 300
+  }
+}

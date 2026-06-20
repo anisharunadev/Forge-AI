@@ -1,0 +1,23 @@
+[project]
+name = "project-intelligence"
+version = "0.1.0"
+description = "Forge AI Project Intelligence Layer"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.6",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.5.0",
+    "sqlalchemy>=2.0.35",
+    "pgvector>=0.3.5",
+    "langgraph>=0.2.20",
+    "litellm>=1.49.0",
+    "mcp>=1.0.0",
+    "httpx>=0.27.2",
+    "redis>=5.0.8"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

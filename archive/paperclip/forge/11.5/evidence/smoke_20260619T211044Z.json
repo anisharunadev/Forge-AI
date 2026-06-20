@@ -1,0 +1,270 @@
+{
+  "issue": "FORA-255",
+  "sub_goal": "11.5",
+  "title": "Tier-3 Divergence Workbench \u2014 v0.1 contract",
+  "schemaVersion": 1,
+  "generated_at": "2026-06-19T21:10:44Z",
+  "test_runner": "forge/11.5/_run_smoke.py",
+  "test_count": 12,
+  "assertion_count": 60,
+  "pass_count": 60,
+  "fail_count": 0,
+  "returncode": 0,
+  "duration_ms": 2344.5,
+  "test_runner_sha256": "c3916efb769f23d16a089b460ac277a6ce19cd403256fd64904c7e99cfc5f071",
+  "tests": [
+    {
+      "assertion": "list_divergences returns 200 rows for 10k store",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "list_divergences total reports 10 000",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "list_divergences render budget < 200 ms (10k store)",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "rows sorted by detected_at DESC",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "resolve() returns a ResolveResult",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "audit event_type = divergence_resolved_by_human",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "audit reason = human_pick (single pick)",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "audit row carries winner + loser HLCs",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "audit row carries winner + loser platforms",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "queue row marked resolved",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "queue row resolution_audit_id matches audit id",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "second resolve raises (idempotency)",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "merge picks higher HLC as winner (left is higher)",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "merge_value recorded in audit metadata",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bad resolution rejected",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bad actor prefix rejected",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "merge without merge_value rejected",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk_resolve resolves 5 events",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk_resolve reports 0 failures",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk emits 5 distinct audit ids",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk audit row a1c90cee\u2026 reason = human_bulk",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk audit row a1c90cee\u2026 metadata.is_bulk = true",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk audit row a1c90cee\u2026 carries bulk_pattern_key",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk audit row ce4fec0a\u2026 reason = human_bulk",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk audit row ce4fec0a\u2026 metadata.is_bulk = true",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk audit row ce4fec0a\u2026 carries bulk_pattern_key",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk audit row 9679ea91\u2026 reason = human_bulk",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk audit row 9679ea91\u2026 metadata.is_bulk = true",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk audit row 9679ea91\u2026 carries bulk_pattern_key",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk audit row b4bafb37\u2026 reason = human_bulk",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk audit row b4bafb37\u2026 metadata.is_bulk = true",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk audit row b4bafb37\u2026 carries bulk_pattern_key",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk audit row d353fb5b\u2026 reason = human_bulk",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk audit row d353fb5b\u2026 metadata.is_bulk = true",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk audit row d353fb5b\u2026 carries bulk_pattern_key",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk partial: 2 succeeded (pre-resolved filtered out)",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk partial: 0 hard failures",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk partial: pre-resolved row still resolved",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "bulk partial: rows 1 and 2 now resolved",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "digest returns None when tenant is opted out",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "digest normal: total = 3",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "digest normal: title count = 2",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "digest normal: subject carries the day",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "digest normal: not action-required",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "digest normal: deep_link is the pre-filtered workbench",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "digest action-required: total = 1001",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "digest action-required: is_action_required = True",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "digest action-required: subject flips (cap is 1000)",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "digest action-required: breakdown truncated to top 5",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "enqueue preserves both HLCs",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "resolve wrote an audit row",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "audit row has record_hash (forwarder fills it)",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "queue row's resolution_audit_id is the audit row's event_id",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "audit row record_hash is 64-char hex",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "enqueue rejects malformed HLC",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "enqueue rejects unknown field_path",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "enqueue rejects left_platform == right_platform",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "get_divergence is tenant-scoped",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "list_divergences filters by tenant",
+      "verdict": "pass"
+    },
+    {
+      "assertion": "all 12 tests green in 1048.2 ms",
+      "verdict": "pass"
+    }
+  ],
+  "ac_coverage": {
+    "AC_1_render_budget_2s_for_10k": "covered (test_render_budget_10k asserts list_divergences < 200 ms in-process; < 2 s budget is end-to-end with React + network)",
+    "AC_2_audit_row_with_hlcs_and_winner": "covered (test_resolve_writes_audit_row)",
+    "AC_3_bulk_emits_n_audit_rows": "covered (test_bulk_emits_n_audit_rows + test_bulk_partial_failure_does_not_roll_back)",
+    "AC_4_daily_digest_opt_out_per_tenant": "covered (test_digest_opt_out + test_digest_normal_day + test_digest_action_required_threshold)",
+    "AC_5_no_silent_resolution": "covered (test_no_silent_resolution)",
+    "AC_6_designer_handoff_doc_agent_style": "covered by design.md Knowledge Layer \u00a70 conventions (\u00a70 quick start, \u00a710 versioning footnote, \u00a79 stage injection, \u00a711 cross-references); UI implementation is the explicit follow-up child per \u00a79"
+  },
+  "follow_up_children": [
+    "11.5a \u2014 UI surface implementation (route + components + server endpoints; dispatched when FORA-11.0 Architect hire closes; spec at forge/11.5/UI_SURFACE.md)",
+    "11.5b \u2014 Daily digest cron + email sender (per \u00a76 of design.md)",
+    "11.5c \u2014 k6 end-to-end render-budget probe (proves AC #1 end-to-end, not just the in-process sub-budget)"
+  ]
+}

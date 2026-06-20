@@ -29,7 +29,7 @@ pii_markers: []
 
 ## 1. Threat model (one paragraph, the rest of the doc defends it)
 
-FORA is an agent-of-agents platform where the agent runtime holds credentials for Jira, GitHub, Confluence, SonarQube, Figma, AWS, Slack, and customer MCP servers. The dominant risks are (1) prompt-injection driving an agent to misuse a tool, (2) credential exfiltration via a confused-deputy through the agent runtime, (3) supply-chain compromise of a third-party MCP server or model provider, and (4) cross-tenant data leakage when a design partner's data is reachable from another tenant's run. Everything in this document is a control against one of these.
+Forge AI is an agent-of-agents platform where the agent runtime holds credentials for Jira, GitHub, Confluence, SonarQube, Figma, AWS, Slack, and customer MCP servers. The dominant risks are (1) prompt-injection driving an agent to misuse a tool, (2) credential exfiltration via a confused-deputy through the agent runtime, (3) supply-chain compromise of a third-party MCP server or model provider, and (4) cross-tenant data leakage when a design partner's data is reachable from another tenant's run. Everything in this document is a control against one of these.
 
 ## 2. Security principles
 
@@ -49,7 +49,7 @@ FORA is an agent-of-agents platform where the agent runtime holds credentials fo
 
 ## 4. Authentication, authorisation, tenancy
 
-- **SSO first.** Customers integrate via OIDC or SAML. We do not store customer passwords. Local accounts exist only for FORA staff and require MFA.
+- **SSO first.** Customers integrate via OIDC or SAML. We do not store customer passwords. Local accounts exist only for Forge AI staff and require MFA.
 - **RBAC + tenant isolation.** Every API call is `authenticated → tenant-scoped → role-checked → tool-permitted`. A request that fails any layer is rejected at that layer; the failure is logged with the full context for forensic review.
 - **Agent runtime identity.** Each agent process has a short-lived (≤ 15 min) JWT scoped to a tenant, a run, and an allow-list of tools. The JWT is rotated on stage transition. The runtime refuses a tool call outside the allow-list with no retries.
 - **MCP server isolation.** Each customer's MCP servers live in a per-tenant namespace. A bug in the router that lets one tenant's request reach another tenant's MCP is a P0. Write tests that would have caught it.

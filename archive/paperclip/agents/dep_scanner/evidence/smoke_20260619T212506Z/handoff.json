@@ -1,0 +1,123 @@
+{
+  "schema_version": "1.0.0",
+  "handoff_id": "depscan-bb59d2bd88",
+  "run_id": "run-76-smoke",
+  "tenant_id": "acme-corp",
+  "scanner_run_id": "run-b1192e1779a0",
+  "decision": "block",
+  "verdict": "block",
+  "findings": [
+    {
+      "finding_id": "finding-a5ed8e06d8",
+      "severity": "critical",
+      "package": {
+        "ecosystem": "generic",
+        "name": "minimatch",
+        "installed_version": "3.0.4",
+        "fixed_versions": [
+          "3.0.5"
+        ],
+        "lockfile_path": "",
+        "lockfile_line": 0
+      },
+      "cve_id": "CVE-2022-3517",
+      "advisory_id": "",
+      "title": "ReDoS in minimatch minimatch() function",
+      "fixed_version": "3.0.5",
+      "remediation": "",
+      "rule_id": "CVE-2022-3517",
+      "scanner": "trivy"
+    },
+    {
+      "finding_id": "finding-45168a348d",
+      "severity": "high",
+      "package": {
+        "ecosystem": "pypi",
+        "name": "django",
+        "installed_version": "3.2.0",
+        "fixed_versions": [
+          "3.2.10"
+        ],
+        "lockfile_path": "",
+        "lockfile_line": 0
+      },
+      "cve_id": "CVE-2022-22818",
+      "advisory_id": "",
+      "title": "{% debug %} template tag did not properly escape user-supplied input",
+      "fixed_version": "3.2.10",
+      "remediation": "",
+      "rule_id": "CVE-2022-22818",
+      "scanner": "trivy"
+    },
+    {
+      "finding_id": "finding-dbd06f354b",
+      "severity": "medium",
+      "package": {
+        "ecosystem": "pypi",
+        "name": "django",
+        "installed_version": "3.2.0",
+        "fixed_versions": [
+          "3.2.10"
+        ],
+        "lockfile_path": "",
+        "lockfile_line": 0
+      },
+      "cve_id": "CVE-2021-33203",
+      "advisory_id": "",
+      "title": "Potential bypass of validation when uploading multiple files",
+      "fixed_version": "3.2.10",
+      "remediation": "",
+      "rule_id": "CVE-2021-33203",
+      "scanner": "trivy"
+    },
+    {
+      "finding_id": "finding-bfb763a480",
+      "severity": "medium",
+      "package": {
+        "ecosystem": "generic",
+        "name": "lodash",
+        "installed_version": "4.17.20",
+        "fixed_versions": [
+          "4.17.21"
+        ],
+        "lockfile_path": "",
+        "lockfile_line": 0
+      },
+      "cve_id": "CVE-2020-28500",
+      "advisory_id": "",
+      "title": "Command injection via template",
+      "fixed_version": "4.17.21",
+      "remediation": "",
+      "rule_id": "CVE-2020-28500",
+      "scanner": "trivy"
+    }
+  ],
+  "finding_count": 4,
+  "severity_counts": {
+    "critical": 1,
+    "high": 1,
+    "medium": 2
+  },
+  "scanners_used": [
+    "trivy",
+    "dependabot"
+  ],
+  "scanner_versions": {
+    "trivy": "trivy/unknown",
+    "dependabot": "gh/unknown"
+  },
+  "pr_comment_posted": true,
+  "evidence_audit_id": "evidence-ba5bea7650b9",
+  "duration_ms": 0.003904014825820923,
+  "generated_at": "2026-06-19T21:25:11Z",
+  "sbom": {
+    "artifact_id": "sbom-9a7ccc9a8cd2",
+    "format": "CycloneDX",
+    "spec_version": "1.5",
+    "sha256": "8b1183eddcefcc350598e535c9a35f84470a1a9915446d75db278c4acba8c032",
+    "byte_size": 2512,
+    "component_count": 3,
+    "storage_key": "memory://dep_scanner/depscan-bb59d2bd88/sbom.cdx.json"
+  },
+  "mode": "full_history"
+}

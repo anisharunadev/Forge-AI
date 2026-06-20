@@ -1,0 +1,8 @@
+{
+  "failures": [],
+  "summary": {
+    "decision": "deny",
+    "reason": "monthly_ceiling_breach",
+    "state": "hard_breach"
+  }
+}

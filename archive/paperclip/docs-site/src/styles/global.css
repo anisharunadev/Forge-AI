@@ -1,0 +1,231 @@
+/* Forge AI — Brand tokens and content polish
+   Override Starlight's defaults with Knackforge brand colors
+   (extracted from KNACKFORGE.svg: #1f77b7 / #1a183f / #21b3e8).
+   See: customer/conventions.md §3 for naming and brand rules.
+*/
+
+:root {
+  /* Brand */
+  --sl-color-accent-low: #0d0e2c;
+  --sl-color-accent: #1f77b7;
+  --sl-color-accent-high: #21b3e8;
+
+  /* Typography */
+  --sl-font: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --sl-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  /* Sidebar polish */
+  --sl-sidebar-width: 18rem;
+  --sl-content-width: 52rem;
+
+  /* Code blocks */
+  --astro-code-foreground: #e6edf3;
+  --astro-code-background: #0d1117;
+  --astro-code-token-comment: #8b949e;
+  --astro-code-token-keyword: #ff7b72;
+  --astro-code-token-string: #a5d6ff;
+  --astro-code-token-function: #d2a8ff;
+  --astro-code-token-constant: #79c0ff;
+  --astro-code-token-parameter: #ffa657;
+  --astro-code-token-punctuation: #c9d1d9;
+}
+
+/* Hero block on landing pages */
+.fora-hero {
+  margin-block: 2rem;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, #1a183f 0%, #0d0e2c 100%);
+  color: #fff;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.fora-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 50%, rgba(31, 119, 183, 0.25) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(33, 179, 232, 0.18) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.fora-hero h1 {
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  margin: 0 0 1rem;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+.fora-hero p {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  max-width: 42rem;
+  margin: 0 0 1.5rem;
+  opacity: 0.9;
+}
+
+.fora-hero .cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.fora-hero a {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.625rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.fora-hero a.primary {
+  background: #1f77b7;
+  color: #fff;
+}
+
+.fora-hero a.primary:hover {
+  background: #21b3e8;
+  transform: translateY(-1px);
+}
+
+.fora-hero a.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.fora-hero a.secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Feature grid */
+.fora-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-block: 2rem;
+}
+
+.fora-feature {
+  padding: 1.25rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 8px;
+  background: var(--sl-color-gray-6);
+}
+
+.fora-feature h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  color: var(--sl-color-accent-high);
+}
+
+.fora-feature p {
+  margin: 0;
+  color: var(--sl-color-gray-2);
+  line-height: 1.55;
+  font-size: 0.95rem;
+}
+
+/* Stage pipeline visual */
+.stage-pipeline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 0;
+  margin-block: 1.5rem;
+  font-family: var(--sl-font-mono);
+  font-size: 0.875rem;
+}
+
+.stage-pipeline .stage {
+  padding: 0.5rem 0.875rem;
+  background: var(--sl-color-gray-6);
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 6px;
+  color: var(--sl-color-accent-high);
+  font-weight: 500;
+}
+
+.stage-pipeline .arrow {
+  color: var(--sl-color-gray-3);
+}
+
+/* Freshness footer */
+.freshness-footer {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--sl-color-gray-5);
+  font-size: 0.8rem;
+  color: var(--sl-color-gray-3);
+  font-family: var(--sl-font-mono);
+}
+
+.freshness-footer dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0;
+}
+
+.freshness-footer dt {
+  color: var(--sl-color-gray-2);
+  font-weight: 500;
+}
+
+.freshness-footer dd {
+  margin: 0;
+}
+
+/* Inline callouts for things like tenant-id, cost, etc. */
+.term {
+  font-family: var(--sl-font-mono);
+  font-size: 0.9em;
+  padding: 0.1em 0.4em;
+  background: var(--sl-color-gray-6);
+  border-radius: 4px;
+  border: 1px solid var(--sl-color-gray-5);
+}
+
+/* Status badges */
+.badge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: var(--sl-font-mono);
+  vertical-align: middle;
+}
+
+.badge.done {
+  background: rgba(46, 160, 67, 0.2);
+  color: #56d364;
+  border: 1px solid rgba(46, 160, 67, 0.4);
+}
+
+.badge.beta {
+  background: rgba(210, 153, 34, 0.2);
+  color: #e3b341;
+  border: 1px solid rgba(210, 153, 34, 0.4);
+}
+
+.badge.alpha {
+  background: rgba(248, 81, 73, 0.2);
+  color: #ff7b72;
+  border: 1px solid rgba(248, 81, 73, 0.4);
+}
+
+/* Sticky table-of-contents polish */
+@media (min-width: 72rem) {
+  .main-frame {
+    grid-template-columns: 18rem minmax(0, 1fr) 16rem;
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "failures": [],
+  "summary": {
+    "costCents": 30,
+    "eventCount": 3,
+    "stages": [
+      "architect",
+      "dev",
+      "ideation"
+    ],
+    "tools": [
+      "github.createPr",
+      "jira.createIssue",
+      "llm.invoke"
+    ]
+  }
+}

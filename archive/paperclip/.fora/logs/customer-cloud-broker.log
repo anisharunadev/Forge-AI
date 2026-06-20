@@ -1,0 +1,165 @@
+
+> @fora/customer-cloud-broker@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/customer-cloud-broker
+> node --watch bin/fora-customer-cloud-broker.mjs
+
+{"level":30,"time":1781987200083,"pid":3047748,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4003"}
+[customer-cloud-broker] listening on 0.0.0.0:4003 (probe every 300000ms)
+{"level":30,"time":1781987200084,"pid":3047748,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4003"}
+{"level":30,"time":1781987200084,"pid":3047748,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4003"}
+{"level":30,"time":1781987200084,"pid":3047748,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4003"}
+{"level":30,"time":1781987205954,"pid":3047748,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4003","remoteAddress":"127.0.0.1","remotePort":59530},"msg":"incoming request"}
+{"level":30,"time":1781987205961,"pid":3047748,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":6.478910028934479,"msg":"request completed"}
+
+> @fora/customer-cloud-broker@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/customer-cloud-broker
+> node --watch bin/fora-customer-cloud-broker.mjs
+
+{"level":30,"time":1781987558926,"pid":3061628,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4003"}
+[customer-cloud-broker] listening on 0.0.0.0:4003 (probe every 300000ms)
+{"level":30,"time":1781987558927,"pid":3061628,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4003"}
+{"level":30,"time":1781987558927,"pid":3061628,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4003"}
+{"level":30,"time":1781987558927,"pid":3061628,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4003"}
+{"level":30,"time":1781987559952,"pid":3061628,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4003","remoteAddress":"127.0.0.1","remotePort":58544},"msg":"incoming request"}
+{"level":30,"time":1781987559957,"pid":3061628,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":4.760862052440643,"msg":"request completed"}
+
+> @fora/customer-cloud-broker@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/customer-cloud-broker
+> node --watch bin/fora-customer-cloud-broker.mjs
+
+{"level":30,"time":1781987777102,"pid":3070797,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4003"}
+[customer-cloud-broker] listening on 0.0.0.0:4003 (probe every 300000ms)
+{"level":30,"time":1781987777103,"pid":3070797,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4003"}
+{"level":30,"time":1781987777103,"pid":3070797,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4003"}
+{"level":30,"time":1781987777103,"pid":3070797,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4003"}
+{"level":30,"time":1781987841109,"pid":3070797,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4003","remoteAddress":"127.0.0.1","remotePort":36362},"msg":"incoming request"}
+{"level":30,"time":1781987841118,"pid":3070797,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":8.662032961845398,"msg":"request completed"}
+
+> @fora/customer-cloud-broker@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/customer-cloud-broker
+> node --watch bin/fora-customer-cloud-broker.mjs
+
+{"level":30,"time":1781988067194,"pid":3083443,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4003"}
+[customer-cloud-broker] listening on 0.0.0.0:4003 (probe every 300000ms)
+{"level":30,"time":1781988067195,"pid":3083443,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4003"}
+{"level":30,"time":1781988067195,"pid":3083443,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4003"}
+{"level":30,"time":1781988067195,"pid":3083443,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4003"}
+{"level":30,"time":1781988075839,"pid":3083443,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4003","remoteAddress":"127.0.0.1","remotePort":48700},"msg":"incoming request"}
+{"level":30,"time":1781988075851,"pid":3083443,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":10.92423701286316,"msg":"request completed"}
+
+> @fora/customer-cloud-broker@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/customer-cloud-broker
+> node --watch bin/fora-customer-cloud-broker.mjs
+
+{"level":30,"time":1781988213679,"pid":3090610,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4003"}
+[customer-cloud-broker] listening on 0.0.0.0:4003 (probe every 300000ms)
+{"level":30,"time":1781988213679,"pid":3090610,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4003"}
+{"level":30,"time":1781988213679,"pid":3090610,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4003"}
+{"level":30,"time":1781988213679,"pid":3090610,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4003"}
+{"level":30,"time":1781988222751,"pid":3090610,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4003","remoteAddress":"127.0.0.1","remotePort":38458},"msg":"incoming request"}
+{"level":30,"time":1781988222781,"pid":3090610,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":24.51791399717331,"msg":"request completed"}
+
+> @fora/customer-cloud-broker@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/customer-cloud-broker
+> node --watch bin/fora-customer-cloud-broker.mjs
+
+{"level":30,"time":1781988403222,"pid":3102650,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4003"}
+[customer-cloud-broker] listening on 0.0.0.0:4003 (probe every 300000ms)
+{"level":30,"time":1781988403223,"pid":3102650,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4003"}
+{"level":30,"time":1781988403223,"pid":3102650,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4003"}
+{"level":30,"time":1781988403223,"pid":3102650,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4003"}
+{"level":30,"time":1781988413753,"pid":3102650,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4003","remoteAddress":"127.0.0.1","remotePort":45266},"msg":"incoming request"}
+{"level":30,"time":1781988413764,"pid":3102650,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":9.934460997581482,"msg":"request completed"}
+
+> @fora/customer-cloud-broker@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/customer-cloud-broker
+> node --watch bin/fora-customer-cloud-broker.mjs
+
+{"level":30,"time":1781988931362,"pid":3121002,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4003"}
+[customer-cloud-broker] listening on 0.0.0.0:4003 (probe every 300000ms)
+{"level":30,"time":1781988931364,"pid":3121002,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4003"}
+{"level":30,"time":1781988931364,"pid":3121002,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4003"}
+{"level":30,"time":1781988931364,"pid":3121002,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4003"}
+{"level":30,"time":1781988946106,"pid":3121002,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4003","remoteAddress":"127.0.0.1","remotePort":48082},"msg":"incoming request"}
+{"level":30,"time":1781988946124,"pid":3121002,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":15.87509399652481,"msg":"request completed"}
+
+> @fora/customer-cloud-broker@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/customer-cloud-broker
+> node --watch bin/fora-customer-cloud-broker.mjs
+
+{"level":30,"time":1781989343184,"pid":3136232,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4003"}
+[customer-cloud-broker] listening on 0.0.0.0:4003 (probe every 300000ms)
+{"level":30,"time":1781989343185,"pid":3136232,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4003"}
+{"level":30,"time":1781989343185,"pid":3136232,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4003"}
+{"level":30,"time":1781989343185,"pid":3136232,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4003"}
+{"level":30,"time":1781989411456,"pid":3136232,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4003","remoteAddress":"127.0.0.1","remotePort":39322},"msg":"incoming request"}
+{"level":30,"time":1781989411470,"pid":3136232,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":13.281386017799377,"msg":"request completed"}
+
+> @fora/customer-cloud-broker@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/customer-cloud-broker
+> node --watch bin/fora-customer-cloud-broker.mjs
+
+{"level":30,"time":1781989617766,"pid":3144686,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4003"}
+[customer-cloud-broker] listening on 0.0.0.0:4003 (probe every 300000ms)
+{"level":30,"time":1781989617767,"pid":3144686,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4003"}
+{"level":30,"time":1781989617767,"pid":3144686,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4003"}
+{"level":30,"time":1781989617767,"pid":3144686,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4003"}
+{"level":30,"time":1781989681329,"pid":3144686,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4003","remoteAddress":"127.0.0.1","remotePort":36710},"msg":"incoming request"}
+{"level":30,"time":1781989681345,"pid":3144686,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":13.675871968269348,"msg":"request completed"}
+
+> @fora/customer-cloud-broker@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/customer-cloud-broker
+> node --watch bin/fora-customer-cloud-broker.mjs
+
+{"level":30,"time":1781989845202,"pid":3152359,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4003"}
+[customer-cloud-broker] listening on 0.0.0.0:4003 (probe every 300000ms)
+{"level":30,"time":1781989845203,"pid":3152359,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4003"}
+{"level":30,"time":1781989845203,"pid":3152359,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4003"}
+{"level":30,"time":1781989845203,"pid":3152359,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4003"}
+{"level":30,"time":1781989851380,"pid":3152359,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4003","remoteAddress":"127.0.0.1","remotePort":55544},"msg":"incoming request"}
+{"level":30,"time":1781989851389,"pid":3152359,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":7.638463973999023,"msg":"request completed"}
+
+> @fora/customer-cloud-broker@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/customer-cloud-broker
+> node --watch bin/fora-customer-cloud-broker.mjs
+
+{"level":30,"time":1781990018421,"pid":3161225,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4003"}
+[customer-cloud-broker] listening on 0.0.0.0:4003 (probe every 300000ms)
+{"level":30,"time":1781990018422,"pid":3161225,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4003"}
+{"level":30,"time":1781990018422,"pid":3161225,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4003"}
+{"level":30,"time":1781990018422,"pid":3161225,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4003"}
+{"level":30,"time":1781990023119,"pid":3161225,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4003","remoteAddress":"127.0.0.1","remotePort":43484},"msg":"incoming request"}
+{"level":30,"time":1781990023127,"pid":3161225,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":6.85080498456955,"msg":"request completed"}
+
+> @fora/customer-cloud-broker@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/customer-cloud-broker
+> node --watch bin/fora-customer-cloud-broker.mjs
+
+{"level":30,"time":1781990160314,"pid":3169653,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4003"}
+[customer-cloud-broker] listening on 0.0.0.0:4003 (probe every 300000ms)
+{"level":30,"time":1781990160315,"pid":3169653,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4003"}
+{"level":30,"time":1781990160315,"pid":3169653,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4003"}
+{"level":30,"time":1781990160315,"pid":3169653,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4003"}
+{"level":30,"time":1781990165935,"pid":3169653,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4003","remoteAddress":"127.0.0.1","remotePort":52842},"msg":"incoming request"}
+{"level":30,"time":1781990165945,"pid":3169653,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":8.868534982204437,"msg":"request completed"}
+
+> @fora/customer-cloud-broker@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/customer-cloud-broker
+> node --watch bin/fora-customer-cloud-broker.mjs
+
+{"level":30,"time":1781990341188,"pid":3179680,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4003"}
+[customer-cloud-broker] listening on 0.0.0.0:4003 (probe every 300000ms)
+{"level":30,"time":1781990341189,"pid":3179680,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4003"}
+{"level":30,"time":1781990341189,"pid":3179680,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4003"}
+{"level":30,"time":1781990341189,"pid":3179680,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4003"}
+{"level":30,"time":1781990347012,"pid":3179680,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4003","remoteAddress":"127.0.0.1","remotePort":52652},"msg":"incoming request"}
+{"level":30,"time":1781990347019,"pid":3179680,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":5.976047039031982,"msg":"request completed"}
+
+> @fora/customer-cloud-broker@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/customer-cloud-broker
+> node --watch bin/fora-customer-cloud-broker.mjs
+
+{"level":30,"time":1781990610802,"pid":3191715,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4003"}
+[customer-cloud-broker] listening on 0.0.0.0:4003 (probe every 300000ms)
+{"level":30,"time":1781990610802,"pid":3191715,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4003"}
+{"level":30,"time":1781990610802,"pid":3191715,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4003"}
+{"level":30,"time":1781990610802,"pid":3191715,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4003"}
+{"level":30,"time":1781990616799,"pid":3191715,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4003","remoteAddress":"127.0.0.1","remotePort":49794},"msg":"incoming request"}
+{"level":30,"time":1781990616804,"pid":3191715,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":4.594169974327087,"msg":"request completed"}
+
+> @fora/customer-cloud-broker@0.1.0 dev /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/customer-cloud-broker
+> node --watch bin/fora-customer-cloud-broker.mjs
+
+{"level":30,"time":1781990842205,"pid":3202736,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://127.0.0.1:4003"}
+[customer-cloud-broker] listening on 0.0.0.0:4003 (probe every 300000ms)
+{"level":30,"time":1781990842206,"pid":3202736,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://192.168.31.229:4003"}
+{"level":30,"time":1781990842206,"pid":3202736,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.27.0.1:4003"}
+{"level":30,"time":1781990842206,"pid":3202736,"hostname":"arunachalam-v-C23276","msg":"Server listening at http://172.28.0.1:4003"}
+{"level":30,"time":1781990849500,"pid":3202736,"hostname":"arunachalam-v-C23276","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:4003","remoteAddress":"127.0.0.1","remotePort":44214},"msg":"incoming request"}
+{"level":30,"time":1781990849507,"pid":3202736,"hostname":"arunachalam-v-C23276","reqId":"req-1","res":{"statusCode":200},"responseTime":7.028799057006836,"msg":"request completed"}

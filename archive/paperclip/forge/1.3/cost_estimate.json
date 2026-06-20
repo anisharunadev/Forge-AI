@@ -1,0 +1,243 @@
+{
+  "schema_version": "1.0",
+  "epic": {
+    "title": "Forge Ideation Agent — Requirement Ingestion (Sub-goal 1.1)",
+    "issue": "FORA-61",
+    "parent_epic": "FORA-17",
+    "story_count": 8
+  },
+  "estimate_basis": {
+    "model_primary": "claude-fable-5",
+    "model_fallback": "claude-sonnet-4-6",
+    "model_pricing_reference": "https://platform.claude.com/docs/about-claude/pricing",
+    "fx_assumption": "Anthropic list price; no enterprise discount applied (FORA is pre-revenue)",
+    "stages_estimated": ["Architecture", "Dev", "QA", "Security", "DevOps", "Docs"],
+    "stage_purpose": {
+      "Architecture": "Sub-goal 2.1 (FORA-27) — turn this Epic into an architecture ADR + design",
+      "Dev": "Implement the 8 stories",
+      "QA": "Eval set + integration tests + prompt-injection regression (per SEC-2 / Q7)",
+      "Security": "Verify P0 controls (cross-tenant, audit completeness, secrets ownership, safety eval set)",
+      "DevOps": "Per-tenant budget gate, degraded-mode fallback, audit sink",
+      "Docs": "Knowledge Layer updates + per-story README + usage walkthrough"
+    },
+    "estimation_method": "Story-effort-in-weeks × stage-multiplier × dollar-per-engineer-week + token-cost-for-AI-assisted-work. Engineer-week cost = $8,000 fully-loaded (illustrative; FORA internal). Token cost is added on top. Ranges reflect p50/p95.",
+    "caveats": [
+      "Cost is a forward estimate, not a contracted budget. The Architect will refine during 2.1.",
+      "Per-run cost (S5 generator) is bounded by the Draft PRD §8 hard ceiling of $5.00; that is captured separately under per_run_costs.",
+      "Q6 (secrets client) and Q7 (safety eval set) are tracked as additional cost lines — if unresolved they push Security cost upward."
+    ]
+  },
+  "story_effort": {
+    "S1": {"title": "Ideation Trigger Intake", "effort": "S", "engineer_weeks": 1, "parallelizable_with": ["S2", "S3"]},
+    "S2": {"title": "Knowledge Layer Allow-List Reader", "effort": "M", "engineer_weeks": 2, "parallelizable_with": ["S3"]},
+    "S3": {"title": "Jira MCP Context Fetcher", "effort": "M", "engineer_weeks": 2, "parallelizable_with": ["S2"]},
+    "S4": {"title": "requirement_brief.json Generator", "effort": "M", "engineer_weeks": 2, "parallelizable_with": ["S7", "S8"]},
+    "S5": {"title": "draft_prd.md Generator", "effort": "L", "engineer_weeks": 4, "parallelizable_with": []},
+    "S6": {"title": "Ambiguity Detection + ask_user_questions Interaction", "effort": "M", "engineer_weeks": 2, "parallelizable_with": ["S7"]},
+    "S7": {"title": "Audit Log Capture (Sub-goal 1.1)", "effort": "M", "engineer_weeks": 2, "parallelizable_with": ["S4", "S6", "S8"]},
+    "S8": {"title": "Per-Tenant Isolation + Per-Run Budget Enforcement", "effort": "M", "engineer_weeks": 2, "parallelizable_with": ["S4", "S7"]},
+    "total_engineer_weeks": 17
+  },
+  "stage_costs": {
+    "Architecture": {
+      "stage": "Architecture (Sub-goal 2.1, FORA-27)",
+      "agent_primary": "architect (proposed hire)",
+      "agent_fallback": "CTO",
+      "scope": "8 story ADRs + cross-cutting decisions (runtime vs prompt enforcement, schema versioning, audit sink topology, interaction schema, per-tenant namespace, degraded-mode fallback, secrets-ownership path)",
+      "tokens_in_p50": 800000,
+      "tokens_in_p95": 1500000,
+      "tokens_out_p50": 150000,
+      "tokens_out_p95": 300000,
+      "token_cost_usd_p50": 8.0,
+      "token_cost_usd_p95": 18.0,
+      "human_engineer_weeks_p50": 2,
+      "human_engineer_weeks_p95": 4,
+      "human_cost_usd_p50": 16000,
+      "human_cost_usd_p95": 32000,
+      "total_cost_usd_p50": 16024,
+      "total_cost_usd_p95": 32018,
+      "currency": "USD",
+      "notes": "Token cost is dwarfed by human cost; one architect-week + 2-4 dev-weeks of architecture review."
+    },
+    "Dev": {
+      "stage": "Dev (Sub-goal 3.x — implementation of 8 stories)",
+      "agent_primary": "engineer agents (multiple, proposed hires)",
+      "agent_fallback": "CTO + SeniorEngineer (runtime engineer)",
+      "scope": "8 stories; per-story: design doc, implementation, unit tests, code review",
+      "tokens_in_p50": 4000000,
+      "tokens_in_p95": 8000000,
+      "tokens_out_p50": 800000,
+      "tokens_out_p95": 1800000,
+      "token_cost_usd_p50": 40.0,
+      "token_cost_usd_p95": 90.0,
+      "human_engineer_weeks_p50": 12,
+      "human_engineer_weeks_p95": 18,
+      "human_cost_usd_p50": 96000,
+      "human_cost_usd_p95": 144000,
+      "total_cost_usd_p50": 96040,
+      "total_cost_usd_p95": 144090,
+      "currency": "USD",
+      "notes": "S5 is the largest story (L = 4 weeks). Critical-path story S5 cannot parallelize; S2/S3 can run in parallel after S1."
+    },
+    "QA": {
+      "stage": "QA (Sub-goal 4.x)",
+      "agent_primary": "qa-agent (proposed hire)",
+      "agent_fallback": "CTO + SeniorEngineer",
+      "scope": "Eval set (per Q7: 5 prompt-injection + 5 role-violation cases), integration tests for the lint step, prompt-output regression for S5, interaction acceptance for S6",
+      "tokens_in_p50": 1200000,
+      "tokens_in_p95": 2500000,
+      "tokens_out_p50": 250000,
+      "tokens_out_p95": 500000,
+      "token_cost_usd_p50": 12.0,
+      "token_cost_usd_p95": 25.0,
+      "human_engineer_weeks_p50": 3,
+      "human_engineer_weeks_p95": 5,
+      "human_cost_usd_p50": 24000,
+      "human_cost_usd_p95": 40000,
+      "total_cost_usd_p50": 24012,
+      "total_cost_usd_p95": 40025,
+      "currency": "USD",
+      "notes": "Q7 (safety eval set seed) is included here."
+    },
+    "Security": {
+      "stage": "Security (Sub-goal 5.x — Epic 5)",
+      "agent_primary": "security-agent (proposed hire)",
+      "agent_fallback": "CTO",
+      "scope": "Verify P0 controls (R2.1 allow-list, R3.2 cross-project Jira, R5.1 PRD hallucination, R7.1 audit completeness, R7.2 cross-tenant audit, R7.3 secret-in-prompt, R8.1 cross-tenant, R8.2 budget bypass). Plus Q6 secrets-ownership path resolution and ADR.",
+      "tokens_in_p50": 600000,
+      "tokens_in_p95": 1200000,
+      "tokens_out_p50": 120000,
+      "tokens_out_p95": 250000,
+      "token_cost_usd_p50": 6.0,
+      "token_cost_usd_p95": 12.0,
+      "human_engineer_weeks_p50": 4,
+      "human_engineer_weeks_p95": 7,
+      "human_cost_usd_p50": 32000,
+      "human_cost_usd_p95": 56000,
+      "total_cost_usd_p50": 32006,
+      "total_cost_usd_p95": 56012,
+      "currency": "USD",
+      "notes": "P0 controls dominate this stage's cost. If Q6 unresolved by Architecture handoff, add 1-2 engineer-weeks ($8-16K) to file the secrets-client ticket."
+    },
+    "DevOps": {
+      "stage": "DevOps (Sub-goal 6.x — Epic 6)",
+      "agent_primary": "devops-agent (proposed hire)",
+      "agent_fallback": "CTO + SeniorEngineer",
+      "scope": "Per-tenant budget gate (S8), degraded-mode fallback (S3), audit sink topology (S7), runbook for 'agent-loop run hangs' (per FORA-60 §9.2 gap)",
+      "tokens_in_p50": 400000,
+      "tokens_in_p95": 800000,
+      "tokens_out_p50": 80000,
+      "tokens_out_p95": 160000,
+      "token_cost_usd_p50": 4.0,
+      "token_cost_usd_p95": 8.0,
+      "human_engineer_weeks_p50": 2,
+      "human_engineer_weeks_p95": 4,
+      "human_cost_usd_p50": 16000,
+      "human_cost_usd_p95": 32000,
+      "total_cost_usd_p50": 16004,
+      "total_cost_usd_p95": 32008,
+      "currency": "USD",
+      "notes": "Cost sensitive to whether S8's per-tenant budget gate is a new piece of infra or a configuration on the existing budget gate."
+    },
+    "Docs": {
+      "stage": "Docs (Sub-goal 7.x — Epic 7, FORA-118)",
+      "agent_primary": "doc-agent (Hire #4 / FORA-23)",
+      "agent_fallback": "ba-agent (PM)",
+      "scope": "Knowledge Layer updates for S1-S8; per-story README; usage walkthrough (Slack-form → console → API); PM-facing runbook",
+      "tokens_in_p50": 300000,
+      "tokens_in_p95": 600000,
+      "tokens_out_p50": 80000,
+      "tokens_out_p95": 150000,
+      "token_cost_usd_p50": 3.0,
+      "token_cost_usd_p95": 6.0,
+      "human_engineer_weeks_p50": 1,
+      "human_engineer_weeks_p95": 2,
+      "human_cost_usd_p50": 8000,
+      "human_cost_usd_p95": 16000,
+      "total_cost_usd_p50": 8003,
+      "total_cost_usd_p95": 16006,
+      "currency": "USD",
+      "notes": "Doc-agent already in flight per FORA-23."
+    }
+  },
+  "rollup": {
+    "totals_by_stage_usd": {
+      "Architecture": {"p50": 16024, "p95": 32018},
+      "Dev": {"p50": 96040, "p95": 144090},
+      "QA": {"p50": 24012, "p95": 40025},
+      "Security": {"p50": 32006, "p95": 56012},
+      "DevOps": {"p50": 16004, "p95": 32008},
+      "Docs": {"p50": 8003, "p95": 16006}
+    },
+    "epic_total_cost_usd": {
+      "p50": 192089,
+      "p95": 320159,
+      "currency": "USD",
+      "note": "p95 ≈ $320K. Architect will refine during 2.1; this is the planning envelope."
+    },
+    "token_cost_only_usd": {
+      "p50": 73,
+      "p95": 159,
+      "currency": "USD",
+      "note": "Token cost is < 0.05 % of the epic total — human engineering cost dominates. AI assistance saves maybe 20-30 % vs all-human, but the stage gates are human-owned."
+    },
+    "engineer_weeks_total": {
+      "p50": 24,
+      "p95": 40,
+      "note": "Roughly 6-10 engineer-months end-to-end. With 3 parallel engineers, calendar time is ~3-5 months."
+    }
+  },
+  "per_run_costs": {
+    "context": "Per-run cost for the actual Forge Ideation run that produces a Draft PRD (the S5 generator, dominated by token spend).",
+    "trigger_intake_p50_usd": 0.005,
+    "knowledge_layer_reader_p50_usd": 0.020,
+    "jira_mcp_fetcher_p50_usd": 0.030,
+    "brief_generator_p50_usd": 0.030,
+    "prd_generator_p50_usd": 0.350,
+    "ambiguity_detector_p50_usd": 0.020,
+    "audit_log_capture_p50_usd": 0.005,
+    "isolation_budget_enforcement_p50_usd": 0.005,
+    "per_run_total_p50_usd": 0.465,
+    "per_run_total_p95_usd": 2.85,
+    "per_run_hard_ceiling_usd": 5.00,
+    "alignment_with_draft_prd_section_8": "Per-run p50 $0.47 ≈ Draft PRD target $0.50 (within 6 %). Per-run p95 $2.85 < target $3.00. Hard ceiling $5.00 enforced.",
+    "currency": "USD"
+  },
+  "blockers_costing_money": {
+    "Q6_secrets_client": {
+      "description": "If unresolved by Architecture handoff, file a secrets-client ticket and add it to Dev + Security stages.",
+      "additional_cost_usd_p50": 16000,
+      "additional_cost_usd_p95": 24000,
+      "owner": "CTO + Security (Epic 5)",
+      "due": "2026-06-25"
+    },
+    "Q7_safety_eval_set": {
+      "description": "Seed 5 prompt-injection + 5 role-violation cases before first design-partner run. Already included in QA stage above; if it slips past the design-partner run date, add to QA scope.",
+      "additional_cost_usd_p50": 4000,
+      "additional_cost_usd_p95": 8000,
+      "owner": "ba-agent + future security-agent",
+      "due": "2026-07-15"
+    },
+    "Q8_agent_runtime_adr": {
+      "description": "Add an ADR candidate resolving the TS-vs-Python divergence. Cost is < 1 engineer-week; absorbed in Architecture stage.",
+      "additional_cost_usd_p50": 0,
+      "additional_cost_usd_p95": 4000,
+      "owner": "CTO",
+      "due": "2026-07-01"
+    }
+  },
+  "audit": {
+    "produced_by": "ba-agent (99b34c5d-87d4-42a0-a66a-c65a916aeeec)",
+    "produced_at": "2026-06-17T00:00:00Z",
+    "source_epic_package": "forge/1.3/epic_package.md",
+    "source_risk_register": "forge/1.3/risk_register.md",
+    "source_dependency_graph": "forge/1.3/dependency_graph.json",
+    "method": "Story-effort-in-weeks × stage-multiplier × dollar-per-engineer-week + token-cost-for-AI-assisted-work. Engineer-week = $8,000 fully loaded (illustrative). Token costs from Anthropic list price (fable-5 primary). p50/p95 ranges reflect planning uncertainty.",
+    "confidence": "medium — Architect will refine in Sub-goal 2.1. The estimate is wide because the per-story implementation approach has not yet been designed.",
+    "run_id": "e951dbfb-bd89-4508-bc9e-e8f462651c19",
+    "links": {
+      "draft_prd_success_metrics": "/FORA/issues/FORA-59 (Section 8)",
+      "feasibility_memo": "/FORA/issues/FORA-60"
+    }
+  }
+}

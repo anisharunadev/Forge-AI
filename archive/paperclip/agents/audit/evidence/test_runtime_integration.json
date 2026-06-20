@@ -1,0 +1,23 @@
+{
+  "scenarios": {
+    "AC1 runtime emits one audit event per tool call (3-step plan)": {
+      "events": 5,
+      "toolCalls": 3,
+      "chainOk": true
+    },
+    "AC failed step (allowlist rejection) still emits an event": {
+      "events": 3,
+      "errorCode": "TOOL_NOT_ALLOWED",
+      "tool": "forbidden_tool",
+      "chainOk": true
+    },
+    "AC cost summary derives from the audit events (FORA-75 contract)": {
+      "totalCostCents": 8,
+      "eventCount": 4
+    },
+    "AC audit disabled (feature flag off) keeps runtime clean": {
+      "auditStore": "None",
+      "ok": true
+    }
+  }
+}

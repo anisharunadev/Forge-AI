@@ -1,0 +1,157 @@
+{
+  "acs": [
+    {
+      "id": "1",
+      "note": "scope + graph are typed MigrationScope + DependencyGraph",
+      "ok": true
+    },
+    {
+      "id": "2",
+      "note": "plan is WavePlan with 7 waves",
+      "ok": true
+    },
+    {
+      "id": "3",
+      "note": "byte-equal (modulo report_id + planner_runtime_ms)",
+      "ok": true
+    },
+    {
+      "id": "4",
+      "note": "wave-0 kind = preflight",
+      "ok": true
+    },
+    {
+      "id": "5",
+      "note": "no cycles in canonical fixture (trivially satisfied)",
+      "ok": true
+    },
+    {
+      "id": "6",
+      "note": "0 cluster_break waves for 0 clusters",
+      "ok": true
+    },
+    {
+      "id": "7",
+      "note": "tier waves ordered: ['T1', 'T2', 'T3', 'T4']",
+      "ok": true
+    },
+    {
+      "id": "8",
+      "note": "tail = cutover, validation",
+      "ok": true
+    },
+    {
+      "id": "9",
+      "note": "4 high-risk waves, all carry canary_probe",
+      "ok": true
+    },
+    {
+      "id": "10",
+      "note": "4 credential waves, all carry secret_rotate_check",
+      "ok": true
+    },
+    {
+      "id": "11",
+      "note": "7 waves, all carry transform.* / aws.* audit_action",
+      "ok": true
+    },
+    {
+      "id": "12",
+      "note": "wave-plan.json round-trips through JSON losslessly",
+      "ok": true
+    },
+    {
+      "id": "13",
+      "note": "planner_runtime_ms=0.438, cost_usd=0.0",
+      "ok": true
+    },
+    {
+      "id": "14",
+      "note": "wrote /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/forge/8.3/wave-plan.json + /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/forge/8.3/wave-plan.md",
+      "ok": true
+    },
+    {
+      "id": "15",
+      "note": "6 skip files, none in any wave",
+      "ok": true
+    },
+    {
+      "id": "16",
+      "note": "all prerequisites precede wave_id (bad=[])",
+      "ok": true
+    },
+    {
+      "id": "17",
+      "note": "1 merged cluster_breaks for 2 overlapping clusters",
+      "ok": true
+    },
+    {
+      "id": "18",
+      "note": "1 cycle_break wave(s), first has 3 members",
+      "ok": true
+    },
+    {
+      "id": "19",
+      "note": "empty-graph plan: ['preflight', 'cutover', 'validation']",
+      "ok": true
+    },
+    {
+      "id": "20",
+      "note": "summary.skipped_files = 4 (expected 4)",
+      "ok": true
+    },
+    {
+      "id": "21",
+      "note": "cluster_break wave covers all 3 services",
+      "ok": false
+    },
+    {
+      "id": "22",
+      "note": "cycle_break audit_action = transform.cycle_break",
+      "ok": true
+    },
+    {
+      "id": "23",
+      "note": "no forbidden imports / calls in plan JSON (bad=[])",
+      "ok": true
+    },
+    {
+      "id": "24",
+      "note": "plan.repo_fingerprint = c6cac1a26669eddf matches upstream",
+      "ok": true
+    }
+  ],
+  "cost_usd": 0.0,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "issue": "FORA-84",
+  "planner_runtime_ms": 0.438,
+  "planner_version": "wave-planner/0.1.0",
+  "sub_goal": "8.3",
+  "summary": {
+    "cluster_breaks": 0,
+    "cycle_breaks": 0,
+    "high_risk_waves": 6,
+    "skipped_files": 4,
+    "tier_counts": {
+      "T1": 1,
+      "T2": 1,
+      "T3": 1,
+      "T4": 1
+    },
+    "total_estimated_effort_days": 5.071,
+    "total_files": 18,
+    "total_waves": 7,
+    "unit_counts": {
+      "api_gateway": 1,
+      "aurora": 2,
+      "cloudfront": 2,
+      "container": 5,
+      "ec2": 3,
+      "lambda": 1,
+      "rds": 1,
+      "step_functions": 1
+    }
+  },
+  "total_waves": 7,
+  "wall_ms": 28.027
+}

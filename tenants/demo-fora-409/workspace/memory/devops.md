@@ -228,8 +228,8 @@ This section is the **handoff contract** between Epic 5 (Security) and Epic 7 (D
 **Stage placement:** 6th of 7 (`Ideation → Architect → Dev → QA → Security → DevOps → Docs`). No new stages — DevOps is the last stage that touches the cloud.
 
 **Sub-goals:**
-- **6.1 Artifact generation** — `artifact-generator` (DevOps). Dockerfile, Terraform, Helm, GitHub Actions, ArgoCD app. Delivered as a PR. MCPs: GitHub MCP, AWS/Azure/GCP MCP (read-only), Confluence MCP. Issue: [FORA-40](/FORA/issues/FORA-40). Blocked by [FORA-19 Epic 3](/FORA/issues/FORA-19) and [FORA-21 Epic 5](/FORA/issues/FORA-21).
-- **6.2 Deployment** — `deploy-agent` (Cloud Architect). ArgoCD sync + post-deploy verification + audit log entry + stage-handoff JSON to Epic 7. MCPs: AWS / Azure / GCP MCP, GitHub MCP, Slack/Teams MCP, Confluence MCP. Issue: [FORA-44](/FORA/issues/FORA-44). Blocked by [FORA-40](/FORA/issues/FORA-40).
+- **6.1 Artifact generation** — `artifact-generator` (DevOps). Dockerfile, Terraform, Helm, GitHub Actions, ArgoCD app. Delivered as a PR. MCPs: GitHub MCP, AWS/Azure/GCP MCP (read-only), Confluence MCP. Issue: [Forge AI-40](/Forge AI/issues/Forge AI-40). Blocked by [Forge AI-19 Epic 3](/Forge AI/issues/Forge AI-19) and [Forge AI-21 Epic 5](/Forge AI/issues/Forge AI-21).
+- **6.2 Deployment** — `deploy-agent` (Cloud Architect). ArgoCD sync + post-deploy verification + audit log entry + stage-handoff JSON to Epic 7. MCPs: AWS / Azure / GCP MCP, GitHub MCP, Slack/Teams MCP, Confluence MCP. Issue: [Forge AI-44](/Forge AI/issues/Forge AI-44). Blocked by [Forge AI-40](/Forge AI/issues/Forge AI-40).
 
 **Hard rules (the "no surprises" rules):**
 1. The agent has **no IAM role of its own** — all `apply` happens via GitHub Actions OIDC into a per-env least-privilege role. Console access is denied.
@@ -238,7 +238,7 @@ This section is the **handoff contract** between Epic 5 (Security) and Epic 7 (D
 4. **No shared context with the Developer agent** — the DevOps stage inherits the same isolation rule as Security (per the plan).
 5. **No new stages** — adding a "post-deploy verification" or "rollback" stage is rejected; both live inside 6.2.
 
-**Stage-handoff JSON (5 → 6.1):** `{ tenant_id, service, image: { repo, tag }, customer: { cloud, region, k8s }, security_clearance: { secrets, deps, iac } }`. See `/docs/agents/artifact-generator.md` (TBD on [FORA-40](/FORA/issues/FORA-40)) for the full schema.
+**Stage-handoff JSON (5 → 6.1):** `{ tenant_id, service, image: { repo, tag }, customer: { cloud, region, k8s }, security_clearance: { secrets, deps, iac } }`. See `/docs/agents/artifact-generator.md` (TBD on [Forge AI-40](/Forge AI/issues/Forge AI-40)) for the full schema.
 
 **Stage-handoff JSON (6.1 → 6.2):** adds `helm_overrides`, `rollback: { previous_tag }`, `deploy_window: { allowed, needs_cto }`.
 
@@ -252,9 +252,9 @@ This section is the **handoff contract** between Epic 5 (Security) and Epic 7 (D
 - `deploy-agent` decision: ≤ 500 tokens
 - Per-tenant per-day cap enforced by the [cost-agent] (Epic 0.6).
 
-**Acceptance for the epic:** [FORA-40](/FORA/issues/FORA-40) done + [FORA-44](/FORA/issues/FORA-44) done + audit log captures pre/post hashes + a real customer deploy behind the gate.
+**Acceptance for the epic:** [Forge AI-40](/Forge AI/issues/Forge AI-40) done + [Forge AI-44](/Forge AI/issues/Forge AI-44) done + audit log captures pre/post hashes + a real customer deploy behind the gate.
 
-**The full plan (rev 1):** [Epic 6 — DevOps Stage Plan](/FORA/issues/FORA-22#document-devops-stage-plan).
+**The full plan (rev 1):** [Epic 6 — DevOps Stage Plan](/Forge AI/issues/Forge AI-22#document-devops-stage-plan).
 
 ## 13. DevOps anti-patterns — extended for the stage
 

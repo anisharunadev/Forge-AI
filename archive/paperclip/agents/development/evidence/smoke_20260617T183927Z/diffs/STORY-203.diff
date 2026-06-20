@@ -1,0 +1,102 @@
+--- /dev/null
++++ b/apps/api/src/db/migrations/add_email_index_migration.sql
+@@ -0,0 +1,18 @@
++-- Auto-generated scaffold — DO NOT COMMIT without review.
+
++-- plan_id: plan-42806efb27
+
++-- story_id: STORY-203
+
++-- task_id: t-001
+
++-- ac_refs: ac-1, ac-2
+
++-- description: Write the SQL migration that introduces the add_email_index_migration change. Include a down migration in the same file.
+
++
+
++-- TODO[3.2/v0.2]: fill in column definitions from the AC descriptions.
+
++-- v0.1 emits the id + audit columns every table in this codebase needs.
+
++
+
++CREATE TABLE IF NOT EXISTS apps_api_src_db_migrations_add_email_index_migration_sql (
+
++    id UUID PRIMARY KEY,
+
++    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+
++    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+
++);
+
++
+
++-- Down migration
+
++-- DROP TABLE IF EXISTS apps_api_src_db_migrations_add_email_index_migration_sql;
+
+
+--- /dev/null
++++ b/apps/api/test/integration/migrations/add_email_index_migration/test_smoke.py
+@@ -0,0 +1,30 @@
++"""
+
++Auto-generated scaffold — DO NOT COMMIT without review.
+
++
+
++plan_id: plan-42806efb27
+
++story_id: STORY-203
+
++task_id: t-002
+
++ac_refs: ac-1, ac-2
+
++
+
++description: Smoke test that applies the migration on a fresh DB and rolls it back. Asserts the schema diff matches the spec.
+
++"""
+
++
+
++from __future__ import annotations
+
++
+
++import pytest
+
++
+
++
+
++class TestAddAddEmailIndexMigrationMigrationSmokeTest:
+
++    """Unit tests for AddAddEmailIndexMigrationMigrationSmokeTest. v0.1 scaffold — fill bodies in v0.2."""
+
++
+
++    def test_constructor_happy_path(self):
+
++        # TODO[3.2/v0.2]: construct a valid AddAddEmailIndexMigrationMigrationSmokeTest and assert fields
+
++        pytest.skip("scaffold-only — body in v0.2")
+
++
+
++    def test_validate_rejects_invalid_input(self):
+
++        # TODO[3.2/v0.2]: assert validate() raises on bad input
+
++        pytest.skip("scaffold-only — body in v0.2")
+
++
+
++    def test_to_dict_round_trip(self):
+
++        # TODO[3.2/v0.2]: assert to_dict → from_row is identity
+
++        pytest.skip("scaffold-only — body in v0.2")

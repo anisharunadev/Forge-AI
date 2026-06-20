@@ -1,0 +1,155 @@
+{
+  "duration_ms": 12,
+  "failure_count": 4,
+  "scenario": "FORA-201 / 11.2b \u2014 GitHub Issues adapter",
+  "scenario_count": 5,
+  "scenarios": [
+    {
+      "data": {
+        "exception": "AttributeError(\"'GitHubIssuesAdapter' object has no attribute '_record_rate_limit'\")"
+      },
+      "duration_ms": 0,
+      "failures": [
+        "exception: Traceback (most recent call last):\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/sync_plane_service/adapters/test_github.py\", line 738, in main\n    r = scenario()\n        ^^^^^^^^^^\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/sync_plane_service/adapters/test_github.py\", line 205, in scenario_create\n    result = adapter.apply_mirror(\"acme-co\", entity)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/sync_plane_service/adapters/github.py\", line 942, in apply_mirror\n    issue_resp = self._create_issue(token, repo, entity)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/sync_plane_service/adapters/github.py\", line 1371, in _create_issue\n    self._record_rate_limit(resp)\n    ^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'GitHubIssuesAdapter' object has no attribute '_record_rate_limit'\n"
+      ],
+      "name": "scenario_create"
+    },
+    {
+      "data": {
+        "exception": "AttributeError(\"'GitHubIssuesAdapter' object has no attribute '_record_rate_limit'\")"
+      },
+      "duration_ms": 0,
+      "failures": [
+        "exception: Traceback (most recent call last):\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/sync_plane_service/adapters/test_github.py\", line 738, in main\n    r = scenario()\n        ^^^^^^^^^^\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/sync_plane_service/adapters/test_github.py\", line 278, in scenario_comment_round_trip\n    r1 = adapter.apply_mirror(\"acme-co\", entity, comment=_comment())\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/sync_plane_service/adapters/github.py\", line 937, in apply_mirror\n    issue_resp = self._update_issue(\n                 ^^^^^^^^^^^^^^^^^^^\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/sync_plane_service/adapters/github.py\", line 1424, in _update_issue\n    self._record_rate_limit(resp)\n    ^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'GitHubIssuesAdapter' object has no attribute '_record_rate_limit'\n"
+      ],
+      "name": "scenario_comment_round_trip"
+    },
+    {
+      "data": {
+        "forward": [
+          {
+            "github_state": "open",
+            "github_state_reason": "",
+            "paperclip": "todo"
+          },
+          {
+            "github_state": "open",
+            "github_state_reason": "",
+            "paperclip": "in_progress"
+          },
+          {
+            "github_state": "open",
+            "github_state_reason": "",
+            "paperclip": "in_review"
+          },
+          {
+            "github_state": "open",
+            "github_state_reason": "",
+            "paperclip": "blocked"
+          },
+          {
+            "github_state": "open",
+            "github_state_reason": "",
+            "paperclip": "backlog"
+          },
+          {
+            "github_state": "closed",
+            "github_state_reason": "completed",
+            "paperclip": "done"
+          },
+          {
+            "github_state": "closed",
+            "github_state_reason": "not_planned",
+            "paperclip": "cancelled"
+          }
+        ],
+        "forward_pairs": [
+          [
+            "closed",
+            "completed"
+          ],
+          [
+            "closed",
+            "not_planned"
+          ],
+          [
+            "open",
+            ""
+          ]
+        ],
+        "forward_status_count": 7,
+        "inverse": [
+          {
+            "github_state": "open",
+            "github_state_reason": "",
+            "paperclip": "in_progress"
+          },
+          {
+            "github_state": "open",
+            "github_state_reason": "reopened",
+            "paperclip": "in_progress"
+          },
+          {
+            "github_state": "closed",
+            "github_state_reason": "completed",
+            "paperclip": "done"
+          },
+          {
+            "github_state": "closed",
+            "github_state_reason": "not_planned",
+            "paperclip": "cancelled"
+          },
+          {
+            "github_state": "closed",
+            "github_state_reason": "",
+            "paperclip": "done"
+          }
+        ],
+        "inverse_pair_count": 5,
+        "override": [
+          {
+            "github_state": "closed",
+            "github_state_reason": "not_planned",
+            "status": "done",
+            "tenant": "acme-co"
+          },
+          {
+            "github_state": "closed",
+            "github_state_reason": "completed",
+            "status": "blocked",
+            "tenant": "bigbank"
+          }
+        ],
+        "verdict_invariant": {
+          "paperclip_status_attr": "not_a_real_status",
+          "raised": "StatusMappingError"
+        }
+      },
+      "duration_ms": 0,
+      "failures": [],
+      "name": "status_mapping"
+    },
+    {
+      "data": {
+        "exception": "AttributeError(\"'GitHubIssuesAdapter' object has no attribute '_record_rate_limit'\")"
+      },
+      "duration_ms": 0,
+      "failures": [
+        "exception: Traceback (most recent call last):\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/sync_plane_service/adapters/test_github.py\", line 738, in main\n    r = scenario()\n        ^^^^^^^^^^\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/sync_plane_service/adapters/test_github.py\", line 575, in scenario_rate_limit_health\n    result = adapter.apply_mirror(\"acme-co\", _entity(entity_id=\"iss-002\", title=\"x\"))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/sync_plane_service/adapters/github.py\", line 942, in apply_mirror\n    issue_resp = self._create_issue(token, repo, entity)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/sync_plane_service/adapters/github.py\", line 1371, in _create_issue\n    self._record_rate_limit(resp)\n    ^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'GitHubIssuesAdapter' object has no attribute '_record_rate_limit'\n"
+      ],
+      "name": "scenario_rate_limit_health"
+    },
+    {
+      "data": {
+        "exception": "AttributeError(\"'GitHubIssuesAdapter' object has no attribute '_record_rate_limit'\")"
+      },
+      "duration_ms": 0,
+      "failures": [
+        "exception: Traceback (most recent call last):\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/sync_plane_service/adapters/test_github.py\", line 738, in main\n    r = scenario()\n        ^^^^^^^^^^\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/sync_plane_service/adapters/test_github.py\", line 635, in scenario_divergence_signal\n    result = adapter.apply_mirror(\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/sync_plane_service/adapters/github.py\", line 942, in apply_mirror\n    issue_resp = self._create_issue(token, repo, entity)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/sync_plane_service/adapters/github.py\", line 1371, in _create_issue\n    self._record_rate_limit(resp)\n    ^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'GitHubIssuesAdapter' object has no attribute '_record_rate_limit'\n"
+      ],
+      "name": "scenario_divergence_signal"
+    }
+  ],
+  "started_at": "2026-06-20T05:31:49Z",
+  "status": "fail"
+}

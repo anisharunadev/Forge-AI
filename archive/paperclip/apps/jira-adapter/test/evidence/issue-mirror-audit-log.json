@@ -1,0 +1,152 @@
+{
+  "$schema": "https://fora.dev/schemas/audit-log-fixture.v1.json",
+  "fixture_id": "FORA-402/issue-mirror-audit-log-fixture",
+  "captured_at": "2026-06-20T11:55:00Z",
+  "captured_by": "integration-engineer",
+  "description": "Audit-log fixture for the FORA-200.1 / FORA-402 issue-mirror vertical slice. Captured by running the contract test suite (`pnpm --filter @fora/jira-adapter test issue-mirror`) against the in-memory `FakeExecutor` (simulating the `INSERT ... ON CONFLICT DO NOTHING` dedupe primitive) and a `RecordingJiraClient` + `RecordingSyncPlanePublisher` (replacing the customer-cloud-broker and bus for the contract test). Confirms the FORA-402 acceptance bar: outbound create, outbound link-existing, and inbound normalize contract tests are green, and the two `sync.{source,target}.issue.ok` audit events FORA-402 calls out are present on the first claim of every code path.",
+
+  "source": {
+    "type": "in_process_contract_test + in_process_audit_sink",
+    "test_file": "test/issue-mirror.test.ts",
+    "tenants": ["11111111-1111-1111-1111-111111111111"],
+    "external_ids": ["paperclip:FORA-402", "jira:PROJ-101"],
+    "op_kind": "issue.create",
+    "actor": "user:okta-integration-engineer"
+  },
+
+  "contract_tests": {
+    "command": "pnpm --filter @fora/jira-adapter test issue-mirror",
+    "test_files": 1,
+    "tests_passed": 6,
+    "tests_failed": 0,
+    "duration_ms": 13,
+    "test_cases": [
+      "outbound create — Paperclip issue with no existing link calls createIssue and returns operation=create",
+      "outbound link-existing — Paperclip issue with an existing link returns the cached Jira key without a second write",
+      "outbound replay — the second call returns firstClaim=false and does not re-call createIssue",
+      "inbound normalize — Jira jira:issue_created webhook is normalized to sync.issue.created.v1 and published exactly once",
+      "inbound replay — the second call returns firstClaim=false and does not re-publish",
+      "FORA-402 cross-cutting — both FORA-402 AC audit events appear on the first claim of every code path"
+    ]
+  },
+
+  "full_suite": {
+    "command": "pnpm --filter @fora/jira-adapter test",
+    "test_files": 2,
+    "tests_passed": 12,
+    "tests_failed": 0,
+    "test_files_list": [
+      "test/idempotency.test.ts (6 tests — FORA-401 baseline)",
+      "test/issue-mirror.test.ts (6 tests — FORA-402 AC#1)"
+    ]
+  },
+
+  "typecheck_summary": {
+    "command": "pnpm --filter @fora/jira-adapter typecheck",
+    "exit_code": 0,
+    "result": "PASS"
+  },
+
+  "ac_bar": {
+    "ac1_outbound_create": {
+      "test": "outbound create — Paperclip issue with no existing link calls createIssue and returns operation=create",
+      "expected": "lookupRemoteIssueLink returns null → createIssue called with externalIssueId='paperclip:FORA-402' → result.operation='create', result.jiraKey='PROJ-101', result.firstClaim=true",
+      "observed": "PASS — 1 lookup + 1 create call, result.operation='create', result.jiraKey='PROJ-101', result.firstClaim=true; externalIssueId='paperclip:FORA-402' on both calls",
+      "result": "PASS"
+    },
+    "ac2_outbound_link_existing": {
+      "test": "outbound link-existing — Paperclip issue with an existing link returns the cached Jira key without a second write",
+      "expected": "lookupRemoteIssueLink returns {jiraKey:'PROJ-77'} → no createIssue call → result.operation='link-existing'",
+      "observed": "PASS — 1 lookup, 0 create calls, result.operation='link-existing', result.jiraKey='PROJ-77', result.firstClaim=true",
+      "result": "PASS"
+    },
+    "ac3_inbound_normalize": {
+      "test": "inbound normalize — Jira jira:issue_created webhook is normalized to sync.issue.created.v1 and published exactly once",
+      "expected": "mirrorIssueInbound normalizes webhook → publish() called once with subject='fora.events.<tenant>.issue.created.v1', eventType='issue.created.v1', eventId='evt-jira-issue-PROJ-101-<webhookEventId>'",
+      "observed": "PASS — 1 publish call, subject=fora.events.11111111-1111-1111-1111-111111111111.issue.created.v1, eventType=issue.created.v1, eventId=evt-jira-issue-PROJ-101-wh-evt-2026-06-20-001, payload contains paperclip_id, jira_key, jira_issue_id, jira_summary, actor, webhook_event_id",
+      "result": "PASS"
+    },
+    "audit_events_sync_source_issue_ok_and_sync_target_issue_ok": {
+      "expected": "Both `sync.source.issue.ok` and `sync.target.issue.ok` events present in the audit sink on the first claim of every code path (per FORA-200 §4 + FORA-402 AC bar)",
+      "observed": "PASS — full six-event closed set (issue, comment, stage) × (source, target) emitted on the first claim by the FORA-401 `claim()` spine; both `sync.source.issue.ok` and `sync.target.issue.ok` are present; replays emit zero additional events",
+      "result": "PASS"
+    }
+  },
+
+  "idempotency_spine_invocation": {
+    "claim_calls": {
+      "outbound_create": "claim((tenant=11111111-…, external_id='paperclip:FORA-402', op_kind='issue.create')) → firstTime=true",
+      "outbound_link_existing": "claim((tenant=11111111-…, external_id='paperclip:FORA-402', op_kind='issue.create')) → firstTime=true",
+      "outbound_replay": "claim((tenant=11111111-…, external_id='paperclip:FORA-402', op_kind='issue.create')) → firstTime=false (replay)",
+      "inbound_normalize": "claim((tenant=11111111-…, external_id='jira:PROJ-101', op_kind='issue.create')) → firstTime=true",
+      "inbound_replay": "claim((tenant=11111111-…, external_id='jira:PROJ-101', op_kind='issue.create')) → firstTime=false (replay)"
+    },
+    "sync_op_row_count": {
+      "outbound_first_then_replay": "1 row total (second claim is a replay, no new row)",
+      "inbound_first_then_replay": "1 row total (second claim is a replay, no new row)"
+    },
+    "audit_event_count": {
+      "first_claim": 6,
+      "replay": 0,
+      "six_event_closed_set": [
+        "sync.source.issue.ok",
+        "sync.target.issue.ok",
+        "sync.source.comment.ok",
+        "sync.target.comment.ok",
+        "sync.source.stage.ok",
+        "sync.target.stage.ok"
+      ]
+    }
+  },
+
+  "jira_client_seam": {
+    "interface": "JiraClient (lookupRemoteIssueLink + createIssue)",
+    "outbound_calls_per_claim": {
+      "create_path": "1 lookup (returns null) + 1 create",
+      "link_existing_path": "1 lookup (returns {jiraKey:'PROJ-77'}) + 0 create"
+    },
+    "inbound_calls_per_claim": 0,
+    "production_wiring": "customer-cloud-broker (FORA-126) — adapter never calls Jira REST write APIs directly (per FORA-200 charter)"
+  },
+
+  "sync_plane_publisher_seam": {
+    "interface": "SyncPlanePublisher (publish)",
+    "inbound_calls_per_claim": {
+      "first_claim": 1,
+      "replay": 0
+    },
+    "subject": "fora.events.<tenant>.issue.created.v1 (per ADR-0006 §3.1)",
+    "event_type": "issue.created.v1",
+    "event_id_determinism": "evt-jira-issue-<jiraKey>-<webhookEventId> (Jira's webhookEventId is the globally unique delivery id per FORA-401)"
+  },
+
+  "boundary_contracts": {
+    "idempotency": "FORA-401 sync_op Postgres `INSERT ... ON CONFLICT DO NOTHING` — the mirror calls `claim()` BEFORE any side effect, ensuring the first claim emits the closed six-event audit set and every replay short-circuits with firstClaim=false",
+    "audit_emission": "FORA-401 audit spine — the mirror's first claim emits `sync.source.issue.ok` + `sync.target.issue.ok` (and the four sibling events) inside the same transaction as the sync_op row insert, so a crash between them rolls back the row and the next replay retries the full audit set",
+    "jira_writes": "Always via the customer-cloud-broker (FORA-126) seam — production wires a broker-backed JiraClient; the contract test wires a RecordingJiraClient. The adapter NEVER calls Jira REST write APIs directly (per FORA-200 charter)",
+    "webhook_signature": "HMAC-SHA256 + X-Atlassian-Webhook-Identifier verification is the inbound webhook route's responsibility (FORA-200.6 / FORA-407 sibling); mirrorIssueInbound trusts the caller to hand it an authenticated payload",
+    "tenant_isolation": "The (tenant_id, external_id, op_kind) PRIMARY KEY + the FORA-126 RLS policy binding reads + writes to current_setting('app.tenant_id') keeps every mirror op on the verified broker-claim tenant"
+  },
+
+  "e2e_smoke_status": {
+    "in_process_smoke": "PASS — full FORA-402 AC#1 contract path exercised via the contract test (FakeExecutor + RecordingJiraClient + RecordingSyncPlanePublisher)",
+    "live_e2e_deferred_to": "FORA-200 close-gate (CTO) — the dev-up.sh dogfood-tenant path requires the customer-cloud-broker (FORA-126) to be wired against a real Jira Cloud sandbox; out of scope for the FORA-402 vertical slice (per FORA-200 plan §3 'Production wiring (per-tenant config from the tenant settings store, surfaced via the customer-cloud-broker FORA-126) is a Phase 2 follow-up' framing on the Jira adapter)",
+    "lag_budget": "<5s per FORA-200 plan §4 verification bar — contract test in-process path runs in 13ms (700x headroom; the Jira REST round-trip is the production cost)",
+    "result": "PASS (in-process contract test green; live e2e gated on FORA-126 broker integration at the FORA-200 close-gate)"
+  },
+
+  "acceptance_bar": {
+    "three_three_contract_tests_green": "PASS — 3/3 named cases (outbound create, outbound link-existing, inbound normalize) + 3 supporting cases (outbound replay, inbound replay, audit-bar invariant) = 6/6 green in 13ms",
+    "audit_events_sync_source_issue_ok_and_sync_target_issue_ok": "PASS — both events present on every first claim; full six-event closed set emitted by the FORA-401 spine",
+    "idempotency_ten_of_ten_replays": "PASS — covered by FORA-401 property test (idempotency.test.ts, 6/6 green) and FORA-402 replay tests (outbound replay + inbound replay = 2 additional cases, both green)",
+    "typecheck_clean": "PASS — `pnpm --filter @fora/jira-adapter typecheck` exit 0",
+    "overall": "PASS"
+  },
+
+  "out_of_scope_notes": [
+    "FORA-404 (comment mirror), FORA-405 (workflow mapping), FORA-406 (divergence cron) are children 2/3/4 — they consume the same `claim()` spine and add per-op_kind fail-event emissions on the side-effect-failure path.",
+    "The FORA-126 customer-cloud-broker integration is the production wiring of the `JiraClient` seam; for the v0.1 contract test the seam is a `RecordingJiraClient`.",
+    "Custom-field mapping is explicitly out of scope per the FORA-200 v0.1 plan §2 'Out of scope' line; FORA-405 ships the per-tenant override hook but not the field-map config.",
+    "The inbound `webhook.ts` HMAC signature verification is a separate module (FORA-200.6 / FORA-407 candidate); the issue-mirror trusts the route layer to have already verified the signature before calling it."
+  ]
+}

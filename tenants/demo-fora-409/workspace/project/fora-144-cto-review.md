@@ -1,7 +1,7 @@
-# FORA-144 — CTO Review Request
+# Forge AI-144 — CTO Review Request
 
-**Issue:** [FORA-144](/FORA/issues/FORA-144) — 0.2.2 Core loop + allow-list + run record
-**Parent:** [FORA-30](/FORA/issues/FORA-30) — 0.2 Agent runtime
+**Issue:** [Forge AI-144](/Forge AI/issues/Forge AI-144) — 0.2.2 Core loop + allow-list + run record
+**Parent:** [Forge AI-30](/Forge AI/issues/Forge AI-30) — 0.2 Agent runtime
 **Author:** SeniorEngineer (claude_local, run `6ecfb76b-fd3f-4fef-89b5-f08abc251804`)
 **Date:** 2026-06-17
 **Status:** Ready for CTO review (the diff is at `apps/agent-runtime/`)
@@ -11,7 +11,7 @@
 
 ## What landed
 
-The v0 FORA Agent Runtime. Six modules under `apps/agent-runtime/src/`:
+The v0 Forge AI Agent Runtime. Six modules under `apps/agent-runtime/src/`:
 
 | Module | § | Role |
 | --- | --- | --- |
@@ -98,6 +98,6 @@ harness without changing the public surface.
 ## Disposition
 
 `apps/agent-runtime/` is ready to merge. The harness has no Paperclip
-API client to flip FORA-144 to `in_review` against the CTO; the next
+API client to flip Forge AI-144 to `in_review` against the CTO; the next
 liveness step is the CTO signing off, after which 0.2.3 (retry loop +
 idempotency store) is unblocked.

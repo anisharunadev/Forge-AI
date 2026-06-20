@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "handoff_id": "iacscan-c622467e9d",
+  "run_id": "run-77-smoke-short",
+  "tenant_id": "acme-corp",
+  "scanner_run_id": "run-f0793a9619c0",
+  "decision": "pass",
+  "verdict": "pass",
+  "findings": [],
+  "finding_count": 0,
+  "severity_counts": {},
+  "scanners_used": [],
+  "scanner_versions": {},
+  "pr_comment_posted": false,
+  "evidence_audit_id": "evidence-a3acb68850d5",
+  "duration_ms": 0.0,
+  "generated_at": "2026-06-20T05:47:01Z",
+  "iac_files": [],
+  "file_types_scanned": [],
+  "iac_not_present": true,
+  "mode": "per_pr"
+}

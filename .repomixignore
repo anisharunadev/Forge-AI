@@ -1,0 +1,23 @@
+# Exclude build/binary noise
+**/node_modules/
+**/dist/
+**/build/
+**/coverage/
+**/*.lock
+**/*.map
+**/*.log
+tmp/
+**/*.json
+
+# Exclude assets that consume tokens without adding "logic"
+**/*.svg
+**/*.png
+**/*.jpg
+**/*.ico
+**/*.gif
+
+# Exclude non-essential source files for the AI
+**/__tests__/
+**/*.test.ts
+**/*.spec.ts
+**/*.md

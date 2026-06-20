@@ -1,0 +1,2022 @@
+{
+  "schema_version": "1.0.0",
+  "agent": "qa",
+  "issue": "FORA-46",
+  "publish_mode": "live-sample",
+  "paths_exercised": [
+    "happy",
+    "failed_validation",
+    "v1_marker_no_op"
+  ],
+  "happy": {
+    "status": "passed",
+    "test_run": {
+      "schema_version": "1.0.0",
+      "test_run_id": "trun-588bd8306fa0",
+      "test_plan_id": "tplan-smoke-happy",
+      "started_at": "2026-06-17T00:28:15Z",
+      "finished_at": "2026-06-17T00:28:15Z",
+      "duration_ms": 0,
+      "status": "passed",
+      "verdict": "pass",
+      "failure_summary": "",
+      "mode": "sample",
+      "tier_results": [
+        {
+          "tier": "unit",
+          "framework": "pytest",
+          "command": "pytest -q tests/unit",
+          "status": "passed",
+          "total": 6,
+          "passed": 6,
+          "failed": 0,
+          "skipped": 0,
+          "not_implemented": 0,
+          "duration_ms": 0.398,
+          "p50_ms": 0.0,
+          "p99_ms": 0.0,
+          "sample_failures": [],
+          "cases": [
+            {
+              "id": "unit-checkout-api_src_idempotency",
+              "name": "test_checkout-api_src_idempotency_contract",
+              "target": "checkout-api/src/idempotency.py",
+              "framework": "pytest",
+              "command": "pytest -q tests/unit",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_checkout-api_src_idempotency.py"
+            },
+            {
+              "id": "unit-checkout-api_src_checkout",
+              "name": "test_checkout-api_src_checkout_contract",
+              "target": "checkout-api/src/checkout.py",
+              "framework": "pytest",
+              "command": "pytest -q tests/unit",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_checkout-api_src_checkout.py"
+            },
+            {
+              "id": "unit-web_pages_checkout.tsx",
+              "name": "test_web_pages_checkout.tsx_contract",
+              "target": "web/pages/checkout.tsx",
+              "framework": "pytest",
+              "command": "pytest -q tests/unit",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_web_pages_checkout.tsx.py"
+            },
+            {
+              "id": "unit-api_v1_openapi.yaml",
+              "name": "test_api_v1_openapi.yaml_contract",
+              "target": "api/v1/openapi.yaml",
+              "framework": "pytest",
+              "command": "pytest -q tests/unit",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_api_v1_openapi.yaml.py"
+            },
+            {
+              "id": "unit-mcp_server",
+              "name": "test_mcp_server_contract",
+              "target": "mcp/server.py",
+              "framework": "pytest",
+              "command": "pytest -q tests/unit",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_mcp_server.py"
+            },
+            {
+              "id": "unit-README.md",
+              "name": "test_README.md_contract",
+              "target": "README.md",
+              "framework": "pytest",
+              "command": "pytest -q tests/unit",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_README.md.py"
+            }
+          ],
+          "error": null,
+          "notes": "[required=True] v1 skeleton: 6 unit-test file(s) emitted under /tmp/qa_smoke_vg3ut52p/happy_evidence"
+        },
+        {
+          "tier": "integration",
+          "framework": "pytest",
+          "command": "pytest -q tests/integration",
+          "status": "passed",
+          "total": 4,
+          "passed": 4,
+          "failed": 0,
+          "skipped": 0,
+          "not_implemented": 0,
+          "duration_ms": 0.203,
+          "p50_ms": 0.0,
+          "p99_ms": 0.0,
+          "sample_failures": [],
+          "cases": [
+            {
+              "id": "integration-api",
+              "name": "test_api_integration",
+              "target": "api",
+              "framework": "pytest",
+              "command": "pytest -q tests/integration",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_integration_api.py"
+            },
+            {
+              "id": "integration-checkout-api",
+              "name": "test_checkout-api_integration",
+              "target": "checkout-api",
+              "framework": "pytest",
+              "command": "pytest -q tests/integration",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_integration_checkout-api.py"
+            },
+            {
+              "id": "integration-mcp",
+              "name": "test_mcp_integration",
+              "target": "mcp",
+              "framework": "pytest",
+              "command": "pytest -q tests/integration",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_integration_mcp.py"
+            },
+            {
+              "id": "integration-web",
+              "name": "test_web_integration",
+              "target": "web",
+              "framework": "pytest",
+              "command": "pytest -q tests/integration",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_integration_web.py"
+            }
+          ],
+          "error": null,
+          "notes": "[required=True] v1 skeleton: 4 integration suite(s) across 4 boundary/ies"
+        },
+        {
+          "tier": "e2e",
+          "framework": "playwright",
+          "command": "playwright test e2e/",
+          "status": "passed",
+          "total": 1,
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "not_implemented": 0,
+          "duration_ms": 0.0,
+          "p50_ms": 0.0,
+          "p99_ms": 0.0,
+          "sample_failures": [],
+          "cases": [
+            {
+              "id": "e2e-FORA-org_checkout-api482",
+              "name": "test_e2e_FORA-org_checkout-api482_happy_path",
+              "target": "FORA-org/checkout-api#482",
+              "framework": "playwright",
+              "command": "playwright test e2e/",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_e2e_FORA-org_checkout-api482.spec.ts"
+            }
+          ],
+          "error": null,
+          "notes": "[required=False] v1 skeleton: emitted e2e spec at /tmp/qa_smoke_vg3ut52p/happy_evidence/test_e2e_FORA-org_checkout-api482.spec.ts"
+        },
+        {
+          "tier": "contract",
+          "framework": "pact",
+          "command": "pact verify pacts/",
+          "status": "passed",
+          "total": 1,
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "not_implemented": 0,
+          "duration_ms": 0.0,
+          "p50_ms": 0.0,
+          "p99_ms": 0.0,
+          "sample_failures": [],
+          "cases": [
+            {
+              "id": "contract-FORA-org_checkout-api482",
+              "name": "test_contract_FORA-org_checkout-api482_pact",
+              "target": "FORA-org/checkout-api#482",
+              "framework": "pact",
+              "command": "pact verify pacts/",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_contract_FORA-org_checkout-api482.py"
+            }
+          ],
+          "error": null,
+          "notes": "[required=True] v1 skeleton: emitted contract suite at /tmp/qa_smoke_vg3ut52p/happy_evidence/test_contract_FORA-org_checkout-api482.py"
+        }
+      ],
+      "publish_meta": {
+        "mode": "noop",
+        "source_pr": "FORA-org/checkout-api#482",
+        "branch": "qa/test-gen",
+        "files_committed": [
+          "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_checkout-api_src_idempotency.py",
+          "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_checkout-api_src_checkout.py",
+          "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_web_pages_checkout.tsx.py",
+          "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_api_v1_openapi.yaml.py",
+          "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_mcp_server.py",
+          "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_README.md.py",
+          "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_integration_api.py",
+          "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_integration_checkout-api.py",
+          "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_integration_mcp.py",
+          "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_integration_web.py",
+          "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_e2e_FORA-org_checkout-api482.spec.ts",
+          "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_contract_FORA-org_checkout-api482.py"
+        ],
+        "github_pr_url": null,
+        "github_pr_number": null,
+        "commit_message": "qa: add generated tests for FORA-org/checkout-api#482",
+        "started_at": "2026-06-17T00:28:15Z",
+        "finished_at": "2026-06-17T00:28:15Z",
+        "mcp_calls": [],
+        "error": null
+      },
+      "source_pr": "FORA-org/checkout-api#482"
+    },
+    "coverage_report": {
+      "schema_version": "1.0.0",
+      "coverage_id": "cov-27c85f1f8579",
+      "test_run_id": "trun-588bd8306fa0",
+      "line_pct": 0.0,
+      "branch_pct": 0.0,
+      "mutation_pct": null,
+      "by_tier": [
+        {
+          "tier": "unit",
+          "line_pct": 0.0,
+          "branch_pct": 0.0,
+          "mutation_pct": null,
+          "available": true,
+          "notes": "[required=True] v1 skeleton: 6 unit-test file(s) emitted under /tmp/qa_smoke_vg3ut52p/happy_evidence"
+        },
+        {
+          "tier": "integration",
+          "line_pct": 0.0,
+          "branch_pct": 0.0,
+          "mutation_pct": null,
+          "available": true,
+          "notes": "[required=True] v1 skeleton: 4 integration suite(s) across 4 boundary/ies"
+        },
+        {
+          "tier": "e2e",
+          "line_pct": 0.0,
+          "branch_pct": 0.0,
+          "mutation_pct": null,
+          "available": true,
+          "notes": "[required=False] v1 skeleton: emitted e2e spec at /tmp/qa_smoke_vg3ut52p/happy_evidence/test_e2e_FORA-org_checkout-api482.spec.ts"
+        },
+        {
+          "tier": "contract",
+          "line_pct": 0.0,
+          "branch_pct": 0.0,
+          "mutation_pct": null,
+          "available": true,
+          "notes": "[required=True] v1 skeleton: emitted contract suite at /tmp/qa_smoke_vg3ut52p/happy_evidence/test_contract_FORA-org_checkout-api482.py"
+        }
+      ],
+      "notes": "v1 coverage stub: real numbers land in Phase 2 from the runner",
+      "produced_at": "2026-06-17T00:28:15.577481Z"
+    },
+    "signals": {
+      "pr_diff": {
+        "source": "pr_diff",
+        "fetched_at": "2026-06-17T00:28:15Z",
+        "mode": "sample",
+        "items": [
+          {
+            "path": "checkout-api/src/idempotency.py",
+            "status": "added",
+            "hunks": [
+              "@@ -0,0 +1,12 @@"
+            ],
+            "lines_added": 18,
+            "lines_removed": 0
+          },
+          {
+            "path": "checkout-api/src/checkout.py",
+            "status": "added",
+            "hunks": [
+              "@@ -0,0 +1,14 @@"
+            ],
+            "lines_added": 14,
+            "lines_removed": 0
+          },
+          {
+            "path": "web/pages/checkout.tsx",
+            "status": "added",
+            "hunks": [
+              "@@ -0,0 +1,8 @@"
+            ],
+            "lines_added": 8,
+            "lines_removed": 0
+          },
+          {
+            "path": "api/v1/openapi.yaml",
+            "status": "added",
+            "hunks": [
+              "@@ -0,0 +1,12 @@"
+            ],
+            "lines_added": 17,
+            "lines_removed": 0
+          },
+          {
+            "path": "mcp/server.py",
+            "status": "added",
+            "hunks": [
+              "@@ -0,0 +1,3 @@"
+            ],
+            "lines_added": 3,
+            "lines_removed": 0
+          },
+          {
+            "path": "README.md",
+            "status": "modified",
+            "hunks": [
+              "@@ -1,1 +1,2 @@"
+            ],
+            "lines_added": 1,
+            "lines_removed": 0
+          }
+        ],
+        "summary": "6 files in diff (/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/qa/fixtures/fixture_pr.diff)"
+      },
+      "tech_stack": {
+        "source": "tech_stack",
+        "fetched_at": "2026-06-17T00:28:15Z",
+        "mode": "sample",
+        "items": {
+          "language": "python",
+          "unit_framework": "pytest",
+          "integration_framework": "pytest",
+          "e2e_framework": "",
+          "contract_framework": "",
+          "package_manager": "",
+          "raw_excerpt": "# FORA \u2014 Tech Stack\n\n**Status:** v1.0 (production bar, 2026-06-17) \u2014 meets the Knowledge Layer bar in [README \u00a73](../README.md#3-the-acceptance-bar)\n**Owner:** CTO owns merges. The relevant stage owner co-signs their section (DevOps owns \u00a75, \u00a76, \u00a77; Security owns \u00a79, \u00a710; the lead engineer co-signs \u00a72, \u00a73, \u00a74).\n**Convention:** Every choice in this document is justified. Alternatives considered, why this one, maintenance signal, exit plan. \"It depends\" is not in a v1 file.\n**Glossary:** Every acronym below (MCP, OIDC, SAML, MFA, SSO, EKS, ALB, FTS, RDS, KMS, CDN, WAF, IaC, CI/CD, SLO, RPS, p99, p50, SSE, RSC, pgvector, ASVS, BYOK, SLA, etc.) is defined in [customer/glossary.md](../customer/glossary.md). If you find a term used here that is not in the glossary, file a glossary PR.\n**Linked Paperclip issues:**\n- Parent Epic: [FORA-26](/FORA/issues/FORA-26) \u2014 Epic 10 \u2014 Knowledge Layer\n- Sub-goal: [FORA-100](/FORA/issues/FORA-100) \u2014 10.3 Project folder hardening\n- Plan of record: [FORA-15](/FORA/issues/FORA-15#doc"
+        },
+        "summary": "tech-stack: language='python', unit='pytest'"
+      },
+      "conventions": {
+        "source": "conventions",
+        "fetched_at": "2026-06-17T00:28:15Z",
+        "mode": "sample",
+        "items": [
+          {
+            "section": "Customer Conventions",
+            "rules": [
+              "Scope:** Naming, repo layout, and delivery norms at the customer level. Overrides the global defaults only where the customer contract requires it.",
+              "Audience:** Every engineer and sub-agent delivering to a customer, and every customer's engineering counterpart.",
+              "Stage injection:** Inject into **Developer**, **DevOps**, and **Documentation** sub-agents. Required when the work touches a customer-specific deliverable.",
+              ""
+            ]
+          },
+          {
+            "section": "0. Quick start",
+            "rules": [
+              "Read [README \u00a79](../README.md#9-quick-start-for-a-new-sub-agent) first.** That is your first ten minutes. This file is the customer-facing delivery bar; the README is how you walk in.",
+              "The convention hierarchy in \u00a71 wins conflicts.** Customer contract > customer-specific override (`engagements/<customer-slug>/conventions.md`) > global convention (this file) > engineering memory. A deviation that is not in the override file is an unlogged exception and gets rejected in PR review.",
+              "A customer PR is not a regular PR.** The customer PR bar in \u00a75 is stricter than the engineering PR bar in [memory/coding.md \u00a710](../memory/coding.md#10-code-review-bar): customer name in the title, Jira link, verification evidence with a screenshot or log, and a security reviewer on isolation/audit/secrets changes.",
+              "Customer-pinned releases are a different release.** They follow the customer's change-management SLA (per \u00a75), ship release notes 5 business days in advance, and are communicated in the customer's preferred channel \u2014 not Slack-only.",
+              ""
+            ]
+          },
+          {
+            "section": "1. The convention hierarchy",
+            "rules": []
+          },
+          {
+            "section": "2. Repo and workspace layout per customer",
+            "rules": []
+          },
+          {
+            "section": "3. Naming conventions",
+            "rules": []
+          },
+          {
+            "section": "4. Severity and priority matrices",
+            "rules": []
+          },
+          {
+            "section": "Severity (engineering triage)",
+            "rules": []
+          },
+          {
+            "section": "Priority (roadmap ordering)",
+            "rules": []
+          },
+          {
+            "section": "5. Delivery norms",
+            "rules": []
+          },
+          {
+            "section": "The PR bar (extends [memory/coding.md \u00a710](../memory/coding.md#10-code-review-bar))",
+            "rules": [
+              "A customer PR **must** name the customer in the title and the description.",
+              "A customer PR **must** link the Jira ticket.",
+              "A customer PR **must** include a verification step with concrete evidence (screenshot, log, command output, or repro recipe).",
+              "A customer PR that touches tenant isolation, the audit log, or the secrets path **must** have a security reviewer."
+            ]
+          },
+          {
+            "section": "The release bar (extends [memory/devops.md \u00a74](../memory/devops.md#4-deployment))",
+            "rules": [
+              "A customer release is a tagged release; it ships through the release train.",
+              "A customer release that is **customer-pinned** (a tag the customer will reference in their own change management) follows the customer's change-management SLA. We publish release notes 5 business days in advance.",
+              "A customer release is communicated in the customer's preferred channel (email, Slack Connect, or customer portal)."
+            ]
+          },
+          {
+            "section": "The incident bar (extends [memory/devops.md \u00a77](../memory/devops.md#7-incident-response-the-play))",
+            "rules": [
+              "A customer-impacting incident triggers a customer notification within 15 min (status page) and 60 min (named account contact).",
+              "A P0 for one customer is a P0 for us. We do not \"blame the customer\" for a bug they hit first."
+            ]
+          },
+          {
+            "section": "6. Communication norms",
+            "rules": [
+              "Tone:** direct, kind, never condescending. We are the expert; we do not perform expertise.",
+              "Channel:** async-first. The customer's preferred channel is the default; internal `#inc-<id>` is the war room.",
+              "Cadence:** weekly status by Friday 17:00 local to the customer. A missed status is a P2 process bug.",
+              "Docs:** the customer-facing doc is the contract. Internal jargon that does not appear in the customer's vocabulary is jargon we have not yet translated. When a term is contested, the [customer/glossary.md](./glossary.md) definition wins."
+            ]
+          },
+          {
+            "section": "7. Customer-specific overrides (the override file)",
+            "rules": []
+          },
+          {
+            "section": "<Customer Name> \u2014 Conventions",
+            "rules": [
+              "Contract reference:** <link to the SOW / MSA section>",
+              "Approved by:** <name, role, date>",
+              "CTO sign-off:** <name, date>"
+            ]
+          },
+          {
+            "section": "Overrides",
+            "rules": []
+          },
+          {
+            "section": "Additions",
+            "rules": [
+              "<things the customer requires that are not in our defaults>"
+            ]
+          },
+          {
+            "section": "Contact",
+            "rules": [
+              "Account contact:** <name, email, phone>",
+              "Escalation:** <name, role, contact>",
+              "Security contact:** <name, role, contact> (24/7 for P0/P1)"
+            ]
+          },
+          {
+            "section": "8. Conventions anti-patterns (auto-flag in review)",
+            "rules": [
+              "A customer-specific convention that lives outside `engagements/<customer-slug>/conventions.md`.",
+              "A customer PR without a Jira link or a customer name.",
+              "A customer release that is not announced in the customer's preferred channel.",
+              "A \"we'll just do it for this customer\" exception that is not in the override file.",
+              "A naming deviation that is not justified by the customer contract.",
+              "A customer weekly status that slips more than 24 h past Friday 17:00 local."
+            ]
+          },
+          {
+            "section": "9. Related",
+            "rules": [
+              "The technical defaults that this overrides: [memory/coding.md](../memory/coding.md), [memory/architecture.md](../memory/architecture.md), [memory/security.md](../memory/security.md), [memory/devops.md](../memory/devops.md)",
+              "The industry standards we inherit: [customer/standards.md](./standards.md)",
+              "Customer-facing vocabulary and acronyms: [customer/glossary.md](./glossary.md)",
+              "The product these conventions serve: [project/PRD.md](../project/PRD.md)",
+              "",
+              "Versioning:** this file ships through the normal release train (see [README \u00a75](../README.md#5-versioning)). A change is a major version bump if it changes the convention hierarchy (\u00a71), the override file format (\u00a77), or the PR/release/incident bars in \u00a75. A change that loosens the customer PR bar, the release announcement SLA, or the customer-pinned release contract is rejected. The CTO owns merges to this file."
+            ]
+          }
+        ],
+        "summary": "conventions: 20 sections parsed"
+      }
+    },
+    "emitted_files": [
+      "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_checkout-api_src_idempotency.py",
+      "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_checkout-api_src_checkout.py",
+      "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_web_pages_checkout.tsx.py",
+      "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_api_v1_openapi.yaml.py",
+      "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_mcp_server.py",
+      "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_README.md.py",
+      "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_integration_api.py",
+      "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_integration_checkout-api.py",
+      "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_integration_mcp.py",
+      "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_integration_web.py",
+      "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_e2e_FORA-org_checkout-api482.spec.ts",
+      "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_contract_FORA-org_checkout-api482.py"
+    ],
+    "validation_errors": [],
+    "error": null,
+    "passed_to_security": true,
+    "gate_decision": {
+      "approved": true,
+      "reviewer": "sec-lead",
+      "reason": "all tiers green; pass to security",
+      "decided_at": "2026-06-17T00:28:15Z"
+    },
+    "gate_requests": 1,
+    "v1_mode": false,
+    "publish_meta": {
+      "mode": "noop",
+      "source_pr": "FORA-org/checkout-api#482",
+      "branch": "qa/test-gen",
+      "files_committed": [
+        "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_checkout-api_src_idempotency.py",
+        "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_checkout-api_src_checkout.py",
+        "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_web_pages_checkout.tsx.py",
+        "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_api_v1_openapi.yaml.py",
+        "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_mcp_server.py",
+        "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_unit_README.md.py",
+        "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_integration_api.py",
+        "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_integration_checkout-api.py",
+        "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_integration_mcp.py",
+        "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_integration_web.py",
+        "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_e2e_FORA-org_checkout-api482.spec.ts",
+        "/tmp/qa_smoke_vg3ut52p/happy_evidence/test_contract_FORA-org_checkout-api482.py"
+      ],
+      "github_pr_url": null,
+      "github_pr_number": null,
+      "commit_message": "qa: add generated tests for FORA-org/checkout-api#482",
+      "started_at": "2026-06-17T00:28:15Z",
+      "finished_at": "2026-06-17T00:28:15Z",
+      "mcp_calls": [],
+      "error": null
+    }
+  },
+  "failed_validation": {
+    "status": "blocked",
+    "test_run": null,
+    "coverage_report": null,
+    "signals": {},
+    "emitted_files": [],
+    "validation_errors": [
+      "TestPlan.schema_version must be '1.0.0', got '999.0.0'",
+      "test_plan.plan_id is required",
+      "test_plan.run_id is required (ADR-0001 \u00a77 join)",
+      "test_plan.contract_id is required (ADR-0001 \u00a77 join)",
+      "test_plan.source_pr is required (e.g. 'org/repo#N')",
+      "test_plan.branch is required",
+      "test_plan.commit_sha must be 40 lowercase hex chars, got 'not-hex'",
+      "test_plan.base_branch is required",
+      "test_plan.target_branch is required",
+      "test_plan.tiers must contain at least one tier"
+    ],
+    "error": "test_plan failed schema validation; not eligible to run",
+    "passed_to_security": false,
+    "gate_decision": null,
+    "gate_requests": 0,
+    "v1_mode": false,
+    "publish_meta": null
+  },
+  "v1_marker_no_op": {
+    "status": "partial",
+    "test_run": {
+      "schema_version": "1.0.0",
+      "test_run_id": "trun-191759efad07",
+      "test_plan_id": "tplan-smoke-v1marker",
+      "started_at": "2026-06-17T00:28:15Z",
+      "finished_at": "2026-06-17T00:28:15Z",
+      "duration_ms": 0,
+      "status": "partial",
+      "verdict": "needs_attention",
+      "failure_summary": "",
+      "mode": "sample",
+      "tier_results": [
+        {
+          "tier": "unit",
+          "framework": "pytest",
+          "command": "pytest -q tests/unit",
+          "status": "passed",
+          "total": 6,
+          "passed": 6,
+          "failed": 0,
+          "skipped": 0,
+          "not_implemented": 0,
+          "duration_ms": 0.352,
+          "p50_ms": 0.0,
+          "p99_ms": 0.0,
+          "sample_failures": [],
+          "cases": [
+            {
+              "id": "unit-checkout-api_src_idempotency",
+              "name": "test_checkout-api_src_idempotency_contract",
+              "target": "checkout-api/src/idempotency.py",
+              "framework": "pytest",
+              "command": "pytest -q tests/unit",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_checkout-api_src_idempotency.py"
+            },
+            {
+              "id": "unit-checkout-api_src_checkout",
+              "name": "test_checkout-api_src_checkout_contract",
+              "target": "checkout-api/src/checkout.py",
+              "framework": "pytest",
+              "command": "pytest -q tests/unit",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_checkout-api_src_checkout.py"
+            },
+            {
+              "id": "unit-web_pages_checkout.tsx",
+              "name": "test_web_pages_checkout.tsx_contract",
+              "target": "web/pages/checkout.tsx",
+              "framework": "pytest",
+              "command": "pytest -q tests/unit",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_web_pages_checkout.tsx.py"
+            },
+            {
+              "id": "unit-api_v1_openapi.yaml",
+              "name": "test_api_v1_openapi.yaml_contract",
+              "target": "api/v1/openapi.yaml",
+              "framework": "pytest",
+              "command": "pytest -q tests/unit",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_api_v1_openapi.yaml.py"
+            },
+            {
+              "id": "unit-mcp_server",
+              "name": "test_mcp_server_contract",
+              "target": "mcp/server.py",
+              "framework": "pytest",
+              "command": "pytest -q tests/unit",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_mcp_server.py"
+            },
+            {
+              "id": "unit-README.md",
+              "name": "test_README.md_contract",
+              "target": "README.md",
+              "framework": "pytest",
+              "command": "pytest -q tests/unit",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_README.md.py"
+            }
+          ],
+          "error": null,
+          "notes": "[required=True] v1 skeleton: 6 unit-test file(s) emitted under /tmp/qa_smoke_vg3ut52p/v1marker_evidence"
+        },
+        {
+          "tier": "integration",
+          "framework": "pytest",
+          "command": "pytest -q tests/integration",
+          "status": "passed",
+          "total": 4,
+          "passed": 4,
+          "failed": 0,
+          "skipped": 0,
+          "not_implemented": 0,
+          "duration_ms": 0.147,
+          "p50_ms": 0.0,
+          "p99_ms": 0.0,
+          "sample_failures": [],
+          "cases": [
+            {
+              "id": "integration-api",
+              "name": "test_api_integration",
+              "target": "api",
+              "framework": "pytest",
+              "command": "pytest -q tests/integration",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_integration_api.py"
+            },
+            {
+              "id": "integration-checkout-api",
+              "name": "test_checkout-api_integration",
+              "target": "checkout-api",
+              "framework": "pytest",
+              "command": "pytest -q tests/integration",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_integration_checkout-api.py"
+            },
+            {
+              "id": "integration-mcp",
+              "name": "test_mcp_integration",
+              "target": "mcp",
+              "framework": "pytest",
+              "command": "pytest -q tests/integration",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_integration_mcp.py"
+            },
+            {
+              "id": "integration-web",
+              "name": "test_web_integration",
+              "target": "web",
+              "framework": "pytest",
+              "command": "pytest -q tests/integration",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_integration_web.py"
+            }
+          ],
+          "error": null,
+          "notes": "[required=True] v1 skeleton: 4 integration suite(s) across 4 boundary/ies"
+        },
+        {
+          "tier": "mutation",
+          "framework": "",
+          "command": "",
+          "status": "not_implemented",
+          "total": 0,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "not_implemented": 0,
+          "duration_ms": 0.0,
+          "p50_ms": 0.0,
+          "p99_ms": 0.0,
+          "sample_failures": [],
+          "cases": [],
+          "error": null,
+          "notes": "no generator registered for tier 'mutation'"
+        }
+      ],
+      "publish_meta": {
+        "mode": "noop",
+        "source_pr": "FORA-org/checkout-api#483",
+        "branch": "qa/test-gen",
+        "files_committed": [
+          "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_checkout-api_src_idempotency.py",
+          "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_checkout-api_src_checkout.py",
+          "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_web_pages_checkout.tsx.py",
+          "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_api_v1_openapi.yaml.py",
+          "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_mcp_server.py",
+          "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_README.md.py",
+          "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_integration_api.py",
+          "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_integration_checkout-api.py",
+          "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_integration_mcp.py",
+          "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_integration_web.py"
+        ],
+        "github_pr_url": null,
+        "github_pr_number": null,
+        "commit_message": "qa: add generated tests for FORA-org/checkout-api#483",
+        "started_at": "2026-06-17T00:28:15Z",
+        "finished_at": "2026-06-17T00:28:15Z",
+        "mcp_calls": [],
+        "error": null
+      },
+      "source_pr": "FORA-org/checkout-api#483"
+    },
+    "coverage_report": {
+      "schema_version": "1.0.0",
+      "coverage_id": "cov-0100266bd8b7",
+      "test_run_id": "trun-191759efad07",
+      "line_pct": 0.0,
+      "branch_pct": 0.0,
+      "mutation_pct": null,
+      "by_tier": [
+        {
+          "tier": "unit",
+          "line_pct": 0.0,
+          "branch_pct": 0.0,
+          "mutation_pct": null,
+          "available": true,
+          "notes": "[required=True] v1 skeleton: 6 unit-test file(s) emitted under /tmp/qa_smoke_vg3ut52p/v1marker_evidence"
+        },
+        {
+          "tier": "integration",
+          "line_pct": 0.0,
+          "branch_pct": 0.0,
+          "mutation_pct": null,
+          "available": true,
+          "notes": "[required=True] v1 skeleton: 4 integration suite(s) across 4 boundary/ies"
+        },
+        {
+          "tier": "mutation",
+          "line_pct": 0.0,
+          "branch_pct": 0.0,
+          "mutation_pct": null,
+          "available": false,
+          "notes": "no generator registered for tier 'mutation'"
+        }
+      ],
+      "notes": "v1 coverage stub: real numbers land in Phase 2 from the runner",
+      "produced_at": "2026-06-17T00:28:15.580086Z"
+    },
+    "signals": {
+      "pr_diff": {
+        "source": "pr_diff",
+        "fetched_at": "2026-06-17T00:28:15Z",
+        "mode": "sample",
+        "items": [
+          {
+            "path": "checkout-api/src/idempotency.py",
+            "status": "added",
+            "hunks": [
+              "@@ -0,0 +1,12 @@"
+            ],
+            "lines_added": 18,
+            "lines_removed": 0
+          },
+          {
+            "path": "checkout-api/src/checkout.py",
+            "status": "added",
+            "hunks": [
+              "@@ -0,0 +1,14 @@"
+            ],
+            "lines_added": 14,
+            "lines_removed": 0
+          },
+          {
+            "path": "web/pages/checkout.tsx",
+            "status": "added",
+            "hunks": [
+              "@@ -0,0 +1,8 @@"
+            ],
+            "lines_added": 8,
+            "lines_removed": 0
+          },
+          {
+            "path": "api/v1/openapi.yaml",
+            "status": "added",
+            "hunks": [
+              "@@ -0,0 +1,12 @@"
+            ],
+            "lines_added": 17,
+            "lines_removed": 0
+          },
+          {
+            "path": "mcp/server.py",
+            "status": "added",
+            "hunks": [
+              "@@ -0,0 +1,3 @@"
+            ],
+            "lines_added": 3,
+            "lines_removed": 0
+          },
+          {
+            "path": "README.md",
+            "status": "modified",
+            "hunks": [
+              "@@ -1,1 +1,2 @@"
+            ],
+            "lines_added": 1,
+            "lines_removed": 0
+          }
+        ],
+        "summary": "6 files in diff (/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/qa/fixtures/fixture_pr.diff)"
+      },
+      "tech_stack": {
+        "source": "tech_stack",
+        "fetched_at": "2026-06-17T00:28:15Z",
+        "mode": "sample",
+        "items": {
+          "language": "python",
+          "unit_framework": "pytest",
+          "integration_framework": "pytest",
+          "e2e_framework": "",
+          "contract_framework": "",
+          "package_manager": "",
+          "raw_excerpt": "# FORA \u2014 Tech Stack\n\n**Status:** v1.0 (production bar, 2026-06-17) \u2014 meets the Knowledge Layer bar in [README \u00a73](../README.md#3-the-acceptance-bar)\n**Owner:** CTO owns merges. The relevant stage owner co-signs their section (DevOps owns \u00a75, \u00a76, \u00a77; Security owns \u00a79, \u00a710; the lead engineer co-signs \u00a72, \u00a73, \u00a74).\n**Convention:** Every choice in this document is justified. Alternatives considered, why this one, maintenance signal, exit plan. \"It depends\" is not in a v1 file.\n**Glossary:** Every acronym below (MCP, OIDC, SAML, MFA, SSO, EKS, ALB, FTS, RDS, KMS, CDN, WAF, IaC, CI/CD, SLO, RPS, p99, p50, SSE, RSC, pgvector, ASVS, BYOK, SLA, etc.) is defined in [customer/glossary.md](../customer/glossary.md). If you find a term used here that is not in the glossary, file a glossary PR.\n**Linked Paperclip issues:**\n- Parent Epic: [FORA-26](/FORA/issues/FORA-26) \u2014 Epic 10 \u2014 Knowledge Layer\n- Sub-goal: [FORA-100](/FORA/issues/FORA-100) \u2014 10.3 Project folder hardening\n- Plan of record: [FORA-15](/FORA/issues/FORA-15#doc"
+        },
+        "summary": "tech-stack: language='python', unit='pytest'"
+      },
+      "conventions": {
+        "source": "conventions",
+        "fetched_at": "2026-06-17T00:28:15Z",
+        "mode": "sample",
+        "items": [
+          {
+            "section": "Customer Conventions",
+            "rules": [
+              "Scope:** Naming, repo layout, and delivery norms at the customer level. Overrides the global defaults only where the customer contract requires it.",
+              "Audience:** Every engineer and sub-agent delivering to a customer, and every customer's engineering counterpart.",
+              "Stage injection:** Inject into **Developer**, **DevOps**, and **Documentation** sub-agents. Required when the work touches a customer-specific deliverable.",
+              ""
+            ]
+          },
+          {
+            "section": "0. Quick start",
+            "rules": [
+              "Read [README \u00a79](../README.md#9-quick-start-for-a-new-sub-agent) first.** That is your first ten minutes. This file is the customer-facing delivery bar; the README is how you walk in.",
+              "The convention hierarchy in \u00a71 wins conflicts.** Customer contract > customer-specific override (`engagements/<customer-slug>/conventions.md`) > global convention (this file) > engineering memory. A deviation that is not in the override file is an unlogged exception and gets rejected in PR review.",
+              "A customer PR is not a regular PR.** The customer PR bar in \u00a75 is stricter than the engineering PR bar in [memory/coding.md \u00a710](../memory/coding.md#10-code-review-bar): customer name in the title, Jira link, verification evidence with a screenshot or log, and a security reviewer on isolation/audit/secrets changes.",
+              "Customer-pinned releases are a different release.** They follow the customer's change-management SLA (per \u00a75), ship release notes 5 business days in advance, and are communicated in the customer's preferred channel \u2014 not Slack-only.",
+              ""
+            ]
+          },
+          {
+            "section": "1. The convention hierarchy",
+            "rules": []
+          },
+          {
+            "section": "2. Repo and workspace layout per customer",
+            "rules": []
+          },
+          {
+            "section": "3. Naming conventions",
+            "rules": []
+          },
+          {
+            "section": "4. Severity and priority matrices",
+            "rules": []
+          },
+          {
+            "section": "Severity (engineering triage)",
+            "rules": []
+          },
+          {
+            "section": "Priority (roadmap ordering)",
+            "rules": []
+          },
+          {
+            "section": "5. Delivery norms",
+            "rules": []
+          },
+          {
+            "section": "The PR bar (extends [memory/coding.md \u00a710](../memory/coding.md#10-code-review-bar))",
+            "rules": [
+              "A customer PR **must** name the customer in the title and the description.",
+              "A customer PR **must** link the Jira ticket.",
+              "A customer PR **must** include a verification step with concrete evidence (screenshot, log, command output, or repro recipe).",
+              "A customer PR that touches tenant isolation, the audit log, or the secrets path **must** have a security reviewer."
+            ]
+          },
+          {
+            "section": "The release bar (extends [memory/devops.md \u00a74](../memory/devops.md#4-deployment))",
+            "rules": [
+              "A customer release is a tagged release; it ships through the release train.",
+              "A customer release that is **customer-pinned** (a tag the customer will reference in their own change management) follows the customer's change-management SLA. We publish release notes 5 business days in advance.",
+              "A customer release is communicated in the customer's preferred channel (email, Slack Connect, or customer portal)."
+            ]
+          },
+          {
+            "section": "The incident bar (extends [memory/devops.md \u00a77](../memory/devops.md#7-incident-response-the-play))",
+            "rules": [
+              "A customer-impacting incident triggers a customer notification within 15 min (status page) and 60 min (named account contact).",
+              "A P0 for one customer is a P0 for us. We do not \"blame the customer\" for a bug they hit first."
+            ]
+          },
+          {
+            "section": "6. Communication norms",
+            "rules": [
+              "Tone:** direct, kind, never condescending. We are the expert; we do not perform expertise.",
+              "Channel:** async-first. The customer's preferred channel is the default; internal `#inc-<id>` is the war room.",
+              "Cadence:** weekly status by Friday 17:00 local to the customer. A missed status is a P2 process bug.",
+              "Docs:** the customer-facing doc is the contract. Internal jargon that does not appear in the customer's vocabulary is jargon we have not yet translated. When a term is contested, the [customer/glossary.md](./glossary.md) definition wins."
+            ]
+          },
+          {
+            "section": "7. Customer-specific overrides (the override file)",
+            "rules": []
+          },
+          {
+            "section": "<Customer Name> \u2014 Conventions",
+            "rules": [
+              "Contract reference:** <link to the SOW / MSA section>",
+              "Approved by:** <name, role, date>",
+              "CTO sign-off:** <name, date>"
+            ]
+          },
+          {
+            "section": "Overrides",
+            "rules": []
+          },
+          {
+            "section": "Additions",
+            "rules": [
+              "<things the customer requires that are not in our defaults>"
+            ]
+          },
+          {
+            "section": "Contact",
+            "rules": [
+              "Account contact:** <name, email, phone>",
+              "Escalation:** <name, role, contact>",
+              "Security contact:** <name, role, contact> (24/7 for P0/P1)"
+            ]
+          },
+          {
+            "section": "8. Conventions anti-patterns (auto-flag in review)",
+            "rules": [
+              "A customer-specific convention that lives outside `engagements/<customer-slug>/conventions.md`.",
+              "A customer PR without a Jira link or a customer name.",
+              "A customer release that is not announced in the customer's preferred channel.",
+              "A \"we'll just do it for this customer\" exception that is not in the override file.",
+              "A naming deviation that is not justified by the customer contract.",
+              "A customer weekly status that slips more than 24 h past Friday 17:00 local."
+            ]
+          },
+          {
+            "section": "9. Related",
+            "rules": [
+              "The technical defaults that this overrides: [memory/coding.md](../memory/coding.md), [memory/architecture.md](../memory/architecture.md), [memory/security.md](../memory/security.md), [memory/devops.md](../memory/devops.md)",
+              "The industry standards we inherit: [customer/standards.md](./standards.md)",
+              "Customer-facing vocabulary and acronyms: [customer/glossary.md](./glossary.md)",
+              "The product these conventions serve: [project/PRD.md](../project/PRD.md)",
+              "",
+              "Versioning:** this file ships through the normal release train (see [README \u00a75](../README.md#5-versioning)). A change is a major version bump if it changes the convention hierarchy (\u00a71), the override file format (\u00a77), or the PR/release/incident bars in \u00a75. A change that loosens the customer PR bar, the release announcement SLA, or the customer-pinned release contract is rejected. The CTO owns merges to this file."
+            ]
+          }
+        ],
+        "summary": "conventions: 20 sections parsed"
+      }
+    },
+    "emitted_files": [
+      "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_checkout-api_src_idempotency.py",
+      "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_checkout-api_src_checkout.py",
+      "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_web_pages_checkout.tsx.py",
+      "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_api_v1_openapi.yaml.py",
+      "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_mcp_server.py",
+      "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_README.md.py",
+      "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_integration_api.py",
+      "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_integration_checkout-api.py",
+      "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_integration_mcp.py",
+      "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_integration_web.py"
+    ],
+    "validation_errors": [],
+    "error": null,
+    "passed_to_security": true,
+    "gate_decision": {
+      "approved": true,
+      "reviewer": "sec-lead",
+      "reason": "approving with the not_implemented gap surfaced",
+      "decided_at": "2026-06-17T00:28:15Z"
+    },
+    "gate_requests": 1,
+    "v1_mode": true,
+    "publish_meta": {
+      "mode": "noop",
+      "source_pr": "FORA-org/checkout-api#483",
+      "branch": "qa/test-gen",
+      "files_committed": [
+        "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_checkout-api_src_idempotency.py",
+        "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_checkout-api_src_checkout.py",
+        "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_web_pages_checkout.tsx.py",
+        "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_api_v1_openapi.yaml.py",
+        "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_mcp_server.py",
+        "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_unit_README.md.py",
+        "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_integration_api.py",
+        "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_integration_checkout-api.py",
+        "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_integration_mcp.py",
+        "/tmp/qa_smoke_vg3ut52p/v1marker_evidence/test_integration_web.py"
+      ],
+      "github_pr_url": null,
+      "github_pr_number": null,
+      "commit_message": "qa: add generated tests for FORA-org/checkout-api#483",
+      "started_at": "2026-06-17T00:28:15Z",
+      "finished_at": "2026-06-17T00:28:15Z",
+      "mcp_calls": [],
+      "error": null
+    }
+  },
+  "live_publish": {
+    "status": "passed",
+    "test_run": {
+      "schema_version": "1.0.0",
+      "test_run_id": "trun-58a384f3e0fc",
+      "test_plan_id": "tplan-smoke-happy",
+      "started_at": "2026-06-17T00:28:15Z",
+      "finished_at": "2026-06-17T00:28:15Z",
+      "duration_ms": 0,
+      "status": "passed",
+      "verdict": "pass",
+      "failure_summary": "",
+      "mode": "sample",
+      "tier_results": [
+        {
+          "tier": "unit",
+          "framework": "pytest",
+          "command": "pytest -q tests/unit",
+          "status": "passed",
+          "total": 6,
+          "passed": 6,
+          "failed": 0,
+          "skipped": 0,
+          "not_implemented": 0,
+          "duration_ms": 0.373,
+          "p50_ms": 0.0,
+          "p99_ms": 0.0,
+          "sample_failures": [],
+          "cases": [
+            {
+              "id": "unit-checkout-api_src_idempotency",
+              "name": "test_checkout-api_src_idempotency_contract",
+              "target": "checkout-api/src/idempotency.py",
+              "framework": "pytest",
+              "command": "pytest -q tests/unit",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_checkout-api_src_idempotency.py"
+            },
+            {
+              "id": "unit-checkout-api_src_checkout",
+              "name": "test_checkout-api_src_checkout_contract",
+              "target": "checkout-api/src/checkout.py",
+              "framework": "pytest",
+              "command": "pytest -q tests/unit",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_checkout-api_src_checkout.py"
+            },
+            {
+              "id": "unit-web_pages_checkout.tsx",
+              "name": "test_web_pages_checkout.tsx_contract",
+              "target": "web/pages/checkout.tsx",
+              "framework": "pytest",
+              "command": "pytest -q tests/unit",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_web_pages_checkout.tsx.py"
+            },
+            {
+              "id": "unit-api_v1_openapi.yaml",
+              "name": "test_api_v1_openapi.yaml_contract",
+              "target": "api/v1/openapi.yaml",
+              "framework": "pytest",
+              "command": "pytest -q tests/unit",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_api_v1_openapi.yaml.py"
+            },
+            {
+              "id": "unit-mcp_server",
+              "name": "test_mcp_server_contract",
+              "target": "mcp/server.py",
+              "framework": "pytest",
+              "command": "pytest -q tests/unit",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_mcp_server.py"
+            },
+            {
+              "id": "unit-README.md",
+              "name": "test_README.md_contract",
+              "target": "README.md",
+              "framework": "pytest",
+              "command": "pytest -q tests/unit",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_README.md.py"
+            }
+          ],
+          "error": null,
+          "notes": "[required=True] v1 skeleton: 6 unit-test file(s) emitted under /tmp/qa_smoke_vg3ut52p/live_publish"
+        },
+        {
+          "tier": "integration",
+          "framework": "pytest",
+          "command": "pytest -q tests/integration",
+          "status": "passed",
+          "total": 4,
+          "passed": 4,
+          "failed": 0,
+          "skipped": 0,
+          "not_implemented": 0,
+          "duration_ms": 0.17200000000000001,
+          "p50_ms": 0.0,
+          "p99_ms": 0.0,
+          "sample_failures": [],
+          "cases": [
+            {
+              "id": "integration-api",
+              "name": "test_api_integration",
+              "target": "api",
+              "framework": "pytest",
+              "command": "pytest -q tests/integration",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_api.py"
+            },
+            {
+              "id": "integration-checkout-api",
+              "name": "test_checkout-api_integration",
+              "target": "checkout-api",
+              "framework": "pytest",
+              "command": "pytest -q tests/integration",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_checkout-api.py"
+            },
+            {
+              "id": "integration-mcp",
+              "name": "test_mcp_integration",
+              "target": "mcp",
+              "framework": "pytest",
+              "command": "pytest -q tests/integration",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_mcp.py"
+            },
+            {
+              "id": "integration-web",
+              "name": "test_web_integration",
+              "target": "web",
+              "framework": "pytest",
+              "command": "pytest -q tests/integration",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_web.py"
+            }
+          ],
+          "error": null,
+          "notes": "[required=True] v1 skeleton: 4 integration suite(s) across 4 boundary/ies"
+        },
+        {
+          "tier": "e2e",
+          "framework": "playwright",
+          "command": "playwright test e2e/",
+          "status": "passed",
+          "total": 1,
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "not_implemented": 0,
+          "duration_ms": 0.0,
+          "p50_ms": 0.0,
+          "p99_ms": 0.0,
+          "sample_failures": [],
+          "cases": [
+            {
+              "id": "e2e-FORA-org_checkout-api482",
+              "name": "test_e2e_FORA-org_checkout-api482_happy_path",
+              "target": "FORA-org/checkout-api#482",
+              "framework": "playwright",
+              "command": "playwright test e2e/",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/live_publish/test_e2e_FORA-org_checkout-api482.spec.ts"
+            }
+          ],
+          "error": null,
+          "notes": "[required=False] v1 skeleton: emitted e2e spec at /tmp/qa_smoke_vg3ut52p/live_publish/test_e2e_FORA-org_checkout-api482.spec.ts"
+        },
+        {
+          "tier": "contract",
+          "framework": "pact",
+          "command": "pact verify pacts/",
+          "status": "passed",
+          "total": 1,
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "not_implemented": 0,
+          "duration_ms": 0.0,
+          "p50_ms": 0.0,
+          "p99_ms": 0.0,
+          "sample_failures": [],
+          "cases": [
+            {
+              "id": "contract-FORA-org_checkout-api482",
+              "name": "test_contract_FORA-org_checkout-api482_pact",
+              "target": "FORA-org/checkout-api#482",
+              "framework": "pact",
+              "command": "pact verify pacts/",
+              "status": "passed",
+              "duration_ms": 0.0,
+              "evidence": "/tmp/qa_smoke_vg3ut52p/live_publish/test_contract_FORA-org_checkout-api482.py"
+            }
+          ],
+          "error": null,
+          "notes": "[required=True] v1 skeleton: emitted contract suite at /tmp/qa_smoke_vg3ut52p/live_publish/test_contract_FORA-org_checkout-api482.py"
+        }
+      ],
+      "publish_meta": {
+        "mode": "sample",
+        "source_pr": "FORA-org/checkout-api#482",
+        "branch": "qa/test-gen",
+        "files_committed": [
+          "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_checkout-api_src_idempotency.py",
+          "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_checkout-api_src_checkout.py",
+          "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_web_pages_checkout.tsx.py",
+          "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_api_v1_openapi.yaml.py",
+          "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_mcp_server.py",
+          "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_README.md.py",
+          "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_api.py",
+          "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_checkout-api.py",
+          "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_mcp.py",
+          "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_web.py",
+          "/tmp/qa_smoke_vg3ut52p/live_publish/test_e2e_FORA-org_checkout-api482.spec.ts",
+          "/tmp/qa_smoke_vg3ut52p/live_publish/test_contract_FORA-org_checkout-api482.py"
+        ],
+        "github_pr_url": "https://github.com/FORA-org/checkout-api/pull/99001",
+        "github_pr_number": 99001,
+        "commit_message": "qa: add generated tests for FORA-org/checkout-api#482",
+        "started_at": "2026-06-17T00:28:15Z",
+        "finished_at": "2026-06-17T00:28:15Z",
+        "mcp_calls": [
+          {
+            "tool": "get_pull_request_files",
+            "args": {
+              "repo": "FORA-org/checkout-api",
+              "number": 482
+            },
+            "ok": true,
+            "duration_ms": 0.3,
+            "result_excerpt": "1 files"
+          },
+          {
+            "tool": "get_pr",
+            "args": {
+              "repo": "FORA-org/checkout-api",
+              "number": 482
+            },
+            "ok": true,
+            "duration_ms": 0.2,
+            "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"number\": 482, \"pr\": {\"number\": 482, \"title\": \"checkout: idempotency ttl follow-up\", \"state\": \"open\", \"user\": {\"login\": \"ops-bot\"}, \"head\": {\"ref\": "
+          },
+          {
+            "tool": "create_branch",
+            "args": {
+              "repo": "FORA-org/checkout-api",
+              "branch": "qa/test-gen",
+              "from_sha": "2222333344445555666677778888999900001111"
+            },
+            "ok": true,
+            "duration_ms": 0.1,
+            "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"sha\": \"2222333344445555666677778888999900001111\", \"created\": true, \"note\": \"Sample data; set GITHUB_MCP_MODE=live to creat"
+          },
+          {
+            "tool": "create_or_update_file",
+            "args": {
+              "repo": "FORA-org/checkout-api",
+              "branch": "qa/test-gen",
+              "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_checkout-api_src_idempotency.py",
+              "message": "qa: add generated tests for FORA-org/checkout-api#482"
+            },
+            "ok": true,
+            "duration_ms": 0.1,
+            "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_checkout-api_src_idempotency.py\", \"content_sha\": \"f8bfe6114499a0cd05"
+          },
+          {
+            "tool": "create_or_update_file",
+            "args": {
+              "repo": "FORA-org/checkout-api",
+              "branch": "qa/test-gen",
+              "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_checkout-api_src_checkout.py",
+              "message": "qa: add generated tests for FORA-org/checkout-api#482"
+            },
+            "ok": true,
+            "duration_ms": 0.1,
+            "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_checkout-api_src_checkout.py\", \"content_sha\": \"47af6f4c1c6b2dd0389c9"
+          },
+          {
+            "tool": "create_or_update_file",
+            "args": {
+              "repo": "FORA-org/checkout-api",
+              "branch": "qa/test-gen",
+              "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_web_pages_checkout.tsx.py",
+              "message": "qa: add generated tests for FORA-org/checkout-api#482"
+            },
+            "ok": true,
+            "duration_ms": 0.3,
+            "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_web_pages_checkout.tsx.py\", \"content_sha\": \"fc7d6790dbc41f23c92e1979"
+          },
+          {
+            "tool": "create_or_update_file",
+            "args": {
+              "repo": "FORA-org/checkout-api",
+              "branch": "qa/test-gen",
+              "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_api_v1_openapi.yaml.py",
+              "message": "qa: add generated tests for FORA-org/checkout-api#482"
+            },
+            "ok": true,
+            "duration_ms": 0.2,
+            "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_api_v1_openapi.yaml.py\", \"content_sha\": \"7b044b9a0e857edbeeaaf90670e"
+          },
+          {
+            "tool": "create_or_update_file",
+            "args": {
+              "repo": "FORA-org/checkout-api",
+              "branch": "qa/test-gen",
+              "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_mcp_server.py",
+              "message": "qa: add generated tests for FORA-org/checkout-api#482"
+            },
+            "ok": true,
+            "duration_ms": 0.2,
+            "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_mcp_server.py\", \"content_sha\": \"9f911f4064284ddc7d38b037c8b8138b7999"
+          },
+          {
+            "tool": "create_or_update_file",
+            "args": {
+              "repo": "FORA-org/checkout-api",
+              "branch": "qa/test-gen",
+              "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_README.md.py",
+              "message": "qa: add generated tests for FORA-org/checkout-api#482"
+            },
+            "ok": true,
+            "duration_ms": 0.1,
+            "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_README.md.py\", \"content_sha\": \"0af9ab6fa5c648a87320ffae399e85a38792e"
+          },
+          {
+            "tool": "create_or_update_file",
+            "args": {
+              "repo": "FORA-org/checkout-api",
+              "branch": "qa/test-gen",
+              "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_api.py",
+              "message": "qa: add generated tests for FORA-org/checkout-api#482"
+            },
+            "ok": true,
+            "duration_ms": 0.2,
+            "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_api.py\", \"content_sha\": \"a43fe925abdb20c4c40b05eeee88937f0c55"
+          },
+          {
+            "tool": "create_or_update_file",
+            "args": {
+              "repo": "FORA-org/checkout-api",
+              "branch": "qa/test-gen",
+              "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_checkout-api.py",
+              "message": "qa: add generated tests for FORA-org/checkout-api#482"
+            },
+            "ok": true,
+            "duration_ms": 0.3,
+            "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_checkout-api.py\", \"content_sha\": \"51910e5966a70b0571b8126d4d2"
+          },
+          {
+            "tool": "create_or_update_file",
+            "args": {
+              "repo": "FORA-org/checkout-api",
+              "branch": "qa/test-gen",
+              "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_mcp.py",
+              "message": "qa: add generated tests for FORA-org/checkout-api#482"
+            },
+            "ok": true,
+            "duration_ms": 0.2,
+            "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_mcp.py\", \"content_sha\": \"5bc86bb756779d0d245221b25441763b9f3f"
+          },
+          {
+            "tool": "create_or_update_file",
+            "args": {
+              "repo": "FORA-org/checkout-api",
+              "branch": "qa/test-gen",
+              "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_web.py",
+              "message": "qa: add generated tests for FORA-org/checkout-api#482"
+            },
+            "ok": true,
+            "duration_ms": 0.2,
+            "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_web.py\", \"content_sha\": \"9449660888a72cd8b0bd4f9687ed607b541b"
+          },
+          {
+            "tool": "create_or_update_file",
+            "args": {
+              "repo": "FORA-org/checkout-api",
+              "branch": "qa/test-gen",
+              "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_e2e_FORA-org_checkout-api482.spec.ts",
+              "message": "qa: add generated tests for FORA-org/checkout-api#482"
+            },
+            "ok": true,
+            "duration_ms": 0.2,
+            "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_e2e_FORA-org_checkout-api482.spec.ts\", \"content_sha\": \"26874f358be2b109c4"
+          },
+          {
+            "tool": "create_or_update_file",
+            "args": {
+              "repo": "FORA-org/checkout-api",
+              "branch": "qa/test-gen",
+              "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_contract_FORA-org_checkout-api482.py",
+              "message": "qa: add generated tests for FORA-org/checkout-api#482"
+            },
+            "ok": true,
+            "duration_ms": 0.2,
+            "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_contract_FORA-org_checkout-api482.py\", \"content_sha\": \"e042845b911d976a91"
+          },
+          {
+            "tool": "create_pull_request",
+            "args": {
+              "repo": "FORA-org/checkout-api",
+              "head": "qa/test-gen",
+              "base": "main",
+              "title": "qa: tests for FORA-org/checkout-api#482",
+              "body": "QA-generated tests for FORA-org/checkout-api#482\n\nThis PR was opened automatically by the FORA QA agent (FORA-49). The DevOps gate should run the published tests and merge only on a green run."
+            },
+            "ok": true,
+            "duration_ms": 0.2,
+            "result_excerpt": "PR #99001 https://github.com/FORA-org/checkout-api/pull/99001"
+          }
+        ],
+        "error": null
+      },
+      "source_pr": "FORA-org/checkout-api#482"
+    },
+    "coverage_report": {
+      "schema_version": "1.0.0",
+      "coverage_id": "cov-68ba3698d542",
+      "test_run_id": "trun-58a384f3e0fc",
+      "line_pct": 0.0,
+      "branch_pct": 0.0,
+      "mutation_pct": null,
+      "by_tier": [
+        {
+          "tier": "unit",
+          "line_pct": 0.0,
+          "branch_pct": 0.0,
+          "mutation_pct": null,
+          "available": true,
+          "notes": "[required=True] v1 skeleton: 6 unit-test file(s) emitted under /tmp/qa_smoke_vg3ut52p/live_publish"
+        },
+        {
+          "tier": "integration",
+          "line_pct": 0.0,
+          "branch_pct": 0.0,
+          "mutation_pct": null,
+          "available": true,
+          "notes": "[required=True] v1 skeleton: 4 integration suite(s) across 4 boundary/ies"
+        },
+        {
+          "tier": "e2e",
+          "line_pct": 0.0,
+          "branch_pct": 0.0,
+          "mutation_pct": null,
+          "available": true,
+          "notes": "[required=False] v1 skeleton: emitted e2e spec at /tmp/qa_smoke_vg3ut52p/live_publish/test_e2e_FORA-org_checkout-api482.spec.ts"
+        },
+        {
+          "tier": "contract",
+          "line_pct": 0.0,
+          "branch_pct": 0.0,
+          "mutation_pct": null,
+          "available": true,
+          "notes": "[required=True] v1 skeleton: emitted contract suite at /tmp/qa_smoke_vg3ut52p/live_publish/test_contract_FORA-org_checkout-api482.py"
+        }
+      ],
+      "notes": "v1 coverage stub: real numbers land in Phase 2 from the runner",
+      "produced_at": "2026-06-17T00:28:15.703474Z"
+    },
+    "signals": {
+      "pr_diff": {
+        "source": "pr_diff",
+        "fetched_at": "2026-06-17T00:28:15Z",
+        "mode": "sample",
+        "items": [
+          {
+            "path": "checkout-api/src/idempotency.py",
+            "status": "added",
+            "hunks": [
+              "@@ -0,0 +1,12 @@"
+            ],
+            "lines_added": 18,
+            "lines_removed": 0
+          },
+          {
+            "path": "checkout-api/src/checkout.py",
+            "status": "added",
+            "hunks": [
+              "@@ -0,0 +1,14 @@"
+            ],
+            "lines_added": 14,
+            "lines_removed": 0
+          },
+          {
+            "path": "web/pages/checkout.tsx",
+            "status": "added",
+            "hunks": [
+              "@@ -0,0 +1,8 @@"
+            ],
+            "lines_added": 8,
+            "lines_removed": 0
+          },
+          {
+            "path": "api/v1/openapi.yaml",
+            "status": "added",
+            "hunks": [
+              "@@ -0,0 +1,12 @@"
+            ],
+            "lines_added": 17,
+            "lines_removed": 0
+          },
+          {
+            "path": "mcp/server.py",
+            "status": "added",
+            "hunks": [
+              "@@ -0,0 +1,3 @@"
+            ],
+            "lines_added": 3,
+            "lines_removed": 0
+          },
+          {
+            "path": "README.md",
+            "status": "modified",
+            "hunks": [
+              "@@ -1,1 +1,2 @@"
+            ],
+            "lines_added": 1,
+            "lines_removed": 0
+          }
+        ],
+        "summary": "6 files in diff (/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/qa/fixtures/fixture_pr.diff)"
+      },
+      "tech_stack": {
+        "source": "tech_stack",
+        "fetched_at": "2026-06-17T00:28:15Z",
+        "mode": "sample",
+        "items": {
+          "language": "python",
+          "unit_framework": "pytest",
+          "integration_framework": "pytest",
+          "e2e_framework": "",
+          "contract_framework": "",
+          "package_manager": "",
+          "raw_excerpt": "# FORA \u2014 Tech Stack\n\n**Status:** v1.0 (production bar, 2026-06-17) \u2014 meets the Knowledge Layer bar in [README \u00a73](../README.md#3-the-acceptance-bar)\n**Owner:** CTO owns merges. The relevant stage owner co-signs their section (DevOps owns \u00a75, \u00a76, \u00a77; Security owns \u00a79, \u00a710; the lead engineer co-signs \u00a72, \u00a73, \u00a74).\n**Convention:** Every choice in this document is justified. Alternatives considered, why this one, maintenance signal, exit plan. \"It depends\" is not in a v1 file.\n**Glossary:** Every acronym below (MCP, OIDC, SAML, MFA, SSO, EKS, ALB, FTS, RDS, KMS, CDN, WAF, IaC, CI/CD, SLO, RPS, p99, p50, SSE, RSC, pgvector, ASVS, BYOK, SLA, etc.) is defined in [customer/glossary.md](../customer/glossary.md). If you find a term used here that is not in the glossary, file a glossary PR.\n**Linked Paperclip issues:**\n- Parent Epic: [FORA-26](/FORA/issues/FORA-26) \u2014 Epic 10 \u2014 Knowledge Layer\n- Sub-goal: [FORA-100](/FORA/issues/FORA-100) \u2014 10.3 Project folder hardening\n- Plan of record: [FORA-15](/FORA/issues/FORA-15#doc"
+        },
+        "summary": "tech-stack: language='python', unit='pytest'"
+      },
+      "conventions": {
+        "source": "conventions",
+        "fetched_at": "2026-06-17T00:28:15Z",
+        "mode": "sample",
+        "items": [
+          {
+            "section": "Customer Conventions",
+            "rules": [
+              "Scope:** Naming, repo layout, and delivery norms at the customer level. Overrides the global defaults only where the customer contract requires it.",
+              "Audience:** Every engineer and sub-agent delivering to a customer, and every customer's engineering counterpart.",
+              "Stage injection:** Inject into **Developer**, **DevOps**, and **Documentation** sub-agents. Required when the work touches a customer-specific deliverable.",
+              ""
+            ]
+          },
+          {
+            "section": "0. Quick start",
+            "rules": [
+              "Read [README \u00a79](../README.md#9-quick-start-for-a-new-sub-agent) first.** That is your first ten minutes. This file is the customer-facing delivery bar; the README is how you walk in.",
+              "The convention hierarchy in \u00a71 wins conflicts.** Customer contract > customer-specific override (`engagements/<customer-slug>/conventions.md`) > global convention (this file) > engineering memory. A deviation that is not in the override file is an unlogged exception and gets rejected in PR review.",
+              "A customer PR is not a regular PR.** The customer PR bar in \u00a75 is stricter than the engineering PR bar in [memory/coding.md \u00a710](../memory/coding.md#10-code-review-bar): customer name in the title, Jira link, verification evidence with a screenshot or log, and a security reviewer on isolation/audit/secrets changes.",
+              "Customer-pinned releases are a different release.** They follow the customer's change-management SLA (per \u00a75), ship release notes 5 business days in advance, and are communicated in the customer's preferred channel \u2014 not Slack-only.",
+              ""
+            ]
+          },
+          {
+            "section": "1. The convention hierarchy",
+            "rules": []
+          },
+          {
+            "section": "2. Repo and workspace layout per customer",
+            "rules": []
+          },
+          {
+            "section": "3. Naming conventions",
+            "rules": []
+          },
+          {
+            "section": "4. Severity and priority matrices",
+            "rules": []
+          },
+          {
+            "section": "Severity (engineering triage)",
+            "rules": []
+          },
+          {
+            "section": "Priority (roadmap ordering)",
+            "rules": []
+          },
+          {
+            "section": "5. Delivery norms",
+            "rules": []
+          },
+          {
+            "section": "The PR bar (extends [memory/coding.md \u00a710](../memory/coding.md#10-code-review-bar))",
+            "rules": [
+              "A customer PR **must** name the customer in the title and the description.",
+              "A customer PR **must** link the Jira ticket.",
+              "A customer PR **must** include a verification step with concrete evidence (screenshot, log, command output, or repro recipe).",
+              "A customer PR that touches tenant isolation, the audit log, or the secrets path **must** have a security reviewer."
+            ]
+          },
+          {
+            "section": "The release bar (extends [memory/devops.md \u00a74](../memory/devops.md#4-deployment))",
+            "rules": [
+              "A customer release is a tagged release; it ships through the release train.",
+              "A customer release that is **customer-pinned** (a tag the customer will reference in their own change management) follows the customer's change-management SLA. We publish release notes 5 business days in advance.",
+              "A customer release is communicated in the customer's preferred channel (email, Slack Connect, or customer portal)."
+            ]
+          },
+          {
+            "section": "The incident bar (extends [memory/devops.md \u00a77](../memory/devops.md#7-incident-response-the-play))",
+            "rules": [
+              "A customer-impacting incident triggers a customer notification within 15 min (status page) and 60 min (named account contact).",
+              "A P0 for one customer is a P0 for us. We do not \"blame the customer\" for a bug they hit first."
+            ]
+          },
+          {
+            "section": "6. Communication norms",
+            "rules": [
+              "Tone:** direct, kind, never condescending. We are the expert; we do not perform expertise.",
+              "Channel:** async-first. The customer's preferred channel is the default; internal `#inc-<id>` is the war room.",
+              "Cadence:** weekly status by Friday 17:00 local to the customer. A missed status is a P2 process bug.",
+              "Docs:** the customer-facing doc is the contract. Internal jargon that does not appear in the customer's vocabulary is jargon we have not yet translated. When a term is contested, the [customer/glossary.md](./glossary.md) definition wins."
+            ]
+          },
+          {
+            "section": "7. Customer-specific overrides (the override file)",
+            "rules": []
+          },
+          {
+            "section": "<Customer Name> \u2014 Conventions",
+            "rules": [
+              "Contract reference:** <link to the SOW / MSA section>",
+              "Approved by:** <name, role, date>",
+              "CTO sign-off:** <name, date>"
+            ]
+          },
+          {
+            "section": "Overrides",
+            "rules": []
+          },
+          {
+            "section": "Additions",
+            "rules": [
+              "<things the customer requires that are not in our defaults>"
+            ]
+          },
+          {
+            "section": "Contact",
+            "rules": [
+              "Account contact:** <name, email, phone>",
+              "Escalation:** <name, role, contact>",
+              "Security contact:** <name, role, contact> (24/7 for P0/P1)"
+            ]
+          },
+          {
+            "section": "8. Conventions anti-patterns (auto-flag in review)",
+            "rules": [
+              "A customer-specific convention that lives outside `engagements/<customer-slug>/conventions.md`.",
+              "A customer PR without a Jira link or a customer name.",
+              "A customer release that is not announced in the customer's preferred channel.",
+              "A \"we'll just do it for this customer\" exception that is not in the override file.",
+              "A naming deviation that is not justified by the customer contract.",
+              "A customer weekly status that slips more than 24 h past Friday 17:00 local."
+            ]
+          },
+          {
+            "section": "9. Related",
+            "rules": [
+              "The technical defaults that this overrides: [memory/coding.md](../memory/coding.md), [memory/architecture.md](../memory/architecture.md), [memory/security.md](../memory/security.md), [memory/devops.md](../memory/devops.md)",
+              "The industry standards we inherit: [customer/standards.md](./standards.md)",
+              "Customer-facing vocabulary and acronyms: [customer/glossary.md](./glossary.md)",
+              "The product these conventions serve: [project/PRD.md](../project/PRD.md)",
+              "",
+              "Versioning:** this file ships through the normal release train (see [README \u00a75](../README.md#5-versioning)). A change is a major version bump if it changes the convention hierarchy (\u00a71), the override file format (\u00a77), or the PR/release/incident bars in \u00a75. A change that loosens the customer PR bar, the release announcement SLA, or the customer-pinned release contract is rejected. The CTO owns merges to this file."
+            ]
+          }
+        ],
+        "summary": "conventions: 20 sections parsed"
+      }
+    },
+    "emitted_files": [
+      "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_checkout-api_src_idempotency.py",
+      "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_checkout-api_src_checkout.py",
+      "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_web_pages_checkout.tsx.py",
+      "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_api_v1_openapi.yaml.py",
+      "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_mcp_server.py",
+      "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_README.md.py",
+      "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_api.py",
+      "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_checkout-api.py",
+      "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_mcp.py",
+      "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_web.py",
+      "/tmp/qa_smoke_vg3ut52p/live_publish/test_e2e_FORA-org_checkout-api482.spec.ts",
+      "/tmp/qa_smoke_vg3ut52p/live_publish/test_contract_FORA-org_checkout-api482.py"
+    ],
+    "validation_errors": [],
+    "error": null,
+    "passed_to_security": true,
+    "gate_decision": {
+      "approved": true,
+      "reviewer": "sec-lead",
+      "reason": "live-publish smoke path",
+      "decided_at": "2026-06-17T00:28:15Z"
+    },
+    "gate_requests": 1,
+    "v1_mode": false,
+    "publish_meta": {
+      "mode": "sample",
+      "source_pr": "FORA-org/checkout-api#482",
+      "branch": "qa/test-gen",
+      "files_committed": [
+        "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_checkout-api_src_idempotency.py",
+        "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_checkout-api_src_checkout.py",
+        "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_web_pages_checkout.tsx.py",
+        "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_api_v1_openapi.yaml.py",
+        "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_mcp_server.py",
+        "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_README.md.py",
+        "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_api.py",
+        "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_checkout-api.py",
+        "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_mcp.py",
+        "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_web.py",
+        "/tmp/qa_smoke_vg3ut52p/live_publish/test_e2e_FORA-org_checkout-api482.spec.ts",
+        "/tmp/qa_smoke_vg3ut52p/live_publish/test_contract_FORA-org_checkout-api482.py"
+      ],
+      "github_pr_url": "https://github.com/FORA-org/checkout-api/pull/99001",
+      "github_pr_number": 99001,
+      "commit_message": "qa: add generated tests for FORA-org/checkout-api#482",
+      "started_at": "2026-06-17T00:28:15Z",
+      "finished_at": "2026-06-17T00:28:15Z",
+      "mcp_calls": [
+        {
+          "tool": "get_pull_request_files",
+          "args": {
+            "repo": "FORA-org/checkout-api",
+            "number": 482
+          },
+          "ok": true,
+          "duration_ms": 0.3,
+          "result_excerpt": "1 files"
+        },
+        {
+          "tool": "get_pr",
+          "args": {
+            "repo": "FORA-org/checkout-api",
+            "number": 482
+          },
+          "ok": true,
+          "duration_ms": 0.2,
+          "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"number\": 482, \"pr\": {\"number\": 482, \"title\": \"checkout: idempotency ttl follow-up\", \"state\": \"open\", \"user\": {\"login\": \"ops-bot\"}, \"head\": {\"ref\": "
+        },
+        {
+          "tool": "create_branch",
+          "args": {
+            "repo": "FORA-org/checkout-api",
+            "branch": "qa/test-gen",
+            "from_sha": "2222333344445555666677778888999900001111"
+          },
+          "ok": true,
+          "duration_ms": 0.1,
+          "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"sha\": \"2222333344445555666677778888999900001111\", \"created\": true, \"note\": \"Sample data; set GITHUB_MCP_MODE=live to creat"
+        },
+        {
+          "tool": "create_or_update_file",
+          "args": {
+            "repo": "FORA-org/checkout-api",
+            "branch": "qa/test-gen",
+            "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_checkout-api_src_idempotency.py",
+            "message": "qa: add generated tests for FORA-org/checkout-api#482"
+          },
+          "ok": true,
+          "duration_ms": 0.1,
+          "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_checkout-api_src_idempotency.py\", \"content_sha\": \"f8bfe6114499a0cd05"
+        },
+        {
+          "tool": "create_or_update_file",
+          "args": {
+            "repo": "FORA-org/checkout-api",
+            "branch": "qa/test-gen",
+            "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_checkout-api_src_checkout.py",
+            "message": "qa: add generated tests for FORA-org/checkout-api#482"
+          },
+          "ok": true,
+          "duration_ms": 0.1,
+          "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_checkout-api_src_checkout.py\", \"content_sha\": \"47af6f4c1c6b2dd0389c9"
+        },
+        {
+          "tool": "create_or_update_file",
+          "args": {
+            "repo": "FORA-org/checkout-api",
+            "branch": "qa/test-gen",
+            "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_web_pages_checkout.tsx.py",
+            "message": "qa: add generated tests for FORA-org/checkout-api#482"
+          },
+          "ok": true,
+          "duration_ms": 0.3,
+          "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_web_pages_checkout.tsx.py\", \"content_sha\": \"fc7d6790dbc41f23c92e1979"
+        },
+        {
+          "tool": "create_or_update_file",
+          "args": {
+            "repo": "FORA-org/checkout-api",
+            "branch": "qa/test-gen",
+            "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_api_v1_openapi.yaml.py",
+            "message": "qa: add generated tests for FORA-org/checkout-api#482"
+          },
+          "ok": true,
+          "duration_ms": 0.2,
+          "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_api_v1_openapi.yaml.py\", \"content_sha\": \"7b044b9a0e857edbeeaaf90670e"
+        },
+        {
+          "tool": "create_or_update_file",
+          "args": {
+            "repo": "FORA-org/checkout-api",
+            "branch": "qa/test-gen",
+            "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_mcp_server.py",
+            "message": "qa: add generated tests for FORA-org/checkout-api#482"
+          },
+          "ok": true,
+          "duration_ms": 0.2,
+          "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_mcp_server.py\", \"content_sha\": \"9f911f4064284ddc7d38b037c8b8138b7999"
+        },
+        {
+          "tool": "create_or_update_file",
+          "args": {
+            "repo": "FORA-org/checkout-api",
+            "branch": "qa/test-gen",
+            "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_README.md.py",
+            "message": "qa: add generated tests for FORA-org/checkout-api#482"
+          },
+          "ok": true,
+          "duration_ms": 0.1,
+          "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_unit_README.md.py\", \"content_sha\": \"0af9ab6fa5c648a87320ffae399e85a38792e"
+        },
+        {
+          "tool": "create_or_update_file",
+          "args": {
+            "repo": "FORA-org/checkout-api",
+            "branch": "qa/test-gen",
+            "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_api.py",
+            "message": "qa: add generated tests for FORA-org/checkout-api#482"
+          },
+          "ok": true,
+          "duration_ms": 0.2,
+          "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_api.py\", \"content_sha\": \"a43fe925abdb20c4c40b05eeee88937f0c55"
+        },
+        {
+          "tool": "create_or_update_file",
+          "args": {
+            "repo": "FORA-org/checkout-api",
+            "branch": "qa/test-gen",
+            "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_checkout-api.py",
+            "message": "qa: add generated tests for FORA-org/checkout-api#482"
+          },
+          "ok": true,
+          "duration_ms": 0.3,
+          "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_checkout-api.py\", \"content_sha\": \"51910e5966a70b0571b8126d4d2"
+        },
+        {
+          "tool": "create_or_update_file",
+          "args": {
+            "repo": "FORA-org/checkout-api",
+            "branch": "qa/test-gen",
+            "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_mcp.py",
+            "message": "qa: add generated tests for FORA-org/checkout-api#482"
+          },
+          "ok": true,
+          "duration_ms": 0.2,
+          "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_mcp.py\", \"content_sha\": \"5bc86bb756779d0d245221b25441763b9f3f"
+        },
+        {
+          "tool": "create_or_update_file",
+          "args": {
+            "repo": "FORA-org/checkout-api",
+            "branch": "qa/test-gen",
+            "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_web.py",
+            "message": "qa: add generated tests for FORA-org/checkout-api#482"
+          },
+          "ok": true,
+          "duration_ms": 0.2,
+          "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_integration_web.py\", \"content_sha\": \"9449660888a72cd8b0bd4f9687ed607b541b"
+        },
+        {
+          "tool": "create_or_update_file",
+          "args": {
+            "repo": "FORA-org/checkout-api",
+            "branch": "qa/test-gen",
+            "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_e2e_FORA-org_checkout-api482.spec.ts",
+            "message": "qa: add generated tests for FORA-org/checkout-api#482"
+          },
+          "ok": true,
+          "duration_ms": 0.2,
+          "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_e2e_FORA-org_checkout-api482.spec.ts\", \"content_sha\": \"26874f358be2b109c4"
+        },
+        {
+          "tool": "create_or_update_file",
+          "args": {
+            "repo": "FORA-org/checkout-api",
+            "branch": "qa/test-gen",
+            "path": "/tmp/qa_smoke_vg3ut52p/live_publish/test_contract_FORA-org_checkout-api482.py",
+            "message": "qa: add generated tests for FORA-org/checkout-api#482"
+          },
+          "ok": true,
+          "duration_ms": 0.2,
+          "result_excerpt": "{\"mode\": \"sample\", \"repo\": \"FORA-org/checkout-api\", \"branch\": \"qa/test-gen\", \"path\": \"/tmp/qa_smoke_vg3ut52p/live_publish/test_contract_FORA-org_checkout-api482.py\", \"content_sha\": \"e042845b911d976a91"
+        },
+        {
+          "tool": "create_pull_request",
+          "args": {
+            "repo": "FORA-org/checkout-api",
+            "head": "qa/test-gen",
+            "base": "main",
+            "title": "qa: tests for FORA-org/checkout-api#482",
+            "body": "QA-generated tests for FORA-org/checkout-api#482\n\nThis PR was opened automatically by the FORA QA agent (FORA-49). The DevOps gate should run the published tests and merge only on a green run."
+          },
+          "ok": true,
+          "duration_ms": 0.2,
+          "result_excerpt": "PR #99001 https://github.com/FORA-org/checkout-api/pull/99001"
+        }
+      ],
+      "error": null
+    }
+  }
+}

@@ -1,0 +1,79 @@
+---
+version: 0.1.0
+last-reviewed-by: cto
+last-reviewed-at: 2026-06-17
+parent-prd: workspace/project/PRD.md
+parent-issue: FORA-35
+sub-goal: "2.3 — Design generation (design-generator)"
+epic: FORA-18 (Epic 2 — Architecture Agent)
+journey: "Technical — Cost ceiling breach pauses the run"
+related-hld: forge/2.3/hld.md
+related-lld: forge/2.3/lld.md
+related-adrs:
+  - forge/2.3/adr/0004-idempotency-key-envelope.md
+  - ../docs/architecture/adr-0001-master-orchestrator-sdlc-architecture.md
+---
+
+# Sequence 05 — Cost ceiling breach pauses the run
+
+The platform's cost discipline. Every run reports tokens + USD on every stage; the Cost agent watches the running total; on a hard ceiling breach the Orchestrator pauses the run with a typed "budget exceeded" state and surfaces a human-approval interaction. There is no path to silently overrun (security memory §5).
+
+## Diagram
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor CTO as CTO (approver)
+    participant Orch as Master Orchestrator
+    participant Agent as Agent Runtime
+    participant Cost as Cost agent (cross-cutting)
+    participant Bus as NATS + event-bus-bridge
+    participant Audit as Audit Account (SQS + S3)
+
+    Note over Orch,Cost: Run header carries cost_estimate={tokens: 200000, usd: 8.00}<br/>and per-run ceiling={tokens: 1000000, usd: 50.00}<br/>(PRD §8: hard ceiling $50/run, median $5, p99 $20).
+
+    Agent->>Orch: Orchestrator.ReportCost {run_id, stage, tokens_in, tokens_out, cost_usd}
+    Orch->>Orch: UPDATE agent_runs SET cost_actual = cost_actual + delta
+    Orch->>Bus: publish cost.reported {run_id, stage, cumulative_usd, ceiling_usd}
+    Bus->>Audit: ship audit row
+    Cost->>Bus: subscribe (cost.reported)
+    Cost->>Cost: cumulative_usd < 80% of ceiling → no-op
+    Cost-->>Orch: (dashboard updates; no action)
+
+    Note over Agent,Cost: A long stage burns through tokens faster than expected.<br/>cumulative_usd crosses 80% of ceiling.
+
+    Cost->>Bus: publish cost.warning {run_id, cumulative_usd, ceiling_usd, ratio=0.81}
+    Cost-->>Orch: emit warning event
+    Orch-->>CTO: Slack notification (thread reply on the originating run)
+
+    Note over Agent,Cost: Stage continues. The next ReportCost pushes cumulative_usd past 100% of ceiling.
+
+    Agent->>Orch: Orchestrator.ReportCost {tokens_in, tokens_out, cost_usd, cumulative_usd: 52.40}
+    Orch->>Orch: ceiling_usd - cumulative_usd < 0 → run.paused_budget
+    Orch->>Orch: UPDATE agent_runs SET status=paused, paused_reason=budget_exceeded
+    Orch->>Bus: publish run.paused_budget {run_id, cumulative_usd, ceiling_usd, stage}
+    Bus->>Audit: ship audit row
+
+    Orch-->>Agent: ResourceExhausted (gRPC) / 402 BUDGET_EXCEEDED (REST)
+    Note right of Agent: Agent surfaces "budget exceeded, awaiting approval"<br/>to the user; in-process state is checkpointed.
+
+    Orch-->>CTO: request_confirmation(prompt="Run acme-api#142 paused at $52.40 (ceiling $50). Approve $20 extension to finish the dev stage?")
+    CTO->>Orch: POST /v1/approvals/{id}/decisions {decision: accept, reason: "approve $20 extension"}
+    Orch->>Orch: UPDATE agent_runs SET cost_ceiling_usd = cost_ceiling_usd + 20, status=running
+    Orch->>Bus: publish run.resumed {run_id, new_ceiling_usd}
+    Bus->>Audit: ship audit row
+    Orch-->>Agent: resume (idempotency_key preserved)
+    Agent->>Orch: Orchestrator.ReportCost (continues)
+
+    Note over Cost,Audit: Every ReportCost is a NATS event and an audit row. The Cost agent's dashboard updates in real time; the Eval agent's weekly report surfaces "ceiling breaches per tenant" as a guardrail.
+```
+
+## Notes
+
+- **Pre-flight estimate.** The run header carries a `cost_estimate` from the Cost agent before the first stage starts. A wildly wrong estimate (e.g. 10× under) is a Cost agent quality bug, surfaced by the Eval agent weekly.
+- **Soft warning at 80 %.** Slack notification, run continues. The user has a chance to act before the hard ceiling.
+- **Hard ceiling at 100 %.** Run pauses. The state is `paused`; the agent's in-process state is checkpointed; resume continues from the last successful stage.
+- **Extension is human-gated.** The orchestrator does not silently extend. A $20 extension is a CTO decision; a $100 extension is a CEO decision (forthcoming ADR on cost-decision policy).
+- **Per-tenant ceiling vs per-run ceiling.** A tenant with 10 active runs gets 10× the per-run budget by default, but the per-tenant monthly cap (forthcoming) is the backstop.
+- **No silent overrun.** The security memory §5 invariant. A bug that lets the agent spend $60 before the pause surfaces is a P1, not a known-issue.
+- **The Cost agent is a cross-cutter, not a stage.** It subscribes to every `cost.reported` event and never blocks the run path. The hard-ceiling check is in the Orchestrator, not the Cost agent — defence in depth.

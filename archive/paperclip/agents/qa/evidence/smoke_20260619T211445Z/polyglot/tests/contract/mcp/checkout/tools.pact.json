@@ -1,0 +1,20 @@
+{
+  "consumer": { "name": "fora-consumer" },
+  "provider": { "name": "fora-mcp_checkout_tools.json" },
+  "interactions": [
+    {
+      "description": "v0.1 scaffold for mcp/checkout/tools.json",
+      "providerState": "the service is reachable",
+      "request": { "method": "GET", "path": "/mcp_checkout_tools.json" },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "body": { "ok": true }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": { "version": "3.0" },
+    "generatedBy": "agents.qa.test_generator@0.1.0"
+  }
+}

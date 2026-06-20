@@ -1,0 +1,104 @@
+{
+  "ac_checks": {
+    "ac10_three_node_cycle": true,
+    "ac11_self_loop_cycle": true,
+    "ac12_cluster_detected": true,
+    "ac13_service_edge_weight": true,
+    "ac14_mermaid_valid": true,
+    "ac15_artefacts_written": true,
+    "ac1_return_type": true,
+    "ac2_deterministic": true,
+    "ac3_full_file_coverage": true,
+    "ac4_edge_endpoints_known": true,
+    "ac5_billing_fan_counts": true,
+    "ac6_blast_radius_monotonic": true,
+    "ac7_top_fan_in_sorted": true,
+    "ac8_cost_bound": true,
+    "ac9_service_graph_present": true
+  },
+  "analyzer_version": "code-analyzer/0.1.0",
+  "cost_usd": 0.0,
+  "deterministic": true,
+  "elapsed_ms_single_run": 0.622,
+  "elapsed_ms_total": 1.848,
+  "fixtures": {
+    "canonical": {
+      "clusters": 0,
+      "cycles": 0,
+      "files": 22,
+      "graph_edges": 8,
+      "graph_nodes": 22,
+      "service_edges": 4,
+      "service_nodes": 8,
+      "services": 7,
+      "source": "github:legacy-corp/billing-monolith@main"
+    },
+    "cluster": {
+      "clusters": 1,
+      "files": 8
+    },
+    "self_loop": {
+      "cycles": 1,
+      "files": 1
+    },
+    "three_node_cycle": {
+      "cycles": 1,
+      "files": 3
+    }
+  },
+  "graph_version": "dep-graph/0.1.0",
+  "repo_fingerprint": "c6cac1a26669eddf",
+  "repo_source": "github:legacy-corp/billing-monolith@main",
+  "run_stamp": "20260619T210915Z",
+  "summary": {
+    "top_blast_radius_5": [
+      {
+        "blast_radius": 6,
+        "path": "src/main/java/com/billingcorp/api/BillingController.java"
+      },
+      {
+        "blast_radius": 6,
+        "path": "src/main/java/com/billingcorp/jobs/MonthlyRollup.java"
+      },
+      {
+        "blast_radius": 6,
+        "path": "src/main/java/com/billingcorp/monolith/ReportsService.java"
+      },
+      {
+        "blast_radius": 6,
+        "path": "src/main/java/com/billingcorp/pipeline/InvoicePipeline.java"
+      },
+      {
+        "blast_radius": 5,
+        "path": "src/main/java/com/billingcorp/monolith/BillingService.java"
+      }
+    ],
+    "top_fan_in_5": [
+      {
+        "fan_in": 4,
+        "path": "src/main/java/com/billingcorp/monolith/BillingService.java",
+        "service": "billing"
+      },
+      {
+        "fan_in": 1,
+        "path": "src/main/java/com/billingcorp/models/rds/LegacyInvoiceRow.java",
+        "service": "billing"
+      },
+      {
+        "fan_in": 1,
+        "path": "src/main/java/com/billingcorp/monolith/Customer.java",
+        "service": "billing"
+      },
+      {
+        "fan_in": 1,
+        "path": "src/main/java/com/billingcorp/monolith/Invoice.java",
+        "service": "billing"
+      },
+      {
+        "fan_in": 1,
+        "path": "src/main/java/com/billingcorp/util/LegacyDb.java",
+        "service": "shared"
+      }
+    ]
+  }
+}

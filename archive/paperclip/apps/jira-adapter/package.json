@@ -1,0 +1,55 @@
+{
+  "name": "@fora/jira-adapter",
+  "version": "0.1.0",
+  "description": "FORA Jira adapter — bidirectional sync between Paperclip and Jira Cloud. Day-one vertical slice FORA-200 / 11.2a. Idempotency spine, audit emitter, issue/comment/stage mirrors and Jira webhook receiver per FORA-199 ADR-0010.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./idempotency": {
+      "import": "./dist/idempotency.js",
+      "types": "./dist/idempotency.d.ts"
+    },
+    "./audit": {
+      "import": "./dist/audit.js",
+      "types": "./dist/audit.d.ts"
+    },
+    "./workflow-mapping": {
+      "import": "./dist/workflow-mapping.js",
+      "types": "./dist/workflow-mapping.d.ts"
+    },
+    "./divergence-cron": {
+      "import": "./dist/divergence-cron.js",
+      "types": "./dist/divergence-cron.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "smoke": "node test/smoke.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@fora/db-pool": "workspace:*",
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "@types/pg": "^8.11.10",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

@@ -1,0 +1,11 @@
+--- token_bucket ---
+--- queue ---
+--- coalescer ---
+--- breaker ---
+--- audit ---
+--- controller (integration) ---
+--- per-tenant isolation ---
+--- load-test fixture (3x rate, 60s) ---
+  load summary: 8100 submitted, 8100 dispatched, worst p99 = 40.00 ms
+
+RESULT: ok=92 fail=0 elapsed=473.8ms

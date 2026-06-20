@@ -16,16 +16,16 @@ content_hash: sha256:7a96fa722d542249ecd587aafbffc9af8728593b2620bb6a0fc3dc12028
 pii_markers:
   - none
 ---
-# FORA — Roadmap
+# Forge AI — Roadmap
 
 **Status:** v1.0 (production bar, 2026-06-17) — meets the Knowledge Layer bar in [README §3](../README.md#3-the-acceptance-bar)
 **Owner:** CTO owns sequencing (the order, the dependencies, the Q-to-Q plan). CEO owns prioritisation (the bet per quarter, the ICP, the go-to-market coupling). CTO merges; CEO co-signs on the bet-of-the-quarter call.
 **Cadence:** Reviewed monthly; revised at every quarterly offsite. A slipped date is a P2 process bug (per §8) — re-plan, do not crunch.
 **Glossary:** Every acronym below (MCP, ICP, MRR, GA, SLO, SOC 2, DPIA, MTTR, WCAG, OWASP, ASVS, pgvector, KPI, etc.) is defined in [customer/glossary.md](../customer/glossary.md).
 **Linked Paperclip issues:**
-- Parent Epic: [FORA-26](/FORA/issues/FORA-26) — Epic 10 — Knowledge Layer
-- Sub-goal: [FORA-100](/FORA/issues/FORA-100) — 10.3 Project folder hardening
-- Plan of record: [FORA-15](/FORA/issues/FORA-15#document-plan) — BMAD → Paperclip Hierarchy Plan
+- Parent Epic: [Forge AI-26](/Forge AI/issues/Forge AI-26) — Epic 10 — Knowledge Layer
+- Sub-goal: [Forge AI-100](/Forge AI/issues/Forge AI-100) — 10.3 Project folder hardening
+- Plan of record: [Forge AI-15](/Forge AI/issues/Forge AI-15#document-plan) — BMAD → Paperclip Hierarchy Plan
 - Hiring plan: see `HIRING_PLAN.md`; the 5-hire sequence is on the CTO's board.
 **Related:** [PRD.md](./PRD.md), [tech-stack.md](./tech-stack.md), `HIRING_PLAN.md`
 

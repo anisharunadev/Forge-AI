@@ -29,7 +29,7 @@ pii_markers: []
 
 ## 1. The shape we are building
 
-FORA is an **agent-of-agents platform**. There is one Master Orchestrator; under it sit SDLC Agents; under each SDLC Agent sit specialist sub-agents (BA, Architect, Developer, QA, Security, DevOps, Documentation, Refactor, Cost, Audit, Evaluation, Memory). The org chart and the runtime topology are the same diagram. If a box exists in one, it exists in the other.
+Forge AI is an **agent-of-agents platform**. There is one Master Orchestrator; under it sit SDLC Agents; under each SDLC Agent sit specialist sub-agents (BA, Architect, Developer, QA, Security, DevOps, Documentation, Refactor, Cost, Audit, Evaluation, Memory). The org chart and the runtime topology are the same diagram. If a box exists in one, it exists in the other.
 
 ```
                        Master Orchestrator

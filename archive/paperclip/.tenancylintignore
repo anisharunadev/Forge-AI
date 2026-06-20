@@ -1,0 +1,50 @@
+# `.tenancylintignore` — gitignore-style exclude list for @fora/tenancy-lint.
+#
+# Format: one pattern per line. `#` starts a comment; blank lines are ignored.
+# Patterns are matched against the repo-relative path with forward slashes.
+# `**` matches any number of segments, `*` matches anything except `/`,
+# trailing `/` matches directories and the files inside them, `!` negates.
+#
+# Anything matching a non-negated pattern is skipped by the lint.
+# See packages/tenancy-lint/src/repo.ts for the full grammar.
+
+# ─────────────────────────────────────────────────────────────────────────
+# Linter self-exclusion.
+# The linter's own source/test files mention `BYPASSRLS` and `CREATE TABLE`
+# in code strings, comments, and test fixtures. Without this line the lint
+# trips on itself and CI is red on every push.
+packages/tenancy-lint/**
+
+# ─────────────────────────────────────────────────────────────────────────
+# Migration runner.
+# `db-migrator` IS the migration runner that audits `BYPASSRLS` grants; its
+# source code, tests, and bin script reference `BYPASSRLS` extensively. The
+# runner's *output* (the SQL it actually applies) lives in its own
+# `migrations/` and `audit/` subdirs and is still linted by the rule's
+# normal migrations/audit exemption.
+packages/db-migrator/**
+
+# ─────────────────────────────────────────────────────────────────────────
+# Connection pool integration tests.
+# `db-pool/test/pool.integration.test.ts` sets up an RLS-protected table
+# inline with `CREATE TABLE … tenant_id …`. That SQL is test fixture, not
+# production DDL, and the surrounding test runner does its own RLS
+# assertion. The package has no production migrations.
+packages/db-pool/**
+
+# ─────────────────────────────────────────────────────────────────────────
+# Generated, vendored, and scaffolding directories.
+# These never contain hand-written tenancy rules.
+docs/**
+forge/**
+infra/**
+mcp-servers/**
+workspace/**
+agents/**
+
+# Hidden dirs that the scanner already skips; listed for documentation.
+# The scanner's SKIP_DIRS list (packages/tenancy-lint/src/repo.ts) handles
+# these without needing to repeat them here.
+#   node_modules/   .git/   dist/   build/   coverage/
+#   .next/   .turbo/   .vercel/   out/
+#   .omc/   .claude/   .paperclip/

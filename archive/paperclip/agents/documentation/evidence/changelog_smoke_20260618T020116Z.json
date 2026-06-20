@@ -1,0 +1,13 @@
+{
+  "spec": "FORA-122",
+  "sub_goal": "7.1.4 Changelog & Release Notes generator",
+  "ran_at": "2026-06-17T20:31:16.614704+00:00",
+  "tests_run": 15,
+  "assertions_failed": 3,
+  "failures": [
+    "AMBIGUOUS_CONVENTIONAL_COMMIT error surfaced",
+    "ambiguous commit rendered with `<!-- ambiguous -->` marker",
+    "ambiguous commit lands in the `### Internal` bucket"
+  ],
+  "acceptance": "see failures"
+}

@@ -1,0 +1,130 @@
+{
+  "schema_version": "1.0",
+  "epic": {
+    "title": "Forge Ideation Agent — Requirement Ingestion (Sub-goal 1.1)",
+    "issue": "FORA-61",
+    "parent_epic": {
+      "identifier": "FORA-17",
+      "title": "Epic 1 — Forge Ideation Agent"
+    },
+    "story_count": 8
+  },
+  "stories": {
+    "S1": {
+      "title": "Ideation Trigger Intake",
+      "effort": "S",
+      "depends_on": [],
+      "blocks": ["S2", "S3", "S8"]
+    },
+    "S2": {
+      "title": "Knowledge Layer Allow-List Reader",
+      "effort": "M",
+      "depends_on": ["S1"],
+      "blocks": ["S4", "S7", "S8"]
+    },
+    "S3": {
+      "title": "Jira MCP Context Fetcher",
+      "effort": "M",
+      "depends_on": ["S1"],
+      "blocks": ["S4", "S7", "S8"]
+    },
+    "S4": {
+      "title": "requirement_brief.json Generator",
+      "effort": "M",
+      "depends_on": ["S2", "S3"],
+      "blocks": ["S5"]
+    },
+    "S5": {
+      "title": "draft_prd.md Generator",
+      "effort": "L",
+      "depends_on": ["S4"],
+      "blocks": ["S6"]
+    },
+    "S6": {
+      "title": "Ambiguity Detection + ask_user_questions Interaction",
+      "effort": "M",
+      "depends_on": ["S5"],
+      "blocks": []
+    },
+    "S7": {
+      "title": "Audit Log Capture (Sub-goal 1.1)",
+      "effort": "M",
+      "depends_on": ["S2", "S3"],
+      "blocks": []
+    },
+    "S8": {
+      "title": "Per-Tenant Isolation + Per-Run Budget Enforcement",
+      "effort": "M",
+      "depends_on": ["S1", "S2", "S3"],
+      "blocks": []
+    }
+  },
+  "edges": [
+    {"from": "S1", "to": "S2", "kind": "blocks", "reason": "Reader needs a trigger_token to key the reads to"},
+    {"from": "S1", "to": "S3", "kind": "blocks", "reason": "Fetcher needs a trigger_token to key the MCP calls to"},
+    {"from": "S2", "to": "S4", "kind": "blocks", "reason": "Brief consumes Knowledge Layer file reads"},
+    {"from": "S3", "to": "S4", "kind": "blocks", "reason": "Brief consumes Jira MCP context"},
+    {"from": "S4", "to": "S5", "kind": "blocks", "reason": "PRD is derived from the brief"},
+    {"from": "S5", "to": "S6", "kind": "blocks", "reason": "Ambiguity detector reads the PRD it produced"},
+    {"from": "S2", "to": "S7", "kind": "blocks", "reason": "Audit captures Knowledge Layer reads"},
+    {"from": "S3", "to": "S7", "kind": "blocks", "reason": "Audit captures MCP calls"},
+    {"from": "S1", "to": "S8", "kind": "blocks", "reason": "Tenant namespace + budget track the run started by the trigger"},
+    {"from": "S2", "to": "S8", "kind": "blocks", "reason": "Allow-list enforces per-tenant namespace on reads"},
+    {"from": "S3", "to": "S8", "kind": "blocks", "reason": "MCP router enforces per-tenant namespace on MCP calls; budget gate counts MCP cost toward ceiling"}
+  ],
+  "critical_path": ["S1", "S2", "S4", "S5", "S6"],
+  "critical_path_length": 5,
+  "parallelizable_groups": [
+    {
+      "level": 0,
+      "stories": ["S1"],
+      "note": "Entry point — no dependencies."
+    },
+    {
+      "level": 1,
+      "stories": ["S2", "S3"],
+      "note": "Both depend on S1 only — can ship in parallel."
+    },
+    {
+      "level": 2,
+      "stories": ["S4", "S7", "S8"],
+      "note": "S4 depends on S2+S3; S7 depends on S2+S3; S8 depends on S1+S2+S3. All three can ship in parallel after S2+S3 are done."
+    },
+    {
+      "level": 3,
+      "stories": ["S5"],
+      "note": "Depends on S4 (brief)."
+    },
+    {
+      "level": 4,
+      "stories": ["S6"],
+      "note": "Last story on the critical path; depends on S5 (PRD)."
+    }
+  ],
+  "downstream_stage_dependencies": {
+    "architecture": ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"],
+    "dev": ["S4", "S5", "S6", "S7", "S8"],
+    "qa": ["S5", "S6", "S7", "S8"],
+    "security": ["S2", "S7", "S8"],
+    "devops": ["S8"],
+    "docs": ["S1", "S4", "S5", "S6"]
+  },
+  "blockers_externally": {
+    "S2_blocks_on": [],
+    "S6_blocks_on": [],
+    "all_stories_block_on": [
+      {"id": "Q6", "question": "Secrets-ownership path resolved by CTO + Security", "due": "2026-06-25", "blocks_stages": ["architecture"]}
+    ]
+  },
+  "notes": [
+    "S8 (tenant isolation + budget) wraps S2 and S3 — design decision is whether to merge S8 into S2+S3 or keep it as an orthogonal concern. Recommended: keep S8 separate so the per-tenant guardrail is owned and testable as a single unit.",
+    "S6 is not on the critical path for *generation* but is on the critical path for *delivery* — without the interaction, the gate cannot clear.",
+    "Audit capture (S7) is technically a parallel concern but is sequenced after S2+S3 because it is most efficiently designed once the read surfaces are fixed."
+  ],
+  "audit": {
+    "produced_by": "ba-agent (99b34c5d-87d4-42a0-a66a-c65a916aeeec)",
+    "produced_at": "2026-06-17T00:00:00Z",
+    "source_epic_package": "forge/1.3/epic_package.md",
+    "run_id": "e951dbfb-bd89-4508-bc9e-e8f462651c19"
+  }
+}

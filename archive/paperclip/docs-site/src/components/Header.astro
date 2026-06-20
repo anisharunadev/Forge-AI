@@ -1,0 +1,35 @@
+---
+/**
+ * Custom Header for the Forge AI docs site.
+ * Renders the Knackforge logo (KNACKFORGE.svg), a "version" badge, search,
+ * and social icons. Overrides Starlight's default <Header/>.
+ */
+import Search from '@astrojs/starlight/components/Search.astro';
+import SocialIcons from '@astrojs/starlight/components/SocialIcons.astro';
+import SiteTitle from '@astrojs/starlight/components/SiteTitle.astro';
+---
+
+<div class="sl-flex sl-items-center sl-justify-between sl-w-full">
+  <SiteTitle />
+  <div class="sl-flex sl-items-center sl-gap-3">
+    <span class="version-pill">v1.0</span>
+    <Search />
+    <SocialIcons />
+  </div>
+</div>
+
+<style>
+  .version-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 999px;
+    background: rgba(31, 119, 183, 0.15);
+    color: #1f77b7;
+    border: 1px solid rgba(31, 119, 183, 0.3);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing: 0.05em;
+  }
+</style>

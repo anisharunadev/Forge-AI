@@ -1,0 +1,154 @@
+{
+  "acs": [
+    {
+      "id": "1",
+      "note": "plan + graph + migration are typed WavePlan + DependencyGraph + MigrationPlan",
+      "ok": true
+    },
+    {
+      "id": "2",
+      "note": "epic=1, waves=7, cycle_breaks=0, cluster_breaks=0",
+      "ok": true
+    },
+    {
+      "id": "3",
+      "note": "plan_sha stable; idempotency_keys identical across re-runs (1.2 ms)",
+      "ok": true
+    },
+    {
+      "id": "4",
+      "note": "first story kind = epic",
+      "ok": true
+    },
+    {
+      "id": "5",
+      "note": "0 break stories, all carry source_break_id + source_wave_id",
+      "ok": true
+    },
+    {
+      "id": "6",
+      "note": "no breaks in canonical fixture (trivially satisfied)",
+      "ok": true
+    },
+    {
+      "id": "7",
+      "note": "7 wave stories, all source_wave_id match plan.waves",
+      "ok": true
+    },
+    {
+      "id": "8",
+      "note": "6 high-risk wave stories, all priority=high",
+      "ok": true
+    },
+    {
+      "id": "9",
+      "note": "0 non-high-risk tier_wave stories, all priority=medium",
+      "ok": true
+    },
+    {
+      "id": "10",
+      "note": "2 cutover/validation wave stories, all priority=low",
+      "ok": false
+    },
+    {
+      "id": "11",
+      "note": "8 stories, all carry non-empty idempotency_key + body",
+      "ok": true
+    },
+    {
+      "id": "12",
+      "note": "8 mutations, idempotency_keys \u2286 story_keys (1:1)",
+      "ok": true
+    },
+    {
+      "id": "13",
+      "note": "8 mutations, JSON round-trip equal (13778 bytes)",
+      "ok": true
+    },
+    {
+      "id": "14",
+      "note": "runtime=1.361 ms, cost=$0.00",
+      "ok": true
+    },
+    {
+      "id": "15",
+      "note": "forge/8.4/migration-plan.json=True, migration-plan.md=True",
+      "ok": true
+    },
+    {
+      "id": "16",
+      "note": "re-run on same WavePlan yields identical 8 idempotency_keys",
+      "ok": true
+    },
+    {
+      "id": "17",
+      "note": "epic key changes when underlying WavePlan changes (fora:8.4:epic:sha256:769e571c33e\u2026 vs fora:8.4:epic:sha256:46016a64bca\u2026)",
+      "ok": true
+    },
+    {
+      "id": "18",
+      "note": "8 mutations, depends_on chain consistent, all reference epic (OK)",
+      "ok": true
+    },
+    {
+      "id": "19",
+      "note": "0 cycle_break stories, no cycle breaks in fixture",
+      "ok": true
+    },
+    {
+      "id": "20",
+      "note": "7 wave stories, all effort_days match source wave",
+      "ok": true
+    },
+    {
+      "id": "21",
+      "note": "summary.total_stories=8 == len(stories)=8",
+      "ok": true
+    },
+    {
+      "id": "22",
+      "note": "sum(priority_counts)=8 == total_stories=8",
+      "ok": true
+    },
+    {
+      "id": "23",
+      "note": "no HTTP / SDK references in mutations (clean)",
+      "ok": true
+    },
+    {
+      "id": "24",
+      "note": "render_migration_plan -> 13180 chars, all 9 titles present",
+      "ok": true
+    }
+  ],
+  "cost_usd": 0.0,
+  "fail_count": 1,
+  "generated_at": "2026-06-19T21:34:15Z",
+  "migration_plan_id": "mig-3181cd0939c5",
+  "mutation_count": 8,
+  "ok_count": 23,
+  "plan_sha": "sha256:769e571c33e1990ca7c97ee3d045e430469c9c867c636f6eabdcc017a98f2e1a",
+  "planner_runtime_ms": 1.361,
+  "repo_fingerprint": "c6cac1a26669eddf",
+  "schema_version": 1,
+  "smoke": "smoke_test_migration_planner",
+  "source_sha": "sha256:10f22ec4f86caeb6e4b0b1774c754052fef31eb530bd338864efb014c4ff8ba1",
+  "story_count": 8,
+  "summary": {
+    "cluster_break_stories": 0,
+    "cluster_breaks_blocked": 0,
+    "cycle_break_stories": 0,
+    "cycle_breaks_blocked": 0,
+    "priority_counts": {
+      "high": 6,
+      "highest": 1,
+      "low": 1,
+      "medium": 0
+    },
+    "total_effort_days": 5.07,
+    "total_stories": 8,
+    "wave_stories": 7
+  },
+  "version": "migration-planner/0.1.0",
+  "wave_plan_id": "9edc7bb3-4d31-4684-8b10-5b86a32f1dae"
+}

@@ -1,0 +1,66 @@
+{
+  "ac_checks": {
+    "ac1_consumes_repo_scope": true,
+    "ac2_emits_full_scope": true,
+    "ac3_deterministic": true,
+    "ac4_full_coverage": true,
+    "ac5_cost_bounded": true,
+    "ac6_artefacts_written": true
+  },
+  "analyzer_version": "code-analyzer/0.1.0",
+  "cost_usd": 0.0,
+  "deterministic": true,
+  "elapsed_ms_analyzer_single_run": 0.884,
+  "elapsed_ms_total": 2.407,
+  "repo_fingerprint": "c6cac1a26669eddf",
+  "repo_source": "github:legacy-corp/billing-monolith@main",
+  "run_stamp": "20260619T213508Z",
+  "summary": {
+    "category_counts": {
+      "keep_as_is": 6,
+      "refactor_in_place": 7,
+      "remove": 7,
+      "replace": 1,
+      "rewrite": 1
+    },
+    "estimated_effort_days": 4.868,
+    "languages": {
+      "dockerfile": 1,
+      "html": 1,
+      "java": 15,
+      "javascript": 1,
+      "markdown": 1,
+      "python": 1,
+      "yaml": 2
+    },
+    "risk_counts": {
+      "high": 7,
+      "low": 9,
+      "medium": 6
+    },
+    "risk_level": "low",
+    "services": 7,
+    "tier_counts": {
+      "T1": 5,
+      "T2": 4,
+      "T3": 6,
+      "T4": 1,
+      "skip": 6
+    },
+    "total_files": 22,
+    "total_loc": 2425,
+    "transform_tier": "T3",
+    "unit_counts": {
+      "api_gateway": 1,
+      "aurora": 2,
+      "cloudfront": 2,
+      "container": 5,
+      "ec2": 3,
+      "lambda": 1,
+      "rds": 1,
+      "s3": 2,
+      "skip": 4,
+      "step_functions": 1
+    }
+  }
+}

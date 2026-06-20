@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fora.dev/schemas/self-healing/repair-proposal.v0.1.0.json",
+  "title": "RepairProposal",
+  "description": "Wire format for the Self-Healing Agent v1 contract (FORA-37). The v1 payload is a dry-run bundle: detected_drift and proposed repairs derived from a recorded Playwright trace. Nothing in the payload has been applied to a test file. Phase 4 may extend this contract under a new major version.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "proposal_id",
+    "validation_run_id",
+    "trace_sha",
+    "source_test_run_id",
+    "detected_drift",
+    "repair_proposal",
+    "mode",
+    "feature_flag",
+    "produced_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.1.0",
+      "description": "Wire-format version. The running code rejects any payload whose schema_version it does not know about."
+    },
+    "proposal_id": {
+      "type": "string",
+      "pattern": "^prop-[a-z0-9-]+$",
+      "description": "Stable id derived from (trace_sha, source_test_run_id) so re-running the dry-run on the same input is idempotent."
+    },
+    "validation_run_id": {
+      "type": "string",
+      "pattern": "^vrn-[a-z0-9-]+$",
+      "description": "Opaque join key into the test run that surfaced the drift."
+    },
+    "trace_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "sha256 of the recorded Playwright trace (hex)."
+    },
+    "source_test_run_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The CI / test run whose trace was the input (e.g. Playwright's run id, an Allure uuid, or a CI run number)."
+    },
+    "detected_drift": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/DetectedDrift" }
+    },
+    "repair_proposal": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ProposedRepair" }
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["dry_run"],
+      "description": "v1 invariant: 'dry_run' only. 'applied' is reserved for Phase 4."
+    },
+    "feature_flag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["self_healing", "enabled"],
+      "properties": {
+        "self_healing": {
+          "type": "string",
+          "enum": ["v1_dry_run", "phase_4_apply"]
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "produced_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp (Z or +00:00)."
+    },
+    "notes": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "$defs": {
+    "DriftKind": {
+      "type": "string",
+      "enum": ["selector_missing", "selector_ambiguous", "attribute_value_changed"]
+    },
+    "RepairKind": {
+      "type": "string",
+      "enum": ["propose_new_selector"]
+    },
+    "DetectedDrift": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "drift_id",
+        "kind",
+        "original_selector",
+        "observed",
+        "confidence",
+        "test_file",
+        "test_name",
+        "action_index"
+      ],
+      "properties": {
+        "drift_id": {
+          "type": "string",
+          "pattern": "^drift-[a-z0-9-]+$"
+        },
+        "kind": { "$ref": "#/$defs/DriftKind" },
+        "original_selector": { "type": "string", "minLength": 1 },
+        "observed": { "type": "string", "minLength": 1 },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "test_file": { "type": "string", "minLength": 1 },
+        "test_name": { "type": "string", "minLength": 1 },
+        "page_url": { "type": "string" },
+        "action_index": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "ProposedRepair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repair_id",
+        "drift_id",
+        "kind",
+        "proposed_selector",
+        "rationale",
+        "confidence"
+      ],
+      "properties": {
+        "repair_id": {
+          "type": "string",
+          "pattern": "^repair-[a-z0-9-]+$"
+        },
+        "drift_id": {
+          "type": "string",
+          "pattern": "^drift-[a-z0-9-]+$"
+        },
+        "kind": { "$ref": "#/$defs/RepairKind" },
+        "proposed_selector": { "type": "string", "minLength": 1 },
+        "rationale": { "type": "string", "minLength": 1 },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      }
+    }
+  }
+}

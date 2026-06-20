@@ -1,0 +1,78 @@
+{
+  "trace_id": "trc-smoke-happy",
+  "framework": "playwright",
+  "branch": "main",
+  "commit_sha": "3333333333333333333333333333333333333333",
+  "actions": [
+    {
+      "action_index": 0,
+      "method": "goto",
+      "selector": "https://example.com/checkout",
+      "result": "ok",
+      "observed": "https://example.com/checkout",
+      "page_url": "https://example.com/checkout",
+      "test_file": "tests/checkout.spec.ts",
+      "test_name": "should complete checkout"
+    },
+    {
+      "action_index": 1,
+      "method": "click",
+      "selector": "button#submit-order",
+      "result": "no_element",
+      "observed": "no element found for 'button#submit-order'",
+      "page_url": "https://example.com/checkout",
+      "test_file": "tests/checkout.spec.ts",
+      "test_name": "should complete checkout"
+    },
+    {
+      "action_index": 2,
+      "method": "fill",
+      "selector": "input[name=coupon]",
+      "result": "ok",
+      "observed": "value=SAVE10",
+      "page_url": "https://example.com/checkout",
+      "test_file": "tests/checkout.spec.ts",
+      "test_name": "should complete checkout"
+    },
+    {
+      "action_index": 3,
+      "method": "click",
+      "selector": "a.continue",
+      "result": "multiple",
+      "observed": "3 elements matched 'a.continue'",
+      "page_url": "https://example.com/checkout",
+      "test_file": "tests/checkout.spec.ts",
+      "test_name": "should complete checkout"
+    },
+    {
+      "action_index": 4,
+      "method": "assert_text",
+      "selector": "h1#title",
+      "result": "wrong_value",
+      "observed": "Checkout — Step 2 of 3",
+      "page_url": "https://example.com/checkout",
+      "test_file": "tests/checkout.spec.ts",
+      "test_name": "should complete checkout"
+    },
+    {
+      "action_index": 5,
+      "method": "click",
+      "selector": "button#next",
+      "result": "timeout",
+      "observed": "exceeded 5000ms",
+      "page_url": "https://example.com/checkout",
+      "test_file": "tests/checkout.spec.ts",
+      "test_name": "should complete checkout"
+    },
+    {
+      "action_index": 6,
+      "method": "click",
+      "selector": "button#pay",
+      "result": "ok",
+      "observed": "clicked",
+      "page_url": "https://example.com/checkout",
+      "test_file": "tests/checkout.spec.ts",
+      "test_name": "should complete checkout"
+    }
+  ]
+}

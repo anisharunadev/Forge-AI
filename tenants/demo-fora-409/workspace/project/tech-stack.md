@@ -18,16 +18,16 @@ content_hash: sha256:e10b594584d94f6c2dc25147dadfa8e1759c25e894443fd0167f9e53bb5
 pii_markers:
   - none
 ---
-# FORA — Tech Stack
+# Forge AI — Tech Stack
 
 **Status:** v1.0 (production bar, 2026-06-17) — meets the Knowledge Layer bar in [README §3](../README.md#3-the-acceptance-bar)
 **Owner:** CTO owns merges. The relevant stage owner co-signs their section (DevOps owns §5, §6, §7; Security owns §9, §10; the lead engineer co-signs §2, §3, §4).
 **Convention:** Every choice in this document is justified. Alternatives considered, why this one, maintenance signal, exit plan. "It depends" is not in a v1 file.
 **Glossary:** Every acronym below (MCP, OIDC, SAML, MFA, SSO, EKS, ALB, FTS, RDS, KMS, CDN, WAF, IaC, CI/CD, SLO, RPS, p99, p50, SSE, RSC, pgvector, ASVS, BYOK, SLA, etc.) is defined in [customer/glossary.md](../customer/glossary.md). If you find a term used here that is not in the glossary, file a glossary PR.
 **Linked Paperclip issues:**
-- Parent Epic: [FORA-26](/FORA/issues/FORA-26) — Epic 10 — Knowledge Layer
-- Sub-goal: [FORA-100](/FORA/issues/FORA-100) — 10.3 Project folder hardening
-- Plan of record: [FORA-15](/FORA/issues/FORA-15#document-plan) — BMAD → Paperclip Hierarchy Plan
+- Parent Epic: [Forge AI-26](/Forge AI/issues/Forge AI-26) — Epic 10 — Knowledge Layer
+- Sub-goal: [Forge AI-100](/Forge AI/issues/Forge AI-100) — 10.3 Project folder hardening
+- Plan of record: [Forge AI-15](/Forge AI/issues/Forge AI-15#document-plan) — BMAD → Paperclip Hierarchy Plan
 - Architecture: [memory/architecture.md](../memory/architecture.md) — the agent-of-agents shape this stack implements
 **Related:** [PRD.md](./PRD.md), [roadmap.md](./roadmap.md), [memory/architecture.md §2](../memory/architecture.md)
 
@@ -58,7 +58,7 @@ pii_markers:
 | Layer | Choice | Why this, not the alternative |
 | --- | --- | --- |
 | API service | **Fastify 4.x** | Faster than Express, better TypeScript story than Nest, simpler than Hono for our shape |
-| Web (Forge console) | **Next.js 15 (App Router) + React 19** | Server components + RSC + the React ecosystem; the PM/Eng Lead views are mostly read-mostly dashboards where RSC shines. Bumped from Next.js 14 → 15 + React 19 per [FORA-393](/FORA/issues/FORA-393) Plan 3 §2.2 (board Q1 resolved); the FORA-393 charter wins over the prior tech-stack entry. |
+| Web (Forge console) | **Next.js 15 (App Router) + React 19** | Server components + RSC + the React ecosystem; the PM/Eng Lead views are mostly read-mostly dashboards where RSC shines. Bumped from Next.js 14 → 15 + React 19 per [Forge AI-393](/Forge AI/issues/Forge AI-393) Plan 3 §2.2 (board Q1 resolved); the Forge AI-393 charter wins over the prior tech-stack entry. |
 | Worker / queue consumer | **BullMQ on Redis** | Native to the Node ecosystem; we already have Redis; the alternative (Temporal) is a big lift for v1 |
 | Agent runtime | **Custom Python service on FastAPI** | The LLM SDK + MCP SDK + evals are Python-first; the orchestration is small enough not to need Temporal |
 | Background jobs (long-running) | **Argo Workflows on the same EKS cluster** | Kubernetes-native; we get retries, suspend/resume, artefact passing for free |
@@ -71,7 +71,7 @@ pii_markers:
 | Primary OLTP database | **PostgreSQL 16** (RDS, then Aurora) | Tenant isolation via row-level security, JSONB for the contract payloads, pgvector for the v1 vector store |
 | Vector store (v1) | **pgvector** in the primary DB | One less service to operate; pgvector is "good enough" for v1; a managed vector DB is a v2 conversation |
 | Cache | **Redis 7** (ElastiCache) | Sessions, idempotency keys, BullMQ, rate limiting |
-| Object store | **S3** | Audit log artefacts, prompt/response bodies (when `FORA_LOG_LLM=1`), Confluence snapshots |
+| Object store | **S3** | Audit log artefacts, prompt/response bodies (when `Forge AI_LOG_LLM=1`), Confluence snapshots |
 | Queue | **BullMQ on Redis** (jobs) + **SQS** (cross-account audit shipping) | BullMQ for in-cluster work; SQS for the audit-account boundary |
 | Search (admin views) | **Postgres full-text** for v1; **OpenSearch** when we need it | Don't add OpenSearch until we need it |
 
@@ -139,7 +139,7 @@ pii_markers:
 | Concern | Choice | Why this, not the alternative |
 | --- | --- | --- |
 | Customer SSO | **OIDC + SAML 2.0** | The industry default; we do not store customer passwords |
-| Internal SSO | **OIDC via Google Workspace** (FORA staff) | The default; MFA enforced |
+| Internal SSO | **OIDC via Google Workspace** (Forge AI staff) | The default; MFA enforced |
 | MFA | **WebAuthn / TOTP** | The default; SMS MFA is forbidden |
 | Customer RBAC | Custom (in the platform DB) | We need fine-grained, per-tenant, per-project roles; the off-the-shelf options (Auth0, Clerk) are not flexible enough for our stage gates |
 | Internal RBAC | **AWS IAM** (cross-account) + **Kubernetes RBAC** (in-cluster) | The default |
@@ -166,13 +166,13 @@ Each MCP server lives in a per-tenant namespace, behind a per-tenant egress prox
 
 | Concern | Choice | Why this, not the alternative |
 | --- | --- | --- |
-| Web framework | **Next.js 15 (App Router) + React 19** | Per §3; bumped from Next.js 14 per [FORA-393](/FORA/issues/FORA-393) Plan 3 §2.2 |
+| Web framework | **Next.js 15 (App Router) + React 19** | Per §3; bumped from Next.js 14 per [Forge AI-393](/Forge AI/issues/Forge AI-393) Plan 3 §2.2 |
 | Component library | **Radix UI** primitives + **shadcn/ui** | Accessible by default (WCAG 2.2 AA), unstyled, owned in our repo |
 | Styling | **Tailwind CSS** | The default; plays well with shadcn |
 | State management | **TanStack Query** for server state; **Zustand** for local UI state | Server-state via TanStack; local state via Zustand; no Redux |
 | Forms | **React Hook Form + Zod** | The default |
 | Charts | **Recharts** (admin) + **D3** (custom) | Recharts for the dashboard widgets; D3 when we need bespoke |
-| Auth in the web | **NextAuth.js** (Auth.js) for FORA staff; **OIDC client** for customer SSO | We use the standard OIDC flow; we do not roll our own |
+| Auth in the web | **NextAuth.js** (Auth.js) for Forge AI staff; **OIDC client** for customer SSO | We use the standard OIDC flow; we do not roll our own |
 | Accessibility testing | **axe-core** in CI + **manual screen-reader pass** per release | Per [customer/standards.md §7](../customer/standards.md) |
 
 ## 12. The dependencies we will regret

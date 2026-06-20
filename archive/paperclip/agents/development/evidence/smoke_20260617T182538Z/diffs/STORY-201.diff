@@ -1,0 +1,452 @@
+--- /dev/null
++++ b/apps/api/src/db/migrations/add_user_entity_table.sql
+@@ -0,0 +1,18 @@
++-- Auto-generated scaffold — DO NOT COMMIT without review.
+
++-- plan_id: plan-1a2ddb817b
+
++-- story_id: STORY-201
+
++-- task_id: t-001
+
++-- ac_refs: ac-1, ac-2, ac-3
+
++-- description: Add the database table for Add User entity. Include id (uuid), audit columns (created_at, updated_at), and the per-AC columns derived from the acceptance criteria.
+
++
+
++-- TODO[3.2/v0.2]: fill in column definitions from the AC descriptions.
+
++-- v0.1 emits the id + audit columns every table in this codebase needs.
+
++
+
++CREATE TABLE IF NOT EXISTS apps_api_src_db_migrations_add_user_entity_table_sql (
+
++    id UUID PRIMARY KEY,
+
++    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+
++    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+
++);
+
++
+
++-- Down migration
+
++-- DROP TABLE IF EXISTS apps_api_src_db_migrations_add_user_entity_table_sql;
+
+
+--- /dev/null
++++ b/apps/api/src/models/add_user_entity.py
+@@ -0,0 +1,45 @@
++"""
+
++Auto-generated scaffold — DO NOT COMMIT without review.
+
++
+
++plan_id: plan-1a2ddb817b
+
++story_id: STORY-201
+
++task_id: t-002
+
++ac_refs: ac-1, ac-2, ac-3
+
++
+
++description: Implement the add_user_entity entity with field validation and the to_dict / from_row converters used by the service layer.
+
++"""
+
++
+
++from __future__ import annotations
+
++
+
++import uuid
+
++from dataclasses import dataclass, field
+
++from datetime import datetime
+
++from typing import Any, Dict, Optional
+
++
+
++
+
++@dataclass
+
++class ImplementAddUserEntityModel:
+
++    id: uuid.UUID
+
++    created_at: datetime
+
++    updated_at: datetime
+
++    # TODO[3.2/v0.2]: add entity fields derived from the AC descriptions.
+
++
+
++    def to_dict(self) -> Dict[str, Any]:
+
++        return {
+
++            "id": str(self.id),
+
++            "created_at": self.created_at.isoformat(),
+
++            "updated_at": self.updated_at.isoformat(),
+
++        }
+
++
+
++    @classmethod
+
++    def from_row(cls, row: Dict[str, Any]) -> "ImplementAddUserEntityModel":
+
++        return cls(
+
++            id=row["id"],
+
++            created_at=row["created_at"],
+
++            updated_at=row["updated_at"],
+
++        )
+
++
+
++    def validate(self) -> None:
+
++        if not self.id:
+
++            raise ValueError("id is required")
+
++        # TODO[3.2/v0.2]: add field-level validation per AC.
+
+
+--- /dev/null
++++ b/apps/api/src/services/add_user_entity_service.py
+@@ -0,0 +1,42 @@
++"""
+
++Auto-generated scaffold — DO NOT COMMIT without review.
+
++
+
++plan_id: plan-1a2ddb817b
+
++story_id: STORY-201
+
++task_id: t-003
+
++ac_refs: ac-1, ac-2, ac-3
+
++
+
++description: Implement the add_user_entity business logic — CRUD + any side-effects called out in the AC descriptions.
+
++"""
+
++
+
++from __future__ import annotations
+
++
+
++import uuid
+
++from typing import Any, Dict, List, Optional
+
++
+
++
+
++class ImplementAddUserEntityServiceService:
+
++    """CRUD + business logic for ImplementAddUserEntityService. v0.1 scaffold."""
+
++
+
++    def __init__(self, db):  # db is wired in v0.2
+
++        self._db = db
+
++
+
++    async def create(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+
++        # TODO[3.2/v0.2]: validate, persist, return created entity
+
++        raise NotImplementedError
+
++
+
++    async def get(self, entity_id: uuid.UUID) -> Optional[Dict[str, Any]]:
+
++        # TODO[3.2/v0.2]
+
++        raise NotImplementedError
+
++
+
++    async def list(self, *, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+
++        # TODO[3.2/v0.2]
+
++        raise NotImplementedError
+
++
+
++    async def update(self, entity_id: uuid.UUID, payload: Dict[str, Any]) -> Dict[str, Any]:
+
++        # TODO[3.2/v0.2]
+
++        raise NotImplementedError
+
++
+
++    async def delete(self, entity_id: uuid.UUID) -> None:
+
++        # TODO[3.2/v0.2]
+
++        raise NotImplementedError
+
+
+--- /dev/null
++++ b/apps/api/src/controllers/add_user_entity_controller.py
+@@ -0,0 +1,50 @@
++"""
+
++Auto-generated scaffold — DO NOT COMMIT without review.
+
++
+
++plan_id: plan-1a2ddb817b
+
++story_id: STORY-201
+
++task_id: t-004
+
++ac_refs: ac-1, ac-2, ac-3
+
++
+
++description: Expose add_user_entity over the HTTP surface — RESTful routes that delegate to the service. Validate request bodies, shape responses, and surface typed errors.
+
++"""
+
++
+
++from __future__ import annotations
+
++
+
++import uuid
+
++from typing import Any, Dict, List, Optional
+
++
+
++from fastapi import APIRouter, HTTPException, status
+
++from pydantic import BaseModel
+
++
+
++
+
++router = APIRouter(prefix="/wireadduserentitycontroller", tags=["wireadduserentitycontroller"])
+
++
+
++
+
++class WireAddUserEntityControllerCreateRequest(BaseModel):
+
++    # TODO[3.2/v0.2]: derive request fields from AC descriptions
+
++    pass
+
++
+
++
+
++class WireAddUserEntityControllerResponse(BaseModel):
+
++    id: uuid.UUID
+
++    created_at: str
+
++    updated_at: str
+
++
+
++
+
++@router.post("/", response_model=WireAddUserEntityControllerResponse, status_code=status.HTTP_201_CREATED)
+
++async def create_wireadduserentitycontroller(payload: WireAddUserEntityControllerCreateRequest) -> WireAddUserEntityControllerResponse:
+
++        # TODO[3.2/v0.2]
+
++        raise HTTPException(status_code=501, detail="not implemented")
+
++
+
++
+
++@router.get("/{entity_id}", response_model=WireAddUserEntityControllerResponse)
+
++async def get_wireadduserentitycontroller(entity_id: uuid.UUID) -> WireAddUserEntityControllerResponse:
+
++        # TODO[3.2/v0.2]
+
++        raise HTTPException(status_code=501, detail="not implemented")
+
++
+
++
+
++@router.get("/", response_model=List[WireAddUserEntityControllerResponse])
+
++async def list_wireadduserentitycontroller(limit: int = 50, offset: int = 0) -> List[WireAddUserEntityControllerResponse]:
+
++        # TODO[3.2/v0.2]
+
++        raise HTTPException(status_code=501, detail="not implemented")
+
+
+--- /dev/null
++++ b/apps/api/test/unit/add_user_entity/test_smoke.py
+@@ -0,0 +1,30 @@
++"""
+
++Auto-generated scaffold — DO NOT COMMIT without review.
+
++
+
++plan_id: plan-1a2ddb817b
+
++story_id: STORY-201
+
++task_id: t-005
+
++ac_refs: ac-1, ac-2, ac-3
+
++
+
++description: Unit tests for the add_user_entity model, service, and controller. Cover the happy path and the AC failure cases.
+
++"""
+
++
+
++from __future__ import annotations
+
++
+
++import pytest
+
++
+
++
+
++class TestAddAddUserEntityUnitTests:
+
++    """Unit tests for AddAddUserEntityUnitTests. v0.1 scaffold — fill bodies in v0.2."""
+
++
+
++    def test_constructor_happy_path(self):
+
++        # TODO[3.2/v0.2]: construct a valid AddAddUserEntityUnitTests and assert fields
+
++        pytest.skip("scaffold-only — body in v0.2")
+
++
+
++    def test_validate_rejects_invalid_input(self):
+
++        # TODO[3.2/v0.2]: assert validate() raises on bad input
+
++        pytest.skip("scaffold-only — body in v0.2")
+
++
+
++    def test_to_dict_round_trip(self):
+
++        # TODO[3.2/v0.2]: assert to_dict → from_row is identity
+
++        pytest.skip("scaffold-only — body in v0.2")
+
+
+--- /dev/null
++++ b/apps/api/test/integration/add_user_entity/test_smoke.py
+@@ -0,0 +1,30 @@
++"""
+
++Auto-generated scaffold — DO NOT COMMIT without review.
+
++
+
++plan_id: plan-1a2ddb817b
+
++story_id: STORY-201
+
++task_id: t-006
+
++ac_refs: ac-1, ac-2, ac-3
+
++
+
++description: Integration tests for add_user_entity end-to-end against a real (test-container) DB. Verifies migration + service + controller wiring.
+
++"""
+
++
+
++from __future__ import annotations
+
++
+
++import pytest
+
++
+
++
+
++class TestAddAddUserEntityIntegrationTests:
+
++    """Unit tests for AddAddUserEntityIntegrationTests. v0.1 scaffold — fill bodies in v0.2."""
+
++
+
++    def test_constructor_happy_path(self):
+
++        # TODO[3.2/v0.2]: construct a valid AddAddUserEntityIntegrationTests and assert fields
+
++        pytest.skip("scaffold-only — body in v0.2")
+
++
+
++    def test_validate_rejects_invalid_input(self):
+
++        # TODO[3.2/v0.2]: assert validate() raises on bad input
+
++        pytest.skip("scaffold-only — body in v0.2")
+
++
+
++    def test_to_dict_round_trip(self):
+
++        # TODO[3.2/v0.2]: assert to_dict → from_row is identity
+
++        pytest.skip("scaffold-only — body in v0.2")

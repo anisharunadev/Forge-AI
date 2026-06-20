@@ -1,0 +1,9 @@
+{
+  "failures": [],
+  "summary": {
+    "isBlocked": true,
+    "reason": "tenant_breach",
+    "tenantRemaining": 0,
+    "tenantSpend": 1100
+  }
+}

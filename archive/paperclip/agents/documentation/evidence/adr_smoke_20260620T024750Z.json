@@ -1,0 +1,28 @@
+{
+  "spec": "FORA-121",
+  "sub_goal": "7.1.5 ADR generator",
+  "ran_at": "2026-06-19T21:17:50.853156+00:00",
+  "tests_run": 17,
+  "assertions_failed": 0,
+  "failures": [],
+  "acceptance": {
+    "sample_run": "PASS",
+    "idempotency": "PASS",
+    "madr_format": "PASS",
+    "no_wall_clock_in_body": "PASS",
+    "monotonic_numbering": "PASS",
+    "cross_linking_refs": "PASS",
+    "approval_routing": "PASS",
+    "missing_input_sha": "PASS",
+    "oversized_diff": "PASS",
+    "dry_run": "PASS",
+    "storage_contract": "PASS",
+    "detect_from_comments": "PASS",
+    "detect_from_markdown_canonical": "PASS",
+    "detect_from_markdown_inline": "PASS",
+    "detect_markdown_ignores_bare_decision": "PASS",
+    "renderer_pure": "PASS",
+    "render_index_empty": "PASS",
+    "render_index_groups_by_status": "PASS"
+  }
+}

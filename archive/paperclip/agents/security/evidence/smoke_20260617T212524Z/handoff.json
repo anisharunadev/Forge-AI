@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0.0",
+  "handoff_id": "sec-e70dac1db5",
+  "run_id": "run-74-smoke",
+  "tenant_id": "acme-corp",
+  "scanner_run_id": "run-416fab43e314",
+  "decision": "block",
+  "verdict": "block",
+  "findings": [
+    {
+      "finding_id": "finding-7da2d569c3",
+      "severity": "critical",
+      "category": "aws_access_key",
+      "rule_id": "fora-aws-access-key",
+      "scanner": "gitleaks",
+      "file": "src/example.py",
+      "line": 4,
+      "remediation": "",
+      "redacted": "[redacted:fpr=1a5d44:len=20:head=AK:tail=LE]"
+    },
+    {
+      "finding_id": "finding-ef50189fb8",
+      "severity": "critical",
+      "category": "github_pat",
+      "rule_id": "fora-github-pat",
+      "scanner": "gitleaks",
+      "file": "src/example.py",
+      "line": 7,
+      "remediation": "",
+      "redacted": "[redacted:fpr=9d6060:len=40:head=gh:tail=89]"
+    },
+    {
+      "finding_id": "finding-d26f992853",
+      "severity": "critical",
+      "category": "stripe_live_key",
+      "rule_id": "fora-stripe-live-key",
+      "scanner": "gitleaks",
+      "file": ".env.example",
+      "line": 1,
+      "remediation": "",
+      "redacted": "[redacted:fpr=78a084:len=32:head=sk:tail=dc]"
+    },
+    {
+      "finding_id": "finding-d9862b594f",
+      "severity": "high",
+      "category": "slack_token",
+      "rule_id": "fora-slack-token",
+      "scanner": "gitleaks",
+      "file": ".env.example",
+      "line": 2,
+      "remediation": "",
+      "redacted": "[redacted:fpr=e4b78f:len=51:head=xo:tail=Wx]"
+    },
+    {
+      "finding_id": "finding-18ccf913ea",
+      "severity": "critical",
+      "category": "openai_api_key",
+      "rule_id": "fora-openai-api-key",
+      "scanner": "gitleaks",
+      "file": ".env.example",
+      "line": 3,
+      "remediation": "",
+      "redacted": "[redacted:fpr=a00a8c:len=73:head=sk:tail=YZ]"
+    },
+    {
+      "finding_id": "finding-fa853a73b2",
+      "severity": "high",
+      "category": "generic_api_key",
+      "rule_id": "trufflehog:AWS",
+      "scanner": "trufflehog",
+      "file": "src/example.py",
+      "line": 4,
+      "remediation": "",
+      "redacted": "[redacted:fpr=1a5d44:len=20:head=AK:tail=LE]"
+    },
+    {
+      "finding_id": "finding-e7d0d5cc1e",
+      "severity": "high",
+      "category": "generic_api_key",
+      "rule_id": "trufflehog:Github",
+      "scanner": "trufflehog",
+      "file": "src/example.py",
+      "line": 7,
+      "remediation": "",
+      "redacted": "[redacted:fpr=9d6060:len=40:head=gh:tail=89]"
+    }
+  ],
+  "finding_count": 7,
+  "severity_counts": {
+    "critical": 4,
+    "high": 3
+  },
+  "scanners_used": [
+    "gitleaks",
+    "trufflehog"
+  ],
+  "scanner_versions": {
+    "gitleaks": "gitleaks/unknown",
+    "trufflehog": "trufflehog/unknown"
+  },
+  "pr_comment_posted": true,
+  "evidence_audit_id": "evidence-7c093452eb50",
+  "duration_ms": 0.0039060115814208984,
+  "generated_at": "2026-06-17T21:25:24Z"
+}

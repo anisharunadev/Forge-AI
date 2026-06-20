@@ -1,0 +1,53 @@
+Scope: all 39 workspace projects
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+mcp-servers/aws prepare$ npm run build
+mcp-servers/azure-devops prepare$ npm run build
+mcp-servers/clickup prepare$ npm run build
+mcp-servers/databricks prepare$ npm run build
+mcp-servers/confluence prepare$ npm run build
+mcp-servers/azure-devops prepare: > @fora/mcp-azure-devops@0.1.0 build
+mcp-servers/azure-devops prepare: > tsc -p tsconfig.json
+mcp-servers/clickup prepare: > @fora/mcp-clickup@0.1.0 build
+mcp-servers/clickup prepare: > tsc -p tsconfig.json
+mcp-servers/aws prepare: > @fora/mcp-aws@0.1.0 build
+mcp-servers/aws prepare: > tsc -p tsconfig.json
+mcp-servers/databricks prepare: > @fora/mcp-databricks@0.1.0 build
+mcp-servers/databricks prepare: > tsc -p tsconfig.json
+mcp-servers/confluence prepare: > @fora/mcp-confluence@0.1.0 build
+mcp-servers/confluence prepare: > tsc -p tsconfig.json
+mcp-servers/azure-devops prepare: Done
+mcp-servers/figma prepare$ npm run build
+mcp-servers/confluence prepare: Done
+mcp-servers/github prepare$ npm run build
+mcp-servers/clickup prepare: Done
+mcp-servers/secrets prepare$ npm run build
+mcp-servers/databricks prepare: Done
+mcp-servers/slack prepare$ npm run build
+mcp-servers/figma prepare: > @fora/mcp-figma@0.1.0 build
+mcp-servers/figma prepare: > tsc -p tsconfig.json
+mcp-servers/github prepare: > @fora/mcp-github@0.1.0 build
+mcp-servers/github prepare: > tsc -p tsconfig.json
+mcp-servers/secrets prepare: > @fora/mcp-secrets@0.1.0 build
+mcp-servers/secrets prepare: > tsc -p tsconfig.json
+mcp-servers/slack prepare: > @fora/mcp-slack@0.1.0 build
+mcp-servers/slack prepare: > tsc -p tsconfig.json
+mcp-servers/aws prepare: Done
+mcp-servers/sonarqube prepare$ npm run build
+mcp-servers/sonarqube prepare: > @fora/mcp-sonarqube@0.1.0 build
+mcp-servers/sonarqube prepare: > tsc -p tsconfig.json
+mcp-servers/figma prepare: Done
+mcp-servers/zendesk prepare$ npm run build
+mcp-servers/zendesk prepare: > @fora/mcp-zendesk@0.1.0 build
+mcp-servers/zendesk prepare: > tsc -p tsconfig.json
+mcp-servers/slack prepare: Done
+mcp-servers/secrets prepare: Done
+mcp-servers/sonarqube prepare: Done
+mcp-servers/github prepare: Done
+mcp-servers/zendesk prepare: Done
+mcp-servers/jira prepare$ npm run build
+mcp-servers/jira prepare: > @fora/mcp-jira@0.1.0 build
+mcp-servers/jira prepare: > tsc -p tsconfig.json
+mcp-servers/jira prepare: Done
+Done in 8.8s

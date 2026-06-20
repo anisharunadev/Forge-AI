@@ -14,7 +14,7 @@ pii_markers: []
 # QA Agent — playbook
 
 **Scope:** what the QA stage does, when each test tier is required, the v1 contract, and the Phase 4 self-healing plan.
-**Audience:** every sub-agent and engineer touching Epic 4 (`FORA-20`) or the gate between Dev → QA → Security.
+**Audience:** every sub-agent and engineer touching Epic 4 (`Forge AI-20`) or the gate between Dev → QA → Security.
 **Stage injection:** Inject into **QA**, **Dev**, **Security**, and **CTO** reviews for any change that touches the test generator contract.
 
 ---
@@ -51,7 +51,7 @@ The QA Agent never mutates a test in the source PR directly. Tests are added on 
 
 If `tech-stack.md` does not name a framework, **stop and ask**, do not default. The four tiers are mandatory; downgrading is a CTO call, not an agent call.
 
-## 3. The v1 contract (FORA-41 ADR)
+## 3. The v1 contract (Forge AI-41 ADR)
 
 ```python
 from agents.qa.schemas import TestPlan, TestRun, CoverageReport
@@ -61,7 +61,7 @@ from agents.qa.schemas import TestPlan, TestRun, CoverageReport
 - `TestRun` — what actually happened: per-tier pass/fail, p50/p99 duration, sample evidence.
 - `CoverageReport` — line, branch, mutation-score (when available).
 
-The full ADR is `docs/adr/0004-test-generator-handoff.md` once [FORA-41](/FORA/issues/FORA-41) is merged. Until then, the contract above is the source of truth.
+The full ADR is `docs/adr/0004-test-generator-handoff.md` once [Forge AI-41](/Forge AI/issues/Forge AI-41) is merged. Until then, the contract above is the source of truth.
 
 ## 4. Non-obvious design choices
 
@@ -81,7 +81,7 @@ The Security stage consumes:
 
 A `not_implemented` tier on a critical path (auth, billing) is a Security-block, not a QA-pass.
 
-## 6. Phase 4 — Self-healing (out of MVP, in scope of FORA-37)
+## 6. Phase 4 — Self-healing (out of MVP, in scope of Forge AI-37)
 
 When the Phase 4 feature flag flips:
 
@@ -97,18 +97,18 @@ When the Phase 4 feature flag flips:
 
 ## 8. Owners and dependencies
 
-- [FORA-20](/FORA/issues/FORA-20) — Epic 4 — QA Agent (CTO, in_progress)
-- [FORA-33](/FORA/issues/FORA-33) — Goal 4.1 — Test Generator
-- [FORA-37](/FORA/issues/FORA-37) — Goal 4.2 — Self-Healing Agent (Phase 4, backlog)
-- [FORA-41](/FORA/issues/FORA-41) — ADR-0004: Test generator handoff contract
-- [FORA-43](/FORA/issues/FORA-43) — Build Test Generator agent skeleton (`agents/qa/`)
-- [FORA-46](/FORA/issues/FORA-46) — Smoke test for QA Agent (blocked by [FORA-43](/FORA/issues/FORA-43))
-- [FORA-49](/FORA/issues/FORA-49) — Wire QA Agent to @fora/mcp-github (blocked by [FORA-43](/FORA/issues/FORA-43) and [FORA-46](/FORA/issues/FORA-46))
-- [FORA-65](/FORA/issues/FORA-65) — Document QA playbook (this file; the formal commit lands via the issue, not via a free edit)
-- [FORA-91](/FORA/issues/FORA-91) — Self-Healing v1 scaffold (Phase 4)
+- [Forge AI-20](/Forge AI/issues/Forge AI-20) — Epic 4 — QA Agent (CTO, in_progress)
+- [Forge AI-33](/Forge AI/issues/Forge AI-33) — Goal 4.1 — Test Generator
+- [Forge AI-37](/Forge AI/issues/Forge AI-37) — Goal 4.2 — Self-Healing Agent (Phase 4, backlog)
+- [Forge AI-41](/Forge AI/issues/Forge AI-41) — ADR-0004: Test generator handoff contract
+- [Forge AI-43](/Forge AI/issues/Forge AI-43) — Build Test Generator agent skeleton (`agents/qa/`)
+- [Forge AI-46](/Forge AI/issues/Forge AI-46) — Smoke test for QA Agent (blocked by [Forge AI-43](/Forge AI/issues/Forge AI-43))
+- [Forge AI-49](/Forge AI/issues/Forge AI-49) — Wire QA Agent to @fora/mcp-github (blocked by [Forge AI-43](/Forge AI/issues/Forge AI-43) and [Forge AI-46](/Forge AI/issues/Forge AI-46))
+- [Forge AI-65](/Forge AI/issues/Forge AI-65) — Document QA playbook (this file; the formal commit lands via the issue, not via a free edit)
+- [Forge AI-91](/Forge AI/issues/Forge AI-91) — Self-Healing v1 scaffold (Phase 4)
 
-GitHub MCP: [FORA-4](/FORA/issues/FORA-4) (done).
-Senior Engineer hire (will own the v1 skeleton + smoke test): [FORA-7](/FORA/issues/FORA-7).
+GitHub MCP: [Forge AI-4](/Forge AI/issues/Forge AI-4) (done).
+Senior Engineer hire (will own the v1 skeleton + smoke test): [Forge AI-7](/Forge AI/issues/Forge AI-7).
 
 ## 9. Cost notes — token budget for the LLM-driven generator (v2)
 

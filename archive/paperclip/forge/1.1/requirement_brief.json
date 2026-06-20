@@ -1,0 +1,183 @@
+{
+  "schema_version": "1.0",
+  "issue": "FORA-59",
+  "issue_title": "Sub-goal 1.1 — Requirement ingestion (Draft PRD)",
+  "produced_by": {
+    "agent_id": "99b34c5d-87d4-42a0-a66a-c65a916aeeec",
+    "agent_name": "BA",
+    "role": "pm",
+    "title": "Business Analyst / Product Manager",
+    "reports_to": "f4d4bf77-2a6b-41e0-b3c5-4a688e2913f0",
+    "reports_to_name": "CTO",
+    "charter_path": "agents/99b34c5d-87d4-42a0-a66a-c65a916aeeec/instructions/AGENTS.md"
+  },
+  "produced_at": "2026-06-17T00:00:00Z",
+  "epic_parent": {
+    "identifier": "FORA-17",
+    "title": "Epic 1 — Forge Ideation Agent",
+    "url": "/FORA/issues/FORA-17"
+  },
+  "ideation_trigger": {
+    "raw_prompt": "Turn a one-line product idea into a board-approved PRD + Jira Epic.",
+    "source": "epic_description",
+    "source_url": "/FORA/issues/FORA-17",
+    "received_at": "2026-06-17T00:00:00Z",
+    "verbatim": "Turn a one-line product idea into a board-approved PRD + Epic in Jira. Board approval gate on exit."
+  },
+  "extracted_signals": {
+    "problem_statement": "The path from a one-line product idea to a board-approved PRD is the single most expensive hand-off in any engineering org, and the hand-off that loses the most context. Today the idea travels through PM brain -> Slack thread -> ad-hoc doc -> Jira ticket -> team kickoff; the PRD drifts from the conversation, the conversation drifts from the PRD, and the eventual Jira epic references neither. There is no machine-readable intermediate between the idea and the PRD, no deterministic record of which inputs shaped which conclusions, and no audit trail a CISO will accept. Existing AI tools (code-review bots, pair programmers, PM-side copilots) do not close this gap because they see at most one link in the chain.",
+    "primary_user_persona": "Product Manager at a Series-B-Series-D SaaS company, 50-500 engineers. Drops a one-paragraph feature idea in a Slack channel or in the Forge console's 'New idea' form, expects a Draft PRD back in under 10 minutes, and is willing to refine the gaps but not willing to author the structure themselves.",
+    "secondary_user_personas": [
+      "Engineering Lead - needs the Draft PRD to be the right shape for the Architect stage to pick up without rework",
+      "CTO / VP Eng - needs the Draft PRD to surface ambiguity explicitly so they can resolve it before Architect work burns budget; this is the persona that signs off on the stage gate",
+      "Customer CISO - needs every step the agent took to be auditable, including which Knowledge Layer files it read and which MCP calls it made"
+    ],
+    "success_criteria": [
+      "A user-supplied one-line prompt is normalized into a requirement_brief and a Draft PRD in a single agent run, with no human in the loop before the artifact is produced.",
+      "The Draft PRD passes a structural lint against workspace/project/PRD.md (every required section is present and non-empty; no section marked TBD without a justification).",
+      "The agent surfaces ambiguity as a structured list, not a hidden guess - every section marked 'partial' must have a paired open_question_id.",
+      "The full input trail (Knowledge Layer files read, MCP calls made, prompt/response pairs when FORA_LOG_LLM=1) is captured in the audit log under the run's run_id.",
+      "The agent never writes to the Knowledge Layer; humans remain the sole writers in v1.",
+      "Every success metric in section 8 of the Draft PRD has a number, baseline, and target."
+    ],
+    "constraints": [
+      "Model-agnostic: must run on Anthropic Claude (primary) with a documented OpenAI fallback path.",
+      "Per-tenant isolation: a Forge Ideation run for tenant A must never read tenant B's Knowledge Layer or MCP data.",
+      "Token + dollar budget per run: target $0.50 median, hard ceiling $5.00 for sub-goal 1.1 (below the platform-wide $50 cap; the gap is intentional headroom for downstream stages).",
+      "Stage gate: the agent must not pass the Draft PRD to the next stage (Market & tech-debt analysis) until the board approval interaction resolves.",
+      "Knowledge Layer reads are restricted to the v1 allow-list: workspace/project/PRD.md, workspace/project/roadmap.md, workspace/project/tech-stack.md, workspace/customer/standards.md, workspace/customer/conventions.md, workspace/customer/glossary.md, workspace/memory/ideation.md.",
+      "MCP read-set for sub-goal 1.1 is Jira only (Q3 2026 milestone); Zendesk / Slack / Confluence are stubbed with not_wired responses and a fallback note."
+    ],
+    "ambiguity_flags": [
+      {
+        "id": "Q1",
+        "section": "ideation_trigger",
+        "severity": "blocking",
+        "question": "Is the trigger for this iteration a real customer one-line idea, or a self-bootstrapping dogfood where FORA is the product being specced? The Draft PRD scope flips on the answer.",
+        "owner": "CEO",
+        "blocks": ["FORA-60", "FORA-61", "FORA-62"],
+        "due_by": "2026-06-20"
+      },
+      {
+        "id": "Q2",
+        "section": "mcp_inputs",
+        "severity": "blocking",
+        "question": "MCP read-set for sub-goal 1.1: proceed with Jira-only and stub the others (Zendesk, Slack, Confluence), or wait for the priority-1 set to be wired in Q4 2026?",
+        "owner": "CTO",
+        "blocks": ["FORA-60"],
+        "due_by": "2026-06-18"
+      },
+      {
+        "id": "Q3",
+        "section": "draft_prd_md",
+        "severity": "non_blocking",
+        "question": "Should the Draft PRD include a 'first design partner scenario' worked example, or stay template-clean and push that to a separate example artifact?",
+        "owner": "ba-agent",
+        "blocks": [],
+        "due_by": "2026-06-25"
+      },
+      {
+        "id": "Q4",
+        "section": "constraints",
+        "severity": "non_blocking",
+        "question": "Is the per-run $0.50 median / $5.00 ceiling measured in input+output tokens only, or does it also include the MCP tool-call cost envelope?",
+        "owner": "CTO",
+        "blocks": [],
+        "due_by": "2026-06-18"
+      },
+      {
+        "id": "Q5",
+        "section": "process",
+        "severity": "non_blocking",
+        "question": "Owner reassignment for sub-goals 1.2-1.4: one-shot CEO action now (assign 1.2-1.4 to ba-agent at creation time so the gate auto-resumes them), or staged manually after each 1.x is done?",
+        "owner": "CEO",
+        "blocks": [],
+        "due_by": "2026-06-20"
+      }
+    ]
+  },
+  "context": {
+    "workspace_files_read": [
+      {
+        "path": "workspace/project/PRD.md",
+        "purpose": "platform PRD template (the 11-section mirror target for the Draft PRD)"
+      },
+      {
+        "path": "workspace/project/roadmap.md",
+        "purpose": "stage gates and milestones; Q3 2026 is the current quarter"
+      },
+      {
+        "path": "workspace/project/tech-stack.md",
+        "purpose": "what is and is not buildable; MCP priority-1 set; Q3 2026 ships Jira only"
+      },
+      {
+        "path": "workspace/customer/standards.md",
+        "purpose": "SOC 2 / ISO 27001 / NIST SSDF / OWASP / WCAG inheritance; the audit baseline"
+      },
+      {
+        "path": "workspace/customer/conventions.md",
+        "purpose": "naming, repo layout, delivery norms; per-tenant override model"
+      },
+      {
+        "path": "workspace/customer/glossary.md",
+        "purpose": "FORA-specific terms; the dictionary that lets a cold-started agent read the rest of the workspace"
+      }
+    ],
+    "mcp_inputs": {
+      "jira": {
+        "status": "available",
+        "queries_run": [
+          "project = FORA AND parent = FORA-17 ORDER BY created DESC"
+        ],
+        "findings": [
+          "FORA-59 (this issue) - Sub-goal 1.1, status: in_progress, assignee: ba-agent (Hire #3)",
+          "FORA-60 - Sub-goal 1.2 (Market & tech-debt analysis), status: blocked, dependent on FORA-59",
+          "FORA-61 - Sub-goal 1.3 (Epic + story generator), status: blocked, dependent on FORA-60",
+          "FORA-62 - Sub-goal 1.4 (Jira sync), status: blocked, dependent on FORA-61"
+        ]
+      },
+      "zendesk": {
+        "status": "not_wired",
+        "fallback": "Knowledge Layer only; v1.1 wiring per roadmap.md section 5"
+      },
+      "slack": {
+        "status": "not_wired",
+        "fallback": "Knowledge Layer only; Slack/Teams MCP is a Q4 2026 milestone per roadmap.md section 4"
+      },
+      "confluence": {
+        "status": "not_wired",
+        "fallback": "Knowledge Layer only; Confluence MCP is a Q4 2026 milestone per roadmap.md section 4"
+      }
+    }
+  },
+  "open_questions_pointer": {
+    "interaction_kind": "ask_user_questions",
+    "issue": "FORA-59",
+    "blocking_question_ids": ["Q1", "Q2"],
+    "non_blocking_question_ids": ["Q3", "Q4", "Q5"]
+  },
+  "output_targets": {
+    "draft_prd_path": "forge/1.1/draft_prd.md",
+    "requirement_brief_path": "forge/1.1/requirement_brief.json",
+    "epic_stub": {
+      "title": "TBD - gated on board approval of Draft PRD (Q1 trigger semantics + Q2 MCP read-set)",
+      "stories": [],
+      "acceptance_criteria_summary": "TBD - derived from the Draft PRD's success metrics and acceptance criteria once Q1 and Q2 resolve."
+    }
+  },
+  "next_action": {
+    "owner": "board (via ask_user_questions interaction on FORA-59) -> ba-agent (on resume)",
+    "blocking_question_ids": ["Q1", "Q2"],
+    "unblock_event": "board_response_received",
+    "resume_path": "ba-agent picks up FORA-60 (sub-goal 1.2 - Market & tech-debt analysis) when FORA-59 transitions to done"
+  },
+  "audit": {
+    "run_id": "3c774945-c874-4dd8-bc2d-d598e24f74ca",
+    "agent_id": "99b34c5d-87d4-42a0-a66a-c65a916aeeec",
+    "company_id": "3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9",
+    "workspace_files_read_count": 6,
+    "mcp_queries_run_count": 1,
+    "interaction_posted": true,
+    "interaction_kind": "ask_user_questions"
+  }
+}

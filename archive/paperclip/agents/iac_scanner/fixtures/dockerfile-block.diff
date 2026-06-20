@@ -1,0 +1,11 @@
+diff --git a/Dockerfile b/Dockerfile
+index 1111111..2222222 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,4 +1,6 @@
+ FROM ubuntu:20.04
++USER root
+ ADD . /app
+ RUN cd /app && make
++EXPOSE 8080
+ CMD ["/app/server"]

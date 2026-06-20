@@ -1,0 +1,271 @@
+{
+  "cost_usd": 0.0,
+  "detector_runtime_ms": 2.522,
+  "detector_version": "arch-style-detector/0.1.0",
+  "deterministic": true,
+  "generated_at": "2026-06-17T17:19:54Z",
+  "graph_edge_count": 1325,
+  "graph_node_count": 345,
+  "notes": [
+    "Detector is pure-Python; no LLM, no network. Same input -> same output.",
+    "Scores are a clamped sum of weighted positive/negative signals per style; see scorers.py for weights.",
+    "Cross-adjustment resolves mutually-exclusive pairs (monolith <-> microservices, modular-monolith cap when microservices is high)."
+  ],
+  "schema_version": 1,
+  "tags": [
+    {
+      "confidence": 0.0,
+      "evidence": [
+        {
+          "description": "5 service groups (apps/packages/mcp-servers/agents/...) \u2014 not a monolith.",
+          "kind": "negative",
+          "metric": "service_count",
+          "paths": [],
+          "value": 5.0
+        },
+        {
+          "description": "Zero cross-service file imports \u2014 boundaries are enforced.",
+          "kind": "negative",
+          "metric": null,
+          "paths": [],
+          "value": null
+        }
+      ],
+      "rationale": "5 service group(s); 2 cycle(s); cross-service file imports = 0.",
+      "style": "monolith"
+    },
+    {
+      "confidence": 0.8999999999999999,
+      "evidence": [
+        {
+          "description": "5 top-level service groups \u2014 independently buildable.",
+          "kind": "positive",
+          "metric": "service_count",
+          "paths": [],
+          "value": 5.0
+        },
+        {
+          "description": "Zero cross-service file imports \u2014 services share only via packages.",
+          "kind": "positive",
+          "metric": null,
+          "paths": [],
+          "value": null
+        },
+        {
+          "description": "11 entry points under apps/ or mcp-servers/ \u2014 multiple runnable services.",
+          "kind": "positive",
+          "metric": null,
+          "paths": [],
+          "value": null
+        },
+        {
+          "description": "0 layering violations \u2014 boundaries respected at file level.",
+          "kind": "neutral",
+          "metric": null,
+          "paths": [],
+          "value": null
+        }
+      ],
+      "rationale": "5 services, 0 cross-service file imports, 11 per-service entry points.",
+      "style": "microservices"
+    },
+    {
+      "confidence": 0.15,
+      "evidence": [
+        {
+          "description": "No broker / pub-sub packages in top external deps.",
+          "kind": "negative",
+          "metric": null,
+          "paths": [],
+          "value": null
+        },
+        {
+          "description": "25 event-bus / bridge related paths.",
+          "kind": "positive",
+          "metric": null,
+          "paths": [
+            "apps/event-bus-bridge/src/config.ts",
+            "apps/event-bus-bridge/src/index.ts",
+            "apps/event-bus-bridge/src/sns-publisher.ts",
+            "apps/event-bus-bridge/test/bridge.test.ts",
+            "apps/orchestrator/src/adapters/event-bus-nats.live.test.ts",
+            "apps/orchestrator/src/adapters/event-bus-nats.test.ts",
+            "apps/orchestrator/src/adapters/event-bus-nats.ts",
+            "packages/event-bus/src/consumer.ts",
+            "packages/event-bus/src/envelope.ts",
+            "packages/event-bus/src/errors.ts",
+            "packages/event-bus/src/events.ts",
+            "packages/event-bus/src/index.ts",
+            "packages/event-bus/src/producer.ts",
+            "packages/event-bus/src/replay.ts",
+            "packages/event-bus/src/state-changes.ts",
+            "packages/event-bus/src/subject.ts",
+            "packages/event-bus/test/dedupe.test.ts",
+            "packages/event-bus/test/envelope.test.ts",
+            "packages/event-bus/test/events.test.ts",
+            "packages/event-bus/test/producer.test.ts",
+            "packages/event-bus/test/replay.test.ts",
+            "packages/event-bus/test/schema-version.test.ts",
+            "packages/event-bus/test/subject.test.ts",
+            "packages/event-bus/test/tenant-isolation.test.ts",
+            "packages/object-store/src/sqs.ts"
+          ],
+          "value": null
+        }
+      ],
+      "rationale": "broker fan-in = 0 across 0 packages; 25 event-bus/bridge paths.",
+      "style": "event-driven"
+    },
+    {
+      "confidence": 0.0,
+      "evidence": [
+        {
+          "description": "No command/query/ read-model/write-model paths and no CQRS libraries in top deps.",
+          "kind": "negative",
+          "metric": null,
+          "paths": [],
+          "value": null
+        }
+      ],
+      "rationale": "0 CQRS-shaped paths; CQRS library fan-in = 0.",
+      "style": "cqrs"
+    },
+    {
+      "confidence": 0.0,
+      "evidence": [
+        {
+          "description": "No /domain, /aggregate, /entities or /bounded-context paths detected.",
+          "kind": "negative",
+          "metric": null,
+          "paths": [],
+          "value": null
+        }
+      ],
+      "rationale": "0 DDD-shaped paths; 0 value-object file(s).",
+      "style": "ddd"
+    },
+    {
+      "confidence": 0.2,
+      "evidence": [
+        {
+          "description": "Only one layer-style keyword: repository.",
+          "kind": "neutral",
+          "metric": null,
+          "paths": [],
+          "value": null
+        }
+      ],
+      "rationale": "1 layer keyword(s) present; 0 layering violations.",
+      "style": "layered"
+    },
+    {
+      "confidence": 0.8,
+      "evidence": [
+        {
+          "description": "3 ports file(s) and 8 adapter file(s).",
+          "kind": "positive",
+          "metric": "port_adapter_count",
+          "paths": [
+            "apps/agent-runtime/src/orchestrator/memory-ports.ts",
+            "apps/agent-runtime/src/orchestrator/ports.ts",
+            "apps/customer-cloud-broker/src/adapters/aws.ts",
+            "apps/customer-cloud-broker/src/adapters/azure.ts",
+            "apps/customer-cloud-broker/src/adapters/gcp.ts",
+            "apps/customer-cloud-broker/src/adapters/index.ts",
+            "apps/customer-cloud-broker/test/azure-adapter.test.ts",
+            "apps/orchestrator/src/adapters/event-bus-nats.live.test.ts",
+            "apps/orchestrator/src/adapters/event-bus-nats.test.ts",
+            "apps/orchestrator/src/adapters/event-bus-nats.ts",
+            "apps/orchestrator/src/ports.ts"
+          ],
+          "value": 11.0
+        },
+        {
+          "description": "4 central types/ports file(s) with inDegree \u2265 10.",
+          "kind": "positive",
+          "metric": null,
+          "paths": [
+            "apps/agent-runtime/src/types.ts",
+            "apps/customer-cloud-broker/src/types.ts",
+            "apps/orchestrator/src/ports.ts",
+            "apps/orchestrator/src/types.ts"
+          ],
+          "value": null
+        },
+        {
+          "description": "ports interface file(s) act as the dependency-inversion seam.",
+          "kind": "positive",
+          "metric": null,
+          "paths": [
+            "apps/agent-runtime/src/orchestrator/memory-ports.ts",
+            "apps/agent-runtime/src/orchestrator/ports.ts",
+            "apps/orchestrator/src/ports.ts"
+          ],
+          "value": null
+        }
+      ],
+      "rationale": "ports=3, adapters=8, central types fan-in \u2265 10: 4.",
+      "style": "hexagonal-clean"
+    },
+    {
+      "confidence": 0.5,
+      "evidence": [
+        {
+          "description": "apps/ + packages/ layout with zero cross-service file imports.",
+          "kind": "positive",
+          "metric": "cross_service_file_imports",
+          "paths": [],
+          "value": 0.0
+        },
+        {
+          "description": "5 service groups \u2014 more microservice-shaped than classic modular monolith.",
+          "kind": "neutral",
+          "metric": null,
+          "paths": [],
+          "value": null
+        },
+        {
+          "description": "Capped at 0.5 because microservices scored \u2265 0.5.",
+          "kind": "cross-adjustment",
+          "metric": null,
+          "paths": [],
+          "value": null
+        }
+      ],
+      "rationale": "services=5, has_apps=True, has_packages=True, cross-service file imports = 0. (capped \u2014 services are microservice-shaped, not classic modular monolith).",
+      "style": "modular-monolith"
+    },
+    {
+      "confidence": 0.0,
+      "evidence": [
+        {
+          "description": "No lambda/serverless/handler paths and no serverless SDKs in top deps.",
+          "kind": "negative",
+          "metric": null,
+          "paths": [],
+          "value": null
+        }
+      ],
+      "rationale": "serverless paths = 0; serverless SDK fan-in = 0.",
+      "style": "serverless"
+    },
+    {
+      "confidence": 0.35,
+      "evidence": [
+        {
+          "description": "2 pipeline/stage/transform paths.",
+          "kind": "positive",
+          "metric": null,
+          "paths": [
+            "apps/agent-runtime/src/orchestrator/stage-table.ts",
+            "apps/agent-runtime/src/stages.ts"
+          ],
+          "value": null
+        }
+      ],
+      "rationale": "pipeline paths = 2; pipeline library fan-in = 0.",
+      "style": "pipeline"
+    }
+  ],
+  "target_root": "/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default"
+}

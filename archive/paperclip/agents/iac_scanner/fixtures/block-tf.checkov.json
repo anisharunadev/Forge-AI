@@ -1,0 +1,29 @@
+[
+  {
+    "check_id": "CKV_AWS_53",
+    "check_name": "S3 Bucket has an ACL defined which allows public READ access.",
+    "check_class": "terraform",
+    "severity": "HIGH",
+    "file_path": "infra/main.tf",
+    "file_line_range": [3, 4],
+    "guideline": "https://docs.bridgecrew.io/docs/s3_13-acl_1#terraform---acls"
+  },
+  {
+    "check_id": "CKV_AWS_19",
+    "check_name": "S3 Bucket does not have default encryption enabled.",
+    "check_class": "terraform",
+    "severity": "HIGH",
+    "file_path": "infra/main.tf",
+    "file_line_range": [6, 8],
+    "guideline": "https://docs.bridgecrew.io/docs/s3_14-server-side-encryption#terraform"
+  },
+  {
+    "check_id": "CKV_AWS_54",
+    "check_name": "S3 Bucket does not have block public ACLs enabled.",
+    "check_class": "terraform",
+    "severity": "HIGH",
+    "file_path": "infra/main.tf",
+    "file_line_range": [3, 4],
+    "guideline": "https://docs.bridgecrew.io/docs/s3_16-block-public-acls#terraform"
+  }
+]

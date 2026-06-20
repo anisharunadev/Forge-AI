@@ -1,0 +1,11 @@
+[
+  {
+    "check_id": "CKV_AWS_53",
+    "check_name": "S3 Bucket has an ACL defined which allows public READ access.",
+    "check_class": "cloudformation",
+    "severity": "HIGH",
+    "file_path": "cfn/webapp.json",
+    "file_line_range": [7, 7],
+    "guideline": "https://docs.bridgecrew.io/docs/s3_13-acl_1"
+  }
+]

@@ -1,0 +1,53 @@
+{
+  "name": "@fora/connector-config",
+  "version": "0.1.0",
+  "description": "FORA tenant-scoped connector configuration service — storage, five-step resolver, override rules, onboarding flow per Plan 4 (FORA-391) and FORA-485. Owns the connector_binding + connector_binding_audit tables and the connector.binding.* audit taxonomy.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./repo": {
+      "import": "./dist/repo.js",
+      "types": "./dist/repo.d.ts"
+    },
+    "./resolver": {
+      "import": "./dist/resolver.js",
+      "types": "./dist/resolver.d.ts"
+    },
+    "./audit": {
+      "import": "./dist/audit.js",
+      "types": "./dist/audit.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "sweep": "node -e \"const a=process.argv[1];console.error('connector-config sweep: action='+a+' — production wires @fora/db-pool + FORA-36 forwarder. The cron descriptor (pnpm cron:register) is the wiring contract; this stub exits 0 in dev.');process.exit(0)\"",
+    "cron:register": "node --input-type=module -e \"import('./dist/cron.js').then(m=>console.log(JSON.stringify(m.registerConnectorCrons(),null,2)))\""
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@fora/db-pool": "workspace:*",
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "@types/pg": "^8.11.10",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0",
+    "fast-check": "^3.23.0"
+  }
+}

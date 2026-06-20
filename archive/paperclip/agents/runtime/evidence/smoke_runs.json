@@ -1,0 +1,707 @@
+{
+  "scenarios": {
+    "AC1 3-step plan succeeds and produces a structured record": {
+      "run_id": "run-0556d4f3fff3",
+      "plan": {
+        "plan_id": "plan-noop",
+        "goal": "demonstrate a 3-step plan",
+        "steps": [
+          {
+            "step_id": "s1",
+            "stage": "act",
+            "tool": "noop_a",
+            "arguments": {
+              "i": 1
+            },
+            "idempotency_key": "e7053f2b7c0e9fddd2c2b1b05f189bac",
+            "description": ""
+          },
+          {
+            "step_id": "s2",
+            "stage": "act",
+            "tool": "noop_b",
+            "arguments": {
+              "i": 2
+            },
+            "idempotency_key": "978f522e55c4ceb37d6caaa382766a61",
+            "description": ""
+          },
+          {
+            "step_id": "s3",
+            "stage": "act",
+            "tool": "noop_c",
+            "arguments": {
+              "i": 3
+            },
+            "idempotency_key": "08010d19c75b578c09df6944c0dc905a",
+            "description": ""
+          }
+        ],
+        "issued_at": "2026-06-16T20:31:56.823355Z",
+        "issued_by": "",
+        "schema_version": "0.1.0",
+        "stage": [
+          "act",
+          "act",
+          "act"
+        ]
+      },
+      "inputs": {
+        "brief": "happy"
+      },
+      "output": {
+        "last_output": {
+          "result": "ok",
+          "calls_so_far": 3
+        },
+        "step_outputs": [
+          {
+            "step_id": "s1",
+            "tool": "noop_a",
+            "output": {
+              "result": "ok",
+              "calls_so_far": 1
+            }
+          },
+          {
+            "step_id": "s2",
+            "tool": "noop_b",
+            "output": {
+              "result": "ok",
+              "calls_so_far": 2
+            }
+          },
+          {
+            "step_id": "s3",
+            "tool": "noop_c",
+            "output": {
+              "result": "ok",
+              "calls_so_far": 3
+            }
+          }
+        ]
+      },
+      "status": "succeeded",
+      "steps": [
+        {
+          "step_id": "s1",
+          "stage": "act",
+          "status": "succeeded",
+          "tool": "noop_a",
+          "call": {
+            "call_id": "call-41d2c54889",
+            "tool": "noop_a",
+            "arguments": {
+              "i": 1
+            },
+            "stage": "act",
+            "idempotency_key": "e7053f2b7c0e9fddd2c2b1b05f189bac",
+            "started_at": "2026-06-16T20:31:56.823461Z"
+          },
+          "result": {
+            "call_id": "call-7d2898f169",
+            "tool": "noop_a",
+            "ok": true,
+            "output": {
+              "result": "ok",
+              "calls_so_far": 1
+            },
+            "error_code": null,
+            "error_message": null,
+            "duration_ms": 0.023365020751953125,
+            "cost": {
+              "tokens_in": 10,
+              "tokens_out": 5,
+              "usd": 0.01
+            },
+            "finished_at": "2026-06-16T20:31:56.823527Z"
+          },
+          "retries": [
+            {
+              "attempt": 1,
+              "idempotency_key": "e7053f2b7c0e9fddd2c2b1b05f189bac",
+              "tool": "noop_a",
+              "ok": true,
+              "error_code": null,
+              "duration_ms": 0.003814697265625
+            }
+          ],
+          "cost": {
+            "tokens_in": 10,
+            "tokens_out": 5,
+            "usd": 0.01
+          },
+          "started_at": "2026-06-16T20:31:56.823429Z",
+          "finished_at": "2026-06-16T20:31:56.823539Z"
+        },
+        {
+          "step_id": "s2",
+          "stage": "act",
+          "status": "succeeded",
+          "tool": "noop_b",
+          "call": {
+            "call_id": "call-c24f9ba978",
+            "tool": "noop_b",
+            "arguments": {
+              "i": 2
+            },
+            "stage": "act",
+            "idempotency_key": "978f522e55c4ceb37d6caaa382766a61",
+            "started_at": "2026-06-16T20:31:56.823570Z"
+          },
+          "result": {
+            "call_id": "call-089af06488",
+            "tool": "noop_b",
+            "ok": true,
+            "output": {
+              "result": "ok",
+              "calls_so_far": 2
+            },
+            "error_code": null,
+            "error_message": null,
+            "duration_ms": 0.017642974853515625,
+            "cost": {
+              "tokens_in": 10,
+              "tokens_out": 5,
+              "usd": 0.01
+            },
+            "finished_at": "2026-06-16T20:31:56.823623Z"
+          },
+          "retries": [
+            {
+              "attempt": 1,
+              "idempotency_key": "978f522e55c4ceb37d6caaa382766a61",
+              "tool": "noop_b",
+              "ok": true,
+              "error_code": null,
+              "duration_ms": 0.0030994415283203125
+            }
+          ],
+          "cost": {
+            "tokens_in": 10,
+            "tokens_out": 5,
+            "usd": 0.01
+          },
+          "started_at": "2026-06-16T20:31:56.823549Z",
+          "finished_at": "2026-06-16T20:31:56.823633Z"
+        },
+        {
+          "step_id": "s3",
+          "stage": "act",
+          "status": "succeeded",
+          "tool": "noop_c",
+          "call": {
+            "call_id": "call-005db75508",
+            "tool": "noop_c",
+            "arguments": {
+              "i": 3
+            },
+            "stage": "act",
+            "idempotency_key": "08010d19c75b578c09df6944c0dc905a",
+            "started_at": "2026-06-16T20:31:56.823665Z"
+          },
+          "result": {
+            "call_id": "call-26b828e497",
+            "tool": "noop_c",
+            "ok": true,
+            "output": {
+              "result": "ok",
+              "calls_so_far": 3
+            },
+            "error_code": null,
+            "error_message": null,
+            "duration_ms": 0.012159347534179688,
+            "cost": {
+              "tokens_in": 10,
+              "tokens_out": 5,
+              "usd": 0.01
+            },
+            "finished_at": "2026-06-16T20:31:56.823697Z"
+          },
+          "retries": [
+            {
+              "attempt": 1,
+              "idempotency_key": "08010d19c75b578c09df6944c0dc905a",
+              "tool": "noop_c",
+              "ok": true,
+              "error_code": null,
+              "duration_ms": 0.0016689300537109375
+            }
+          ],
+          "cost": {
+            "tokens_in": 10,
+            "tokens_out": 5,
+            "usd": 0.01
+          },
+          "started_at": "2026-06-16T20:31:56.823642Z",
+          "finished_at": "2026-06-16T20:31:56.823706Z"
+        }
+      ],
+      "total_cost": {
+        "tokens_in": 30,
+        "tokens_out": 15,
+        "usd": 0.03
+      },
+      "started_at": "2026-06-16T20:31:56.823389Z",
+      "finished_at": "2026-06-16T20:31:56.823720Z",
+      "error": null,
+      "schema_version": "0.1.0"
+    },
+    "AC2 allow-list rejects non-allow-listed tool call": {
+      "run_id": "run-fbdc6ea7556f",
+      "plan": {
+        "plan_id": "plan-bad",
+        "goal": "reference a tool that is not in the allow-list",
+        "steps": [
+          {
+            "step_id": "s1",
+            "stage": "act",
+            "tool": "forbidden_tool",
+            "arguments": {},
+            "idempotency_key": "bae89a6426add06fe3e17ac8f9697c1c",
+            "description": ""
+          }
+        ],
+        "issued_at": "2026-06-16T20:31:56.824118Z",
+        "issued_by": "",
+        "schema_version": "0.1.0",
+        "stage": [
+          "act"
+        ]
+      },
+      "inputs": {},
+      "output": null,
+      "status": "tool_not_allowed",
+      "steps": [],
+      "total_cost": {
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "usd": 0.0
+      },
+      "started_at": "2026-06-16T20:31:56.824130Z",
+      "finished_at": "2026-06-16T20:31:56.824306Z",
+      "error": {
+        "code": "TOOL_NOT_ALLOWED",
+        "message": "tool 'forbidden_tool' is not allowed in stage 'act'",
+        "context": {
+          "stage": "act",
+          "tool": "forbidden_tool",
+          "allowed": [
+            "allowed_tool"
+          ]
+        }
+      },
+      "schema_version": "0.1.0"
+    },
+    "AC2 plan-level validation refuses non-allow-listed tool": {
+      "run_id": "run-3a158edc4141",
+      "plan": {
+        "plan_id": "plan-allowed",
+        "goal": "demonstrate a 3-step plan",
+        "steps": [
+          {
+            "step_id": "s1",
+            "stage": "act",
+            "tool": "allowed_a",
+            "arguments": {
+              "i": 1
+            },
+            "idempotency_key": "9d97a80f9c7adb765b62ce4fffc59a90",
+            "description": ""
+          },
+          {
+            "step_id": "s2",
+            "stage": "act",
+            "tool": "allowed_b",
+            "arguments": {
+              "i": 2
+            },
+            "idempotency_key": "c5d4068ae269d3ea4f79ef9e9ac353d0",
+            "description": ""
+          },
+          {
+            "step_id": "s3",
+            "stage": "act",
+            "tool": "forbidden",
+            "arguments": {
+              "i": 3
+            },
+            "idempotency_key": "7db380b9a84e8f0a83fccad64813cff5",
+            "description": ""
+          }
+        ],
+        "issued_at": "2026-06-16T20:31:56.824453Z",
+        "issued_by": "",
+        "schema_version": "0.1.0",
+        "stage": [
+          "act",
+          "act",
+          "act"
+        ]
+      },
+      "inputs": {},
+      "output": null,
+      "status": "tool_not_allowed",
+      "steps": [],
+      "total_cost": {
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "usd": 0.0
+      },
+      "started_at": "2026-06-16T20:31:56.824477Z",
+      "finished_at": "2026-06-16T20:31:56.824573Z",
+      "error": {
+        "code": "TOOL_NOT_ALLOWED",
+        "message": "tool 'allowed_a' is not allowed in stage 'act'",
+        "context": {
+          "stage": "act",
+          "tool": "allowed_a",
+          "allowed": [
+            "allowed_tool"
+          ]
+        }
+      },
+      "schema_version": "0.1.0"
+    },
+    "AC3 retries do not duplicate side effects (single key)": {
+      "run_id": "run-22d80518908b",
+      "plan": {
+        "plan_id": "plan-flaky",
+        "goal": "retry safety",
+        "steps": [
+          {
+            "step_id": "s1",
+            "stage": "act",
+            "tool": "flaky_tool",
+            "arguments": {
+              "x": 1
+            },
+            "idempotency_key": "acd77a3bb73266f7175f045eff1c46f5",
+            "description": ""
+          }
+        ],
+        "issued_at": "2026-06-16T20:31:56.824707Z",
+        "issued_by": "",
+        "schema_version": "0.1.0",
+        "stage": [
+          "act"
+        ]
+      },
+      "inputs": {},
+      "output": {
+        "last_output": {
+          "result": "ok-on-third",
+          "calls_so_far": 3
+        },
+        "step_outputs": [
+          {
+            "step_id": "s1",
+            "tool": "flaky_tool",
+            "output": {
+              "result": "ok-on-third",
+              "calls_so_far": 3
+            }
+          }
+        ]
+      },
+      "status": "succeeded",
+      "steps": [
+        {
+          "step_id": "s1",
+          "stage": "act",
+          "status": "succeeded",
+          "tool": "flaky_tool",
+          "call": {
+            "call_id": "call-941487d8d6",
+            "tool": "flaky_tool",
+            "arguments": {
+              "x": 1
+            },
+            "stage": "act",
+            "idempotency_key": "acd77a3bb73266f7175f045eff1c46f5",
+            "started_at": "2026-06-16T20:31:56.824752Z"
+          },
+          "result": {
+            "call_id": "call-407a0157bb",
+            "tool": "flaky_tool",
+            "ok": true,
+            "output": {
+              "result": "ok-on-third",
+              "calls_so_far": 3
+            },
+            "error_code": null,
+            "error_message": null,
+            "duration_ms": 26.743412017822266,
+            "cost": {
+              "tokens_in": 10,
+              "tokens_out": 5,
+              "usd": 0.01
+            },
+            "finished_at": "2026-06-16T20:31:56.851539Z"
+          },
+          "retries": [
+            {
+              "attempt": 1,
+              "idempotency_key": "acd77a3bb73266f7175f045eff1c46f5",
+              "tool": "flaky_tool",
+              "ok": false,
+              "error_code": "TRANSIENT",
+              "duration_ms": 0.009298324584960938
+            },
+            {
+              "attempt": 2,
+              "idempotency_key": "acd77a3bb73266f7175f045eff1c46f5",
+              "tool": "flaky_tool",
+              "ok": false,
+              "error_code": "TRANSIENT",
+              "duration_ms": 0.014066696166992188
+            },
+            {
+              "attempt": 3,
+              "idempotency_key": "acd77a3bb73266f7175f045eff1c46f5",
+              "tool": "flaky_tool",
+              "ok": true,
+              "error_code": null,
+              "duration_ms": 0.009775161743164062
+            }
+          ],
+          "cost": {
+            "tokens_in": 10,
+            "tokens_out": 5,
+            "usd": 0.01
+          },
+          "started_at": "2026-06-16T20:31:56.824733Z",
+          "finished_at": "2026-06-16T20:31:56.851754Z"
+        }
+      ],
+      "total_cost": {
+        "tokens_in": 10,
+        "tokens_out": 5,
+        "usd": 0.01
+      },
+      "started_at": "2026-06-16T20:31:56.824720Z",
+      "finished_at": "2026-06-16T20:31:56.851828Z",
+      "error": null,
+      "schema_version": "0.1.0"
+    },
+    "AC3 handler-side idempotency is honoured": {
+      "run_id": "run-0d7b304a0805",
+      "plan": {
+        "plan_id": "plan-idem",
+        "goal": "no duplicate side effects",
+        "steps": [
+          {
+            "step_id": "s1",
+            "stage": "act",
+            "tool": "idempotent",
+            "arguments": {
+              "id": "TICKET-1"
+            },
+            "idempotency_key": "16381b14d2d2aa48e9e72bd06e42dd3e",
+            "description": ""
+          }
+        ],
+        "issued_at": "2026-06-16T20:31:56.854502Z",
+        "issued_by": "",
+        "schema_version": "0.1.0",
+        "stage": [
+          "act"
+        ]
+      },
+      "inputs": {},
+      "output": {
+        "last_output": {
+          "ticket": "TICKET-1"
+        },
+        "step_outputs": [
+          {
+            "step_id": "s1",
+            "tool": "idempotent",
+            "output": {
+              "ticket": "TICKET-1"
+            }
+          }
+        ]
+      },
+      "status": "succeeded",
+      "steps": [
+        {
+          "step_id": "s1",
+          "stage": "act",
+          "status": "succeeded",
+          "tool": "idempotent",
+          "call": {
+            "call_id": "call-54248b632d",
+            "tool": "idempotent",
+            "arguments": {
+              "id": "TICKET-1"
+            },
+            "stage": "act",
+            "idempotency_key": "16381b14d2d2aa48e9e72bd06e42dd3e",
+            "started_at": "2026-06-16T20:31:56.854642Z"
+          },
+          "result": {
+            "call_id": "call-13ab34adaa",
+            "tool": "idempotent",
+            "ok": true,
+            "output": {
+              "ticket": "TICKET-1"
+            },
+            "error_code": null,
+            "error_message": null,
+            "duration_ms": 8.125782012939453,
+            "cost": {
+              "tokens_in": 5,
+              "tokens_out": 2,
+              "usd": 0.005
+            },
+            "finished_at": "2026-06-16T20:31:56.862837Z"
+          },
+          "retries": [
+            {
+              "attempt": 1,
+              "idempotency_key": "16381b14d2d2aa48e9e72bd06e42dd3e",
+              "tool": "idempotent",
+              "ok": false,
+              "error_code": "TRANSIENT",
+              "duration_ms": 0.011920928955078125
+            },
+            {
+              "attempt": 2,
+              "idempotency_key": "16381b14d2d2aa48e9e72bd06e42dd3e",
+              "tool": "idempotent",
+              "ok": true,
+              "error_code": null,
+              "duration_ms": 0.011444091796875
+            }
+          ],
+          "cost": {
+            "tokens_in": 5,
+            "tokens_out": 2,
+            "usd": 0.005
+          },
+          "started_at": "2026-06-16T20:31:56.854578Z",
+          "finished_at": "2026-06-16T20:31:56.862929Z"
+        }
+      ],
+      "total_cost": {
+        "tokens_in": 5,
+        "tokens_out": 2,
+        "usd": 0.005
+      },
+      "started_at": "2026-06-16T20:31:56.854545Z",
+      "finished_at": "2026-06-16T20:31:56.863026Z",
+      "error": null,
+      "schema_version": "0.1.0"
+    },
+    "AC4 cost ceiling aborts with typed error": {
+      "run_id": "run-e7dc5abc0a9b",
+      "plan": {
+        "plan_id": "plan-costly",
+        "goal": "breach the budget",
+        "steps": [
+          {
+            "step_id": "s1",
+            "stage": "act",
+            "tool": "expensive",
+            "arguments": {
+              "n": 1
+            },
+            "idempotency_key": "d7bacd770fffac23563efbbbc362c622",
+            "description": ""
+          },
+          {
+            "step_id": "s2",
+            "stage": "act",
+            "tool": "expensive",
+            "arguments": {
+              "n": 2
+            },
+            "idempotency_key": "50eb0022abc92f9c1957a3ce0d32155c",
+            "description": ""
+          }
+        ],
+        "issued_at": "2026-06-16T20:31:56.863840Z",
+        "issued_by": "",
+        "schema_version": "0.1.0",
+        "stage": [
+          "act",
+          "act"
+        ]
+      },
+      "inputs": {},
+      "output": null,
+      "status": "budget_exceeded",
+      "steps": [
+        {
+          "step_id": "s1",
+          "stage": "act",
+          "status": "succeeded",
+          "tool": "expensive",
+          "call": {
+            "call_id": "call-bad056283a",
+            "tool": "expensive",
+            "arguments": {
+              "n": 1
+            },
+            "stage": "act",
+            "idempotency_key": "d7bacd770fffac23563efbbbc362c622",
+            "started_at": "2026-06-16T20:31:56.863991Z"
+          },
+          "result": {
+            "call_id": "call-b94c643dbd",
+            "tool": "expensive",
+            "ok": true,
+            "output": {
+              "echo": {
+                "n": 1
+              }
+            },
+            "error_code": null,
+            "error_message": null,
+            "duration_ms": 0.039577484130859375,
+            "cost": {
+              "tokens_in": 20,
+              "tokens_out": 10,
+              "usd": 0.04
+            },
+            "finished_at": "2026-06-16T20:31:56.864108Z"
+          },
+          "retries": [
+            {
+              "attempt": 1,
+              "idempotency_key": "d7bacd770fffac23563efbbbc362c622",
+              "tool": "expensive",
+              "ok": true,
+              "error_code": null,
+              "duration_ms": 0.0095367431640625
+            }
+          ],
+          "cost": {
+            "tokens_in": 20,
+            "tokens_out": 10,
+            "usd": 0.04
+          },
+          "started_at": "2026-06-16T20:31:56.863928Z",
+          "finished_at": "2026-06-16T20:31:56.864135Z"
+        }
+      ],
+      "total_cost": {
+        "tokens_in": 40,
+        "tokens_out": 20,
+        "usd": 0.08
+      },
+      "started_at": "2026-06-16T20:31:56.863882Z",
+      "finished_at": "2026-06-16T20:31:56.864606Z",
+      "error": {
+        "code": "BUDGET_EXCEEDED",
+        "message": "cost ceiling breached: spent $0.0800 > cap $0.0500",
+        "context": {
+          "spent_usd": 0.08,
+          "ceiling_usd": 0.05
+        }
+      },
+      "schema_version": "0.1.0"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "scenarios": {
+    "AC default 13mo hot policy redacts old events via synthetic event": {
+      "redacted": 3
+    },
+    "AC per-tenant custom policy is honoured": {
+      "redacted": 3,
+      "hotDays": 30
+    },
+    "AC recent events are not redacted": {
+      "redacted": 0
+    },
+    "AC sweep is idempotent (second pass is a no-op)": {
+      "firstRun": 3,
+      "secondRun": 0
+    }
+  }
+}

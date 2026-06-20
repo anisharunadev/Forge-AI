@@ -1,0 +1,9 @@
+{
+  "failures": [],
+  "summary": {
+    "hardCount": 1,
+    "pausedCount": 1,
+    "spendCents": 20300,
+    "state": "hard_breach"
+  }
+}

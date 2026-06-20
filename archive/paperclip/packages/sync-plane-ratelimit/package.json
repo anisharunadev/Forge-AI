@@ -1,0 +1,36 @@
+{
+  "name": "@fora/sync-plane-ratelimit",
+  "version": "0.5.0",
+  "description": "FORA Sync Plane three-layer rate limiter + circuit breaker + composite-edit coalescer + per-actor burst control + backoff scheduler + tenant-weighted FIFO. Implements FORA-487 (FORA-391 Plan 5) end-to-end. v0.1 was FORA-256 (Epic 11.6) per ADR-0010 §7.1 and §8.2 R-SYNC-03. v0.2 was FORA-487.1 (audit-event rename). v0.3 was FORA-487.2 / FORA-516 (three-layer model + per-actor burst). v0.4 was FORA-487.3 / FORA-517 (backoff scheduler + idempotency keys via sync_op). v0.5 is FORA-487.4 / FORA-518 (tenant-weighted FIFO + connector_rate_limit_policy RLS). Pattern reused from @fora/customer-cloud-broker (FORA-126.5).",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

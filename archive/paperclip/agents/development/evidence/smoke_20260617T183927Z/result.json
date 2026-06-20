@@ -1,0 +1,308 @@
+{
+  "issue": "FORA-70",
+  "sub_goal": "3.2 \u2014 Coding",
+  "smoke_utc": "20260617T183927Z",
+  "elapsed_ms": 5,
+  "passed": 67,
+  "failed": 0,
+  "ok": true,
+  "checks": [
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1] crud_user (STORY-201) produces one FileChange per (task \u00d7 files_touched) \u2014 got 6, expected 6"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#2] crud_user (STORY-201) every FileChange has non-empty content"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#3] crud_user (STORY-201) every FileChange carries its source task_id"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4] crud_user (STORY-201) every FileChange carries AC refs from the plan"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#5] crud_user (STORY-201) unified_diff is non-empty"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#6] crud_user (STORY-201) unified_diff has 6 `+++ b/` headers \u2014 got 6"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#7] crud_user (STORY-201) SQL migrations contain CREATE TABLE + id UUID"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#8] crud_user (STORY-201) Python files contain @dataclass or TODO marker"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#9] crud_user (STORY-201) service files contain async def create + get"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#10] crud_user (STORY-201) controller files contain @router. decorators"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#11] crud_user (STORY-201) test files contain class Test + def test_"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#12] crud_user (STORY-201) every plan AC ref appears in at least one FileChange \u2014 plan=['ac-1', 'ac-2', 'ac-3'] covered=['ac-1', 'ac-2', 'ac-3']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#17] crud_user (STORY-201) diff is byte-stable across two runs"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#19] crud_user (STORY-201) summary.total_files == len(files) \u2014 summary=6 actual=6"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#20] crud_user (STORY-201) summary.ac_coverage matches plan ACs \u2014 summary=['ac-1', 'ac-2', 'ac-3'] plan=['ac-1', 'ac-2', 'ac-3']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#21] crud_user (STORY-201) CodeDiff.validate() returns no errors \u2014 got []"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#24] crud_user (STORY-201) all file paths start with apps/"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#25] crud_user (STORY-201) every file contains a TODO[3.2/v0.2] marker"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#26] crud_user (STORY-201) headers include plan_id, story_id, task_id"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#28] crud_user (STORY-201) schema_version is pinned to 0.1.0 \u2014 got 0.1.0"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1] api_login (STORY-202) produces one FileChange per (task \u00d7 files_touched) \u2014 got 4, expected 4"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#2] api_login (STORY-202) every FileChange has non-empty content"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#3] api_login (STORY-202) every FileChange carries its source task_id"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4] api_login (STORY-202) every FileChange carries AC refs from the plan"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#5] api_login (STORY-202) unified_diff is non-empty"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#6] api_login (STORY-202) unified_diff has 4 `+++ b/` headers \u2014 got 4"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#8] api_login (STORY-202) Python files contain @dataclass or TODO marker"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#9] api_login (STORY-202) service files contain async def create + get"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#10] api_login (STORY-202) controller files contain @router. decorators"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#11] api_login (STORY-202) test files contain class Test + def test_"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#12] api_login (STORY-202) every plan AC ref appears in at least one FileChange \u2014 plan=['ac-1', 'ac-2'] covered=['ac-1', 'ac-2']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#17] api_login (STORY-202) diff is byte-stable across two runs"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#19] api_login (STORY-202) summary.total_files == len(files) \u2014 summary=4 actual=4"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#20] api_login (STORY-202) summary.ac_coverage matches plan ACs \u2014 summary=['ac-1', 'ac-2'] plan=['ac-1', 'ac-2']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#21] api_login (STORY-202) CodeDiff.validate() returns no errors \u2014 got []"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#24] api_login (STORY-202) all file paths start with apps/"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#25] api_login (STORY-202) every file contains a TODO[3.2/v0.2] marker"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#26] api_login (STORY-202) headers include plan_id, story_id, task_id"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#28] api_login (STORY-202) schema_version is pinned to 0.1.0 \u2014 got 0.1.0"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#1] migration_only (STORY-203) produces one FileChange per (task \u00d7 files_touched) \u2014 got 2, expected 2"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#2] migration_only (STORY-203) every FileChange has non-empty content"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#3] migration_only (STORY-203) every FileChange carries its source task_id"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#4] migration_only (STORY-203) every FileChange carries AC refs from the plan"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#5] migration_only (STORY-203) unified_diff is non-empty"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#6] migration_only (STORY-203) unified_diff has 2 `+++ b/` headers \u2014 got 2"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#7] migration_only (STORY-203) SQL migrations contain CREATE TABLE + id UUID"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#8] migration_only (STORY-203) Python files contain @dataclass or TODO marker"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#11] migration_only (STORY-203) test files contain class Test + def test_"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#12] migration_only (STORY-203) every plan AC ref appears in at least one FileChange \u2014 plan=['ac-1', 'ac-2'] covered=['ac-1', 'ac-2']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#17] migration_only (STORY-203) diff is byte-stable across two runs"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#19] migration_only (STORY-203) summary.total_files == len(files) \u2014 summary=2 actual=2"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#20] migration_only (STORY-203) summary.ac_coverage matches plan ACs \u2014 summary=['ac-1', 'ac-2'] plan=['ac-1', 'ac-2']"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#21] migration_only (STORY-203) CodeDiff.validate() returns no errors \u2014 got []"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#24] migration_only (STORY-203) all file paths start with apps/"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#25] migration_only (STORY-203) every file contains a TODO[3.2/v0.2] marker"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#26] migration_only (STORY-203) headers include plan_id, story_id, task_id"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#28] migration_only (STORY-203) schema_version is pinned to 0.1.0 \u2014 got 0.1.0"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#29] migration-only fixture emits only migration + test task types \u2014 got {'migration', 'test'}"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#30] api-endpoint fixture emits no migration/model tasks \u2014 got {'service', 'controller', 'test'}"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#13] Coding module has no `subprocess` import (no-commit constraint)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#14] Coding module has no `git` import (no-commit constraint)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#15] Coding module has no LLM imports (no-LLM constraint)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#16] Coding module has no HTTP imports (no-network constraint)"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#22] code_for_plan is exposed as a callable"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#18] Coding is re-instantiable and produces stable bytes"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#23] end-to-end planner + coding pipeline produces a valid diff"
+    },
+    {
+      "ok": true,
+      "message": "OK  \u2014 [AC#27] diff_id is derived from plan_id (expected diff-2d31f349d1, got diff-2d31f349d1)"
+    }
+  ],
+  "per_fixture": [
+    {
+      "fixture_key": "crud_user",
+      "story_id": "STORY-201",
+      "plan_id": "plan-1a2ddb817b",
+      "diff_id": "diff-2d31f349d1",
+      "file_count": 6,
+      "task_count": 6,
+      "diff_path": "agents/development/evidence/smoke_20260617T183927Z/diffs/STORY-201.diff"
+    },
+    {
+      "fixture_key": "api_login",
+      "story_id": "STORY-202",
+      "plan_id": "plan-53978af1da",
+      "diff_id": "diff-9e71135df6",
+      "file_count": 4,
+      "task_count": 4,
+      "diff_path": "agents/development/evidence/smoke_20260617T183927Z/diffs/STORY-202.diff"
+    },
+    {
+      "fixture_key": "migration_only",
+      "story_id": "STORY-203",
+      "plan_id": "plan-42806efb27",
+      "diff_id": "diff-f12e5af286",
+      "file_count": 2,
+      "task_count": 2,
+      "diff_path": "agents/development/evidence/smoke_20260617T183927Z/diffs/STORY-203.diff"
+    }
+  ]
+}
