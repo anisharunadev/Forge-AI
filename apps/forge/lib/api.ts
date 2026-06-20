@@ -25,7 +25,7 @@ const PUBLIC_BASE =
 // orchestrator call so the gateway's tenant extractor accepts the
 // request (FORA-50 §4.2). Production wires this through the identity
 // broker's JWT claim — see FORA-123.
-const DEV_TENANT_UUID = '00000000-0000-0000-0000-000000000ace';
+const DEV_TENANT_UUID = '00000000-0000-4000-8000-000000000ace';
 
 function base(): string {
   return typeof window === 'undefined' ? SERVER_BASE : PUBLIC_BASE;
@@ -212,6 +212,7 @@ export async function runLifecycle(
 export function indexStages(
   rows: ReadonlyArray<StageRecord>,
 ): Map<StageRecord['stage'], StageRecord | null> {
+  console.log('DEBUG indexStages rows:', rows);
   const map = new Map<StageRecord['stage'], StageRecord | null>();
   for (const stage of [
     'ideation',

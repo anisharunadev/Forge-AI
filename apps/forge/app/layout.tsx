@@ -6,6 +6,7 @@ import { PersonaSwitcher } from '@/components/PersonaSwitcher';
 import { PERSONAS } from '@/lib/types';
 import { SEED_TENANT_ID, SEED_TENANT_NAME, defaultPersona, isPersona } from '@/lib/auth';
 import { canAccessConnectorCenter } from '@/lib/connectors/rbac';
+import { canAccessProjectIntelligence } from '@/lib/intelligence/rbac';
 
 export const metadata: Metadata = {
   title: 'Forge AI Console',
@@ -46,20 +47,32 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   </Link>
                 ))}
               </nav>
-              {canAccessConnectorCenter(persona) ? (
+              {canAccessConnectorCenter(persona) || canAccessProjectIntelligence(persona) ? (
                 <nav
                   className="flex gap-4 text-sm text-forge-200"
                   aria-label="centers"
                   data-testid="centers-nav"
                 >
-                  <Link
-                    href="/connector-center"
-                    className="inline-flex items-center gap-1 hover:text-white"
-                    data-testid="nav-connector-center"
-                  >
-                    <span aria-hidden="true">🔧</span>
-                    Connector Center
-                  </Link>
+                  {canAccessConnectorCenter(persona) ? (
+                    <Link
+                      href="/connector-center"
+                      className="inline-flex items-center gap-1 hover:text-white"
+                      data-testid="nav-connector-center"
+                    >
+                      <span aria-hidden="true">🔧</span>
+                      Connector Center
+                    </Link>
+                  ) : null}
+                  {canAccessProjectIntelligence(persona) ? (
+                    <Link
+                      href="/project-intelligence"
+                      className="inline-flex items-center gap-1 hover:text-white"
+                      data-testid="nav-project-intelligence"
+                    >
+                      <span aria-hidden="true">📊</span>
+                      Project Intelligence
+                    </Link>
+                  ) : null}
                 </nav>
               ) : null}
               <span className="hidden text-xs text-forge-300 md:inline" title="Tenant">

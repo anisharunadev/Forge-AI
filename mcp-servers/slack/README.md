@@ -1,6 +1,6 @@
-# `@fora/mcp-slack` — FORA Slack MCP Server
+# `@fora/mcp-slack` — Forge AI Slack MCP Server
 
-Priority-1 MCP server for the FORA Enterprise AI SDLC Operating System. Exposes seven tools over MCP/stdio: `list_channels`, `list_threads`, `get_thread`, `post_message`, `update_message`, `add_reaction`, `search_messages`.
+Priority-1 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes seven tools over MCP/stdio: `list_channels`, `list_threads`, `get_thread`, `post_message`, `update_message`, `add_reaction`, `search_messages`.
 
 The server is **pinned to a single Slack workspace** at startup. The model can pass a `channel` id as an argument, but it is asserted against the pinned workspace (`SLACK_TEAM_ID`) on every call. This is the safety property that lets the same server template drive Jira, Confluence, GitHub, and (forthcoming) Teams integrations.
 
@@ -94,7 +94,7 @@ For production, mint the bot token through a service that rotates it on a schedu
 
 ### The `confirm: true` gate
 
-`post_message` and `update_message` are **destructive, externally visible, and financial-adjacent** in spirit (they put words in a customer's mouth in front of their team). Per FORA-5 §5.2, the orchestrator halts and asks before any action that is destructive / irreversible / externally visible; the model achieves that for these two tools by passing `confirm: true` in the Zod literal. A confused or malicious prompt that calls `post_message` without it gets a Zod validation error back, not a posted message.
+`post_message` and `update_message` are **destructive, externally visible, and financial-adjacent** in spirit (they put words in a customer's mouth in front of their team). Per Forge AI-5 §5.2, the orchestrator halts and asks before any action that is destructive / irreversible / externally visible; the model achieves that for these two tools by passing `confirm: true` in the Zod literal. A confused or malicious prompt that calls `post_message` without it gets a Zod validation error back, not a posted message.
 
 This is implemented in `src/tools.ts` as `confirm: z.literal(true).describe("Must be exactly true. …")` — the Zod schema rejects anything else before any HTTP call lands.
 
@@ -207,7 +207,7 @@ If any assertion fails, the script exits non-zero and prints the failure. No rea
 
 ---
 
-## Reuse: the FORA MCP server template
+## Reuse: the Forge AI MCP server template
 
 See `docs/template-note.md` for which MCP servers this package templates (Jira, Confluence, GitHub) and the contract they share. The forthcoming Teams MCP (P2) will copy the same template; only the auth (Graph API + `TEAMS_ACCESS_TOKEN`) and call surface differ.
 

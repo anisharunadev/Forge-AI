@@ -72,6 +72,7 @@ export function Timeline({ runId, currentStage, stages }: TimelineProps) {
               }`}
               data-stage={stage}
               data-status={status}
+              {...(isCurrent ? { 'data-current-stage': 'true' } : {})}
             >
               <div className="flex items-center gap-3">
                 <span
@@ -81,11 +82,12 @@ export function Timeline({ runId, currentStage, stages }: TimelineProps) {
                   {status.replace('_', ' ')}
                 </span>
                 <span className="font-medium">{STAGE_LABELS[stage]}</span>
-                {isCurrent ? (
-                  <span className="badge bg-forge-500 text-white" data-testid="current-stage-marker">
-                    current
+                {isCurrent && (
+                  <span className="relative flex h-2 w-2" data-testid="current-stage-marker">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-forge-300 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-forge-400" />
                   </span>
-                ) : null}
+                )}
               </div>
               <div className="flex gap-6 text-xs text-forge-300">
                 <span>

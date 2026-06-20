@@ -30,7 +30,7 @@ export { canTransition, currentStageOnVerb, isTerminal, nextStatus, } from './st
 export { GATES, GATE_BY_KIND, findGate, isStageTransition, pagesAt50Percent, ttlMs, } from './gates.js';
 // 0.1.4.a — Postgres adapter for `ApprovalsRepo`. See FORA-168.
 export { PgApprovalsRepo } from './approvals-repo-pg.js';
-export { ApprovalAlreadyDecidedError, } from './ports.js';
+export { ApprovalAlreadyDecidedError, InvalidStageTransitionError, } from './ports.js';
 export { RouterError, cancelApproval, decide, extendApproval, recoverStaleTarget, routeGate, } from './router.js';
 export { tickSweeper, } from './sweeper.js';
 // 0.1.4.d — PagerDuty V2 Events API adapter for the Pager port. See FORA-171.
@@ -42,7 +42,12 @@ export { PaperclipHttpClient, PaperclipHttpError, } from './paperclip-client-htt
 // Test doubles — public so the eval tests and downstream packages
 // can reuse them. The production adapters (Postgres, NATS, PagerDuty,
 // Paperclip HTTP) are follow-up sub-tasks.
-export { InMemoryApprovalsRepo, RecordingEventBus, RecordingPaperclipClient, RecordingPager, TestClock, } from './test-doubles.js';
+export { InMemoryApprovalsRepo, InMemoryCostBudget, InMemoryStageEngine, RecordingEventBus, RecordingPaperclipClient, RecordingPager, TestClock, } from './test-doubles.js';
+// 0.1.b — Active cost-ceiling check (FORA-528 / FORA-110). The
+// v0.1 seam adapter reads `FORA_DEFAULT_COST_CEILING_USD` and
+// reports `spentUsd = 0`. v0.2 replaces it with the live Cost
+// agent MCP server adapter (FORA-149 / FORA-150).
+export { createEnvCostBudget } from './cost-budget-env.js';
 // 0.1.4.c — NATS adapter for the approval-event slice of the bus (FORA-170).
 // Per ADR-0006 §3.1 the adapter publishes to
 // `fora.events.<tenant_id>.<event_type>.v1` and the Orchestrator is the
@@ -52,4 +57,9 @@ export { InMemoryApprovalsRepo, RecordingEventBus, RecordingPaperclipClient, Rec
 // maps the gate router's `ApprovalEvent` union onto the substrate's
 // typed-event payloads.
 export { NatsApprovalEventBus, connectNatsApprovalEventBus, natsProducerFactoryFor, openNatsConnection, } from './adapters/event-bus-nats.js';
+// 0.1.4.f — Stage engine wiring (FORA-173). The seam between the
+// FORA-135 stage engine and the FORA-137 gate router. See
+// `docs/architecture/adr-0007-grpc-orchestrator-runtime.md` for the
+// gRPC adapter (follow-up).
+export { gateForStageTransition, nextStageOrDone, onApprovalDecided, onApprovalExpired, onStageCompleted, } from './gate_wiring.js';
 //# sourceMappingURL=index.js.map

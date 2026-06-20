@@ -1,6 +1,6 @@
 # Template note — which MCP servers `@fora/mcp-github` templates for
 
-This package is the **first concrete MCP server** in the FORA priority-1 set. The shared structure was designed up front so the rest of the priority-1 set — and the priority-2 Slack/Teams integration — can copy it and ship in days, not weeks.
+This package is the **first concrete MCP server** in the Forge AI priority-1 set. The shared structure was designed up front so the rest of the priority-1 set — and the priority-2 Slack/Teams integration — can copy it and ship in days, not weeks.
 
 ## Servers that copy this template
 
@@ -15,7 +15,7 @@ Zendesk, Databricks, Azure DevOps, and Slack/Teams are P2 and will follow the sa
 
 ## The shared contract
 
-Every FORA MCP server has these properties. They are **not negotiable per-server** — that is what lets the orchestrator and agent runtime treat them uniformly.
+Every Forge AI MCP server has these properties. They are **not negotiable per-server** — that is what lets the orchestrator and agent runtime treat them uniformly.
 
 1. **Single-scope pin on startup.** The server refuses to start without a pin env var (`GITHUB_ORG`, `JIRA_PROJECT_KEY`, `CONFLUENCE_SPACE_KEY`, `FIGMA_FILE_KEY` + `FIGMA_TEAM_ID`). The model can pass an ID, but it is asserted against the pin before any call lands. This is the safety property that lets us hand a customer a token and trust the agent won't escape into another customer's data.
 2. **Typed client wrapper.** A single `createClient(config)` returns a `Client` interface whose methods take only IDs and primitives, never raw HTTP. Easier to mock, easier to audit, easier to swap to a different HTTP client later.

@@ -1,12 +1,12 @@
 # Template note — which MCP servers `@fora/mcp-sonarqube` is built from
 
-This package is **built from** the `@fora/mcp-github` template ([FORA-4](/FORA/issues/FORA-4)). The seven contract points in the GitHub template-note are the source of truth and are not relaxed for this server. This file records the contract points and any local drift required to apply them to SonarQube.
+This package is **built from** the `@fora/mcp-github` template ([Forge AI-4](/Forge AI/issues/Forge AI-4)). The seven contract points in the GitHub template-note are the source of truth and are not relaxed for this server. This file records the contract points and any local drift required to apply them to SonarQube.
 
 ## Source template
 
 | Server | Priority | Status | Role for this package |
 | --- | --- | --- | --- |
-| [`@fora/mcp-github`](/FORA/issues/FORA-4) | P1 | shipped | Source template. All seven contract points ported verbatim. |
+| [`@fora/mcp-github`](/Forge AI/issues/Forge AI-4) | P1 | shipped | Source template. All seven contract points ported verbatim. |
 
 ## The seven contract points as applied here
 
@@ -25,7 +25,7 @@ This package is **built from** the `@fora/mcp-github` template ([FORA-4](/FORA/i
 | HTTP client | `@octokit/rest` | Built-in `fetch` | SonarQube v1 is plain REST + form-urlencoded; no need for an SDK. Keeps the dependency surface small. |
 | Pin granularity | `GITHUB_ORG` (org-wide) | `SONARQUBE_PROJECT_KEY` (one project) | SonarQube's smallest sensible scope is a project. The model can still pass a `projectKey` to `get_project` and it is asserted. |
 | Org assertion | n/a | Optional `SONARQUBE_ORG` asserted on startup | SonarCloud projects live under an org; the assertion is a no-op on SonarQube Server. |
-| GraphQL path | `create_issue` migrated to GraphQL (FORA-14) | n/a — SonarQube has no GraphQL | Every tool here is plain REST. |
+| GraphQL path | `create_issue` migrated to GraphQL (Forge AI-14) | n/a — SonarQube has no GraphQL | Every tool here is plain REST. |
 | Write path | `create_pr_comment` requires the `Pull requests: read and write` PAT scope | `transition_issue` requires `Administer Issues` on the pinned project AND `confirm: true` in the call | The write tool is the deliberate exception; both gates are enforced. |
 | Search escaping | `search_code` auto-appends `org:<pin>` | `list_issues` and `search_components` auto-pin to the project | Same safety property: the model can't drift to an adjacent resource. |
 

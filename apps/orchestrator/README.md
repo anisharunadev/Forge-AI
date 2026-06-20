@@ -1,16 +1,16 @@
-# @fora/orchestrator — Master Orchestrator (FORA-50 / FORA-134)
+# @fora/orchestrator — Master Orchestrator (Forge AI-50 / Forge AI-134)
 
-**Status:** 0.1.0 (first-pass CTO delivery — FORA-134 acceptance)
-**Sub-task:** [FORA-134](/FORA/issues/FORA-134) — 0.1.1 Session lifecycle
-**Spec:** [FORA-50 spec §3, §4, §9](/FORA/issues/FORA-50#document-spec), [ADR-0009](/FORA/docs/architecture/adr-0009-soft-delete-runs-events.md)
+**Status:** 0.1.0 (first-pass CTO delivery — Forge AI-134 acceptance)
+**Sub-task:** [Forge AI-134](/Forge AI/issues/Forge AI-134) — 0.1.1 Session lifecycle
+**Spec:** [Forge AI-50 spec §3, §4, §9](/Forge AI/issues/Forge AI-50#document-spec), [ADR-0009](/Forge AI/docs/architecture/adr-0009-soft-delete-runs-events.md)
 
-The Master Orchestrator owns the session lifecycle of a FORA run:
+The Master Orchestrator owns the session lifecycle of a Forge AI run:
 `create / pause / resume / cancel`, durable across crashes, with
 `Idempotency-Key` on every mutating call. The four sibling sub-tasks
-(`FORA-135` stage engine, `FORA-136` event bus, `FORA-137` human-approval
+(`Forge AI-135` stage engine, `Forge AI-136` event bus, `Forge AI-137` human-approval
 router) build on this service.
 
-## Endpoints (FORA-50 §4.1 subset shipped in 0.1.1)
+## Endpoints (Forge AI-50 §4.1 subset shipped in 0.1.1)
 
 | Method | Path | Purpose |
 | --- | --- | --- |
@@ -22,9 +22,9 @@ router) build on this service.
 | `POST` | `/v1/runs/{id}/cancel` | Operator cancel (terminal). Idempotent. |
 | `GET`  | `/healthz` | Liveness. |
 
-The remaining FORA-50 §4.1 endpoints (`/events`, `/soft-delete`,
+The remaining Forge AI-50 §4.1 endpoints (`/events`, `/soft-delete`,
 `/restore`, `/approvals/{id}/decide`, `/stages/{stage}/return`) are
-owned by FORA-136, FORA-137, and the v1.1 ADR.
+owned by Forge AI-136, Forge AI-137, and the v1.1 ADR.
 
 ## Idempotency contract
 
@@ -41,13 +41,13 @@ The dedupe store is the `agent_run_idempotency_keys` table (see
 replay: a future v1.1 ADR may add a TTL job, but no TTL is enforced in
 0.1.
 
-## Crash recovery (FORA-134 acceptance #4)
+## Crash recovery (Forge AI-134 acceptance #4)
 
 `buildRecoveryTickets(pool, tenantId)` reads every non-terminal run for
 the tenant and returns one ticket per run. The ticket carries the run
 header, the seven stage rows, and the `resumeFrom` stage (the row
 matching `run.current_stage`). The actual resume is the stage engine's
-job in FORA-135; this service hands the engine the read-side data.
+job in Forge AI-135; this service hands the engine the read-side data.
 
 ## Soft-delete invariant (ADR-0009)
 
@@ -64,9 +64,9 @@ pnpm install
 pnpm typecheck
 pnpm test
 
-# against a real Postgres (FORA_DATABASE_URL must be set)
-FORA_DATABASE_URL=postgres://user:pass@localhost:5432/fora \
-FORA_ORCHESTRATOR_PORT=8082 \
+# against a real Postgres (Forge AI_DATABASE_URL must be set)
+Forge AI_DATABASE_URL=postgres://user:pass@localhost:5432/fora \
+Forge AI_ORCHESTRATOR_PORT=8082 \
 pnpm dev
 ```
 
@@ -77,13 +77,13 @@ re-run is a no-op.
 
 | Var | Default | Purpose |
 | --- | --- | --- |
-| `FORA_ORCHESTRATOR_PORT` | `8082` | HTTP port |
-| `FORA_ORCHESTRATOR_HOST` | `0.0.0.0` | Bind host |
-| `FORA_DATABASE_URL` | (required) | Postgres connection string |
-| `FORA_DEFAULT_COST_CEILING_USD` | `100.00` | Per-run ceiling (FORA-50 §3.1) |
-| `FORA_ORCHESTRATOR_LOG_LEVEL` | `info` | pino log level |
-| `FORA_ENV` | `dev` | `dev` / `test` / `prod` |
-| `FORA_BOOT_RECOVERY_TENANT_ID` | unset | Optional: rebuild recovery tickets on boot for a single tenant (debug only) |
+| `Forge AI_ORCHESTRATOR_PORT` | `8082` | HTTP port |
+| `Forge AI_ORCHESTRATOR_HOST` | `0.0.0.0` | Bind host |
+| `Forge AI_DATABASE_URL` | (required) | Postgres connection string |
+| `Forge AI_DEFAULT_COST_CEILING_USD` | `100.00` | Per-run ceiling (Forge AI-50 §3.1) |
+| `Forge AI_ORCHESTRATOR_LOG_LEVEL` | `info` | pino log level |
+| `Forge AI_ENV` | `dev` | `dev` / `test` / `prod` |
+| `Forge AI_BOOT_RECOVERY_TENANT_ID` | unset | Optional: rebuild recovery tickets on boot for a single tenant (debug only) |
 
 ## Auth model
 
@@ -106,12 +106,12 @@ pnpm test
 
 ## Follow-ups (deferred, tracked)
 
-- **FORA-135** — Stage transition engine (uses the seven-stage spine
-  in `agent_run_stages`; this service exposes the read-side, FORA-135
+- **Forge AI-135** — Stage transition engine (uses the seven-stage spine
+  in `agent_run_stages`; this service exposes the read-side, Forge AI-135
   owns the write-side).
-- **FORA-136** — Event bus + `agent_run_events` (append-only table;
+- **Forge AI-136** — Event bus + `agent_run_events` (append-only table;
   ADR-0009 §5 trigger; this service emits the bus events in 0.2).
-- **FORA-137** — Human-approval router + `agent_run_approvals`
+- **Forge AI-137** — Human-approval router + `agent_run_approvals`
   (separate table; uses the `request_confirmation` primitive per
   ADR-0008).
 - **v1.1 ADR** — `POST /v1/runs/{id}/soft-delete` + `/restore`

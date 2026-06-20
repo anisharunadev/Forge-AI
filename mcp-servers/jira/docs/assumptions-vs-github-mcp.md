@@ -26,7 +26,7 @@ Both MCP servers follow the same packaging, the same single-tenant pinning patte
 | **Default order** | Server-defined (best match) | Caller controls via `ORDER BY` in JQL |
 | **Pagination** | `per_page` + `page` | `maxResults` + `startAt` |
 
-**Implication for the agent layer:** the model's prompting needs explicit JQL examples (`project = FORA AND status = "In Progress" ORDER BY updated DESC`). There is no `is:open` analogue — JQL uses `status != Done` or `statusCategory != Done`.
+**Implication for the agent layer:** the model's prompting needs explicit JQL examples (`project = Forge AI AND status = "In Progress" ORDER BY updated DESC`). There is no `is:open` analogue — JQL uses `status != Done` or `statusCategory != Done`.
 
 ## 3. Transition model
 
@@ -47,8 +47,8 @@ This is the biggest semantic difference. GitHub's `state` is a free-floating str
 
 | | GitHub MCP | Jira MCP |
 |---|---|---|
-| **Project identifier** | `owner/repo` (two strings) | `projectKey` (one short string, e.g. `FORA`) — server-pinned, NOT a tool arg |
-| **Issue identifier** | `repo` + `number` | `issueIdOrKey` — accepts either a numeric ID or a key like `FORA-123` |
+| **Project identifier** | `owner/repo` (two strings) | `projectKey` (one short string, e.g. `Forge AI`) — server-pinned, NOT a tool arg |
+| **Issue identifier** | `repo` + `number` | `issueIdOrKey` — accepts either a numeric ID or a key like `Forge AI-123` |
 | **Server-pinned scope** | `GITHUB_ORG` | `JIRA_PROJECT_KEY` (one level deeper than the org pin) |
 | **PRs vs Issues** | Two different objects with overlapping fields | One `Issue` covers both bugs and stories; subtasks are a separate `IssueType` |
 

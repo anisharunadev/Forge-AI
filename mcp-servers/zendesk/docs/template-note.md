@@ -1,6 +1,6 @@
 # Template note — which MCP servers `@fora/mcp-zendesk` templates for
 
-This package is the **second P2 MCP server** in the FORA platform and copies the `@fora/mcp-github` template (FORA-4). The shared structure was designed up front so P2 servers can ship in days, not weeks, and the agent runtime can treat them uniformly.
+This package is the **second P2 MCP server** in the Forge AI platform and copies the `@fora/mcp-github` template (Forge AI-4). The shared structure was designed up front so P2 servers can ship in days, not weeks, and the agent runtime can treat them uniformly.
 
 ## Servers that copy this template
 
@@ -11,14 +11,14 @@ This package is the **second P2 MCP server** in the FORA platform and copies the
 | `@fora/mcp-confluence` | P1 | shipped | Space-pinned; Confluence storage format; Basic auth from email + API token. |
 | `@fora/mcp-aws` | P1 | shipped | Account+region pinned; AWS SDK credential chain; JSON 1.1 protocol. |
 | `@fora/mcp-sonarqube` | P1 | shipped | Project-pinned; `fetch` against SonarQube REST v1; no SDK. |
-| `@fora/mcp-azure-devops` | P2 | shipped (FORA-96) | Project-pinned (org + project); `fetch` against AzDO REST 7.1; Basic auth from a project-scoped PAT. Three mutations require `confirm: true`. |
-| `@fora/mcp-zendesk` | **P2** | **shipped (this issue, FORA-94)** | **Subdomain-pinned**: `ZENDESK_SUBDOMAIN` + `ZENDESK_EMAIL` + `ZENDESK_API_TOKEN`; Basic auth from a Zendesk API token; `fetch` against Zendesk REST v2; no SDK. Two mutations require `confirm: true` (`create_ticket`, `update_ticket`); `add_comment` and `apply_macro` are append-only / reviewable and do not require explicit confirmation. The auth header is `Basic base64("{email}/token:{apiToken}")` — the `/token` suffix is Zendesk-specific. List endpoints use page+perPage pagination; search uses Zendesk's native search syntax. |
+| `@fora/mcp-azure-devops` | P2 | shipped (Forge AI-96) | Project-pinned (org + project); `fetch` against AzDO REST 7.1; Basic auth from a project-scoped PAT. Three mutations require `confirm: true`. |
+| `@fora/mcp-zendesk` | **P2** | **shipped (this issue, Forge AI-94)** | **Subdomain-pinned**: `ZENDESK_SUBDOMAIN` + `ZENDESK_EMAIL` + `ZENDESK_API_TOKEN`; Basic auth from a Zendesk API token; `fetch` against Zendesk REST v2; no SDK. Two mutations require `confirm: true` (`create_ticket`, `update_ticket`); `add_comment` and `apply_macro` are append-only / reviewable and do not require explicit confirmation. The auth header is `Basic base64("{email}/token:{apiToken}")` — the `/token` suffix is Zendesk-specific. List endpoints use page+perPage pagination; search uses Zendesk's native search syntax. |
 
 Databricks is still P2 and will follow the same template.
 
 ## The shared contract
 
-This server implements the seven FORA MCP contract points verbatim:
+This server implements the seven Forge AI MCP contract points verbatim:
 
 1. **Single-scope pin on startup.** The server refuses to start without `ZENDESK_SUBDOMAIN` + `ZENDESK_EMAIL` + `ZENDESK_API_TOKEN`. The subdomain is the unit of safety — one Zendesk instance per server. The model never sees the pin.
 2. **Typed client wrapper.** A single `createClient(config)` returns a `Client` interface whose methods take only IDs and primitives, never raw HTTP or raw URLs.
@@ -46,6 +46,6 @@ This server implements the seven FORA MCP contract points verbatim:
 - `npm run smoke` exits 0 with the same end-of-log `[smoke] done: all 8 tools smoke-tested green`.
 - README follows the same sections as the GitHub one: Install, Authentication, Tools, Run the smoke test, Troubleshooting, Reuse.
 - This `docs/template-note.md` is updated to list the new server and any contract drift it requires.
-- A `request_review` comment on FORA-94 links the smoke transcript and names the manual verification step.
+- A `request_review` comment on Forge AI-94 links the smoke transcript and names the manual verification step.
 
 Anything less is a draft.

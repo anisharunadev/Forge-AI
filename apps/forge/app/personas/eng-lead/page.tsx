@@ -22,6 +22,12 @@ export const dynamic = 'force-dynamic';
  * "No runs visible" empty state — when it's unreachable we render an
  * explicit `OrchestratorUnreachable` notice instead.
  */
+async function fetchRunsForEngLead() {
+  'use server';
+  const next = await getRunsView();
+  return next.state === 'ok' ? next.runs : [];
+}
+
 export default async function EngLeadDashboard() {
   const view = await getRunsView();
 
@@ -73,10 +79,7 @@ export default async function EngLeadDashboard() {
         {view.state === 'ok' ? (
           <RealtimeRunsList
             initialRuns={runs}
-            fetcher={async () => {
-              const next = await getRunsView();
-              return next.state === 'ok' ? next.runs : [];
-            }}
+            fetcher={fetchRunsForEngLead}
           />
         ) : view.state === 'empty' ? (
           <div data-testid="eng-empty">

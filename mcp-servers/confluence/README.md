@@ -1,6 +1,6 @@
-# `@fora/mcp-confluence` — FORA Confluence MCP Server
+# `@fora/mcp-confluence` — Forge AI Confluence MCP Server
 
-Priority-1 MCP server for the FORA Enterprise AI SDLC Operating System. Exposes five tools over MCP/stdio: `list_pages`, `get_page`, `create_page`, `update_page`, `add_comment`.
+Priority-1 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes five tools over MCP/stdio: `list_pages`, `get_page`, `create_page`, `update_page`, `add_comment`.
 
 The server is **pinned to a single Confluence space** at startup. The model can pass `page_id` as an argument, but it is asserted against the pinned space before any call lands. This is the safety property that lets the same server template drive Jira, GitHub, and Confluence integrations uniformly.
 
@@ -123,7 +123,7 @@ For rich ADF/Atlas-style content, use the Confluence web editor and copy the sto
 ```json
 {
   "title": "Release notes — v0.1.0",
-  "body": "<h1>v0.1.0</h1><p>Initial FORA MCP Confluence integration.</p>"
+  "body": "<h1>v0.1.0</h1><p>Initial Forge AI MCP Confluence integration.</p>"
 }
 ```
 
@@ -133,7 +133,7 @@ For rich ADF/Atlas-style content, use the Confluence web editor and copy the sto
 {
   "page_id": "10001",
   "title": "Release notes — v0.1.0 (updated)",
-  "body": "<h1>v0.1.0</h1><p>Updated by the FORA MCP server.</p>",
+  "body": "<h1>v0.1.0</h1><p>Updated by the Forge AI MCP server.</p>",
   "version_number": 4
 }
 ```
@@ -181,6 +181,6 @@ If any assertion fails, the script exits non-zero and prints the failure. No rea
 
 ---
 
-## Reuse: the FORA MCP server template
+## Reuse: the Forge AI MCP server template
 
 See `docs/template-note.md` for which MCP servers this package templates (Jira, GitHub) and the contract they share.

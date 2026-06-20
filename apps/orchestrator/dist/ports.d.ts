@@ -204,13 +204,56 @@ export interface PaperclipClient {
     }>;
 }
 /**
+ * Cost-budget port — the seam between the Orchestrator's active
+ * cost-ceiling policy and the Cost agent's per-tenant spend
+ * calculation (FORA-528 / FORA-110 0.1.b).
+ *
+ * The Orchestrator is the policy boundary: every `routeGate({ stage })`
+ * call asks the Cost agent "how much has this tenant spent, and what is
+ * their ceiling?" before issuing a confirmation. If `spentUsd >=
+ * ceilingUsd`, the Orchestrator refuses the stage transition and emits
+ * `gate_failed_cost_ceiling` on the bus. The Cost agent owns the
+ * underlying spend aggregation; the Orchestrator owns the refusal.
+ *
+ * v0.1 fallback (the seam): the EnvCostBudget adapter reads
+ * `FORA_DEFAULT_COST_CEILING_USD` and reports `spentUsd = 0` — a
+ * permissive default that surfaces the wiring without committing to a
+ * real Cost-agent integration. v0.2 replaces the adapter with a
+ * `cost-budget-agent.ts` that calls the live Cost agent MCP server
+ * (FORA-149 / FORA-150).
+ */
+export interface CostBudget {
+    /**
+     * Read the tenant's current spend + ceiling. Returns USD amounts as
+     * plain numbers (NOT Decimal strings); the boundary that the Cost
+     * agent exposes has already normalised precision.
+     *
+     * The adapter is responsible for any caching / retry / dead-letter
+     * semantics; the policy here is intentionally simple.
+     */
+    currentSpendUsd(args: {
+        tenantId: TenantId;
+    }): Promise<{
+        spentUsd: number;
+        ceilingUsd: number;
+    }>;
+}
+/**
  * Event bus port. The Orchestrator is the only writer (per
  * architecture.md §2.1); this port surfaces the typed events the
  * router emits. The concrete implementation publishes to NATS per
  * ADR-0006 (FORA-136).
  */
 export interface EventBus {
-    emit(event: ApprovalEvent): Promise<void>;
+    /**
+     * Emit a bus event. The Orchestrator publishes both router-owned
+     * `ApprovalEvent`s and stage-engine-owned `RunLifecycleEvent`s on
+     * the same NATS subject family per ADR-0006 §3.3; the port's
+     * parameter type is the union so the wiring in `gate_wiring.ts`
+     * can emit `run_paused` (a `RunLifecycleEvent`) without a second
+     * port.
+     */
+    emit(event: ApprovalEvent | RunLifecycleEvent): Promise<void>;
 }
 /**
  * Approval events emitted by the router. The full bus vocabulary is
@@ -263,3 +306,123 @@ export type ApprovalEvent = {
     reason: string;
     returnedBy: string;
 };
+/**
+ * Run-lifecycle events the stage engine emits and consumes. These
+ * cross the same NATS bus as `ApprovalEvent` (FORA-50 §5.1) but are
+ * owned by the stage engine, not the router. The router consumes
+ * `stage_completed` to call `routeGate`; the engine consumes
+ * `gate_passed` (router's precursor), `approval_decided` (advance or
+ * return), and `approval_expired` (pause the run).
+ *
+ * Per ADR-0001 §2.3 the engine is the only writer of stage state;
+ * the router never touches it directly. The wiring in `gate_wiring.ts`
+ * is the only place that bridges the two event vocabularies.
+ */
+export type RunLifecycleEvent = {
+    type: 'stage_completed';
+    tenantId: TenantId;
+    runId: RunId;
+    fromStage: Stage;
+    toStage: Stage | 'done';
+    artefactRefs: ReadonlyArray<{
+        kind: string;
+        url: string;
+        sha256?: string;
+    }>;
+    emittedAt: string;
+} | {
+    type: 'run_paused';
+    tenantId: TenantId;
+    runId: RunId;
+    approvalId: string;
+    reason: 'approval_expired';
+    pausedAt: string;
+} | {
+    /**
+     * FORA-528 (0.1.b): the active cost-ceiling check refused the
+     * stage transition. The run stays in the originating stage; the
+     * orchestrator does NOT call `routeGate`, so no approval row is
+     * inserted and no `approval_requested` event is emitted. The
+     * Cost agent (FORA-149 / FORA-150) owns the underlying spend
+     * calculation; the Orchestrator owns the policy decision.
+     */
+    type: 'gate_failed_cost_ceiling';
+    tenantId: TenantId;
+    runId: RunId;
+    fromStage: Stage;
+    toStage: Stage | 'done';
+    gateKind: GateKind;
+    spentUsd: number;
+    ceilingUsd: number;
+    reason: 'over_budget';
+    emittedAt: string;
+};
+/**
+ * Stage-engine port — the seam between the gate router and FORA-135.
+ *
+ * The router never reads or writes stage state directly. The wiring
+ * (`gate_wiring.ts`) calls these typed methods in response to the
+ * approval events the router emits; the production adapter is the
+ * gRPC client from ADR-0007 (FORA-135). The in-memory adapter
+ * (test-doubles.ts) is used by the integration test that walks all
+ * seven stages end to end.
+ */
+export interface StageEngine {
+    /**
+     * Advance the run to the next stage. Called on `accept` for every
+     * per-stage gate. Idempotent: replaying the same call with the
+     * same `runId` + target stage is a no-op (ADR-0001 §2.3).
+     */
+    advance(args: {
+        tenantId: TenantId;
+        runId: RunId;
+        fromStage: Stage;
+        toStage: Stage | 'done';
+        idempotencyKey: string;
+    }): Promise<{
+        currentStage: Stage | 'done';
+    }>;
+    /**
+     * Re-enter a prior stage — the "send it back" primitive from
+     * ADR-0008 §6. The engine rehydrates the stage context with the
+     * same RunContext (no fresh ADR-0001 §2.3 idempotency key;
+     * replays are deduped by `(runId, toStage)`).
+     */
+    reEnter(args: {
+        tenantId: TenantId;
+        runId: RunId;
+        fromStage: Stage;
+        toStage: Stage;
+        reason: string;
+        idempotencyKey: string;
+    }): Promise<{
+        currentStage: Stage;
+    }>;
+    /**
+     * Pause the run header — used when an approval expires. The run
+     * stays resumable; an `extend` or a new approval on the next gate
+     * resumes via `advance` (ADR-0008 §4 step 7).
+     */
+    pauseRun(args: {
+        tenantId: TenantId;
+        runId: RunId;
+        approvalId: string;
+    }): Promise<void>;
+}
+/** Raised by `StageEngine` on an invalid transition. The wiring
+ *  converts this into a no-op + audit log so a stale event does
+ *  not crash the consumer. */
+export declare class InvalidStageTransitionError extends Error {
+    readonly typed: {
+        code: 'INVALID_STAGE_TRANSITION';
+        message: string;
+        fromStage: Stage;
+        toStage: Stage | 'done';
+    };
+    constructor(typed: {
+        code: 'INVALID_STAGE_TRANSITION';
+        message: string;
+        fromStage: Stage;
+        toStage: Stage | 'done';
+    });
+}

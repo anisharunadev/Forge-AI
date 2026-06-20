@@ -1,6 +1,6 @@
 # Template note — which MCP servers `@fora/mcp-confluence` templates for
 
-This package is the **third concrete MCP server** in the FORA priority-1 set, after `@fora/mcp-github` and `@fora/mcp-jira`. Zendesk, Databricks, and Azure DevOps are P2 and will follow the same template.
+This package is the **third concrete MCP server** in the Forge AI priority-1 set, after `@fora/mcp-github` and `@fora/mcp-jira`. Zendesk, Databricks, and Azure DevOps are P2 and will follow the same template.
 
 ## Servers that copy this template (or vice-versa)
 
@@ -23,7 +23,7 @@ The three P1 servers share the same template — see `@fora/mcp-github/docs/temp
 
 ## How a future server should copy this
 
-If you are building a fourth FORA MCP server (Zendesk, Databricks, or Azure DevOps), the right move is:
+If you are building a fourth Forge AI MCP server (Zendesk, Databricks, or Azure DevOps), the right move is:
 
 1. Copy `src/config.ts` first, rename the env vars to match your upstream's auth model.
 2. Copy `src/client.ts`, change the URL builder, the `createClient` bootstrap (resolve the pin), and the per-method endpoint paths.

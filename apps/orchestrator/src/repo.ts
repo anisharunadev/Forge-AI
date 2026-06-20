@@ -377,6 +377,43 @@ export async function listActiveRunsForRecovery(
 }
 
 /**
+ * Read all runs within the caller's tenant, ordered by creation (newest first).
+ * FORA-378 adds this so the forge UI can determine if a tenant genuinely has
+ * zero runs vs. just lacking the seeded demo run.
+ */
+export async function listRuns(
+  pool: Pool,
+  tenantId: TenantId,
+): Promise<ReadonlyArray<RunRecord>> {
+  const r = await pool.query<{
+    id: string;
+    tenant_id: string;
+    goal_id: string;
+    project_id: string;
+    status: RunStatus;
+    current_stage: string;
+    triggered_by: Record<string, unknown>;
+    cost_ceiling_usd: string;
+    cost_spent_usd: string;
+    started_at: string | null;
+    finished_at: string | null;
+    deleted_at: string | null;
+    archived_at: string | null;
+  }>(
+    `SELECT id, tenant_id, goal_id, project_id, status, current_stage,
+            triggered_by, cost_ceiling_usd::text AS cost_ceiling_usd,
+            cost_spent_usd::text AS cost_spent_usd,
+            started_at, finished_at, deleted_at, archived_at
+       FROM agent_runs
+      WHERE tenant_id = $1
+        AND deleted_at IS NULL
+      ORDER BY created_at DESC`,
+    [tenantId],
+  );
+  return r.rows.map(rowToRun);
+}
+
+/**
  * Fetch an idempotency record by (tenant, key). Returns `null` on miss.
  * Used by the replay path — the second call with the same key returns
  * the cached response.

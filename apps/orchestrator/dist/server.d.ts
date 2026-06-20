@@ -15,15 +15,23 @@
  *
  *   { "error": { "code": "INVALID_TRANSITION", "message": "...", "request_id": "..." } }
  *
- * Auth model: the Orchestrator trusts the upstream gateway to have
- * verified the JWT and stamped `x-fora-tenant-id` on the request.
- * ADR-0003 §4.2 binds the db-pool to the verified claim; a v1.1 ADR
- * moves JWT validation in-process.
+ * Auth model — ADR-0003 §4.2 v1.1 (FORA-526):
+ *
+ * The Orchestrator verifies JWTs in-process. A Fastify preHandler hook
+ * (`jwtAuthHook` below) reads `Authorization: Bearer <jwt>`, calls
+ * `JwtValidator.verify` (jose + JWKS at `config.jwtVerifierUrl`), and
+ * stamps the typed `JwtPrincipal` on `request.tenantContext`. The legacy
+ * `x-fora-tenant-id` header is REMOVED from the trust boundary — it
+ * is honoured only when `FORA_REQUIRE_JWT=false` for local dev. The
+ * gateway is no longer required; the service can be deployed behind
+ * an untrusted LB / sidecar.
  */
 import type { Pool } from 'pg';
 import { type FastifyInstance } from 'fastify';
 import type { OrchestratorConfig } from './config.js';
 import { type ApprovalsRepo, type Clock, type EventBus, type Pager, type PaperclipClient } from './index.js';
+import { type AttachEventsWebSocketOptions } from './ws.js';
+import { JwtValidator, type JwtPrincipal } from './jwt-validator.js';
 export interface OrchestratorDeps {
     config: OrchestratorConfig;
     pool: Pool;
@@ -39,9 +47,30 @@ export interface OrchestratorDeps {
         clock: Clock;
     };
     /**
-     * Override the gateway-claim extractor for tests. In production the
-     * gateway upstream stamps `x-fora-tenant-id` after verifying the JWT
-     * (ADR-0003 §4.2); the test seam returns a deterministic tenant.
+     * FORA-526: an explicit `JwtValidator` instance. Production builds
+     * it from `config.jwtVerifierUrl / jwtIssuer / jwtAudience / jwtClockToleranceSec`
+     * inside `buildServer`; tests can inject a fake to avoid the JWKS
+     * round-trip. Required when `config.requireJwt` is true (the default).
+     */
+    jwtValidator?: JwtValidator;
+    /**
+     * FORA-514: the realtime WS endpoint. When provided, `buildServer`
+     * attaches a `GET /v1/events` handler that forwards NATS events to
+     * authenticated tenant clients. Production wires this to NATS via
+     * `@fora/event-bus`; tests can omit it (REST-only) or supply a
+     * fake subscriber.
+     */
+    ws?: Omit<AttachEventsWebSocketOptions, 'registry'> & {
+        /** Override the per-tenant connection cap (default 10). */
+        cap?: number;
+    };
+    /**
+     * Override the tenant extractor for tests. In production the
+     * preHandler hook (`jwtAuthHook`) stamps `request.tenantContext`
+     * after a successful JWT verify; this seam lets tests bypass JWT
+     * verification entirely by setting `config.requireJwt=false` and
+     * returning a deterministic tenant from the legacy `x-fora-tenant-id`
+     * header.
      */
     extractTenant?: (req: {
         headers: Record<string, unknown>;
@@ -49,15 +78,24 @@ export interface OrchestratorDeps {
     /** Override `new Date()` for tests. */
     now?: () => number;
 }
+/**
+ * FORA-526 — module augmentation that surfaces the JWT-verified
+ * principal on every `FastifyRequest`. The preHandler hook stamps
+ * this; the rest of the server reads `request.tenantContext` via
+ * the `extractTenant` closure.
+ */
+declare module 'fastify' {
+    interface FastifyRequest {
+        tenantContext?: JwtPrincipal;
+    }
+}
 export declare function buildServer(deps: OrchestratorDeps): Promise<FastifyInstance>;
 /**
- * Wrap an async handler so a thrown AuthError or ValidationErrorWithId
- * returns the right HTTP status instead of 500. The handler-level
- * `try/catch` in each route already maps ValidationError; this helper
- * is a safety net for any future route that forgets.
+ * The setErrorHandler at the top of `buildServer` is the only safety
+ * net that maps AuthError / ValidationErrorWithId to 401 / 400. Each
+ * route already validates its inputs inline (see `requireTenant` /
+ * `requireIdempotencyKey`); a `preHandler` would only duplicate that
+ * work. We intentionally do not export `mapAuthAndValidationErrors` —
+ * keeping the function would invite a future route to register it
+ * without the matching setErrorHandler branch.
  */
-export declare function mapAuthAndValidationErrors(reply: {
-    status: (n: number) => {
-        send: (b: unknown) => unknown;
-    };
-}, requestId: string): (err: unknown) => unknown;

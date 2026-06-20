@@ -82,3 +82,51 @@ export interface GlossaryEntry {
   /** Optional anti-glossary note (per customer/glossary.md). */
   readonly antiNote?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Knowledge Graph (FORA-502.5 — mirrors `@fora/forge-ui/graph/nodes.ts`)
+// ---------------------------------------------------------------------------
+
+/** Node kinds per Plan 2 §3.1. */
+export type KnowledgeNodeKind = "knowledge_file" | "glossary_entry" | "stage_injection" | "folder_summary";
+
+/** Edge kinds per Plan 2 §3.1. */
+export type KnowledgeEdgeKind = "references" | "defines" | "injects_into" | "supersedes";
+
+/** Folder the file lives in. Drives the color token (Plan 2 §3.1). */
+export type GraphFolder = "memory" | "customer" | "project" | "engagements" | "reference";
+
+/** A node in the Knowledge Graph. */
+export interface KnowledgeNode {
+  readonly id: string;
+  readonly kind: KnowledgeNodeKind;
+  /** Display label. */
+  readonly label: string;
+  /** Optional secondary line. */
+  readonly subtitle?: string;
+  /** Folder the file lives in (for `knowledge_file` / `folder_summary`). */
+  readonly folder?: GraphFolder;
+  /** Stage name (for `stage_injection`). */
+  readonly stage?: string;
+  /** Size hint for graph rendering (Plan 2 §3.1 "sized by usage count"). */
+  readonly usageCount?: number;
+  /** KnowledgeFile id (for `knowledge_file` nodes). */
+  readonly fileId?: string;
+}
+
+/** An edge in the Knowledge Graph. */
+export interface KnowledgeEdge {
+  readonly id: string;
+  readonly source: string;
+  readonly target: string;
+  readonly kind: KnowledgeEdgeKind;
+  /** Optional human-readable annotation. */
+  readonly annotation?: string;
+}
+
+/** Filter shape passed to the provider (mirror of @fora/forge-ui/graph provider). */
+export interface GraphFilter {
+  readonly folder?: GraphFolder | "all";
+  readonly stage?: string | "all";
+  readonly fileType?: KnowledgeFile["fileType"] | "all";
+}

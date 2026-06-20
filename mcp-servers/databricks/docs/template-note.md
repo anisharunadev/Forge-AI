@@ -1,6 +1,6 @@
 # Template note — which MCP servers `@fora/mcp-databricks` templates for
 
-This package is a **priority-2** MCP server in the FORA platform and ships in the same shape as the priority-1 set (Jira, GitHub, Confluence, AWS, SonarQube, Figma, Slack/Teams). It is the eighth concrete server to land and the first P2 to ship.
+This package is a **priority-2** MCP server in the Forge AI platform and ships in the same shape as the priority-1 set (Jira, GitHub, Confluence, AWS, SonarQube, Figma, Slack/Teams). It is the eighth concrete server to land and the first P2 to ship.
 
 The GitHub MCP server is the canonical template; see [`@fora/mcp-github`'s template note](../github/docs/template-note.md) for the seven shared contract points and the full list of servers that already copy it.
 
@@ -36,4 +36,4 @@ Databricks has no actively-maintained JavaScript SDK. The MCP server uses plain 
 
 ## Servers that copy this template
 
-This package is the ninth concrete MCP server in the FORA platform. The list of servers that already copy the canonical template lives in [`@fora/mcp-github`'s template note](../github/docs/template-note.md); the local drift table above is the only thing that's different.
+This package is the ninth concrete MCP server in the Forge AI platform. The list of servers that already copy the canonical template lives in [`@fora/mcp-github`'s template note](../github/docs/template-note.md); the local drift table above is the only thing that's different.

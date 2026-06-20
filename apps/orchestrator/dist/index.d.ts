@@ -23,11 +23,13 @@ export { canTransition, currentStageOnVerb, isTerminal, nextStatus, } from './st
 export { GATES, GATE_BY_KIND, findGate, isStageTransition, pagesAt50Percent, ttlMs, type Approver, type ContinuationPolicy, type EscalationTarget, type GateDefinition, type GateKind, type LaunchGate, type PaperclipPrimitive, type RoleOfRecord, type StageTransition, type TtlTier, } from './gates.js';
 export { PgApprovalsRepo } from './approvals-repo-pg.js';
 export { type ApprovalRecord, type ApprovalStatus, type Decision, type PaperclipInteraction, type ReturnTarget, } from './router-types.js';
-export { type ApprovalsRepo, type Clock, type EventBus, type Pager, type PaperclipClient, type ApprovalEvent, ApprovalAlreadyDecidedError, } from './ports.js';
+export { type ApprovalsRepo, type Clock, type CostBudget, type EventBus, type Pager, type PaperclipClient, type ApprovalEvent, type RunLifecycleEvent, type StageEngine, ApprovalAlreadyDecidedError, InvalidStageTransitionError, } from './ports.js';
 export { type DecideArgs, type DecideOutcome, type RouterContext, type RouterDeps, RouterError, cancelApproval, decide, extendApproval, recoverStaleTarget, routeGate, } from './router.js';
 export { type SweepResult, type SweeperDeps, tickSweeper, } from './sweeper.js';
 export { PagerDutyClientError, PagerDutyPager, PagerDutyServerError, type PagerDutyPagerConfig, type PagerDutySeverity, type PageReason, severityForReason, } from './pagerduty.js';
 export { buildSweeperWorker, type SweeperWorker, type SweeperWorkerDeps, type TenantTickOutcome, } from './sweeper-worker.js';
 export { PaperclipHttpClient, PaperclipHttpError, type PaperclipHttpClientConfig, type PaperclipHttpErrorCode, } from './paperclip-client-http.js';
-export { InMemoryApprovalsRepo, RecordingEventBus, RecordingPaperclipClient, RecordingPager, TestClock, } from './test-doubles.js';
+export { InMemoryApprovalsRepo, InMemoryCostBudget, InMemoryStageEngine, RecordingEventBus, RecordingPaperclipClient, RecordingPager, TestClock, } from './test-doubles.js';
+export { createEnvCostBudget } from './cost-budget-env.js';
 export { NatsApprovalEventBus, connectNatsApprovalEventBus, natsProducerFactoryFor, openNatsConnection, type NatsApprovalEventBusOptions, type NatsConnectionBundle, } from './adapters/event-bus-nats.js';
+export { gateForStageTransition, nextStageOrDone, onApprovalDecided, onApprovalExpired, onStageCompleted, } from './gate_wiring.js';

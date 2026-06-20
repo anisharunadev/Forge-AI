@@ -1,15 +1,15 @@
-# `@fora/forge` — FORA Forge AI Console
+# `@fora/forge` — Forge AI Forge AI Console
 
-**Status:** 0.1.0 (FORA-374 first cut)
-**Spec:** [FORA-374](/FORA/issues/FORA-374)
-**Sibling:** [FORA-371](/FORA/issues/FORA-371) (backend dev runbook), [FORA-50](/FORA/issues/FORA-50) (orchestrator)
+**Status:** 0.1.0 (Forge AI-374 first cut)
+**Spec:** [Forge AI-374](/Forge AI/issues/Forge AI-374)
+**Sibling:** [Forge AI-371](/Forge AI/issues/Forge AI-371) (backend dev runbook), [Forge AI-50](/Forge AI/issues/Forge AI-50) (orchestrator)
 
 The Forge console is a Next.js 15 (App Router) UI shell over the Master Orchestrator
 REST API. It ships three persona dashboards — **Product Manager**, **Engineering
 Lead**, **CTO / VP Eng** — plus a seven-stage run timeline. There is no SSR data
 fetching from internal services; the console is purely a read + operator shell.
 
-## Endpoints (FORA-374 deliverables)
+## Endpoints (Forge AI-374 deliverables)
 
 | Path | Notes |
 | --- | --- |
@@ -38,16 +38,16 @@ curl http://localhost:3000/healthz     # → {"status":"ok","service":"forge"}
 
 Env vars (all optional — defaults shown):
 
-- `FORA_FORGE_PORT` (default `3000`) — the port Next binds to.
-- `FORA_FORGE_HOST` (default `0.0.0.0`) — bind interface.
-- `FORA_FORGE_API_URL` (default `http://localhost:4000`) — orchestrator base URL (server-side).
-- `NEXT_PUBLIC_FORGE_API_URL` (default = `FORA_FORGE_API_URL`) — public browser URL.
-- `FORA_SEED_RUN_ID` (default `demo-run-001`) — the demo run id the persona dashboards fall back to.
-- `FORA_SEED_TENANT_ID` / `FORA_SEED_TENANT_NAME` — header badge values.
+- `Forge AI_FORGE_PORT` (default `3000`) — the port Next binds to.
+- `Forge AI_FORGE_HOST` (default `0.0.0.0`) — bind interface.
+- `Forge AI_FORGE_API_URL` (default `http://localhost:4000`) — orchestrator base URL (server-side).
+- `NEXT_PUBLIC_FORGE_API_URL` (default = `Forge AI_FORGE_API_URL`) — public browser URL.
+- `Forge AI_SEED_RUN_ID` (default `demo-run-001`) — the demo run id the persona dashboards fall back to.
+- `Forge AI_SEED_TENANT_ID` / `Forge AI_SEED_TENANT_NAME` — header badge values.
 
-## Out of scope (FORA-374 non-goals)
+## Out of scope (Forge AI-374 non-goals)
 
-- Production auth (FORA-123 owns the identity-broker integration).
+- Production auth (Forge AI-123 owns the identity-broker integration).
 - Mobile / responsive-first design — desktop-first is acceptable for v1.
 - WebSocket / SSE — the persona pages revalidate on navigation only.
 - Write paths for prompts / stage artefacts — the console is read-only over the

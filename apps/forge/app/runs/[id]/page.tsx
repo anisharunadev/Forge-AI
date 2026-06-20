@@ -11,12 +11,19 @@ import { RealtimeTimeline } from '@/components/RealtimeTimeline';
 
 export const dynamic = 'force-dynamic';
 
+async function fetchTimelineData(runId: string) {
+  'use server';
+  const [r, s] = await Promise.all([getRun(runId), getRunStages(runId)]);
+  return { currentStage: r.current_stage, stages: s };
+}
+
 export default async function RunDetailPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   try {
+    const params = await paramsPromise;
     const [run, stages] = await Promise.all([
       getRun(params.id),
       getRunStages(params.id),
@@ -51,10 +58,7 @@ export default async function RunDetailPage({
           runId={run.id}
           initialCurrentStage={run.current_stage}
           initialStages={stages}
-          fetcher={async () => {
-            const [r, s] = await Promise.all([getRun(params.id), getRunStages(params.id)]);
-            return { currentStage: r.current_stage, stages: s };
-          }}
+          fetcher={fetchTimelineData.bind(null, run.id)}
         />
 
         <p className="text-sm">
@@ -65,7 +69,7 @@ export default async function RunDetailPage({
       </div>
     );
   } catch (err) {
-    if (err instanceof OrchestratorError && err.status === 404) notFound();
+    if (err instanceof OrchestratorError && (err.status === 404 || err.status === 400)) notFound();
     throw err;
   }
 }

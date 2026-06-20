@@ -39,24 +39,27 @@ import {
   getKnowledgeFile,
   workspaceRoot as _workspaceRoot,
 } from "@/lib/knowledge/manifest";
-import type { KnowledgeFile, KnowledgeFileType, KnowledgeFolder } from "@/lib/knowledge/types";
+import type { KnowledgeFile, KnowledgeFileType, KnowledgeFolder, GraphFilter } from "@/lib/knowledge/types";
 import { KnowledgeFileView } from "@/components/knowledge/KnowledgeFileView";
 import { KnowledgeFileTree } from "@/components/knowledge/KnowledgeFileTree";
 import { InjectionMapPanel } from "@/components/knowledge/InjectionMapPanel";
+import { KnowledgeGraphView } from "@/components/knowledge/KnowledgeGraphView";
 
 export const dynamic = "force-dynamic";
 
-type KnowledgeView = "files" | "map";
+type KnowledgeView = "files" | "map" | "graph";
 
 interface KnowledgeCenterSearchParams {
   readonly file?: string;
   readonly folder?: string;
   readonly type?: string;
   readonly view?: string;
+  readonly stage?: string;
+  readonly federation?: string;
 }
 
 function isView(value: string | undefined): value is KnowledgeView {
-  return value === "files" || value === "map";
+  return value === "files" || value === "map" || value === "graph";
 }
 
 function parseSearchParams(
@@ -68,6 +71,8 @@ function parseSearchParams(
     folder: typeof raw.folder === "string" ? raw.folder : Array.isArray(raw.folder) ? raw.folder[0] : undefined,
     type: typeof raw.type === "string" ? raw.type : Array.isArray(raw.type) ? raw.type[0] : undefined,
     view: typeof raw.view === "string" ? raw.view : Array.isArray(raw.view) ? raw.view[0] : undefined,
+    stage: typeof raw.stage === "string" ? raw.stage : Array.isArray(raw.stage) ? raw.stage[0] : undefined,
+    federation: typeof raw.federation === "string" ? raw.federation : Array.isArray(raw.federation) ? raw.federation[0] : undefined,
   };
 }
 
@@ -107,12 +112,16 @@ function filterQueryString(
   folder: KnowledgeFolder | "all",
   type: KnowledgeFileType | "all",
   view: KnowledgeView = "files",
+  stage: string | undefined = undefined,
+  federation: boolean = false,
 ): string {
   const params = new URLSearchParams();
   if (view !== "files") params.set("view", view);
   if (file) params.set("file", file);
   if (folder !== "all") params.set("folder", folder);
   if (type !== "all") params.set("type", type);
+  if (stage) params.set("stage", stage);
+  if (federation) params.set("federation", "1");
   const s = params.toString();
   return s ? `?${s}` : "";
 }
@@ -139,6 +148,8 @@ export default async function KnowledgeCenterPage({
   const folderFilter: KnowledgeFolder | "all" = isFolder(params.folder) ? params.folder : "all";
   const typeFilter: KnowledgeFileType | "all" = isFileType(params.type) ? params.type : "all";
   const view: KnowledgeView = isView(params.view) ? params.view : "files";
+  const stageFilter = params.stage;
+  const federation = params.federation === "1";
   const filtered = applyFilters(files, folderFilter, typeFilter);
 
   const selectedFile = params.file ? getKnowledgeFile(params.file) : null;
@@ -181,7 +192,7 @@ export default async function KnowledgeCenterPage({
         data-active-view={view}
       >
         <a
-          href={`/knowledge-center${filterQueryString(undefined, folderFilter, typeFilter, "files")}`}
+          href={`/knowledge-center${filterQueryString(undefined, folderFilter, typeFilter, "files", stageFilter, federation)}`}
           data-testid="tab-files"
           data-active={view === "files"}
           className={`-mb-px border-b-2 px-3 py-1.5 text-sm font-medium ${
@@ -193,7 +204,7 @@ export default async function KnowledgeCenterPage({
           Files
         </a>
         <a
-          href={`/knowledge-center${filterQueryString(undefined, folderFilter, typeFilter, "map")}`}
+          href={`/knowledge-center${filterQueryString(undefined, folderFilter, typeFilter, "map", stageFilter, federation)}`}
           data-testid="tab-map"
           data-active={view === "map"}
           className={`-mb-px border-b-2 px-3 py-1.5 text-sm font-medium ${
@@ -203,6 +214,18 @@ export default async function KnowledgeCenterPage({
           }`}
         >
           What does each agent see?
+        </a>
+        <a
+          href={`/knowledge-center${filterQueryString(undefined, folderFilter, typeFilter, "graph", stageFilter, federation)}`}
+          data-testid="tab-graph"
+          data-active={view === "graph"}
+          className={`-mb-px border-b-2 px-3 py-1.5 text-sm font-medium ${
+            view === "graph"
+              ? "border-forge-300 text-forge-50"
+              : "border-transparent text-forge-300 hover:text-forge-100"
+          }`}
+        >
+          Graph
         </a>
       </nav>
 
@@ -258,6 +281,15 @@ export default async function KnowledgeCenterPage({
 
       {view === "map" ? (
         <InjectionMapPanel />
+      ) : view === "graph" ? (
+        <KnowledgeGraphView
+          filter={{
+            folder: folderFilter,
+            fileType: typeFilter,
+            stage: stageFilter ?? "all",
+          }}
+          federation={federation}
+        />
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
           <aside

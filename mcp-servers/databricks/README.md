@@ -1,6 +1,6 @@
-# `@fora/mcp-databricks` — FORA Databricks MCP Server
+# `@fora/mcp-databricks` — Forge AI Databricks MCP Server
 
-Priority-2 MCP server for the FORA Enterprise AI SDLC Operating System. Exposes eight tools over MCP/stdio: `list_jobs`, `get_job`, `run_job`, `get_run`, `cancel_run`, `list_clusters`, `get_cluster`, `execute_sql`.
+Priority-2 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes eight tools over MCP/stdio: `list_jobs`, `get_job`, `run_job`, `get_run`, `cancel_run`, `list_clusters`, `get_cluster`, `execute_sql`.
 
 The server is **pinned to a single Databricks workspace** at startup. The model can pass `job_id` and `warehouse_id` as arguments, but they are asserted against the optional server pins (`DATABRICKS_JOB_ID`, `DATABRICKS_WAREHOUSE_ID`) when those env vars are set. This is the safety property that lets the same server template drive all priority-2 migrations.
 
@@ -155,7 +155,7 @@ The smoke test asserts:
 
 ### Live smoke
 
-Live E2E against a real Databricks workspace is out of scope for this issue and follows the [FORA-11](https://github.example/FORA/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/issues/11) pattern (one per server after the smoke is green). A future ticket will wire `npm run smoke:live` against `https://<your-workspace>.cloud.databricks.com`.
+Live E2E against a real Databricks workspace is out of scope for this issue and follows the [Forge AI-11](https://github.example/Forge AI/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/issues/11) pattern (one per server after the smoke is green). A future ticket will wire `npm run smoke:live` against `https://<your-workspace>.cloud.databricks.com`.
 
 ---
 
@@ -176,7 +176,7 @@ Live E2E against a real Databricks workspace is out of scope for this issue and 
 
 ---
 
-## Reuse: the FORA MCP server template
+## Reuse: the Forge AI MCP server template
 
 See `docs/template-note.md` for the full list of MCP servers that copy this template and the seven contract points they all share.
 

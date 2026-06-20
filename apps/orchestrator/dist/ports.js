@@ -28,4 +28,15 @@ export class ApprovalAlreadyDecidedError extends Error {
         this.name = 'ApprovalAlreadyDecidedError';
     }
 }
+/** Raised by `StageEngine` on an invalid transition. The wiring
+ *  converts this into a no-op + audit log so a stale event does
+ *  not crash the consumer. */
+export class InvalidStageTransitionError extends Error {
+    typed;
+    constructor(typed) {
+        super(typed.message);
+        this.typed = typed;
+        this.name = 'InvalidStageTransitionError';
+    }
+}
 //# sourceMappingURL=ports.js.map

@@ -1,4 +1,4 @@
-# FORA-128 v0 — secrets-mcp contract
+# Forge AI-128 v0 — secrets-mcp contract
 
 This document is the contract every follow-up child issue must
 honour. v0 is the landable skeleton; the children add the
@@ -43,7 +43,7 @@ from any field above.
 |-----------|---------------------------------------------------|-------|
 | `resolve` | `{ secret_ref }`                                  | Returns `{ ok, envelope }` or `{ ok: false, code, message }` |
 | `rotate`  | `{ secret_ref, new_value }`                       | Returns `{ ok, secret_ref, version, created_at }` or error envelope. `new_value` is never echoed back. |
-| `use_for` | `{ secret_ref, intent, payload }`                 | Broker-side raw-use pattern (FORA-128.f). Returns `{ ok, result: { intent, result, side_effect_fingerprint } }` or error envelope. The raw value never enters the response — the broker resolves the secret, calls the registered handler in-process, and returns only the action's result. |
+| `use_for` | `{ secret_ref, intent, payload }`                 | Broker-side raw-use pattern (Forge AI-128.f). Returns `{ ok, result: { intent, result, side_effect_fingerprint } }` or error envelope. The raw value never enters the response — the broker resolves the secret, calls the registered handler in-process, and returns only the action's result. |
 
 Error codes: `tenant_scope`, `not_found`, `invalid_ref`, `store_error`, `unknown_intent`, `invalid_payload`.
 
@@ -68,7 +68,7 @@ the agent does **not** call `resolve`. The agent calls the
 *target* MCP with an *intent* (e.g. `git.sign(commit=…)`); that
 target MCP is brokered through the `secrets-mcp` on the agent's
 behalf. The PAT never enters the agent's prompt or memory. v0
-ships the broker; the intent-routing layer is `FORA-128.f`.
+ships the broker; the intent-routing layer is `Forge AI-128.f`.
 
 ## 5. Audit events (closed)
 
@@ -85,11 +85,11 @@ Three action types, all on the `secret.*` namespace:
 could recover it. The audit log is the *fact* the secret was
 touched, not the content.
 
-### Production sink: FORA-36
+### Production sink: Forge AI-36
 
-The production audit sink is `ForaAuditSink` (`src/audit-fora.ts`).
-It POSTs each event to `{FORA_AUDIT_URL}/v1/audit/events` with the
-FORA-36 envelope shape (ADR-0003 §8.1):
+The production audit sink is `Forge AIAuditSink` (`src/audit-fora.ts`).
+It POSTs each event to `{Forge AI_AUDIT_URL}/v1/audit/events` with the
+Forge AI-36 envelope shape (ADR-0003 §8.1):
 
 - `actor`, `tenant_id`, `principal="agent"`, `scopes_used=[]`,
   `action`, `decision`, `trace_id`, `timestamp`, `metadata`.
@@ -107,14 +107,14 @@ credential-shaped substring; the event is logged to stderr and
 dropped.
 
 The `InMemoryAuditSink` remains the test default
-(`FORA_AUDIT_SINK=memory`); the production default is
-`FORA_AUDIT_SINK=fora`, gated by `FORA_AUDIT_URL`.
+(`Forge AI_AUDIT_SINK=memory`); the production default is
+`Forge AI_AUDIT_SINK=fora`, gated by `Forge AI_AUDIT_URL`.
 
 ## 6. Per-tenant configuration
 
 The server process is pinned to one tenant at boot
-(`FORA_TENANT_ID`). The backing-store kind is `memory` (v0) or
-`aws-secrets-manager` (FORA-128.b). Cross-tenant reads are
+(`Forge AI_TENANT_ID`). The backing-store kind is `memory` (v0) or
+`aws-secrets-manager` (Forge AI-128.b). Cross-tenant reads are
 rejected at the store layer with `TenantScopeError`; the server
 itself never re-derives a tenant from the ref alone.
 
@@ -124,24 +124,24 @@ itself never re-derives a tenant from the ref alone.
 - [x] `npm run build` (tsc)
 - [x] `npm test` (unit — grammar, redact, broker)
 - [x] `node test/unit-aws.mjs` (AWS Secrets Manager adapter)
-- [x] `node test/unit-audit.mjs` (FORA-36 audit forwarder)
+- [x] `node test/unit-audit.mjs` (Forge AI-36 audit forwarder)
 - [x] `node test/unit-brokered.mjs` (broker-side raw-use)
 - [x] `node test/property/memory-dump.mjs` (property: no raw value in agent-observable surfaces, 200 fuzz runs)
 - [x] `npm run smoke` (MCP stdio e2e)
-- [x] gitleaks scan (FORA-128.e) — `.gitleaks.toml` + regression test
-- [x] secrets: block lint rule (FORA-128.d) — `tools/lint-secrets-blocks.mjs` + fixtures
-- [x] property test: agent memory dump has no raw value (FORA-128.g) — `test/property/memory-dump.mjs`
+- [x] gitleaks scan (Forge AI-128.e) — `.gitleaks.toml` + regression test
+- [x] secrets: block lint rule (Forge AI-128.d) — `tools/lint-secrets-blocks.mjs` + fixtures
+- [x] property test: agent memory dump has no raw value (Forge AI-128.g) — `test/property/memory-dump.mjs`
 
 ## 8. Acceptance criteria mapping
 
-| FORA-128 acceptance criterion                              | Where satisfied                                  |
+| Forge AI-128 acceptance criterion                              | Where satisfied                                  |
 |------------------------------------------------------------|--------------------------------------------------|
 | `resolve` returns a redacted envelope; raw value never in response or log | `src/broker.ts` redact + audit sink; smoke test asserts no leak |
 | Same `secret_ref` in a different tenant resolves to a different value (or `not_found`) | `TenantScopeError` at the store; smoke test asserts `tenant_scope` |
 | Rotation creates a new version; old version revokable independently | `InMemorySecretStore.rotate` appends, never overwrites; `AwsSecretsManagerStore.rotate` calls `PutSecretValue`; unit + unit-aws tests assert `r1` still resolves to v1 after `rotate` to v2 |
-| Memory dump shows no raw value                              | `FORA-128.g` (deferred)                          |
-| Pre-commit gitleaks + CI secret-scan + lint rule           | `FORA-128.e` + `FORA-128.d` (deferred)           |
+| Memory dump shows no raw value                              | `Forge AI-128.g` (deferred)                          |
+| Pre-commit gitleaks + CI secret-scan + lint rule           | `Forge AI-128.e` + `Forge AI-128.d` (deferred)           |
 | AWS Secrets Manager backing store (v1)                      | `src/store-aws.ts` + `test/unit-aws.mjs`          |
-| FORA-36 audit sink (replace InMemoryAuditSink)              | `src/audit-fora.ts` + `test/unit-audit.mjs`      |
+| Forge AI-36 audit sink (replace InMemoryAuditSink)              | `src/audit-fora.ts` + `test/unit-audit.mjs`      |
 | Broker-side raw-use pattern (intent → action)               | `src/brokered.ts` + `test/unit-brokered.mjs`     |
 | Memory-dump property test (no raw value in agent-observable surfaces) | `test/property/memory-dump.mjs` (200 fuzz runs) |

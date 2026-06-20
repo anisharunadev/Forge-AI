@@ -1,6 +1,6 @@
-# `@fora/mcp-azure-devops` — FORA Azure DevOps MCP Server
+# `@fora/mcp-azure-devops` — Forge AI Azure DevOps MCP Server
 
-Priority-2 MCP server for the FORA Enterprise AI SDLC Operating System. Exposes nine tools over MCP/stdio against Azure DevOps REST 7.1: `list_projects`, `list_repos`, `list_pipelines`, `run_pipeline`, `get_pipeline_run`, `list_work_items`, `get_work_item`, `create_work_item`, `add_work_item_comment`.
+Priority-2 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes nine tools over MCP/stdio against Azure DevOps REST 7.1: `list_projects`, `list_repos`, `list_pipelines`, `run_pipeline`, `get_pipeline_run`, `list_work_items`, `get_work_item`, `create_work_item`, `add_work_item_comment`.
 
 The server is **pinned to a single Azure DevOps project** at startup. Three mutation tools (`run_pipeline`, `create_work_item`, `add_work_item_comment`) require `confirm: true` in the call so the model can't quietly mutate state.
 
@@ -113,7 +113,7 @@ A broad, org-level PAT would let a confused or malicious agent prompt reach into
 {
   "type": "Task",
   "title": "Smoke: AzDO MCP connected",
-  "description": "Created by the FORA AzDO MCP smoke test.",
+  "description": "Created by the Forge AI AzDO MCP smoke test.",
   "fields": { "System.Tags": "smoke; prio-1" },
   "confirm": true
 }
@@ -172,7 +172,7 @@ The mock asserts:
 
 ---
 
-## Reuse: the FORA MCP server template
+## Reuse: the Forge AI MCP server template
 
 See `docs/template-note.md` for the shared contract (single-scope pin, typed client, Zod raw shapes, stdio=JSON-RPC, mock-backed smoke, clean SIGINT/SIGTERM, no extra env vars) and how `@fora/mcp-azure-devops` deviates from the GitHub template.
 

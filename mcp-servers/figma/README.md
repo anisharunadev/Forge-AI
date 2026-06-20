@@ -1,6 +1,6 @@
-# `@fora/mcp-figma` — FORA Figma MCP Server
+# `@fora/mcp-figma` — Forge AI Figma MCP Server
 
-Priority-1 MCP server for the FORA Enterprise AI SDLC Operating System. Exposes six tools over MCP/stdio: `get_file`, `get_file_nodes`, `get_node`, `get_images`, `get_comments`, `post_comment`.
+Priority-1 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes six tools over MCP/stdio: `get_file`, `get_file_nodes`, `get_node`, `get_images`, `get_comments`, `post_comment`.
 
 The server is **pinned to a single Figma file and team** at startup. The model can pass node ids, but they are scoped to the pinned file. The team scope is asserted on startup with a single liveness call. This is the safety property: a model can only see what is in the pinned file, and only what the team's token can reach.
 
@@ -194,7 +194,7 @@ If any assertion fails, the script exits non-zero and prints the failure. No rea
 
 ---
 
-## Reuse: the FORA MCP server template
+## Reuse: the Forge AI MCP server template
 
 See `docs/template-note.md` for which MCP servers this package templates (it is itself a copy of `@fora/mcp-github` plus a Figma-specific client) and the contract they share.
 
@@ -204,7 +204,7 @@ See `docs/template-note.md` for which MCP servers this package templates (it is 
 
 ### No Figma SDK
 
-Figma's public REST v1 surface is not covered by a maintained TypeScript SDK we want to depend on. The client in `src/client.ts` is hand-rolled over `fetch`, with the same typed `createClient(config) → Client` shape the other FORA MCP servers use. The trade-off: no auto-pagination, no GraphQL client, no built-in retries. v0.1.0 does a single request per tool call and surfaces non-2xx as `FigmaApiError`. If we adopt retries later, do it inside the client so the tools' input/output shape stays stable.
+Figma's public REST v1 surface is not covered by a maintained TypeScript SDK we want to depend on. The client in `src/client.ts` is hand-rolled over `fetch`, with the same typed `createClient(config) → Client` shape the other Forge AI MCP servers use. The trade-off: no auto-pagination, no GraphQL client, no built-in retries. v0.1.0 does a single request per tool call and surfaces non-2xx as `FigmaApiError`. If we adopt retries later, do it inside the client so the tools' input/output shape stays stable.
 
 ### Design-file mutation is out of scope
 

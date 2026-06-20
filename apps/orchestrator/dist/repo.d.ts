@@ -12,7 +12,51 @@
  * DO NOTHING against the (run_id, stage) unique from migration 0002.
  */
 import type { Pool, PoolClient } from 'pg';
-import type { CreateRunRequest, IdempotencyRecord, RunId, RunRecord, RunStatus, StageRecord, TenantId } from './types.js';
+import { z } from 'zod';
+import type { CreateRunRequest, IdempotencyRecord, RunId, RunRecord, RunStatus, StageRecord, TenantId, TriggerPayload } from './types.js';
+/**
+ * zod schema for the `triggered_by` jsonb column on `agent_runs`. The
+ * schema mirrors `createRunBody.triggered_by` in server.ts:99-103 — the
+ * create path parses incoming requests with this shape, so the row we
+ * read back must satisfy the same contract. Living here (not in
+ * server.ts) means a future caller that writes `triggered_by` directly
+ * through the repo can re-use the schema without importing the HTTP
+ * layer.
+ */
+export declare const triggerPayloadSchema: z.ZodObject<{
+    type: z.ZodEnum<["manual", "slack", "email", "schedule", "api"]>;
+    actor: z.ZodString;
+    payload_ref: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    type: "manual" | "slack" | "email" | "schedule" | "api";
+    actor: string;
+    payload_ref?: string | undefined;
+}, {
+    type: "manual" | "slack" | "email" | "schedule" | "api";
+    actor: string;
+    payload_ref?: string | undefined;
+}>;
+/**
+ * Typed error thrown when a row's `triggered_by` jsonb value does not
+ * match the schema above. The HTTP layer maps this to a 500 with an
+ * `INTERNAL` envelope — a malformed jsonb payload is a data-integrity
+ * violation, not a client input error, so the API contract is the
+ * same as any other unrecoverable DB shape mismatch.
+ */
+export declare class TriggerPayloadParseError extends Error {
+    constructor(message: string);
+}
+/**
+ * Parse the raw `triggered_by` jsonb value into the typed
+ * `TriggerPayload` shape. The DB stores jsonb; pg returns it as
+ * `Record<string, unknown>`. The create path validates the shape via
+ * `createRunBody.triggered_by` in server.ts, so in practice this
+ * parser only rejects rows that predate the schema (legacy data) or
+ * rows whose jsonb was hand-edited. Throws `TriggerPayloadParseError`
+ * on mismatch — a typed error the HTTP layer can surface and the
+ * operator can alert on.
+ */
+export declare function parseTriggerPayload(value: unknown): TriggerPayload;
 /**
  * Insert the run header and the seven stage rows in one transaction.
  * Returns the persisted run on success. On retry with the same
@@ -66,6 +110,12 @@ export declare function transitionRunStatus(pool: Pool, tenantId: TenantId, runI
  * pick up a soft-deleted run, even if it was paused mid-flight.
  */
 export declare function listActiveRunsForRecovery(pool: Pool, tenantId: TenantId): Promise<ReadonlyArray<RunRecord>>;
+/**
+ * Read all runs within the caller's tenant, ordered by creation (newest first).
+ * FORA-378 adds this so the forge UI can determine if a tenant genuinely has
+ * zero runs vs. just lacking the seeded demo run.
+ */
+export declare function listRuns(pool: Pool, tenantId: TenantId): Promise<ReadonlyArray<RunRecord>>;
 /**
  * Fetch an idempotency record by (tenant, key). Returns `null` on miss.
  * Used by the replay path — the second call with the same key returns

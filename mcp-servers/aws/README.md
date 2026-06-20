@@ -1,10 +1,10 @@
-# `@fora/mcp-aws` — FORA AWS MCP Server
+# `@fora/mcp-aws` — Forge AI AWS MCP Server
 
-Priority-1 MCP server for the FORA Enterprise AI SDLC Operating System. Exposes seven read-only tools over MCP/stdio: `list_stacks`, `get_stack`, `list_stack_resources`, `get_resource`, `list_change_sets`, `get_change_set`, `describe_change_set`.
+Priority-1 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes seven read-only tools over MCP/stdio: `list_stacks`, `get_stack`, `list_stack_resources`, `get_resource`, `list_change_sets`, `get_change_set`, `describe_change_set`.
 
 The server is **pinned to a single AWS account and a single region** at startup. The model can pass resource IDs (stack names, change-set names, type names) but the underlying account and region are server-pinned for safety. A `STS:GetCallerIdentity` round-trip on boot verifies that the resolved credential chain belongs to the pinned account; if it does not, the server refuses to start.
 
-**Mutations are intentionally out of scope in v1.** `execute_change_set` and any Cloud Control write tools will land in a tracked follow-up to [FORA-92](/FORA/issues/FORA-92) behind a `confirm: true` Zod argument.
+**Mutations are intentionally out of scope in v1.** `execute_change_set` and any Cloud Control write tools will land in a tracked follow-up to [Forge AI-92](/Forge AI/issues/Forge AI-92) behind a `confirm: true` Zod argument.
 
 ---
 
@@ -195,7 +195,7 @@ The smoke also asserts:
 
 ### Live smoke (against a real account)
 
-A live smoke is **out of scope for this ticket** per the original FORA-92 description. The planned pattern (per the FORA-11 live-smoke model) is: run the smoke against a sandbox AWS account, then exercise every tool against that account with read-only IAM credentials.
+A live smoke is **out of scope for this ticket** per the original Forge AI-92 description. The planned pattern (per the Forge AI-11 live-smoke model) is: run the smoke against a sandbox AWS account, then exercise every tool against that account with read-only IAM credentials.
 
 ---
 
@@ -213,7 +213,7 @@ A live smoke is **out of scope for this ticket** per the original FORA-92 descri
 
 ---
 
-## Reuse: the FORA MCP server template
+## Reuse: the Forge AI MCP server template
 
 See `docs/template-note.md` for the contract drifts `@fora/mcp-aws` introduces vs. the `@fora/mcp-github` template, and the seven contract points the AWS package preserves verbatim.
 
@@ -221,7 +221,7 @@ See `docs/template-note.md` for the contract drifts `@fora/mcp-aws` introduces v
 
 ## Out of scope (tracked elsewhere)
 
-- **Live E2E against a real AWS account** — separate ticket, follows the FORA-11 live-smoke pattern with a sandbox account.
-- **`execute_change_set` and other mutations** — separate ticket, ships with a `confirm: true` Zod argument per the FORA-92 contract note.
-- **AWS Transform orchestration** — owned by the Refactor agent (Epic 8, [FORA-24](/FORA/issues/FORA-24)), not this MCP.
+- **Live E2E against a real AWS account** — separate ticket, follows the Forge AI-11 live-smoke pattern with a sandbox account.
+- **`execute_change_set` and other mutations** — separate ticket, ships with a `confirm: true` Zod argument per the Forge AI-92 contract note.
+- **AWS Transform orchestration** — owned by the Refactor agent (Epic 8, [Forge AI-24](/Forge AI/issues/Forge AI-24)), not this MCP.
 - **Bedrock / model invocation calls** — the platform model is Anthropic, not hosted on AWS Bedrock for v1.

@@ -1,4 +1,4 @@
-# Operator runbook — `secrets-mcp` (FORA-128)
+# Operator runbook — `secrets-mcp` (Forge AI-128)
 
 This runbook walks an SRE through the four operations that matter
 in production: **boot**, **`rotate`**, **revoke**, and **force-rotate**.
@@ -24,7 +24,7 @@ every other call is a `resolve` that returns a redacted envelope.
   chain — the operator does not need to mint STS credentials by
   hand; the per-tenant backing store is configured at deploy time
   (see "Per-tenant configuration" below).
-- The FORA-36 audit service reachable at `FORA_AUDIT_URL`. The
+- The Forge AI-36 audit service reachable at `Forge AI_AUDIT_URL`. The
   forwarder is fire-and-forget; 5xx is retried 3× and then
   dropped with a stderr log.
 
@@ -36,18 +36,18 @@ for the fan-out. The relevant env vars, per tenant process:
 
 | Env var                   | Required            | Default | Purpose                                  |
 |---------------------------|---------------------|---------|------------------------------------------|
-| `FORA_TENANT_ID`          | **yes**             | —       | The broker's tenant claim                |
-| `FORA_BACKING_STORE`      | no                  | `memory` | `memory` (dev/test) or `aws-secrets-manager` (prod) |
-| `FORA_AWS_REGION`         | if backing=aws-sm   | —       | AWS region for the secrets-mcp           |
-| `FORA_AWS_SM_PREFIX`      | no                  | `fora`  | Name prefix in AWS SM (`{prefix}/{tid}/{name}`) |
-| `FORA_AUDIT_SINK`         | no                  | `memory` | `memory` (test) or `fora` (prod)         |
-| `FORA_AUDIT_URL`          | if audit=fora       | —       | Base URL of the FORA-36 audit service    |
-| `FORA_AUDIT_TOKEN`        | no                  | —       | Bearer token for the FORA-36 service     |
-| `FORA_TRACE_ID`           | no (orchestrator sets) | `trace-unknown` | The trace id of the parent ToolCall |
-| `FORA_ACTOR`              | no (orchestrator sets) | `agent:unknown` | The agent's principal                  |
-| `FORA_AGENT_TYPE`         | no (orchestrator sets) | `unknown` | The agent type (developer, security-engineer, etc.) |
+| `Forge AI_TENANT_ID`          | **yes**             | —       | The broker's tenant claim                |
+| `Forge AI_BACKING_STORE`      | no                  | `memory` | `memory` (dev/test) or `aws-secrets-manager` (prod) |
+| `Forge AI_AWS_REGION`         | if backing=aws-sm   | —       | AWS region for the secrets-mcp           |
+| `Forge AI_AWS_SM_PREFIX`      | no                  | `fora`  | Name prefix in AWS SM (`{prefix}/{tid}/{name}`) |
+| `Forge AI_AUDIT_SINK`         | no                  | `memory` | `memory` (test) or `fora` (prod)         |
+| `Forge AI_AUDIT_URL`          | if audit=fora       | —       | Base URL of the Forge AI-36 audit service    |
+| `Forge AI_AUDIT_TOKEN`        | no                  | —       | Bearer token for the Forge AI-36 service     |
+| `Forge AI_TRACE_ID`           | no (orchestrator sets) | `trace-unknown` | The trace id of the parent ToolCall |
+| `Forge AI_ACTOR`              | no (orchestrator sets) | `agent:unknown` | The agent's principal                  |
+| `Forge AI_AGENT_TYPE`         | no (orchestrator sets) | `unknown` | The agent type (developer, security-engineer, etc.) |
 
-The `FORA_TRACE_ID`, `FORA_ACTOR`, and `FORA_AGENT_TYPE` env vars
+The `Forge AI_TRACE_ID`, `Forge AI_ACTOR`, and `Forge AI_AGENT_TYPE` env vars
 are placeholders for the v0 entry point. The production path passes
 these through the ToolCall envelope directly.
 
@@ -56,13 +56,13 @@ these through the ToolCall envelope directly.
 **Goal**: bring a per-tenant `secrets-mcp` process online.
 
 ```bash
-export FORA_TENANT_ID="tnt_acme"
-export FORA_BACKING_STORE="aws-secrets-manager"
-export FORA_AWS_REGION="us-east-1"
-export FORA_AWS_SM_PREFIX="fora"
-export FORA_AUDIT_SINK="fora"
-export FORA_AUDIT_URL="https://audit.fora.example.com"
-export FORA_AUDIT_TOKEN="<bearer>"
+export Forge AI_TENANT_ID="tnt_acme"
+export Forge AI_BACKING_STORE="aws-secrets-manager"
+export Forge AI_AWS_REGION="us-east-1"
+export Forge AI_AWS_SM_PREFIX="fora"
+export Forge AI_AUDIT_SINK="fora"
+export Forge AI_AUDIT_URL="https://audit.fora.example.com"
+export Forge AI_AUDIT_TOKEN="<bearer>"
 
 node node_modules/@fora/mcp-secrets/dist/index.js
 ```
@@ -75,8 +75,8 @@ Verify the boot by reading the stderr line:
 
 If the server refuses to boot with `Invalid secrets-mcp configuration`,
 the missing env var is in the error message. The most common cause
-is `FORA_AWS_REGION` not set when `FORA_BACKING_STORE=aws-secrets-manager`,
-or `FORA_AUDIT_URL` not set when `FORA_AUDIT_SINK=fora`.
+is `Forge AI_AWS_REGION` not set when `Forge AI_BACKING_STORE=aws-secrets-manager`,
+or `Forge AI_AUDIT_URL` not set when `Forge AI_AUDIT_SINK=fora`.
 
 **Smoke test from the operator shell** (no agent in the loop):
 
@@ -101,7 +101,7 @@ documented in `contract.md` §2.
 ## Operation 2 — `rotate`
 
 **Goal**: write a new version of a secret; the old version stays
-resolvable (FORA-128 acceptance: "Rotation creates a new version;
+resolvable (Forge AI-128 acceptance: "Rotation creates a new version;
 old version revokable independently").
 
 ```bash
@@ -180,14 +180,14 @@ but is no longer staged as AWSCURRENT.
 
 **Goal**: rotate a secret that is known or strongly suspected to
 be compromised. The audit log is the source of truth for "who saw
-it last" — pull the FORA-36 events for `secret_ref` and check the
+it last" — pull the Forge AI-36 events for `secret_ref` and check the
 `fingerprint` of the resolved values against the new rotation.
 
 **Step 4.1 — Identify the blast radius**:
 
 ```bash
 # Find every resolve of the compromised secret_ref in the last 7 days.
-# FORA-36 is the append-only store; the query API is a board-level
+# Forge AI-36 is the append-only store; the query API is a board-level
 # endpoint behind the same OAuth scope as the board dashboard.
 fora audit query \
   --tenant "tnt_acme" \
@@ -236,7 +236,7 @@ fora audit query \
 ## Observability
 
 The `secrets-mcp` does not emit Prometheus metrics directly. The
-production observability surface is the FORA-36 audit feed:
+production observability surface is the Forge AI-36 audit feed:
 
 - `secret.resolved` — counter of successful resolutions, scoped
   per `(tenant_id, secret_ref, fingerprint)`.
@@ -259,13 +259,13 @@ the SRE on-call.
 
 | Symptom                                              | Likely cause                              | Fix                                                                                            |
 |------------------------------------------------------|-------------------------------------------|------------------------------------------------------------------------------------------------|
-| Server refuses to boot with `FORA_AWS_REGION` required | `FORA_BACKING_STORE=aws-secrets-manager` but `FORA_AWS_REGION` unset | Set `FORA_AWS_REGION` (e.g. `us-east-1`) and restart.                                       |
-| Server refuses to boot with `FORA_AUDIT_URL` required  | `FORA_AUDIT_SINK=fora` but `FORA_AUDIT_URL` unset | Set `FORA_AUDIT_URL` and restart.                                                            |
-| `resolve` returns `not_found` for a known secret      | Wrong tenant or wrong prefix              | Confirm `FORA_TENANT_ID` matches the ref's `tenants/{tid}/...` segment; confirm `FORA_AWS_SM_PREFIX`. |
+| Server refuses to boot with `Forge AI_AWS_REGION` required | `Forge AI_BACKING_STORE=aws-secrets-manager` but `Forge AI_AWS_REGION` unset | Set `Forge AI_AWS_REGION` (e.g. `us-east-1`) and restart.                                       |
+| Server refuses to boot with `Forge AI_AUDIT_URL` required  | `Forge AI_AUDIT_SINK=fora` but `Forge AI_AUDIT_URL` unset | Set `Forge AI_AUDIT_URL` and restart.                                                            |
+| `resolve` returns `not_found` for a known secret      | Wrong tenant or wrong prefix              | Confirm `Forge AI_TENANT_ID` matches the ref's `tenants/{tid}/...` segment; confirm `Forge AI_AWS_SM_PREFIX`. |
 | `resolve` returns `tenant_scope`                      | Orchestrator routed a ToolCall for tenant X to the tenant-Y process | The orchestrator is the single source of truth for routing. Restart the wrong-tenant process. |
 | `use_for` returns `unknown_intent`                   | The intent is not in the registry         | Add a handler via `BrokeredActionRegistry.register(intent, handler)` at boot. Production wiring is the `auth-engineer` hire. |
 | `use_for` returns `invalid_payload`                  | The payload is not a plain object         | The MCP tool schema requires `payload: object`; arrays / null / primitives are rejected.       |
-| Audit forwarder logs `retry-exhaust-3`                | FORA-36 is down or unreachable           | The forwarder drops the event. The MCP keeps serving. Alert the platform team on the FORA-36 side. |
+| Audit forwarder logs `retry-exhaust-3`                | Forge AI-36 is down or unreachable           | The forwarder drops the event. The MCP keeps serving. Alert the platform team on the Forge AI-36 side. |
 | Audit forwarder logs `credential-shape-detected`     | A regression leaked a raw value into a metadata field | P0 incident. Pull the event details from the stderr log; the broker must not put the raw value anywhere. Open a PR that adds the regression to `test/unit-audit.mjs` first. |
 
 ## Related docs
@@ -275,4 +275,4 @@ the SRE on-call.
 - `docs/runbooks/secrets-mcp.md` — the cross-linked repo-root runbook (mirror).
 - `docs/architecture/adr-0003-auth-tenancy.md` §7 — the ADR that defines the pattern.
 - `docs/engineering/standards.md` §5.1 — the "secrets never in code" rule.
-- FORA-128 epic and the 7 child issues (FORA-185 / FORA-186 / FORA-187 / FORA-188 / FORA-189 / FORA-190 / FORA-191).
+- Forge AI-128 epic and the 7 child issues (Forge AI-185 / Forge AI-186 / Forge AI-187 / Forge AI-188 / Forge AI-189 / Forge AI-190 / Forge AI-191).

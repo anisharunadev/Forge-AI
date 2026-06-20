@@ -11,7 +11,58 @@
  * tree inconsistent. The idempotent replay uses INSERT ... ON CONFLICT
  * DO NOTHING against the (run_id, stage) unique from migration 0002.
  */
-import { STAGES_IN_ORDER, asRunId, asTenantId } from './types.js';
+import { z } from 'zod';
+import { STAGES_IN_ORDER, asGoalId, asProjectId, asRunId, asTenantId, } from './types.js';
+/**
+ * zod schema for the `triggered_by` jsonb column on `agent_runs`. The
+ * schema mirrors `createRunBody.triggered_by` in server.ts:99-103 — the
+ * create path parses incoming requests with this shape, so the row we
+ * read back must satisfy the same contract. Living here (not in
+ * server.ts) means a future caller that writes `triggered_by` directly
+ * through the repo can re-use the schema without importing the HTTP
+ * layer.
+ */
+export const triggerPayloadSchema = z.object({
+    type: z.enum(['manual', 'slack', 'email', 'schedule', 'api']),
+    actor: z.string().min(1),
+    payload_ref: z.string().optional(),
+});
+/**
+ * Typed error thrown when a row's `triggered_by` jsonb value does not
+ * match the schema above. The HTTP layer maps this to a 500 with an
+ * `INTERNAL` envelope — a malformed jsonb payload is a data-integrity
+ * violation, not a client input error, so the API contract is the
+ * same as any other unrecoverable DB shape mismatch.
+ */
+export class TriggerPayloadParseError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'TriggerPayloadParseError';
+    }
+}
+/**
+ * Parse the raw `triggered_by` jsonb value into the typed
+ * `TriggerPayload` shape. The DB stores jsonb; pg returns it as
+ * `Record<string, unknown>`. The create path validates the shape via
+ * `createRunBody.triggered_by` in server.ts, so in practice this
+ * parser only rejects rows that predate the schema (legacy data) or
+ * rows whose jsonb was hand-edited. Throws `TriggerPayloadParseError`
+ * on mismatch — a typed error the HTTP layer can surface and the
+ * operator can alert on.
+ */
+export function parseTriggerPayload(value) {
+    const parsed = triggerPayloadSchema.safeParse(value);
+    if (!parsed.success) {
+        throw new TriggerPayloadParseError(`agent_runs.triggered_by failed schema: ${parsed.error.message}`);
+    }
+    return {
+        type: parsed.data.type,
+        actor: parsed.data.actor,
+        ...(parsed.data.payload_ref !== undefined
+            ? { payload_ref: parsed.data.payload_ref }
+            : {}),
+    };
+}
 /**
  * Insert the run header and the seven stage rows in one transaction.
  * Returns the persisted run on success. On retry with the same
@@ -187,6 +238,22 @@ export async function listActiveRunsForRecovery(pool, tenantId) {
     return r.rows.map(rowToRun);
 }
 /**
+ * Read all runs within the caller's tenant, ordered by creation (newest first).
+ * FORA-378 adds this so the forge UI can determine if a tenant genuinely has
+ * zero runs vs. just lacking the seeded demo run.
+ */
+export async function listRuns(pool, tenantId) {
+    const r = await pool.query(`SELECT id, tenant_id, goal_id, project_id, status, current_stage,
+            triggered_by, cost_ceiling_usd::text AS cost_ceiling_usd,
+            cost_spent_usd::text AS cost_spent_usd,
+            started_at, finished_at, deleted_at, archived_at
+       FROM agent_runs
+      WHERE tenant_id = $1
+        AND deleted_at IS NULL
+      ORDER BY created_at DESC`, [tenantId]);
+    return r.rows.map(rowToRun);
+}
+/**
  * Fetch an idempotency record by (tenant, key). Returns `null` on miss.
  * Used by the replay path — the second call with the same key returns
  * the cached response.
@@ -234,16 +301,18 @@ function rowToRun(row) {
     return {
         id: asRunId(row.id),
         tenant_id: asTenantId(row.tenant_id),
-        goal_id: row.goal_id,
-        project_id: row.project_id,
+        goal_id: asGoalId(row.goal_id),
+        project_id: asProjectId(row.project_id),
         status: row.status,
         current_stage: row.current_stage,
         // The DB stores triggered_by as jsonb; pg returns the parsed
-        // value as `Record<string, unknown>`. We trust the round-trip
-        // (the INSERT path validates the shape via the zod schema in
-        // server.ts) and narrow through `unknown` so the branded
-        // RunRecord shape compiles under exactOptionalPropertyTypes.
-        triggered_by: row.triggered_by,
+        // value as `Record<string, unknown>`. `parseTriggerPayload`
+        // narrows it to the typed `TriggerPayload` shape and throws
+        // `TriggerPayloadParseError` on mismatch — a typed error the
+        // operator can alert on. The schema mirrors the create-path
+        // validator in server.ts, so a freshly-written row will always
+        // parse; the parse surfaces legacy data or hand-edited rows.
+        triggered_by: parseTriggerPayload(row.triggered_by),
         cost_ceiling_usd: row.cost_ceiling_usd,
         cost_spent_usd: row.cost_spent_usd,
         started_at: row.started_at,

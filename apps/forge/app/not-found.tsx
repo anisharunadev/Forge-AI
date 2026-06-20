@@ -6,7 +6,7 @@ export default function NotFound() {
       <h1 className="text-xl font-semibold">Not found</h1>
       <p className="text-sm text-forge-200">
         That run id is not visible to the seeded <code>acme-corp</code> tenant, or the
-        orchestrator is unreachable.
+        orchestrator is unreachable. Stages not yet written.
       </p>
       <p>
         <Link className="underline" href="/">

@@ -1,6 +1,6 @@
-# Template note — `@fora/mcp-aws` and the FORA MCP server template
+# Template note — `@fora/mcp-aws` and the Forge AI MCP server template
 
-This package copies the [FORA MCP server template](../../github/docs/template-note.md) defined by `@fora/mcp-github` (FORA-4). The seven contract points from the upstream template (single-scope pin, typed client, Zod raw shapes, stdout = JSON-RPC, mock-HTTP smoke, clean SIGINT/SIGTERM, no extra env vars) are **all preserved** in this package.
+This package copies the [Forge AI MCP server template](../../github/docs/template-note.md) defined by `@fora/mcp-github` (Forge AI-4). The seven contract points from the upstream template (single-scope pin, typed client, Zod raw shapes, stdout = JSON-RPC, mock-HTTP smoke, clean SIGINT/SIGTERM, no extra env vars) are **all preserved** in this package.
 
 This file documents the **contract drift** the AWS server introduces. Anything not called out here matches the upstream contract verbatim.
 

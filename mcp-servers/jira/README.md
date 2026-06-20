@@ -1,6 +1,6 @@
-# `@fora/mcp-jira` — FORA Jira MCP Server
+# `@fora/mcp-jira` — Forge AI Jira MCP Server
 
-Priority-1 MCP server for the FORA Enterprise AI SDLC Operating System. Exposes six tools over MCP/stdio: `list_issues`, `search_jql`, `get_issue`, `create_issue`, `add_comment`, `transition_issue`.
+Priority-1 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes six tools over MCP/stdio: `list_issues`, `search_jql`, `get_issue`, `create_issue`, `add_comment`, `transition_issue`.
 
 The server is **pinned to a single Jira project** at startup. The model can pass an `issueIdOrKey`, but the underlying project is asserted against the pin before any call lands. This is the same safety posture as `@fora/mcp-github`'s `GITHUB_ORG` enforcement, scoped one level deeper to a single project.
 
@@ -42,7 +42,7 @@ In your Paperclip MCP client config, add:
       "env": {
         "JIRA_EMAIL": "${JIRA_EMAIL}",
         "JIRA_API_TOKEN": "${JIRA_API_TOKEN}",
-        "JIRA_PROJECT_KEY": "FORA",
+        "JIRA_PROJECT_KEY": "Forge AI",
         "JIRA_BASE_URL": "https://acme.atlassian.net"
       }
     }
@@ -67,7 +67,7 @@ The server uses **Atlassian Cloud REST v3** with HTTP Basic auth (`email:api_tok
 
 ### 2. Set the project pin and base URL
 
-- `JIRA_PROJECT_KEY` — the short project key you want pinned, e.g. `FORA`. The model cannot address any other project.
+- `JIRA_PROJECT_KEY` — the short project key you want pinned, e.g. `Forge AI`. The model cannot address any other project.
 - `JIRA_BASE_URL` — your site root, e.g. `https://acme.atlassian.net`. The server appends `/rest/api/3` automatically.
 
 ### Least-privilege scope
@@ -107,7 +107,7 @@ All tools operate against the pinned project. The `projectKey` is intentionally 
 
 ```json
 {
-  "jql": "project = FORA AND assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC",
+  "jql": "project = Forge AI AND assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC",
   "maxResults": 20
 }
 ```
@@ -115,7 +115,7 @@ All tools operate against the pinned project. The `projectKey` is intentionally 
 `get_issue`:
 
 ```json
-{ "issueIdOrKey": "FORA-123" }
+{ "issueIdOrKey": "Forge AI-123" }
 ```
 
 `create_issue`:
@@ -133,7 +133,7 @@ All tools operate against the pinned project. The `projectKey` is intentionally 
 
 ```json
 {
-  "issueIdOrKey": "FORA-123",
+  "issueIdOrKey": "Forge AI-123",
   "body": "## QA report\n\nSmoke test passed. Ready for review."
 }
 ```
@@ -142,7 +142,7 @@ All tools operate against the pinned project. The `projectKey` is intentionally 
 
 ```json
 {
-  "issueIdOrKey": "FORA-123",
+  "issueIdOrKey": "Forge AI-123",
   "transitionName": "Done"
 }
 ```
@@ -184,6 +184,6 @@ If any assertion fails, the script exits non-zero and prints the failure. No rea
 
 ---
 
-## Reuse: the FORA MCP server template
+## Reuse: the Forge AI MCP server template
 
 See `docs/template-note.md` (in `@fora/mcp-github`) for the contract these servers share, and `docs/assumptions-vs-github-mcp.md` (in this package) for the divergences that matter when wiring the agent: rate limits, JQL vs `search_code`, the transition model vs `state`, ADF vs Markdown, and the project-key pin vs `GITHUB_ORG`.

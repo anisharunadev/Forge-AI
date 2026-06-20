@@ -15,20 +15,27 @@
  *
  *   { "error": { "code": "INVALID_TRANSITION", "message": "...", "request_id": "..." } }
  *
- * Auth model: the Orchestrator trusts the upstream gateway to have
- * verified the JWT and stamped `x-fora-tenant-id` on the request.
- * ADR-0003 §4.2 binds the db-pool to the verified claim; a v1.1 ADR
- * moves JWT validation in-process.
+ * Auth model — ADR-0003 §4.2 v1.1 (FORA-526):
+ *
+ * The Orchestrator verifies JWTs in-process. A Fastify preHandler hook
+ * (`jwtAuthHook` below) reads `Authorization: Bearer <jwt>`, calls
+ * `JwtValidator.verify` (jose + JWKS at `config.jwtVerifierUrl`), and
+ * stamps the typed `JwtPrincipal` on `request.tenantContext`. The legacy
+ * `x-fora-tenant-id` header is REMOVED from the trust boundary — it
+ * is honoured only when `FORA_REQUIRE_JWT=false` for local dev. The
+ * gateway is no longer required; the service can be deployed behind
+ * an untrusted LB / sidecar.
  */
 import { randomUUID } from 'node:crypto';
-import { createHmac, timingSafeEqual } from 'node:crypto';
 import Fastify from 'fastify';
 import { z } from 'zod';
-import { lookupIdempotency, parseIdempotencyKey, recordIdempotency, ValidationError, fingerprint, } from './idempotency.js';
-import { createRun, findRunById, listStages, transitionRunStatus, } from './repo.js';
+import { isUuidV4, lookupIdempotency, parseIdempotencyKey, recordIdempotency, ValidationError, fingerprint, } from './idempotency.js';
+import { createRun, findRunById, listRuns, listStages, transitionRunStatus, } from './repo.js';
 import { canTransition, isTerminal, nextStatus } from './state-machine.js';
-import { asRunId, STAGES_IN_ORDER, } from './types.js';
+import { asGoalId, asProjectId, asRunId, STAGES_IN_ORDER, } from './types.js';
 import { decide, ApprovalAlreadyDecidedError, RouterError, } from './index.js';
+import { attachEventsWebSocket, WsConnectionRegistry, } from './ws.js';
+import { JwtError, JwtValidator, } from './jwt-validator.js';
 /**
  * zod schemas for request bodies. The schemas are the public input
  * contract; the handler maps each to the typed shapes in types.ts.
@@ -46,7 +53,13 @@ const createRunBody = z.object({
         .regex(/^\d{1,8}(\.\d{1,2})?$/, 'cost_ceiling_usd must be a numeric string')
         .optional(),
 });
-const idParam = z.object({ id: z.string().uuid() });
+const DEMO_RUN_ALIAS = 'demo-run-001';
+const DEMO_RUN_UUID = '00000000-0000-4000-8000-000000000001';
+const idParam = z.object({
+    id: z.string().refine((val) => isUuidV4(val) || val === DEMO_RUN_ALIAS, {
+        message: 'invalid run id',
+    }).transform((val) => val === DEMO_RUN_ALIAS ? DEMO_RUN_UUID : val),
+});
 const decideParams = z.object({
     id: z.string().uuid(),
     approvalId: z.string().min(1),
@@ -75,14 +88,20 @@ const returnBody = z.object({
     reason: z.string().min(1),
 });
 /**
- * The shared header that authenticates a request to a tenant. In
- * production this is `x-fora-tenant-id` set by the gateway after JWT
- * verification (ADR-0003 §4.2). The test seam injects a deterministic
- * tenant without going through the gateway.
+ * The shared header that authenticates a request to a tenant.
+ *
+ * FORA-526 (v1.1): in production, the JWT-verified principal on
+ * `request.tenantContext` is the only trust boundary. The legacy
+ * `x-fora-tenant-id` header is honoured ONLY when
+ * `config.requireJwt === false` (local dev) — production MUST run
+ * with `FORA_REQUIRE_JWT=true` (the default). The header is kept
+ * here as a named constant so the local-dev path is grep-able.
  */
 const TENANT_HEADER = 'x-fora-tenant-id';
 const IDEMPOTENCY_HEADER = 'idempotency-key';
 const REQUEST_ID_HEADER = 'x-request-id';
+const AUTH_HEADER = 'authorization';
+const HEALTHZ_PATH = '/healthz';
 export async function buildServer(deps) {
     const app = Fastify({
         logger: deps.config.env !== 'test'
@@ -93,7 +112,67 @@ export async function buildServer(deps) {
     });
     const now = deps.now ?? (() => Date.now());
     // --- Default tenant extractor (production) ----------------------------
+    // FORA-526: the preHandler hook (`jwtAuthHook` below) stamps the
+    // verified principal on `request.tenantContext`. `defaultExtractTenant`
+    // reads from there. The legacy `x-fora-tenant-id` header is the
+    // fallback ONLY when `config.requireJwt === false` (local dev).
     const extractTenant = deps.extractTenant ?? defaultExtractTenant;
+    // --- JWT auth hook (FORA-526) -----------------------------------------
+    // Verify `Authorization: Bearer <jwt>` on every non-healthz request
+    // when `config.requireJwt` is true (the default). On success,
+    // `request.tenantContext` carries the typed `JwtPrincipal`; on
+    // failure, the typed `JwtError` propagates to the setErrorHandler
+    // and surfaces as 401 VALIDATION with the discrete code in the log.
+    // Tests inject a stub `deps.jwtValidator` to avoid the JWKS round-trip.
+    const jwtValidator = deps.jwtValidator ??
+        new JwtValidator({
+            jwksUrl: deps.config.jwtVerifierUrl,
+            issuer: deps.config.jwtIssuer,
+            audience: deps.config.jwtAudience,
+            clockToleranceSec: deps.config.jwtClockToleranceSec,
+        });
+    if (deps.config.requireJwt) {
+        app.addHook('preHandler', async (req, reply) => {
+            // Liveness is unauthenticated by design.
+            if (req.url === HEALTHZ_PATH)
+                return;
+            const requestId = headerString(req.headers[REQUEST_ID_HEADER]) ?? randomUUID();
+            const auth = headerString(req.headers[AUTH_HEADER]);
+            if (!auth || !auth.toLowerCase().startsWith('bearer ')) {
+                throw new AuthError('missing or malformed Authorization header', requestId);
+            }
+            const token = auth.slice('bearer '.length).trim();
+            try {
+                const principal = await jwtValidator.verify(token);
+                req.tenantContext = principal;
+            }
+            catch (e) {
+                // Discrete codes (`EXPIRED` / `TAMPERED` / `INVALID` / `WRONG_TENANT`)
+                // are logged for audit; the wire response is the standard
+                // 401 VALIDATION envelope so the client cannot probe for
+                // failure-mode information.
+                if (e instanceof JwtError) {
+                    req.log.warn({
+                        request_id: requestId,
+                        jwt_error_code: e.code,
+                        jwt_claim: e.claim,
+                    }, 'jwt auth failed');
+                    throw new AuthError(`jwt auth failed: ${e.code.toLowerCase()}`, requestId);
+                }
+                throw e;
+            }
+        });
+    }
+    else {
+        // Local-dev opt-out: log a single warning per process so the
+        // footgun is visible in test runs. Production MUST NOT log
+        // this — the `if (deps.config.requireJwt)` branch above is the
+        // only path that stamps a verified principal.
+        app.log.warn({
+            jwt_required: false,
+            fallback_header: TENANT_HEADER,
+        }, 'FORA_REQUIRE_JWT=false — JWT verification disabled, honouring legacy x-fora-tenant-id header (LOCAL DEV ONLY)');
+    }
     // --- Global error handler ---------------------------------------------
     // Maps the typed errors thrown by `requireTenant` /
     // `requireIdempotencyKey` to the right HTTP status + envelope. The
@@ -129,9 +208,14 @@ export async function buildServer(deps) {
         if (!parsed.success) {
             return errorEnvelope(reply, 400, 'VALIDATION', parsed.error.message, requestId);
         }
+        // Build the typed CreateRunRequest directly from the zod-parsed
+        // shape. The brands (GoalId / ProjectId) are erased at runtime —
+        // the values are the strings the gateway verified — so the cast
+        // happens through the public `asGoalId` / `asProjectId` helpers
+        // and is type-narrowing, not a structural bypass.
         const body = {
-            goal_id: parsed.data.goal_id,
-            project_id: parsed.data.project_id,
+            goal_id: asGoalId(parsed.data.goal_id),
+            project_id: asProjectId(parsed.data.project_id),
             triggered_by: {
                 type: parsed.data.triggered_by.type,
                 actor: parsed.data.triggered_by.actor,
@@ -190,6 +274,13 @@ export async function buildServer(deps) {
             client.release();
         }
         return reply.status(201).send(run);
+    });
+    // --- GET /v1/runs ----------------------------------------------------
+    app.get('/v1/runs', async (req, reply) => {
+        const requestId = headerString(req.headers[REQUEST_ID_HEADER]) ?? randomUUID();
+        const tenantId = requireTenant(extractTenant(req), requestId);
+        const runs = await listRuns(deps.pool, tenantId);
+        return reply.status(200).send(runs);
     });
     // --- GET /v1/runs/{id} -----------------------------------------------
     app.get('/v1/runs/:id', async (req, reply) => {
@@ -460,6 +551,17 @@ export async function buildServer(deps) {
             throw e;
         }
     });
+    // --- GET /v1/events (WebSocket — FORA-514) ------------------------------
+    // Attach the WS endpoint to the underlying HTTP server. The route is
+    // gated on `deps.ws` so REST-only deployments (and most tests) can omit
+    // it without paying the upgrade-listener cost. The listener lives on
+    // `app.server` (Node's http.Server) — Fastify hands the server to us
+    // before `listen` is called so this is the right place to register.
+    if (deps.ws) {
+        const { cap = 10, ...rest } = deps.ws;
+        const registry = new WsConnectionRegistry(cap);
+        attachEventsWebSocket(app.server, { ...rest, registry });
+    }
     return app;
 }
 // ---------------------------------------------------------------------------
@@ -473,11 +575,28 @@ function headerString(v) {
     return undefined;
 }
 function defaultExtractTenant(req) {
+    // FORA-526 v1.1: the JWT-verified principal (when present) is the
+    // only trust boundary. The hook stamps `request.tenantContext`
+    // before any route handler runs.
+    const fromJwt = req.tenantContext?.tenantId;
+    if (fromJwt)
+        return fromJwt;
+    // Legacy fallback — only reached when `config.requireJwt` is false
+    // (local dev). Production MUST NOT exercise this path; the
+    // preHandler hook refuses requests without a valid `Authorization`
+    // header before they reach the routes.
     const v = req.headers[TENANT_HEADER];
+    console.log("defaultExtractTenant headers:", req.headers);
+    console.log("defaultExtractTenant TENANT_HEADER value:", v);
     if (typeof v !== 'string')
         return null;
     const trimmed = v.trim();
-    return trimmed.length === 0 ? null : trimmed;
+    console.log("defaultExtractTenant trimmed:", trimmed);
+    if (trimmed.length === 0 || !isUuidV4(trimmed)) {
+        console.log("defaultExtractTenant isUuidV4 failed!");
+        return null;
+    }
+    return trimmed;
 }
 function requireTenant(value, requestId) {
     if (!value) {
@@ -521,27 +640,12 @@ function errorEnvelope(reply, httpStatus, code, message, requestId) {
     });
 }
 /**
- * Wrap an async handler so a thrown AuthError or ValidationErrorWithId
- * returns the right HTTP status instead of 500. The handler-level
- * `try/catch` in each route already maps ValidationError; this helper
- * is a safety net for any future route that forgets.
+ * The setErrorHandler at the top of `buildServer` is the only safety
+ * net that maps AuthError / ValidationErrorWithId to 401 / 400. Each
+ * route already validates its inputs inline (see `requireTenant` /
+ * `requireIdempotencyKey`); a `preHandler` would only duplicate that
+ * work. We intentionally do not export `mapAuthAndValidationErrors` —
+ * keeping the function would invite a future route to register it
+ * without the matching setErrorHandler branch.
  */
-export function mapAuthAndValidationErrors(reply, requestId) {
-    return (err) => {
-        if (err instanceof AuthError) {
-            return errorEnvelope(reply, 401, 'VALIDATION', err.message, requestId);
-        }
-        if (err instanceof ValidationErrorWithId) {
-            return errorEnvelope(reply, 400, 'VALIDATION', err.message, requestId);
-        }
-        return errorEnvelope(reply, 500, 'INTERNAL', err instanceof Error ? err.message : 'unknown error', requestId);
-    };
-}
-// Silence unused-import warnings for helpers that are exported for
-// test consumers but not directly used in this file.
-void lifecycleVerbCheck;
-void timingSafeEqual;
-void createHmac;
-/** Compile-time-only check: the verb list is closed. */
-function lifecycleVerbCheck(_v) { }
 //# sourceMappingURL=server.js.map

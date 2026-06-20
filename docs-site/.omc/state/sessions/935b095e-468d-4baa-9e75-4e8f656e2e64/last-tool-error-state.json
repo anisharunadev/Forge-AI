@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -s -X POST \\\"http://127.0.0.1:3100/api/issues/bab7e4a9-4973-405b-93d0-4cc2fbcec222/comments\\\" \\\\\\n  -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\\\\n  -H \\\"Content-Type: applic...",
-  "error": "Exit code 2\n/usr/bin/bash: eval: line 12: syntax error near unexpected token `('\n/usr/bin/bash: eval: line 12: `    \"body\": \"✅ Rebrand complete — site is live with the new branding at **http://127.0.0.1:8080/** (45 pages, all 9 sidebar sections).\\n\\n## What changed\\n\\n### Brand & logo\\n- **Logo**: copied `/home/arunachalam.v@knackforge.com/Downloads/KNACKFORGE.svg` → `docs-site/src/assets/logo.svg` and `docs-site/public/favicon.svg`. The Knackforge logo (extracted colors: `#1f77b7` primary blue,...",
-  "timestamp": "2026-06-18T07:56:33.442Z",
-  "retry_count": 1
-}

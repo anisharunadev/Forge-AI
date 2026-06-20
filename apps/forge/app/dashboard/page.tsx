@@ -22,21 +22,19 @@ import type { RunRecord } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
+async function fetchRuns(): Promise<ReadonlyArray<RunRecord>> {
+  'use server';
+  const res = await fetch(`${getApiBase()}/v1/runs`, {
+    cache: 'no-store',
+    headers: { 'x-fora-tenant-id': getDevTenantUuid() },
+  });
+  if (!res.ok) return [];
+  return (await res.json()) as ReadonlyArray<RunRecord>;
+}
+
 export default async function IssueDashboard() {
   const view = await getRunsView();
   const initialRuns: ReadonlyArray<RunRecord> = view.state === 'ok' ? view.runs : [];
-
-  // Client-side fetcher mirrors the server path. We re-export `listRuns`
-  // (server-only) through a thin async wrapper so the client component
-  // calls into the same REST endpoint without holding server deps.
-  const fetcher = async (): Promise<ReadonlyArray<RunRecord>> => {
-    const res = await fetch(`${getApiBase()}/v1/runs`, {
-      cache: 'no-store',
-      headers: { 'x-fora-tenant-id': getDevTenantUuid() },
-    });
-    if (!res.ok) return [];
-    return (await res.json()) as ReadonlyArray<RunRecord>;
-  };
 
   return (
     <div className="space-y-8" data-testid="issue-dashboard">
@@ -59,7 +57,7 @@ export default async function IssueDashboard() {
           </h2>
           <RealtimeRunsList
             initialRuns={initialRuns}
-            fetcher={fetcher}
+            fetcher={fetchRuns}
             hideActions
           />
         </section>

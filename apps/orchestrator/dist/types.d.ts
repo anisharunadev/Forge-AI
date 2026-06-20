@@ -45,8 +45,14 @@ export type LifecycleVerb = 'pause' | 'resume' | 'cancel';
 /**
  * Typed error codes for the JSON error envelope. Stable; clients
  * pattern-match on `code`. The HTTP status is mapped in server.ts.
+ *
+ * Note: a cross-tenant read or write (caller's tenant claim does not
+ * match the row's tenant_id) is intentionally mapped to 404 NOT_FOUND,
+ * not to a dedicated `TENANT_MISMATCH` code. Returning a different
+ * status code for a foreign-tenant row would leak the existence of
+ * the row to a caller who should not know it exists (ADR-0003 §4.2).
  */
-export type OrchestratorErrorCode = 'NOT_FOUND' | 'INVALID_TRANSITION' | 'TENANT_MISMATCH' | 'IDEMPOTENCY_CONFLICT' | 'VALIDATION' | 'INTERNAL';
+export type OrchestratorErrorCode = 'NOT_FOUND' | 'INVALID_TRANSITION' | 'IDEMPOTENCY_CONFLICT' | 'VALIDATION' | 'INTERNAL';
 export interface OrchestratorError {
     code: OrchestratorErrorCode;
     message: string;

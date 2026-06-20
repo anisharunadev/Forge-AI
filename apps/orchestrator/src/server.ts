@@ -44,6 +44,7 @@ import {
   createRun,
   findRunById,
   listActiveRunsForRecovery,
+  listRuns,
   listStages,
   transitionRunStatus,
 } from './repo.js';
@@ -156,7 +157,14 @@ const createRunBody = z.object({
     .optional(),
 });
 
-const idParam = z.object({ id: z.string().uuid() });
+const DEMO_RUN_ALIAS = 'demo-run-001';
+const DEMO_RUN_UUID = '00000000-0000-4000-8000-000000000001';
+
+const idParam = z.object({
+  id: z.string().refine((val) => isUuidV4(val) || val === DEMO_RUN_ALIAS, {
+    message: 'invalid run id',
+  }).transform((val) => val === DEMO_RUN_ALIAS ? DEMO_RUN_UUID : val),
+});
 
 const decideParams = z.object({
   id: z.string().uuid(),
@@ -418,6 +426,14 @@ export async function buildServer(deps: OrchestratorDeps): Promise<FastifyInstan
     }
 
     return reply.status(201).send(run);
+  });
+
+  // --- GET /v1/runs ----------------------------------------------------
+  app.get('/v1/runs', async (req, reply) => {
+    const requestId = headerString(req.headers[REQUEST_ID_HEADER]) ?? randomUUID();
+    const tenantId = requireTenant(extractTenant(req), requestId);
+    const runs = await listRuns(deps.pool, tenantId);
+    return reply.status(200).send(runs);
   });
 
   // --- GET /v1/runs/{id} -----------------------------------------------
@@ -810,14 +826,15 @@ function defaultExtractTenant(req: {
   // preHandler hook refuses requests without a valid `Authorization`
   // header before they reach the routes.
   const v = req.headers[TENANT_HEADER];
+  console.log("defaultExtractTenant headers:", req.headers);
+  console.log("defaultExtractTenant TENANT_HEADER value:", v);
   if (typeof v !== 'string') return null;
   const trimmed = v.trim();
-  // Tenant ids are UUIDs (the `tenants` table stores them as `uuid`,
-  // and downstream queries bind them into a UUID-typed column). A
-  // claim that is not a UUID would surface as a Postgres type error
-  // 500 on the first DB call; validate at the boundary so the bad
-  // claim becomes a 401 from the setErrorHandler instead.
-  if (trimmed.length === 0 || !isUuidV4(trimmed)) return null;
+  console.log("defaultExtractTenant trimmed:", trimmed);
+  if (trimmed.length === 0 || !isUuidV4(trimmed)) {
+    console.log("defaultExtractTenant isUuidV4 failed!");
+    return null;
+  }
   return trimmed;
 }
 

@@ -1,6 +1,6 @@
-# `@fora/mcp-zendesk` — FORA Zendesk MCP Server
+# `@fora/mcp-zendesk` — Forge AI Zendesk MCP Server
 
-P2 MCP server for the FORA Enterprise AI SDLC Operating System. Exposes eight tools over MCP/stdio: `list_tickets`, `get_ticket`, `search_tickets`, `create_ticket`, `update_ticket`, `add_comment`, `list_macros`, `apply_macro`.
+P2 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes eight tools over MCP/stdio: `list_tickets`, `get_ticket`, `search_tickets`, `create_ticket`, `update_ticket`, `add_comment`, `list_macros`, `apply_macro`.
 
 The server is **pinned to a single Zendesk subdomain** at startup. The model can pass ticket IDs, search queries, comment bodies, and macro IDs — never subdomain names. This is the safety property that lets us hand a customer a Zendesk API token and trust the agent won't escape into another customer's data.
 
@@ -63,7 +63,7 @@ Authorization: Basic base64("{email}/token:{apiToken}")
 
 1. In the Zendesk Admin Center, go to **Apps and integrations → APIs → Zendesk API**.
 2. Enable **Token Access** if not already enabled.
-3. Click **Add API token**, name it (e.g. `FORA MCP — <customer>`), and copy the token.
+3. Click **Add API token**, name it (e.g. `Forge AI MCP — <customer>`), and copy the token.
 4. In the customer admin's **Manage → Team → Members**, set the **Role** to a **custom role** with the following scopes only:
    - **Tickets** — read
    - **Comments** — add
@@ -114,7 +114,7 @@ Authorization: Basic base64("{email}/token:{apiToken}")
 ```json
 {
   "subject": "Smoke: MCP server connected",
-  "comment": { "body": "Created by the FORA smoke test." },
+  "comment": { "body": "Created by the Forge AI smoke test." },
   "priority": "high",
   "tags": ["smoke"],
   "confirm": true
@@ -192,6 +192,6 @@ The smoke also asserts:
 
 ---
 
-## Reuse: the FORA MCP server template
+## Reuse: the Forge AI MCP server template
 
 See `docs/template-note.md` for which MCP servers this package templates (GitHub, Jira, Confluence, AWS, SonarQube, Azure DevOps) and the contract they share.

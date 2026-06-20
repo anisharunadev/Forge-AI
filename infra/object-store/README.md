@@ -1,12 +1,12 @@
 # infra/object-store — per-tenant IAM policy
 
-The Terraform in this directory is the **cloud-side gate** for FORA-124 acceptance bar #3. The in-process gate lives in `packages/object-store/`.
+The Terraform in this directory is the **cloud-side gate** for Forge AI-124 acceptance bar #3. The in-process gate lives in `packages/object-store/`.
 
 ## What it does
 
 For each tenant, it creates one IAM role (`fora-object-store-<tenant_id>`) whose:
 
-- **Trust policy** allows the FORA agent runtime to `sts:AssumeRole`, but only with the `TenantID` session tag set (enforced via `sts:TagSession` + `sts:ExternalId`).
+- **Trust policy** allows the Forge AI agent runtime to `sts:AssumeRole`, but only with the `TenantID` session tag set (enforced via `sts:TagSession` + `sts:ExternalId`).
 - **Permission policy** grants `s3:GetObject`, `s3:PutObject`, `s3:DeleteObject`, `s3:ListBucket` only on `arn:aws:s3:::*\/tenants/${var.tenant_id}/*`. Any access to a different tenant's prefix is explicitly denied.
 - **SQS + OpenSearch** permissions are gated on the same `TenantID` session tag.
 
@@ -42,4 +42,4 @@ The IAM policy is the *real* cross-tenant gate. Removing the prefix restriction 
 
 - `packages/object-store/` — the in-process adapter
 - `docs/runbooks/object-store-tenant-isolation.md` — LocalStack end-to-end test recipe
-- FORA-124 — parent epic
+- Forge AI-124 — parent epic

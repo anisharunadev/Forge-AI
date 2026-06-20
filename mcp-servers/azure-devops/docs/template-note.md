@@ -1,6 +1,6 @@
 # Template note — which MCP servers `@fora/mcp-azure-devops` templates for
 
-This package is the **first P2 MCP server** in the FORA platform and copies the `@fora/mcp-github` template ([FORA-4](https://github.example/FORA-4)). The shared structure was designed up front so P2 servers can ship in days, not weeks, and the agent runtime can treat them uniformly.
+This package is the **first P2 MCP server** in the Forge AI platform and copies the `@fora/mcp-github` template ([Forge AI-4](https://github.example/Forge AI-4)). The shared structure was designed up front so P2 servers can ship in days, not weeks, and the agent runtime can treat them uniformly.
 
 ## Servers that copy this template
 
@@ -17,7 +17,7 @@ Zendesk and Databricks are still P2 and will follow the same template.
 
 ## The shared contract
 
-This server implements the seven FORA MCP contract points verbatim:
+This server implements the seven Forge AI MCP contract points verbatim:
 
 1. **Single-scope pin on startup.** The server refuses to start without `AZURE_DEVOPS_PAT` + `AZURE_DEVOPS_ORG_URL` + `AZURE_DEVOPS_PROJECT`. The project is the unit of safety — one project per server, one org per server.
 2. **Typed client wrapper.** A single `createClient(config)` returns a `Client` interface whose methods take only IDs and primitives, never raw HTTP or raw URLs.
@@ -35,7 +35,7 @@ This server implements the seven FORA MCP contract points verbatim:
 | 2 | `src/client.ts` | Two-step `list_work_items`: `POST /_apis/wit/wiql` → `GET /_apis/wit/workitems?ids=…`. | AzDO's `/wit/workitems` endpoint is batch-by-ID; a list MUST be WIQL-driven. |
 | 3 | `src/tools.ts` | Three mutations carry a `confirm: z.literal(true)` Zod arg. | The platform bar for `confirm: true` is: any tool that has a meaningful destructive side-effect on the customer data plane must require explicit intent. The three AzDO mutations qualify; the GitHub mutations did not. |
 | 4 | `src/config.ts` | `AZURE_DEVOPS_PAT` is a project-scoped PAT, not a user OAuth token. | AzDO's only auth path for REST is Basic auth from a PAT; we document the project-scoping requirement at deployment time (the REST API does not surface the token's scope). |
-| 5 | `src/config.ts` | `api-version=7.1` pinned on every request via the client wrapper. | Matches the FORA-13-style API-version pinning pattern from `@fora/mcp-github`. |
+| 5 | `src/config.ts` | `api-version=7.1` pinned on every request via the client wrapper. | Matches the Forge AI-13-style API-version pinning pattern from `@fora/mcp-github`. |
 | 6 | `test/mock-azdo.mjs` | Optional project segment stripped from the path before routing. | Lets one mock server handle both org-level (`/_apis/projects`) and project-level (`/forge/_apis/...`) routes, matching the production URL layout. |
 | 7 | `test/smoke.mjs` | Asserts `confirm: false` is rejected for a mutation. | The Zod literal is the only thing standing between the model and a real Azure DevOps mutation; the smoke proves it works. |
 
@@ -45,6 +45,6 @@ This server implements the seven FORA MCP contract points verbatim:
 - `npm run smoke` exits 0 with the same end-of-log `[smoke] done: all 9 tools smoke-tested green`.
 - README follows the same sections as the GitHub one: Install, Authentication, Tools, Run the smoke test, Troubleshooting, Reuse.
 - This `docs/template-note.md` is updated to list the new server and any contract drift it requires.
-- A `request_review` comment on FORA-96 links the smoke transcript and names the manual verification step.
+- A `request_review` comment on Forge AI-96 links the smoke transcript and names the manual verification step.
 
 Anything less is a draft.

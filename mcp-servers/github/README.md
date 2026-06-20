@@ -1,6 +1,6 @@
-# `@fora/mcp-github` — FORA GitHub MCP Server
+# `@fora/mcp-github` — Forge AI GitHub MCP Server
 
-Priority-1 MCP server for the FORA Enterprise AI SDLC Operating System. Exposes seven tools over MCP/stdio: `list_repos`, `get_pr`, `list_prs`, `create_pr_comment`, `list_issues`, `create_issue`, `search_code`.
+Priority-1 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes seven tools over MCP/stdio: `list_repos`, `get_pr`, `list_prs`, `create_pr_comment`, `list_issues`, `create_issue`, `search_code`.
 
 The server is **pinned to a single GitHub org** at startup. The model can pass `owner` as an argument, but it is asserted against the pinned org before any call lands. This is the safety property that lets the same server template drive Jira and Confluence integrations.
 
@@ -199,13 +199,13 @@ at a sandbox repo, not a customer repo. Expected output ends with:
 | `OrgScopeError: Refusing to act on org 'foo' — this server is pinned to 'bar'` | The `owner` arg didn't match the pinned org. | Either pass the pinned org as `owner`, or reconfigure the server for a different org (requires restart). |
 | `MCP error -32000: Connection closed` on first call | The child process died at startup. | Check stderr — usually a config error or a missing dist/ build. |
 | `search_code` returns no results | The query is too narrow, or the org qualifier was malformed. | Drop the `org:` prefix and let the server add it; check GitHub's code search requires an `org:` or `user:` qualifier. |
-| `LabelNotFoundError: Labels not found in owner/repo: …` from `create_issue` | FORA-14: `create_issue` was migrated to the GraphQL `createIssue` mutation, which requires labels to already exist in the target repo. | Create the labels in the repo first (Settings → Labels), or omit `labels` from the call. |
-| `create_issue` hits an unexpected GraphQL rate-limit / 502 | FORA-14: the new path goes through GraphQL, which has different rate-limit semantics than REST. | See "Rate-limit implications of `create_issue` (FORA-14)" below. |
-| Operator dashboard expected an `[@octokit/request] …/search/code… is deprecated` warning and doesn't see one | FORA-13: the warning is suppressed at source by a custom Octokit logger because GitHub's deprecation header refers only to fields/params we don't consume. | This is intentional. See "Code-search backend (FORA-13)" below. The smoke and live smoke both assert the warning never reaches stderr. |
+| `LabelNotFoundError: Labels not found in owner/repo: …` from `create_issue` | Forge AI-14: `create_issue` was migrated to the GraphQL `createIssue` mutation, which requires labels to already exist in the target repo. | Create the labels in the repo first (Settings → Labels), or omit `labels` from the call. |
+| `create_issue` hits an unexpected GraphQL rate-limit / 502 | Forge AI-14: the new path goes through GraphQL, which has different rate-limit semantics than REST. | See "Rate-limit implications of `create_issue` (Forge AI-14)" below. |
+| Operator dashboard expected an `[@octokit/request] …/search/code… is deprecated` warning and doesn't see one | Forge AI-13: the warning is suppressed at source by a custom Octokit logger because GitHub's deprecation header refers only to fields/params we don't consume. | This is intentional. See "Code-search backend (Forge AI-13)" below. The smoke and live smoke both assert the warning never reaches stderr. |
 
 ---
 
-## Rate-limit implications of `create_issue` (FORA-14)
+## Rate-limit implications of `create_issue` (Forge AI-14)
 
 The `create_issue` tool was migrated from the deprecated REST `POST /repos/{owner}/{repo}/issues` (sunset **Fri, 10 Mar 2028**) to GitHub's GraphQL `createIssue` mutation. The tool's input/output shape is unchanged — callers see the same `{ number, title, html_url, state }` return — but the network path is now GraphQL, which has different rate-limit semantics:
 
@@ -218,13 +218,13 @@ If a caller was relying on the deprecation warning as a signal that the REST end
 
 ---
 
-## Reuse: the FORA MCP server template
+## Reuse: the Forge AI MCP server template
 
 See `docs/template-note.md` for which MCP servers this package templates (Jira, Confluence) and the contract they share.
 
 ---
 
-## Code-search backend (FORA-13)
+## Code-search backend (Forge AI-13)
 
 `search_code` is backed by the REST `GET /search/code` endpoint via Octokit. GitHub returns a `Deprecation: true` and `Sunset: Sun, 27 Sep 2026 …` header on every response, which Octokit would normally surface as:
 
