@@ -267,7 +267,7 @@ export interface ApprovalRequest {
   readonly issueRef?: { readonly identifier: string; readonly id: string };
 }
 
-export type RendererVariant = "card" | "panel" | "row" | "summary" | "summary-card" | "detail-panel" | "inline-banner" | "compact-list-row" | "kanban-card" | "finding-list" | "coverage-map" | "run-log-table" | "diff" | "pr-link" | "history-row" | "export-row";
+export type RendererVariant = "card" | "panel" | "row" | "summary" | "summary-card" | "detail-panel" | "inline-banner" | "compact-list-row" | "kanban-card" | "finding-list" | "coverage-map" | "run-log-table" | "diff" | "pr-link" | "history-row" | "export-row" | "injection-list";
 
 export interface BaseRendererProps<T> {
   readonly artifact: T;
@@ -371,4 +371,121 @@ export interface McpConnector {
   readonly credential: CredentialEnvelope;
   readonly lastUsedAt?: string;
   readonly lastAuditEntryId?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Knowledge Center — Plan 1 §3.3 typed-artifact surface
+//   * `KnowledgeFile`     — the Knowledge Layer file the center browses
+//   * `GlossaryEntry`     — a term from `customer/glossary.md` (always injected)
+//   * `StageInjectionMap` — per-stage file list per workspace/README.md §2
+//
+// The renderers below are the typed twin of the Handoff Contract's
+// `KnowledgeFile` / `GlossaryEntry` / `StageInjectionMap` artifacts
+// (memory/architecture.md §7). v1.0 is read-only — the renderers expose
+// no edit affordances. v1.1 will add the "request glossary PR" + "add
+// file" affordances behind RBAC.
+// ---------------------------------------------------------------------------
+
+/**
+ * The Knowledge Layer's `memory/` / `customer/` / `project/` /
+ * `engagements/<slug>/` folders. `reference` covers Plan 2's typed
+ * graph source (the Foundation registry); the renderer never
+ * distinguishes colour from `customer` (Plan 2 §3.1).
+ */
+export type KnowledgeFolder =
+  | "memory"
+  | "customer"
+  | "project"
+  | "engagements"
+  | "reference";
+
+/**
+ * File type discriminator for the file viewer (Plan 1 §3.3 #2).
+ * `markdown` → render with prose viewer.
+ * `json-schema` → render as a typed schema tree.
+ * `adr-registry` → render the ADR list (per project/adr-registry.md).
+ * `glossary` → render the glossary dictionary.
+ */
+export type KnowledgeFileType =
+  | "markdown"
+  | "json-schema"
+  | "adr-registry"
+  | "glossary";
+
+/**
+ * The injection role a file plays for a given sub-agent stage. The
+ * glossary is always injected (Plan 1 §3.3, README §2); other files
+ * are selected by the Master Orchestrator.
+ */
+export type InjectionRole = "primary" | "secondary" | "glossary";
+
+/** Per-stage row of the README §2 injection model. */
+export interface KnowledgeInjectionRole {
+  readonly stage: string;
+  readonly role: InjectionRole;
+}
+
+/**
+ * A file in the Knowledge Layer. The renderer surfaces the file
+ * metadata (path, folder, byte size, version hash) and, when the
+ * `panel` variant is requested, a markdown body. The body is the raw
+ * file content as a string; the renderer does NOT sanitise it — the
+ * producer side is responsible for content safety.
+ */
+export interface KnowledgeFile {
+  readonly id: string;
+  /** Path relative to the workspace root, e.g. "memory/coding.md". */
+  readonly path: string;
+  /** Display title — usually the basename of `path`. */
+  readonly title: string;
+  readonly folder: KnowledgeFolder;
+  readonly fileType: KnowledgeFileType;
+  /** Byte size of the file on disk. */
+  readonly byteSize: number;
+  /** sha256[:12] of the file content — the version pin. */
+  readonly versionHash: string;
+  /** Per-stage injection roles (denormalised from README §2). */
+  readonly injectionRoles: ReadonlyArray<KnowledgeInjectionRole>;
+  /** Optional body — only loaded by the `panel` variant. */
+  readonly content?: string;
+  /**
+   * Last-write timestamp (ISO 8601). Used by the file viewer header
+   * and by the Knowledge Center's "recently changed" widget.
+   */
+  readonly updatedAt?: string;
+}
+
+/**
+ * A glossary entry from `customer/glossary.md`. `usageCount` drives
+ * the node-size hint in the Knowledge Graph (Plan 2 §3.1).
+ */
+export interface GlossaryEntry {
+  readonly id: string;
+  readonly term: string;
+  /** The definition. Markdown allowed (rendered as prose). */
+  readonly definition: string;
+  /** KnowledgeFile ids that reference this term. */
+  readonly relatedFileIds?: ReadonlyArray<string>;
+  /** Number of files that inject this term — drives the graph node size. */
+  readonly usageCount: number;
+  /** Optional anti-glossary note (Plan 1 §3.3 + customer/glossary.md). */
+  readonly antiNote?: string;
+}
+
+/**
+ * A row of the README §2 injection model — the per-stage file list
+ * the "what does each agent see?" panel renders. The renderer
+ * composes this with the `KnowledgeFile` rows to produce the
+ * injection-list view (Plan 1 §3.3 #3).
+ */
+export interface StageInjectionMap {
+  readonly id: string;
+  /** Stage label, e.g. "Developer", "QA", "Security". */
+  readonly stage: string;
+  /** KnowledgeFile ids injected for this stage (denormalised). */
+  readonly fileIds: ReadonlyArray<string>;
+  /** KnowledgeFile ids always injected (the glossary). */
+  readonly glossaryFileIds: ReadonlyArray<string>;
+  /** Optional co-owner sub-agent role (e.g. "Developer", "Security"). */
+  readonly ownerRole?: string;
 }
