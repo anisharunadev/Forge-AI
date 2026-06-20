@@ -75,6 +75,7 @@ from agents.sync_plane_service.adapters._test_transport import (  # noqa: E402
 from agents.sync_plane_service.schema import (  # noqa: E402
     CanonicalComment,
     EntityKind,
+    ReceivedEvent,
     SyncEntity,
 )
 
@@ -133,6 +134,93 @@ class _RecordingAuditHook:
         return None
 
     def source_issue_ok(self, *args: Any, **kwargs: Any) -> None:
+        return None
+
+
+@dataclass
+class _RecordedIssueAudit:
+    """One captured issue-audit hook call. The FORA-431
+    close-gate scenarios (S8 idempotent_re_call,
+    S9 inbound_issue_opened) assert the issue-audit
+    calls carry `{tenant, paperclip_id, github_number}`."""
+    kind: str                # "target" | "source"
+    tenant_id: str
+    entity_id: str
+    github_number: str
+    operation: str           # "create" | "update" | "opened" | "reopened" | "edited"
+    metadata: Dict[str, Any]
+
+
+class _IssueRecordingAuditHook:
+    """Richer audit hook for the FORA-431 close-gate
+    scenarios. Records `target_issue_ok` (outbound
+    create / update) and `source_issue_ok` (inbound
+    webhook normalization) calls so the smoke can
+    assert the audit payload carries the AC-required
+    `{tenant, paperclip_id, github_number}` fields.
+
+    Mirrors the divergence hook in `_RecordingAuditHook`
+    (kept for the S5 / S6 scenarios that only care
+    about divergence). The day-one `_RecordingAuditHook`
+    remains the small-surface default; this richer
+    variant is wired into the FORA-431-specific
+    scenarios."""
+
+    def __init__(self) -> None:
+        self.target_calls: List[_RecordedIssueAudit] = []
+        self.source_calls: List[_RecordedIssueAudit] = []
+
+    def target_issue_ok(
+        self,
+        tenant_id: str,
+        entity_id: str,
+        *,
+        github_number: str,
+        operation: str,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        self.target_calls.append(
+            _RecordedIssueAudit(
+                kind="target",
+                tenant_id=tenant_id,
+                entity_id=entity_id,
+                github_number=github_number,
+                operation=operation,
+                metadata=dict(metadata or {}),
+            )
+        )
+
+    def source_issue_ok(
+        self,
+        tenant_id: str,
+        entity_id: str,
+        *,
+        github_number: str,
+        action: str,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        self.source_calls.append(
+            _RecordedIssueAudit(
+                kind="source",
+                tenant_id=tenant_id,
+                entity_id=entity_id,
+                github_number=github_number,
+                operation=action,
+                metadata=dict(metadata or {}),
+            )
+        )
+
+    # The other audit hook methods are no-ops — the
+    # FORA-431 scenarios only assert on `target_issue_ok`
+    # and `source_issue_ok`. Divergence detection is
+    # covered by S5 / S6 / S7 via `_RecordingAuditHook`.
+    def divergence_detected(self, *args: Any, **kwargs: Any) -> None:
+        return None
+
+    def target_comment_ok(self, *args: Any, **kwargs: Any) -> None:
+        return None
+
+    def source_comment_ok(self, *args: Any, **kwargs: Any) -> None:
         return None
 
 
