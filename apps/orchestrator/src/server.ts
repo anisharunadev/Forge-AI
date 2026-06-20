@@ -71,6 +71,11 @@ import {
   type RouterDeps,
 } from './index.js';
 import {
+  attachEventsWebSocket,
+  WsConnectionRegistry,
+  type AttachEventsWebSocketOptions,
+} from './ws.js';
+import {
   JwtError,
   JwtValidator,
   type JwtPrincipal,
@@ -97,6 +102,17 @@ export interface OrchestratorDeps {
    * round-trip. Required when `config.requireJwt` is true (the default).
    */
   jwtValidator?: JwtValidator;
+  /**
+   * FORA-514: the realtime WS endpoint. When provided, `buildServer`
+   * attaches a `GET /v1/events` handler that forwards NATS events to
+   * authenticated tenant clients. Production wires this to NATS via
+   * `@fora/event-bus`; tests can omit it (REST-only) or supply a
+   * fake subscriber.
+   */
+  ws?: Omit<AttachEventsWebSocketOptions, 'registry'> & {
+    /** Override the per-tenant connection cap (default 10). */
+    cap?: number;
+  };
   /**
    * Override the tenant extractor for tests. In production the
    * preHandler hook (`jwtAuthHook`) stamps `request.tenantContext`
@@ -753,6 +769,18 @@ export async function buildServer(deps: OrchestratorDeps): Promise<FastifyInstan
       throw e;
     }
   });
+
+  // --- GET /v1/events (WebSocket — FORA-514) ------------------------------
+  // Attach the WS endpoint to the underlying HTTP server. The route is
+  // gated on `deps.ws` so REST-only deployments (and most tests) can omit
+  // it without paying the upgrade-listener cost. The listener lives on
+  // `app.server` (Node's http.Server) — Fastify hands the server to us
+  // before `listen` is called so this is the right place to register.
+  if (deps.ws) {
+    const { cap = 10, ...rest } = deps.ws;
+    const registry = new WsConnectionRegistry(cap);
+    attachEventsWebSocket(app.server, { ...rest, registry });
+  }
 
   return app;
 }

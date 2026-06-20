@@ -20,6 +20,7 @@ import {
   InMemoryEventSubscriber,
   type CrossTenantLeakAudit,
 } from '../src/ws.js';
+import type { JwtPrincipal } from '../src/jwt-validator.js';
 import type { TypedEvent } from '@fora/event-bus';
 
 const TENANT = '00000000-0000-0000-0000-000000000ace';
@@ -47,6 +48,7 @@ async function startTestServer(
       defaultCostCeilingUsd: '100.00',
       logLevel: 'fatal',
       env: 'test',
+      requireJwt: false,
     },
     pool: {} as unknown as OrchestratorDeps['pool'],
     approvals: {
@@ -55,6 +57,16 @@ async function startTestServer(
       bus: {} as unknown as OrchestratorDeps['approvals']['bus'],
       pager: {} as unknown as OrchestratorDeps['approvals']['pager'],
       clock: { now: () => new Date() },
+    },
+    // FORA-514 / FORA-526: bypass the JWKS round-trip by injecting a
+    // stub JwtValidator. The WS upgrade uses the `x-fora-tenant-id`
+    // header directly, not the JWT principal — the validator is here
+    // only because the orchestrator builds one unconditionally.
+    jwtValidator: {
+      verify: async (token: string): Promise<JwtPrincipal> => ({
+        sub: token,
+        tenant_id: '00000000-0000-0000-0000-000000000ace',
+      }),
     },
     ws: {
       subscriber,
