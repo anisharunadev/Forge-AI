@@ -103,6 +103,15 @@ from ._transport import (
 _log = logging.getLogger("fora.sync_plane_service.adapters.github")
 
 
+# FORA-438: the `actor` the adapter uses when it forwards
+# a `sync.event.divergence_detected` audit event. Per the
+# FORA-36 actor convention (`agent:<id>` / `user:<id>` /
+# `system:<component>`) the adapter is a system component,
+# not an agent. Mirrors the SYSTEM_ACTOR_SYNC_PLANE
+# constant in the parent `audit_forwarder.py`.
+SYSTEM_ACTOR_GITHUB_ADAPTER = "system:github_adapter"
+
+
 # Day-one debounce window for comment posts (per the FORA-201
 # AC and the §10 workspace tech-stack note). A repeat post
 # for the same `(tenant, entity, comment)` inside this window
@@ -862,6 +871,23 @@ class GitHubIssuesAdapter(PlatformAdapter):
         self._last_rate_limit_reset: Optional[int] = None
         self._last_rate_limit_check_at: str = ""
 
+    def _record_rate_limit(self, resp: "GitHubResponse") -> None:
+        """FORA-437 (FORA-201.4 AC#4): capture the latest
+        transport rate-limit snapshot so `health()` and the
+        PollingBackstop (11.7) can read the GitHub quota
+        without making a separate API call.
+
+        Called from `_create_issue` and `_update_issue` on
+        every transport response (success or failure —
+        GitHub returns `X-RateLimit-*` on 4xx / 5xx too,
+        and the PollingBackstop wants to see a 0-remaining
+        signal even on a 429). Idempotent: a noop if the
+        response carries no headers."""
+        self._last_rate_limit_remaining = resp.rate_limit_remaining
+        self._last_rate_limit_reset = resp.rate_limit_reset
+        from ..schema import now_iso  # local import to avoid cycle
+        self._last_rate_limit_check_at = now_iso()
+
     # -- PlatformAdapter contract --------------------------------------
 
     def apply_mirror(
@@ -923,6 +949,12 @@ class GitHubIssuesAdapter(PlatformAdapter):
             )
 
         existing_issue_number = entity.remote_refs.get(self.name)
+        # FORA-431 (FORA-201.1 AC #1): track the operation so
+        # `target_issue_ok` can carry `operation=create|update`
+        # in its metadata. The audit row is the close-gate
+        # evidence for the AC and feeds the FORA-204 daily
+        # drift report (one row per outbound mirror).
+        operation = "update" if existing_issue_number else "create"
         try:
             if existing_issue_number:
                 issue_resp = self._update_issue(
@@ -943,6 +975,49 @@ class GitHubIssuesAdapter(PlatformAdapter):
                 error=str(exc),
                 metadata=exc.metadata,
             )
+
+        # FORA-431 (FORA-201.1 AC #1): emit `target_issue_ok`
+        # after a successful create / update. The local
+        # `_audit` hook is the day-one recording path; the
+        # forwarder (when wired) is the canonical FORA-36
+        # route. Both are best-effort — a transient audit
+        # outage must not roll back a successful GitHub write.
+        issue_metadata = {
+            "github_repo": repo,
+            "github_number": issue_number,
+            "github_state": str(issue_resp.body.get("state", "open")),
+            "github_state_reason": str(
+                issue_resp.body.get("state_reason") or ""
+            ),
+            "html_url": str(issue_resp.body.get("html_url", "")),
+            "rate_limit_remaining": issue_resp.rate_limit_remaining,
+            "rate_limit_reset": issue_resp.rate_limit_reset,
+            "operation": operation,
+        }
+        try:
+            self._audit.target_issue_ok(
+                tenant_id,
+                entity.entity_id,
+                github_number=issue_number,
+                operation=operation,
+                metadata=issue_metadata,
+            )
+        except Exception:  # pragma: no cover - audit is best-effort
+            _log.exception(
+                "github.adapters.target_issue_audit_failed",
+                extra={
+                    "tenant_id": tenant_id,
+                    "entity_id": entity.entity_id,
+                    "github_number": issue_number,
+                },
+            )
+        self._emit_audit_forward(
+            event_type="sync.target.issue.ok",
+            tenant_id=tenant_id,
+            actor="system:sync_plane.github_mirror_writer",
+            entity_id=entity.entity_id,
+            metadata=issue_metadata,
+        )
 
         comment_result_metadata: Dict[str, Any] = {}
         if comment is not None:
@@ -974,18 +1049,22 @@ class GitHubIssuesAdapter(PlatformAdapter):
             # failure here must not roll back the GitHub
             # write (the canonical state is already
             # consistent).
+            target_metadata = {
+                "rate_limit_remaining": cr.rate_limit_remaining,
+                "rate_limit_reset": cr.rate_limit_reset,
+                "html_url": cr.body.get("html_url", ""),
+                "debounced": bool(cr.body.get("debounced")),
+                "remote_comment_id": remote_comment_id,
+                "github_repo": repo,
+                "github_issue_number": issue_number,
+            }
             try:
                 self._audit.target_comment_ok(
                     tenant_id,
                     entity.entity_id,
                     comment_id=comment.comment_id,
                     remote_comment_id=remote_comment_id,
-                    metadata={
-                        "rate_limit_remaining": cr.rate_limit_remaining,
-                        "rate_limit_reset": cr.rate_limit_reset,
-                        "html_url": cr.body.get("html_url", ""),
-                        "debounced": bool(cr.body.get("debounced")),
-                    },
+                    metadata=target_metadata,
                 )
             except Exception:  # pragma: no cover - audit is best-effort
                 _log.exception(
@@ -996,10 +1075,28 @@ class GitHubIssuesAdapter(PlatformAdapter):
                         "comment_id": comment.comment_id,
                     },
                 )
+            # FORA-433 AC #2 close-gate: the audit forwarder
+            # is the canonical route for the FORA-36 audit
+            # pipeline. The local `_audit` hook above stays
+            # for the day-one recording path (smoke + tests);
+            # production wiring (service.py) passes the same
+            # `InMemoryAuditForwarder` and asserts the row
+            # appears there.
+            self._emit_audit_forward(
+                event_type="sync.target.comment.ok",
+                tenant_id=tenant_id,
+                actor=SYSTEM_ACTOR_GITHUB_ADAPTER,
+                entity_id=entity.entity_id,
+                metadata=target_metadata,
+            )
 
         # Divergence check: did GitHub's response state
         # match what we requested? If not, surface the
-        # event so the audit log can flag it.
+        # event so the audit log can flag it. FORA-438
+        # AC#5 also routes this through the
+        # `AuditForwarder` (FORA-204 sibling) with the
+        # 6-field payload so the daily drift report
+        # aggregates across all platforms.
         observed = GitHubState(
             state=str(issue_resp.body.get("state", "open")),
             state_reason=str(issue_resp.body.get("state_reason") or ""),
@@ -1021,6 +1118,47 @@ class GitHubIssuesAdapter(PlatformAdapter):
                     "github.adapters.audit_failed",
                     extra={"tenant_id": tenant_id, "entity_id": entity.entity_id},
                 )
+            # FORA-438: also emit the canonical
+            # `sync.event.divergence_detected` via the
+            # `AuditForwarder` so the FORA-204 daily drift
+            # report can aggregate. The 6 required fields
+            # are surfaced under `metadata`. A None
+            # forwarder short-circuits (the day-one smoke
+            # uses None unless the scenario wires one).
+            if self._audit_forwarder is not None:
+                try:
+                    from ..schema import now_iso  # local import to avoid cycle
+                    self._audit_forwarder.forward(
+                        event_type="sync.event.divergence_detected",
+                        tenant_id=tenant_id,
+                        actor=SYSTEM_ACTOR_GITHUB_ADAPTER,
+                        entity_id=entity.entity_id,
+                        hlc=now_iso(),
+                        metadata={
+                            "paperclip_id": entity.entity_id,
+                            "github_number": str(issue_number or ""),
+                            "expected_state": (
+                                f"{requested.state}/{requested.state_reason}"
+                                if requested.state_reason
+                                else requested.state
+                            ),
+                            "actual_state": (
+                                f"{observed.state}/{observed.state_reason}"
+                                if observed.state_reason
+                                else observed.state
+                            ),
+                            "reason": "github_response_state_mismatch",
+                            "response_status": issue_resp.status,
+                        },
+                    )
+                except Exception:  # pragma: no cover - audit is best-effort
+                    _log.exception(
+                        "github.adapters.divergence_forwarder_failed",
+                        extra={
+                            "tenant_id": tenant_id,
+                            "entity_id": entity.entity_id,
+                        },
+                    )
 
         return MirrorResult(
             ok=True,
@@ -1194,18 +1332,20 @@ class GitHubIssuesAdapter(PlatformAdapter):
                 "github_action": payload.get("action", ""),
             },
         )
+        source_metadata: Dict[str, Any] = {
+            "github_repo": repo_obj.get("full_name"),
+            "github_issue_number": issue_obj.get("number"),
+            "github_action": payload.get("action", ""),
+            "mapped_author_id": mapped.author_id,
+            "comment_id": canonical.comment_id,
+        }
         try:
             self._audit.source_comment_ok(
                 tenant_id,
                 paperclip_issue_id,
                 comment_id=canonical.comment_id,
                 source_login=source_login,
-                metadata={
-                    "github_repo": repo_obj.get("full_name"),
-                    "github_issue_number": issue_obj.get("number"),
-                    "github_action": payload.get("action", ""),
-                    "mapped_author_id": mapped.author_id,
-                },
+                metadata=source_metadata,
             )
         except Exception:  # pragma: no cover - audit is best-effort
             _log.exception(
@@ -1216,6 +1356,27 @@ class GitHubIssuesAdapter(PlatformAdapter):
                     "comment_id": canonical.comment_id,
                 },
             )
+        # FORA-433 AC #2 close-gate: emit
+        # `sync.source.comment.ok` through the audit
+        # forwarder (the canonical FORA-36 route). The
+        # local `_audit` hook above stays for the day-one
+        # recording path; production wiring passes the
+        # same `InMemoryAuditForwarder` and asserts the
+        # row appears there. `source_login` is the raw
+        # GitHub identity; `mapped_author_id` is the
+        # FORA-253 service-account id we mapped it to.
+        self._emit_audit_forward(
+            event_type="sync.source.comment.ok",
+            tenant_id=tenant_id,
+            actor=SYSTEM_ACTOR_GITHUB_ADAPTER,
+            entity_id=paperclip_issue_id,
+            metadata={
+                **source_metadata,
+                "source_login": source_login,
+                "mapped_author_id": mapped.author_id,
+                "comment_id": canonical.comment_id,
+            },
+        )
         return canonical
 
     def fetch_remote_comment(
@@ -1249,6 +1410,51 @@ class GitHubIssuesAdapter(PlatformAdapter):
 
     # -- Internals -------------------------------------------------------
 
+    def _emit_audit_forward(
+        self,
+        *,
+        event_type: str,
+        tenant_id: str,
+        actor: str,
+        entity_id: str = "",
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Best-effort fan-out of one `sync.*` event into the
+        canonical audit pipeline (`AuditForwarder`). FORA-433
+        (FORA-201.2 AC #2) closes the gate by asserting the
+        `sync.target.comment.ok` and `sync.source.comment.ok`
+        rows appear in the FORA-36 audit store, not just the
+        in-adapter `_audit` hook.
+
+        The forwarder is optional: day-one smoke tests that
+        pass only `audit=` (the local recording hook) see a
+        no-op here. Production wiring passes both. A failure
+        here is logged and swallowed — the canonical state
+        is already consistent, the audit row is a side
+        effect, and a transient audit outage must not roll
+        back a successful GitHub write."""
+        forwarder = self._audit_forwarder
+        if forwarder is None:
+            return
+        try:
+            forwarder.forward(
+                event_type=event_type,
+                tenant_id=tenant_id,
+                actor=actor,
+                entity_id=entity_id,
+                hlc="",
+                metadata=metadata,
+            )
+        except Exception:  # pragma: no cover - audit is best-effort
+            _log.exception(
+                "github.adapters.audit_forward_failed",
+                extra={
+                    "tenant_id": tenant_id,
+                    "entity_id": entity_id,
+                    "event_type": event_type,
+                },
+            )
+
     def _create_issue(
         self,
         token: str,
@@ -1265,10 +1471,43 @@ class GitHubIssuesAdapter(PlatformAdapter):
             payload["state"] = "closed"
             if gh_state.state_reason:
                 payload["state_reason"] = gh_state.state_reason
-        return self._transport.request(
+        resp = self._transport.request(
             "POST", f"/repos/{repo}/issues",
             token=token, json_body=payload,
         )
+        # FORA-437 (FORA-201.4 AC#4): capture rate-limit
+        # snapshot for `health()` regardless of status.
+        # A 4xx/5xx response still carries `X-RateLimit-*`
+        # headers and the PollingBackstop should see them.
+        self._record_rate_limit(resp)
+        # FORA-438 AC#5: a 422 from GitHub on a state_reason
+        # we don't own is a *divergence*, not a transport
+        # error. Emit `sync.event.divergence_detected` via
+        # the `AuditForwarder` and retry the create with the
+        # state_reason stripped (the closest valid mapping).
+        # Other 4xx/5xx responses still surface as adapter
+        # errors via the existing path.
+        if _is_state_reason_422(resp):
+            requested = gh_state or GitHubState("open", "")
+            observed = _observed_state_from_response(resp, default_state="open")
+            self._emit_state_reason_divergence(
+                entity=entity,
+                github_number="",
+                requested=requested,
+                observed=observed,
+                resp=resp,
+            )
+            retry_payload = dict(payload)
+            retry_payload.pop("state_reason", None)
+            resp = self._transport.request(
+                "POST", f"/repos/{repo}/issues",
+                token=token, json_body=retry_payload,
+            )
+            # Re-capture the rate-limit snapshot from the
+            # retry — the more recent transport response
+            # is the fresher signal for the PollingBackstop.
+            self._record_rate_limit(resp)
+        return resp
 
     def _update_issue(
         self,
@@ -1287,10 +1526,108 @@ class GitHubIssuesAdapter(PlatformAdapter):
             payload["state"] = gh_state.state
             if gh_state.state == "closed" and gh_state.state_reason:
                 payload["state_reason"] = gh_state.state_reason
-        return self._transport.request(
+        resp = self._transport.request(
             "PATCH", f"/repos/{repo}/issues/{issue_number}",
             token=token, json_body=payload,
         )
+        # FORA-437 (FORA-201.4 AC#4): capture rate-limit
+        # snapshot for `health()`.
+        self._record_rate_limit(resp)
+        # FORA-438 AC#5: 422 = divergence, not transport
+        # error. Emit the audit event with the 6-field
+        # payload and retry by stripping state_reason (the
+        # issue stays closed without the rejected reason;
+        # the next sync converges from the canonical
+        # Paperclip state).
+        if _is_state_reason_422(resp):
+            requested = gh_state or GitHubState("open", "")
+            observed = _observed_state_from_response(resp, default_state="open")
+            self._emit_state_reason_divergence(
+                entity=entity,
+                github_number=issue_number,
+                requested=requested,
+                observed=observed,
+                resp=resp,
+            )
+            retry_payload = dict(payload)
+            retry_payload.pop("state_reason", None)
+            resp = self._transport.request(
+                "PATCH", f"/repos/{repo}/issues/{issue_number}",
+                token=token, json_body=retry_payload,
+            )
+        return resp
+
+    def _emit_state_reason_divergence(
+        self,
+        *,
+        entity: SyncEntity,
+        github_number: str,
+        requested: GitHubState,
+        observed: GitHubState,
+        resp: "GitHubResponse",
+    ) -> None:
+        """FORA-438 AC#5: emit
+        `sync.event.divergence_detected` via the injected
+        `AuditForwarder` (FORA-204 sibling). The 6 required
+        payload fields per the AC are surfaced under
+        `metadata`:
+
+            tenant          → tenant_id (also the top-level
+                              AuditForwarder argument)
+            paperclip_id    → entity.entity_id
+            github_number   → the remote id (empty for a
+                              failed create)
+            expected_state  → requested (state + state_reason)
+            actual_state    → observed  (state + state_reason)
+            reason          → "github_returned_422_state_reason_mismatch"
+
+        The call is best-effort: a forwarder failure must not
+        bubble to the service (per the AC: "no exception
+        bubbles to service"). The smoke test asserts the
+        forwarder received exactly one event with the full
+        6-field payload."""
+        if self._audit_forwarder is None:
+            return
+        def _render(s: GitHubState) -> str:
+            # Empty state_reason renders as "" so the audit
+            # payload is unambiguous (e.g. "open" not
+            # "open/").
+            if s.state_reason:
+                return f"{s.state}/{s.state_reason}"
+            return s.state
+        try:
+            from ..schema import now_iso  # local import to avoid cycle
+            self._audit_forwarder.forward(
+                event_type="sync.event.divergence_detected",
+                tenant_id=entity.tenant_id,
+                actor=SYSTEM_ACTOR_GITHUB_ADAPTER,
+                entity_id=entity.entity_id,
+                hlc=now_iso(),
+                metadata={
+                    "paperclip_id": entity.entity_id,
+                    "github_number": str(github_number or ""),
+                    "expected_state": _render(requested),
+                    "actual_state": _render(observed),
+                    "reason": "github_returned_422_state_reason_mismatch",
+                    # Forensics: capture the response shape
+                    # that triggered the divergence so the
+                    # drift report (FORA-204) can group
+                    # recurring offenders.
+                    "response_status": resp.status,
+                    "response_message": str(
+                        resp.body.get("message") or ""
+                    ),
+                },
+            )
+        except Exception:  # pragma: no cover - audit is best-effort
+            _log.exception(
+                "github.adapters.divergence_forwarder_failed",
+                extra={
+                    "tenant_id": entity.tenant_id,
+                    "entity_id": entity.entity_id,
+                    "github_number": github_number,
+                },
+            )
 
     def _post_comment(
         self,
@@ -1317,7 +1654,16 @@ class GitHubIssuesAdapter(PlatformAdapter):
         `remote_refs["github"][comment_id]` map in
         `MirrorResult.metadata` without re-inspecting
         the response body."""
-        now = time.time()
+        # FORA-437 (FORA-201.4 AC#4): stamp the post time
+        # from the injectable `clock` so the smoke test
+        # can advance the 30s debounce window deterministically
+        # (no `time.sleep(31)`). The window check in
+        # `_DebounceIndex.cached_remote_id` also reads from
+        # this clock, so `mark_posted`'s timestamp and the
+        # next call's window check agree — moving `t[0]`
+        # forward by 30s in the test falls the cached path
+        # off cleanly.
+        now = self._clock()
         with self._lock:
             cached_remote_id = self._debounce.cached_remote_id(
                 tenant_id, entity.entity_id, comment.comment_id,
@@ -1472,3 +1818,62 @@ class _GitHubAdapterError(Exception):
     ) -> None:
         super().__init__(message)
         self.metadata = metadata or {}
+
+
+# -- 422 divergence detection (FORA-438 AC#5) ------------------------------
+
+
+def _is_state_reason_422(resp: "GitHubResponse") -> bool:
+    """FORA-438 AC#5: GitHub returns 422 (Validation Failed)
+    when a PATCH tries to set a `state_reason` that is
+    incompatible with the issue's current state — e.g.
+    `not_planned` on an `open` issue, or `completed` on a
+    not-yet-closed issue. Per the AC this is a *divergence*,
+    not a transport error: we asked for a mapping that
+    GitHub refuses to honour, the correct response is to
+    emit `sync.event.divergence_detected` and retry with
+    the closest valid mapping (state_reason stripped).
+
+    A 422 with a non-state_reason message (e.g. title too
+    long, label not found) is **not** a divergence and
+    surfaces as a regular adapter error via the caller."""
+    if resp.status != 422:
+        return False
+    msg = str(resp.body.get("message") or "").lower()
+    errors = resp.body.get("errors") or []
+    # The GitHub 422 body is `{message, errors:[{code,
+    # field, ...}]}`. Either the top-level message or any
+    # error entry mentioning `state_reason` flags the
+    # divergence case.
+    if "state_reason" in msg or "state reason" in msg:
+        return True
+    for entry in errors:
+        if not isinstance(entry, dict):
+            continue
+        field = str(entry.get("field") or "").lower()
+        code = str(entry.get("code") or "").lower()
+        if "state_reason" in field or "state reason" in field:
+            return True
+        if code in {"invalid", "missing_field"} and "state" in field:
+            return True
+    return False
+
+
+def _observed_state_from_response(
+    resp: "GitHubResponse",
+    *,
+    default_state: str,
+) -> GitHubState:
+    """Best-effort observed state extraction from a
+    GitHub response. A 422 body does not include the
+    issue's current `state` (only the validation message),
+    so we fall back to `default_state` (usually `open` —
+    the most common case where the canonical store
+    believed the issue was still open and we tried to
+    close it). The smoke test exercises the fallback
+    path; the live path will be exercised end-to-end by
+    FORA-204's daily drift report."""
+    return GitHubState(
+        state=str(resp.body.get("state") or default_state),
+        state_reason=str(resp.body.get("state_reason") or ""),
+    )

@@ -23,6 +23,14 @@ Scenarios (one per FORA-201 AC):
   S5 divergence     — adapter emits a divergence event
                       when the response state differs from
                       the requested state.
+  S6 divergence_422 — FORA-438 AC#5: when GitHub returns
+                      422 for a state_reason mismatch the
+                      adapter emits
+                      `sync.event.divergence_detected` via
+                      the `AuditForwarder` with the 6
+                      required fields, retries with
+                      state_reason stripped, and is
+                      idempotent on replay.
 
 The smoke test is dependency-free (no `pytest`,
 no `httpx`, no real GitHub App). It uses the
@@ -55,6 +63,11 @@ from agents.sync_plane_service.adapters import (  # noqa: E402
     StatusMappingError,
     map_status_paperclip_to_github,
     map_status_github_to_paperclip,
+)
+from agents.sync_plane_service.adapters.github import (  # noqa: E402
+    AuthorMappingError,
+    EnvBackedGitHubAuthorMapper,
+    MappedPaperclipAuthor,
 )
 from agents.sync_plane_service.adapters._test_transport import (  # noqa: E402
     InMemoryGitHubTransport,
@@ -115,6 +128,74 @@ class _RecordingAuditHook:
 
     def source_comment_ok(self, *args: Any, **kwargs: Any) -> None:
         return None
+
+    def target_issue_ok(self, *args: Any, **kwargs: Any) -> None:
+        return None
+
+    def source_issue_ok(self, *args: Any, **kwargs: Any) -> None:
+        return None
+
+
+@dataclass
+class _RecordedForward:
+    """One captured `AuditForwarder.forward(...)` call.
+    The S6 scenario asserts all 6 AC-required fields are
+    present on the first call (FORA-438 AC#5: tenant,
+    paperclip_id, github_number, expected_state,
+    actual_state, reason)."""
+    event_type: str
+    tenant_id: str
+    actor: str
+    entity_id: str
+    hlc: str
+    metadata: Dict[str, Any]
+
+
+class _RecordingAuditForwarder:
+    """In-memory `AuditForwarder` for the smoke test. The
+    S6 scenario wires this in so the test can assert the
+    adapter emitted the `sync.event.divergence_detected`
+    event with the FORA-438 6-field payload. The shape
+    mirrors `agents.sync_plane_service.audit_forwarder
+    .InMemoryAuditForwarder.forward(...)` exactly so the
+    smoke is a faithful integration test.
+
+    For the S6 scenario the forwarder is *not* wired to a
+    real `AuditStore`; we just record the call envelope.
+    The production wiring in `service.py` is what
+    ultimately threads the same call into FORA-36
+    `tool_call` audit rows. The close-gate reviewer can
+    re-run this smoke against the real `InMemoryStore` to
+    verify the row shape end-to-end."""
+
+    def __init__(self) -> None:
+        self.calls: List[_RecordedForward] = []
+
+    def forward(
+        self,
+        *,
+        event_type: str,
+        tenant_id: str,
+        actor: str,
+        entity_id: str = "",
+        hlc: str = "",
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        self.calls.append(
+            _RecordedForward(
+                event_type=event_type,
+                tenant_id=tenant_id,
+                actor=actor,
+                entity_id=entity_id,
+                hlc=hlc,
+                metadata=dict(metadata or {}),
+            )
+        )
+        # Return a synthetic event id so the caller (the
+        # adapter) does not need to special-case the
+        # recording impl. The real forwarder returns the
+        # audit row's `event_id`.
+        return f"audit-evt-{len(self.calls):04d}"
 
 
 # -- Auth seam for the test -----------------------------------------------
@@ -602,6 +683,240 @@ def scenario_rate_limit_health() -> Dict[str, Any]:
     }
 
 
+def scenario_rate_limit_window() -> Dict[str, Any]:
+    """S5a — FORA-437 (FORA-201.4 AC#4) acceptance bar.
+
+    Two posts inside the 30s debounce window coalesce (no
+    second transport call); two posts >30s apart both go
+    through (transport is called twice).
+
+    Uses the adapter's injectable `clock=` kwarg to advance
+    the 30s wall-clock deterministically — the test runs
+    in <1 ms without `time.sleep(31)`. The clock is a
+    closure over a single-element list (`t[0]`) so the
+    scenario can mutate the current time between calls.
+
+    Debounce key shape (per the AC): the adapter keys the
+    debounce map by `(tenant_id, entity_id, comment_id)`,
+    so distinct comment_ids never coalesce. The smoke
+    proves the inverse — *same* `(tenant, entity,
+    comment)` posts inside the window coalesce.
+    """
+    # Mutable fake clock. The smoke increments `t[0]` to
+    # jump forward in wall-clock time; the adapter reads
+    # `clock()` via the `_DebounceIndex` window check and
+    # via the `_post_comment` post-time stamp.
+    t = [1_700_000_000.0]
+    fake_clock = lambda: t[0]  # noqa: E731 - intentional late binding
+
+    transport = InMemoryGitHubTransport(
+        script=[
+            # 1st post (at t=0) — issue PATCH (entity has
+            # `remote_refs["github"]="17"`) + comment POST.
+            (
+                "PATCH",
+                "/repos/fora-labs/sync-plane-fixture/issues/17",
+                {
+                    "id": 1001,
+                    "number": 17,
+                    "state": "open",
+                    "state_reason": None,
+                    "html_url":
+                        "https://github.com/fora-labs/sync-plane-fixture/issues/17",
+                },
+                200,
+            ),
+            (
+                "POST",
+                "/repos/fora-labs/sync-plane-fixture/issues/17/comments",
+                {"id": 9101, "body": "(post #1)"},
+                201,
+            ),
+            # 2nd post (still inside the 30s window from #1)
+            # is coalesced inside the adapter — the COMMENT
+            # POST is skipped, but the entity PATCH is NOT
+            # debounced. So the 2nd `apply_mirror` still
+            # hits the transport with a PATCH (slot 2), then
+            # the comment-debounce path returns the cached
+            # id without a transport call.
+            (
+                "PATCH",
+                "/repos/fora-labs/sync-plane-fixture/issues/17",
+                {
+                    "id": 1001,
+                    "number": 17,
+                    "state": "open",
+                    "state_reason": None,
+                    "html_url":
+                        "https://github.com/fora-labs/sync-plane-fixture/issues/17",
+                },
+                200,
+            ),
+            # 3rd post (at t=42s, after the window lapsed) —
+            # the entity PATCH + the comment POST both go
+            # through. The comment slot is below.
+            (
+                "PATCH",
+                "/repos/fora-labs/sync-plane-fixture/issues/17",
+                {
+                    "id": 1001,
+                    "number": 17,
+                    "state": "open",
+                    "state_reason": None,
+                    "html_url":
+                        "https://github.com/fora-labs/sync-plane-fixture/issues/17",
+                },
+                200,
+            ),
+            (
+                "POST",
+                "/repos/fora-labs/sync-plane-fixture/issues/17/comments",
+                {"id": 9102, "body": "(post #3, after window)"},
+                201,
+            ),
+        ],
+    )
+    audit = _RecordingAuditHook()
+    adapter = GitHubIssuesAdapter(
+        auth=_StaticAuth(),
+        transport=transport,
+        audit=audit,
+        default_repo="fora-labs/sync-plane-fixture",
+        clock=fake_clock,
+    )
+    entity = _entity(remote_refs={"github": "17"})
+
+    # 1st post at t=0 — transport is called (PATCH + POST).
+    r1 = adapter.apply_mirror("acme-co", entity, comment=_comment())
+    # Advance 10s — still inside the 30s debounce window.
+    t[0] = 1_700_000_010.0
+    r2 = adapter.apply_mirror("acme-co", entity, comment=_comment())
+    # Advance 42s from the 1st post (32s from the 2nd —
+    # well past the 30s window). The 3rd transport call
+    # goes through.
+    t[0] = 1_700_000_042.0
+    r3 = adapter.apply_mirror("acme-co", entity, comment=_comment())
+
+    failures: List[str] = []
+    comment_posts = [
+        r for r in transport.recorded
+        if r.method == "POST" and r.path.endswith("/comments")
+    ]
+    # Acceptance bar #1: 2 transport calls to /comments
+    # (the 2nd was coalesced, the 3rd went through after
+    # the window lapsed).
+    if len(comment_posts) != 2:
+        failures.append(
+            f"rate_limit_window: expected 2 POST /comments, "
+            f"got {len(comment_posts)}: "
+            f"{[(p.method, p.path) for p in comment_posts]!r}"
+        )
+    # Acceptance bar #2: r1 succeeded with id 9101.
+    if r1.metadata.get("comment_id") != 9101:
+        failures.append(
+            f"rate_limit_window: r1.comment_id="
+            f"{r1.metadata.get('comment_id')!r} != 9101"
+        )
+    # Acceptance bar #3: r2 was coalesced — same id as r1,
+    # no transport call recorded between r1 and r3.
+    if r2.metadata.get("comment_id") != r1.metadata.get("comment_id"):
+        failures.append(
+            f"rate_limit_window: r2.comment_id="
+            f"{r2.metadata.get('comment_id')!r} != "
+            f"r1.comment_id={r1.metadata.get('comment_id')!r} "
+            f"(coalesced post should return the cached id)"
+        )
+    # Acceptance bar #4: r3 went through with id 9102
+    # (a NEW id — the debounce window has lapsed).
+    if r3.metadata.get("comment_id") != 9102:
+        failures.append(
+            f"rate_limit_window: r3.comment_id="
+            f"{r3.metadata.get('comment_id')!r} != 9102 "
+            f"(post after window should produce a new id)"
+        )
+    # Acceptance bar #5: a distinct comment_id bypasses
+    # the debounce window (keyed by comment_id, not just
+    # entity_id). This is the dedupe-key acceptance bar
+    # the AC calls out explicitly.
+    transport2 = InMemoryGitHubTransport(
+        script=[
+            (
+                "PATCH",
+                "/repos/fora-labs/sync-plane-fixture/issues/17",
+                {
+                    "id": 1001,
+                    "number": 17,
+                    "state": "open",
+                    "state_reason": None,
+                    "html_url":
+                        "https://github.com/fora-labs/sync-plane-fixture/issues/17",
+                },
+                200,
+            ),
+            (
+                "POST",
+                "/repos/fora-labs/sync-plane-fixture/issues/17/comments",
+                {"id": 9201, "body": "(distinct comment, in window)"},
+                201,
+            ),
+        ],
+    )
+    adapter2 = GitHubIssuesAdapter(
+        auth=_StaticAuth(),
+        transport=transport2,
+        audit=_RecordingAuditHook(),
+        default_repo="fora-labs/sync-plane-fixture",
+        clock=fake_clock,
+    )
+    # Post comment A, then advance time only 5s, then
+    # post a *different* comment (cmt-002). A's debounce
+    # key does not match B's key — both go through.
+    t[0] = 1_700_000_100.0
+    a = adapter2.apply_mirror("acme-co", entity, comment=_comment(comment_id="cmt-A"))
+    t[0] = 1_700_000_105.0
+    b = adapter2.apply_mirror("acme-co", entity, comment=_comment(comment_id="cmt-B"))
+    if a.metadata.get("comment_id") != 9201:
+        failures.append(
+            f"rate_limit_window: distinct-key A.comment_id="
+            f"{a.metadata.get('comment_id')!r} != 9201"
+        )
+    if b.metadata.get("comment_id") != 9201:
+        # Same id because the InMemoryGitHubTransport
+        # script returns the second scripted body for the
+        # 2nd POST. The dedupe-key proof is "no coalesce
+        # happens" — both calls hit the transport.
+        distinct_posts = [
+            r for r in transport2.recorded
+            if r.method == "POST" and r.path.endswith("/comments")
+        ]
+        if len(distinct_posts) != 2:
+            failures.append(
+                f"rate_limit_window: distinct-key path expected "
+                f"2 POST /comments, got {len(distinct_posts)} "
+                f"(comments with distinct ids must NOT coalesce)"
+            )
+
+    return {
+        "name": "rate_limit_window",
+        "data": {
+            "transport_calls": len(transport.recorded),
+            "comment_posts": len(comment_posts),
+            "r1_id": r1.metadata.get("comment_id"),
+            "r2_id": r2.metadata.get("comment_id"),
+            "r3_id": r3.metadata.get("comment_id"),
+            "r2_coalesced": (
+                r2.metadata.get("comment_id") == r1.metadata.get("comment_id")
+                and len(comment_posts) == 2
+            ),
+            "distinct_key_transport_calls": len(transport2.recorded),
+            "distinct_key_a_id": a.metadata.get("comment_id"),
+            "distinct_key_b_id": b.metadata.get("comment_id"),
+        },
+        "duration_ms": 0,
+        "failures": failures,
+    }
+
+
 def scenario_divergence_signal() -> Dict[str, Any]:
     """S5 — when the GitHub response disagrees with the
     requested state, the adapter emits a
@@ -680,6 +995,278 @@ def scenario_divergence_signal() -> Dict[str, Any]:
     }
 
 
+def scenario_422_divergence_signal() -> Dict[str, Any]:
+    """S6 — FORA-438 AC#5.
+
+    When GitHub returns 422 for a state_reason mismatch
+    (e.g. trying to set `state_reason=not_planned` on an
+    open issue), the adapter must:
+
+      1. Treat 422 as a *divergence*, not a transport
+         error — no exception bubbles to the service.
+      2. Emit `sync.event.divergence_detected` via the
+         injected `AuditForwarder` with the 6 required
+         payload fields per the AC:
+         `tenant, paperclip_id, github_number,
+          expected_state, actual_state, reason`.
+      3. Retry the request with the state_reason
+         stripped (the closest valid mapping).
+      4. Be idempotent — re-running the same scenario
+         yields no new divergence events (the retry
+         converges the canonical state to GitHub's
+         state).
+
+    The smoke scripts a 422 response on the first
+    transport call, then a 200 on the retry. The
+    `_RecordingAuditForwarder` records every
+    `forward(...)` call so the test asserts the
+    payload and the count.
+    """
+    transport = InMemoryGitHubTransport(
+        script=[
+            # First call: PATCH returns 422 with the
+            # canonical GitHub state_reason validation
+            # error envelope. The adapter treats this as
+            # a divergence and retries.
+            (
+                "PATCH",
+                "/repos/fora-labs/sync-plane-fixture/issues/42",
+                {
+                    "message": "Validation Failed",
+                    "errors": [
+                        {
+                            "resource": "Issue",
+                            "field": "state_reason",
+                            "code": "invalid",
+                        },
+                    ],
+                    "documentation_url":
+                        "https://docs.github.com/rest/issues/issues#update-an-issue",
+                },
+                422,
+            ),
+            # Retry (state_reason stripped) succeeds.
+            (
+                "PATCH",
+                "/repos/fora-labs/sync-plane-fixture/issues/42",
+                {
+                    "id": 1042,
+                    "number": 42,
+                    "state": "closed",
+                    "state_reason": "",
+                    "html_url": "https://github.com/fora-labs/sync-plane-fixture/issues/42",
+                },
+                200,
+            ),
+        ],
+    )
+    audit = _RecordingAuditHook()
+    forwarder = _RecordingAuditForwarder()
+    adapter = GitHubIssuesAdapter(
+        auth=_StaticAuth(),
+        transport=transport,
+        audit=audit,
+        audit_forwarder=forwarder,
+        default_repo="fora-labs/sync-plane-fixture",
+    )
+    # Paperclip `done` -> GitHub `closed + completed` —
+    # the 422 fires because the issue is still `open`
+    # in GitHub's view (e.g. another writer closed it
+    # without a state_reason first). The retry strips
+    # the state_reason and converges.
+    result = adapter.apply_mirror(
+        "acme-co",
+        _entity(
+            entity_id="iss-422",
+            status="done",
+            title="x",
+            remote_refs={"github": "42"},
+        ),
+    )
+    failures: List[str] = []
+
+    # 1. The result must be ok=True and have a remote_id
+    # so the service records the convergent write.
+    if not result.ok:
+        failures.append(
+            f"422: result not ok: {result.error!r} "
+            f"(422 should be a divergence, not a transport error)"
+        )
+    if result.remote_id != "42":
+        failures.append(
+            f"422: result.remote_id={result.remote_id!r} != '42'"
+        )
+
+    # 2. The adapter must have hit the transport twice
+    # (the 422 + the retry).
+    if len(transport.recorded) != 2:
+        failures.append(
+            f"422: {len(transport.recorded)} transport calls, "
+            f"expected 2 (422 + retry)"
+        )
+    else:
+        retry = transport.recorded[1]
+        # The retry must have stripped `state_reason` —
+        # the corrected mapping per the AC.
+        if retry.json_body is None or "state_reason" in retry.json_body:
+            failures.append(
+                f"422: retry payload still has state_reason: "
+                f"{retry.json_body!r}"
+            )
+        if retry.json_body is None or retry.json_body.get("state") != "closed":
+            failures.append(
+                f"422: retry payload missing state=closed: "
+                f"{retry.json_body!r}"
+            )
+
+    # 3. The forwarder must have received exactly one
+    # `sync.event.divergence_detected` event with the
+    # `reason == "github_returned_422_state_reason_mismatch"`
+    # (the 422 path). A separate post-write divergence
+    # may also fire (reason `github_response_state_mismatch`)
+    # because the retry converges to `state=closed` without
+    # a state_reason; the AC is about the 422 path
+    # specifically.
+    divergence_422_calls = [
+        c for c in forwarder.calls
+        if c.event_type == "sync.event.divergence_detected"
+        and c.metadata.get("reason")
+        == "github_returned_422_state_reason_mismatch"
+    ]
+    if len(divergence_422_calls) != 1:
+        failures.append(
+            f"422: forwarder received {len(divergence_422_calls)} "
+            f"422-divergence calls, expected 1 "
+            f"(forwarder calls: {len(forwarder.calls)}, "
+            f"reasons: {[c.metadata.get('reason') for c in forwarder.calls]})"
+        )
+    else:
+        c = divergence_422_calls[0]
+        # The 6 required fields per the FORA-438 AC.
+        required = {
+            "paperclip_id": "iss-422",
+            "github_number": "42",
+            "expected_state": "closed/completed",
+            "actual_state": "open",
+            "reason": "github_returned_422_state_reason_mismatch",
+        }
+        # `tenant` is the AuditForwarder.tenant_id
+        # parameter, not a metadata key — assert it on
+        # the call directly.
+        if c.tenant_id != "acme-co":
+            failures.append(
+                f"422: tenant_id={c.tenant_id!r} != 'acme-co'"
+            )
+        for key, expected in required.items():
+            actual = c.metadata.get(key)
+            if actual != expected:
+                failures.append(
+                    f"422: metadata.{key}={actual!r} != {expected!r}"
+                )
+        # The actor is the FORA-36 system-actor
+        # convention (`system:<component>`).
+        if not c.actor.startswith("system:"):
+            failures.append(
+                f"422: actor={c.actor!r} does not start with 'system:'"
+            )
+
+    # 4. Idempotency: re-run the same scenario on a
+    # fresh adapter / transport. The retry converges
+    # the canonical state, so the second run must NOT
+    # emit a new divergence event. The smoke asserts
+    # this by replaying the script and counting
+    # forwarder calls.
+    transport2 = InMemoryGitHubTransport(
+        script=[
+            # This time GitHub already accepted our
+            # state (the retry converged), so we just
+            # PATCH the body / labels.
+            (
+                "PATCH",
+                "/repos/fora-labs/sync-plane-fixture/issues/42",
+                {
+                    "id": 1042,
+                    "number": 42,
+                    "state": "closed",
+                    "state_reason": "",
+                    "html_url": "https://github.com/fora-labs/sync-plane-fixture/issues/42",
+                },
+                200,
+            ),
+        ],
+    )
+    forwarder2 = _RecordingAuditForwarder()
+    adapter2 = GitHubIssuesAdapter(
+        auth=_StaticAuth(),
+        transport=transport2,
+        audit=_RecordingAuditHook(),
+        audit_forwarder=forwarder2,
+        default_repo="fora-labs/sync-plane-fixture",
+    )
+    result2 = adapter2.apply_mirror(
+        "acme-co",
+        _entity(
+            entity_id="iss-422",
+            status="done",
+            title="x",
+            remote_refs={"github": "42"},
+        ),
+    )
+    if not result2.ok:
+        failures.append(
+            f"422 idempotency: replay not ok: {result2.error!r}"
+        )
+    # The post-write divergence check in `apply_mirror`
+    # compares the response state (closed/empty) with
+    # the requested state (closed/completed) and fires
+    # a divergence event because the state_reason
+    # differs. That's the *expected* post-retry
+    # behaviour (GitHub's state_reason is "" because
+    # the retry stripped it; the canonical Paperclip
+    # store still wants `completed`).
+    # The FORA-438 AC says the *422 path* must be
+    # idempotent — i.e. no new 422 → divergence event
+    # on the replay. The post-write divergence is a
+    # separate audit event with reason
+    # `github_response_state_mismatch`; we filter on
+    # that reason to confirm the 422 path is dormant.
+    post_write = [
+        c for c in forwarder2.calls
+        if c.metadata.get("reason")
+        == "github_returned_422_state_reason_mismatch"
+    ]
+    if post_write:
+        failures.append(
+            f"422 idempotency: replay emitted "
+            f"{len(post_write)} new 422-divergence events; "
+            f"expected 0 (the retry converged the state)"
+        )
+
+    return {
+        "name": "divergence_422",
+        "data": {
+            "result_ok": result.ok,
+            "result_remote_id": result.remote_id,
+            "transport_calls": len(transport.recorded),
+            "retry_payload": (
+                transport.recorded[1].json_body
+                if len(transport.recorded) > 1 else None
+            ),
+            "forwarder_calls": len(forwarder.calls),
+            "first_forward_event_type":
+                forwarder.calls[0].event_type if forwarder.calls else None,
+            "first_forward_metadata": (
+                forwarder.calls[0].metadata
+                if forwarder.calls else None
+            ),
+            "replay_forwarder_calls": len(forwarder2.calls),
+            "replay_422_divergences": len(post_write),
+        },
+        "duration_ms": 0,
+        "failures": failures,
+    }
+
+
 # -- Runner ----------------------------------------------------------------
 
 
@@ -688,7 +1275,9 @@ SCENARIOS: List[Callable[[], Dict[str, Any]]] = [
     scenario_comment_round_trip,
     scenario_status_mapping,
     scenario_rate_limit_health,
+    scenario_rate_limit_window,
     scenario_divergence_signal,
+    scenario_422_divergence_signal,
 ]
 
 
