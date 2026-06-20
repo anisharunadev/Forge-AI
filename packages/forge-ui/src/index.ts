@@ -12,6 +12,7 @@
  *   - "@fora/forge-ui/tree"          — generic / OrgTree / FileTree
  *   - "@fora/forge-ui/lists"         — TypedTable<T> + toolbar + empty state
  *   - "@fora/forge-ui/testing"       — renderWithProviders, axe helper
+ *   - "@fora/forge-ui/audit"         — Audit Center (composer + query + saved queries)
  *
  * Subpaths keep bundle size tight. A center that only needs Button + tokens
  * should not pull the chart or graph tree-shaking surface.
@@ -26,3 +27,4 @@ export * as Charts from "./charts";
 export * as Tree from "./tree";
 export * as Lists from "./lists";
 export * as Graph from "./graph";
+export * as Audit from "./audit";
