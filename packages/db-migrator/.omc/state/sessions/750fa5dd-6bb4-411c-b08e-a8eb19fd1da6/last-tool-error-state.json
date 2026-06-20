@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk ls /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/packages/db-migrator/ 2>/...",
-  "error": "Exit code 1\n.omc/\naudit/\nbin/\nmigrations/\nsrc/\ntest/\nREADME.md  4.3K\npackage.json  997B\npnpm-lock.yaml  31.6K\npnpm-workspace.yaml  29B\ntsconfig.json  439B\nvitest.config.ts  202B\n---",
-  "timestamp": "2026-06-17T01:10:59.631Z",
-  "retry_count": 1
-}

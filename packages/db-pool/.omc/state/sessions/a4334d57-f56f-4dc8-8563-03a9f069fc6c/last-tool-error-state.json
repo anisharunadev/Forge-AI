@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"python3 /tmp/post-comment.py 2>&1\",\"description\":\"Post FORA-163 summary comment via Python\"}",
-  "error": "Exit code 1\nHTTP ERROR 404\n{\"error\":\"API route not found\"}",
-  "timestamp": "2026-06-17T06:53:36.388Z",
-  "retry_count": 2
-}

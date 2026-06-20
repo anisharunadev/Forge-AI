@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cd packages/db-pool && pnpm typecheck 2>&1 | tail -20\",\"timeout\":60000,\"description\":\"Run typecheck on db-pool\"}",
-  "error": "Exit code 1\n/usr/bin/bash: line 1: cd: packages/db-pool: No such file or directory",
-  "timestamp": "2026-06-17T15:42:17.860Z",
-  "retry_count": 1
-}
