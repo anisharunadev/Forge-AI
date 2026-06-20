@@ -15,15 +15,21 @@
  *
  *   { "error": { "code": "INVALID_TRANSITION", "message": "...", "request_id": "..." } }
  *
- * Auth model: the Orchestrator trusts the upstream gateway to have
- * verified the JWT and stamped `x-fora-tenant-id` on the request.
- * ADR-0003 §4.2 binds the db-pool to the verified claim; a v1.1 ADR
- * moves JWT validation in-process.
+ * Auth model — ADR-0003 §4.2 v1.1 (FORA-526):
+ *
+ * The Orchestrator verifies JWTs in-process. A Fastify preHandler hook
+ * (`jwtAuthHook` below) reads `Authorization: Bearer <jwt>`, calls
+ * `JwtValidator.verify` (jose + JWKS at `config.jwtVerifierUrl`), and
+ * stamps the typed `JwtPrincipal` on `request.tenantContext`. The legacy
+ * `x-fora-tenant-id` header is REMOVED from the trust boundary — it
+ * is honoured only when `FORA_REQUIRE_JWT=false` for local dev. The
+ * gateway is no longer required; the service can be deployed behind
+ * an untrusted LB / sidecar.
  */
 
 import { randomUUID } from 'node:crypto';
 import type { Pool } from 'pg';
-import Fastify, { type FastifyInstance } from 'fastify';
+import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
 import {
@@ -64,6 +70,11 @@ import {
   type PaperclipClient,
   type RouterDeps,
 } from './index.js';
+import {
+  JwtError,
+  JwtValidator,
+  type JwtPrincipal,
+} from './jwt-validator.js';
 
 export interface OrchestratorDeps {
   config: OrchestratorConfig;
@@ -80,13 +91,35 @@ export interface OrchestratorDeps {
     clock: Clock;
   };
   /**
-   * Override the gateway-claim extractor for tests. In production the
-   * gateway upstream stamps `x-fora-tenant-id` after verifying the JWT
-   * (ADR-0003 §4.2); the test seam returns a deterministic tenant.
+   * FORA-526: an explicit `JwtValidator` instance. Production builds
+   * it from `config.jwtVerifierUrl / jwtIssuer / jwtAudience / jwtClockToleranceSec`
+   * inside `buildServer`; tests can inject a fake to avoid the JWKS
+   * round-trip. Required when `config.requireJwt` is true (the default).
+   */
+  jwtValidator?: JwtValidator;
+  /**
+   * Override the tenant extractor for tests. In production the
+   * preHandler hook (`jwtAuthHook`) stamps `request.tenantContext`
+   * after a successful JWT verify; this seam lets tests bypass JWT
+   * verification entirely by setting `config.requireJwt=false` and
+   * returning a deterministic tenant from the legacy `x-fora-tenant-id`
+   * header.
    */
   extractTenant?: (req: { headers: Record<string, unknown> }) => string | null;
   /** Override `new Date()` for tests. */
   now?: () => number;
+}
+
+/**
+ * FORA-526 — module augmentation that surfaces the JWT-verified
+ * principal on every `FastifyRequest`. The preHandler hook stamps
+ * this; the rest of the server reads `request.tenantContext` via
+ * the `extractTenant` closure.
+ */
+declare module 'fastify' {
+  interface FastifyRequest {
+    tenantContext?: JwtPrincipal;
+  }
 }
 
 /**
@@ -141,14 +174,20 @@ const returnBody = z.object({
 });
 
 /**
- * The shared header that authenticates a request to a tenant. In
- * production this is `x-fora-tenant-id` set by the gateway after JWT
- * verification (ADR-0003 §4.2). The test seam injects a deterministic
- * tenant without going through the gateway.
+ * The shared header that authenticates a request to a tenant.
+ *
+ * FORA-526 (v1.1): in production, the JWT-verified principal on
+ * `request.tenantContext` is the only trust boundary. The legacy
+ * `x-fora-tenant-id` header is honoured ONLY when
+ * `config.requireJwt === false` (local dev) — production MUST run
+ * with `FORA_REQUIRE_JWT=true` (the default). The header is kept
+ * here as a named constant so the local-dev path is grep-able.
  */
 const TENANT_HEADER = 'x-fora-tenant-id';
 const IDEMPOTENCY_HEADER = 'idempotency-key';
 const REQUEST_ID_HEADER = 'x-request-id';
+const AUTH_HEADER = 'authorization';
+const HEALTHZ_PATH = '/healthz';
 
 export async function buildServer(deps: OrchestratorDeps): Promise<FastifyInstance> {
   const app = Fastify({
@@ -161,7 +200,74 @@ export async function buildServer(deps: OrchestratorDeps): Promise<FastifyInstan
   const now = deps.now ?? (() => Date.now());
 
   // --- Default tenant extractor (production) ----------------------------
+  // FORA-526: the preHandler hook (`jwtAuthHook` below) stamps the
+  // verified principal on `request.tenantContext`. `defaultExtractTenant`
+  // reads from there. The legacy `x-fora-tenant-id` header is the
+  // fallback ONLY when `config.requireJwt === false` (local dev).
   const extractTenant = deps.extractTenant ?? defaultExtractTenant;
+
+  // --- JWT auth hook (FORA-526) -----------------------------------------
+  // Verify `Authorization: Bearer <jwt>` on every non-healthz request
+  // when `config.requireJwt` is true (the default). On success,
+  // `request.tenantContext` carries the typed `JwtPrincipal`; on
+  // failure, the typed `JwtError` propagates to the setErrorHandler
+  // and surfaces as 401 VALIDATION with the discrete code in the log.
+  // Tests inject a stub `deps.jwtValidator` to avoid the JWKS round-trip.
+  const jwtValidator =
+    deps.jwtValidator ??
+    new JwtValidator({
+      jwksUrl: deps.config.jwtVerifierUrl,
+      issuer: deps.config.jwtIssuer,
+      audience: deps.config.jwtAudience,
+      clockToleranceSec: deps.config.jwtClockToleranceSec,
+    });
+  if (deps.config.requireJwt) {
+    app.addHook('preHandler', async (req, reply) => {
+      // Liveness is unauthenticated by design.
+      if (req.url === HEALTHZ_PATH) return;
+
+      const requestId =
+        headerString(req.headers[REQUEST_ID_HEADER]) ?? randomUUID();
+      const auth = headerString(req.headers[AUTH_HEADER]);
+      if (!auth || !auth.toLowerCase().startsWith('bearer ')) {
+        throw new AuthError('missing or malformed Authorization header', requestId);
+      }
+      const token = auth.slice('bearer '.length).trim();
+      try {
+        const principal = await jwtValidator.verify(token);
+        req.tenantContext = principal;
+      } catch (e: unknown) {
+        // Discrete codes (`EXPIRED` / `TAMPERED` / `INVALID` / `WRONG_TENANT`)
+        // are logged for audit; the wire response is the standard
+        // 401 VALIDATION envelope so the client cannot probe for
+        // failure-mode information.
+        if (e instanceof JwtError) {
+          req.log.warn(
+            {
+              request_id: requestId,
+              jwt_error_code: e.code,
+              jwt_claim: e.claim,
+            },
+            'jwt auth failed',
+          );
+          throw new AuthError(`jwt auth failed: ${e.code.toLowerCase()}`, requestId);
+        }
+        throw e;
+      }
+    });
+  } else {
+    // Local-dev opt-out: log a single warning per process so the
+    // footgun is visible in test runs. Production MUST NOT log
+    // this — the `if (deps.config.requireJwt)` branch above is the
+    // only path that stamps a verified principal.
+    app.log.warn(
+      {
+        jwt_required: false,
+        fallback_header: TENANT_HEADER,
+      },
+      'FORA_REQUIRE_JWT=false — JWT verification disabled, honouring legacy x-fora-tenant-id header (LOCAL DEV ONLY)',
+    );
+  }
 
   // --- Global error handler ---------------------------------------------
   // Maps the typed errors thrown by `requireTenant` /
@@ -663,7 +769,18 @@ function headerString(v: unknown): string | undefined {
 
 function defaultExtractTenant(req: {
   headers: Record<string, unknown>;
+  tenantContext?: JwtPrincipal;
 }): string | null {
+  // FORA-526 v1.1: the JWT-verified principal (when present) is the
+  // only trust boundary. The hook stamps `request.tenantContext`
+  // before any route handler runs.
+  const fromJwt = req.tenantContext?.tenantId;
+  if (fromJwt) return fromJwt;
+
+  // Legacy fallback — only reached when `config.requireJwt` is false
+  // (local dev). Production MUST NOT exercise this path; the
+  // preHandler hook refuses requests without a valid `Authorization`
+  // header before they reach the routes.
   const v = req.headers[TENANT_HEADER];
   if (typeof v !== 'string') return null;
   const trimmed = v.trim();
