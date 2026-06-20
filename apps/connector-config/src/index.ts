@@ -72,6 +72,17 @@ export type {
   DivergenceRecord,
 } from './override.js';
 export {
+  registerConnectorCrons,
+  runAttestationSweep,
+  runOrphanSweep,
+} from './cron.js';
+export type {
+  ConnectorCronDescriptor,
+  ConnectorSweepWorkerArgs,
+  SweepAction,
+  SweepRunResult,
+} from './cron.js';
+export {
   createAndActivateTenantDefault,
   isRealAuthMethod,
   onboardTenant,

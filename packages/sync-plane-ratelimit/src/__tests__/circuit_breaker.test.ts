@@ -49,7 +49,7 @@ describe('CircuitBreaker', () => {
     expect(cb.state).toBe('closed');
   });
 
-  it('re-opens on probe failure and resets the cooldown clock', () => {
+  it('re-opens on probe failure and resets the cooldown clock (v0.3 exp backoff applies)', () => {
     let t = 0;
     const cb = new CircuitBreaker({ failure_threshold: 3, failure_window_ms: 60_000, cooldown_ms: 1000, now: () => t });
     for (let i = 0; i < 3; i++) cb.onFailure();
@@ -57,12 +57,15 @@ describe('CircuitBreaker', () => {
     expect(cb.canPass()).toBe(true);
     cb.onFailure();
     expect(cb.state).toBe('open');
-    // New cooldown clock — must wait again.
+    // v0.3 exp backoff: first half-open failure doubles the cooldown
+    // from 1000ms to 2000ms (factor[0]=2). must wait again, and for
+    // the full doubled window before the next probe is admitted.
+    expect(cb.currentCooldown()).toBe(2000);
     expect(cb.canPass()).toBe(false);
-    t += 500;
-    expect(cb.canPass()).toBe(false);
+    t += 1500;
+    expect(cb.canPass()).toBe(false); // still inside the 2s cooldown
     t += 600;
-    expect(cb.canPass()).toBe(true);
+    expect(cb.canPass()).toBe(true); // 2.1s elapsed since opened_at_ms
   });
 
   it('emits a transition record on state change', () => {

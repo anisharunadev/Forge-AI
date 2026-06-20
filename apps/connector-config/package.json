@@ -32,7 +32,9 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "sweep": "node -e \"const a=process.argv[1];console.error('connector-config sweep: action='+a+' — production wires @fora/db-pool + FORA-36 forwarder. The cron descriptor (pnpm cron:register) is the wiring contract; this stub exits 0 in dev.');process.exit(0)\"",
+    "cron:register": "node --input-type=module -e \"import('./dist/cron.js').then(m=>console.log(JSON.stringify(m.registerConnectorCrons(),null,2)))\""
   },
   "engines": {
     "node": ">=20"
