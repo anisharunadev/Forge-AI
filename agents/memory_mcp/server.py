@@ -59,7 +59,10 @@ from agents._shared.jsonrpc import (  # noqa: E402
 )
 
 from .audit import JsonlAuditMirror  # noqa: E402
-from .injection import get_stage, list_stages  # noqa: E402
+from .injection import (  # noqa: E402
+    get_stage,
+    list_stages,
+)
 from .seed import (  # noqa: E402
     SeedChunk,
     chunk_markdown_file,
@@ -67,6 +70,10 @@ from .seed import (  # noqa: E402
     seed_workspace,
 )
 from .store import Fact, MemoryError, MemoryStore  # noqa: E402
+from .tenant_workspace import (  # noqa: E402
+    list_tenant_files,
+    retrieve_tenant_file,
+)
 
 DEFAULT_DB = os.environ.get("FORA_MEMORY_DB", os.path.join(ROOT, "var", "memory.db"))
 DEFAULT_AUDIT = os.environ.get(
@@ -570,12 +577,123 @@ def make_server(
             return {"stage": s, "entry": get_stage(s)}
         return {"stages": list_stages()}
 
+    # ------------------------------------------------------------------
+    # list  ->  memory.list({tenant | tenant_id, namespaces?})
+    # (FORA-413 / 0.8.6 thin adapter over workspace_resolve)
+    # ------------------------------------------------------------------
+    @tool(
+        name="list",
+        description=(
+            "List the resolved file tree for a tenant workspace. Walks "
+            "``tenants/<slug>/workspace/<ns>/...`` via the extension-hook "
+            "resolver (FORA-411) and falls back to the seed for relpaths "
+            "the tenant has not overridden. Returns one entry per file "
+            "with ``{relpath, source, path, size, mtime_ns, seed_path}``; "
+            "``source`` is ``\"tenant\"`` when the tenant override or "
+            "extension wins, ``\"seed\"`` when the seed fallthrough is "
+            "used. Accepts either ``tenant`` (per FORA-413) or "
+            "``tenant_id`` (existing convention) for the slug."
+        ),
+        input_schema={
+            "type": "object",
+            "properties": {
+                "tenant": {"type": "string"},
+                "tenant_id": {"type": "string"},
+                "namespaces": {"type": "array", "items": {"type": "string"}},
+                "max_depth": {"type": "integer", "minimum": 1, "maximum": 16},
+                "max_files": {"type": "integer", "minimum": 1, "maximum": 50000},
+                "actor": {"type": "object"},
+            },
+        },
+    )
+    def list_workspace(arguments: Dict[str, Any]) -> Any:
+        slug = arguments.get("tenant") or arguments.get("tenant_id")
+        if not slug or not isinstance(slug, str):
+            raise JsonRpcError(INVALID_PARAMS, "tenant (or tenant_id) is required")
+        try:
+            payload = list_tenant_files(
+                slug,
+                namespaces=arguments.get("namespaces"),
+                max_depth=int(arguments.get("max_depth") or 8),
+                max_files=int(arguments.get("max_files") or 5000),
+            )
+        except ValueError as exc:
+            raise JsonRpcError(INVALID_PARAMS, str(exc))
+        mirror.record(
+            actor=arguments.get("actor") or {"agentId": "memory-mcp"},
+            operation="list",
+            target={"tenant": slug, "namespaces": payload.get("namespaces")},
+            result="ok",
+            tokens_out=payload.get("count", 0),
+        )
+        return payload
+
+    # ------------------------------------------------------------------
+    # retrieve_file  ->  memory.retrieve_file({tenant | tenant_id, path})
+    # (FORA-413 / 0.8.6 thin adapter over workspace_resolve)
+    # ------------------------------------------------------------------
+    @tool(
+        name="retrieve_file",
+        description=(
+            "Resolve one file in a tenant workspace and return its "
+            "content + metadata. The tenant override wins if the file "
+            "exists on the tenant side; otherwise the seed fallthrough "
+            "is returned. Use the ``list`` tool first to discover the "
+            "resolved tree. Returns ``{tenant, relpath, source, path, "
+            "size, mtime_ns, content, found}``; ``source`` is "
+            "``\"tenant\"`` for an override or extension, ``\"seed\"`` "
+            "for a fallthrough, ``null`` when the file is missing on "
+            "both sides. Accepts ``tenant`` (per FORA-413) or "
+            "``tenant_id`` (existing convention); ``path`` and "
+            "``relpath`` are interchangeable."
+        ),
+        input_schema={
+            "type": "object",
+            "required": ["path"],
+            "properties": {
+                "tenant": {"type": "string"},
+                "tenant_id": {"type": "string"},
+                "path": {"type": "string"},
+                "relpath": {"type": "string"},
+                "encoding": {"type": "string", "default": "utf-8"},
+                "include_content": {"type": "boolean", "default": True},
+                "actor": {"type": "object"},
+            },
+        },
+    )
+    def retrieve_file_tool(arguments: Dict[str, Any]) -> Any:
+        slug = arguments.get("tenant") or arguments.get("tenant_id")
+        rel = arguments.get("path") or arguments.get("relpath")
+        if not slug or not isinstance(slug, str):
+            raise JsonRpcError(INVALID_PARAMS, "tenant (or tenant_id) is required")
+        if not rel or not isinstance(rel, str):
+            raise JsonRpcError(INVALID_PARAMS, "path (or relpath) is required")
+        try:
+            payload = retrieve_tenant_file(
+                slug,
+                rel,
+                encoding=arguments.get("encoding") or "utf-8",
+                include_content=bool(arguments.get("include_content", True)),
+            )
+        except ValueError as exc:
+            raise JsonRpcError(INVALID_PARAMS, str(exc))
+        mirror.record(
+            actor=arguments.get("actor") or {"agentId": "memory-mcp"},
+            operation="retrieve_file",
+            target={"tenant": slug, "relpath": rel,
+                    "source": payload.get("source"), "found": payload.get("found")},
+            result="ok" if payload.get("found") else "not_found",
+            tokens_out=len((payload.get("content") or "").split()),
+        )
+        return payload
+
     for name, fn in [
         ("write", write), ("propose", propose), ("recall", recall),
         ("retrieve", retrieve), ("inject_for_stage", inject_for_stage),
         ("seed_workspace", seed_workspace_tool), ("promote", promote),
         ("forget", forget), ("stats", stats), ("read_audit", read_audit),
         ("injection_table", injection_table),
+        ("list", list_workspace), ("retrieve_file", retrieve_file_tool),
     ]:
         server.register(name, fn)
     return server

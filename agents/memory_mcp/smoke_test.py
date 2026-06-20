@@ -56,9 +56,9 @@ def main() -> int:  # noqa: C901
         # 1) tool list
         tools_listed = client.list_tools()
         names = sorted(t["name"] for t in tools_listed)
-        expected = ["forget", "inject_for_stage", "injection_table", "promote",
-                    "propose", "read_audit", "recall", "retrieve", "seed_workspace",
-                    "stats", "write"]
+        expected = ["forget", "inject_for_stage", "injection_table", "list",
+                    "promote", "propose", "read_audit", "recall", "retrieve",
+                    "retrieve_file", "seed_workspace", "stats", "write"]
         if names != expected:
             failures.append(f"tool list mismatch: got {names}, want {expected}")
         else:
@@ -332,6 +332,132 @@ def main() -> int:  # noqa: C901
             else:
                 _print("forget (execution fact)", True,
                        "fact removed from recall results")
+
+        # ============================================================
+        # FORA-413 / 0.8.6 Acceptance #4 (in FORA-103): tenant-aware
+        # file reads via the extension-hook resolver.
+        #
+        # - ``memory.list(tenant=acme)`` returns the resolved tree
+        #   (``acme/workspace/*`` shadows ``workspace/*``; acme has a
+        #   real override at ``customer/standards.md``).
+        # - ``memory.retrieve_file(tenant=acme, customer/standards.md)``
+        #   returns the tenant override (8 lines).
+        # - ``memory.retrieve_file(tenant=globex, customer/standards.md)``
+        #   falls through to the seed (148 lines).
+        # - The override is identifiable as ``source="tenant"`` in the
+        #   listing; the fallthrough shows ``source="seed"``.
+        # ============================================================
+        list_acme = client.call("list", {
+            "tenant": "acme",
+            "actor": {"agentId": "test", "runId": "run-1"},
+        })
+        acme_files = {f["relpath"]: f for f in list_acme.get("files", [])}
+        if list_acme.get("count", 0) < 5:
+            failures.append(f"list(acme): count={list_acme.get('count')} "
+                            f"(expected >= 5 files)")
+        elif "customer/standards.md" not in acme_files:
+            failures.append(f"list(acme): missing customer/standards.md "
+                            f"(got {len(acme_files)} files)")
+        elif acme_files["customer/standards.md"].get("source") != "tenant":
+            failures.append(f"list(acme): customer/standards.md source="
+                            f"{acme_files['customer/standards.md'].get('source')!r}, "
+                            f"want 'tenant' (acme has a real override)")
+        elif not acme_files["customer/standards.md"].get("seed_path"):
+            failures.append("list(acme): customer/standards.md has seed_path=null; "
+                            "shadow should carry the seed path")
+        else:
+            _print("list(acme)", True,
+                   f"{list_acme['count']} files; "
+                   f"customer/standards.md source=tenant, "
+                   f"seed_path={os.path.basename(acme_files['customer/standards.md']['seed_path'])}")
+
+        # acme's customer/standards.md override is short and starts with
+        # the ACME header; the seed is the long FORA baseline. Reading
+        # through retrieve_file must surface the tenant bytes.
+        rf_acme = client.call("retrieve_file", {
+            "tenant": "acme",
+            "path": "customer/standards.md",
+            "actor": {"agentId": "test", "runId": "run-1"},
+        })
+        if not rf_acme.get("found"):
+            failures.append("retrieve_file(acme, customer/standards.md): not found")
+        elif rf_acme.get("source") != "tenant":
+            failures.append(f"retrieve_file(acme): source={rf_acme.get('source')!r}, "
+                            f"want 'tenant' (acme has a real override)")
+        elif "ACME" not in (rf_acme.get("content") or ""):
+            failures.append("retrieve_file(acme): tenant override missing 'ACME' header "
+                            f"(got {len(rf_acme.get('content') or '')} bytes)")
+        else:
+            _print("retrieve_file(acme, customer/standards.md)", True,
+                   f"source=tenant, {len(rf_acme['content'])} bytes (override)")
+
+        # globex has no override for customer/standards.md — the file
+        # in tenants/globex/workspace/ is byte-identical to the seed
+        # (the FORA-409 materializer copied the seed baseline). The
+        # acceptance contract for FORA-413 AC #4 is "the call returns
+        # the seed [content]"; we check that content identity (and that
+        # globex does NOT return acme's override). The source label can
+        # legitimately be either 'tenant' (the file exists on the tenant
+        # side) or 'seed' (resolver fell through) — globex was fully
+        # materialized, so it is 'tenant' on disk.
+        rf_globex = client.call("retrieve_file", {
+            "tenant": "globex",
+            "path": "customer/standards.md",
+            "actor": {"agentId": "test", "runId": "run-1"},
+        })
+        # Read the seed in BINARY mode so we compare raw bytes (the
+        # ``list`` tool's ``size`` field is ``os.stat().st_size``).
+        seed_path = os.path.join(workspace, "customer", "standards.md")
+        with open(seed_path, "rb") as fh:
+            seed_raw = fh.read()
+        if not rf_globex.get("found"):
+            failures.append("retrieve_file(globex, customer/standards.md): not found")
+        else:
+            globex_raw = (rf_globex.get("content") or "").encode("utf-8")
+            if globex_raw != seed_raw:
+                failures.append("retrieve_file(globex): returned bytes differ from "
+                                f"the seed (got {len(globex_raw)} bytes, "
+                                f"seed is {len(seed_raw)} bytes)")
+            elif globex_raw == (rf_acme.get("content") or "").encode("utf-8"):
+                failures.append("retrieve_file(globex): returned acme's override; "
+                                "expected seed-equivalent content")
+            else:
+                _print("retrieve_file(globex, customer/standards.md)", True,
+                       f"source={rf_globex.get('source')}, "
+                       f"{len(globex_raw)} bytes (seed-equivalent)")
+
+        # Cross-check: globex's listing of customer/standards.md must
+        # also reflect seed-equivalent bytes. The source label is
+        # 'tenant' (file exists on tenant side) but the resolved path
+        # and bytes match the seed baseline.
+        list_globex = client.call("list", {
+            "tenant": "globex",
+            "actor": {"agentId": "test", "runId": "run-1"},
+        })
+        gx_files = {f["relpath"]: f for f in list_globex.get("files", [])}
+        if "customer/standards.md" not in gx_files:
+            failures.append("list(globex): missing customer/standards.md")
+        elif gx_files["customer/standards.md"].get("size") != len(seed_raw):
+            failures.append("list(globex): customer/standards.md size differs "
+                            f"from seed (got "
+                            f"{gx_files['customer/standards.md'].get('size')}, "
+                            f"want {len(seed_raw)})")
+        else:
+            _print("list(globex).customer/standards.md", True,
+                   f"source={gx_files['customer/standards.md'].get('source')}, "
+                   f"size=seed-equivalent")
+
+        # Bad slug must be rejected (resolver contract — no path traversal).
+        try:
+            bad = client.call("list", {"tenant": "BAD/SLUG"})
+        except Exception as exc:  # McpError / JsonRpcError — both fine here
+            err_msg = str(exc)
+            if "invalid slug" not in err_msg:
+                failures.append(f"list('BAD/SLUG'): wrong error: {err_msg}")
+            else:
+                _print("list rejects invalid slug", True, "invalid_slug error surfaced")
+        else:
+            failures.append(f"list('BAD/SLUG'): expected error, got {bad}")
 
     if failures:
         print("\nFAIL:")
