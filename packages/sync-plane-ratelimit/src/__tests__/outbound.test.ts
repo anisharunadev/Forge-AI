@@ -125,8 +125,8 @@ describe('OutboundReliability — FORA-256 acceptance criteria', () => {
     // be rejected with circuit-open.
     const after = r.enqueue(edit(6, { remote_issue_id: 'JIRA-NEW', enqueued_at_ms: 10_000 }));
     expect(after.kind).toBe('rejected_circuit_open');
-    // Audit emitted sync.platform.degraded.
-    const degraded = audit.listOfType('sync.platform.degraded');
+    // Audit emitted connector.circuit.opened.
+    const degraded = audit.listOfType('connector.circuit.opened');
     expect(degraded.length).toBeGreaterThanOrEqual(1);
     expect(degraded[0]!.platform).toBe('jira');
     // After cooldown, half-open probe admitted → success → closed.
@@ -148,7 +148,7 @@ describe('OutboundReliability — FORA-256 acceptance criteria', () => {
     // *contract* is that the breaker recovers; that's covered by the
     // unit test in circuit_breaker.test.ts. Here we just confirm the
     // audit event was emitted.
-    const recovered = audit.listOfType('sync.platform.recovered');
+    const recovered = audit.listOfType('connector.circuit.closed');
     expect(recovered.length).toBe(0); // not recovered (the breaker is still open on r2's state)
     void r2; // silence unused
   });

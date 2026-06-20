@@ -20,8 +20,8 @@
 
 import { TokenBucket } from './token_bucket.js';
 import { CircuitBreaker } from './circuit_breaker.js';
-import { Coalescer, type OutboundEdit, type CoalesceFlushResult, type EditKind, type PlatformId } from './coalescer.js';
-import { InMemoryAuditSink, NoopAuditSink, makeEvent, type AuditSink, type SyncAuditEventType } from './audit.js';
+import { Coalescer, type OutboundEdit, type CoalesceFlushResult, type PlatformId } from './coalescer.js';
+import { InMemoryAuditSink, NoopAuditSink, makeEvent, type AuditSink } from './audit.js';
 
 export interface OutboundConfig {
   /** Per-tenant bucket defaults. 60 events/min = 1/s; burst 10. */
@@ -115,28 +115,28 @@ export class OutboundReliability {
     // 2. Per-tenant bucket.
     const tenantBucket = this.tenantBucketFor(edit.tenant_id);
     if (!tenantBucket.take()) {
-      this.audit.emit(makeEvent('sync.outbound.rate_limited', edit.tenant_id, edit.platform, { layer: 'tenant' }, this.nowDate));
+      this.audit.emit(makeEvent('connector.rate_limit.throttled', edit.tenant_id, edit.platform, { layer: 'tenant' }, this.nowDate));
       return { kind: 'rejected_rate_limited', layer: 'tenant' };
     }
 
     // 3. Per-(tenant, platform) bucket.
     const platformBucket = this.platformBucketFor(edit.tenant_id, edit.platform);
     if (!platformBucket.take()) {
-      this.audit.emit(makeEvent('sync.outbound.rate_limited', edit.tenant_id, edit.platform, { layer: 'platform' }, this.nowDate));
+      this.audit.emit(makeEvent('connector.rate_limit.throttled', edit.tenant_id, edit.platform, { layer: 'platform' }, this.nowDate));
       return { kind: 'rejected_rate_limited', layer: 'platform' };
     }
 
     // 4. Per-platform circuit breaker.
     const breaker = this.breakerFor(edit.platform);
     if (!breaker.canPass()) {
-      this.audit.emit(makeEvent('sync.outbound.circuit_open', edit.tenant_id, edit.platform, {}, this.nowDate));
+      this.audit.emit(makeEvent('connector.circuit.opened', edit.tenant_id, edit.platform, {}, this.nowDate));
       return { kind: 'rejected_circuit_open' };
     }
 
     // 5. Coalescer — append and return disposition.
     const { coalesced, key } = this.coalescer.enqueue(edit);
     if (coalesced) {
-      this.audit.emit(makeEvent('sync.outbound.coalesced', edit.tenant_id, edit.platform, { key, event_id: edit.event_id }, this.nowDate));
+      this.audit.emit(makeEvent('connector.coalesce.applied', edit.tenant_id, edit.platform, { key, event_id: edit.event_id }, this.nowDate));
       // Reflect the event in the composite result once it flushes;
       // we don't know the final source_event_ids yet, so we record
       // just the new event id here and the audit row at flush time
@@ -200,7 +200,7 @@ export class OutboundReliability {
         const existing = this.pausedUntil.get(platform) ?? 0;
         if (until > existing) this.pausedUntil.set(platform, until);
         this.audit.emit(
-          makeEvent('sync.outbound.rate_limited', tenant_id, platform, { layer: 'platform_remote', remaining, limit, paused_until_ms: until }, this.nowDate),
+          makeEvent('connector.rate_limit.throttled', tenant_id, platform, { layer: 'provider', remaining, limit, paused_until_ms: until }, this.nowDate),
         );
       }
     }
@@ -217,9 +217,9 @@ export class OutboundReliability {
     if (transitions.length === 0) return;
     const last = transitions[transitions.length - 1]!;
     if (last.to === 'open' && last.from !== 'open') {
-      this.audit.emit(makeEvent('sync.platform.degraded', null, platform, { state: 'open', at_ms: last.at_ms }, this.nowDate));
+      this.audit.emit(makeEvent('connector.circuit.opened', null, platform, { state: 'open', at_ms: last.at_ms }, this.nowDate));
     } else if (last.to === 'closed' && last.from !== 'closed') {
-      this.audit.emit(makeEvent('sync.platform.recovered', null, platform, { state: 'closed', at_ms: last.at_ms }, this.nowDate));
+      this.audit.emit(makeEvent('connector.circuit.closed', null, platform, { state: 'closed', at_ms: last.at_ms }, this.nowDate));
     }
   }
 

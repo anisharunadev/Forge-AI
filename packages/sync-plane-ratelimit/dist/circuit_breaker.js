@@ -12,7 +12,7 @@
  *   - trips on N consecutive 5xx within a sliding window (default 5
  *     in 60s)
  *   - half-open probe after 5 min
- *   - emits `sync.platform.degraded` on the open transition (the
+ *   - emits `connector.circuit.opened` on the open transition (the
  *     audit module turns the transition into the typed event)
  *
  * The breaker is a pure state machine. `now()` is injectable so the
