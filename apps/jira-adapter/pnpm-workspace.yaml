@@ -1,0 +1,6 @@
+packages:
+  - ../../packages/db-pool
+  - ../../packages/session-tokens
+allowBuilds:
+  esbuild: set this to true or false
+  protobufjs: set this to true or false
