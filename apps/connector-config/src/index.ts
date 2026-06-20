@@ -56,6 +56,7 @@ export type {
   ConnectorBindingAttestationExpiredMetadata,
   ConnectorBindingOrphanRiskMetadata,
   ConnectorBindingMissingMetadata,
+  ConnectorBindingInheritedResolvedMetadata,
   ConnectorBindingHealthCheckMetadata,
 } from './audit.js';
 export {

@@ -54,8 +54,14 @@ import { ConnectorBindingRepo, connectorBindingRepo } from './repo.js';
 import type {
   ConnectorBindingAuditSink,
   ConnectorBindingEvent,
+  ConnectorBindingEventBase,
 } from './audit.js';
-import { buildEvent, mintEventId, systemActor } from './audit.js';
+import {
+  buildEvent,
+  mintEventId,
+  systemActor,
+  userActor,
+} from './audit.js';
 import type {
   ConnectorBinding,
   ConnectorId,
@@ -245,9 +251,34 @@ export class ConnectorConfigResolver {
       connector_id: input.connector_id,
       auth_method: input.auth_method,
     });
-    if (inherited) {
-      this.deps.cache.set(key, inherited);
-      return { binding: inherited, step: 'tenant_inherited', cache_hit: false };
+    if (inherited !== null) {
+      // Hoist into a non-null local so the rest of the block
+      // can reference the fields without `!.` or guarded
+      // property access. `walkInheritance` is the only path
+      // that constructs this object; null means "no
+      // inherited binding found".
+      const hit = inherited;
+      this.deps.cache.set(key, hit.binding);
+      // Emit connector.binding.inherited_resolved stamped with
+      // the CHILD's tenant_id (input.tenant_id) per Plan 4 §5.
+      // The parent's binding_id + tenant_id + depth are
+      // captured in the metadata so auditors can trace every
+      // parent-inheritance resolve back to its consumer.
+      await this.emitInheritedResolved({
+        requester_tenant_id: input.tenant_id,
+        parent_tenant_id: hit.parent_tenant_id,
+        depth: hit.depth,
+        inherited_binding_id: hit.binding.binding_id,
+        connector_id: input.connector_id,
+        auth_method: input.auth_method,
+        project_id: input.project_id,
+        actor: input.actor,
+      });
+      return {
+        binding: hit.binding,
+        step: 'tenant_inherited',
+        cache_hit: false,
+      };
     }
 
     // ---- Step 4: forge_operator_fallback (Auditor only) -------------------
@@ -307,15 +338,26 @@ export class ConnectorConfigResolver {
 
   /**
    * Walk the inheritance chain from depth 1 to 3. Returns the
-   * first active binding found, or `null` if the chain breaks
-   * or the cap is reached.
+   * first active binding found plus the depth + parent tenant
+   * id it was found at, or `null` if the chain breaks or the
+   * cap is reached.
+   *
+   * Plan 4 §5 + FORA-546: an attempt to walk past depth 3
+   * (e.g. an admin-time request to chain four tenants deep)
+   * raises the typed `TenantInheritanceDepthExceededError`
+   * before the SQL runs, so the call site learns the
+   * rejection reason rather than observing a silent MISS.
    */
   private async walkInheritance(args: {
     repo: ConnectorBindingRepo;
     tenant_id: TenantId;
     connector_id: ConnectorId;
     auth_method: string;
-  }): Promise<ConnectorBinding | null> {
+  }): Promise<{
+    binding: ConnectorBinding;
+    parent_tenant_id: TenantId;
+    depth: 1 | 2 | 3;
+  } | null> {
     let parent_tenant_id: TenantId | null = args.tenant_id;
     for (let depth = 1; depth <= 3; depth++) {
       if (parent_tenant_id === null) return null;
@@ -325,7 +367,13 @@ export class ConnectorConfigResolver {
         connector_id: args.connector_id,
         auth_method: args.auth_method,
       });
-      if (row && this.isResolvable(row)) return row;
+      if (row && this.isResolvable(row)) {
+        return {
+          binding: row,
+          parent_tenant_id: row.tenant_id,
+          depth: depth as 1 | 2 | 3,
+        };
+      }
       // The plan: walk parent_tenant_id from depth 1..3; each
       // step queries the binding whose tenant_id equals the
       // *current* parent and depth equals the iteration. We
@@ -380,6 +428,58 @@ export class ConnectorConfigResolver {
     });
     await this.deps.audit.append(event);
     return event_id;
+  }
+
+  /**
+   * Emit `connector.binding.inherited_resolved` audit event
+   * stamped with the requesting CHILD's tenant_id per
+   * Plan 4 §5 + FORA-546 AC #2. The event carries
+   * parent_tenant_id + depth + inherited_binding_id in
+   * metadata so the FORA-36 forwarder can reconstruct the
+   * chain at audit time.
+   */
+  private async emitInheritedResolved(args: {
+    requester_tenant_id: TenantId;
+    parent_tenant_id: TenantId;
+    depth: 1 | 2 | 3;
+    inherited_binding_id: string;
+    connector_id: ConnectorId;
+    auth_method: string;
+    project_id: string | null;
+    actor: ResolveBindingInput['actor'];
+  }): Promise<void> {
+    const event_id = mintEventId();
+    const now = (this.deps.now ?? (() => new Date().toISOString()))();
+    const event: ConnectorBindingEvent = buildEvent({
+      event_id,
+      event_type: 'connector.binding.inherited_resolved',
+      // Stamp the event with the CHILD's tenant_id per
+      // Plan 4 §5; auditors can filter on
+      // metadata.requester_tenant_id to find every consumer
+      // who resolved through a given parent binding.
+      tenant_id: args.requester_tenant_id,
+      // The binding being used is the parent's row, so the
+      // event's binding_id is the parent's binding_id and
+      // its auth_method is the inherited value. The
+      // connector_id + project_id mirror the request shape.
+      binding_id: args.inherited_binding_id,
+      connector_id: args.connector_id,
+      project_id: args.project_id,
+      // ResolveBindingInput.auth_method is the closed
+      // RealAuthMethod enum; the event envelope accepts the
+      // wider AuthMethod union. Narrowing through `as`
+      // preserves the typed contract at the call site.
+      auth_method: args.auth_method as ConnectorBindingEventBase['auth_method'],
+      actor: userActor(args.actor.actor_id, args.actor.role, args.actor.trace_id),
+      emitted_at: now,
+      metadata: {
+        requester_tenant_id: args.requester_tenant_id,
+        parent_tenant_id: args.parent_tenant_id,
+        depth: args.depth,
+        inherited_binding_id: args.inherited_binding_id,
+      },
+    });
+    await this.deps.audit.append(event);
   }
 
   /**

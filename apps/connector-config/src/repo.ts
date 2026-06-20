@@ -54,6 +54,10 @@ import type {
   CreateBindingInput,
   RevokeBindingInput,
 } from './types.js';
+import {
+  CrossTenantBindingWriteForbiddenError,
+  enforceDepthAtAdmission,
+} from './types.js';
 
 // ---------------------------------------------------------------------------
 // SQL builders
@@ -425,12 +429,70 @@ export class ConnectorBindingRepo {
   // ---- Writes ---------------------------------------------------------------
 
   /**
+   * Enforce the Plan 4 §5 tenant-ownership rule at every write
+   * boundary. The runtime NEVER mutates an inherited row on
+   * the child's behalf — the activation, revocation,
+   * attestation, and health-check paths all run this guard
+   * before the SQL. The Keycloak admin layer + the column
+   * CHECK + the RLS policy are the outer gates; this is the
+   * application-level gate that surfaces a typed
+   * `CrossTenantBindingWriteForbiddenError` to the caller.
+   *
+   * FORA-546 AC #3: "Child cannot write parent binding
+   * (negative test required)."
+   */
+  private async enforceWriteTenantOwnership(args: {
+    requester_tenant_id: TenantId;
+    binding_id: string;
+    operation: 'activate' | 'revoke' | 'attest' | 'health_check';
+  }): Promise<void> {
+    const existing = await this.findByBindingId({
+      tenant_id: args.requester_tenant_id,
+      binding_id: args.binding_id,
+    });
+    if (existing === null) {
+      // The row does not exist in the caller's tenant scope
+      // (the RLS posture or the natural key returns null).
+      // The downstream write would also fail — but the typed
+      // error is clearer than the repo's "binding not found"
+      // string and helps the FORA-36 forwarder correlate the
+      // rejection with the request claim.
+      throw new CrossTenantBindingWriteForbiddenError({
+        requester_tenant_id: args.requester_tenant_id,
+        binding_owner_tenant_id: args.requester_tenant_id,
+        binding_id: args.binding_id,
+        operation: args.operation,
+      });
+    }
+    if (existing.tenant_id !== args.requester_tenant_id) {
+      throw new CrossTenantBindingWriteForbiddenError({
+        requester_tenant_id: args.requester_tenant_id,
+        binding_owner_tenant_id: existing.tenant_id,
+        binding_id: args.binding_id,
+        operation: args.operation,
+      });
+    }
+  }
+
+  /**
    * Insert a new binding. Idempotent on `(tenant_id,
    * binding_id)` via ON CONFLICT DO NOTHING; returns the
    * existing row on conflict so callers can detect a
    * duplicate-Keycloak-client situation.
+   *
+   * Plan 4 §5 admission gate (FORA-546 AC #1): the
+   * `enforceDepthAtAdmission` guard runs first so an attempt
+   * to insert at depth > 3 raises the typed
+   * `TenantInheritanceDepthExceededError` before the SQL
+   * executes. The Keycloak admin layer is the first gate; the
+   * column CHECK is the data-layer gate; this is the runtime
+   * gate. All three must agree.
    */
   async create(input: CreateBindingInput): Promise<ConnectorBinding> {
+    enforceDepthAtAdmission({
+      tenant_id: input.tenant_id,
+      depth: input.depth ?? 0,
+    });
     const result = await this.client.query(
       `INSERT INTO connector_binding (${INSERT_COLUMNS})
        VALUES (
@@ -476,6 +538,11 @@ export class ConnectorBindingRepo {
     binding_id: string;
     actor: ActorId;
   }): Promise<ConnectorBinding> {
+    await this.enforceWriteTenantOwnership({
+      requester_tenant_id: args.tenant_id,
+      binding_id: args.binding_id,
+      operation: 'activate',
+    });
     const result = await this.client.query(
       `UPDATE connector_binding
           SET status = 'active',
@@ -501,6 +568,11 @@ export class ConnectorBindingRepo {
    * on tenant activation, and by the admin revoke path.
    */
   async revoke(input: RevokeBindingInput): Promise<ConnectorBinding> {
+    await this.enforceWriteTenantOwnership({
+      requester_tenant_id: input.tenant_id,
+      binding_id: input.binding_id,
+      operation: 'revoke',
+    });
     const result = await this.client.query(
       `UPDATE connector_binding
           SET status = 'revoked',
@@ -538,6 +610,11 @@ export class ConnectorBindingRepo {
     binding_id: string;
     actor: ActorId;
   }): Promise<ConnectorBinding> {
+    await this.enforceWriteTenantOwnership({
+      requester_tenant_id: args.tenant_id,
+      binding_id: args.binding_id,
+      operation: 'attest',
+    });
     const result = await this.client.query(
       `UPDATE connector_binding
           SET status = 'attesting',
@@ -569,6 +646,11 @@ export class ConnectorBindingRepo {
     binding_id: string;
     attested_by: ActorId;
   }): Promise<ConnectorBinding> {
+    await this.enforceWriteTenantOwnership({
+      requester_tenant_id: args.tenant_id,
+      binding_id: args.binding_id,
+      operation: 'attest',
+    });
     const result = await this.client.query(
       `UPDATE connector_binding
           SET status = 'active',
@@ -604,6 +686,11 @@ export class ConnectorBindingRepo {
     binding_id: string;
     actor: ActorId;
   }): Promise<ConnectorBinding> {
+    await this.enforceWriteTenantOwnership({
+      requester_tenant_id: args.tenant_id,
+      binding_id: args.binding_id,
+      operation: 'health_check',
+    });
     const result = await this.client.query(
       `UPDATE connector_binding
           SET last_health_check_at = now(),
@@ -634,6 +721,11 @@ export class ConnectorBindingRepo {
     binding_id: string;
     actor: ActorId;
   }): Promise<ConnectorBinding> {
+    await this.enforceWriteTenantOwnership({
+      requester_tenant_id: args.tenant_id,
+      binding_id: args.binding_id,
+      operation: 'health_check',
+    });
     const result = await this.client.query(
       `UPDATE connector_binding
           SET last_health_check_at = now(),

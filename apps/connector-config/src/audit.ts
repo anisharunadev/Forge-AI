@@ -25,6 +25,7 @@
  *   connector.binding.attestation_expired  — 90-day sweep marked attesting
  *   connector.binding.orphan_risk          — override whose parent default is revoked
  *   connector.binding.missing              — resolver fell through to step 5
+ *   connector.binding.inherited_resolved   — step 3 used a parent's binding
  *   connector.binding.health_check.ok      — health worker success
  *   connector.binding.health_check.fail    — health worker failure
  *
@@ -65,6 +66,7 @@ export type ConnectorBindingEventType =
   | 'connector.binding.attestation_expired'
   | 'connector.binding.orphan_risk'
   | 'connector.binding.missing'
+  | 'connector.binding.inherited_resolved'
   | 'connector.binding.health_check.ok'
   | 'connector.binding.health_check.fail';
 
@@ -82,6 +84,7 @@ export const CONNECTOR_BINDING_EVENT_TYPES: ReadonlyArray<ConnectorBindingEventT
     'connector.binding.attestation_expired',
     'connector.binding.orphan_risk',
     'connector.binding.missing',
+    'connector.binding.inherited_resolved',
     'connector.binding.health_check.ok',
     'connector.binding.health_check.fail',
   ] as const;
@@ -164,6 +167,26 @@ export interface ConnectorBindingMissingMetadata {
   readonly attempted_steps: ReadonlyArray<string>;
 }
 
+/**
+ * Metadata for `connector.binding.inherited_resolved`. Emitted
+ * by the resolver when step 3 (tenant inherited) returns a
+ * non-null binding — the child's request used the parent's
+ * binding. The event is stamped with the requesting child's
+ * `tenant_id` (the requester), the parent's `tenant_id` (the
+ * binding's owner), the depth (1..3), and the inherited row's
+ * binding_id so the FORA-36 forwarder + the auditors can trace
+ * every parent-inheritance resolve back to its consumer.
+ *
+ * Spec source: Plan 4 §5 + FORA-546. Auditor-only fallback
+ * reads use step 4 instead; this event covers step 3 only.
+ */
+export interface ConnectorBindingInheritedResolvedMetadata {
+  readonly requester_tenant_id: string;
+  readonly parent_tenant_id: string;
+  readonly depth: 1 | 2 | 3;
+  readonly inherited_binding_id: string;
+}
+
 export interface ConnectorBindingHealthCheckMetadata {
   readonly latency_ms: number;
   readonly error?: string;
@@ -206,6 +229,10 @@ export type ConnectorBindingEvent =
   | (ConnectorBindingEventBase & {
       readonly event_type: 'connector.binding.missing';
       readonly metadata: ConnectorBindingMissingMetadata;
+    })
+  | (ConnectorBindingEventBase & {
+      readonly event_type: 'connector.binding.inherited_resolved';
+      readonly metadata: ConnectorBindingInheritedResolvedMetadata;
     })
   | (ConnectorBindingEventBase & {
       readonly event_type: 'connector.binding.health_check.ok';

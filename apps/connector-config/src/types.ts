@@ -406,6 +406,75 @@ export class TenantInheritanceDepthExceededError extends Error {
 }
 
 /**
+ * The Plan 4 §5 + Keycloak admission cap. Depth 0 (project
+ * owned) is always valid. Depth 1..3 is the inheritance range
+ * for child → grandchild chains. Depth > 3 is rejected at
+ * admission so a misconfigured admin cannot blow past the
+ * cap. Mirrors the `connector_binding.depth` CHECK in
+ * migration 0006.
+ */
+export const MAX_TENANT_INHERITANCE_DEPTH = 3;
+
+/**
+ * Enforce the Plan 4 §5 depth cap at the runtime admission
+ * boundary (the `repo.create` write path). Throws the typed
+ * `TenantInheritanceDepthExceededError` if the caller
+ * attempts to insert a binding with `depth > 3`. The Keycloak
+ * admin layer is the first gate; this is defence in depth.
+ *
+ * Plan 4: "Inheritance depth is hard-limited to 3
+ * (parent → child → grandchild)." FORA-546 AC #1.
+ */
+export function enforceDepthAtAdmission(args: {
+  tenant_id: TenantId;
+  depth: number;
+}): void {
+  if (args.depth < 0 || args.depth > MAX_TENANT_INHERITANCE_DEPTH) {
+    throw new TenantInheritanceDepthExceededError({
+      tenant_id: args.tenant_id,
+      attempted_depth: args.depth,
+    });
+  }
+}
+
+/**
+ * Thrown when a child tenant attempts to write a binding row
+ * that belongs to one of its ancestors. The runtime NEVER
+ * mutates an inherited row on the child's behalf — the
+ * `repo.activate / revoke / attest / recordHealthCheck*`
+ * methods all run this guard before the SQL. The error
+ * surfaces the requester tenant, the binding's owner tenant,
+ * and the attempted write kind so the FORA-36 forwarder can
+ * correlate the rejection with the request claim.
+ *
+ * Plan 4 §5: "A child can never write the parent's binding."
+ * FORA-546 AC #3 (child-cannot-write negative test).
+ */
+export class CrossTenantBindingWriteForbiddenError extends Error {
+  readonly requester_tenant_id: TenantId;
+  readonly binding_owner_tenant_id: TenantId;
+  readonly binding_id: string;
+  readonly operation: 'activate' | 'revoke' | 'attest' | 'health_check';
+  constructor(args: {
+    requester_tenant_id: TenantId;
+    binding_owner_tenant_id: TenantId;
+    binding_id: string;
+    operation: 'activate' | 'revoke' | 'attest' | 'health_check';
+  }) {
+    super(
+      `cross-tenant write forbidden: tenant=${args.requester_tenant_id} ` +
+        `cannot ${args.operation} binding_id=${args.binding_id} ` +
+        `owned by tenant=${args.binding_owner_tenant_id}`,
+    );
+    this.name = 'CrossTenantBindingWriteForbiddenError';
+    this.requester_tenant_id = args.requester_tenant_id;
+    this.binding_owner_tenant_id = args.binding_owner_tenant_id;
+    this.binding_id = args.binding_id;
+    this.operation = args.operation;
+  }
+}
+
+/**
  * Thrown when an actor that is not an Auditor attempts to use
  * the `forge_operator_fallback` binding. Step 4 of the resolver
  * is gated to Auditor role only.

@@ -449,7 +449,28 @@ export class FakeScopedClient implements ScopedClient {
         : ({ rows: [], rowCount: 0 } as QueryResult<R>);
     }
 
-    // findForgeOperatorFallback
+    // listForgeOperatorFallbacks — must match BEFORE the
+    // single-row findForgeOperatorFallback branch because
+    // both queries include the `auth_method =
+    // 'forge_operator_fallback'` filter. The list query
+    // has NO LIMIT clause; the single-row query has LIMIT
+    // 1. The list branch is the no-LIMIT match.
+    if (
+      trimmed.includes('FROM CONNECTOR_BINDING') &&
+      trimmed.includes("AUTH_METHOD = 'FORGE_OPERATOR_FALLBACK'") &&
+      !trimmed.includes('LIMIT 1')
+    ) {
+      const [tenant_id] = params as [string];
+      const matches = Array.from(this.bindings.values()).filter(
+        (b) =>
+          b.tenant_id === tenant_id &&
+          b.auth_method === 'forge_operator_fallback' &&
+          b.status === 'active',
+      );
+      return { rows: matches.map((m) => this.toRow(m) as R), rowCount: matches.length } as QueryResult<R>;
+    }
+
+    // findForgeOperatorFallback (single-row, LIMIT 1)
     if (trimmed.includes("AUTH_METHOD = 'FORGE_OPERATOR_FALLBACK'")) {
       const [tenant_id] = params as [string];
       const match = Array.from(this.bindings.values()).find(
@@ -462,23 +483,6 @@ export class FakeScopedClient implements ScopedClient {
       return match
         ? { rows: [this.toRow(match) as R], rowCount: 1 }
         : ({ rows: [], rowCount: 0 } as QueryResult<R>);
-    }
-
-    // listForgeOperatorFallbacks
-    if (
-      trimmed.includes('FROM CONNECTOR_BINDING') &&
-      trimmed.includes("AUTH_METHOD = 'FORGE_OPERATOR_FALLBACK'") &&
-      trimmed.includes("STATUS = 'ACTIVE'") &&
-      !trimmed.includes('LIMIT')
-    ) {
-      const [tenant_id] = params as [string];
-      const matches = Array.from(this.bindings.values()).filter(
-        (b) =>
-          b.tenant_id === tenant_id &&
-          b.auth_method === 'forge_operator_fallback' &&
-          b.status === 'active',
-      );
-      return { rows: matches.map((m) => this.toRow(m) as R), rowCount: matches.length } as QueryResult<R>;
     }
 
     // listActiveProjectOverrides
@@ -572,7 +576,7 @@ export function seedBinding(
 ): ConnectorBinding {
   const now = new Date().toISOString();
   const expires = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
-  const id = `00000000-0000-0000-0000-${String(client.bindings.size + 1).padStart(12, '0')}`;
+  const id = `ffffffff-ffff-ffff-ffff-${String(client.bindings.size + 1).padStart(12, '0')}`;
   const row: StoredBinding = {
     id,
     binding_id: args.binding_id,
