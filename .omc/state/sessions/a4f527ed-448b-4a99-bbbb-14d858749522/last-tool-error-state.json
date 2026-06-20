@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cat > /tmp/close_fora_309.py <<'PY'\\nimport json, os, urllib.request\\n\\napi = os.environ['PAPERCLIP_API_URL']\\nkey = os.environ['PAPERCLIP_API_KEY']\\nrun = os.environ['PAPERCLIP_RUN_ID']\\n...",
-  "error": "Exit code 1\nstatus: done\nTraceback (most recent call last):\n  File \"/tmp/close_fora_309.py\", line 24, in <module>\n    print(\"comment snippet:\", (resp.get('comment') or '')[:80])\n                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^\nKeyError: slice(None, 80, None)",
-  "timestamp": "2026-06-18T00:12:15.033Z",
-  "retry_count": 1
-}

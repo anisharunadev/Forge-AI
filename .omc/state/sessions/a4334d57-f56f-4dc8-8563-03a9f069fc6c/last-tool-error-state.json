@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk ls pnpm-workspace.yaml 2>&1; rtk read pnpm-workspace.yaml 2>&1\",\"description\":\"Find pnpm workspace\"}",
-  "error": "Exit code 1\n/usr/bin/ls: cannot access 'pnpm-workspace.yaml': No such file or directory\ncat: pnpm-workspace.yaml: No such file or directory (os error 2)",
-  "timestamp": "2026-06-17T01:05:36.709Z",
-  "retry_count": 1
-}

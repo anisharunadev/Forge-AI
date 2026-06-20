@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk git status 2>&1 | head -30; echo \\\"---\\\"; rtk git log -1 --format=\\\"%H %s\\\" 2>&1\",\"description\":\"Check git status and head\"}",
-  "error": "Exit code 128\nNot a git repository\n---\nfatal: not a git repository (or any of the parent directories): .git",
-  "timestamp": "2026-06-17T16:57:37.888Z",
-  "retry_count": 1
-}

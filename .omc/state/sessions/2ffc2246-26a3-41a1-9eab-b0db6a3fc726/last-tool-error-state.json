@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -sS -X POST \\\\\\n  -H \\\"Authorization: Bearer ${PAPERCLIP_API_KEY}\\\" \\\\\\n  -H \\\"X-Paperclip-Run-Id: ${PAPERCLIP_RUN_ID}\\\" \\\\\\n  -H \\\"Content-Type: application/json\\\" \\\\\\n  -d '{\\n ...",
-  "error": "Exit code 2\n/usr/bin/bash: eval: line 26: syntax error near unexpected token `('\n/usr/bin/bash: eval: line 26: `    \"description\": \"## Scope (from approved plan on FORA-336)\\n\\nThis is the implementation child for the Scrum Master developer-communication + auto-resolve capability (v0.1). Board approved via `request_confirmation` 2a6d0231-… on [FORA-336](/FORA/issues/FORA-336).\\n\\n## What the CTO must deliver\\n\\n### 1. Update `agents/fc897e4f-.../instructions/AGENTS.md`\\n\\nAdd the following three...",
-  "timestamp": "2026-06-18T08:07:21.621Z",
-  "retry_count": 1
-}

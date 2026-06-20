@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"python3 <<'PYEOF'\\nimport json, urllib.request, os\\n\\nAPI = \\\"http://127.0.0.1:3100\\\"\\nTOK = os.environ[\\\"PAPERCLIP_API_KEY\\\"]\\nRUN = os.environ[\\\"PAPERCLIP_RUN_ID\\\"]\\nAGENT = os.environ[\\...",
-  "error": "Exit code 1\nSetting cross-blockers...\nTraceback (most recent call last):\n  File \"<stdin>\", line 26, in <module>\n  File \"<stdin>\", line 15, in req\n  File \"/usr/lib/python3.12/urllib/request.py\", line 215, in urlopen\n    return opener.open(url, data, timeout)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 521, in open\n    response = meth(req, response)\n               ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 630, in ht...",
-  "timestamp": "2026-06-17T00:58:29.636Z",
-  "retry_count": 1
-}

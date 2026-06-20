@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"python3 -m agents.documentation.readme_smoke_test\",\"description\":\"Re-run README smoke test\"}",
-  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<frozen runpy>\", line 198, in _run_module_as_main\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/documentation/readme_smoke_test.py\", line 505, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/arunachalam.v@knackforge.com/.paperclip/instances/default/proje...",
-  "timestamp": "2026-06-17T17:04:19.794Z",
-  "retry_count": 2
-}

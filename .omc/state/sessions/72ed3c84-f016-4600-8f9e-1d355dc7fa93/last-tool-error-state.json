@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -s -X POST -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" -H \\\"Content-Type: application/json\\\" \\\"http://127.0.0.1:3100/api/issues/20240d99-009c-4a15-978f-9bf5376f426b/comments\\\"...",
-  "error": "Exit code 2\n/usr/bin/bash: eval: line 1: syntax error near unexpected token `)'\n/usr/bin/bash: eval: line 1: `rtk curl -s -X POST -H \"Authorization: Bearer $PAPERCLIP_API_KEY\" -H \"Content-Type: application/json\" \"http://127.0.0.1:3100/api/issues/20240d99-009c-4a15-978f-9bf5376f426b/comments\" -d '{\"body\":\"## Verdict: PRODUCTIVE — cadence by design, no action needed\\n\\nFORA-283 (Weekly flow cadence) is healthy. The 6h `long_active_duration` trigger is firing on a deliberate wait-state, not a stall...",
-  "timestamp": "2026-06-18T03:27:53.839Z",
-  "retry_count": 1
-}

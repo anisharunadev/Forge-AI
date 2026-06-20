@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -s -X POST -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" -H \\\"X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID\\\" -H \\\"Content-Type: application/json\\\" \\\"$PAPERCLIP_API_URL/api/companies/3f...",
-  "error": "Exit code 2\n/usr/bin/bash: eval: line 20: syntax error near unexpected token `)'\n/usr/bin/bash: eval: line 20: `  \"description\": \"## Scope\\n\\nDeliverable for [FORA-337](/FORA/issues/FORA-337) AC #3 — the Scrum Master must create its own Monday blocked-issue-sweep routine (Paperclip API rule: agents can only manage routines assigned to themselves; the CTO cannot create this on the Scrum Master agent's behalf).\\n\\n## Routine spec\\n\\nCreate the routine via `POST /api/companies/3fde3945-9dcb-4c43-95...",
-  "timestamp": "2026-06-18T08:23:41.045Z",
-  "retry_count": 1
-}

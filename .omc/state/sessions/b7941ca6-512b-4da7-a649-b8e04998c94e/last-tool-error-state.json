@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"COMMENT=$(cat <<'MD'\\n## Cadence setup — ACCEPT executed\\n\\nCEO 2026-06-18 ACCEPT on this issue's process change #6. Cadence is now live.\\n\\n### What was set up\\n\\n1. **Routine** — \\\"Weekl...",
-  "error": "Exit code 2",
-  "timestamp": "2026-06-17T21:32:56.356Z",
-  "retry_count": 1
-}

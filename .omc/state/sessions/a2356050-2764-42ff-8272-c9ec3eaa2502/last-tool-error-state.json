@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -sS -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\"$PAPERCLIP_API_URL/api/companies/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/issues?parentId=24c6d820-44d4-47f2-bd43-02cbfa38b605&ma...",
-  "error": "Exit code 3\njq: error: syntax error, unexpected INVALID_CHARACTER (Unix shell quoting issues?) at <top-level>, line 1:\nif type == \"array\" then map({identifier, title, status, assigneeAgentName: (.assigneeAgentId // \\\"unassigned\\\")}) else . end                                                                                                \njq: 1 compile error\n\nthread 'main' (1430364) panicked at /rustc/ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96/library/std/src/io/stdio.rs:1165:9:\nfailed printing to ...",
-  "timestamp": "2026-06-17T21:18:34.310Z",
-  "retry_count": 1
-}

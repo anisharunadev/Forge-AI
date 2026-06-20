@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -s \\\"$PAPERCLIP_API_URL/api/issues?parentId=6a25cacf-2816-416b-bebe-34385820c57e\\\" -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" | jq '.[] | select(.identifier == \\\"FORA-40\\\") |...",
-  "error": "Exit code 5\njq: error (at <stdin>:1): Cannot index string with string \"identifier\"",
-  "timestamp": "2026-06-17T20:38:46.010Z",
-  "retry_count": 1
-}

@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"scripts/paperclip-issue-update.sh --issue-id \\\"$PAPERCLIP_TASK_ID\\\" --comment \\\"Heartbeat resume — wiring Epic 6.1 children to the parent epic.\\\" <<'MD'\\n## Resume note (2026-06-18, CEO)\\n...",
-  "error": "Exit code 127\n/usr/bin/bash: line 20: scripts/paperclip-issue-update.sh: No such file or directory",
-  "timestamp": "2026-06-17T20:20:51.522Z",
-  "retry_count": 1
-}

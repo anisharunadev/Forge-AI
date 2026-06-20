@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -sS -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\"$PAPERCLIP_API_URL/api/companies/$PAPERCLIP_COMPANY_ID/agents\\\" 2>/dev/null | python3 -c \\\"import sys, json; d = json.load(sy...",
-  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nAttributeError: 'list' object has no attribute 'get'",
-  "timestamp": "2026-06-16T18:12:19.646Z",
-  "retry_count": 2
-}

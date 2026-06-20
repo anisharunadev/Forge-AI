@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk ls /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/docs/architecture/ 2>/dev...",
-  "error": "Exit code 2\n.omc/\nadr-0001-architecture-diagram.md  7.1K\nadr-0001-master-orchestrator-sdlc-architecture.md  21.1K\nadr-0002-memory-store-diagram.md  4.9K\nadr-0002-memory-store.md  32.9K\nadr-0003-auth-tenancy.md  20.3K\naudit-system-design.md  22.8K\nstandards.md",
-  "timestamp": "2026-06-16T20:08:01.929Z",
-  "retry_count": 1
-}

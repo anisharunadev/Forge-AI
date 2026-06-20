@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"python3 /tmp/post_fora_122_comment.py 2>&1\",\"description\":\"Post FORA-122 comment, PATCH status, create confirmation interaction\"}",
-  "error": "Exit code 1\n→ POST /api/issues/FORA-122/comments\n   comment id: cca122d0-a59d-4c45-affe-c5bb1a2685ef\n→ PATCH /api/issues/FORA-122 status=in_review\nTraceback (most recent call last):\n  File \"/tmp/post_fora_122_comment.py\", line 164, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/tmp/post_fora_122_comment.py\", line 129, in main\n    resp = request(\"PATCH\", f\"/api/issues/{ISSUE}\", {\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/post_fora_122_comment.py\", line 109,...",
-  "timestamp": "2026-06-17T20:34:28.432Z",
-  "retry_count": 2
-}

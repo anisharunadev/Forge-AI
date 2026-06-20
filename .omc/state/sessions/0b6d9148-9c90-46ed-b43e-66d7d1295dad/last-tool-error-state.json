@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -s -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\"http://127.0.0.1:3100/api/companies/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/agents/f4d4bf77-2a6b-41e0-b3c5-4a688e2913f0\\\" 2>&1 | ...",
-  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 4, in <module>\nKeyError: 'name'",
-  "timestamp": "2026-06-16T19:03:14.994Z",
-  "retry_count": 2
-}

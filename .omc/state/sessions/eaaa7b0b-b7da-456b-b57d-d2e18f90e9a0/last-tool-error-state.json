@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"python3 /tmp/validate_forge23.py\",\"description\":\"Re-run validation with fixed OpenAPI body extraction\"}",
-  "error": "Exit code 1\n[1/4] 14 artefact files present.\n[2/4] All 14 artefacts have version + last-reviewed-by + parent-prd + parent-issue.\n[3/4] All Mermaid blocks parse (header in known set). 7 diagram blocks total.\nTraceback (most recent call last):\n  File \"/tmp/validate_forge23.py\", line 93, in <module>\n    spec = yaml.safe_load(body)\n           ^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/yaml/__init__.py\", line 125, in safe_load\n    return load(stream, SafeLoader)\n           ^^^^^^^^^^...",
-  "timestamp": "2026-06-17T17:47:06.438Z",
-  "retry_count": 5
-}

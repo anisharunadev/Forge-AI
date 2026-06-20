@@ -1,9 +1,0 @@
-{"kind":"stage.entered","runId":"run_zzgkhyvj_mqhbv28o","stage":"plan","at":"2026-06-17T00:23:20.856Z"}
-{"kind":"plan.emitted","runId":"run_zzgkhyvj_mqhbv28o","planId":"plan-bad","stepCount":1,"at":"2026-06-17T00:23:20.857Z"}
-{"kind":"stage.entered","runId":"run_zzgkhyvj_mqhbv28o","stage":"act","at":"2026-06-17T00:23:20.857Z"}
-{"kind":"error","runId":"run_zzgkhyvj_mqhbv28o","error":{"code":"NotAllowed","message":"tool \"forbidden-echo\" is not in stage \"act\" allow-list","tool":"forbidden-echo","stage":"act","runId":"run_zzgkhyvj_mqhbv28o"},"at":"2026-06-17T00:23:20.857Z"}
-{"kind":"observation","runId":"run_zzgkhyvj_mqhbv28o","observation":{"stepId":"step-bad","tool":"forbidden-echo","output":null,"ok":false,"errorOutput":{"code":"NotAllowed","message":"tool \"forbidden-echo\" is not in stage \"act\" allow-list","tool":"forbidden-echo","stage":"act","runId":"run_zzgkhyvj_mqhbv28o"},"durationMs":0},"at":"2026-06-17T00:23:20.858Z"}
-{"kind":"stage.entered","runId":"run_zzgkhyvj_mqhbv28o","stage":"observe","at":"2026-06-17T00:23:20.858Z"}
-{"kind":"stage.entered","runId":"run_zzgkhyvj_mqhbv28o","stage":"reflect","at":"2026-06-17T00:23:20.858Z"}
-{"kind":"reflection","runId":"run_zzgkhyvj_mqhbv28o","done":true,"note":"echo done","at":"2026-06-17T00:23:20.859Z"}
-{"kind":"finished","runId":"run_zzgkhyvj_mqhbv28o","status":"failed","at":"2026-06-17T00:23:20.859Z"}

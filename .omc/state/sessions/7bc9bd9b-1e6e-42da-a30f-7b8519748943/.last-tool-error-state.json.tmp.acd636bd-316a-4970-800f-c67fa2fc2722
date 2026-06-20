@@ -1,7 +1,0 @@
-{
-  "tool_name": "mcp__plugin_atlassian_atlassian__getJiraIssue",
-  "tool_input_preview": "{\"cloudId\":\"fora-17\",\"issueIdOrKey\":\"FORA-242\",\"fields\":[\"*all\"]}",
-  "error": "{\"error\":true,\"message\":\"Failed to fetch cloud ID for: fora-17. Error: Input does not look like a valid domain or URL\"}",
-  "timestamp": "2026-06-17T21:26:23.196Z",
-  "retry_count": 3
-}

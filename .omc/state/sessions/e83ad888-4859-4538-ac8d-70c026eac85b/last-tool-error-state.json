@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"python3 -c \\\"\\nimport sqlite3, sqlite_vec\\nprint('sqlite-vec version:', sqlite_vec.__version__ if hasattr(sqlite_vec,'__version__') else 'unknown')\\ndb = sqlite3.connect(':memory:')\\ndb.en...",
-  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 10, in <module>\nsqlite3.OperationalError: Inserted vector for the \"embedding\" column is invalid: invalid float32 vector BLOB length. Must be divisible by 4, found 17\nsqlite-vec version: 0.1.9\nvec0 extension loaded OK at: /home/arunachalam.v@knackforge.com/.local/lib/python3.12/site-packages/sqlite_vec/vec0",
-  "timestamp": "2026-06-16T18:57:53.181Z",
-  "retry_count": 2
-}

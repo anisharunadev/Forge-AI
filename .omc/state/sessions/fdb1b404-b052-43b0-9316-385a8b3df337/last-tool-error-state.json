@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"ISSUE=\\\"08185985-150e-4738-a01b-aeeeb91a3b51\\\"\\nrtk curl -s -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\"$PAPERCLIP_API_URL/api/issues/$ISSUE/comments\\\" | jq 'length, .[-1] | {id, bod...",
-  "error": "Exit code 5\njq: error (at <stdin>:1): Cannot index number with string \"id\"",
-  "timestamp": "2026-06-18T00:30:21.907Z",
-  "retry_count": 2
-}

@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"python3 << 'PYEOF'\\nimport os, json, urllib.request\\n\\nbase = os.environ[\\\"PAPERCLIP_API_URL\\\"].rstrip(\\\"/\\\")\\nheaders = {\\n    \\\"Authorization\\\": f\\\"Bearer {os.environ['PAPERCLIP_API_TOKE...",
-  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<stdin>\", line 5, in <module>\n  File \"<frozen os>\", line 685, in __getitem__\nKeyError: 'PAPERCLIP_API_TOKEN'",
-  "timestamp": "2026-06-18T08:24:17.047Z",
-  "retry_count": 1
-}

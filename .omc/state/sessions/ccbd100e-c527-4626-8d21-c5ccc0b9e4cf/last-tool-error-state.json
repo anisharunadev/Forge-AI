@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -sS -X POST \\\"$PAPERCLIP_API_URL/api/issues/5d723fca-2e5a-46e3-a610-a9073f20df75/comments\\\" \\\\\\n  -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\\\\n  -H \\\"Content-Type: applicat...",
-  "error": "Exit code 2\n/usr/bin/bash: eval: line 12: syntax error near unexpected token `('\n/usr/bin/bash: eval: line 12: `    \"body\": \"## ADR-0010 (Proposed) — Cross-Platform Sync Plane\\n\\nFiled at `docs/architecture/adr-0010-cross-platform-sync-plane.md`.\\n\\n**One-line decision:** per-tenant logical hub, NATS JetStream internal spine (ADR-0006), per-platform adapter as the only writer per remote, HLC for clock ordering, three-tier conflict policy (source-of-truth by field → HLC LWW → human divergence wor...",
-  "timestamp": "2026-06-17T17:07:42.084Z",
-  "retry_count": 1
-}

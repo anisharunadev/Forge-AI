@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"scripts/paperclip-issue-update.sh --issue-id \\\"c2e5d697-af4f-474e-ad8d-1e71d8758265\\\" --status done <<'MD'\\n## FORA-209 — Review verdict: productive\\n\\n**Decision:** Close as productive. T...",
-  "error": "Exit code 127\n/usr/bin/bash: line 24: scripts/paperclip-issue-update.sh: No such file or directory",
-  "timestamp": "2026-06-17T17:08:32.240Z",
-  "retry_count": 1
-}

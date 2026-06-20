@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk ls /home/arunachalam.v@knackforge.com/.paperclip/instances/default/companies/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/claude-prompt-cache/be7a250ccc38ba74f7a4f29ce2242c70afaf78121effcd643f...",
-  "error": "Exit code 2",
-  "timestamp": "2026-06-16T20:23:25.072Z",
-  "retry_count": 1
-}

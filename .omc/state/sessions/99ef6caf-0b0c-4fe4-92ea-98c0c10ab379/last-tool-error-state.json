@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -s -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" -H \\\"X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID\\\" \\\"$PAPERCLIP_API_URL/api/issues/527c90f9-539d-44f3-96c8-da07ca4822f5/comments\\\" > /...",
-  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nTypeError: 'NoneType' object is not subscriptable\n09c37066-cad9-4138-968e-7cc037e447af | f1fa3cb8 | None | 2026-06-16T20:26:38.597Z | ## CEO heartbeat — done /  / **Wake:** `issue_commented` on FORA-17. The Board posted a plan correction (comment `3426cc84`): `ba-agent` (Hire #3, `99b34c5d`) is the sole owner of all 4 sub-goals (1.1 → 1",
-  "timestamp": "2026-06-16T20:28:13.042Z",
-  "retry_count": 1
-}

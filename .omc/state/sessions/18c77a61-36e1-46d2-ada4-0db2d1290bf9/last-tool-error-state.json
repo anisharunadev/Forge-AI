@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk ls /home/arunachalam.v@knackforge.com/.claude/skills/ 2>/dev/null | head -30; echo \\\"---\\\"; rtk ls /home/arunachalam.v@knackforge.com/.claude/skills/paperclip* 2>/dev/null\",\"descriptio...",
-  "error": "Exit code 2\ncommit-context/\ncommit-history/\nforget/\nhandoff/\nomc-reference/\nrecall/\nrecap/\nremember/\nsession-history/\nagent-browser -> ../../.agents/skills/agent-browser  34B\nbrainstorming -> ../../.agents/skills/brainstorming  34B\ndispatching-parallel-agents -> ../../.agents/skills/dispatching-parallel-agents  48B\ndocx -> ../../.agents/skills/docx  25B\ndrawio -> ../../.agents/skills/drawio  27B\nexecuting-plans -> ../../.agents/skills/executing-plans  36B\nfigma -> ../../.agents/skills/figma  26B...",
-  "timestamp": "2026-06-17T20:22:13.648Z",
-  "retry_count": 1
-}

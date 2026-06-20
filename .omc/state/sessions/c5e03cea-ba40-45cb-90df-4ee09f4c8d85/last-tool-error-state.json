@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"python3 - <<'PY'\\nimport os, json, urllib.request\\napi = os.environ['PAPERCLIP_API_URL']\\ntoken = os.environ['PAPERCLIP_API_KEY']\\nrunid = os.environ['PAPERCLIP_RUN_ID']\\n\\ndef get(issue_i...",
-  "error": "Exit code 1\n=== Final state verification ===\n\nTraceback (most recent call last):\n  File \"<stdin>\", line 17, in <module>\nTypeError: 'NoneType' object is not subscriptable",
-  "timestamp": "2026-06-17T17:08:44.421Z",
-  "retry_count": 1
-}

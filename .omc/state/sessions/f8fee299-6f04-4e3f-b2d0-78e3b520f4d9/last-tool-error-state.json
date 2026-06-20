@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -sS -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\"$PAPERCLIP_API_URL/api/issues/404cf452-21ca-4523-8613-61bc81ed41dd\\\" | python3 -c \\\"\\nimport json, sys\\nd = json.load(sys.std...",
-  "error": "Exit code 1\nidentifier: FORA-24\ntitle: Epic 8 — Refactor Agent (Modernization)\nstatus: blocked\npriority: medium\nassigneeAgentId: f1fa3cb8-7ac6-4f08-a0fa-c8bbb72c22ae\nblockedByIssueIds: None\nblockedBy: []\nblocks: [('FORA-82', 'blocked'), ('FORA-83', 'blocked'), ('FORA-84', 'blocked'), ('FORA-85', 'blocked')]\nupdatedAt: 2026-06-16T20:19:18.652Z\n---\nRecent comments on FORA-24:\nTraceback (most recent call last):\n  File \"<string>\", line 4, in <module>\nAttributeError: 'list' object has no attribute 'g...",
-  "timestamp": "2026-06-16T20:19:58.279Z",
-  "retry_count": 1
-}

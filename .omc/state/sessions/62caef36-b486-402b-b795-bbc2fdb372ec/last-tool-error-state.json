@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"echo \\\"=== FORA-340 final state ===\\\"\\ncurl -s \\\"$PAPERCLIP_API_URL/api/issues/5935c3fe-44ec-4e7e-9071-e892429dc7d7\\\" \\\\\\n  -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\\\\n  -H \\\"X-Pap...",
-  "error": "Exit code 5\n=== FORA-340 final state ===\n{\n  \"identifier\": \"FORA-340\",\n  \"status\": \"done\",\n  \"completedAt\": \"2026-06-18T08:27:07.179Z\",\n  \"parentId\": \"38e849bb-cd8b-46a4-b325-ad94ad345806\"\n}\n\n=== FORA-341 (mock-run issue) final state ===\n{\n  \"identifier\": \"FORA-341\",\n  \"status\": \"done\",\n  \"completedAt\": \"2026-06-18T08:26:15.484Z\",\n  \"originRunId\": \"450efa6e-d3d0-45a1-933d-c17964e7372a\"\n}\n\n=== Routine ===\n{\n  \"id\": \"3916338e-e462-48de-9047-c29cdda90d84\",\n  \"title\": \"Monday 09:07Z blocked-issue sw...",
-  "timestamp": "2026-06-18T08:28:12.680Z",
-  "retry_count": 1
-}

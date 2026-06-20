@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cd /tmp && python3 forge-epic1-create-subgoals.py\",\"description\":\"Create the 4 Epic 1 sub-goals with blockers\"}",
-  "error": "Exit code 1\nCreating Epic 1 sub-goals under FORA-17…\n\n  ✓ FORA-113 (82461208-14a0-4f39-8d3d-08006a5acefc) — Sub-goal 1.1 — Requirement ingestion (Draft PRD)\n  ✓ FORA-114 (07116dd8-9895-40b6-a3ee-538b1a16336a) — Sub-goal 1.2 — Market & tech-debt analysis\n  ✓ FORA-115 (5dac2331-287b-420b-9e7c-3feff1b69fc9) — Sub-goal 1.3 — Epic generator (Epic + stories + acceptance criteria)\n  ✓ FORA-116 (98410482-495d-4bd3-a9e4-0fc79aec3089) — Sub-goal 1.4 — Jira sync (push approved Epic to customer sprint)\nTrac...",
-  "timestamp": "2026-06-16T18:56:58.950Z",
-  "retry_count": 1
-}

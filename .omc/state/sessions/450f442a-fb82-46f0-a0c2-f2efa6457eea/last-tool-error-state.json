@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"pwd; rtk ls node_modules/.bin/vitest 2>&1\",\"description\":\"Confirm cwd and vitest path\"}",
-  "error": "Exit code 2\n/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default\n/usr/bin/ls: cannot access 'node_modules/.bin/vitest': No such file or directory",
-  "timestamp": "2026-06-17T10:47:40.570Z",
-  "retry_count": 1
-}

@@ -1,7 +1,0 @@
-{
-  "tool_name": "Write",
-  "tool_input_preview": "{\"file_path\":\"/home/arunachalam.v@knackflare.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/agents/architecture/detector.p...",
-  "error": "EACCES: permission denied, mkdir '/home/arunachalam.v@knackflare.com'",
-  "timestamp": "2026-06-17T17:28:15.826Z",
-  "retry_count": 1
-}

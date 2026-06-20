@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -s -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\"$PAPERCLIP_API_URL/api/issues/75953dd3-9348-42b5-833d-5a8574eac061?include=assignee,executionState\\\" 2>/dev/null | python3 -c ...",
-  "error": "Exit code 1\nstatus: in_progress\nassignee: f4d4bf77-2a6b-41e0-b3c5-4a688e2913f0\nwork_mode: standard\npriority: medium\nexecutionRun: fc590ffb-d15a-40da-98c7-ee6b22ae1986\nlatest comment area:\n  File \"<string>\", line 2\n    [print('---', c.get('id'), c.get('authorType'), c.get('authorAgentId') or c.get('authorUserId'), c.get('createdAt'), '---'); print((c.get('body') or '')[:2000]) for c in d.get('comments', d if isinstance(d,list) else [])]\n                                                            ...",
-  "timestamp": "2026-06-17T20:14:39.265Z",
-  "retry_count": 1
-}

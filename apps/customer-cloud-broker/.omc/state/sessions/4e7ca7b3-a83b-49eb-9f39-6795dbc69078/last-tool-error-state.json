@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk ls scripts/ 2>&1 && rtk read scripts/paperclip-issue-update.sh 2>&1 | head -60\",\"description\":\"Check helper script\"}",
-  "error": "Exit code 2\n/usr/bin/ls: cannot access 'scripts/': No such file or directory",
-  "timestamp": "2026-06-18T00:37:32.113Z",
-  "retry_count": 1
-}

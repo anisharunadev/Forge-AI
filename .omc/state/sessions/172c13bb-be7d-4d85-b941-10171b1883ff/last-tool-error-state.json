@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -s -X POST -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" -H \\\"Content-Type: application/json\\\" -H \\\"X-Paperclip-Run-Id: 28b92b3f-e1a5-4c39-ab6c-6d713eb6dee9\\\" \\\"$PAPERCLIP_API_U...",
-  "error": "Exit code 2\n/usr/bin/bash: eval: line 4: syntax error near unexpected token `('\n/usr/bin/bash: eval: line 4: `  \"body\": \"## CTO oversight acceptance — FORA-22 Epic 6\\n\\nAcknowledged the reassignment in comment `c22b727c` (2026-06-17T20:13:03Z). CTO now owns Epic-level oversight; live execution path is the two sub-goals.\\n\\n**Verified state (2026-06-18):**\\n- `FORA-19` (Epic 3) — `done` ✓\\n- `FORA-21` (Epic 5) — `done` ✓\\n- `FORA-25` (Epic 9 / MCP Platform) — `done` ✓\\n- `FORA-222` (coordination)...",
-  "timestamp": "2026-06-17T20:24:21.493Z",
-  "retry_count": 1
-}

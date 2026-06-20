@@ -1,7 +1,0 @@
-{"kind":"stage.entered","runId":"run_f8tqjut9_mqhce1zn","stage":"plan","at":"1970-01-01T00:16:40.000Z"}
-{"kind":"plan.emitted","runId":"run_f8tqjut9_mqhce1zn","planId":"plan","stepCount":0,"at":"1970-01-01T00:16:40.000Z"}
-{"kind":"stage.entered","runId":"run_f8tqjut9_mqhce1zn","stage":"act","at":"1970-01-01T00:16:40.000Z"}
-{"kind":"stage.entered","runId":"run_f8tqjut9_mqhce1zn","stage":"observe","at":"1970-01-01T00:16:40.000Z"}
-{"kind":"stage.entered","runId":"run_f8tqjut9_mqhce1zn","stage":"reflect","at":"1970-01-01T00:16:40.000Z"}
-{"kind":"reflection","runId":"run_f8tqjut9_mqhce1zn","done":true,"note":"done","at":"1970-01-01T00:16:40.000Z"}
-{"kind":"finished","runId":"run_f8tqjut9_mqhce1zn","status":"succeeded","at":"1970-01-01T00:16:40.000Z"}

@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -sS \\\"${PAPERCLIP_API_URL}/api/agents/231cc5ae-3235-482c-a791-d8ff3e217c8e\\\" -H \\\"Authorization: Bearer ${PAPERCLIP_API_KEY}\\\" 2>&1 | python3 -c \\\"\\nimport json,sys\\nd = json.load...",
-  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 23, in <module>\nAttributeError: 'list' object has no attribute 'keys'\nid: 231cc5ae-3235-482c-a791-d8ff3e217c8e\nname: SecurityEngineer\nrole: engineer\ntitle: Security Engineer\nicon: shield\nstatus: idle\nreportsTo: f4d4bf77-2a6b-41e0-b3c5-4a688e2913f0\nadapterType: claude_local\npermissions: {'canCreateAgents': False}\ninstructionsBundle type: dict\n  entryFile: None\n  files keys: []",
-  "timestamp": "2026-06-17T21:21:55.575Z",
-  "retry_count": 2
-}

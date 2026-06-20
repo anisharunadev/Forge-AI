@@ -1,9 +1,0 @@
-# Generated lockfile snapshot — fixture for FORA-76 smoke test (clean / patched).
-# Purpose: every previously vulnerable package is bumped to its
-# fixed version. Trivy must return zero HIGH or CRITICAL findings
-# and Dependabot must return zero open alerts.
-
-# Web framework
-django==3.2.10
-pillow==9.0.0
-requests==2.27.0

@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"python3 -c \\\"\\nimport json\\nwith open('/tmp/openapi.json') as f:\\n  d = json.load(f)\\npaths = d.get('paths', {}).keys()\\n# find anything related to blocked, dependencies, links\\nprint('All...",
-  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 16, in <module>\nTypeError: 'dict_keys' object is not subscriptable\nAll paths with blocked, dep, link, relation:\n\nAll PATCH endpoints:",
-  "timestamp": "2026-06-17T21:24:44.955Z",
-  "retry_count": 1
-}

@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -sS -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\"$PAPERCLIP_API_URL/api/issues/FORA-318\\\" | python3 -c \\\"\\nimport json, sys\\nd = json.load(sys.stdin)\\nprint('identifier:', d....",
-  "error": "Exit code 1\nidentifier: FORA-318\nstatus: done\nupdatedAt: 2026-06-18T00:20:32.783Z\nassigneeAgentId: f1fa3cb8-7ac6-4f08-a0fa-c8bbb72c22ae\ncompletedAt: 2026-06-18T00:20:32.783Z\n---\n  File \"<string>\", line 6\n    print(f\"id={c.get('id')[:8]} authorType={c.get('authorType')} author={c.get('authorAgentId') or c.get('authorUserId')} created={c.get('createdAt)} body[:140]={c.get('body','')[:140]!r}\")\n                                                                                                         ...",
-  "timestamp": "2026-06-18T00:21:13.784Z",
-  "retry_count": 1
-}

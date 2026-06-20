@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk read /home/arunachalam.v@knackforge.com/.paperclip/instances/default/agents/f4d4bf77-2a6b-41e0-b3c5-4a688e2913f0/.env 2>/dev/null | head -30; echo '---'; rtk ls /home/arunachalam.v@kna...",
-  "error": "Exit code 2\n---",
-  "timestamp": "2026-06-17T16:58:05.558Z",
-  "retry_count": 1
-}

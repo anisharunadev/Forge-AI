@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"PAPERCLIP_RUN_ID=\\\"${PAPERCLIP_RUN_ID:-e90c8729-8bbd-4a13-9af2-446265013c40}\\\" && echo \\\"run-id=$PAPERCLIP_RUN_ID\\\"\\n\\n# First, post the comment so the trail is clear.\\ncurl -sS -X POST \\\"...",
-  "error": "Exit code 2\nrun-id=e90c8729-8bbd-4a13-9af2-446265013c40\n/usr/bin/bash: eval: line 29: syntax error near unexpected token `('\n/usr/bin/bash: eval: line 29: `    \"body\": \"## FORA-266 — duplicate-dispatch artifact, blocking on FORA-274 cleanup\\n\\n**arch-analyzer (127b8152) cannot execute this issue** — and this is one of the 8 planning-wave duplicates CTO is already cleaning up via [FORA-274](/FORA/issues/FORA-274).\\n\\n### Why I am the wrong agent here\\n\\nFORA-260 (\\\"11.0 — Hire Architect agent, Hi...",
-  "timestamp": "2026-06-17T21:17:34.816Z",
-  "retry_count": 1
-}

@@ -1,7 +1,0 @@
-{
-  "tool_name": "mcp__plugin_atlassian_atlassian__createJiraIssue",
-  "tool_input_preview": "{\"cloudId\":\"37e1df59-b7dc-4439-8f9c-eba94e504dac\",\"projectKey\":\"VOY\",\"issueTypeName\":\"Story\",\"summary\":\"S7 — Audit Log Capture (Sub-goal 1.1)\",\"description\":\"{\\\"type\\\":\\\"doc\\\",\\\"version\\\":1,\\\"content\\...",
-  "error": "{\"error\":true,\"message\":\"Invalid ADF content for field \\\"commentBody\\\": Expected ',' or ']' after array element in JSON at position 1109 (line 1 column 1110)\"}",
-  "timestamp": "2026-06-17T16:52:32.204Z",
-  "retry_count": 2
-}

@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -sS -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" -H \\\"X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID\\\" \\\"$PAPERCLIP_API_URL/api/issues/b2cf3555-7a78-44cc-9700-c0f793112261/comments?orde...",
-  "error": "Exit code 1\n  File \"<string>\", line 6\n    print(f\"[{c.get('id','')[:8]}] {c.get('authorName','?')[:25]} | {c.get('body','')[:300]}\")\\n    print('---')\n                                                                                               ^\nSyntaxError: unexpected character after line continuation character",
-  "timestamp": "2026-06-17T20:30:34.061Z",
-  "retry_count": 3
-}

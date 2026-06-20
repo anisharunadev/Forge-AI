@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -sS -X POST \\\"${PAPERCLIP_API_URL:-http://localhost:3100}/api/issues/FORA-333/comments\\\" \\\\\\n  -H \\\"Authorization: Bearer ${PAPERCLIP_AGENT_TOKEN}\\\" \\\\\\n  -H \\\"Content-Type: appli...",
-  "error": "Exit code 2\n/usr/bin/bash: eval: line 16: syntax error near unexpected token `('\n/usr/bin/bash: eval: line 16: `    \"body\": \"## FORA-333 disposition: reroute via resume — FORA-252 wake restored\\n\\n### Finding\\n\\nFORA-252 (11.1 Sync Plane service skeleton, assigned Architect) was not a productivity stall — it was a **wake-on-demand silent drop** on comment-driven cross-agent reassignment. Activity log evidence:\\n\\n- 21:17:03 — CTO reassigned → `arch-analyzer` (run `0037d956…` succeeded)\\n- 21:33:...",
-  "timestamp": "2026-06-18T03:12:02.967Z",
-  "retry_count": 1
-}

@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"python3 -c \\\"\\nimport json, os, urllib.request, urllib.error\\n\\napi = os.environ['PAPERCLIP_API_URL']\\nkey = os.environ['PAPERCLIP_API_KEY']\\nissue_id = 'ed6b01e6-e7db-464b-a87b-b81629a8e3...",
-  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 14, in <module>\n  File \"/usr/lib/python3.12/urllib/request.py\", line 215, in urlopen\n    return opener.open(url, data, timeout)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 521, in open\n    response = meth(req, response)\n               ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/urllib/request.py\", line 630, in http_response\n    response = self.parent.error(\n             ...",
-  "timestamp": "2026-06-16T20:29:11.868Z",
-  "retry_count": 2
-}

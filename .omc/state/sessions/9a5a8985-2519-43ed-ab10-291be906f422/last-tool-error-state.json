@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"python3 <<'PY'\\nimport json, subprocess, os\\ntoken = os.environ['PAPERCLIP_API_KEY']\\nurl = os.environ['PAPERCLIP_API_URL']\\nissue_id = '0530820f-feb1-4815-987e-2e111b932028'\\nrun_id = '50...",
-  "error": "Exit code 1\nupdated: False\nupdatedAt: None\nTraceback (most recent call last):\n  File \"<stdin>\", line 48, in <module>\nKeyError: 'description'",
-  "timestamp": "2026-06-17T10:59:31.923Z",
-  "retry_count": 2
-}

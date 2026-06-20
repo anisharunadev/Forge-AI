@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -s \\\"http://localhost:3100/api/issues/FORA-268\\\" 2>/dev/null | python3 -c \\\"import sys, json; d=json.load(sys.stdin); print(json.dumps({k:d[k] for k in ['id','identifier','status'...",
-  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nKeyError: 'blockedByIssueIds'",
-  "timestamp": "2026-06-17T21:28:42.370Z",
-  "retry_count": 1
-}

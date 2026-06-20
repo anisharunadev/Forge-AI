@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk grep -rn \\\"parseTriggerPayload\\\\|triggerPayloadSchema\\\" apps/orchestrator/ 2>/dev/null\",\"description\":\"Check if parseTriggerPayload / triggerPayloadSchema exist\"}",
-  "error": "Exit code 1",
-  "timestamp": "2026-06-17T15:38:28.128Z",
-  "retry_count": 1
-}

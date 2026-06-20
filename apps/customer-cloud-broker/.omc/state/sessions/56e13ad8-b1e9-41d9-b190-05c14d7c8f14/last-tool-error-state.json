@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cat > /tmp/fora-126-done.md <<'MD'\\n## FORA-126 — done\\n\\nAll 5 children are `done`. Customer-cloud-broker v1 ships end-to-end: AWS / Azure / GCP OIDC federation, per-service SDK dispatch,...",
-  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 4, in <module>\nKeyError: 'issue'",
-  "timestamp": "2026-06-17T17:13:08.151Z",
-  "retry_count": 1
-}

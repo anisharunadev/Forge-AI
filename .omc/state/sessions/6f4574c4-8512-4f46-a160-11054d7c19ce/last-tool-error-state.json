@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk ls mcp-servers/github/node_modules/ 2>/dev/null | head -30 && echo \\\"---\\\" && rtk read mcp-servers/github/.omc/ 2>/dev/null && rtk ls mcp-servers/github/.omc/ 2>/dev/null\",\"description...",
-  "error": "Exit code 1\n.bin/\n@hono/\n@modelcontextprotocol/\n@octokit/\n@types/\naccepts/\najv/\najv-formats/\nbefore-after-hook/\nbody-parser/\nbytes/\ncall-bind-apply-helpers/\ncall-bound/\ncontent-disposition/\ncontent-type/\ncookie/\ncookie-signature/\ncors/\ncross-spawn/\ndebug/\ndepd/\ndunder-proto/\nee-first/\nencodeurl/\nes-define-property/\nes-errors/\nes-object-atoms/\nescape-html/\netag/\neventsource/\n---",
-  "timestamp": "2026-06-16T18:21:44.338Z",
-  "retry_count": 1
-}

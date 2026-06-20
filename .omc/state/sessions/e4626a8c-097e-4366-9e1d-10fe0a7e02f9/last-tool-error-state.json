@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -s -X PATCH \\\"https://${PAPERCLIP_API_URL}/api/issues/FORA-148\\\" \\\\\\n  -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\\\\n  -H \\\"X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID\\\" \\\\\\n  -H ...",
-  "error": "Exit code 6\nFAILED: curl",
-  "timestamp": "2026-06-17T00:32:00.684Z",
-  "retry_count": 1
-}

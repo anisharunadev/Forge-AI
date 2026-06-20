@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk ls /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/mcp-servers/databricks/sr...",
-  "error": "Exit code 2\n/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/mcp-servers/databricks/src/:\ntotal 40\ndrwxrwxr-x 2 arunachalam.v@knackforge.com arunachalam.v@knackforge.com  4096 Jun 18 02:29 .\ndrwxrwxr-x 9 arunachalam.v@knackforge.com arunachalam.v@knackforge.com  4096 Jun 18 02:30 ..\n-rw-rw-r-- 1 arunachalam.v@knackforge.com arunachalam.v@knackforge.com 11959 Jun 18 02:29 client.ts\n-rw-rw-r-...",
-  "timestamp": "2026-06-17T21:05:25.868Z",
-  "retry_count": 2
-}

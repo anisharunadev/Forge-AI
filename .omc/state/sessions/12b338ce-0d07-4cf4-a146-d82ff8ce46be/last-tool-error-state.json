@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"env | grep -i paperclip 2>/dev/null; env | grep -i api 2>/dev/null | head -20; rtk read /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4...",
-  "error": "Exit code 2\nPAPERCLIP_API_URL=http://127.0.0.1:3100\nPAPERCLIP_API_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmNGQ0YmY3Ny0yYTZiLTQxZTAtYjNjNS00YTY4OGUyOTEzZjAiLCJjb21wYW55X2lkIjoiM2ZkZTM5NDUtOWRjYi00YzQzLTk1YjMtNGU0ZTlkYjZmZmU5IiwiYWRhcHRlcl90eXBlIjoiY2xhdWRlX2xvY2FsIiwicnVuX2lkIjoiMzZiN2M2MzYtZDFkMy00N2Q1LThiZTMtYzA2Nzk4YjBjNDA5IiwiaWF0IjoxNzgxNzU5MTE3LCJleHAiOjE3ODE5MzE5MTcsImlzcyI6InBhcGVyY2xpcCIsImF1ZCI6InBhcGVyY2xpcC1hcGkifQ.wZz2fYR1RtlRnRe8PN33NAqKilwZRqjnOT4_eynzvYo\nPAPERCLIP_WORK...",
-  "timestamp": "2026-06-18T05:05:39.841Z",
-  "retry_count": 1
-}

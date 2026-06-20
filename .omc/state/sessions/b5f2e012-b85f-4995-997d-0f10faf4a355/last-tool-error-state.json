@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk read /home/arunachalam.v@knackforge.com/.claude/projects/-home-arunachalam-v-knackforge-com--paperclip-instances-default-projects-3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9-bb09220b-5ed2-47b...",
-  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 3, in <module>\n  File \"/usr/lib/python3.12/json/__init__.py\", line 293, in load\n    return loads(fp.read(),\n           ^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/json/__init__.py\", line 346, in loads\n    return _default_decoder.decode(s)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/json/decoder.py\", line 337, in decode\n    obj, end = self.raw_decode(s, idx=_w(s, 0).end())\n               ^^^^^^^^^^^^^^^^...",
-  "timestamp": "2026-06-17T16:36:05.793Z",
-  "retry_count": 2
-}

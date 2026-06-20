@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"echo \\\"=== FORA-262 (CTO's skeleton duplicate) ===\\\"\\ncurl -sS \\\"${PAPERCLIP_API_URL}/api/issues/$(curl -sS \\\"${PAPERCLIP_API_URL}/api/companies/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/issues...",
-  "error": "Exit code 127\n=== FORA-262 (CTO's skeleton duplicate) ===\n/usr/bin/bash: eval: line 22: syntax error near unexpected token `('\n/usr/bin/bash: eval: line 22: `d = json.load(sys.stdin)'",
-  "timestamp": "2026-06-17T21:11:42.584Z",
-  "retry_count": 1
-}

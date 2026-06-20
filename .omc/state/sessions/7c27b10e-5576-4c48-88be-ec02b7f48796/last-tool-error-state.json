@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -s -X PATCH -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" -H \\\"X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID\\\" -H \\\"Content-Type: application/json\\\" \\\\\\n  -d '{\\\"assigneeAgentId\\\": \\\"27...",
-  "error": "Exit code 5\njq: error (at <stdin>:1): Cannot iterate over null (null)",
-  "timestamp": "2026-06-17T15:57:43.794Z",
-  "retry_count": 3
-}

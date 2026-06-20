@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"python -c \\\"from agents.github_mcp import server; s = server.make_server(); tools = list(s._tools.keys()); print('TOOLS:', sorted(tools))\\\"\",\"description\":\"Verify github_mcp server loads w...",
-  "error": "Exit code 127\n/usr/bin/bash: line 1: python: command not found",
-  "timestamp": "2026-06-17T00:22:15.382Z",
-  "retry_count": 1
-}

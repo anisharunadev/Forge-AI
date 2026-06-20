@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk ls /home/arunachalam.v@knackforge.com/.paperclip/instances/default/companies/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/claude-prompt-cache/e71ea447dbeea15a13f7d2026d01fc0eea49cf48a4c9ac0465...",
-  "error": "Exit code 1\npaperclip-upload-artifact.sh  10.1K",
-  "timestamp": "2026-06-17T17:03:59.392Z",
-  "retry_count": 1
-}

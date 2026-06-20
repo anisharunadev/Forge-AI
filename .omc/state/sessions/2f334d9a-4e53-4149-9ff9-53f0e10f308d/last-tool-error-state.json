@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -s \\\"http://localhost:3100/api/issues/FORA-26/comments\\\" | python3 -c \\\"\\nimport sys, json\\nd = json.load(sys.stdin)\\nitems = d if isinstance(d, list) else d.get('items', d.get('c...",
-  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 6, in <module>\nTypeError: 'NoneType' object is not subscriptable",
-  "timestamp": "2026-06-17T15:52:08.207Z",
-  "retry_count": 1
-}

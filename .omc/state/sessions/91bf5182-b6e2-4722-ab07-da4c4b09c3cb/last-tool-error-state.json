@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -s -X POST -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" -H \\\"X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID\\\" -H \\\"Content-Type: application/json\\\" \\\"http://localhost:3100/api/issues/FO...",
-  "error": "Exit code 2\n/usr/bin/bash: eval: line 5: syntax error near unexpected token `('\n/usr/bin/bash: eval: line 5: `  \"body\": \"## CTO review of CEO silent run (6c914c9e)\\n\\nAssessing the suspicious silence on CEO run `6c914c9e-9764-4a98-a408-dddf61e4df1d` (started 2026-06-17T05:17:47Z, silent 1h 27m, pid 2237007 still alive).\\n\\n**Source issue:** [FORA-165](/FORA/issues/FORA-165) — 0.7.2d — `blocked` on upstream 0.7.2a/b/c children.\\n\\n**Findings**\\n- Latest run (239276ca) finished `succeeded` at 2026...",
-  "timestamp": "2026-06-17T06:47:03.725Z",
-  "retry_count": 3
-}

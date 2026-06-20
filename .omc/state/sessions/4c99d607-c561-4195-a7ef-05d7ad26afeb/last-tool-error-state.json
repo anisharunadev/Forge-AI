@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -sS \\\"$PAPERCLIP_API_URL/api/companies/$PAPERCLIP_COMPANY_ID/issues?q=FORA-60\\\" \\\\\\n  -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" | jq '.issues[] | {id: .id, identifier: .iden...",
-  "error": "Exit code 5\njq: error (at <stdin>:1): Cannot index array with string \"issues\"",
-  "timestamp": "2026-06-17T10:27:31.738Z",
-  "retry_count": 1
-}

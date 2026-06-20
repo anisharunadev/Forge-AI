@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"env | grep -i paperclip 2>&1 | head -10 && echo \\\"---\\\" && which paperclip 2>&1 && echo \\\"---\\\" && rtk ls -la /usr/local/bin/paperclip 2>&1 && echo \\\"---\\\" && find . -name \\\"*.paperclip*\\\"...",
-  "error": "Exit code 1\nPAPERCLIP_API_URL=http://127.0.0.1:3100\nPAPERCLIP_API_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmNGQ0YmY3Ny0yYTZiLTQxZTAtYjNjNS00YTY4OGUyOTEzZjAiLCJjb21wYW55X2lkIjoiM2ZkZTM5NDUtOWRjYi00YzQzLTk1YjMtNGU0ZTlkYjZmZmU5IiwiYWRhcHRlcl90eXBlIjoiY2xhdWRlX2xvY2FsIiwicnVuX2lkIjoiMDAzN2Q5NTYtZWY1Ni00NzgwLThkY2UtY2QwNTVmZjlmZTVhIiwiaWF0IjoxNzgxNzMwNDk1LCJleHAiOjE3ODE5MDMyOTUsImlzcyI6InBhcGVyY2xpcCIsImF1ZCI6InBhcGVyY2xpcC1hcGkifQ.H-MavNByB31KBjeSrWmb4efJXV6a00ODE4S1JQqPEK4\nPAPERCLIP_WORK...",
-  "timestamp": "2026-06-17T21:27:07.411Z",
-  "retry_count": 1
-}

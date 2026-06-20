@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -sS -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" -H \\\"X-Paperclip-Run-Id: $PAPERCLIP_RUN_ID\\\" \\\"http://127.0.0.1:3100/api/companies/$PAPERCLIP_COMPANY_ID/issues?identifier=FORA...",
-  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 4, in <module>\nAttributeError: 'list' object has no attribute 'get'",
-  "timestamp": "2026-06-18T00:48:12.442Z",
-  "retry_count": 1
-}

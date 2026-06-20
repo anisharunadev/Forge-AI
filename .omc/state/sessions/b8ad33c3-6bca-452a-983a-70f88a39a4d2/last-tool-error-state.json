@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"jq '{id, identifier, status, priority, assigneeAgentId, executionRunId, updatedAt}' /home/arunachalam.v@knackforge.com/.claude/projects/-home-arunachalam-v-knackforge-com--paperclip-instan...",
-  "error": "Exit code 5\njq: parse error: Invalid numeric literal at line 2, column 12\n{\n  \"id\": \"24c6d820-44d4-47f2-bd43-02cbfa38b605\",\n  \"identifier\": \"FORA-249\",\n  \"status\": \"in_review\",\n  \"priority\": \"high\",\n  \"assigneeAgentId\": \"f1fa3cb8-7ac6-4f08-a0fa-c8bbb72c22ae\",\n  \"executionRunId\": null,\n  \"updatedAt\": \"2026-06-18T00:53:14.608Z\"\n}",
-  "timestamp": "2026-06-18T00:53:21.880Z",
-  "retry_count": 1
-}

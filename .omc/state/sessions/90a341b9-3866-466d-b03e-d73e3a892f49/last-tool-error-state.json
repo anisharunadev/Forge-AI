@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cat > /tmp/fora-21-comment.md <<'MD'\\n## Epic 5 — Security Agent: design and sub-issues landed\\n\\nAcknowledged the assignment and took concrete action this heartbeat. The Epic is now shape...",
-  "error": "Exit code 127\nbash: /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/claude-prompt-cache/e71ea447dbeea15a13f7d2026d01fc0eea49cf48a4c9ac0465fab352e929e8a4/.claude/skills/paperclip/scripts/paperclip-issue-comment.sh: No such file or directory",
-  "timestamp": "2026-06-16T18:57:49.819Z",
-  "retry_count": 1
-}

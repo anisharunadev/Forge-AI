@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"jq -n --arg body \\\"$(cat /tmp/fora-23-comment.md)\\\" '{body:$body}' > /tmp/fora-23-comment.json\\necho \\\"--- request body ---\\\"\\njq . /tmp/fora-23-comment.json\\necho \\\"--- post ---\\\"\\ncurl -...",
-  "error": "Exit code 5\n--- request body ---\n{\n  \"body\": \"## Epic 7 — Documentation Agent: sub-goal + task breakdown shipped\\n\\nStatus: in_progress (live continuation path established).\\nReference plan: [FORA-15 BMAD workflow plan](/FORA/issues/FORA-15#document-plan) — still in board review.\\n\\n### What I did this heartbeat\\n\\nDrilled Epic 7 into a concrete sub-goal + 6 implementation tasks so the work is ready to dispatch the moment the parent plan is approved.\\n\\n**Sub-goal created**\\n- [FORA-54 — 7.1 Doc...",
-  "timestamp": "2026-06-16T18:58:00.297Z",
-  "retry_count": 2
-}
