@@ -94,6 +94,15 @@ export interface McpRequestContext {
   readonly trace_id?: string;
   /** Agent type when the caller is an agent. */
   readonly agent_type?: string;
+  /**
+   * Per-(tenant, server) credential material resolved by the
+   * customer-cloud-broker. Populated by the router immediately before the
+   * transport is called; the transport reads it (opaque, broker-owned) and
+   * forwards it to the upstream MCP server. UNDEFINED when the scope guard
+   * is disabled OR when resolve/invoke short-circuited before the launch
+   * step.
+   */
+  readonly credential?: unknown;
 }
 
 /** Successful invocation result. */
@@ -129,15 +138,28 @@ export type McpResolutionResult = McpResolution | McpInvocationError;
 
 /** Audit event emitted on every resolve/invoke. */
 export interface McpAuditEvent {
-  readonly kind: 'mcp.resolve' | 'mcp.invoke' | 'mcp.register' | 'mcp.deny';
+  readonly kind:
+    | 'mcp.resolve'
+    | 'mcp.invoke'
+    | 'mcp.register'
+    | 'mcp.deny'
+    | 'mcp.scope_guard';
   readonly tenant_id: TenantId;
   readonly actor: string;
   readonly server: ServerName;
   readonly tool?: ToolName;
-  readonly outcome: 'ok' | McpErrorKind;
+  readonly outcome:
+    | 'ok'
+    | McpErrorKind
+    | 'tenant_invalid'
+    | 'credential_denied'
+    | 'validator_unreachable'
+    | 'resolver_unreachable';
   readonly latency_ms?: number;
   readonly trace_id?: string;
   readonly at: string; // ISO 8601
+  /** Free-form detail (e.g. "tenant validator unreachable"). */
+  readonly reason?: string;
 }
 
 /** Subset of `McpError` shape used in audit events. */
@@ -147,7 +169,11 @@ export type McpErrorKind =
   | 'tool_not_found'
   | 'args_invalid'
   | 'upstream_error'
-  | 'circuit_open';
+  | 'circuit_open'
+  | 'tenant_invalid'
+  | 'credential_denied'
+  | 'validator_unreachable'
+  | 'resolver_unreachable';
 
 /**
  * The typed port. Implementations must be deterministic; a fresh
@@ -186,6 +212,60 @@ export interface McpRouter {
    * in the target scope.
    */
   registerServer(manifest: ServerManifest): Promise<McpInvocationResult>;
+}
+
+// --- Per-tenant scope guard ports (FORA-48 §3.5 / FORA-448) --------------
+//
+// The scope guard is the chokepoint between a ToolCall envelope and the
+// downstream MCP server process. Two pluggable ports back it:
+//
+//   - `TenantValidator` — backed by `@fora/identity-broker`. Confirms the
+//     `tenant_id` on the caller's claim is real and active. Throws on
+//     transport failure (timeout / DNS / 5xx) so the router can fail closed.
+//   - `CredentialResolver` — backed by `@fora/customer-cloud-broker`. Mints
+//     the per-(tenant, server) credential material the transport will hand
+//     to the upstream MCP server. Throws on transport failure.
+//
+// Both are OPTIONAL on the router; when omitted the router falls back to
+// the FORA-444 scope gate (manifest.tenantScope match) only. Production
+// wires both — see `apps/agent-runtime/mounts.ts`.
+
+/** Outcome of a tenant validator call. */
+export type TenantValidationOutcome =
+  | { readonly ok: true }
+  | { readonly ok: false; readonly reason: string };
+
+/** Pluggable tenant validator (identity-broker adapter). */
+export interface TenantValidator {
+  /**
+   * Confirm `tenant_id` is real and active. MUST throw on transport failure
+   * (the router fails closed in that case).
+   */
+  validate(tenant_id: TenantId): Promise<TenantValidationOutcome>;
+}
+
+/** Outcome of a credential resolver call. The credential is opaque to the router. */
+export type CredentialResolutionOutcome =
+  | { readonly ok: true; readonly credential: unknown }
+  | { readonly ok: false; readonly reason: string };
+
+/** Pluggable per-tenant credential resolver (customer-cloud-broker adapter). */
+export interface CredentialResolver {
+  /**
+   * Resolve the per-(tenant, server) credential. MUST throw on transport
+   * failure (the router fails closed and never spawns the upstream MCP).
+   */
+  resolve(
+    tenant_id: TenantId,
+    server: ServerName,
+  ): Promise<CredentialResolutionOutcome>;
+}
+
+/** Resolved credential carried through `invoke` to the transport. */
+export interface McpResolvedCredential {
+  readonly tenant_id: TenantId;
+  readonly server: ServerName;
+  readonly credential: unknown;
 }
 
 // --- Re-exports / helpers -----------------------------------------------

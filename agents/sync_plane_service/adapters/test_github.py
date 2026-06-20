@@ -1655,6 +1655,536 @@ def scenario_inbound_issue_opened() -> Dict[str, Any]:
     }
 
 
+
+
+
+def scenario_comment_round_trip_bidirectional() -> Dict[str, Any]:
+    """S9 — FORA-433 / FORA-201.2 AC #2 close-gate.
+
+    Exercises the FULL bidirectional comment mirror:
+
+      1. Outbound — `apply_mirror(entity, comment=...)` posts
+         a `CanonicalComment` to GitHub via the scripted
+         transport. The 30s debounce from S2 still applies;
+         the test posts once.
+      2. Re-read — `fetch_remote_comment(...)` GETs the
+         same id from GitHub (scripted response echoes the
+         body the adapter posted).
+      3. Inbound — `normalize_issue_comment_webhook(...)`
+         normalises a `issue_comment.created` payload
+         using the FORA-253 author mapper. The GitHub
+         `user.login` (`dependabot[bot]`) maps to the
+         Paperclip service-account id
+         `service-account:dependabot` per the FORA-253
+         envelope.
+      4. Author attribution — the resulting canonical
+         comment has `author_kind=agent`,
+         `author_id=service-account:dependabot`, and a
+         display name from the mapper (not from the raw
+         GitHub login).
+      5. Body preservation — the round-tripped body
+         matches the original `CanonicalComment.body_md`
+         (the `>` blockquote hint lives in
+         `body_remote_rendered`, the raw Markdown stays
+         in `body_md`).
+      6. Audit events — the forwarder receives BOTH
+         `sync.target.comment.ok` (outbound) and
+         `sync.source.comment.ok` (inbound). The metadata
+         carries the rate-limit snapshot / html_url /
+         mapped author id so the close-gate reviewer can
+         inspect.
+
+    The FORA-433 acceptance bar is fully exercised by
+    this one scenario: body preservation, author
+    attribution, audit emission on both sides, and
+    idempotency (the round-trip is two separate calls —
+    outbound and inbound — sharing only the audit log).
+    """
+    transport = InMemoryGitHubTransport(
+        script=[
+            (
+                "PATCH",
+                "/repos/fora-labs/sync-plane-fixture/issues/17",
+                {
+                    "id": 1001,
+                    "number": 17,
+                    "state": "open",
+                    "state_reason": None,
+                    "html_url":
+                        "https://github.com/fora-labs/sync-plane-fixture/issues/17",
+                },
+                200,
+            ),
+            (
+                "POST",
+                "/repos/fora-labs/sync-plane-fixture/issues/17/comments",
+                {
+                    "id": 9001,
+                    "body": "(echoed)",
+                    "html_url":
+                        "https://github.com/fora-labs/sync-plane-fixture/issues/17#issuecomment-9001",
+                },
+                201,
+            ),
+            (
+                "GET",
+                "/repos/fora-labs/sync-plane-fixture/issues/comments/9001",
+                {
+                    "id": 9001,
+                    "body": "Original Paperclip body.",
+                    "user": {"login": "dependabot[bot]"},
+                },
+                200,
+            ),
+        ],
+    )
+    audit = _RecordingAuditHook()
+    forwarder = _RecordingAuditForwarder()
+    author_mapper = EnvBackedGitHubAuthorMapper()
+    os.environ["FORA_TENANT_ACME_CO_GITHUB_AUTHOR_MAP"] = json.dumps({
+        "dependabot[bot]": {
+            "kind": "agent",
+            "id": "service-account:dependabot",
+            "display_name": "Dependabot",
+        },
+    })
+    try:
+        adapter = GitHubIssuesAdapter(
+            auth=_StaticAuth(),
+            transport=transport,
+            audit=audit,
+            audit_forwarder=forwarder,
+            author_mapper=author_mapper,
+            default_repo="fora-labs/sync-plane-fixture",
+        )
+        entity = _entity(remote_refs={"github": "17"})
+        original_comment = _comment(body="Original Paperclip body.")
+        r = adapter.apply_mirror(
+            "acme-co", entity, comment=original_comment,
+        )
+        read_resp = adapter.fetch_remote_comment(
+            "acme-co",
+            "fora-labs/sync-plane-fixture",
+            "17",
+            str(r.metadata.get("comment_id")),
+        )
+        webhook_payload = {
+            "action": "created",
+            "issue": {
+                "number": 17,
+                "html_url":
+                    "https://github.com/fora-labs/sync-plane-fixture/issues/17",
+            },
+            "comment": {
+                "id": 9001,
+                "body": original_comment.body_md,
+                "user": {"login": "dependabot[bot]"},
+            },
+            "repository": {
+                "full_name": "fora-labs/sync-plane-fixture",
+            },
+        }
+        canonical = adapter.normalize_issue_comment_webhook(
+            "acme-co",
+            webhook_payload,
+            paperclip_issue_id="iss-001",
+        )
+    finally:
+        os.environ.pop(
+            "FORA_TENANT_ACME_CO_GITHUB_AUTHOR_MAP", None,
+        )
+
+    failures: List[str] = []
+    if not r.ok:
+        failures.append(f"bidir: outbound not ok: {r.error!r}")
+    if r.metadata.get("comment_id") != 9001:
+        failures.append(
+            f"bidir: outbound comment_id="
+            f"{r.metadata.get('comment_id')!r} != 9001"
+        )
+    if read_resp.status != 200:
+        failures.append(
+            f"bidir: fetch_remote_comment status="
+            f"{read_resp.status!r} != 200"
+        )
+    if read_resp.body.get("id") != 9001:
+        failures.append(
+            f"bidir: fetch_remote_comment body.id="
+            f"{read_resp.body.get('id')!r} != 9001"
+        )
+    if canonical.body_md != original_comment.body_md:
+        failures.append(
+            f"bidir: body round-trip failed: "
+            f"original={original_comment.body_md!r} got="
+            f"{canonical.body_md!r}"
+        )
+    if canonical.author_kind != "agent":
+        failures.append(
+            f"bidir: author_kind={canonical.author_kind!r} != 'agent'"
+        )
+    if canonical.author_id != "service-account:dependabot":
+        failures.append(
+            f"bidir: author_id={canonical.author_id!r} != "
+            f"'service-account:dependabot' (FORA-253 mapping)"
+        )
+    if canonical.author_display_name != "Dependabot":
+        failures.append(
+            f"bidir: author_display_name="
+            f"{canonical.author_display_name!r} != 'Dependabot'"
+        )
+    gh_remote = canonical.remote_refs.get("github", {})
+    if str(gh_remote.get("github:9001")) != "9001":
+        failures.append(
+            f"bidir: remote_refs.github.github:9001="
+            f"{gh_remote!r} (expected '9001')"
+        )
+    if canonical.comment_id != "github:9001":
+        failures.append(
+            f"bidir: comment_id={canonical.comment_id!r} != "
+            f"'github:9001'"
+        )
+    rendered = canonical.body_remote_rendered.get(
+        "github", {},
+    ).get("rendered", "")
+    if original_comment.body_md not in rendered:
+        failures.append(
+            f"bidir: body_remote_rendered.github.rendered missing "
+            f"body: {rendered!r}"
+        )
+    forward_event_types = [c.event_type for c in forwarder.calls]
+    if "sync.target.comment.ok" not in forward_event_types:
+        failures.append(
+            f"bidir: forwarder missing sync.target.comment.ok; "
+            f"saw {forward_event_types!r}"
+        )
+    if "sync.source.comment.ok" not in forward_event_types:
+        failures.append(
+            f"bidir: forwarder missing sync.source.comment.ok; "
+            f"saw {forward_event_types!r}"
+        )
+    target_calls = [
+        c for c in forwarder.calls
+        if c.event_type == "sync.target.comment.ok"
+    ]
+    if target_calls:
+        tc = target_calls[0]
+        if tc.tenant_id != "acme-co":
+            failures.append(
+                f"bidir: target.tenant_id={tc.tenant_id!r} != 'acme-co'"
+            )
+        if tc.entity_id != "iss-001":
+            failures.append(
+                f"bidir: target.entity_id={tc.entity_id!r} != 'iss-001'"
+            )
+        if tc.metadata.get("remote_comment_id") != 9001:
+            failures.append(
+                f"bidir: target.metadata.remote_comment_id="
+                f"{tc.metadata.get('remote_comment_id')!r} != 9001"
+            )
+        if not tc.actor.startswith("system:"):
+            failures.append(
+                f"bidir: target.actor={tc.actor!r} (expected "
+                f"system:<component>)"
+            )
+    source_calls = [
+        c for c in forwarder.calls
+        if c.event_type == "sync.source.comment.ok"
+    ]
+    if source_calls:
+        sc = source_calls[0]
+        if sc.metadata.get("source_login") != "dependabot[bot]":
+            failures.append(
+                f"bidir: source.metadata.source_login="
+                f"{sc.metadata.get('source_login')!r} != "
+                f"'dependabot[bot]'"
+            )
+        if sc.metadata.get("mapped_author_id") != "service-account:dependabot":
+            failures.append(
+                f"bidir: source.metadata.mapped_author_id="
+                f"{sc.metadata.get('mapped_author_id')!r} != "
+                f"'service-account:dependabot'"
+            )
+        if sc.metadata.get("comment_id") != "github:9001":
+            failures.append(
+                f"bidir: source.metadata.comment_id="
+                f"{sc.metadata.get('comment_id')!r} != "
+                f"'github:9001'"
+            )
+
+    return {
+        "name": "comment_round_trip_bidirectional",
+        "data": {
+            "outbound_comment_id": r.metadata.get("comment_id"),
+            "reread_status": read_resp.status,
+            "reread_id": read_resp.body.get("id"),
+            "inbound_canonical_comment_id": canonical.comment_id,
+            "inbound_author_kind": canonical.author_kind,
+            "inbound_author_id": canonical.author_id,
+            "inbound_author_display_name": canonical.author_display_name,
+            "inbound_body_matches": (
+                canonical.body_md == original_comment.body_md
+            ),
+            "inbound_remote_refs_github": dict(gh_remote),
+            "forwarder_event_types": forward_event_types,
+            "forwarder_call_count": len(forwarder.calls),
+            "target_metadata_actor": (
+                target_calls[0].actor if target_calls else None
+            ),
+            "source_metadata_source_login": (
+                source_calls[0].metadata.get("source_login")
+                if source_calls else None
+            ),
+            "source_metadata_mapped_author_id": (
+                source_calls[0].metadata.get("mapped_author_id")
+                if source_calls else None
+            ),
+        },
+        "duration_ms": 0,
+        "failures": failures,
+    }
+
+
+def scenario_author_mapping_verdict() -> Dict[str, Any]:
+    """S10 — FORA-433 / FORA-201.2 AC #2 verdict invariant.
+
+    Per the AC: `unknown author -> AuthorMappingError,
+    never post as Paperclip user`. The inbound webhook
+    path MUST raise `AuthorMappingError` when the
+    GitHub `user.login` is not in the per-tenant
+    FORA-253 mapping table. The adapter does not make
+    any transport call and does not emit
+    `sync.source.comment.ok` for a failed mapping —
+    the failure sink (FORA-36 `tool_call` exception
+    path) records the failure.
+    """
+    failures: List[str] = []
+
+    # Branch 1: known bot login maps cleanly.
+    forwarder_ok = _RecordingAuditForwarder()
+    mapper_ok = EnvBackedGitHubAuthorMapper()
+    os.environ["FORA_TENANT_ACME_CO_GITHUB_AUTHOR_MAP"] = json.dumps({
+        "github-actions[bot]": {
+            "kind": "agent",
+            "id": "service-account:ci",
+            "display_name": "GitHub Actions",
+        },
+    })
+    adapter_ok = GitHubIssuesAdapter(
+        auth=_StaticAuth(),
+        transport=InMemoryGitHubTransport(),
+        audit=_RecordingAuditHook(),
+        audit_forwarder=forwarder_ok,
+        author_mapper=mapper_ok,
+        default_repo="fora-labs/sync-plane-fixture",
+    )
+    payload_ok = {
+        "action": "created",
+        "issue": {"number": 17},
+        "comment": {
+            "id": 8001,
+            "body": "ci comment",
+            "user": {"login": "github-actions[bot]"},
+        },
+        "repository": {"full_name": "fora-labs/sync-plane-fixture"},
+    }
+    canonical_ok = adapter_ok.normalize_issue_comment_webhook(
+        "acme-co", payload_ok, paperclip_issue_id="iss-001",
+    )
+    if canonical_ok.author_id != "service-account:ci":
+        failures.append(
+            f"verdict#1: known login author_id="
+            f"{canonical_ok.author_id!r} != 'service-account:ci'"
+        )
+    if canonical_ok.author_kind != "agent":
+        failures.append(
+            f"verdict#1: author_kind={canonical_ok.author_kind!r} "
+            f"!= 'agent'"
+        )
+    if not [
+        c for c in forwarder_ok.calls
+        if c.event_type == "sync.source.comment.ok"
+    ]:
+        failures.append(
+            "verdict#1: known login did not emit "
+            "sync.source.comment.ok"
+        )
+
+    # Branch 2: unknown login raises AuthorMappingError.
+    saved_env = os.environ.pop(
+        "FORA_TENANT_ACME_CO_GITHUB_AUTHOR_MAP", None,
+    )
+    try:
+        mapper_unknown = EnvBackedGitHubAuthorMapper()
+        adapter_unknown = GitHubIssuesAdapter(
+            auth=_StaticAuth(),
+            transport=InMemoryGitHubTransport(),
+            audit=_RecordingAuditHook(),
+            audit_forwarder=_RecordingAuditForwarder(),
+            author_mapper=mapper_unknown,
+            default_repo="fora-labs/sync-plane-fixture",
+        )
+        payload_unknown = {
+            "action": "created",
+            "issue": {"number": 17},
+            "comment": {
+                "id": 8002,
+                "body": "ghost comment",
+                "user": {"login": "unknown-user-9999"},
+            },
+            "repository": {"full_name": "fora-labs/sync-plane-fixture"},
+        }
+        raised: Optional[AuthorMappingError] = None
+        try:
+            adapter_unknown.normalize_issue_comment_webhook(
+                "acme-co", payload_unknown,
+                paperclip_issue_id="iss-001",
+            )
+        except AuthorMappingError as exc:
+            raised = exc
+        if raised is None:
+            failures.append(
+                "verdict#2: unknown login did not raise "
+                "AuthorMappingError"
+            )
+        else:
+            if raised.source_login != "unknown-user-9999":
+                failures.append(
+                    f"verdict#2: exception.source_login="
+                    f"{raised.source_login!r} != 'unknown-user-9999'"
+                )
+            if "unknown-user-9999" not in (raised.reason or ""):
+                failures.append(
+                    f"verdict#2: exception.reason missing "
+                    f"the offender login: {raised.reason!r}"
+                )
+    finally:
+        if saved_env is not None:
+            os.environ["FORA_TENANT_ACME_CO_GITHUB_AUTHOR_MAP"] = (
+                saved_env
+            )
+
+    # Branch 3: no mapper at all raises the safe default.
+    adapter_none = GitHubIssuesAdapter(
+        auth=_StaticAuth(),
+        transport=InMemoryGitHubTransport(),
+        audit=_RecordingAuditHook(),
+        audit_forwarder=_RecordingAuditForwarder(),
+        author_mapper=None,
+        default_repo="fora-labs/sync-plane-fixture",
+    )
+    raised_none: Optional[AuthorMappingError] = None
+    try:
+        adapter_none.normalize_issue_comment_webhook(
+            "acme-co",
+            {
+                "action": "created",
+                "issue": {"number": 17},
+                "comment": {
+                    "id": 8003,
+                    "body": "x",
+                    "user": {"login": "any-user"},
+                },
+                "repository": {"full_name": "fora-labs/sync-plane-fixture"},
+            },
+            paperclip_issue_id="iss-001",
+        )
+    except AuthorMappingError as exc:
+        raised_none = exc
+    if raised_none is None:
+        failures.append(
+            "verdict#3: no-mapper adapter did not raise "
+            "AuthorMappingError"
+        )
+    elif "no GitHubAuthorMapper configured" not in (
+        raised_none.reason or ""
+    ):
+        failures.append(
+            f"verdict#3: no-mapper reason missing "
+            f"'no GitHubAuthorMapper configured': "
+            f"{raised_none.reason!r}"
+        )
+
+    # Branch 4: verdict invariant end-to-end — unknown
+    # login must produce ZERO forwarder calls (no
+    # `sync.source.comment.ok` row; the failure is
+    # recorded via the FORA-36 `tool_call` exception
+    # sink).
+    unknown_forwarder = _RecordingAuditForwarder()
+    if "FORA_TENANT_ACME_CO_GITHUB_AUTHOR_MAP" in os.environ:
+        del os.environ["FORA_TENANT_ACME_CO_GITHUB_AUTHOR_MAP"]
+    mapper_strict = EnvBackedGitHubAuthorMapper()
+    adapter_strict = GitHubIssuesAdapter(
+        auth=_StaticAuth(),
+        transport=InMemoryGitHubTransport(),
+        audit=_RecordingAuditHook(),
+        audit_forwarder=unknown_forwarder,
+        author_mapper=mapper_strict,
+        default_repo="fora-labs/sync-plane-fixture",
+    )
+    branch4_raised = False
+    try:
+        adapter_strict.normalize_issue_comment_webhook(
+            "acme-co",
+            {
+                "action": "created",
+                "issue": {"number": 17},
+                "comment": {
+                    "id": 8004,
+                    "body": "should fail",
+                    "user": {"login": "definitely-not-mapped"},
+                },
+                "repository": {
+                    "full_name": "fora-labs/sync-plane-fixture",
+                },
+            },
+            paperclip_issue_id="iss-001",
+        )
+    except AuthorMappingError:
+        branch4_raised = True
+    if not branch4_raised:
+        failures.append(
+            "verdict#4: strict mapper let an unknown login through"
+        )
+    if unknown_forwarder.calls:
+        failures.append(
+            f"verdict#4: unknown-login path emitted "
+            f"{len(unknown_forwarder.calls)} forwarder calls; "
+            f"expected 0: "
+            f"{[c.event_type for c in unknown_forwarder.calls]!r}"
+        )
+
+    os.environ.pop(
+        "FORA_TENANT_ACME_CO_GITHUB_AUTHOR_MAP", None,
+    )
+
+    return {
+        "name": "author_mapping_verdict",
+        "data": {
+            "branch1_known_login_author_id": canonical_ok.author_id,
+            "branch2_unknown_raised": raised is not None,
+            "branch2_unknown_source_login": (
+                raised.source_login if raised else None
+            ),
+            "branch2_unknown_reason": (
+                raised.reason if raised else None
+            ),
+            "branch3_no_mapper_raised": raised_none is not None,
+            "branch3_no_mapper_reason": (
+                raised_none.reason if raised_none else None
+            ),
+            "branch4_forwarder_calls_on_failure": len(
+                unknown_forwarder.calls
+            ),
+            "verdict_invariant_ok": (
+                raised is not None
+                and raised_none is not None
+                and branch4_raised
+                and len(unknown_forwarder.calls) == 0
+            ),
+        },
+        "duration_ms": 0,
+        "failures": failures,
+    }
 SCENARIOS: List[Callable[[], Dict[str, Any]]] = [
     scenario_create,
     scenario_comment_round_trip,
@@ -1665,6 +2195,8 @@ SCENARIOS: List[Callable[[], Dict[str, Any]]] = [
     scenario_422_divergence_signal,
     scenario_idempotent_re_call,
     scenario_inbound_issue_opened,
+    scenario_comment_round_trip_bidirectional,
+    scenario_author_mapping_verdict,
 ]
 
 

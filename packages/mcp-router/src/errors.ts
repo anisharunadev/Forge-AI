@@ -19,7 +19,11 @@ export type McpErrorKind =
   | 'tool_not_found'
   | 'args_invalid'
   | 'upstream_error'
-  | 'circuit_open';
+  | 'circuit_open'
+  | 'tenant_invalid'
+  | 'credential_denied'
+  | 'validator_unreachable'
+  | 'resolver_unreachable';
 
 /**
  * Common envelope fields. Every member of the union carries a `kind`, a
@@ -51,6 +55,45 @@ export interface McpScopeDeniedError extends McpErrorBase {
   readonly required_scope: 'global' | 'tenant' | 'agent';
   readonly caller_tenant_id: TenantId;
   readonly caller_agent_type?: string;
+}
+
+/**
+ * Identity-broker rejected the tenant — tenant is unknown, suspended, or
+ * otherwise not eligible to invoke any MCP. Emitted before any process
+ * spawn; the transport is never called.
+ */
+export interface McpTenantInvalidError extends McpErrorBase {
+  readonly kind: 'tenant_invalid';
+  readonly caller_tenant_id: TenantId;
+}
+
+/**
+ * Customer-cloud-broker refused to mint per-tenant credentials for the
+ * (tenant, server) pair. Emitted before any process spawn; the transport
+ * is never called.
+ */
+export interface McpCredentialDeniedError extends McpErrorBase {
+  readonly kind: 'credential_denied';
+  readonly caller_tenant_id: TenantId;
+}
+
+/**
+ * Identity-broker is unreachable, timing out, or returning an
+ * unparseable response. Per FORA-48 §3.5 the router fails CLOSED:
+ * no process spawn, `scope_denied`-class outcome.
+ */
+export interface McpValidatorUnreachableError extends McpErrorBase {
+  readonly kind: 'validator_unreachable';
+  readonly caller_tenant_id: TenantId;
+}
+
+/**
+ * Customer-cloud-broker is unreachable when the router tries to mint
+ * the per-tenant credential. Per FORA-48 §3.5 the router fails CLOSED.
+ */
+export interface McpResolverUnreachableError extends McpErrorBase {
+  readonly kind: 'resolver_unreachable';
+  readonly caller_tenant_id: TenantId;
 }
 
 /** Tool name is not exposed by the server (or the manifest was loaded without it). */
@@ -99,6 +142,10 @@ export interface McpCircuitOpenError extends McpErrorBase {
 export type McpError =
   | McpUnavailableError
   | McpScopeDeniedError
+  | McpTenantInvalidError
+  | McpCredentialDeniedError
+  | McpValidatorUnreachableError
+  | McpResolverUnreachableError
   | McpToolNotFoundError
   | McpArgsInvalidError
   | McpUpstreamError
@@ -134,6 +181,22 @@ export const isUpstreamError = (e: McpErrorEnvelope): e is McpErrorEnvelope & { 
 export const isUnavailable = (e: McpErrorEnvelope): e is McpErrorEnvelope & { error: McpUnavailableError } =>
   e.status === 'error' && e.error.kind === 'unavailable';
 
+export const isTenantInvalid = (e: McpErrorEnvelope): e is McpErrorEnvelope & { error: McpTenantInvalidError } =>
+  e.status === 'error' && e.error.kind === 'tenant_invalid';
+
+export const isCredentialDenied = (e: McpErrorEnvelope): e is McpErrorEnvelope & { error: McpCredentialDeniedError } =>
+  e.status === 'error' && e.error.kind === 'credential_denied';
+
+export const isValidatorUnreachable = (
+  e: McpErrorEnvelope,
+): e is McpErrorEnvelope & { error: McpValidatorUnreachableError } =>
+  e.status === 'error' && e.error.kind === 'validator_unreachable';
+
+export const isResolverUnreachable = (
+  e: McpErrorEnvelope,
+): e is McpErrorEnvelope & { error: McpResolverUnreachableError } =>
+  e.status === 'error' && e.error.kind === 'resolver_unreachable';
+
 // --- constructors (used by the in-memory router) ------------------------
 
 const nowIso = (): string => new Date().toISOString();
@@ -168,6 +231,66 @@ export const scopeDenied = (
     required_scope: required,
     caller_tenant_id,
     ...(caller_agent_type !== undefined ? { caller_agent_type } : {}),
+    at: nowIso(),
+  },
+});
+
+export const tenantInvalid = (
+  server: ServerName,
+  caller_tenant_id: TenantId,
+  reason: string,
+): McpErrorEnvelope => ({
+  status: 'error',
+  error: {
+    kind: 'tenant_invalid',
+    message: `tenant validator rejected ${caller_tenant_id}: ${reason}`,
+    server,
+    caller_tenant_id,
+    at: nowIso(),
+  },
+});
+
+export const credentialDenied = (
+  server: ServerName,
+  caller_tenant_id: TenantId,
+  reason: string,
+): McpErrorEnvelope => ({
+  status: 'error',
+  error: {
+    kind: 'credential_denied',
+    message: `credential resolver rejected ${caller_tenant_id}@${server}: ${reason}`,
+    server,
+    caller_tenant_id,
+    at: nowIso(),
+  },
+});
+
+export const validatorUnreachable = (
+  server: ServerName,
+  caller_tenant_id: TenantId,
+  reason: string,
+): McpErrorEnvelope => ({
+  status: 'error',
+  error: {
+    kind: 'validator_unreachable',
+    message: `tenant validator unreachable for ${caller_tenant_id}: ${reason}`,
+    server,
+    caller_tenant_id,
+    at: nowIso(),
+  },
+});
+
+export const resolverUnreachable = (
+  server: ServerName,
+  caller_tenant_id: TenantId,
+  reason: string,
+): McpErrorEnvelope => ({
+  status: 'error',
+  error: {
+    kind: 'resolver_unreachable',
+    message: `credential resolver unreachable for ${caller_tenant_id}@${server}: ${reason}`,
+    server,
+    caller_tenant_id,
     at: nowIso(),
   },
 });
