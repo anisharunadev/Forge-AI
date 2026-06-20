@@ -42,13 +42,21 @@ import {
 import type { KnowledgeFile, KnowledgeFileType, KnowledgeFolder } from "@/lib/knowledge/types";
 import { KnowledgeFileView } from "@/components/knowledge/KnowledgeFileView";
 import { KnowledgeFileTree } from "@/components/knowledge/KnowledgeFileTree";
+import { InjectionMapPanel } from "@/components/knowledge/InjectionMapPanel";
 
 export const dynamic = "force-dynamic";
+
+type KnowledgeView = "files" | "map";
 
 interface KnowledgeCenterSearchParams {
   readonly file?: string;
   readonly folder?: string;
   readonly type?: string;
+  readonly view?: string;
+}
+
+function isView(value: string | undefined): value is KnowledgeView {
+  return value === "files" || value === "map";
 }
 
 function parseSearchParams(
@@ -59,6 +67,7 @@ function parseSearchParams(
     file: typeof raw.file === "string" ? raw.file : Array.isArray(raw.file) ? raw.file[0] : undefined,
     folder: typeof raw.folder === "string" ? raw.folder : Array.isArray(raw.folder) ? raw.folder[0] : undefined,
     type: typeof raw.type === "string" ? raw.type : Array.isArray(raw.type) ? raw.type[0] : undefined,
+    view: typeof raw.view === "string" ? raw.view : Array.isArray(raw.view) ? raw.view[0] : undefined,
   };
 }
 
@@ -97,8 +106,10 @@ function filterQueryString(
   file: string | undefined,
   folder: KnowledgeFolder | "all",
   type: KnowledgeFileType | "all",
+  view: KnowledgeView = "files",
 ): string {
   const params = new URLSearchParams();
+  if (view !== "files") params.set("view", view);
   if (file) params.set("file", file);
   if (folder !== "all") params.set("folder", folder);
   if (type !== "all") params.set("type", type);
@@ -127,6 +138,7 @@ export default async function KnowledgeCenterPage({
   const files = listKnowledgeFiles();
   const folderFilter: KnowledgeFolder | "all" = isFolder(params.folder) ? params.folder : "all";
   const typeFilter: KnowledgeFileType | "all" = isFileType(params.type) ? params.type : "all";
+  const view: KnowledgeView = isView(params.view) ? params.view : "files";
   const filtered = applyFilters(files, folderFilter, typeFilter);
 
   const selectedFile = params.file ? getKnowledgeFile(params.file) : null;
@@ -156,11 +168,43 @@ export default async function KnowledgeCenterPage({
             Every sub-agent at Forge AI wakes up with a slice of these files. The
             left rail is the folder tree; the main column is the file. The
             <span className="font-mono"> type</span> filter narrows by file
-            shape. The &ldquo;What does each agent see?&rdquo; tab (in v1.0) shows the
+            shape. The &ldquo;What does each agent see?&rdquo; tab shows the
             per-stage injection map.
           </p>
         </aside>
       )}
+
+      <nav
+        aria-label="Knowledge Center views"
+        className="flex gap-1 border-b border-forge-700/40"
+        data-testid="knowledge-center-tabs"
+        data-active-view={view}
+      >
+        <a
+          href={`/knowledge-center${filterQueryString(undefined, folderFilter, typeFilter, "files")}`}
+          data-testid="tab-files"
+          data-active={view === "files"}
+          className={`-mb-px border-b-2 px-3 py-1.5 text-sm font-medium ${
+            view === "files"
+              ? "border-forge-300 text-forge-50"
+              : "border-transparent text-forge-300 hover:text-forge-100"
+          }`}
+        >
+          Files
+        </a>
+        <a
+          href={`/knowledge-center${filterQueryString(undefined, folderFilter, typeFilter, "map")}`}
+          data-testid="tab-map"
+          data-active={view === "map"}
+          className={`-mb-px border-b-2 px-3 py-1.5 text-sm font-medium ${
+            view === "map"
+              ? "border-forge-300 text-forge-50"
+              : "border-transparent text-forge-300 hover:text-forge-100"
+          }`}
+        >
+          What does each agent see?
+        </a>
+      </nav>
 
       <section
         aria-labelledby="filters-h"
@@ -212,47 +256,51 @@ export default async function KnowledgeCenterPage({
         </p>
       </section>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
-        <aside
-          aria-label="File tree"
-          className="rounded-md border border-forge-700/40 bg-forge-900/40 p-3"
-          data-testid="knowledge-center-tree-rail"
-        >
-          <h2 className="mb-2 text-xs uppercase tracking-wider text-forge-300">Folders</h2>
-          <KnowledgeFileTree
-            files={files}
-            selectedPath={selectedFile?.path}
-            activeFolder={folderFilter}
-            activeFileType={typeFilter}
-          />
-        </aside>
+      {view === "map" ? (
+        <InjectionMapPanel />
+      ) : (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
+          <aside
+            aria-label="File tree"
+            className="rounded-md border border-forge-700/40 bg-forge-900/40 p-3"
+            data-testid="knowledge-center-tree-rail"
+          >
+            <h2 className="mb-2 text-xs uppercase tracking-wider text-forge-300">Folders</h2>
+            <KnowledgeFileTree
+              files={files}
+              selectedPath={selectedFile?.path}
+              activeFolder={folderFilter}
+              activeFileType={typeFilter}
+            />
+          </aside>
 
-        <main
-          className="space-y-4"
-          data-testid="knowledge-center-main"
-          data-selected-path={selectedFile?.path ?? ""}
-        >
-          {selectedFile ? (
-            <KnowledgeFileView file={selectedFile} />
-          ) : (
-            <div
-              className="card text-sm text-forge-300"
-              data-testid="knowledge-center-empty"
-              data-empty-kind="no-selection"
-            >
-              <p className="font-medium text-forge-100">Pick a file from the left rail.</p>
-              <p className="mt-1 text-forge-300">
-                The Knowledge Center is the typed-artifact browser for the Knowledge
-                Layer. The list view (left) and graph view (coming in
-                FORA-601) both surface the same 12 v1 files.
-              </p>
-              <p className="mt-2 text-xs text-forge-400">
-                Workspace root: <span className="font-mono">{_workspaceRoot()}</span>
-              </p>
-            </div>
-          )}
-        </main>
-      </div>
+          <main
+            className="space-y-4"
+            data-testid="knowledge-center-main"
+            data-selected-path={selectedFile?.path ?? ""}
+          >
+            {selectedFile ? (
+              <KnowledgeFileView file={selectedFile} />
+            ) : (
+              <div
+                className="card text-sm text-forge-300"
+                data-testid="knowledge-center-empty"
+                data-empty-kind="no-selection"
+              >
+                <p className="font-medium text-forge-100">Pick a file from the left rail.</p>
+                <p className="mt-1 text-forge-300">
+                  The Knowledge Center is the typed-artifact browser for the Knowledge
+                  Layer. The list view (left) and graph view (coming in
+                  FORA-601) both surface the same 12 v1 files.
+                </p>
+                <p className="mt-2 text-xs text-forge-400">
+                  Workspace root: <span className="font-mono">{_workspaceRoot()}</span>
+                </p>
+              </div>
+            )}
+          </main>
+        </div>
+      )}
     </div>
   );
 }
