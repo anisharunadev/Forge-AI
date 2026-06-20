@@ -24,9 +24,19 @@
  * that only care about "is the platform degraded" filter on
  * `payload.rejected === undefined`.
  *
- * Note: `connector.rate_limit.consumed` (per-allowed-call event from
- * Plan 3 §6) is RESERVED but not emitted yet — it lands in FORA-487.2
- * when the three-layer stack is wired end-to-end.
+ * v0.3 (FORA-487.2 / FORA-516): adds `connector.rate_limit.consumed`
+ * (per-allowed-call event from Plan 3 §6). Emitted by the three-layer
+ * limiter on every allow-path `take()` (Layer 1 provider, Layer 2
+ * tenant tier, or per-actor burst), and by Layer 1's provider-ceiling
+ * adjust() when provider feedback refills the dynamic capacity.
+ * `connector.circuit.half_open` is now emitted on the
+ * `open → half_open` transition (was reserved in v0.2).
+ *
+ * v0.4 (FORA-487.3 / FORA-517): adds the backoff-scheduler events
+ * `connector.backoff.retried` and `connector.backoff.exhausted`.
+ * Emitted by the new `BackoffScheduler` on every successful retry
+ * after backoff and once the retry budget is exhausted. Payload
+ * includes the per-attempt `backoff_ms` and `idempotency_key`.
  *
  * The emitter is a thin facade: it tags every event with
  * `actor=system:outbound-reliability`, ISO timestamp, and tenant /
@@ -38,10 +48,13 @@ import type { PlatformId } from './coalescer.js';
 
 export type SyncAuditEventType =
   | 'connector.rate_limit.throttled'
+  | 'connector.rate_limit.consumed'
   | 'connector.coalesce.applied'
   | 'connector.circuit.opened'
   | 'connector.circuit.half_open'
-  | 'connector.circuit.closed';
+  | 'connector.circuit.closed'
+  | 'connector.backoff.retried'
+  | 'connector.backoff.exhausted';
 
 export interface SyncAuditEvent {
   readonly schema_version: 1;
