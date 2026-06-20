@@ -1,0 +1,341 @@
+# tenants/_default/sync_scope_allowlist.yaml
+#
+# Default per-tenant scope allow-list (FORA-258 / R-SYNC-02).
+# Mirrors the convention in tenants/acme/policy.yaml and
+# tenants/acme/cloud_trust.yaml (top-level version, description, per-section
+# metadata, signature block).
+#
+# This is the **deny-by-default** allow-list. Any scope not listed here
+# is refused at OAuth install time on the customer side. Per-tenant
+# overrides are allowed (drop scopes) but not widen (add new scopes
+# requires a new manifest commit + signed_by: security-engineer-agent).
+#
+# Reference: forge/sync-plane/allowlist-taxonomy-FORA-258.md (v0.1 starting
+# taxonomy, the Architect's review input for FORA-586).
+# Owner: Security Engineer (231cc5ae) signs; Architect (c4654678) reviews.
+
+version: 1
+description: >
+  Default per-platform OAuth scope allow-list for the Forge Sync Plane.
+  Sourced from forge/sync-plane/allowlist-taxonomy-FORA-258.md. Tenants
+  inherit this list and may drop scopes (per-tenant override in
+  tenants/<tenant>/sync_scope_allowlist.yaml). Widen the allow-list
+  requires a new manifest commit + signed_by: security-engineer-agent
+  per my AGENTS.md policy.
+
+# ---------------------------------------------------------------------------
+# Manifest signature
+# ---------------------------------------------------------------------------
+# The manifest_hash is the git tree hash of this file. The signed_by
+# tag must be one of the canonical agents: security-engineer-agent or
+# architect-agent. CI lint (lint/sync_plane/allowlist-sig.lint.ts)
+# asserts every signed_by tag is on the allow-list and the manifest_hash
+# matches the file content.
+
+manifest:
+  source: "forge/sync-plane/allowlist-taxonomy-FORA-258.md"
+  revision: "v0.2.1"         # v0.2 = Architect review applied; v0.2.1 = Security Engineer counter-sign
+  manifest_hash: "computed-at-commit-time-by-security-engineer-ci (git tree-hash of this file)"  # SE CI fills at commit; Architect lint verifies non-empty + signed_by allow-list
+  signed_by: "security-engineer-agent"   # the canonical signatory (per Security Engineer AGENTS.md)
+  signed_at: "2026-06-20T17:41:27Z"  # counter-signed by Security Engineer after Architect review
+  counter_signed_by: "security-engineer-agent"
+  counter_signed_at: "2026-06-20T17:41:27Z"
+  counter_signed_after_review: "forge/sync-plane/architect-review-FORA-586.md"
+  supersedes: null            # previous manifest hash, if any
+
+  # Architect review block (FORA-586). Records the joint-approval sign-off
+  # so the manifest has a tamper-evident record of the Architect's findings,
+  # independent of the Security Engineer's signed_at timestamp. The CI lint
+  # rule (test/allowlist-sig.test.ts) asserts the architect_review block
+  # is present once the manifest carries an architect-review revision.
+  architect_review:
+    reviewer: "architect-agent"
+    reviewer_agent_id: "c4654678-cb35-4d12-abd5-0b9b2a644975"
+    reviewed_at: "2026-06-20T17:35:00Z"
+    review_document: "forge/sync-plane/architect-review-FORA-586.md"
+    decisions:
+      clickup_scope_catalog: "verified_as_requires_follow_up — ClickUp uses app_level (1/2) not flat resource scopes; manifest uses logical Paperclip scope names; broker translates to app_level at install time"
+      github_app_vs_oauth: "v1 uses GitHub App; manifest records platform_oauth translation table from Paperclip scope to GitHub App permission"
+      clickup_custom_fields: "per_tenant_opt_in — default off; tenants flip the flag in their tenants/<tenant>/sync_scope_allowlist.yaml override"
+      jira_servicedesk: "per_tenant_opt_in — same shape as clickup custom fields"
+      rotation_cadence: "hard_coded_v1 — 60/90/60 (Jira/GitHub/ClickUp); per-tenant override added in v2 broker surface"
+
+# ---------------------------------------------------------------------------
+# Deny-by-default rule
+# ---------------------------------------------------------------------------
+# Any scope requested at OAuth install time that is NOT in the per-platform
+# allow-list below is refused with 401 + audit event
+# `auth.scope.denied reason: not_in_allowlist`. The customer-side tenant
+# admin sees a banner listing the requested scopes; scopes outside the
+# allow-list are reported as "denied by Sync Plane policy" with no
+# remediation path (no admin override; widen requires manifest commit).
+
+deny_by_default: true
+deny_audit_event: "auth.scope.denied"
+deny_audit_reason: "not_in_allowlist"
+
+# ---------------------------------------------------------------------------
+# Per-platform allow-list
+# ---------------------------------------------------------------------------
+# Each platform section lists the scopes that may be granted to the
+# `paperclip-sync-plane-<platform>-<tenant>` synthetic service account
+# at install time. Tier is read / write / admin. Admin tier is denied
+# by default (see taxonomy §4.1); adding an admin scope requires a
+# Board ask_user_questions sign-off + manifest re-sign.
+
+jira:
+  # Jira Cloud OAuth 2.0 (3LO) classic scopes per the Atlassian developer
+  # docs. v1 uses OAuth 2.0 (3LO) — not a GitHub-App-style install — because
+  # Jira's consent model is per-tenant, not per-project. The `scope` field
+  # below is the literal scope string the consent screen shows.
+  allowlist:
+    - scope: "read:jira-work"
+      tier: "read"
+      added_by: "security-engineer-agent"
+      justification: "Inbound webhook receiver + polling backstop (FORA-257) + mirror reconciliation"
+    - scope: "read:jira-user"
+      tier: "read"
+      added_by: "security-engineer-agent"
+      justification: "Map customer-side human commenters to Paperclip actors (R-SYNC-04 + ADR-0010 §5)"
+    - scope: "read:project-scope"
+      tier: "read"
+      added_by: "security-engineer-agent"
+      justification: "Per-project mirror configuration table (ADR-0010 §3.1)"
+    - scope: "write:jira-work"
+      tier: "write"
+      added_by: "security-engineer-agent"
+      justification: "Outbound mirror writes (every_event default per Board 2026-06-17)"
+    - scope: "write:issue"
+      tier: "write"
+      added_by: "security-engineer-agent"
+      justification: "Outbound issue creation in board-response runs"
+    - scope: "write:comment"
+      tier: "write"
+      added_by: "security-engineer-agent"
+      justification: "Outbound comment mirror per ADR-0010 §6 canonical envelope"
+  denied:
+    - scope: "manage:jira-project"
+      tier: "admin"
+      reason: "Not needed for sync plane; high-blast-radius if compromised"
+    - scope: "manage:jira-configuration"
+      tier: "admin"
+      reason: "Schema-modifying; never required for read/write mirror"
+    - scope: "admin:jira"
+      tier: "admin"
+      reason: "High-blast-radius; customer-side org-wide compromise if leaked"
+    - scope: "delete:jira-work"
+      tier: "admin"
+      reason: "Sync plane never deletes; tombstones via ADR-0010 §6.1 deleted_hlc"
+  rotation_days: 60  # matches Atlassian recommendation for 3LO apps
+
+github:
+  # GitHub App permissions translation table (FORA-586 review §2).
+  # The Paperclip scope names below are the stable identifiers used in
+  # audit events + drift detection. The `platform_permission` field records
+  # the literal GitHub App permission string the install flow requests.
+  # v1 uses GitHub App (not OAuth App) for fine-grained permissions +
+  # short-lived tokens + per-repo install blast-radius isolation.
+  platform_oauth:
+    install_type: "github_app"
+    manifest_format: "github_app_permissions"
+    translation:
+      "repo": ["contents:read", "contents:write", "metadata:read"]
+      "read:user": ["metadata:read"]
+      "user:email": ["metadata:read"]
+      "project": ["projects:read", "projects:write"]
+  allowlist:
+    - scope: "repo"
+      tier: "read+write"
+      added_by: "security-engineer-agent"
+      platform_permission: ["contents:read", "contents:write", "metadata:read"]
+      justification: "All GitHub-side sync plane operations (read issues/comments/labels + write comments/issue updates)"
+    - scope: "read:user"
+      tier: "read"
+      added_by: "security-engineer-agent"
+      platform_permission: ["metadata:read"]
+      justification: "Map GitHub user to Paperclip actor (R-SYNC-04 + ADR-0010 §5)"
+    - scope: "user:email"
+      tier: "read"
+      added_by: "security-engineer-agent"
+      platform_permission: ["metadata:read"]
+      justification: "Git commit author email mapping (outbound commit metadata)"
+    - scope: "project"
+      tier: "read+write"
+      added_by: "security-engineer-agent"
+      platform_permission: ["projects:read", "projects:write"]
+      justification: "Mirror state to GitHub Projects v2 (per ADR-0010 §3.2 field mapping)"
+  denied:
+    - scope: "admin:org"
+      tier: "admin"
+      reason: "Org-level settings; org-admin scope is a single-token-takeover vector (SOC 2 CC6.1)"
+    - scope: "admin:repo_hook"
+      tier: "admin"
+      reason: "Sync plane does not install webhooks from its own service account"
+    - scope: "admin:org_hook"
+      tier: "admin"
+      reason: "Same as above"
+    - scope: "delete_repo"
+      tier: "admin"
+      reason: "Sync plane never deletes; tombstones via issue close"
+    - scope: "admin:user"
+      tier: "admin"
+      reason: "User-level admin; never required"
+    - scope: "admin:user:email"
+      tier: "admin"
+      reason: "User-level admin; never required"
+    - scope: "admin:enterprise"
+      tier: "admin"
+      reason: "Enterprise admin; never required"
+    - scope: "admin:gpg_key"
+      tier: "admin"
+      reason: "GPG key admin; never required"
+    - scope: "admin:ssh_signing_key"
+      tier: "admin"
+      reason: "SSH signing key admin; never required"
+    - scope: "admin:public_key"
+      tier: "admin"
+      reason: "Public key admin; never required"
+    - scope: "admin:invitation"
+      tier: "admin"
+      reason: "Org invitation admin; never required"
+    - scope: "admin:business_portfolio"
+      tier: "admin"
+      reason: "Enterprise license admin; never required"
+    - scope: "admin:licenses"
+      tier: "admin"
+      reason: "Enterprise license admin; never required"
+    - scope: "admin:user_block"
+      tier: "admin"
+      reason: "User-blocking admin; never required"
+  rotation_days: 90  # matches GitHub App installation token lifecycle
+
+clickup:
+  # ClickUp does NOT expose a flat list of resource-scoped OAuth scope
+  # strings the way Jira/GitHub do. ClickUp's OAuth uses a single
+  # `app_level` integer parameter on the authorization URL:
+  #   app_level=1  → read-only access (read across all resources)
+  #   app_level=2  → write access (read + write across all resources)
+  #   app_level=3  → admin (not exposed to public OAuth apps)
+  # The Paperclip scope names below are a LOGICAL DECOMPOSITION used
+  # in our audit + drift-detection lanes; the broker translates them
+  # to app_level at install time. The mapping is:
+  #   task:read, space:read, list:read, member:read  → app_level >= 1
+  #   task:write, list:write, comment:write          → app_level >= 2
+  # customFields:* are per-tenant opt-in (default off) per FORA-586 §3.
+  # Follow-up: joint Architect + Security Engineer verification with
+  # ClickUp support to confirm the exact app_level OAuth parameter format.
+  platform_oauth:
+    install_type: "clickup_oauth_app"
+    manifest_format: "app_level_integer"
+    translation:
+      "1": ["task:read", "space:read", "list:read", "member:read"]
+      "2": ["task:write", "list:write", "comment:write"]
+    app_level_max: 2
+    verified_against_live_docs: "requires_follow_up"
+    verified_by: "architect-agent"
+    verified_at: "2026-06-20T17:35:00Z"
+    follow_up_issue: "see architect-review-FORA-586.md §8 follow-up #1"
+  allowlist:
+    - scope: "task:read"
+      tier: "read"
+      added_by: "security-engineer-agent"
+      app_level_min: 1
+      justification: "Read tasks, comments, attachments, statuses"
+    - scope: "task:write"
+      tier: "write"
+      added_by: "security-engineer-agent"
+      app_level_min: 2
+      justification: "Update tasks, post comments, change status"
+    - scope: "space:read"
+      tier: "read"
+      added_by: "security-engineer-agent"
+      app_level_min: 1
+      justification: "Read space + list metadata for canonical mapping table"
+    - scope: "list:read"
+      tier: "read"
+      added_by: "security-engineer-agent"
+      app_level_min: 1
+      justification: "Read list metadata for canonical mapping table"
+    - scope: "list:write"
+      tier: "write"
+      added_by: "security-engineer-agent"
+      app_level_min: 2
+      justification: "Create + update lists if Paperclip escalates"
+    - scope: "comment:write"
+      tier: "write"
+      added_by: "security-engineer-agent"
+      app_level_min: 2
+      justification: "Post comments on customer ClickUp from Paperclip agents"
+    - scope: "member:read"
+      tier: "read"
+      added_by: "security-engineer-agent"
+      app_level_min: 1
+      justification: "Map ClickUp user to Paperclip actor (R-SYNC-04 + ADR-0010 §5)"
+    - scope: "customFields:read"
+      tier: "read"
+      added_by: "security-engineer-agent"
+      app_level_min: 1
+      opt_in: "per_tenant"
+      justification: "Read ClickUp custom field values; opt-in per tenant (default off) per FORA-586 §3"
+    - scope: "customFields:write"
+      tier: "write"
+      added_by: "security-engineer-agent"
+      app_level_min: 2
+      opt_in: "per_tenant"
+      justification: "Write ClickUp custom field values; opt-in per tenant (default off) per FORA-586 §3"
+  denied:
+    - scope: "space:write (admin)"
+      tier: "admin"
+      reason: "Space-level configuration; never required"
+    - scope: "user:write"
+      tier: "admin"
+      reason: "User management; never required"
+    - scope: "webhook:write (admin)"
+      tier: "admin"
+      reason: "Webhook installation; the platform install-time setup grants webhooks via a separate surface"
+    - scope: "goal:write (admin)"
+      tier: "admin"
+      reason: "Goal CRUD; out of scope for sync"
+    - scope: "view:write (admin)"
+      tier: "admin"
+      reason: "View management; out of scope"
+    - scope: "folder:write (admin)"
+      tier: "admin"
+      reason: "Folder management; out of scope"
+  rotation_days: 60  # matches ClickUp personal access token best practice
+
+# ---------------------------------------------------------------------------
+# Cross-cutting decisions (mirrors taxonomy §4)
+# ---------------------------------------------------------------------------
+cross_cutting:
+  admin_tier_default: "deny"
+  admin_tier_opt_in: "Board ask_user_questions sign-off + manifest re-sign"
+  impersonation: "deny"            # per ADR-0010 §5
+  oauth_delegation: "deny"          # no agent acts as a human user
+  per_tenant_opt_out: "allow"        # tenant can drop specific scopes
+  per_tenant_opt_in: "deny"          # widen requires manifest commit + sign
+  rotation_policy_source: "apps/customer-cloud-broker (FORA-126) via AWS Secrets Manager (FORA-128)"
+  per_tenant_webhook_secret: "HMAC-SHA256 per-tenant (FORA-161 pattern); 5-min timestamp window + nonce"
+  cross_tenant_key_isolation: "tenant-scoped secret ARN; broker assume() validates tenant_id match; CI lint for per-tenant namespace invariant (FORA-204 R6.3)"
+
+# ---------------------------------------------------------------------------
+# Audit + drift detection (FORA-258.4 + FORA-258.5)
+# ---------------------------------------------------------------------------
+audit:
+  drift_event_name: "sync.scope_drift.detected"
+  drift_event_schema: "metadata.sync.* keys per FORA-204 §6 (no top-level fields; AUDIT_SCHEMA_VERSION bump on breaking change)"
+  per_tenant_namespace_invariant: "metadata.sync.authored_for_tenant must match tenantId (FORA-204 R6.3); CI lint"
+  pagerduty_routing_key_scope: "per-tenant"  # FORA-258.5 default; CTO walkthrough to confirm
+  pagerduty_alert_threshold: ">0 drifts per tenant per 5 min"
+
+# ---------------------------------------------------------------------------
+# Open questions (Architect review applied)
+# ---------------------------------------------------------------------------
+# Resolved in forge/sync-plane/architect-review-FORA-586.md:
+#   §1 ClickUp catalog verification → marked as 'requires follow-up' (AC #2)
+#   §2 GitHub App vs OAuth App      → v1 uses GitHub App (AC #3)
+#   §3 ClickUp custom fields        → per-tenant opt-in (default off)
+#   §4 Jira Service Management       → per-tenant opt-in (default off)
+#   §5 Rotation cadence              → hard-coded v1; per-tenant override in v2
+#   §6 Admin-tier Board sign-off     → out of scope for FORA-586; documented alongside risk register
+open_questions: "resolved in forge/sync-plane/architect-review-FORA-586.md"
