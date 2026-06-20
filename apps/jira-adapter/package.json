@@ -22,6 +22,10 @@
     "./workflow-mapping": {
       "import": "./dist/workflow-mapping.js",
       "types": "./dist/workflow-mapping.d.ts"
+    },
+    "./divergence-cron": {
+      "import": "./dist/divergence-cron.js",
+      "types": "./dist/divergence-cron.d.ts"
     }
   },
   "files": [
