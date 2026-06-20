@@ -31,3 +31,15 @@ export {
   type SyncAuditEvent,
   type AuditSink,
 } from './audit.js';
+export {
+  mirrorIssueOutbound,
+  mirrorIssueInbound,
+  makeClaimDeps,
+  type JiraClient,
+  type SyncPlanePublisher,
+  type PaperclipIssueEvent,
+  type JiraIssueCreatedWebhook,
+  type MirrorInboundInput,
+  type OutboundIssueResult,
+  type InboundIssueResult,
+} from './issue-mirror.js';
