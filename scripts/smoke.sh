@@ -154,6 +154,14 @@ run_check "workspace lint        workspace/  no production-bar violations" \
 run_check "workspace materialize  agents/workspace_materialize/smoke_test.py 7 ACs green" \
   "PYTHONPATH=. python3 -m agents.workspace_materialize.smoke_test >/dev/null 2>&1"
 
+# Knowledge Layer tenant override/extend resolver gate (FORA-411,
+# sub-goal 0.8.4). Runs the workspace:resolve smoke test in a tempdir:
+# tenant override wins for acme, seed fallthrough for globex, memory/
+# write is refused + audit row, cache invalidates on mtime drift,
+# CLI exit codes + JSON output. Non-skippable by design.
+run_check "workspace resolve     agents/workspace_resolve/smoke_test.py 9 ACs green" \
+  "PYTHONPATH=. python3 -m agents.workspace_resolve.smoke_test >/dev/null 2>&1"
+
 # Demo-run seed (FORA-378). The persona dashboards fall back to "No
 # runs yet" unless the seed run is present and the orchestrator's
 # tenant-scoped reads can see it. The probe asserts the seven canonical

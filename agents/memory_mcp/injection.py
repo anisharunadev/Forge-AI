@@ -8,6 +8,7 @@ service resolves the table to facts in the requested tenant scope.
 
 from __future__ import annotations
 
+import os
 from typing import Any, Dict, List, Optional
 
 # Faithful copy of the injection table in [workspace/README.md §2]
@@ -199,3 +200,67 @@ def get_stage(stage: str) -> Dict[str, Any]:
 
 def list_stages() -> List[str]:
     return sorted(INJECTION_TABLE.keys())
+
+
+# ---------------------------------------------------------------------------
+# Tenant-aware file resolution (FORA-411 / 0.8.4)
+# ---------------------------------------------------------------------------
+#
+# After a tenant has been materialized (FORA-409 / 0.8.3), the orchestrator
+# read path must consult ``tenants/<slug>/workspace/<rel>`` BEFORE the
+# seed so a tenant override (or extension) wins. The lookup goes through
+# :mod:`agents.workspace_resolve` so the override contract (memory/
+# read-only; customer/+project/ overridable) is enforced in one place.
+#
+# The integration here is intentionally small: ``resolve_stage_files``
+# returns the on-disk paths the orchestrator / sub-agent should read
+# for a given stage + tenant. The Memory MCP continues to serve facts
+# from the SQLite index (which is also tenant-scoped — see the
+# materializer's prime step), and the file-content read is what
+# changes.
+
+
+def resolve_stage_files(
+    stage: str,
+    *,
+    slug: Optional[str] = None,
+    seed_root: Optional[str] = None,
+    tenants_root: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    """Resolve every file in *stage*'s injection table to its on-disk path.
+
+    For each entry in ``INJECTION_TABLE[stage]["files"]``, return
+    ``{"relpath", "path", "source"}`` where ``source`` is ``"tenant"``
+    if the tenant override exists, ``"seed"`` if only the seed has
+    the file, or the entry is dropped if neither side has it.
+
+    If *slug* is ``None`` or empty, the seed is consulted directly
+    (pre-materialization behavior — preserved so legacy callers and
+    unit tests keep working).
+    """
+    from agents.workspace_resolve import resolve  # late import: avoid a hard dep
+
+    entry = get_stage(stage)
+    files = entry.get("files", []) or []
+    out: List[Dict[str, Any]] = []
+    for rel in files:
+        if not slug:
+            # Pre-materialization behavior: no tenant context, just
+            # build the seed path. We deliberately do NOT call
+            # ``resolve`` here so a missing tenant_id never accidentally
+            # touches the tenants/ tree.
+            seed_path = os.path.join(seed_root or "workspace", rel) if seed_root else os.path.join("workspace", rel)
+            out.append({"relpath": rel, "path": seed_path, "source": "seed"})
+            continue
+        rp = resolve(
+            slug,
+            rel,
+            seed_root=seed_root,
+            tenants_root=tenants_root,
+        )
+        if rp is None:
+            # Neither side has the file. Skip — the orchestrator can
+            # decide whether to surface the gap.
+            continue
+        out.append({"relpath": rel, "path": rp.path, "source": rp.source})
+    return out
