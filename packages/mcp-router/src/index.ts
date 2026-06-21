@@ -1,5 +1,5 @@
 /**
- * @fora/mcp-router — public API
+ * forge-ai/mcp-router — public API
  *
  * The only surface the rest of the platform imports. Re-exports the typed
  * port, types, errors, in-memory router, and audit sinks.

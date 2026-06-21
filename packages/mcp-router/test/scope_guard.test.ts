@@ -1,5 +1,5 @@
 /**
- * @fora/mcp-router — scope-guard test suite
+ * forge-ai/mcp-router — scope-guard test suite
  *
  * Covers FORA-448 / FORA-48 §3.5: the per-tenant scope guard that wires
  * identity-broker (tenant validation) and customer-cloud-broker (credential

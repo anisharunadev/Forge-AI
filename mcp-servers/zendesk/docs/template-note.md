@@ -1,18 +1,18 @@
-# Template note — which MCP servers `@fora/mcp-zendesk` templates for
+# Template note — which MCP servers `forge-ai/mcp-zendesk` templates for
 
-This package is the **second P2 MCP server** in the Forge AI platform and copies the `@fora/mcp-github` template (Forge AI-4). The shared structure was designed up front so P2 servers can ship in days, not weeks, and the agent runtime can treat them uniformly.
+This package is the **second P2 MCP server** in the Forge AI platform and copies the `forge-ai/mcp-github` template (Forge AI-4). The shared structure was designed up front so P2 servers can ship in days, not weeks, and the agent runtime can treat them uniformly.
 
 ## Servers that copy this template
 
 | Server | Priority | Status | Differences vs. github |
 | --- | --- | --- | --- |
-| `@fora/mcp-github` | P1 | shipped | n/a |
-| `@fora/mcp-jira` | P1 | shipped | Project-pinned (one level deeper than org-pin); ADF in/out for description and comments. |
-| `@fora/mcp-confluence` | P1 | shipped | Space-pinned; Confluence storage format; Basic auth from email + API token. |
-| `@fora/mcp-aws` | P1 | shipped | Account+region pinned; AWS SDK credential chain; JSON 1.1 protocol. |
-| `@fora/mcp-sonarqube` | P1 | shipped | Project-pinned; `fetch` against SonarQube REST v1; no SDK. |
-| `@fora/mcp-azure-devops` | P2 | shipped (Forge AI-96) | Project-pinned (org + project); `fetch` against AzDO REST 7.1; Basic auth from a project-scoped PAT. Three mutations require `confirm: true`. |
-| `@fora/mcp-zendesk` | **P2** | **shipped (this issue, Forge AI-94)** | **Subdomain-pinned**: `ZENDESK_SUBDOMAIN` + `ZENDESK_EMAIL` + `ZENDESK_API_TOKEN`; Basic auth from a Zendesk API token; `fetch` against Zendesk REST v2; no SDK. Two mutations require `confirm: true` (`create_ticket`, `update_ticket`); `add_comment` and `apply_macro` are append-only / reviewable and do not require explicit confirmation. The auth header is `Basic base64("{email}/token:{apiToken}")` — the `/token` suffix is Zendesk-specific. List endpoints use page+perPage pagination; search uses Zendesk's native search syntax. |
+| `forge-ai/mcp-github` | P1 | shipped | n/a |
+| `forge-ai/mcp-jira` | P1 | shipped | Project-pinned (one level deeper than org-pin); ADF in/out for description and comments. |
+| `forge-ai/mcp-confluence` | P1 | shipped | Space-pinned; Confluence storage format; Basic auth from email + API token. |
+| `forge-ai/mcp-aws` | P1 | shipped | Account+region pinned; AWS SDK credential chain; JSON 1.1 protocol. |
+| `forge-ai/mcp-sonarqube` | P1 | shipped | Project-pinned; `fetch` against SonarQube REST v1; no SDK. |
+| `forge-ai/mcp-azure-devops` | P2 | shipped (Forge AI-96) | Project-pinned (org + project); `fetch` against AzDO REST 7.1; Basic auth from a project-scoped PAT. Three mutations require `confirm: true`. |
+| `forge-ai/mcp-zendesk` | **P2** | **shipped (this issue, Forge AI-94)** | **Subdomain-pinned**: `ZENDESK_SUBDOMAIN` + `ZENDESK_EMAIL` + `ZENDESK_API_TOKEN`; Basic auth from a Zendesk API token; `fetch` against Zendesk REST v2; no SDK. Two mutations require `confirm: true` (`create_ticket`, `update_ticket`); `add_comment` and `apply_macro` are append-only / reviewable and do not require explicit confirmation. The auth header is `Basic base64("{email}/token:{apiToken}")` — the `/token` suffix is Zendesk-specific. List endpoints use page+perPage pagination; search uses Zendesk's native search syntax. |
 
 Databricks is still P2 and will follow the same template.
 

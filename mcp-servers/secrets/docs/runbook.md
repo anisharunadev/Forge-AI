@@ -18,7 +18,7 @@ every other call is a `resolve` that returns a redacted envelope.
 ## Pre-conditions
 
 - Node.js ≥ 18.17 (the `secrets-mcp` is published as
-  `@fora/mcp-secrets`).
+  `forge-ai/mcp-secrets`).
 - AWS Secrets Manager access for the production account(s) the
   broker routes to. The MCP uses the SDK's default credential
   chain — the operator does not need to mint STS credentials by
@@ -64,7 +64,7 @@ export Forge AI_AUDIT_SINK="fora"
 export Forge AI_AUDIT_URL="https://audit.fora.example.com"
 export Forge AI_AUDIT_TOKEN="<bearer>"
 
-node node_modules/@fora/mcp-secrets/dist/index.js
+node node_modules/forge-ai/mcp-secrets/dist/index.js
 ```
 
 Verify the boot by reading the stderr line:
@@ -91,7 +91,7 @@ echo '{
     "name": "resolve",
     "arguments": { "secret_ref": "tenants/tnt_acme/secrets/sanity_check" }
   }
-}' | node node_modules/@fora/mcp-secrets/dist/index.js
+}' | node node_modules/forge-ai/mcp-secrets/dist/index.js
 ```
 
 A `not_found` envelope is the expected response for a sanity-check
@@ -116,7 +116,7 @@ echo '{
       "new_value": "ghp_<the-new-value>"
     }
   }
-}' | node node_modules/@fora/mcp-secrets/dist/index.js
+}' | node node_modules/forge-ai/mcp-secrets/dist/index.js
 ```
 
 The response carries `{ ok: true, secret_ref, version, created_at }`
@@ -130,7 +130,7 @@ The response carries `{ ok: true, secret_ref, version, created_at }`
 
 ```bash
 # Resolve the @latest — should return the new value's fingerprint.
-echo '...' | node node_modules/@fora/mcp-secrets/dist/index.js
+echo '...' | node node_modules/forge-ai/mcp-secrets/dist/index.js
 
 # Resolve @1 — should return the old value's fingerprint.
 # Confirms the old version is still resolvable.

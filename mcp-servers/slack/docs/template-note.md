@@ -1,21 +1,21 @@
-# Template note — Forge AI MCP servers and what `@fora/mcp-slack` copies from
+# Template note — Forge AI MCP servers and what `forge-ai/mcp-slack` copies from
 
-This package is the **first chat/IM MCP server** in the Forge AI priority-1 set. It is built by copy-from-template of `@fora/mcp-github` ([Forge AI-4](/Forge AI/issues/Forge AI-4), [template note](../github/docs/template-note.md)). The seven contract points in the GitHub template-note are mandatory and non-negotiable; this server preserves all of them.
+This package is the **first chat/IM MCP server** in the Forge AI priority-1 set. It is built by copy-from-template of `forge-ai/mcp-github` ([Forge AI-4](/Forge AI/issues/Forge AI-4), [template note](../github/docs/template-note.md)). The seven contract points in the GitHub template-note are mandatory and non-negotiable; this server preserves all of them.
 
 ## Servers that share this template
 
 | Server | Priority | Status | Differences vs. github |
 | --- | --- | --- | --- |
-| `@fora/mcp-github` | P1 | shipped | n/a |
-| `@fora/mcp-jira` | P1 | shipped | **Project-pinned** (one level deeper than org-pin): `JIRA_PROJECT_KEY` + email + API token auth against Atlassian Cloud REST v3; `list_issues` / `search_jql` / `get_issue` / `create_issue` / `add_comment` / `transition_issue`; no `pull_request`/`repo` analogues; ADF in/out for description and comments. |
-| `@fora/mcp-confluence` | P1 | shipped | Space-pinned (not org-pinned); `page_id` not `repo`; uses Confluence storage format (not GFM); Basic auth header built from email + API token; resolves `CONFLUENCE_SPACE_KEY` to a numeric space id on startup. |
-| `@fora/mcp-slack` | P1 | shipped (this issue) | **Workspace-pinned** (Slack `team_id`): `SLACK_TEAM_ID` + `SLACK_BOT_TOKEN`; chat surface (channels, threads, messages, reactions) instead of repo/PR surface. No Slack SDK — direct `fetch` calls to `slack.com/api` mirror the Jira server's SDK-free stance. `post_message` and `update_message` require `confirm: true` as a human-in-the-loop gate (Forge AI-5 §5.2). |
+| `forge-ai/mcp-github` | P1 | shipped | n/a |
+| `forge-ai/mcp-jira` | P1 | shipped | **Project-pinned** (one level deeper than org-pin): `JIRA_PROJECT_KEY` + email + API token auth against Atlassian Cloud REST v3; `list_issues` / `search_jql` / `get_issue` / `create_issue` / `add_comment` / `transition_issue`; no `pull_request`/`repo` analogues; ADF in/out for description and comments. |
+| `forge-ai/mcp-confluence` | P1 | shipped | Space-pinned (not org-pinned); `page_id` not `repo`; uses Confluence storage format (not GFM); Basic auth header built from email + API token; resolves `CONFLUENCE_SPACE_KEY` to a numeric space id on startup. |
+| `forge-ai/mcp-slack` | P1 | shipped (this issue) | **Workspace-pinned** (Slack `team_id`): `SLACK_TEAM_ID` + `SLACK_BOT_TOKEN`; chat surface (channels, threads, messages, reactions) instead of repo/PR surface. No Slack SDK — direct `fetch` calls to `slack.com/api` mirror the Jira server's SDK-free stance. `post_message` and `update_message` require `confirm: true` as a human-in-the-loop gate (Forge AI-5 §5.2). |
 
 Zendesk, Databricks, Azure DevOps, and **Microsoft Teams** are P2 and will follow the same template, but the four P1 servers get the contract first because they are the ones every design partner asks for.
 
 ## Contract drift vs. the github template
 
-The Slack server is a faithful copy-from-template of `@fora/mcp-github` for the seven contract points:
+The Slack server is a faithful copy-from-template of `forge-ai/mcp-github` for the seven contract points:
 
 1. **Single-scope pin on startup** — `SLACK_TEAM_ID` is required and asserted on startup via `auth.test`. The startup call is eager (in `index.ts` `main()`), so a wrong-workspace token fails fast at boot rather than on the first user call.
 2. **Typed client wrapper** — `createClient(config)` returns a `Client` interface whose methods take IDs and primitives, never raw HTTP.
@@ -34,7 +34,7 @@ The Slack server is a faithful copy-from-template of `@fora/mcp-github` for the 
 
 ## Why Teams is a follow-up ticket, not this one
 
-The original [Forge AI-93](/Forge AI/issues/Forge AI-93) ticket called for a unified `@fora/mcp-chat` package with a Slack-vs-Teams adapter that switches based on which token is set. After review in the Forge AI-25 redistribution, Teams was split out as a separate ticket (P2) so Slack could ship on its own with the contract's seven points preserved exactly. The Teams server will follow this same template; the only contract difference is `TEAMS_ACCESS_TOKEN` + `TEAMS_TENANT_ID` instead of `SLACK_BOT_TOKEN` + `SLACK_TEAM_ID`, and the Graph API call surface instead of the Slack Web API. The shared `@fora/mcp-chat` adapter idea is shelved — two narrow servers beat one dual-mode one for a security-sensitive boundary.
+The original [Forge AI-93](/Forge AI/issues/Forge AI-93) ticket called for a unified `forge-ai/mcp-chat` package with a Slack-vs-Teams adapter that switches based on which token is set. After review in the Forge AI-25 redistribution, Teams was split out as a separate ticket (P2) so Slack could ship on its own with the contract's seven points preserved exactly. The Teams server will follow this same template; the only contract difference is `TEAMS_ACCESS_TOKEN` + `TEAMS_TENANT_ID` instead of `SLACK_BOT_TOKEN` + `SLACK_TEAM_ID`, and the Graph API call surface instead of the Slack Web API. The shared `forge-ai/mcp-chat` adapter idea is shelved — two narrow servers beat one dual-mode one for a security-sensitive boundary.
 
 ## Acceptance bar (also the template's)
 

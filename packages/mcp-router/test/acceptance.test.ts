@@ -1,17 +1,17 @@
 /**
- * `@fora/mcp-router` — single-file acceptance harness (FORA-48 §4 / FORA-450).
+ * `forge-ai/mcp-router` — single-file acceptance harness (FORA-48 §4 / FORA-450).
  *
  * Exercises every FORA-48 AC end-to-end against the shipped 0.3 surface, using
  * the `InMemoryMcpRouter` reference implementation. All four scenarios share
  * this file so the harness stays a single `pnpm` script invocation
- * (`pnpm --filter @fora/mcp-router test:acceptance:router`).
+ * (`pnpm --filter forge-ai/mcp-router test:acceptance:router`).
  *
  * Sibling deliverables (all shipped):
- *   - `@fora/mcp-schemas`   v0.1.0 (FORA-445) — SchemaRegistry + toJsonSchema.
- *   - `@fora/mcp-breaker`   v0.1.0 (FORA-446) — `circuit_open` typed error ≤50ms.
- *   - `@fora/mcp-transport` v0.1.0 (FORA-447) — newline-JSON transport SDK 1.29.
- *   - `@fora/mcp-router`    v0.3.6 (FORA-448) — scope-guard + scope-guard e2e.
- *   - `@fora/mcp-jira`      v0.3.6 (FORA-449) — `createJiraManifest` + router-port smoke.
+ *   - `forge-ai/mcp-schemas`   v0.1.0 (FORA-445) — SchemaRegistry + toJsonSchema.
+ *   - `forge-ai/mcp-breaker`   v0.1.0 (FORA-446) — `circuit_open` typed error ≤50ms.
+ *   - `forge-ai/mcp-transport` v0.1.0 (FORA-447) — newline-JSON transport SDK 1.29.
+ *   - `forge-ai/mcp-router`    v0.3.6 (FORA-448) — scope-guard + scope-guard e2e.
+ *   - `forge-ai/mcp-jira`      v0.3.6 (FORA-449) — `createJiraManifest` + router-port smoke.
  *
  * AC mapping:
  *   - AC #1 — `register <10 lines + immediate allow-list visibility` → describe "AC #1 …"

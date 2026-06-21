@@ -1,76 +1,75 @@
-# Root docker-compose for FORA local dev (FORA-371).
+name: forge-dev
+
+# Forge AI v2.0 local development stack.
 #
-# Scope: developer laptop only. NOT production — no TLS, no secrets
-# manager, no IAM roles. Production lives in `infra/terraform/`.
+# Scope: developer laptop only. NOT production. Production lives in
+# `infra/terraform/` and uses AWS managed services per ADR-001.
 #
-# This stack boots the three stateful dependencies every FORA app
-# reads at boot:
-#   - postgres  (apps/orchestrator, packages/db-migrator, packages/db-pool)
-#   - redis     (packages/cache-broker, packages/session-tokens,
-#                packages/sync-plane-ratelimit)
-#   - localstack (packages/object-store, apps/customer-cloud-broker,
-#                 apps/identity-broker — S3, IAM, STS, Secrets Manager)
+# v2.0 PRD stack (see implementation_plan.md):
+#   - FastAPI (Python 3.13) on :8000  (backend)
+#   - Next.js 15 on :3000             (apps/forge)
+#   - PostgreSQL 17 + Apache AGE + pgvector on :5432  (ADR-002)
+#   - Redis 7 on :6379
+#   - Keycloak 26+ on :8080  (OIDC + SAML)
+#   - LiteLLM Proxy on :4000 (DL-025: Provider Abstraction Layer)
+#   - floci (S3-compatible local AWS emulator) on :4566
+#     Drop-in LocalStack Community replacement (LocalStack Community
+#     was sunset March 2026). Emulates 58 AWS services — S3, SQS, SNS,
+#     Lambda, RDS, DynamoDB, Secrets Manager, etc. ADR-001: dev-only;
+#     S3 (and other managed AWS services) in prod.
 #
-# The three FORA HTTP services (agent-runtime, orchestrator,
-# customer-cloud-broker) are NOT started by Compose — `scripts/dev-up.sh`
-# starts them via `pnpm -r dev` once the infra is healthy. This keeps
-# the Compose surface small and matches the AC: "exit 0 on green,
-# non-zero on any failure."
+# ADR-001: cloud-only AWS in production — this compose exists solely
+#          for local development and CI smoke.
+# ADR-002: PostgreSQL 17 is the only database; Apache AGE provides
+#          the property graph, pgvector provides vector search.
+# DL-025 : LiteLLM Proxy is the sole LLM access path; downstream
+#          code never calls provider SDKs directly.
 #
 # Usage:
-#   cp .env.example .env       # edit ANTHROPIC_API_KEY
-#   ./scripts/dev-up.sh        # boots infra + apps + runs smoke
-#   ./scripts/smoke.sh         # re-runs the health gate
-#   docker compose down        # tears down the infra (named volumes preserved)
-
-name: fora-dev
+#   cp .env.example .env       # edit secrets
+#   ./scripts/setup-local.sh   # first-time bootstrap
+#   docker compose up -d       # subsequent boots
+#   docker compose down        # tear down (named volumes preserved)
 
 services:
   postgres:
-    image: postgres:16-alpine
-    container_name: fora-postgres
+    # pgvector/pgvector:pg17 has pgvector pre-installed (postgres:17-alpine
+    # does not, which breaks our knowledge graph / vector search). AGE
+    # (Apache Graph Extension) is loaded at init time via scripts/postgres-init.
+    image: pgvector/pgvector:pg17
+    container_name: forge-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-fora}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fora}
-      POSTGRES_DB: ${POSTGRES_DB:-fora}
-      # FORA apps trust the gateway to set `app.tenant_id`; the
-      # migrator runs as a non-superuser role that can BYPASSRLS only
-      # in the allow-listed migration paths.
+      POSTGRES_USER: ${POSTGRES_USER:-forge}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-forge}
+      POSTGRES_DB: ${POSTGRES_DB:-forge}
+      # UTF8 encoding is required so pgvector + AGE identifiers round-trip.
       POSTGRES_INITDB_ARGS: "--encoding=UTF8"
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - fora-postgres-data:/var/lib/postgresql/data
-      # Migration files are mounted read-only; the db-migrator package
-      # is the *only* path that creates tables, so we never want a
-      # shell-driven `psql` to drift the schema in dev.
-      - ./migrations:/docker-entrypoint-initdb.d/migrations:ro
+      - forge-postgres-data:/var/lib/postgresql/data
+      # Init scripts run once on a fresh volume; reruns are safe
+      # because every statement is guarded with IF NOT EXISTS.
+      - ./scripts/postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fora} -d ${POSTGRES_DB:-fora}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-forge} -d ${POSTGRES_DB:-forge}"]
       interval: 5s
       timeout: 3s
       retries: 20
       start_period: 10s
     networks:
-      - fora-net
+      - forge-net
 
   redis:
     image: redis:7-alpine
-    container_name: fora-redis
+    container_name: forge-redis
     restart: unless-stopped
-    command:
-      - redis-server
-      - --appendonly
-      - "yes"
-      - --maxmemory
-      - "256mb"
-      - --maxmemory-policy
-      - "allkeys-lru"
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
-      - fora-redis-data:/data
+      - forge-redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -78,45 +77,196 @@ services:
       retries: 20
       start_period: 5s
     networks:
-      - fora-net
+      - forge-net
 
-  localstack:
-    image: localstack/localstack:3.8
-    container_name: fora-localstack
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.0
+    container_name: forge-keycloak
     restart: unless-stopped
+    # start-dev + --import-realm boots with the forge realm preloaded.
+    # In production, Keycloak runs in `start` mode behind a managed
+    # Postgres and is fronted by the identity-broker (see ADR-001).
+    command: ["start-dev"]
     environment:
-      SERVICES: s3,iam,sts,secretsmanager
-      DEBUG: ${LOCALSTACK_DEBUG:-0}
-      # LocalStack is single-node, single-account dev. The dummy
-      # credentials below are baked in by the image — the @aws-sdk
-      # clients FORA uses pick them up via AWS_ENDPOINT_URL +
-      # AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY.
-      AWS_DEFAULT_REGION: ${AWS_REGION:-us-east-1}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HEALTH_ENABLED: "true"
     ports:
-      - "${LOCALSTACK_PORT:-4566}:4566"
-    volumes:
-      - fora-localstack-data:/var/lib/localstack
-      # Init script: creates the dev S3 bucket + a starter secrets
-      # manager entry so the smoke test has something to assert.
-      - ./scripts/localstack-init.sh:/etc/localstack/init/ready.d/init.sh:ro
+      - "${KEYCLOAK_PORT:-8080}:8080"
     healthcheck:
-      test: ["CMD-SHELL", "awslocal s3 ls >/dev/null 2>&1"]
-      interval: 5s
+      # Keycloak container has no curl/wget, but the bundled `/bin/sh`
+      # supports the bash /dev/tcp pseudo-device. The OIDC discovery
+      # endpoint requires the master realm to be initialized, so a
+      # successful response proves the server is fully ready.
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /realms/master/.well-known/openid-configuration HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '200 OK' <&3"]
+      interval: 10s
       timeout: 5s
       retries: 30
-      start_period: 15s
+      start_period: 30s
     networks:
-      - fora-net
+      - forge-net
+
+  litellm:
+    # DL-025: Provider Abstraction Layer. Every LLM call in the
+    # backend targets http://litellm:4000 regardless of which
+    # upstream provider actually serves the request.
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: forge-litellm
+    restart: unless-stopped
+    volumes:
+      - ./infra/litellm/config.yaml:/app/config.yaml:ro
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    environment:
+      # LiteLLM uses its own database for spend tracking and rate
+      # limits. We point it at the same Postgres instance for
+      # simplicity; the database is created by postgres-init/03.
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-forge}:${POSTGRES_PASSWORD:-forge}@postgres:5432/litellm"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+    ports:
+      - "${LITELLM_PORT:-4000}:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health/liveliness || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks:
+      - forge-net
+
+  floci:
+    # ADR-001: floci (LocalStack Community successor) emulates S3, SQS,
+    # SNS, Lambda, RDS, DynamoDB, Secrets Manager, IAM, STS in dev. The
+    # backend targets it via the standard AWS SDKs; in prod the same
+    # SDKs target real AWS (see infra/terraform/). Floci accepts any
+    # non-empty AWS credentials, so the test/test defaults in .env are
+    # fine. The Docker socket is mounted so floci can spin up
+    # Docker-backed services (Lambda, RDS emulation) when requested.
+    image: floci/floci:latest
+    container_name: forge-floci
+    restart: unless-stopped
+    environment:
+      FLOCI_PORT: "4566"
+      FLOCI_DEFAULT_REGION: "us-east-1"
+      FLOCI_DEFAULT_ACCOUNT_ID: "000000000000"
+      FLOCI_STORAGE_MODE: "persistent"
+      FLOCI_STORAGE_PERSISTENT_PATH: "/data"
+      FLOCI_HOSTNAME: "floci"
+      SERVICES: "s3,sqs,sns,lambda,rds,secretsmanager,iam,sts,dynamodb"
+      PERSISTENCE: "1"
+    ports:
+      - "${FLOCI_PORT:-4566}:4566"
+    volumes:
+      - forge-floci-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./scripts/floci-init:/etc/localstack/init/ready.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:4566/_localstack/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - forge-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: forge-backend
+    restart: unless-stopped
+    environment:
+      # ADR-002: single Postgres for OLTP + graph + vectors.
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-forge}:${POSTGRES_PASSWORD:-forge}@postgres:5432/${POSTGRES_DB:-forge}"
+      REDIS_URL: "redis://redis:6379/0"
+      # OIDC: backend validates tokens issued by the local Keycloak
+      # realm. Issuer URL must match what Keycloak prints on
+      # startup (no trailing slash).
+      KEYCLOAK_URL: "http://keycloak:8080"
+      KEYCLOAK_REALM: "forge"
+      JWT_SECRET: "${JWT_SECRET:-dev-jwt-secret-change-in-production-min-32-chars-long}"
+      # DL-025: backend never talks to provider SDKs directly.
+      LITELLM_PROXY_URL: "http://litellm:4000"
+      LITELLM_API_KEY: "${LITELLM_MASTER_KEY:-sk-1234}"
+      # ADR-001: S3-compatible object storage.
+      FLOCI_URL: "http://floci:4566"
+      FLOCI_PUBLIC_URL: "${FLOCI_PUBLIC_URL:-http://localhost:4566}"
+      AWS_ENDPOINT_URL: "http://floci:4566"
+      S3_BUCKET_ARTIFACTS: "${S3_BUCKET_ARTIFACTS:-forge-artifacts}"
+      S3_BUCKET_TERMINAL_EXPORTS: "${S3_BUCKET_TERMINAL_EXPORTS:-forge-terminal-exports}"
+      S3_BUCKET_DOCS: "${S3_BUCKET_DOCS:-forge-docs}"
+      ENV: "development"
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      litellm:
+        condition: service_started
+      floci:
+        condition: service_started
+    networks:
+      - forge-net
+
+  forge-ui:
+    build:
+      context: .
+      dockerfile: apps/forge/Dockerfile
+    container_name: forge-ui
+    restart: unless-stopped
+    environment:
+      FORGE_API_BASE_URL: "http://backend:8000/api/v1"
+      FORGE_WS_BASE_URL: "ws://backend:8000/ws"
+      KEYCLOAK_URL: "http://keycloak:8080"
+      NODE_ENV: "development"
+    ports:
+      - "${FORGE_UI_PORT:-3000}:3000"
+    depends_on:
+      - backend
+    networks:
+      - forge-net
+
+  docs-site:
+    # Astro.js 5 + Starlight docs site. The Dockerfile is at
+    # docs-site/Dockerfile and produces a Node 20-alpine image that
+    # serves the prebuilt static output via `astro preview` on :4321.
+    # Astro static output needs no runtime backend; the `depends_on`
+    # is informational so docs is started after the API for a
+    # nicer boot order.
+    build:
+      context: ./docs-site
+      dockerfile: Dockerfile
+    container_name: forge-docs
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOST: "0.0.0.0"
+      PORT: "4321"
+    ports:
+      - "${DOCS_SITE_PORT:-4321}:4321"
+    depends_on:
+      - backend
+    networks:
+      - forge-net
 
 volumes:
-  fora-postgres-data:
-    name: fora-postgres-data
-  fora-redis-data:
-    name: fora-redis-data
-  fora-localstack-data:
-    name: fora-localstack-data
+  forge-postgres-data:
+    name: forge-postgres-data
+  forge-redis-data:
+    name: forge-redis-data
+  forge-floci-data:
+    name: forge-floci-data
 
 networks:
-  fora-net:
-    name: fora-net
+  forge-net:
+    name: forge-net
     driver: bridge

@@ -1,8 +1,8 @@
 /**
- * @fora/mcp-router — audit
+ * forge-ai/mcp-router — audit
  *
  * Minimal audit sink + the canonical `mcp.*` event shape. Mirrors the
- * `ForaAuditEvent` / `AuditSink` pair in `@fora/cache-broker`. The router
+ * `ForaAuditEvent` / `AuditSink` pair in `forge-ai/cache-broker`. The router
  * emits one event per resolve/invoke/register; emits are best-effort.
  */
 

@@ -1,4 +1,4 @@
-# `@fora/mcp-github` — Forge AI GitHub MCP Server
+# `forge-ai/mcp-github` — Forge AI GitHub MCP Server
 
 Priority-1 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes seven tools over MCP/stdio: `list_repos`, `get_pr`, `list_prs`, `create_pr_comment`, `list_issues`, `create_issue`, `search_code`.
 

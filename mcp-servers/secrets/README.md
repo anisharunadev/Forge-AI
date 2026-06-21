@@ -1,6 +1,6 @@
 # Forge AI secrets-mcp
 
-`@fora/mcp-secrets` — the secrets-mcp adapter for the Forge AI Enterprise
+`forge-ai/mcp-secrets` — the secrets-mcp adapter for the Forge AI Enterprise
 AI SDLC Operating System. Resolves `secret_ref`s at call time from a
 tenant-scoped secret manager, returns a redacted envelope to the
 agent, and emits an audit event per resolution. v1 backing store

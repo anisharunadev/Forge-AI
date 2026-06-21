@@ -1,5 +1,5 @@
 /**
- * `@fora/mcp-router` — acceptance harness fixture: a deliberately-failing MCP.
+ * `forge-ai/mcp-router` — acceptance harness fixture: a deliberately-failing MCP.
  *
  * Used by FORA-48 / FORA-450 AC #2 to prove the per-server circuit breaker
  * trips after N consecutive `upstream_error` failures and short-circuits the

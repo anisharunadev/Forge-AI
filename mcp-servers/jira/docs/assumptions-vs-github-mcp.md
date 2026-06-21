@@ -2,7 +2,7 @@
 
 Both MCP servers follow the same packaging, the same single-tenant pinning pattern, the same Zod-first tool schema, and the same JSON-stringified content block. The divergences below are the ones that matter when wiring this server into a real agent.
 
-> **Pin scope.** `@fora/mcp-jira` is pinned to a single **project** (`JIRA_PROJECT_KEY`), one level deeper than `@fora/mcp-github` which is pinned to a single **org** (`GITHUB_ORG`). The same template contract — single scope, server-enforced, model cannot override — applies. A Confluence MCP that follows would pin a single `spaceKey`.
+> **Pin scope.** `forge-ai/mcp-jira` is pinned to a single **project** (`JIRA_PROJECT_KEY`), one level deeper than `forge-ai/mcp-github` which is pinned to a single **org** (`GITHUB_ORG`). The same template contract — single scope, server-enforced, model cannot override — applies. A Confluence MCP that follows would pin a single `spaceKey`.
 
 ## 1. Rate limits
 

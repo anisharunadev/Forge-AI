@@ -1,4 +1,4 @@
-# `@fora/mcp-slack` — Forge AI Slack MCP Server
+# `forge-ai/mcp-slack` — Forge AI Slack MCP Server
 
 Priority-1 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes seven tools over MCP/stdio: `list_channels`, `list_threads`, `get_thread`, `post_message`, `update_message`, `add_reaction`, `search_messages`.
 

@@ -4,7 +4,7 @@
  * Auth is single-list and least-privilege. The server refuses to start if it
  * cannot pin itself to a single List — this prevents an agent prompt from
  * accidentally reaching tasks outside the customer boundary, the same posture
- * `@fora/mcp-jira` takes with `JIRA_PROJECT_KEY` (one level shallower: a List
+ * `forge-ai/mcp-jira` takes with `JIRA_PROJECT_KEY` (one level shallower: a List
  * is roughly a Jira "filter saved search" over a single board column).
  *
  * ClickUp uses HTTP Basic-style auth with a Personal API Token: the token is

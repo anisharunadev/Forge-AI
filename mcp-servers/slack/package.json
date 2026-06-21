@@ -1,5 +1,5 @@
 {
-  "name": "@fora/mcp-slack",
+  "name": "forge-ai/mcp-slack",
   "version": "0.1.0",
   "description": "FORA Slack MCP server — exposes list_channels, list_threads, get_thread, post_message, update_message, add_reaction, search_messages over MCP/stdio. Auth via Slack bot token (xoxb-…) pinned to a single workspace.",
   "license": "UNLICENSED",

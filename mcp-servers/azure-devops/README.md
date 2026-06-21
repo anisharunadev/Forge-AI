@@ -1,4 +1,4 @@
-# `@fora/mcp-azure-devops` — Forge AI Azure DevOps MCP Server
+# `forge-ai/mcp-azure-devops` — Forge AI Azure DevOps MCP Server
 
 Priority-2 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes nine tools over MCP/stdio against Azure DevOps REST 7.1: `list_projects`, `list_repos`, `list_pipelines`, `run_pipeline`, `get_pipeline_run`, `list_work_items`, `get_work_item`, `create_work_item`, `add_work_item_comment`.
 
@@ -174,6 +174,6 @@ The mock asserts:
 
 ## Reuse: the Forge AI MCP server template
 
-See `docs/template-note.md` for the shared contract (single-scope pin, typed client, Zod raw shapes, stdio=JSON-RPC, mock-backed smoke, clean SIGINT/SIGTERM, no extra env vars) and how `@fora/mcp-azure-devops` deviates from the GitHub template.
+See `docs/template-note.md` for the shared contract (single-scope pin, typed client, Zod raw shapes, stdio=JSON-RPC, mock-backed smoke, clean SIGINT/SIGTERM, no extra env vars) and how `forge-ai/mcp-azure-devops` deviates from the GitHub template.
 
-This server was copied from `@fora/mcp-github` and adapted for Azure DevOps REST 7.1.
+This server was copied from `forge-ai/mcp-github` and adapted for Azure DevOps REST 7.1.

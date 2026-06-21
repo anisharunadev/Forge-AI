@@ -1,16 +1,16 @@
-# `@fora/mcp-router`
+# `forge-ai/mcp-router`
 
 Typed `McpRouter` port + `InMemoryMcpRouter` reference implementation for the Forge AI MCP framework (sub-goal **0.3 / Forge AI-48 §3.1**). Lands via **Forge AI-444**.
 
 ## Acceptance harness (v0.3.7)
 
 Single-file end-to-end harness that exercises every FORA-48 AC against the
-shipped 0.3 surface (`@fora/mcp-schemas` 0.1.0, `@fora/mcp-breaker` 0.1.0,
-`@fora/mcp-transport` 0.1.0, `@fora/mcp-router` 0.3.6, `@fora/mcp-jira` 0.3.6).
+shipped 0.3 surface (`forge-ai/mcp-schemas` 0.1.0, `forge-ai/mcp-breaker` 0.1.0,
+`forge-ai/mcp-transport` 0.1.0, `forge-ai/mcp-router` 0.3.6, `forge-ai/mcp-jira` 0.3.6).
 Closes the FORA-48 epic via **FORA-450**.
 
 ```bash
-pnpm --filter @fora/mcp-router test:acceptance:router
+pnpm --filter forge-ai/mcp-router test:acceptance:router
 ```
 
 Harness: `packages/mcp-router/test/acceptance.test.ts` (single vitest file).
@@ -24,16 +24,16 @@ Harness: `packages/mcp-router/test/acceptance.test.ts` (single vitest file).
 
 Acceptance:
 
-- `pnpm --filter @fora/mcp-router test:acceptance:router` — 4/4 AC scenarios green.
-- `pnpm --filter @fora/mcp-router typecheck` — clean.
-- `pnpm --filter @fora/mcp-router test` — pre-existing 215+ tests still green (no regression in `router.test.ts` / `scope_guard.test.ts` / `scope_guard_e2e.test.ts`).
-- `pnpm --filter @fora/mcp-jira test` — still 5/5 green (FORA-449 contract preserved).
-- `pnpm --filter @fora/mcp-jira smoke` — `mcp-servers/jira/test/smoke.mjs` unchanged, still passes ("all 6 tools smoke-tested green").
+- `pnpm --filter forge-ai/mcp-router test:acceptance:router` — 4/4 AC scenarios green.
+- `pnpm --filter forge-ai/mcp-router typecheck` — clean.
+- `pnpm --filter forge-ai/mcp-router test` — pre-existing 215+ tests still green (no regression in `router.test.ts` / `scope_guard.test.ts` / `scope_guard_e2e.test.ts`).
+- `pnpm --filter forge-ai/mcp-jira test` — still 5/5 green (FORA-449 contract preserved).
+- `pnpm --filter forge-ai/mcp-jira smoke` — `mcp-servers/jira/test/smoke.mjs` unchanged, still passes ("all 6 tools smoke-tested green").
 - Total harness runtime ≤2s (AC #2 alone has a 50ms budget; full file is comfortably under 2s).
 
 Cross-links:
 
-- Sibling deliverables: FORA-445 (`@fora/mcp-schemas` 0.1.0), FORA-446 (`@fora/mcp-breaker` 0.1.0), FORA-447 (`@fora/mcp-transport` 0.1.0), FORA-448 (`@fora/mcp-router` 0.3.6 scope-guard), FORA-449 (`@fora/mcp-jira` 0.3.6 + router-port smoke).
+- Sibling deliverables: FORA-445 (`forge-ai/mcp-schemas` 0.1.0), FORA-446 (`forge-ai/mcp-breaker` 0.1.0), FORA-447 (`forge-ai/mcp-transport` 0.1.0), FORA-448 (`forge-ai/mcp-router` 0.3.6 scope-guard), FORA-449 (`forge-ai/mcp-jira` 0.3.6 + router-port smoke).
 - Jira router-port smoke (parallel AC #4 cross-check): `mcp-servers/jira/test/router-smoke.test.ts`.
 - FORA-48 (parent epic) and FORA-450 (this acceptance harness).
 
@@ -50,7 +50,7 @@ import {
   type McpRouter,
   type McpRequestContext,
   type ServerManifest,
-} from '@fora/mcp-router';
+} from 'forge-ai/mcp-router';
 ```
 
 The package exports:
@@ -118,9 +118,9 @@ if (result.status === 'ok') {
 ## Tests
 
 ```bash
-pnpm --filter @fora/mcp-router test
-pnpm --filter @fora/mcp-router test:coverage   # ≥ 80% lines
-pnpm --filter @fora/mcp-router typecheck
+pnpm --filter forge-ai/mcp-router test
+pnpm --filter forge-ai/mcp-router test:coverage   # ≥ 80% lines
+pnpm --filter forge-ai/mcp-router typecheck
 ```
 
 Coverage targets (vitest v8):
@@ -134,4 +134,4 @@ Coverage targets (vitest v8):
 
 - Forge AI-48 §3.1 — v0.1 plan (parent epic).
 - Forge AI-444 — this sub-goal (port + result/error types).
-- `@fora/cache-broker` — sibling package; same `RequestContext` shape.
+- `forge-ai/cache-broker` — sibling package; same `RequestContext` shape.

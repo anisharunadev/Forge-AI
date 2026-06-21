@@ -103,7 +103,7 @@ When the Phase 4 feature flag flips:
 - [Forge AI-41](/Forge AI/issues/Forge AI-41) — ADR-0004: Test generator handoff contract
 - [Forge AI-43](/Forge AI/issues/Forge AI-43) — Build Test Generator agent skeleton (`agents/qa/`)
 - [Forge AI-46](/Forge AI/issues/Forge AI-46) — Smoke test for QA Agent (blocked by [Forge AI-43](/Forge AI/issues/Forge AI-43))
-- [Forge AI-49](/Forge AI/issues/Forge AI-49) — Wire QA Agent to @fora/mcp-github (blocked by [Forge AI-43](/Forge AI/issues/Forge AI-43) and [Forge AI-46](/Forge AI/issues/Forge AI-46))
+- [Forge AI-49](/Forge AI/issues/Forge AI-49) — Wire QA Agent to forge-ai/mcp-github (blocked by [Forge AI-43](/Forge AI/issues/Forge AI-43) and [Forge AI-46](/Forge AI/issues/Forge AI-46))
 - [Forge AI-65](/Forge AI/issues/Forge AI-65) — Document QA playbook (this file; the formal commit lands via the issue, not via a free edit)
 - [Forge AI-91](/Forge AI/issues/Forge AI-91) — Self-Healing v1 scaffold (Phase 4)
 

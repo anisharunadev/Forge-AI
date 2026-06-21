@@ -1,4 +1,4 @@
-# Template note — which MCP servers `@fora/mcp-github` templates for
+# Template note — which MCP servers `forge-ai/mcp-github` templates for
 
 This package is the **first concrete MCP server** in the Forge AI priority-1 set. The shared structure was designed up front so the rest of the priority-1 set — and the priority-2 Slack/Teams integration — can copy it and ship in days, not weeks.
 
@@ -6,10 +6,10 @@ This package is the **first concrete MCP server** in the Forge AI priority-1 set
 
 | Server | Priority | Status | Differences vs. github |
 | --- | --- | --- | --- |
-| `@fora/mcp-github` | P1 | shipped (this issue) | n/a |
-| `@fora/mcp-jira` | P1 | shipped | **Project-pinned** (one level deeper than org-pin): `JIRA_PROJECT_KEY` + email + API token auth against Atlassian Cloud REST v3; `list_issues` / `search_jql` / `get_issue` / `create_issue` / `add_comment` / `transition_issue`; no `pull_request`/`repo` analogues; ADF in/out for description and comments. |
-| `@fora/mcp-confluence` | P1 | shipped | Space-pinned (not org-pinned); `page_id` not `repo`; uses Confluence storage format (not GFM); Basic auth header built from email + API token; resolves `CONFLUENCE_SPACE_KEY` to a numeric space id on startup. |
-| `@fora/mcp-figma` | P1 | shipped | **File-pinned** (one level deeper than org-pin): `FIGMA_FILE_KEY` + `FIGMA_TEAM_ID` (asserted on startup) + `FIGMA_TOKEN` (PAT scoped to the team); read + comment-only — no design-file mutation; six tools (`get_file`, `get_file_nodes`, `get_node`, `get_images`, `get_comments`, `post_comment`); hand-rolled `fetch` client (no maintained TS SDK for the Figma REST v1 surface); `X-Figma-Token` header. See "Figma contract drift" below. |
+| `forge-ai/mcp-github` | P1 | shipped (this issue) | n/a |
+| `forge-ai/mcp-jira` | P1 | shipped | **Project-pinned** (one level deeper than org-pin): `JIRA_PROJECT_KEY` + email + API token auth against Atlassian Cloud REST v3; `list_issues` / `search_jql` / `get_issue` / `create_issue` / `add_comment` / `transition_issue`; no `pull_request`/`repo` analogues; ADF in/out for description and comments. |
+| `forge-ai/mcp-confluence` | P1 | shipped | Space-pinned (not org-pinned); `page_id` not `repo`; uses Confluence storage format (not GFM); Basic auth header built from email + API token; resolves `CONFLUENCE_SPACE_KEY` to a numeric space id on startup. |
+| `forge-ai/mcp-figma` | P1 | shipped | **File-pinned** (one level deeper than org-pin): `FIGMA_FILE_KEY` + `FIGMA_TEAM_ID` (asserted on startup) + `FIGMA_TOKEN` (PAT scoped to the team); read + comment-only — no design-file mutation; six tools (`get_file`, `get_file_nodes`, `get_node`, `get_images`, `get_comments`, `post_comment`); hand-rolled `fetch` client (no maintained TS SDK for the Figma REST v1 surface); `X-Figma-Token` header. See "Figma contract drift" below. |
 
 Zendesk, Databricks, Azure DevOps, and Slack/Teams are P2 and will follow the same template, but the P1 servers get the contract first because they are the ones every design partner asks for.
 
@@ -36,7 +36,7 @@ A Figma MCP server should ship with the same files, renamed:
 
 ```
 mcp-servers/figma/
-├── package.json            # @fora/mcp-figma
+├── package.json            # forge-ai/mcp-figma
 ├── tsconfig.json
 ├── bin/fora-mcp-figma.mjs
 ├── src/

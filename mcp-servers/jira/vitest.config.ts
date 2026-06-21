@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config';
 
 /**
- * `@fora/mcp-jira` test runner.
+ * `forge-ai/mcp-jira` test runner.
  *
  * Only `router-smoke.test.ts` lives here for now (FORA-48 AC #4); the
  * stdio child-process smoke flow is in `test/smoke.mjs` and runs via

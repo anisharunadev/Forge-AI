@@ -1,5 +1,5 @@
 {
-  "name": "@fora/mcp-aws",
+  "name": "forge-ai/mcp-aws",
   "version": "0.1.0",
   "description": "FORA AWS MCP server — exposes list_stacks, get_stack, list_stack_resources, get_resource, list_change_sets, get_change_set, describe_change_set over MCP/stdio. Auth via the standard AWS SDK credential chain, pinned to one account+region.",
   "license": "UNLICENSED",

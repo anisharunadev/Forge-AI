@@ -1,7 +1,7 @@
 {
-  "name": "@fora/connector-events",
+  "name": "forge-ai/connector-events",
   "version": "0.1.1",
-  "description": "FORA connector event taxonomy — universal audit envelope, hash-chained per-(tenant, binding) emit pipeline, Tier-1 family event catalogs (Jira / Confluence / GitHub / Slack / Teams), cross-connector lifecycle events, and typed-artifact generation rule engine with RBAC gating. Implements FORA-391 Plan 3 (FORA-484).",
+  "description": "FORA connector event taxonomy \u2014 universal audit envelope, hash-chained per-(tenant, binding) emit pipeline, Tier-1 family event catalogs (Jira / Confluence / GitHub / Slack / Teams), cross-connector lifecycle events, and typed-artifact generation rule engine with RBAC gating. Implements FORA-391 Plan 3 (FORA-484).",
   "license": "UNLICENSED",
   "type": "module",
   "main": "dist/index.js",

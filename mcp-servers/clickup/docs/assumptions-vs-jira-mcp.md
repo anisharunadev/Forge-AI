@@ -2,7 +2,7 @@
 
 Both MCP servers follow the same packaging, the same single-tenant pinning pattern, the same Zod-first tool schema, the same JSON-stringified content block, and the same mutation gate (`confirm: z.literal(true)` for every write). The divergences below are the ones that matter when wiring the ClickUp server into a real agent.
 
-> **Pin scope.** `@fora/mcp-clickup` is pinned to a single **List** (`CLICKUP_LIST_ID`), one level shallower than `@fora/mcp-jira` which is pinned to a single **Project** (`JIRA_PROJECT_KEY`). The same template contract — single scope, server-enforced, model cannot override — applies. A Confluence MCP that follows would pin a single `spaceKey`.
+> **Pin scope.** `forge-ai/mcp-clickup` is pinned to a single **List** (`CLICKUP_LIST_ID`), one level shallower than `forge-ai/mcp-jira` which is pinned to a single **Project** (`JIRA_PROJECT_KEY`). The same template contract — single scope, server-enforced, model cannot override — applies. A Confluence MCP that follows would pin a single `spaceKey`.
 
 ## 1. Rate limits
 

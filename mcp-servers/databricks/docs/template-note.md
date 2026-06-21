@@ -1,8 +1,8 @@
-# Template note — which MCP servers `@fora/mcp-databricks` templates for
+# Template note — which MCP servers `forge-ai/mcp-databricks` templates for
 
 This package is a **priority-2** MCP server in the Forge AI platform and ships in the same shape as the priority-1 set (Jira, GitHub, Confluence, AWS, SonarQube, Figma, Slack/Teams). It is the eighth concrete server to land and the first P2 to ship.
 
-The GitHub MCP server is the canonical template; see [`@fora/mcp-github`'s template note](../github/docs/template-note.md) for the seven shared contract points and the full list of servers that already copy it.
+The GitHub MCP server is the canonical template; see [`forge-ai/mcp-github`'s template note](../github/docs/template-note.md) for the seven shared contract points and the full list of servers that already copy it.
 
 ## Local drift from the canonical template
 
@@ -32,8 +32,8 @@ The `confirm: true` literal is checked in the typed `Client` (not just at the MC
 
 ## SDK choice
 
-Databricks has no actively-maintained JavaScript SDK. The MCP server uses plain `fetch` against the Jobs REST 2.1 + SQL Statement Execution APIs. This matches the `@fora/mcp-aws` precedent (which also uses plain `fetch` against AWS JSON 1.1) and keeps the dep tree tiny — only `@modelcontextprotocol/sdk` and `zod` are required.
+Databricks has no actively-maintained JavaScript SDK. The MCP server uses plain `fetch` against the Jobs REST 2.1 + SQL Statement Execution APIs. This matches the `forge-ai/mcp-aws` precedent (which also uses plain `fetch` against AWS JSON 1.1) and keeps the dep tree tiny — only `@modelcontextprotocol/sdk` and `zod` are required.
 
 ## Servers that copy this template
 
-This package is the ninth concrete MCP server in the Forge AI platform. The list of servers that already copy the canonical template lives in [`@fora/mcp-github`'s template note](../github/docs/template-note.md); the local drift table above is the only thing that's different.
+This package is the ninth concrete MCP server in the Forge AI platform. The list of servers that already copy the canonical template lives in [`forge-ai/mcp-github`'s template note](../github/docs/template-note.md); the local drift table above is the only thing that's different.

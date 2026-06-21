@@ -1,9 +1,0 @@
-FORA-446 smoke:
-  policy: {"consecutive_failure_threshold":5,"window_ms":30000,"error_rate_threshold":0.5,"cooldown_ms":30000}
-  tripped after 5 consecutive failures
-  100/100 calls rejected with circuit_open (0 allowed)
-  rejection latency p50=0.027ms p95=0.195ms p99=5.466ms max=5.466ms
-  AC #2 (≤50ms): PASS
-  breaker.trip events:    1 (expect 1)
-  breaker.reject events:  100 (expect 100)
-SMOKE OK

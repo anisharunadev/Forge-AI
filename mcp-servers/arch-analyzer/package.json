@@ -1,5 +1,5 @@
 {
-  "name": "@fora/mcp-arch-analyzer",
+  "name": "forge-ai/mcp-arch-analyzer",
   "version": "0.1.0",
   "description": "FORA arch-analyzer MCP server — deterministic codebase graph extraction for TypeScript, Python, Go, and Java. Produces codebase-graph.json + summary.md with cycle and high-fanout detection. No LLM in the inner loop, so cost stays under the $0.50 budget on a 50k LOC repo.",
   "license": "UNLICENSED",

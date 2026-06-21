@@ -1,7 +1,7 @@
 {
-  "name": "@fora/mcp-clickup",
+  "name": "forge-ai/mcp-clickup",
   "version": "0.1.0",
-  "description": "FORA ClickUp MCP server — exposes 8 tools (list_tasks, search_tasks, get_task, create_task, update_task, set_task_status, list_comments, add_comment) over MCP/stdio. Auth via ClickUp personal API token, pinned to a single List (CLICKUP_LIST_ID) for least-privilege scoping. Mirrors FORA-200 / @fora/mcp-jira.",
+  "description": "FORA ClickUp MCP server — exposes 8 tools (list_tasks, search_tasks, get_task, create_task, update_task, set_task_status, list_comments, add_comment) over MCP/stdio. Auth via ClickUp personal API token, pinned to a single List (CLICKUP_LIST_ID) for least-privilege scoping. Mirrors FORA-200 / forge-ai/mcp-jira.",
   "license": "UNLICENSED",
   "type": "module",
   "main": "dist/index.js",

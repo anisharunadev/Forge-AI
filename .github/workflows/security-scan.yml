@@ -1,0 +1,242 @@
+name: security-scan
+
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Run full DAST against staging"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  security-events: write
+
+env:
+  STAGING_URL: https://staging.forge-ai.internal
+
+jobs:
+  trivy-container:
+    name: trivy (container scan)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Build backend image (do not push)
+        run: |
+          docker build -t forge-backend:scan ./backend
+          docker build -t forge-ui:scan ./apps/forge
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-fs.sarif
+          severity: CRITICAL,HIGH
+
+      - name: Trivy backend image scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: forge-backend:scan
+          format: sarif
+          output: trivy-backend.sarif
+          severity: CRITICAL,HIGH
+
+      - name: Trivy frontend image scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: forge-ui:scan
+          format: sarif
+          output: trivy-frontend.sarif
+          severity: CRITICAL,HIGH
+
+      - name: Upload SARIF (filesystem)
+        uses: github/codeql-action/upload-sarif@v3.27.4
+        with:
+          sarif_file: trivy-fs.sarif
+          category: trivy-filesystem
+
+      - name: Upload SARIF (backend image)
+        uses: github/codeql-action/upload-sarif@v3.27.4
+        with:
+          sarif_file: trivy-backend.sarif
+          category: trivy-backend-image
+
+      - name: Upload SARIF (frontend image)
+        uses: github/codeql-action/upload-sarif@v3.27.4
+        with:
+          sarif_file: trivy-frontend.sarif
+          category: trivy-frontend-image
+
+  snyk-deps:
+    name: snyk (dependency scan)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [backend, apps/forge, packages]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup Python (backend)
+        if: matrix.target == 'backend'
+        uses: actions/setup-python@v5.4.0
+        with:
+          python-version: "3.13"
+
+      - name: Setup Node (frontend/packages)
+        if: matrix.target != 'backend'
+        uses: actions/setup-node@v4.2.0
+        with:
+          node-version: "22"
+
+      - name: Setup pnpm
+        if: matrix.target != 'backend'
+        uses: pnpm/action-setup@v4.1.0
+        with:
+          version: "9.12.3"
+
+      - name: Install deps
+        if: matrix.target != 'backend'
+        run: |
+          pnpm install --frozen-lockfile
+        working-directory: ${{ matrix.target }}
+
+      - name: Run Snyk
+        if: matrix.target == 'backend'
+        uses: snyk/actions/python-3.13@1.1300.0
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --sarif-file-output=snyk-backend.sarif --severity-threshold=high
+
+      - name: Run Snyk (Node)
+        if: matrix.target != 'backend'
+        uses: snyk/actions/node-22@1.1300.0
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --sarif-file-output=snyk-${{ matrix.target }}.sarif --severity-threshold=high
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3.27.4
+        with:
+          sarif_file: snyk-${{ matrix.target }}.sarif
+          category: snyk-${{ matrix.target }}
+
+  gitleaks:
+    name: gitleaks (secrets)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2.3.6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  bandit:
+    name: bandit (Python)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup Python
+        uses: actions/setup-python@v5.4.0
+        with:
+          python-version: "3.13"
+
+      - name: Install bandit
+        run: |
+          python -m pip install --upgrade pip==24.2
+          pip install bandit==1.7.10 bandit-sarif-formatter==1.1.0
+
+      - name: Run bandit
+        working-directory: backend
+        run: |
+          mkdir -p ../bandit-out
+          bandit -r app -f sarif -o ../bandit-out/bandit.sarif
+          bandit -r app -f txt -o ../bandit-out/bandit.txt
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3.27.4
+        with:
+          sarif_file: bandit-out/bandit.sarif
+          category: bandit
+
+  owasp-zap:
+    name: OWASP ZAP (DAST on staging)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    if: ${{ github.event.inputs.full == 'true' || github.event_name == 'schedule' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.13.0
+        with:
+          target: ${{ env.STAGING_URL }}
+          rules_file_name: .zap/rules.tsv
+          cmd_options: "-a -l WARN"
+          issue_types: alert,report
+          fail_action: false
+          artifact_name: zap-baseline-report
+
+      - name: ZAP full scan
+        uses: zaproxy/action-full-scan@v0.11.0
+        with:
+          target: ${{ env.STAGING_URL }}
+          rules_file_name: .zap/rules.tsv
+          issue_types: alert,report
+          fail_action: false
+          artifact_name: zap-full-report
+
+      - name: Upload ZAP reports
+        if: always()
+        uses: actions/upload-artifact@v4.4.3
+        with:
+          name: zap-reports
+          path: |
+            report_html.html
+            report_json.json
+            report_md.md
+          retention-days: 30
+
+  summary:
+    name: security summary
+    runs-on: ubuntu-24.04
+    needs: [trivy-container, snyk-deps, gitleaks, bandit, owasp-zap]
+    if: always()
+    steps:
+      - name: Build summary issue
+        uses: actions/github-script@v7.0.1
+        with:
+          script: |
+            const results = {
+              trivy: '${{ needs.trivy-container.result }}',
+              snyk: '${{ needs.snyk-deps.result }}',
+              gitleaks: '${{ needs.gitleaks.result }}',
+              bandit: '${{ needs.bandit.result }}',
+              zap: '${{ needs.owasp-zap.result }}',
+            };
+            console.log('Security scan results:', JSON.stringify(results, null, 2));
+            if (Object.values(results).some(r => r === 'failure')) {
+              core.setFailed('One or more security scans failed. See Security tab.');
+            }

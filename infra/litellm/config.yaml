@@ -1,0 +1,64 @@
+# infra/litellm/config.yaml — Forge AI v2.0 LiteLLM Proxy config.
+#
+# DL-025: Provider Abstraction Layer. The backend talks ONLY to
+# http://litellm:4000; this file picks the upstream providers,
+# sets spend / rate limits, and exposes the model catalog that the
+# orchestrator enumerates.
+#
+# The values below are read from environment variables (set in
+# infra/env/<env>.env). The proxy refuses to start if the master
+# key is missing, so LITELLM_MASTER_KEY MUST be set in the env file.
+
+model_list:
+  # Chat models — the orchestrator and most sub-agents use gpt-4o
+  # as the workhorse. claude-3-5-sonnet is the long-context default
+  # for code review and large-doc summarization.
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+  - model_name: claude-3-5-sonnet
+    litellm_params:
+      model: anthropic/claude-3-5-sonnet-20241022
+      api_key: os.environ/ANTHROPIC_API_KEY
+  - model_name: claude-3-5-haiku
+    litellm_params:
+      model: anthropic/claude-3-5-haiku-20241022
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  # Embeddings — pgvector is the destination. We default to
+  # text-embedding-3-small (1536 dims) which is the column width
+  # the backend creates. Swap to 3-large (3072 dims) requires an
+  # alembic migration on the embeddings table.
+  - model_name: text-embedding-3-small
+    litellm_params:
+      model: openai/text-embedding-3-small
+      api_key: os.environ/OPENAI_API_KEY
+      dimensions: 1536
+  - model_name: text-embedding-3-large
+    litellm_params:
+      model: openai/text-embedding-3-large
+      api_key: os.environ/OPENAI_API_KEY
+      dimensions: 3072
+
+router_settings:
+  # Per-tenant rate limits are enforced at the orchestrator layer;
+  # LiteLLM's own limits are a safety net for runaway spend.
+  num_retries: 3
+  timeout: 60
+  redis_host: os.environ/REDIS_HOST
+  redis_port: os.environ/REDIS_PORT
+
+litellm_settings:
+  drop_params: true            # ignore provider-specific params LiteLLM does not understand
+  set_verbose: false           # flip to true when debugging the proxy
+  telemetry: false             # DL-025: no provider-side telemetry
+  database_url: os.environ/DATABASE_URL
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_type: "postgres"

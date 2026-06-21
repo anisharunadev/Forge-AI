@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+.DS_Store
+*.log
+.env
+.env.local
+.turbo
+coverage
+playwright-report
+test-results
+__tests__
+tests

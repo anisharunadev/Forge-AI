@@ -1,4 +1,4 @@
-# `@fora/mcp-figma` — Forge AI Figma MCP Server
+# `forge-ai/mcp-figma` — Forge AI Figma MCP Server
 
 Priority-1 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes six tools over MCP/stdio: `get_file`, `get_file_nodes`, `get_node`, `get_images`, `get_comments`, `post_comment`.
 
@@ -196,7 +196,7 @@ If any assertion fails, the script exits non-zero and prints the failure. No rea
 
 ## Reuse: the Forge AI MCP server template
 
-See `docs/template-note.md` for which MCP servers this package templates (it is itself a copy of `@fora/mcp-github` plus a Figma-specific client) and the contract they share.
+See `docs/template-note.md` for which MCP servers this package templates (it is itself a copy of `forge-ai/mcp-github` plus a Figma-specific client) and the contract they share.
 
 ---
 

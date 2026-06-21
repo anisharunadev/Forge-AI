@@ -1,4 +1,4 @@
-# `@fora/mcp-zendesk` — Forge AI Zendesk MCP Server
+# `forge-ai/mcp-zendesk` — Forge AI Zendesk MCP Server
 
 P2 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes eight tools over MCP/stdio: `list_tickets`, `get_ticket`, `search_tickets`, `create_ticket`, `update_ticket`, `add_comment`, `list_macros`, `apply_macro`.
 

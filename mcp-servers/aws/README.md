@@ -1,4 +1,4 @@
-# `@fora/mcp-aws` — Forge AI AWS MCP Server
+# `forge-ai/mcp-aws` — Forge AI AWS MCP Server
 
 Priority-1 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes seven read-only tools over MCP/stdio: `list_stacks`, `get_stack`, `list_stack_resources`, `get_resource`, `list_change_sets`, `get_change_set`, `describe_change_set`.
 
@@ -215,7 +215,7 @@ A live smoke is **out of scope for this ticket** per the original Forge AI-92 de
 
 ## Reuse: the Forge AI MCP server template
 
-See `docs/template-note.md` for the contract drifts `@fora/mcp-aws` introduces vs. the `@fora/mcp-github` template, and the seven contract points the AWS package preserves verbatim.
+See `docs/template-note.md` for the contract drifts `forge-ai/mcp-aws` introduces vs. the `forge-ai/mcp-github` template, and the seven contract points the AWS package preserves verbatim.
 
 ---
 

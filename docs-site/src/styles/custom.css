@@ -1,0 +1,313 @@
+/* Forge AI — Custom Theme
+   A modern, AI-feel palette: deep indigo, electric blue, cyan, with violet accents.
+   Inter for body, JetBrains Mono for code, tasteful micro-animations. */
+
+:root {
+  /* Brand palette */
+  --forge-indigo-50:  #eef2ff;
+  --forge-indigo-100: #e0e7ff;
+  --forge-indigo-200: #c7d2fe;
+  --forge-indigo-300: #a5b4fc;
+  --forge-indigo-400: #818cf8;
+  --forge-indigo-500: #6366f1;
+  --forge-indigo-600: #4f46e5;
+  --forge-indigo-700: #4338ca;
+  --forge-indigo-800: #3730a3;
+  --forge-indigo-900: #1e1b4b;
+  --forge-indigo-950: #0f0d2e;
+
+  --forge-cyan-300:   #67e8f9;
+  --forge-cyan-400:   #22d3ee;
+  --forge-cyan-500:   #06b6d4;
+  --forge-cyan-600:   #0891b2;
+
+  --forge-violet-500: #8b5cf6;
+  --forge-violet-600: #7c3aed;
+
+  --forge-amber-400:  #fbbf24;
+  --forge-emerald-400:#34d399;
+  --forge-rose-400:   #fb7185;
+
+  /* Starlight overrides — light */
+  --sl-color-accent-low:        var(--forge-indigo-100);
+  --sl-color-accent:            var(--forge-indigo-600);
+  --sl-color-accent-high:       var(--forge-indigo-700);
+  --sl-color-white:             #ffffff;
+  --sl-color-gray-1:            #f8fafc;
+  --sl-color-gray-2:            #e2e8f0;
+  --sl-color-gray-3:            #cbd5e1;
+  --sl-color-gray-4:            #475569;
+  --sl-color-gray-5:            #334155;
+  --sl-color-gray-6:            #1e293b;
+  --sl-color-black:             #0b1020;
+
+  --sl-font:                    'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --sl-font-mono:               'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Dark mode overrides */
+:root[data-theme='dark'] {
+  --sl-color-accent-low:        var(--forge-indigo-900);
+  --sl-color-accent:            var(--forge-cyan-400);
+  --sl-color-accent-high:       var(--forge-cyan-300);
+  --sl-color-white:             #f8fafc;
+  --sl-color-gray-1:            #0f172a;
+  --sl-color-gray-2:            #1e293b;
+  --sl-color-gray-3:            #334155;
+  --sl-color-gray-4:            #94a3b8;
+  --sl-color-gray-5:            #cbd5e1;
+  --sl-color-gray-6:            #f1f5f9;
+  --sl-color-black:             #f8fafc;
+}
+
+/* Body font */
+:root {
+  --sl-font: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+html, body {
+  font-family: var(--sl-font);
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Heading typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--sl-font);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  background: linear-gradient(135deg, var(--forge-indigo-700) 0%, var(--forge-violet-600) 50%, var(--forge-cyan-600) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Hero gradient banner */
+.hero-banner {
+  background: radial-gradient(ellipse at top, var(--forge-indigo-700) 0%, var(--forge-indigo-950) 60%);
+  color: #f8fafc;
+  padding: 4rem 2rem;
+  border-radius: 1rem;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.25) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(34, 211, 238, 0.20) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+.hero-banner > * {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-banner h1 {
+  color: #ffffff;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  font-size: 2.75rem;
+  margin: 0 0 1rem 0;
+}
+
+.hero-banner p {
+  font-size: 1.25rem;
+  color: var(--forge-indigo-100);
+  max-width: 60ch;
+  margin: 0;
+}
+
+/* Feature grid */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  margin: 2rem 0;
+}
+
+.feature-card {
+  padding: 1.5rem;
+  border: 1px solid var(--sl-color-gray-2);
+  border-radius: 0.75rem;
+  background: var(--sl-color-gray-1);
+  transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--sl-color-accent);
+  box-shadow: 0 12px 32px -16px rgba(99, 102, 241, 0.35);
+}
+
+.feature-card h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--sl-color-accent-high);
+  font-size: 1.1rem;
+}
+
+.feature-card p {
+  margin: 0;
+  color: var(--sl-color-gray-5);
+  line-height: 1.55;
+}
+
+/* CTA buttons */
+.cta-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.cta-primary, .cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.cta-primary {
+  background: linear-gradient(135deg, var(--forge-indigo-600), var(--forge-violet-600));
+  color: #ffffff;
+  box-shadow: 0 8px 24px -12px rgba(99, 102, 241, 0.6);
+}
+
+.cta-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -10px rgba(99, 102, 241, 0.7);
+}
+
+.cta-secondary {
+  background: transparent;
+  color: var(--sl-color-accent);
+  border: 1.5px solid var(--sl-color-accent);
+}
+
+.cta-secondary:hover {
+  background: var(--sl-color-accent-low);
+}
+
+/* Header CTA */
+.header-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: 1rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 0.4rem;
+  background: linear-gradient(135deg, var(--forge-indigo-600), var(--forge-violet-600));
+  color: #ffffff !important;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.header-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px -6px rgba(99, 102, 241, 0.6);
+}
+
+/* Code blocks */
+pre, code, kbd {
+  font-family: var(--sl-font-mono);
+}
+
+:not(pre) > code {
+  background: var(--sl-color-gray-2);
+  padding: 0.15em 0.4em;
+  border-radius: 0.3em;
+  font-size: 0.9em;
+  border: 1px solid var(--sl-color-gray-3);
+}
+
+pre {
+  border: 1px solid var(--sl-color-gray-2);
+  border-radius: 0.6rem;
+  box-shadow: 0 4px 12px -8px rgba(15, 23, 42, 0.15);
+}
+
+/* Tables */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.95em;
+}
+
+th {
+  text-align: left;
+  background: var(--sl-color-gray-2);
+  font-weight: 700;
+}
+
+th, td {
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--sl-color-gray-2);
+}
+
+tr:hover td {
+  background: var(--sl-color-accent-low);
+}
+
+/* ASCII diagrams */
+pre.astro-code, pre[data-language='text'] {
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+/* Footer polish */
+footer {
+  border-top: 1px solid var(--sl-color-gray-2);
+  margin-top: 4rem;
+}
+
+/* Subtle entrance animation */
+@media (prefers-reduced-motion: no-preference) {
+  .feature-card,
+  .hero-banner > * {
+    animation: fade-up 400ms ease both;
+  }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* Sidebar polish */
+starlight-menu-button + nav a[aria-current='page'] {
+  font-weight: 600;
+  color: var(--sl-color-accent-high);
+}
+
+/* Blockquote (note/warn) */
+blockquote {
+  border-left: 4px solid var(--sl-color-accent);
+  background: var(--sl-color-accent-low);
+  padding: 0.75rem 1rem;
+  border-radius: 0 0.4rem 0.4rem 0;
+  margin: 1.25rem 0;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--sl-color-gray-1); }
+::-webkit-scrollbar-thumb {
+  background: var(--sl-color-gray-3);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--sl-color-accent); }

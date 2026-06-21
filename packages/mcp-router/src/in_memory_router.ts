@@ -1,5 +1,5 @@
 /**
- * @fora/mcp-router — InMemoryMcpRouter
+ * forge-ai/mcp-router — InMemoryMcpRouter
  *
  * Reference implementation of the `McpRouter` port. Pure logic, no I/O — the
  * router simulates upstream latency via the optional `delay_ms` knob and

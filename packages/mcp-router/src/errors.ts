@@ -1,5 +1,5 @@
 /**
- * @fora/mcp-router — errors
+ * forge-ai/mcp-router — errors
  *
  * The `McpError` discriminated union. Every failure path in the router shapes
  * its result as one of these envelopes so the caller can switch on `kind`

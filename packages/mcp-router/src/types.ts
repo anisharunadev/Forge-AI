@@ -1,5 +1,5 @@
 /**
- * @fora/mcp-router — types
+ * forge-ai/mcp-router — types
  *
  * The typed shape of an MCP server, its tool descriptors, the request envelope
  * the router binds to every invocation, and the success/failure result unions.
@@ -80,7 +80,7 @@ export interface ServerManifest {
 }
 
 /**
- * Request envelope. Mirrors `@fora/cache-broker`'s `RequestContext` so the
+ * Request envelope. Mirrors `forge-ai/cache-broker`'s `RequestContext` so the
  * router can be slotted into the same tenancy matrix.
  */
 export interface McpRequestContext {
@@ -219,10 +219,10 @@ export interface McpRouter {
 // The scope guard is the chokepoint between a ToolCall envelope and the
 // downstream MCP server process. Two pluggable ports back it:
 //
-//   - `TenantValidator` — backed by `@fora/identity-broker`. Confirms the
+//   - `TenantValidator` — backed by `forge-ai/identity-broker`. Confirms the
 //     `tenant_id` on the caller's claim is real and active. Throws on
 //     transport failure (timeout / DNS / 5xx) so the router can fail closed.
-//   - `CredentialResolver` — backed by `@fora/customer-cloud-broker`. Mints
+//   - `CredentialResolver` — backed by `forge-ai/customer-cloud-broker`. Mints
 //     the per-(tenant, server) credential material the transport will hand
 //     to the upstream MCP server. Throws on transport failure.
 //

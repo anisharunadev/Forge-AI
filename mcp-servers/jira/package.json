@@ -1,5 +1,5 @@
 {
-  "name": "@fora/mcp-jira",
+  "name": "forge-ai/mcp-jira",
   "version": "0.1.0",
   "description": "FORA Jira MCP server — exposes list_projects, list_issues, get_issue, create_issue, update_issue, add_comment, transition_issue over MCP/stdio. Auth via Atlassian API token scoped to a single site (cloudId).",
   "license": "UNLICENSED",
@@ -27,7 +27,7 @@
     "node": ">=18.17"
   },
   "dependencies": {
-    "@fora/mcp-router": "workspace:*",
+    "forge-ai/mcp-router": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.0.4",
     "zod": "^3.23.8"
   },

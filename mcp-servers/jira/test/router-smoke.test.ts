@@ -1,5 +1,5 @@
 /**
- * `@fora/mcp-jira` — router-port smoke test (FORA-48 §3 / AC #4).
+ * `forge-ai/mcp-jira` — router-port smoke test (FORA-48 §3 / AC #4).
  *
  * Proves the Jira MCP drops into the FORA 0.3 router framework cleanly:
  * the same `list_issues` flow that `test/smoke.mjs` exercises over an MCP
@@ -39,7 +39,7 @@ import {
   type McpInvocationResult,
   type McpRequestContext,
   type ServerManifest,
-} from '@fora/mcp-router';
+} from 'forge-ai/mcp-router';
 
 import { initialState, startMockServer } from './mock-atlassian.mjs';
 import { createClient, type Client } from '../src/client.js';
@@ -133,7 +133,7 @@ afterAll(async () => {
 
 // ---------- the actual test --------------------------------------------
 
-describe('FORA-48 AC #4 — `@fora/mcp-jira` drops into the router unchanged', () => {
+describe('FORA-48 AC #4 — `forge-ai/mcp-jira` drops into the router unchanged', () => {
   it('manifest advertises the same 6 tools the stdio server registers', () => {
     expect(JIRA_SERVER_NAME).toBe(asServerName('jira'));
     expect(manifest.name).toBe(JIRA_SERVER_NAME);

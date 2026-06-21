@@ -1,4 +1,4 @@
-# `@fora/mcp-databricks` — Forge AI Databricks MCP Server
+# `forge-ai/mcp-databricks` — Forge AI Databricks MCP Server
 
 Priority-2 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes eight tools over MCP/stdio: `list_jobs`, `get_job`, `run_job`, `get_run`, `cancel_run`, `list_clusters`, `get_cluster`, `execute_sql`.
 

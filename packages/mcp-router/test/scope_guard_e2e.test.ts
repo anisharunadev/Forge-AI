@@ -1,11 +1,11 @@
 /**
- * @fora/mcp-router — end-to-end scope-guard integration test
+ * forge-ai/mcp-router — end-to-end scope-guard integration test
  * (FORA-48 §3.5 / FORA-448).
  *
  * This is the canonical proof of AC #3. The router is wired with HTTP
  * adapters (the same shape as the real `HttpTenantValidator` and
- * `HttpCredentialResolver` in `@fora/identity-broker` and
- * `@fora/customer-cloud-broker`), pointed at a live `node:http` server
+ * `HttpCredentialResolver` in `forge-ai/identity-broker` and
+ * `forge-ai/customer-cloud-broker`), pointed at a live `node:http` server
  * that implements the two broker routes.
  *
  * Acceptance: tenant A's session attempting tenant B's MCP returns

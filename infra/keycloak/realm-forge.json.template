@@ -1,0 +1,665 @@
+{
+  "realm": "forge",
+  "enabled": true,
+  "accessTokenLifespan": 900,
+  "accessTokenLifespanForImplicitFlow": 900,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "sslRequired": "external",
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "verifyEmail": true,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "minimumQuickLoginWaitSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "rememberMe": true,
+  "registrationAllowed": false,
+  "registrationEmailAsUsername": false,
+  "userManagedAccessAllowed": false,
+  "internationalizationEnabled": true,
+  "supportedLocales": [
+    "en",
+    "es",
+    "fr",
+    "de",
+    "ja",
+    "zh-CN"
+  ],
+  "defaultLocale": "en",
+  "loginTheme": "forge",
+  "accountTheme": "forge",
+  "adminTheme": "forge",
+  "emailTheme": "forge",
+  "defaultSignatureAlgorithm": "RS256",
+  "defaultDigestAlgorithm": "SHA-256",
+  "eventsEnabled": true,
+  "eventsExpiration": 7776000,
+  "eventsListeners": [
+    "jboss-logging",
+    "json-file"
+  ],
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": true,
+  "webAuthnPolicyRpEntityName": "Forge AI",
+  "webAuthnPolicySignatureAlgorithms": [
+    "ES256",
+    "RS256"
+  ],
+  "webAuthnPolicyAttestationConveyancePreference": "none",
+  "webAuthnPolicyAuthenticatorAttachment": "platform",
+  "webAuthnPolicyRequireResidentKey": "no",
+  "webAuthnPolicyUserVerificationRequirement": "preferred",
+  "webAuthnPolicyCreateTimeout": 0,
+  "webAuthnPolicyAvoidSameAuthenticatorRegister": false,
+  "webAuthnPolicyAcceptableAaguids": [],
+  "attributes": {
+    "webAuthnPolicyRpEntityName": "Forge AI",
+    "webAuthnPolicySignatureAlgorithms": "ES256 RS256",
+    "_browser_header.xFrameOptions": "SAMEORIGIN",
+    "_browser_header.contentSecurityPolicy": "frame-src 'self'; frame-ancestors 'self'; object-src 'none';",
+    "_browser_header.strictTransportSecurity": "max-age=31536000; includeSubDomains",
+    "realmKeystoreVersion": "1"
+  },
+  "userFederationProviders": [],
+  "userFederationMappers": [],
+  "smtpServer": {},
+  "requiredCredentials": [
+    "password",
+    "totp"
+  ],
+  "passwordPolicy": "length(12) and digits(1) and lowerCase(1) and upperCase(1) and specialChars(1) and notUsername(undefined) and notEmail(undefined)",
+  "roles": {
+    "realm": [
+      {
+        "name": "forge-admin",
+        "description": "Forge platform administrator"
+      },
+      {
+        "name": "forge-steward",
+        "description": "Master data steward per ADR-003"
+      },
+      {
+        "name": "forge-architect",
+        "description": "Architecture approval authority"
+      },
+      {
+        "name": "forge-security",
+        "description": "Security approval authority"
+      },
+      {
+        "name": "forge-deployer",
+        "description": "Deployment approval authority"
+      },
+      {
+        "name": "forge-developer",
+        "description": "Standard developer"
+      },
+      {
+        "name": "forge-viewer",
+        "description": "Read-only access"
+      }
+    ]
+  },
+  "groups": [
+    {
+      "name": "forge-admins",
+      "path": "/forge-admins",
+      "attributes": {},
+      "realmRoles": ["forge-admin"],
+      "subGroups": []
+    },
+    {
+      "name": "forge-stewards",
+      "path": "/forge-stewards",
+      "attributes": {},
+      "realmRoles": ["forge-steward"],
+      "subGroups": []
+    },
+    {
+      "name": "forge-architects",
+      "path": "/forge-architects",
+      "attributes": {},
+      "realmRoles": ["forge-architect"],
+      "subGroups": []
+    },
+    {
+      "name": "security-officers",
+      "path": "/security-officers",
+      "attributes": {},
+      "realmRoles": ["forge-security"],
+      "subGroups": []
+    },
+    {
+      "name": "deployers",
+      "path": "/deployers",
+      "attributes": {},
+      "realmRoles": ["forge-deployer"],
+      "subGroups": []
+    },
+    {
+      "name": "developers",
+      "path": "/developers",
+      "attributes": {},
+      "realmRoles": ["forge-developer"],
+      "subGroups": []
+    },
+    {
+      "name": "viewers",
+      "path": "/viewers",
+      "attributes": {},
+      "realmRoles": ["forge-viewer"],
+      "subGroups": []
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "forge-ui",
+      "name": "Forge UI",
+      "description": "Forge web UI (OIDC, public client, PKCE required)",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "publicClient": true,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "rootUrl": "${FORGE_UI_URL}",
+      "baseUrl": "${FORGE_UI_URL}",
+      "redirectUris": ["${FORGE_UI_URL}/*"],
+      "webOrigins": ["${FORGE_UI_URL}"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "${FORGE_UI_URL}/*",
+        "backchannel.logout.url": "",
+        "backchannel.logout.session.required": "true",
+        "frontchannel.logout.enabled": "true",
+        "frontchannel.logout.url": "${FORGE_UI_URL}/logout"
+      },
+      "protocolMappers": [
+        {
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "tenant_id",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "project_ids",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "project_ids",
+            "claim.name": "project_ids",
+            "jsonType.label": "JSON",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "false",
+            "multivalued": "true"
+          }
+        },
+        {
+          "name": "roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "roles",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "true"
+          }
+        },
+        {
+          "name": "mfa_verified",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "mfa_verified",
+            "claim.name": "mfa_verified",
+            "jsonType.label": "boolean",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "forge-cli",
+      "name": "Forge CLI",
+      "description": "Forge command-line tool (OIDC, public client, device flow)",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "publicClient": true,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "attributes": {
+        "oauth2.device.authorization.grant.enabled": "true",
+        "oauth2.device.code.lifespan": "600",
+        "oauth2.device.polling.interval": "5",
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocolMappers": [
+        {
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "tenant_id",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "project_ids",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "project_ids",
+            "claim.name": "project_ids",
+            "jsonType.label": "JSON",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "multivalued": "true"
+          }
+        },
+        {
+          "name": "roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "roles",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "multivalued": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "forge-backend",
+      "name": "Forge Backend",
+      "description": "Forge backend services (OIDC, confidential, bearer-only)",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "publicClient": false,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false,
+      "secret": "${FORGE_BACKEND_CLIENT_SECRET}",
+      "attributes": {
+        "access.token.lifespan": "900",
+        "client.secret.creation.time": "0",
+        "client.secret.rotation.policy": "{\"policy\":\"rotate-90-days\",\"length\":48}"
+      }
+    },
+    {
+      "clientId": "forge-saml",
+      "name": "Forge SAML",
+      "description": "Forge SAML SP (used for legacy / partner IdP federation)",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "publicClient": false,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "attributes": {
+        "saml.authnstatement": "true",
+        "saml.client.signature": "true",
+        "saml.server.signature": "true",
+        "saml.encrypt.assertions": "false",
+        "saml.client.signature.required": "false",
+        "saml.force.post.binding": "true",
+        "saml.allow.ecp.flow": "false",
+        "saml.assertion.consumer.url.post": "${FORGE_SAML_ACS_URL}"
+      },
+      "protocol": "saml"
+    }
+  ],
+  "identityProviders": [
+    {
+      "alias": "github",
+      "displayName": "GitHub",
+      "providerId": "github",
+      "enabled": false,
+      "updateProfileFirstLoginMode": "on",
+      "trustEmail": true,
+      "storeToken": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "${GITHUB_CLIENT_ID}",
+        "clientSecret": "${GITHUB_CLIENT_SECRET}",
+        "defaultScope": "user:email"
+      }
+    },
+    {
+      "alias": "google",
+      "displayName": "Google",
+      "providerId": "google",
+      "enabled": false,
+      "updateProfileFirstLoginMode": "on",
+      "trustEmail": true,
+      "storeToken": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "${GOOGLE_CLIENT_ID}",
+        "clientSecret": "${GOOGLE_CLIENT_SECRET}",
+        "defaultScope": "openid email profile"
+      }
+    },
+    {
+      "alias": "okta",
+      "displayName": "Okta (SAML)",
+      "providerId": "saml",
+      "enabled": false,
+      "updateProfileFirstLoginMode": "on",
+      "trustEmail": true,
+      "storeToken": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "entityId": "${OKTA_ENTITY_ID}",
+        "singleSignOnServiceUrl": "${OKTA_SSO_URL}",
+        "singleLogoutServiceUrl": "${OKTA_SLO_URL}",
+        "nameIDPolicyFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+        "wantAssertionsSigned": "true",
+        "wantAssertionsEncrypted": "false"
+      }
+    },
+    {
+      "alias": "azure-ad",
+      "displayName": "Azure AD",
+      "providerId": "microsoft",
+      "enabled": false,
+      "updateProfileFirstLoginMode": "on",
+      "trustEmail": true,
+      "storeToken": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "${AZURE_AD_CLIENT_ID}",
+        "clientSecret": "${AZURE_AD_CLIENT_SECRET}",
+        "tenantId": "${AZURE_AD_TENANT_ID}"
+      }
+    }
+  ],
+  "authenticationFlows": [
+    {
+      "id": "browser-flow",
+      "alias": "browser",
+      "description": "Browser-based authentication with username+password, MFA (TOTP or WebAuthn)",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "auth-cookie",
+          "authenticatorFlow": false,
+          "requirement": "ALTERNATIVE",
+          "priority": 10,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "auth-spnego",
+          "authenticatorFlow": false,
+          "requirement": "DISABLED",
+          "priority": 20,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticatorFlow": true,
+          "authenticator": "identity-provider-redirector",
+          "requirement": "ALTERNATIVE",
+          "priority": 25,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticatorFlow": true,
+          "authenticator": "forge-username-password-forms",
+          "requirement": "REQUIRED",
+          "priority": 30,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticatorFlow": true,
+          "authenticator": "forge-mfa-choice",
+          "requirement": "REQUIRED",
+          "priority": 40,
+          "userSetupAllowed": false
+        }
+      ]
+    },
+    {
+      "id": "username-password-forms",
+      "alias": "forge-username-password-forms",
+      "description": "Username + password",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "username-password-form",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false
+        }
+      ]
+    },
+    {
+      "id": "mfa-choice",
+      "alias": "forge-mfa-choice",
+      "description": "MFA: TOTP or WebAuthn (user choice)",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "conditional-otp-form",
+          "authenticatorFlow": false,
+          "requirement": "CONDITIONAL",
+          "priority": 10,
+          "userSetupAllowed": false
+        }
+      ]
+    },
+    {
+      "id": "direct-grant-flow",
+      "alias": "direct grant",
+      "description": "Direct grant (resource owner password credentials) - service accounts only",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": true,
+      "authenticationExecutions": [
+        {
+          "authenticator": "direct-grant-validate-username",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "direct-grant-validate-password",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "direct-grant-validate-otp",
+          "authenticatorFlow": false,
+          "requirement": "CONDITIONAL",
+          "priority": 30,
+          "userSetupAllowed": false
+        }
+      ]
+    },
+    {
+      "id": "device-flow",
+      "alias": "cli",
+      "description": "Device authorization flow (RFC 8628) for the Forge CLI",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "auth-cookie",
+          "authenticatorFlow": false,
+          "requirement": "ALTERNATIVE",
+          "priority": 10,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "auth-conditional-otp-form",
+          "authenticatorFlow": false,
+          "requirement": "CONDITIONAL",
+          "priority": 20,
+          "userSetupAllowed": false
+        }
+      ]
+    },
+    {
+      "id": "reset-credentials-flow",
+      "alias": "reset credentials",
+      "description": "Reset credentials for a user if they forget their password or something",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": true,
+      "authenticationExecutions": [
+        {
+          "authenticator": "reset-credential-choose-user",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "send-email",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "reset-password",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 30,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "conditional-otp-form",
+          "authenticatorFlow": false,
+          "requirement": "CONDITIONAL",
+          "priority": 40,
+          "userSetupAllowed": false
+        }
+      ]
+    }
+  ],
+  "authenticatorConfig": [],
+  "requiredActions": [
+    {
+      "alias": "CONFIGURE_TOTP",
+      "name": "Configure OTP",
+      "providerId": "CONFIGURE_TOTP",
+      "enabled": true,
+      "defaultAction": true,
+      "priority": 10,
+      "config": {}
+    },
+    {
+      "alias": "WEAR_AUTHN_REGISTER",
+      "name": "Webauthn Register",
+      "providerId": "webauthn-register",
+      "enabled": true,
+      "defaultAction": false,
+      "priority": 20,
+      "config": {}
+    },
+    {
+      "alias": "VERIFY_EMAIL",
+      "name": "Verify Email",
+      "providerId": "VERIFY_EMAIL",
+      "enabled": true,
+      "defaultAction": false,
+      "priority": 30,
+      "config": {}
+    },
+    {
+      "alias": "UPDATE_PASSWORD",
+      "name": "Update Password",
+      "providerId": "UPDATE_PASSWORD",
+      "enabled": true,
+      "defaultAction": true,
+      "priority": 40,
+      "config": {}
+    },
+    {
+      "alias": "TERMS_AND_CONDITIONS",
+      "name": "Terms and Conditions",
+      "providerId": "terms_and_conditions",
+      "enabled": true,
+      "defaultAction": false,
+      "priority": 50,
+      "config": {
+        "termsFileName": "terms-and-conditions.html"
+      }
+    }
+  ],
+  "scopeMappings": [],
+  "clientScopeMappings": {},
+  "components": {
+    "org.keycloak.protocol.oidc.OIDCProviderConfig": {
+      "id": "forge-oidc-config",
+      "providerId": "OIDCProviderConfig",
+      "subComponents": {},
+      "config": {
+        "idTokenSignatureAlgorithm": "RS256",
+        "accessTokenSignatureAlgorithm": "RS256",
+        "userInfoSignatureAlgorithm": "RS256",
+        "requestObjectSignatureAlgorithm": "RS256",
+        "authorizationEncryptionAlg": "RSA-OAEP",
+        "authorizationEncryptionEnc": "A256GCM"
+      }
+    }
+  },
+  "verifiableCredentialsEnabled": false
+}

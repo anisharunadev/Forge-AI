@@ -1,0 +1,121 @@
+---
+import type { Props } from '@astrojs/starlight/props';
+
+const { locale } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<div class="forge-footer">
+  <div class="forge-footer-inner">
+    <div class="forge-footer-col">
+      <strong class="forge-footer-brand">Forge AI</strong>
+      <p class="forge-footer-tag">
+        Enterprise SDLC Agent Operating System.
+      </p>
+    </div>
+
+    <div class="forge-footer-col">
+      <h4>Documentation</h4>
+      <ul>
+        <li><a href={`${locale ? `/${locale}` : ''}/start-here/quickstart/`}>Quickstart</a></li>
+        <li><a href={`${locale ? `/${locale}` : ''}/commands/`}>Forge Commands</a></li>
+        <li><a href={`${locale ? `/${locale}` : ''}/architecture/overview/`}>Architecture</a></li>
+        <li><a href={`${locale ? `/${locale}` : ''}/reference/glossary/`}>Glossary</a></li>
+      </ul>
+    </div>
+
+    <div class="forge-footer-col">
+      <h4>Community</h4>
+      <ul>
+        <li><a href="https://github.com/forge-ai/forge-ai" rel="noopener">GitHub</a></li>
+        <li><a href="https://github.com/forge-ai/forge-ai/issues" rel="noopener">Issue Tracker</a></li>
+        <li><a href="https://github.com/forge-ai/forge-ai/discussions" rel="noopener">Discussions</a></li>
+      </ul>
+    </div>
+
+    <div class="forge-footer-col">
+      <h4>Project</h4>
+      <ul>
+        <li><a href={`${locale ? `/${locale}` : ''}/concepts/white-label-commands/`}>White-label guide</a></li>
+        <li><a href={`${locale ? `/${locale}` : ''}/architecture/adr-008-worm-audit/`}>Audit &amp; compliance</a></li>
+        <li><a href={`${locale ? `/${locale}` : ''}/operations/pilot-overview/`}>Pilot program</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="forge-footer-meta">
+    <span>© {year} Forge AI — all rights reserved.</span>
+    <span>v1.0.0</span>
+  </div>
+</div>
+
+<style>
+  .forge-footer {
+    width: 100%;
+    padding: 3rem 1.5rem 1.5rem 1.5rem;
+    color: var(--sl-color-gray-4);
+  }
+
+  .forge-footer-inner {
+    max-width: 72rem;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    gap: 2rem;
+  }
+
+  @media (max-width: 800px) {
+    .forge-footer-inner { grid-template-columns: 1fr 1fr; }
+  }
+
+  .forge-footer-brand {
+    font-size: 1.1rem;
+    color: var(--sl-color-accent-high);
+  }
+
+  .forge-footer-tag {
+    margin: 0.4rem 0 0 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    max-width: 26ch;
+  }
+
+  .forge-footer-col h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--sl-color-gray-5);
+  }
+
+  .forge-footer-col ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .forge-footer-col a {
+    color: var(--sl-color-gray-4);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 150ms ease;
+  }
+
+  .forge-footer-col a:hover {
+    color: var(--sl-color-accent);
+  }
+
+  .forge-footer-meta {
+    max-width: 72rem;
+    margin: 2.5rem auto 0 auto;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--sl-color-gray-2);
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--sl-color-gray-4);
+  }
+</style>

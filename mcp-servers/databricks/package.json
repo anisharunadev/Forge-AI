@@ -1,5 +1,5 @@
 {
-  "name": "@fora/mcp-databricks",
+  "name": "forge-ai/mcp-databricks",
   "version": "0.1.0",
   "description": "FORA Databricks MCP server — exposes list_jobs, get_job, run_job, get_run, cancel_run, list_clusters, get_cluster, execute_sql over MCP/stdio. Auth via a workspace-scoped service-principal PAT against the Databricks Jobs REST 2.1 + SQL Statement Execution APIs.",
   "license": "UNLICENSED",

@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "white_label": {
+    "engine_name": "Forge AI",
+    "internal_engine": "gsd-core",
+    "command_prefix": "forge-",
+    "hide_internal_names": true,
+    "dl_024": true
+  },
+  "tenancy": {
+    "isolation": "strict",
+    "audit_required": true
+  },
+  "categories": [
+    "onboarding",
+    "intel",
+    "ideate",
+    "arch",
+    "dev",
+    "test",
+    "sec",
+    "review",
+    "deploy",
+    "milestone",
+    "learn",
+    "flow",
+    "env"
+  ],
+  "command_count": 63,
+  "notes": "Hand-written — do NOT regenerate from `gsd-core init` until the real @opengsd/gsd-core package is published. See packages/gsd-core-stub/README.md for the white-labeling contract (DL-024)."
+}

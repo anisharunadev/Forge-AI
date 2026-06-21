@@ -1,5 +1,5 @@
 /**
- * @fora/mcp-router — test suite
+ * forge-ai/mcp-router — test suite
  *
  * Covers the McpRouter port contract end-to-end:
  *   - register / listServers / resolve / invoke

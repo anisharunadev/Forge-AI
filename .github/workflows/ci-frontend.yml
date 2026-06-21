@@ -1,0 +1,267 @@
+name: ci-frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/forge/**"
+      - "packages/**"
+      - ".github/workflows/ci-frontend.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/forge/**"
+      - "packages/**"
+      - ".github/workflows/ci-frontend.yml"
+
+env:
+  NODE_DEFAULT_VERSION: "22"
+  PNPM_VERSION: "9.12.3"
+
+jobs:
+  lint:
+    name: lint (eslint + prettier)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["20", "22"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.1.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4.2.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: ESLint
+        run: pnpm -r --filter "./apps/*" lint
+
+      - name: Prettier check
+        run: pnpm -r --filter "./apps/*" prettier --check .
+
+  typecheck:
+    name: typecheck (tsc --noEmit)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["20", "22"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.1.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4.2.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript check
+        run: pnpm -r --filter "./apps/*" typecheck
+
+  unit-tests:
+    name: unit-tests (vitest)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["20", "22"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.1.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4.2.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run vitest
+        run: pnpm -r --filter "./apps/*" test:unit -- --coverage --reporter=verbose
+
+      - name: Upload coverage
+        if: always()
+        uses: codecov/codecov-action@v5.4.0
+        with:
+          directory: apps/forge/coverage
+          flags: frontend-unit
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4.4.3
+        with:
+          name: frontend-coverage-${{ matrix.node-version }}
+          path: apps/forge/coverage
+          retention-days: 14
+
+  e2e-tests:
+    name: e2e-tests (playwright)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    needs: [lint, typecheck, unit-tests]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.1.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.2.0
+        with:
+          node-version: ${{ env.NODE_DEFAULT_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm --filter forge exec playwright install --with-deps chromium
+
+      - name: Build forge app
+        run: pnpm --filter forge build
+
+      - name: Run Playwright tests
+        run: pnpm --filter forge test:e2e -- --reporter=github
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4.4.3
+        with:
+          name: playwright-report
+          path: apps/forge/playwright-report
+          retention-days: 14
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4.4.3
+        with:
+          name: playwright-test-results
+          path: apps/forge/test-results
+          retention-days: 14
+
+  build:
+    name: build (next build)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["20", "22"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.1.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4.2.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Next.js build
+        run: pnpm --filter forge build
+
+      - name: Upload .next artifact
+        uses: actions/upload-artifact@v4.4.3
+        with:
+          name: next-build-${{ matrix.node-version }}
+          path: apps/forge/.next
+          retention-days: 7
+
+  bundle-analysis:
+    name: bundle-analysis
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    needs: [build]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.1.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.2.0
+        with:
+          node-version: ${{ env.NODE_DEFAULT_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4.3.0
+        with:
+          name: next-build-${{ env.NODE_DEFAULT_VERSION }}
+          path: apps/forge/.next
+
+      - name: Analyze bundle
+        run: |
+          cd apps/forge
+          pnpm exec webpack-bundle-analyzer .next/analyze/client.json --report bundle-report.html --mode static --no-open
+        continue-on-error: true
+
+      - name: Upload bundle report
+        if: always()
+        uses: actions/upload-artifact@v4.4.3
+        with:
+          name: bundle-analysis-report
+          path: apps/forge/bundle-report.html
+          retention-days: 14
+
+  build-status:
+    name: build-status
+    runs-on: ubuntu-24.04
+    needs: [lint, typecheck, unit-tests, e2e-tests, build, bundle-analysis]
+    if: always()
+    steps:
+      - name: Report overall status
+        run: |
+          if [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" = "true" ]; then
+            echo "One or more frontend CI jobs failed"
+            exit 1
+          fi
+          echo "All frontend CI jobs passed"

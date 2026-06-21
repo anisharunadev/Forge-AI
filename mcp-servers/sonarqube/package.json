@@ -1,5 +1,5 @@
 {
-  "name": "@fora/mcp-sonarqube",
+  "name": "forge-ai/mcp-sonarqube",
   "version": "0.1.0",
   "description": "FORA SonarQube MCP server — exposes list_projects, get_project, search_components, get_component_measures, list_issues, get_issue, transition_issue, get_quality_gate over MCP/stdio. Pinned to a single project. Auth via SonarQube user token.",
   "license": "UNLICENSED",

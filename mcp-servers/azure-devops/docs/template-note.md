@@ -1,17 +1,17 @@
-# Template note — which MCP servers `@fora/mcp-azure-devops` templates for
+# Template note — which MCP servers `forge-ai/mcp-azure-devops` templates for
 
-This package is the **first P2 MCP server** in the Forge AI platform and copies the `@fora/mcp-github` template ([Forge AI-4](https://github.example/Forge AI-4)). The shared structure was designed up front so P2 servers can ship in days, not weeks, and the agent runtime can treat them uniformly.
+This package is the **first P2 MCP server** in the Forge AI platform and copies the `forge-ai/mcp-github` template ([Forge AI-4](https://github.example/Forge AI-4)). The shared structure was designed up front so P2 servers can ship in days, not weeks, and the agent runtime can treat them uniformly.
 
 ## Servers that copy this template
 
 | Server | Priority | Status | Differences vs. github |
 | --- | --- | --- | --- |
-| `@fora/mcp-github` | P1 | shipped | n/a |
-| `@fora/mcp-jira` | P1 | shipped | Project-pinned (one level deeper than org-pin); ADF in/out for description and comments. |
-| `@fora/mcp-confluence` | P1 | shipped | Space-pinned; Confluence storage format; Basic auth from email + API token. |
-| `@fora/mcp-aws` | P1 | shipped | Account+region pinned; AWS SDK credential chain; JSON 1.1 protocol. |
-| `@fora/mcp-sonarqube` | P1 | shipped | Project-pinned; `fetch` against SonarQube REST v1; no SDK. |
-| `@fora/mcp-azure-devops` | **P2** | **shipped (this issue)** | **Project-pinned** (org + project); plain `fetch` against AzDO REST 7.1; Basic auth from a project-scoped PAT. Mutation tools (`run_pipeline`, `create_work_item`, `add_work_item_comment`) require `confirm: true` in the call (Zod literal). Two-step list pattern for `list_work_items` (WIQL query → batched `GET /_apis/wit/workitems?ids=…`). Auth-header presence is asserted by the mock-backed smoke. |
+| `forge-ai/mcp-github` | P1 | shipped | n/a |
+| `forge-ai/mcp-jira` | P1 | shipped | Project-pinned (one level deeper than org-pin); ADF in/out for description and comments. |
+| `forge-ai/mcp-confluence` | P1 | shipped | Space-pinned; Confluence storage format; Basic auth from email + API token. |
+| `forge-ai/mcp-aws` | P1 | shipped | Account+region pinned; AWS SDK credential chain; JSON 1.1 protocol. |
+| `forge-ai/mcp-sonarqube` | P1 | shipped | Project-pinned; `fetch` against SonarQube REST v1; no SDK. |
+| `forge-ai/mcp-azure-devops` | **P2** | **shipped (this issue)** | **Project-pinned** (org + project); plain `fetch` against AzDO REST 7.1; Basic auth from a project-scoped PAT. Mutation tools (`run_pipeline`, `create_work_item`, `add_work_item_comment`) require `confirm: true` in the call (Zod literal). Two-step list pattern for `list_work_items` (WIQL query → batched `GET /_apis/wit/workitems?ids=…`). Auth-header presence is asserted by the mock-backed smoke. |
 
 Zendesk and Databricks are still P2 and will follow the same template.
 
@@ -35,7 +35,7 @@ This server implements the seven Forge AI MCP contract points verbatim:
 | 2 | `src/client.ts` | Two-step `list_work_items`: `POST /_apis/wit/wiql` → `GET /_apis/wit/workitems?ids=…`. | AzDO's `/wit/workitems` endpoint is batch-by-ID; a list MUST be WIQL-driven. |
 | 3 | `src/tools.ts` | Three mutations carry a `confirm: z.literal(true)` Zod arg. | The platform bar for `confirm: true` is: any tool that has a meaningful destructive side-effect on the customer data plane must require explicit intent. The three AzDO mutations qualify; the GitHub mutations did not. |
 | 4 | `src/config.ts` | `AZURE_DEVOPS_PAT` is a project-scoped PAT, not a user OAuth token. | AzDO's only auth path for REST is Basic auth from a PAT; we document the project-scoping requirement at deployment time (the REST API does not surface the token's scope). |
-| 5 | `src/config.ts` | `api-version=7.1` pinned on every request via the client wrapper. | Matches the Forge AI-13-style API-version pinning pattern from `@fora/mcp-github`. |
+| 5 | `src/config.ts` | `api-version=7.1` pinned on every request via the client wrapper. | Matches the Forge AI-13-style API-version pinning pattern from `forge-ai/mcp-github`. |
 | 6 | `test/mock-azdo.mjs` | Optional project segment stripped from the path before routing. | Lets one mock server handle both org-level (`/_apis/projects`) and project-level (`/forge/_apis/...`) routes, matching the production URL layout. |
 | 7 | `test/smoke.mjs` | Asserts `confirm: false` is rejected for a mutation. | The Zod literal is the only thing standing between the model and a real Azure DevOps mutation; the smoke proves it works. |
 

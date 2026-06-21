@@ -1,5 +1,5 @@
 /**
- * `@fora/mcp-jira` — `ServerManifest` registration record.
+ * `forge-ai/mcp-jira` — `ServerManifest` registration record.
  *
  * Drops the existing Jira MCP server into the FORA 0.3 router framework
  * (FORA-48 §3 / AC #4) without touching `tools.ts`, `client.ts`, or
@@ -28,7 +28,7 @@ import {
   type McpToolDescriptor,
   type ServerManifest,
   type TenantId,
-} from '@fora/mcp-router';
+} from 'forge-ai/mcp-router';
 
 /** Canonical server name — matches `index.ts` (`name: "fora-mcp-jira"`). */
 export const JIRA_SERVER_NAME = asServerName('jira');
@@ -250,4 +250,4 @@ export function createJiraManifest(tenantId: TenantId): ServerManifest {
 }
 
 /** Re-export the `ServerManifest` type for callers that import from this module. */
-export type { ServerManifest } from '@fora/mcp-router';
+export type { ServerManifest } from 'forge-ai/mcp-router';

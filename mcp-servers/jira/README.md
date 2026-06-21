@@ -1,10 +1,10 @@
-# `@fora/mcp-jira` — Forge AI Jira MCP Server
+# `forge-ai/mcp-jira` — Forge AI Jira MCP Server
 
 Priority-1 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes six tools over MCP/stdio: `list_issues`, `search_jql`, `get_issue`, `create_issue`, `add_comment`, `transition_issue`.
 
-The server is **pinned to a single Jira project** at startup. The model can pass an `issueIdOrKey`, but the underlying project is asserted against the pin before any call lands. This is the same safety posture as `@fora/mcp-github`'s `GITHUB_ORG` enforcement, scoped one level deeper to a single project.
+The server is **pinned to a single Jira project** at startup. The model can pass an `issueIdOrKey`, but the underlying project is asserted against the pin before any call lands. This is the same safety posture as `forge-ai/mcp-github`'s `GITHUB_ORG` enforcement, scoped one level deeper to a single project.
 
-The package layout, scripts, and entry-point pattern are deliberately identical to `@fora/mcp-github` so the rest of the priority-1 MCP family (Confluence, SonarQube, Figma, AWS, Slack) can copy it.
+The package layout, scripts, and entry-point pattern are deliberately identical to `forge-ai/mcp-github` so the rest of the priority-1 MCP family (Confluence, SonarQube, Figma, AWS, Slack) can copy it.
 
 ---
 
@@ -186,4 +186,4 @@ If any assertion fails, the script exits non-zero and prints the failure. No rea
 
 ## Reuse: the Forge AI MCP server template
 
-See `docs/template-note.md` (in `@fora/mcp-github`) for the contract these servers share, and `docs/assumptions-vs-github-mcp.md` (in this package) for the divergences that matter when wiring the agent: rate limits, JQL vs `search_code`, the transition model vs `state`, ADF vs Markdown, and the project-key pin vs `GITHUB_ORG`.
+See `docs/template-note.md` (in `forge-ai/mcp-github`) for the contract these servers share, and `docs/assumptions-vs-github-mcp.md` (in this package) for the divergences that matter when wiring the agent: rate limits, JQL vs `search_code`, the transition model vs `state`, ADF vs Markdown, and the project-key pin vs `GITHUB_ORG`.

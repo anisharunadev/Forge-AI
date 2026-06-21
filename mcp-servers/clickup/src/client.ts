@@ -4,7 +4,7 @@
  * The MCP server only ever calls these methods. List scope is enforced at
  * boot via `listId` in config — every read or write targets the pinned List.
  * The model can pass `taskId` but the underlying List is server-pinned for
- * safety (mirrors `@fora/mcp-jira`'s `JIRA_PROJECT_KEY` and `@fora/mcp-github`'s
+ * safety (mirrors `forge-ai/mcp-jira`'s `JIRA_PROJECT_KEY` and `forge-ai/mcp-github`'s
  * `GITHUB_ORG` enforcement). Any attempt to act on a task whose List does
  * not match the pin raises `ListScopeError` before any HTTP call lands.
  *

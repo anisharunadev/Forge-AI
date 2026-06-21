@@ -1,10 +1,10 @@
-# `@fora/mcp-clickup` — Forge AI ClickUp MCP Server
+# `forge-ai/mcp-clickup` — Forge AI ClickUp MCP Server
 
 Priority-1 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes eight tools over MCP/stdio: `list_tasks`, `search_tasks`, `get_task`, `list_comments`, `create_task`, `update_task`, `set_task_status`, `add_comment`.
 
-The server is **pinned to a single List** at startup. The model can pass a `taskId`, but the underlying List is asserted against the pin before any call lands. This is the same safety posture as `@fora/mcp-jira`'s `JIRA_PROJECT_KEY` enforcement, scoped one level shallower (a List is roughly a Jira "filter saved search" over a single board column).
+The server is **pinned to a single List** at startup. The model can pass a `taskId`, but the underlying List is asserted against the pin before any call lands. This is the same safety posture as `forge-ai/mcp-jira`'s `JIRA_PROJECT_KEY` enforcement, scoped one level shallower (a List is roughly a Jira "filter saved search" over a single board column).
 
-The package layout, scripts, and entry-point pattern are deliberately identical to `@fora/mcp-jira` and `@fora/mcp-github` so the rest of the priority-1 MCP family (Confluence, SonarQube, Figma, AWS, Slack) can copy it.
+The package layout, scripts, and entry-point pattern are deliberately identical to `forge-ai/mcp-jira` and `forge-ai/mcp-github` so the rest of the priority-1 MCP family (Confluence, SonarQube, Figma, AWS, Slack) can copy it.
 
 This package implements **Forge AI-202 sub-task 11.2c.1** — the ClickUp MCP skeleton — and is the foundation for the ClickUp adapter (sub-tasks 11.2c.2 → 11.2c.5: webhook ingest, outbound, comment bridge, divergence job).
 
@@ -227,4 +227,4 @@ See `docs/assumptions-vs-jira-mcp.md` (in this package) for divergences from the
 
 ## Reuse: the Forge AI MCP server template
 
-See `docs/template-note.md` (in `@fora/mcp-github`) for the contract these servers share, and `docs/assumptions-vs-jira-mcp.md` (in this package) for the divergences that matter when wiring the agent: rate limits, search syntax, status vs transition model, List pin vs project pin.
+See `docs/template-note.md` (in `forge-ai/mcp-github`) for the contract these servers share, and `docs/assumptions-vs-jira-mcp.md` (in this package) for the divergences that matter when wiring the agent: rate limits, search syntax, status vs transition model, List pin vs project pin.

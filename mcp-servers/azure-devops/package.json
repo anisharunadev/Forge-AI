@@ -1,5 +1,5 @@
 {
-  "name": "@fora/mcp-azure-devops",
+  "name": "forge-ai/mcp-azure-devops",
   "version": "0.1.0",
   "description": "FORA Azure DevOps MCP server — exposes list_projects, list_repos, list_pipelines, run_pipeline, get_pipeline_run, list_work_items, get_work_item, create_work_item, add_work_item_comment over MCP/stdio. Auth via project-scoped PAT. Pinned to a single Azure DevOps org + project on startup.",
   "license": "UNLICENSED",

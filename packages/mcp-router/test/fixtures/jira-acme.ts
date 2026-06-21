@@ -1,13 +1,13 @@
 /**
- * `@fora/mcp-router` — acceptance harness fixture: `createJiraManifest('acme')`.
+ * `forge-ai/mcp-router` — acceptance harness fixture: `createJiraManifest('acme')`.
  *
  * Thin re-export of the FORA-449 manifest factory so the router acceptance
- * harness exercises the SAME ServerManifest that ships in `@fora/mcp-jira`
+ * harness exercises the SAME ServerManifest that ships in `forge-ai/mcp-jira`
  * 0.3.6 (commit `da1b51ef`). Mirrors the symmetry of `packages/mcp-router/test/fixtures/scope-guard/*`
  * (FORA-448): one file per fixture, used by `test/acceptance.test.ts`.
  *
- * Why relative import (not `@fora/mcp-jira`):
- *   - `@fora/mcp-jira` declares `@fora/mcp-router` as a runtime dep (workspace).
+ * Why relative import (not `forge-ai/mcp-jira`):
+ *   - `forge-ai/mcp-jira` declares `forge-ai/mcp-router` as a runtime dep (workspace).
  *     Adding the reverse workspace dep would be a package-graph cycle and would
  *     require a `pnpm install` for every consumer — too high a cost for a
  *     re-export.

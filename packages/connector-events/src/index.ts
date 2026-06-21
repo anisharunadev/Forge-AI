@@ -1,5 +1,5 @@
 /**
- * @fora/connector-events — FORA-484.
+ * forge-ai/connector-events — FORA-484.
  *
  * Public surface: universal connector audit envelope, hash-chained
  * per-(tenant, binding) store, RBAC-gated typed-artifact rule engine,

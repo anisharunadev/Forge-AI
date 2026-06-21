@@ -1,10 +1,10 @@
-# `@fora/mcp-sonarqube` — Forge AI SonarQube MCP Server
+# `forge-ai/mcp-sonarqube` — Forge AI SonarQube MCP Server
 
 Priority-1 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes nine tools over MCP/stdio: `list_projects`, `get_project`, `search_components`, `get_component_measures`, `list_issues`, `get_issue`, `transition_issue`, `get_quality_gate`, `webhooks_get`.
 
 The server is **pinned to a single SonarQube project** at startup. The model can pass `projectKey` as an argument, but it is asserted against the pinned project before any call lands. `transition_issue` is the only write tool; the rest are read-only.
 
-This package is built from the `@fora/mcp-github` template ([Forge AI-4](/Forge AI/issues/Forge AI-4), [template note](docs/template-note.md)). The seven contract points in that template-note are mandatory and non-negotiable.
+This package is built from the `forge-ai/mcp-github` template ([Forge AI-4](/Forge AI/issues/Forge AI-4), [template note](docs/template-note.md)). The seven contract points in that template-note are mandatory and non-negotiable.
 
 ---
 

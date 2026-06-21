@@ -1,16 +1,16 @@
-# Template note — which MCP servers `@fora/mcp-confluence` templates for
+# Template note — which MCP servers `forge-ai/mcp-confluence` templates for
 
-This package is the **third concrete MCP server** in the Forge AI priority-1 set, after `@fora/mcp-github` and `@fora/mcp-jira`. Zendesk, Databricks, and Azure DevOps are P2 and will follow the same template.
+This package is the **third concrete MCP server** in the Forge AI priority-1 set, after `forge-ai/mcp-github` and `forge-ai/mcp-jira`. Zendesk, Databricks, and Azure DevOps are P2 and will follow the same template.
 
 ## Servers that copy this template (or vice-versa)
 
 | Server | Priority | Status | Differences vs. confluence |
 | --- | --- | --- | --- |
-| `@fora/mcp-github` | P1 | shipped | Org-pinned (not space-pinned); `repo` / `pull_number` not `page_id`; uses GFM not storage format. |
-| `@fora/mcp-jira` | P1 | shipped | Site-pinned (cloudId) not space-pinned; `issue_key` not `page_id`; uses ADF / Jira REST v3. |
-| `@fora/mcp-confluence` | P1 | shipped (this issue) | n/a |
+| `forge-ai/mcp-github` | P1 | shipped | Org-pinned (not space-pinned); `repo` / `pull_number` not `page_id`; uses GFM not storage format. |
+| `forge-ai/mcp-jira` | P1 | shipped | Site-pinned (cloudId) not space-pinned; `issue_key` not `page_id`; uses ADF / Jira REST v3. |
+| `forge-ai/mcp-confluence` | P1 | shipped (this issue) | n/a |
 
-The three P1 servers share the same template — see `@fora/mcp-github/docs/template-note.md` for the full contract. This file notes only the Confluence-specific drift.
+The three P1 servers share the same template — see `forge-ai/mcp-github/docs/template-note.md` for the full contract. This file notes only the Confluence-specific drift.
 
 ## Confluence-specific contract drift
 

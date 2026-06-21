@@ -1,0 +1,20 @@
+{
+  "name": "forge-ai-docs",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.30.0",
+    "@astrojs/check": "^0.9.0",
+    "astro": "^5.0.0",
+    "sharp": "^0.33.0",
+    "typescript": "^5.6.0"
+  }
+}

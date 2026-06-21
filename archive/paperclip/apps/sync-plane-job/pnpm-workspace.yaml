@@ -1,5 +1,0 @@
-packages:
-  - ../../packages/db-pool
-allowBuilds:
-  esbuild: set this to true or false
-  protobufjs: set this to true or false

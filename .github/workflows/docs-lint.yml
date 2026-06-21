@@ -1,0 +1,146 @@
+name: docs-lint
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "**/*.md"
+      - ".github/workflows/docs-lint.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  markdownlint:
+    name: markdownlint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.2.0
+        with:
+          node-version: "22"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.1.0
+        with:
+          version: "9.12.3"
+
+      - name: Install markdownlint-cli
+        run: |
+          pnpm dlx markdownlint-cli@0.42.0 --version
+
+      - name: Run markdownlint
+        run: |
+          pnpm dlx markdownlint-cli@0.42.0 \
+            --config .markdownlint.jsonc \
+            "docs/**/*.md" \
+            "*.md" \
+            "apps/**/*.md" \
+            "packages/**/*.md" \
+            "backend/**/*.md"
+
+  lychee:
+    name: lychee (link checker)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Lychee link checker
+        uses: lycheeverse/lychee-action@v2.0.0
+        with:
+          args: >-
+            --config lychee.toml
+            --no-progress
+            --format markdown
+            --output lychee-report.md
+            --accept 200,203,206,301,302,303,304,307,308,403,429
+            --max-retries 3
+            --retry-wait-time 2
+            --timeout 20
+            ./docs/**/*.md
+            ./README.md
+            ./CONTRIBUTING.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload lychee report
+        if: always()
+        uses: actions/upload-artifact@v4.4.3
+        with:
+          name: lychee-report
+          path: lychee-report.md
+          retention-days: 14
+
+  adr-validate:
+    name: ADR validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup Python
+        uses: actions/setup-python@v5.4.0
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip==24.2
+          pip install pyyaml==6.0.2
+
+      - name: Run ADR validator
+        run: |
+          python scripts/validate_adrs.py \
+            --adr-dir docs/architecture/decisions \
+            --nfr-dir docs/architecture/nfrs \
+            --fail-on-warnings
+
+      - name: Check cross-references
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          root = Path("docs")
+          md_files = list(root.rglob("*.md"))
+
+          # Find ADR references like ADR-0007, ADR 0007, etc.
+          ref_pattern = re.compile(r"\bADR[- ]?(\d{4})\b", re.IGNORECASE)
+          adr_dir = root / "architecture" / "decisions"
+          existing = {p.stem.split("-")[0] for p in adr_dir.glob("*.md") if re.match(r"^\d{4}-", p.name)}
+
+          broken = []
+          for md in md_files:
+              text = md.read_text(encoding="utf-8", errors="replace")
+              for m in ref_pattern.finditer(text):
+                  if m.group(1) not in existing:
+                      broken.append((md, m.group(0)))
+
+          if broken:
+              for md, ref in broken:
+                  print(f"BROKEN: {md} references {ref}")
+              import sys; sys.exit(1)
+          print(f"Checked {len(md_files)} files for ADR cross-references")
+          PY
+
+  status:
+    name: docs-lint status
+    runs-on: ubuntu-24.04
+    needs: [markdownlint, lychee, adr-validate]
+    if: always()
+    steps:
+      - name: Report overall status
+        run: |
+          if [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" = "true" ]; then
+            echo "Docs lint failed"
+            exit 1
+          fi
+          echo "All docs lint jobs passed"

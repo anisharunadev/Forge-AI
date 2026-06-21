@@ -1,4 +1,4 @@
-# `@fora/mcp-confluence` — Forge AI Confluence MCP Server
+# `forge-ai/mcp-confluence` — Forge AI Confluence MCP Server
 
 Priority-1 MCP server for the Forge AI Enterprise AI SDLC Operating System. Exposes five tools over MCP/stdio: `list_pages`, `get_page`, `create_page`, `update_page`, `add_comment`.
 

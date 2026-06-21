@@ -1,0 +1,70 @@
+# Forge AI CODEOWNERS
+# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-details/customizing-your-repository/about-code-owners
+
+# Order matters: later entries override earlier ones.
+
+# Default — leads must approve everything
+*                                              @forge-ai-leads
+
+# Backend modules
+/backend/app/agents/                          @forge-ai-agents-team @forge-ai-leads
+/backend/app/agents/langgraph/                @forge-ai-agents-team @forge-ai-leads
+/backend/app/terminal/                         @forge-ai-terminal-team @forge-ai-leads
+/backend/app/services/event_bus.py            @forge-ai-platform-team @forge-ai-leads
+/backend/app/services/litellm_client.py        @forge-ai-platform-team @forge-ai-leads
+/backend/app/services/llm_proxy/               @forge-ai-platform-team @forge-ai-leads
+/backend/app/auth/                             @forge-ai-security-team @forge-ai-leads
+/backend/app/cost/                             @forge-ai-platform-team @forge-ai-leads
+/backend/app/db/migrations/                    @forge-ai-platform-team @forge-ai-leads
+/backend/tests/                                @forge-ai-platform-team @forge-ai-leads
+
+# Frontend
+/apps/forge/                                   @forge-ai-frontend-team @forge-ai-leads
+/apps/forge/app/(auth)/                        @forge-ai-security-team @forge-ai-frontend-team @forge-ai-leads
+/apps/forge/components/terminal/               @forge-ai-terminal-team @forge-ai-frontend-team @forge-ai-leads
+/apps/forge/app/api/                           @forge-ai-frontend-team @forge-ai-platform-team @forge-ai-leads
+
+# Shared TypeScript packages
+/packages/                                     @forge-ai-platform-team @forge-ai-leads
+/packages/gsd-core-stub/                       @forge-ai-integrations-team @forge-ai-leads
+/packages/gsd-pi-stub/                         @forge-ai-integrations-team @forge-ai-leads
+
+# MCP servers
+/mcp-servers/                                  @forge-ai-integrations-team @forge-ai-leads
+/mcp-servers/gsd-wrapper/                      @forge-ai-integrations-team @forge-ai-leads
+/mcp-servers/repomix-wrapper/                  @forge-ai-integrations-team @forge-ai-leads
+
+# Documentation
+/docs/architecture/decisions/                  @forge-ai-architects @forge-ai-leads
+/docs/architecture/nfrs/                       @forge-ai-architects @forge-ai-leads
+/docs/testing/                                 @forge-ai-qa-team @forge-ai-leads
+/docs/                                         @forge-ai-leads
+
+# Infrastructure
+/infra/                                        @forge-ai-platform-team @forge-ai-leads
+/infra/terraform/                              @forge-ai-platform-team @forge-ai-leads
+/infra/k8s/                                    @forge-ai-platform-team @forge-ai-leads
+/infra/keycloak/                               @forge-ai-security-team @forge-ai-platform-team @forge-ai-leads
+/infra/auth/                                   @forge-ai-security-team @forge-ai-platform-team @forge-ai-leads
+/infra/ecs/                                    @forge-ai-platform-team @forge-ai-leads
+/docker-compose.yml                             @forge-ai-platform-team @forge-ai-leads
+/docker-compose*.yml                           @forge-ai-platform-team @forge-ai-leads
+
+# CI / CD
+/.github/workflows/                            @forge-ai-platform-team @forge-ai-leads
+/.github/workflows/cd-*                        @forge-ai-platform-team @forge-ai-security-team @forge-ai-leads
+/.github/CODEOWNERS                            @forge-ai-leads
+
+# Tooling
+/scripts/                                      @forge-ai-platform-team @forge-ai-leads
+/tools/                                        @forge-ai-platform-team @forge-ai-leads
+/tenants/                                      @forge-ai-platform-team @forge-ai-leads
+/tests/                                        @forge-ai-qa-team @forge-ai-platform-team @forge-ai-leads
+
+# Root
+/AGENTS.md                                     @forge-ai-leads
+/CONTRIBUTING.md                               @forge-ai-leads
+/SECURITY.md                                   @forge-ai-security-team @forge-ai-leads
+/pnpm-workspace.yaml                           @forge-ai-platform-team @forge-ai-leads
+/package.json                                  @forge-ai-platform-team @forge-ai-leads
+/pyproject.toml                                @forge-ai-platform-team @forge-ai-leads

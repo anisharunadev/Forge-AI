@@ -1,12 +1,12 @@
-# Template note — which MCP servers `@fora/mcp-sonarqube` is built from
+# Template note — which MCP servers `forge-ai/mcp-sonarqube` is built from
 
-This package is **built from** the `@fora/mcp-github` template ([Forge AI-4](/Forge AI/issues/Forge AI-4)). The seven contract points in the GitHub template-note are the source of truth and are not relaxed for this server. This file records the contract points and any local drift required to apply them to SonarQube.
+This package is **built from** the `forge-ai/mcp-github` template ([Forge AI-4](/Forge AI/issues/Forge AI-4)). The seven contract points in the GitHub template-note are the source of truth and are not relaxed for this server. This file records the contract points and any local drift required to apply them to SonarQube.
 
 ## Source template
 
 | Server | Priority | Status | Role for this package |
 | --- | --- | --- | --- |
-| [`@fora/mcp-github`](/Forge AI/issues/Forge AI-4) | P1 | shipped | Source template. All seven contract points ported verbatim. |
+| [`forge-ai/mcp-github`](/Forge AI/issues/Forge AI-4) | P1 | shipped | Source template. All seven contract points ported verbatim. |
 
 ## The seven contract points as applied here
 

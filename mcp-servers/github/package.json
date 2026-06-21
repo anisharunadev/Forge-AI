@@ -1,5 +1,5 @@
 {
-  "name": "@fora/mcp-github",
+  "name": "forge-ai/mcp-github",
   "version": "0.1.0",
   "description": "FORA GitHub MCP server — exposes list_repos, get_pr, list_prs, create_pr_comment, list_issues, create_issue, search_code over MCP/stdio. Auth via GitHub App or PAT scoped to a single org.",
   "license": "UNLICENSED",
