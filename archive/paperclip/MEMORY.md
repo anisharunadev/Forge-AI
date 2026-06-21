@@ -1,1 +1,0 @@
-- [Forge AI-517 backoff scheduler shipped](project-fora-517-shipped.md) — closed `done` 2026-06-20T12:46:58Z; commit c43b066a; @fora/sync-plane-ratelimit v0.4.0 (backoff_policy + backoff_scheduler + idempotency_key + sync_op_store + 2 audit events). 83/83 + 46/46. WIP v0.3 (Forge AI-516) left in working tree.
