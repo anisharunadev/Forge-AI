@@ -1,7 +1,7 @@
 # Contains ANTHROPIC_API_KEY.
 # Never commit.
 **/node_modules
-archive/**
+# archive/**
 .env
 .env.*
 !.env.example
