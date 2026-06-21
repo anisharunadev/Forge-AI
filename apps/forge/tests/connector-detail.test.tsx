@@ -26,7 +26,7 @@ import {
   ConnectorDetailPanel,
   isRotationDeadlineImminent,
 } from "../components/ConnectorDetailPanel";
-import type { McpConnector } from "../lib/connectors/mock-data";
+import type { McpConnector } from "../lib/connectors/data";
 import type { AuditEntry } from "../lib/connectors/audit-feed-types";
 
 function connector(overrides: Partial<McpConnector> = {}): McpConnector {

@@ -4,7 +4,7 @@
  * Reads the 12 v1 files + the 12-stage injection model and emits a
  * typed `KnowledgeNode[]` + `KnowledgeEdge[]` per the local mirror in
  * `apps/forge/lib/knowledge/types.ts` (which mirrors the shipped
- * `@fora/forge-ui/graph` types from FORA-393-F2).
+ * `the v2.0 knowledge graph types` types from FORA-393-F2).
  *
  * The producer is the consumer-side seam for the Knowledge Graph
  * canvas (Plan 2 §3.1). v1.0 emits a static 12-file + 12-stage
@@ -30,7 +30,6 @@
 
 import { listKnowledgeFiles } from "./manifest.ts";
 import { listStageInjectionMaps } from "./injection-model.ts";
-import { knowledgeFileId } from "./injection-model.ts";
 import type {
   GraphFilter,
   KnowledgeEdge,

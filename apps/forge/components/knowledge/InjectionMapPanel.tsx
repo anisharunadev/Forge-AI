@@ -13,7 +13,7 @@
  *   * workspace/README.md §2 (the source of truth).
  *   * The local `StageInjectionMap` mirror in
  *     `apps/forge/lib/knowledge/types.ts` (which mirrors
- *     `@fora/forge-ui/typed-artifacts` shipped in FORA-502.1).
+ *     `the v2.0 typed-artifact system` shipped in FORA-502.1).
  *   * `apps/forge/lib/knowledge/injection-model.ts` (the producer).
  */
 

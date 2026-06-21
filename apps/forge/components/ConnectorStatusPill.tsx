@@ -1,7 +1,7 @@
 /**
  * ConnectorStatusPill — typed status pill for the Connector Center.
  *
- * Mirrors `@fora/forge-ui/typed-artifacts/connector-status-pill` (shipped
+ * Mirrors `the v2.0 typed-artifact system/connector-status-pill` (shipped
  * in FORA-577, package v0.3.0) but uses the forge console's tailwind
  * `forge-*` tokens so the list page matches the rest of the app. The
  * two implementations converge to the same brand-token mapping per
@@ -15,7 +15,7 @@
  * WCAG 1.4.1.
  */
 
-import type { ToolCallStatus } from "@/lib/connectors/mock-data";
+import type { ToolCallStatus } from "@/lib/connectors/data";
 
 const TONE_CLASS: Record<ToolCallStatus, string> = {
   success: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",

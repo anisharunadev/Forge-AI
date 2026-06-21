@@ -13,8 +13,11 @@ import {
   getHandoffContract,
   getStory,
   listHandoffContracts,
+  listEpics,
+  listStories,
+  resolveIdentifier,
   SEED_TENANT_ID,
-} from "@/lib/intelligence/mock-data";
+} from "@/lib/intelligence/data";
 import {
   canAccessProjectIntelligence,
   isAuditPersona,
@@ -24,7 +27,6 @@ import { readPersonaFromCookieHeader } from "@/lib/auth";
 import { StoryCard } from "@/components/intelligence/StoryCard";
 import { BlockedByList } from "@/components/intelligence/BlockedByList";
 import { HandoffContractViewer } from "@/components/intelligence/HandoffContractViewer";
-import { resolveIdentifier } from "@/lib/intelligence/mock-data";
 
 export const dynamic = "force-dynamic";
 
@@ -45,15 +47,24 @@ export default async function StoryDetailPage({
   if (!canAccessProjectIntelligence(persona)) notFound();
 
   const { id } = await params;
-  const story = getStory(id);
+  const story = await getStory(id);
   if (!story) notFound();
   const audit = isAuditPersona(persona);
 
-  const handoffContracts = story.handoffContractIds
-    .map((hid) => getHandoffContract(hid))
-    .filter((h): h is NonNullable<typeof h> => h !== null);
+  const [resolvedContracts, allContracts, epics, stories] = await Promise.all([
+    Promise.all(
+      story.handoffContractIds.map((hid) => getHandoffContract(hid)),
+    ),
+    listHandoffContracts(),
+    listEpics(),
+    listStories(),
+  ]);
 
-  const allContracts = listHandoffContracts();
+  const handoffContracts = resolvedContracts.filter(
+    (h): h is NonNullable<typeof h> => h !== null,
+  );
+
+  const resolve = (id: string) => resolveIdentifier(id, epics, stories);
 
   return (
     <div className="space-y-8" data-testid="story-detail">
@@ -81,7 +92,7 @@ export default async function StoryDetailPage({
           blockedBy={story.blockedBy}
           blocks={story.blocks}
           variant="panel"
-          resolveIdentifier={resolveIdentifier}
+          resolveIdentifier={resolve}
         />
       </section>
 

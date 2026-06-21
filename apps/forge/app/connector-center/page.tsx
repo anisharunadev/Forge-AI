@@ -1,186 +1,221 @@
-/**
- * Connector Center — list page (FORA-578).
- *
- * The operator view of every MCP integration the tenant uses. Server
- * fetches the typed-mock connector list, applies the RBAC gate, and
- * renders one card per connector. Per-tenant, persona-gated:
- *
- *   * Eng Lead, CTO — full Tier-1 + Tier-2 list of <ConnectorCard />.
- *   * PM — typed-artifact empty-state (cards never render); the empty
- *     state names the persona to ask.
- *
- * Reconciles with:
- *   * FORA-128 — credential envelope is always redacted; raw values
- *     never appear on the wire or in the DOM.
- *   * FORA-125 — status colors map to the audit-log `tool_call_status`
- *     enum (success / degraded / error → green / amber / red).
- *   * Plan 3 §7.1 — ConnectorStatusPill is the single canonical
- *     connector-health indicator.
- *   * Plan 4 §3.2 — every card is a typed-artifact render of the
- *     `McpConnector` shape.
- *
- * The "(centers)" route group is reserved for the future Center
- * layout (a shared shell that wraps /connector-center, /audit-center,
- * /run-center, etc.). Today the page still renders under the root
- * layout so the URL resolves to `/connector-center` exactly.
- */
+'use client';
 
-import { cookies } from "next/headers";
+import * as React from 'react';
+import { Plug, ShoppingBag, Stethoscope, History } from 'lucide-react';
+
+import { AdminShell } from '@/components/admin/AdminShell';
+import { ConnectorGrid } from '@/components/connector-center/ConnectorGrid';
+import { ConnectorDetailPanel } from '@/components/connector-center/ConnectorDetailPanel';
+import { MarketplaceGrid } from '@/components/connector-center/MarketplaceGrid';
+import { AddConnectorDialog } from '@/components/connector-center/AddConnectorDialog';
+import { HealthBadge } from '@/components/connector-center/HealthBadge';
+import { SyncHistoryTable } from '@/components/connector-center/SyncHistoryTable';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  listConnectors,
-  TIER_1_CONNECTORS,
-  type McpConnector,
-} from "@/lib/connectors/mock-data";
-import { SEED_TENANT_ID, readPersonaFromCookieHeader } from "@/lib/auth";
-import {
-  canAccessConnectorCenter,
-  escalationPersonaLabel,
-  type ConnectorCenterPersona,
-} from "@/lib/connectors/rbac";
-import { ConnectorCard } from "@/components/ConnectorCard";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useApiData } from '@/hooks/use-api-data';
+import type {
+  Connector,
+  ConnectorHealthStatus,
+  MarketplaceConnector,
+  SyncRecord,
+} from '@/lib/connector-center/data';
+import { listMarketplaceFromRegistry } from '@/lib/connector-center/mcp-adapter';
 
-export const dynamic = "force-dynamic";
+const STATUS_OPTIONS: ReadonlyArray<ConnectorHealthStatus | 'all'> = [
+  'all',
+  'healthy',
+  'syncing',
+  'stale',
+  'failed',
+  'quarantined',
+];
 
-const PERSONA_LABEL: Record<ConnectorCenterPersona, string> = {
-  pm: "Product Manager",
-  "eng-lead": "Engineering Lead",
-  cto: "CTO",
-};
-
-function tierOneCoverage(rows: ReadonlyArray<McpConnector>): {
-  present: ReadonlyArray<string>;
-  missing: ReadonlyArray<string>;
-} {
-  const present = TIER_1_CONNECTORS.filter((id) => rows.some((r) => r.id === id));
-  const missing = TIER_1_CONNECTORS.filter((id) => !rows.some((r) => r.id === id));
-  return { present, missing };
-}
-
-export default async function ConnectorCenterPage() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore
-    .getAll()
-    .map((c) => `${c.name}=${c.value}`)
-    .join("; ");
-  const persona: ConnectorCenterPersona = readPersonaFromCookieHeader(
-    cookieHeader,
+export default function ConnectorCenterM2Page() {
+  const [statusFilter, setStatusFilter] = React.useState<ConnectorHealthStatus | 'all'>(
+    'all',
   );
+  const [selected, setSelected] = React.useState<Connector | null>(null);
+  const [detailOpen, setDetailOpen] = React.useState(false);
 
-  if (!canAccessConnectorCenter(persona)) {
-    return (
-      <div className="space-y-6" data-testid="connector-center">
-        <header className="space-y-1">
-          <p className="text-xs uppercase tracking-wider text-forge-300">
+  // Live data from the orchestrator proxy. Empty state surfaces an
+  // info card when the API is unreachable.
+  const connectorsQ = useApiData<Connector[]>('/v1/connector-center/connectors');
+  const historyQ = useApiData<SyncRecord[]>('/v1/connector-center/sync-history');
+
+  const connectors: ReadonlyArray<Connector> = connectorsQ.data ?? [];
+  const history: ReadonlyArray<SyncRecord> = historyQ.data ?? [];
+
+  // Marketplace is sourced from the MCP registry (real catalog of 13
+  // servers). The orchestrator marketplace endpoint is the secondary
+  // fallback when the registry is empty (e.g., during UI-only demos).
+  const marketplaceFromRegistry = listMarketplaceFromRegistry();
+  const [marketplaceFromApi, setMarketplaceFromApi] =
+    React.useState<ReadonlyArray<MarketplaceConnector>>([]);
+  React.useEffect(() => {
+    let cancelled = false;
+    fetch('/api/proxy/v1/connector-center/marketplace', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((rows: ReadonlyArray<MarketplaceConnector>) => {
+        if (!cancelled) setMarketplaceFromApi(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setMarketplaceFromApi([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const marketplace: ReadonlyArray<MarketplaceConnector> =
+    marketplaceFromRegistry.length > 0
+      ? marketplaceFromRegistry
+      : marketplaceFromApi;
+
+  const filteredConnectors = React.useMemo(() => {
+    if (statusFilter === 'all') return connectors;
+    return connectors.filter((c) => c.status === statusFilter);
+  }, [connectors, statusFilter]);
+
+  const healthBreakdown = React.useMemo(() => {
+    const out: Record<ConnectorHealthStatus, number> = {
+      healthy: 0,
+      syncing: 0,
+      stale: 0,
+      failed: 0,
+      quarantined: 0,
+    };
+    for (const c of connectors) out[c.status] += 1;
+    return out;
+  }, [connectors]);
+
+  const handleSelect = (c: Connector) => {
+    setSelected(c);
+    setDetailOpen(true);
+  };
+
+  return (
+    <AdminShell>
+      <div className="flex flex-col gap-6" data-testid="connector-center-m2">
+        <header className="flex flex-col gap-2">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">
             Center
           </p>
-          <h1 className="text-2xl font-semibold">Connector Center</h1>
-          <p className="text-sm text-forge-200">
-            Operator view of every MCP integration {PERSONA_LABEL[persona]} can audit.
-            Credentials are redacted (FORA-128); rotate a credential from the per-connector
-            detail page.
+          <div className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
+            <h1 className="flex items-center gap-2 text-2xl font-semibold">
+              <Plug className="h-5 w-5" aria-hidden="true" />
+              Connector Center
+            </h1>
+            <AddConnectorDialog
+              onAdd={(input) => {
+                // M2 — live wiring pending. Local-only acknowledgement.
+                // eslint-disable-next-line no-console
+                console.info('[connector-center] add', input);
+              }}
+            />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Manage integrations with external systems, browse the marketplace,
+            and review connector health.
           </p>
         </header>
 
-        <section
-          aria-labelledby="empty-h"
-          className="card flex flex-col items-start gap-3 border-amber-500/40 bg-amber-500/5"
-          data-testid="connector-empty-state"
-          data-empty-kind="rbac-denied"
-        >
-          <p
-            className="inline-flex rounded-sm border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-amber-200"
-            data-testid="connector-empty-pill"
-          >
-            Access restricted
-          </p>
-          <h2 id="empty-h" className="text-lg font-semibold text-amber-100">
-            Connector Center is restricted to Engineering Lead and CTO personas.
-          </h2>
-          <p className="text-sm text-amber-200">
-            The <span className="font-mono">{persona}</span> persona cannot audit MCP
-            connectors or rotate credentials. Ask the{" "}
-            <span className="font-mono">
-              {escalationPersonaLabel(persona).toLowerCase()}
-            </span>{" "}
-            to operate the Connector Center for tenant{" "}
-            <span className="font-mono">{SEED_TENANT_ID}</span>.
-          </p>
-        </section>
+        <Tabs defaultValue="connected" className="w-full">
+          <TabsList aria-label="Connector Center sections">
+            <TabsTrigger value="connected" data-testid="tab-connected">
+              Connected
+            </TabsTrigger>
+            <TabsTrigger value="marketplace" data-testid="tab-marketplace">
+              <ShoppingBag className="h-3 w-3" aria-hidden="true" />
+              Marketplace
+            </TabsTrigger>
+            <TabsTrigger value="health" data-testid="tab-health">
+              <Stethoscope className="h-3 w-3" aria-hidden="true" />
+              Health
+            </TabsTrigger>
+            <TabsTrigger value="activity" data-testid="tab-activity">
+              <History className="h-3 w-3" aria-hidden="true" />
+              Activity
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="connected" className="space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Status:</span>
+              <Select
+                value={statusFilter}
+                onValueChange={(v) =>
+                  setStatusFilter(v as ConnectorHealthStatus | 'all')
+                }
+              >
+                <SelectTrigger
+                  className="w-40"
+                  data-testid="connector-status-filter"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s === 'all' ? 'All statuses' : s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <ConnectorGrid connectors={filteredConnectors} onSelect={handleSelect} />
+          </TabsContent>
+
+          <TabsContent value="marketplace">
+            <MarketplaceGrid
+              connectors={marketplace}
+              onInstall={(c: MarketplaceConnector) => {
+                // M2 — install flow wired in a future PR.
+                // eslint-disable-next-line no-console
+                console.info('[connector-center] install', c.id);
+              }}
+            />
+          </TabsContent>
+
+          <TabsContent value="health" className="space-y-4">
+            <div className="grid gap-3 md:grid-cols-5">
+              {(Object.keys(healthBreakdown) as ReadonlyArray<ConnectorHealthStatus>).map(
+                (k) => (
+                  <div
+                    key={k}
+                    className="card flex items-center justify-between"
+                    data-testid={`health-cell-${k}`}
+                  >
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-forge-300">
+                        {k}
+                      </p>
+                      <p className="text-2xl font-semibold text-forge-50">
+                        {healthBreakdown[k]}
+                      </p>
+                    </div>
+                    <HealthBadge status={k} />
+                  </div>
+                ),
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="activity">
+            <SyncHistoryTable records={history} />
+          </TabsContent>
+        </Tabs>
+
+        <ConnectorDetailPanel
+          connector={selected}
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
+        />
       </div>
-    );
-  }
-
-  const rows = await listConnectors(SEED_TENANT_ID);
-  const coverage = tierOneCoverage(rows);
-
-  return (
-    <div className="space-y-6" data-testid="connector-center">
-      <header className="space-y-1">
-        <p className="text-xs uppercase tracking-wider text-forge-300">Center</p>
-        <h1 className="text-2xl font-semibold">Connector Center</h1>
-        <p className="text-sm text-forge-200">
-          Operator view of every MCP integration {PERSONA_LABEL[persona]} can audit.
-          Credentials are redacted (FORA-128); rotate a credential from the per-connector
-          detail page.
-        </p>
-      </header>
-
-      <section aria-labelledby="connectors-h" className="space-y-3">
-        <div className="flex items-baseline justify-between">
-          <h2 id="connectors-h" className="text-lg font-semibold">
-            Connectors
-          </h2>
-          <p className="text-xs text-forge-300" data-testid="connector-count">
-            {rows.length} connector{rows.length === 1 ? "" : "s"} · tenant{" "}
-            <span className="font-mono">{SEED_TENANT_ID}</span>
-          </p>
-        </div>
-
-        {coverage.missing.length > 0 ? (
-          <p
-            className="text-xs text-rose-300"
-            data-testid="tier-one-coverage"
-            data-present={coverage.present.join(",")}
-            data-missing={coverage.missing.join(",")}
-          >
-            Tier-1 coverage: {coverage.present.length}/{TIER_1_CONNECTORS.length} —
-            missing {coverage.missing.join(", ")}.
-          </p>
-        ) : (
-          <p
-            className="text-xs text-forge-300"
-            data-testid="tier-one-coverage"
-            data-present={coverage.present.join(",")}
-            data-missing=""
-          >
-            Tier-1 coverage: {coverage.present.length}/{TIER_1_CONNECTORS.length} (all
-            present).
-          </p>
-        )}
-
-        {rows.length === 0 ? (
-          <div
-            className="card"
-            data-testid="connector-empty"
-            data-empty-kind="no-connectors"
-          >
-            <p className="text-sm text-forge-200">
-              No connectors provisioned for this persona. Ask the Eng Lead to onboard a
-              connector in the tenant settings.
-            </p>
-          </div>
-        ) : (
-          <ul
-            className="grid gap-3 md:grid-cols-2"
-            aria-label="MCP connectors"
-            data-testid="connector-list"
-          >
-            {rows.map((c) => (
-              <ConnectorCard key={c.id} connector={c} />
-            ))}
-          </ul>
-        )}
-      </section>
-    </div>
+    </AdminShell>
   );
 }

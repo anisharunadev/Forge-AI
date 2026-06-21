@@ -23,11 +23,7 @@
 
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import {
-  getConnector,
-  TIER_1_CONNECTORS,
-  type ConnectorId,
-} from "@/lib/connectors/mock-data";
+import { getConnector, listConnectors, TIER_1_CONNECTORS, type ConnectorId } from "@/lib/connectors/data";
 import { getConnectorAuditFeed } from "@/lib/connectors/audit-feed";
 import { SEED_TENANT_ID, readPersonaFromCookieHeader } from "@/lib/auth";
 import {

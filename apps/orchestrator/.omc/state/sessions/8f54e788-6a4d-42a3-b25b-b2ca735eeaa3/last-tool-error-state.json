@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"apt list --installed 2>/dev/null | grep -i postgres | head -5; which psql\",\"description\":\"Check psql client\"}",
-  "error": "Exit code 1",
-  "timestamp": "2026-06-17T11:05:21.514Z",
-  "retry_count": 1
-}

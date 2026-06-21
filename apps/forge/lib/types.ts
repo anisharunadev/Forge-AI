@@ -1,7 +1,7 @@
 /**
  * Type contracts for the Forge console.
  *
- * These mirror `@fora/orchestrator/src/types.ts` but are kept independent
+ * These mirror `the FastAPI backend/src/types.ts` but are kept independent
  * so the console can be built, type-checked, and shipped without a
  * cross-package workspace dep. Field names track the orchestrator JSON
  * envelope exactly (snake_case); keep them in sync if the upstream

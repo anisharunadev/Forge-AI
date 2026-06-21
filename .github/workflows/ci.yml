@@ -62,7 +62,7 @@ jobs:
         run: pnpm lint
 
       - name: Build tenancy-lint
-        run: pnpm --filter @fora/tenancy-lint build
+        run: pnpm --filter @forge-ai/tenancy-lint build
 
       - name: Tenancy lint (FORA-124 acceptance bar #5)
         # Gates red on `CREATE TABLE` outside `migrations/` and `BYPASSRLS`

@@ -1,9 +1,9 @@
 /**
  * Knowledge Center typed-artifact mirror (FORA-502.2).
  *
- * The canonical types live in `@fora/forge-ui/typed-artifacts` (shipped
+ * The canonical types live in `the v2.0 typed-artifact system` (shipped
  * in FORA-502.1). The forge console mirrors them locally because the
- * `@fora/forge-ui` package is not a forge-app dependency (per the
+ * `the v2.0 design system` package is not a forge-app dependency (per the
  * connector-center precedent in FORA-578). The two mirrors MUST stay
  * in lockstep — a drift is a v1.0 GA ship-blocker for the Knowledge
  * Center because the page and the canvas would render the same file
@@ -84,7 +84,7 @@ export interface GlossaryEntry {
 }
 
 // ---------------------------------------------------------------------------
-// Knowledge Graph (FORA-502.5 — mirrors `@fora/forge-ui/graph/nodes.ts`)
+// Knowledge Graph (FORA-502.5 — mirrors `the v2.0 knowledge graph types/nodes.ts`)
 // ---------------------------------------------------------------------------
 
 /** Node kinds per Plan 2 §3.1. */
@@ -124,7 +124,7 @@ export interface KnowledgeEdge {
   readonly annotation?: string;
 }
 
-/** Filter shape passed to the provider (mirror of @fora/forge-ui/graph provider). */
+/** Filter shape passed to the provider (mirror of the v2.0 knowledge graph types provider). */
 export interface GraphFilter {
   readonly folder?: GraphFolder | "all";
   readonly stage?: string | "all";

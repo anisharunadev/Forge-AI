@@ -4,7 +4,7 @@
  * Reads the workspace/README.md §2 injection table verbatim and emits
  * a typed `StageInjectionMap[]` per the local mirror in
  * `apps/forge/lib/knowledge/types.ts` (which mirrors the canonical
- * `@fora/forge-ui/typed-artifacts` shape shipped in FORA-502.1).
+ * `the v2.0 typed-artifact system` shape shipped in FORA-502.1).
  *
  * The "what does each agent see?" panel renders one
  * `StageInjectionMap` per stage. v1.0 is read-only (Plan 1 §5.1);

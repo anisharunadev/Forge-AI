@@ -3,19 +3,19 @@
  * Center left rail.
  *
  * A self-contained folder + file tree, rendered as a static nested
- * list. The forge app does not depend on `@fora/forge-ui` (per the
+ * list. The forge app does not depend on `the v2.0 design system` (per the
  * connector-center precedent), so this is a local implementation of
  * the same shape the shipped `FileTree` (Plan 4 §6) produces.
  *
  * Why a local impl:
  *   * The forge app uses `forge-*` tailwind tokens, not the brand
- *     tokens that ship with `@fora/forge-ui/tree`.
+ *     tokens that ship with `the v2.0 tree primitives`.
  *   * The `FileTree` from forge-ui reads the `TreeNode<FileTreeEntry>`
  *     shape; this component builds that shape from the
  *     `KnowledgeFile[]` manifest and renders it directly.
  *
  * The renderer mirror is in `apps/forge/lib/knowledge/types.ts`.
- * The renderer contract in @fora/forge-ui/typed-artifacts is the
+ * The renderer contract in the v2.0 typed-artifact system is the
  * source of truth; this component is the consumer-facing view.
  */
 import Link from "next/link";

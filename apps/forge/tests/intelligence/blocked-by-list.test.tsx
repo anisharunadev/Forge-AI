@@ -5,7 +5,6 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { BlockedByList } from "../../components/intelligence/BlockedByList";
-import { resolveIdentifier } from "../../lib/intelligence/mock-data";
 
 describe("<BlockedByList>", () => {
   it("renders the empty chips when both lists are empty", () => {
@@ -15,11 +14,12 @@ describe("<BlockedByList>", () => {
   });
 
   it("renders one chip per blocked-by and per blocks entry", () => {
+    const resolver = (id: string) => `LABEL:${id}`;
     render(
       <BlockedByList
         blockedBy={["story-forge-393-1", "story-forge-393-2"]}
         blocks={["story-forge-501-list"]}
-        resolveIdentifier={resolveIdentifier}
+        resolveIdentifier={resolver}
       />,
     );
     const blocked = screen.getAllByTestId("blocked-by-chip");
@@ -28,10 +28,13 @@ describe("<BlockedByList>", () => {
       "story-forge-393-1",
       "story-forge-393-2",
     ]);
-    expect(blocked.map((el) => el.textContent)).toEqual(["FORA-488", "FORA-508"]);
+    expect(blocked.map((el) => el.textContent)).toEqual([
+      "LABEL:story-forge-393-1",
+      "LABEL:story-forge-393-2",
+    ]);
     const blocks = screen.getAllByTestId("blocks-chip");
     expect(blocks).toHaveLength(1);
-    expect(blocks[0]!.textContent).toBe("FORA-501.list");
+    expect(blocks[0]!.textContent).toBe("LABEL:story-forge-501-list");
   });
 
   it("renders the raw id when no resolver is passed", () => {

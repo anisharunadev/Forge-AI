@@ -4,7 +4,7 @@
  * Reads the 12 v1 files from `workspace/` (per workspace/README.md §1)
  * and emits a typed `KnowledgeFile[]` per the local mirror in
  * `apps/forge/lib/knowledge/types.ts` (which mirrors the canonical
- * `@fora/forge-ui/typed-artifacts` shape shipped in FORA-502.1).
+ * `the v2.0 typed-artifact system` shape shipped in FORA-502.1).
  *
  * Why a static read: the 12-file v1 layout is small, file-content
  * rarely changes between deploys, and the producer is the Handoff

@@ -1,7 +1,7 @@
 /**
  * KnowledgeFileView — the forge-console mirror of the
  * `KnowledgeFileRenderer` `panel` variant shipped in
- * `@fora/forge-ui/typed-artifacts` (FORA-502.1).
+ * `the v2.0 typed-artifact system` (FORA-502.1).
  *
  * Uses the forge app's tailwind tokens (`forge-*`, `text-forge-300`,
  * `border-forge-700/40`) so the file viewer matches the rest of the
@@ -14,7 +14,7 @@
  *   * Plan 4 §3.1 — typed-artifact renderer contract.
  *   * The `KnowledgeFile` typed-artifact in
  *     `apps/forge/lib/knowledge/types.ts` (mirror of
- *     `@fora/forge-ui/typed-artifacts`).
+ *     `the v2.0 typed-artifact system`).
  */
 import type { KnowledgeFile } from "@/lib/knowledge/types";
 

@@ -2,15 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
+/* xterm.js base styles (official CSS). */
+@import '@xterm/xterm/css/xterm.css';
+
+@layer base {
+  :root {
+    /* === Forge design tokens (refreshed Phase B) ===
+     *
+     * HSL channels for shadcn/ui theme variables. The brand refresh
+     * shifts the palette from washed-out forge-blue to a saturated
+     * indigo / violet / amber ramp on near-black slate. Charts,
+     * badges, and accent strokes now read with intent.
+     */
+
+    /* Surfaces — dark-mode default. */
+    --background: 226 47% 6%;     /* near-black slate */
+    --foreground: 220 33% 96%;
+
+    --card: 226 38% 10%;
+    --card-foreground: 220 33% 96%;
+
+    --popover: 226 38% 10%;
+    --popover-foreground: 220 33% 96%;
+
+    /* Brand — saturated indigo. */
+    --primary: 239 84% 67%;
+    --primary-foreground: 220 33% 98%;
+
+    --secondary: 226 30% 18%;
+    --secondary-foreground: 220 33% 96%;
+
+    --muted: 226 30% 14%;
+    --muted-foreground: 220 14% 70%;
+
+    --accent: 263 70% 58%;        /* violet */
+    --accent-foreground: 220 33% 96%;
+
+    --destructive: 350 89% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 226 30% 20%;
+    --input: 226 30% 20%;
+    --ring: 239 84% 67%;
+
+    --radius: 0.625rem;
+
+    /* Status hues — referenced from tailwind.config.ts stage / run tokens. */
+    --status-running: 239 84% 67%;
+    --status-approved: 160 84% 39%;
+    --status-waiting: 38 92% 50%;
+    --status-rejected: 350 89% 60%;
+    --status-returned: 263 70% 58%;
+  }
+}
+
 :root {
-  --background: 17 23 42;
-  --foreground: 245 247 251;
+  /* Legacy forge vars — kept so any direct consumers don't break. */
+  --forge-background: 11 16 32;
+  --forge-foreground: 245 247 251;
 }
 
 html,
 body {
-  background-color: rgb(var(--background));
-  color: rgb(var(--foreground));
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
   font-family:
     ui-sans-serif,
     system-ui,
@@ -20,6 +75,8 @@ body {
     "Helvetica Neue",
     Arial,
     sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
@@ -27,22 +84,53 @@ a {
   text-decoration: none;
 }
 
+/* xterm canvas should not absorb browser focus styles. */
+.xterm,
+.xterm .xterm-viewport,
+.xterm .xterm-screen {
+  background-color: transparent !important;
+}
+
+/* === Brand utility classes (Phase B) === */
+
 .btn {
   @apply inline-flex items-center justify-center rounded-md border border-transparent px-3 py-1.5 text-sm font-medium shadow-sm transition focus:outline-none focus:ring-2 focus:ring-offset-2;
 }
 
 .btn-primary {
-  @apply bg-forge-500 text-white hover:bg-forge-600 focus:ring-forge-400;
+  @apply bg-brand-500 text-white hover:bg-brand-600 focus:ring-brand-400
+         shadow-glow-brand;
 }
 
 .btn-secondary {
-  @apply border-forge-300 bg-forge-50 text-forge-800 hover:bg-forge-100 focus:ring-forge-300 dark:bg-forge-800 dark:text-forge-50 dark:hover:bg-forge-700;
+  @apply border-forge-700 bg-forge-800 text-forge-100 hover:bg-forge-700 focus:ring-forge-500;
+}
+
+.btn-accent {
+  @apply bg-violet-500 text-white hover:bg-violet-600 focus:ring-violet-400
+         shadow-glow-brand;
 }
 
 .card {
-  @apply rounded-lg border border-forge-200 bg-white p-4 shadow-sm dark:border-forge-700 dark:bg-forge-900;
+  @apply rounded-xl border border-forge-700/60 bg-forge-800/60 p-5 shadow-sm backdrop-blur-sm;
 }
 
 .badge {
-  @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium;
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+}
+
+.badge-running   { @apply badge bg-brand-500/15 text-brand-300 ring-1 ring-inset ring-brand-500/30; }
+.badge-approved  { @apply badge bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-500/30; }
+.badge-waiting   { @apply badge bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-500/30; }
+.badge-rejected  { @apply badge bg-rose-500/15 text-rose-300 ring-1 ring-inset ring-rose-500/30; }
+.badge-returned  { @apply badge bg-violet-500/15 text-violet-300 ring-1 ring-inset ring-violet-500/30; }
+.badge-pending   { @apply badge bg-forge-500/15 text-forge-300 ring-1 ring-inset ring-forge-500/30; }
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }

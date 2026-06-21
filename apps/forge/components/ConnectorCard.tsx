@@ -3,7 +3,7 @@
  * Center list page (FORA-578).
  *
  * Mirrors `McpConnectorRenderer` variant="summary-card" from
- * `@fora/forge-ui/typed-artifacts` (shipped in FORA-577) but uses the
+ * `the v2.0 typed-artifact system` (shipped in FORA-577) but uses the
  * forge console's tailwind `forge-*` tokens so the card matches the
  * rest of the app. The two renderers share the brand-token mapping
  * (Plan 3 §7.1) — success/degraded/error → green/amber/red.
@@ -21,7 +21,7 @@
  */
 
 import Link from "next/link";
-import type { McpConnector } from "@/lib/connectors/mock-data";
+import type { McpConnector } from "@/lib/connectors/data";
 import { ConnectorStatusPill } from "@/components/ConnectorStatusPill";
 
 export interface ConnectorCardProps {

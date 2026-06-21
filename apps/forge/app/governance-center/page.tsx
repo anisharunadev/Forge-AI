@@ -5,7 +5,7 @@
  * with: pending Approval Requests, Board Confirmation history, Policy
  * list, and the read-only RBAC role viewer. Server fetches the typed
  * mock seam (`@/lib/governance/mock-data`) and renders the
- * `GovernanceCenter` composition from `@fora/forge-ui/typed-artifacts`.
+ * `GovernanceCenter` composition from `the v2.0 typed-artifact system`.
  *
  * Reconciles with:
  *   - FORA-393 Plan 1 §3.11 (typed artifacts), Plan 3 §7.2 (brand
@@ -22,12 +22,12 @@
 import { cookies } from "next/headers";
 import { SEED_TENANT_ID, readPersonaFromCookieHeader } from "@/lib/auth";
 import {
-  BOARD_CONFIRMATIONS,
-  PENDING_APPROVALS,
-  POLICIES,
-  RBAC_ROLES,
+  listApprovals,
+  listBoardConfirmations,
+  listPolicies,
+  listRbacRoles,
   readBoardTokenForPersona,
-} from "@/lib/governance/mock-data";
+} from "@/lib/governance/data";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +50,17 @@ export default async function GovernanceCenterPage() {
     .join("; ");
   const persona: Persona = readPersonaFromCookieHeader(cookieHeader) as Persona;
   const boardToken = readBoardTokenForPersona(persona);
+
+  // Pull live data; the fetch helpers fall back to [] when the
+  // orchestrator is unreachable so the page renders the empty
+  // states instead of throwing.
+  const [pendingApprovals, boardConfirmations, policies, rbacRoles] =
+    await Promise.all([
+      listApprovals(),
+      listBoardConfirmations(),
+      listPolicies(),
+      listRbacRoles(),
+    ]);
 
   return (
     <div className="space-y-6" data-testid="governance-center-page">
@@ -105,10 +116,10 @@ export default async function GovernanceCenterPage() {
             Pending Approvals
           </h2>
           <p className="text-xs text-forge-300" data-testid="pending-approval-count">
-            {PENDING_APPROVALS.length} pending
+            {pendingApprovals.length} pending
           </p>
         </div>
-        {PENDING_APPROVALS.length === 0 ? (
+        {pendingApprovals.length === 0 ? (
           <div className="card" data-testid="pending-approvals-empty">
             <p className="text-sm text-forge-200">
               No pending approvals. The Board is caught up.
@@ -116,7 +127,7 @@ export default async function GovernanceCenterPage() {
           </div>
         ) : (
           <ul className="space-y-3" aria-label="Pending Approval Requests">
-            {PENDING_APPROVALS.map((p) => (
+            {pendingApprovals.map((p) => (
               <li key={p.id} className="card" data-testid={`pending-row-${p.id}`}>
                 <header className="flex items-start justify-between gap-3">
                   <div>
@@ -196,7 +207,7 @@ export default async function GovernanceCenterPage() {
           Board Confirmation History
         </h2>
         <ul className="space-y-2" aria-label="Board Confirmation history">
-          {BOARD_CONFIRMATIONS.map((c) => (
+          {boardConfirmations.map((c) => (
             <li
               key={c.id}
               data-outcome={c.outcome}
@@ -243,7 +254,7 @@ export default async function GovernanceCenterPage() {
           Policies
         </h2>
         <ul className="space-y-2" aria-label="Policies">
-          {POLICIES.map((p) => (
+          {policies.map((p) => (
             <li
               key={p.id}
               data-status={p.status}
@@ -291,7 +302,7 @@ export default async function GovernanceCenterPage() {
           </p>
         </div>
         <ul className="space-y-2" aria-label="RBAC roles">
-          {RBAC_ROLES.map((r) => (
+          {rbacRoles.map((r) => (
             <li
               key={r.id}
               data-system={String(r.system)}

@@ -1,5 +1,7 @@
-# Local dev .env (FORA-371). Contains ANTHROPIC_API_KEY.
+# Contains ANTHROPIC_API_KEY.
 # Never commit.
+**/node_modules
+archive/**
 .env
 .env.*
 !.env.example
@@ -11,6 +13,9 @@
 # Tooling scratch
 .omc/
 .serena/
+
+# Archived historical code (Paperclip era) — not deployed
+archive/
 
 # Node build artefacts
 node_modules/
@@ -28,3 +33,4 @@ __pycache__/
 
 # Vitest results
 **/vitest/results.json
+node_modules

@@ -3,7 +3,7 @@
  * Connector Center detail page (FORA-579).
  *
  * Mirrors `McpConnectorRenderer` variant="detail-panel" from
- * `@fora/forge-ui/typed-artifacts` (shipped in FORA-577) and adds the
+ * `the v2.0 typed-artifact system` (shipped in FORA-577) and adds the
  * detail-page-only features the spec calls out:
  *
  *   * Header — display name + status pill + "Open in audit" link.
@@ -29,7 +29,7 @@
  */
 
 import Link from "next/link";
-import type { McpConnector } from "@/lib/connectors/mock-data";
+import type { McpConnector } from "@/lib/connectors/data";
 import { ConnectorStatusPill } from "@/components/ConnectorStatusPill";
 import type { AuditEntry } from "@/lib/connectors/audit-feed-types";
 

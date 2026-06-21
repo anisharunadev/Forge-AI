@@ -13,7 +13,7 @@
 import { describe, expect, it } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { ConnectorCard } from "../components/ConnectorCard";
-import type { McpConnector } from "../lib/connectors/mock-data";
+import type { McpConnector } from "../lib/connectors/data";
 
 function connector(overrides: Partial<McpConnector> = {}): McpConnector {
   return {

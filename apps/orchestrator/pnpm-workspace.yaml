@@ -1,6 +1,0 @@
-packages:
-  - ../../packages/db-migrator
-  - ../../packages/db-pool
-  - ../../packages/event-bus
-allowBuilds:
-  esbuild: true

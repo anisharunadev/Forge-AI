@@ -4,7 +4,7 @@
  *
  * Why a server-renderable local mirror instead of the shipped React
  * Flow canvas:
- *   * The forge app does not depend on `@fora/forge-ui` (per the
+ *   * The forge app does not depend on `the v2.0 design system` (per the
  *     FORA-578 connector-center precedent) and React Flow would
  *     require a `use client` directive + the @xyflow/react dep.
  *   * v1.0 ships a read-only view of the 12 v1 files + 12 stages;

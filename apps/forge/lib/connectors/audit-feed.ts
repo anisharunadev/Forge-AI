@@ -4,7 +4,7 @@
  *
  * The detail panel surfaces the last 100 audit entries for a connector
  * inline (Plan 1 §3.2 / Plan 4 §3.9). The shape mirrors the
- * `AuditEntry` typed artifact from `@fora/forge-ui/typed-artifacts`
+ * `AuditEntry` typed artifact from `the v2.0 typed-artifact system`
  * (shipped in FORA-505, package v0.5.0). The audit center's
  * `TenantScopedAuditFetcher` is the live source; this mock is the
  * dev-time seam the page reads from until that service is wired to

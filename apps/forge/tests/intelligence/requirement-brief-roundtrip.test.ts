@@ -3,6 +3,9 @@
  *
  * `schema_version: "1.0"` MUST survive parse → serialize → parse.
  * The 11 canonical section keys MUST also survive the round-trip.
+ *
+ * Uses inline fixtures so the parser is tested in isolation against
+ * a known canonical shape.
  */
 
 import { describe, expect, it } from "vitest";
@@ -13,18 +16,30 @@ import {
   REQUIREMENT_BRIEF_SCHEMA_VERSION,
 } from "../../lib/intelligence/parser";
 import { REQUIREMENT_BRIEF_SECTIONS } from "../../lib/intelligence/types";
-import {
-  listRequirementBriefs,
-  resolveIdentifier,
-} from "../../lib/intelligence/mock-data";
+import { resolveIdentifier } from "../../lib/intelligence/data";
+import type { RequirementBrief } from "../../lib/intelligence/types";
+
+const fixtureBrief: RequirementBrief = {
+  id: "rb-test-001",
+  epicId: "epic-test-001",
+  title: "Test Requirement Brief",
+  schema_version: "1.0",
+  source: "FORA-test",
+  sections: REQUIREMENT_BRIEF_SECTIONS.map((key) => ({
+    key,
+    title: key.replace(/_/g, " "),
+    body: `Body for ${key}.`,
+  })),
+  createdAt: "2026-06-20T00:00:00Z",
+  updatedAt: "2026-06-20T00:00:00Z",
+};
 
 function rawBriefFromFixture() {
-  const b = listRequirementBriefs()[0]!;
-  return serializeRequirementBrief(b);
+  return serializeRequirementBrief(fixtureBrief);
 }
 
 describe("parseRequirementBrief", () => {
-  it("accepts the canonical mock fixture and preserves schema_version", () => {
+  it("accepts the canonical fixture and preserves schema_version", () => {
     const raw = rawBriefFromFixture();
     const parsed = parseRequirementBrief(raw);
     expect(parsed).not.toBeNull();
@@ -84,22 +99,37 @@ describe("roundTripRequirementBrief", () => {
   });
 
   it("parse(serialize(brief)) is deep-equal to brief on the canonical fixture", () => {
-    const brief = listRequirementBriefs()[0]!;
-    const after = parseRequirementBrief(serializeRequirementBrief(brief));
-    expect(after).toEqual(brief);
+    const after = parseRequirementBrief(serializeRequirementBrief(fixtureBrief));
+    expect(after).toEqual(fixtureBrief);
   });
 });
 
-describe("resolveIdentifier (mock-data seam)", () => {
-  it("resolves known epic ids to their human identifier", () => {
-    expect(resolveIdentifier("epic-forge-501")).toBe("FORA-501");
+describe("resolveIdentifier", () => {
+  it("returns the raw id for unknown ids when no arrays match", () => {
+    // The data-layer resolveIdentifier walks pre-fetched arrays and
+    // falls through to the raw id when nothing matches.
+    expect(resolveIdentifier("not-in-the-data", [], [])).toBe(
+      "not-in-the-data",
+    );
   });
 
-  it("resolves known story ids to their human identifier", () => {
-    expect(resolveIdentifier("story-forge-501-list")).toBe("FORA-501.list");
+  it("returns the identifier when the id is in the epics array", () => {
+    expect(
+      resolveIdentifier(
+        "epic-x",
+        [{ id: "epic-x", identifier: "FORA-X" } as never],
+        [],
+      ),
+    ).toBe("FORA-X");
   });
 
-  it("returns the raw id when the id is unknown", () => {
-    expect(resolveIdentifier("not-in-the-mock")).toBe("not-in-the-mock");
+  it("returns the identifier when the id is in the stories array", () => {
+    expect(
+      resolveIdentifier(
+        "story-y",
+        [],
+        [{ id: "story-y", identifier: "FORA-Y.s" } as never],
+      ),
+    ).toBe("FORA-Y.s");
   });
 });

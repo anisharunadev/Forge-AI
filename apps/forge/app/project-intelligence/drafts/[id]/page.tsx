@@ -6,7 +6,7 @@
 
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import { getDraftPrd } from "@/lib/intelligence/mock-data";
+import { getDraftPrd } from "@/lib/intelligence/data";
 import {
   canAccessProjectIntelligence,
   type ProjectIntelligencePersona,
@@ -33,7 +33,7 @@ export default async function DraftPrdPage({
   if (!canAccessProjectIntelligence(persona)) notFound();
 
   const { id } = await params;
-  const prd = getDraftPrd(id);
+  const prd = await getDraftPrd(id);
   if (!prd) notFound();
 
   return (

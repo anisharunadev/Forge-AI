@@ -14,7 +14,7 @@ import {
   getDraftPrd,
   listStoriesForEpic,
   SEED_TENANT_ID,
-} from "@/lib/intelligence/mock-data";
+} from "@/lib/intelligence/data";
 import {
   canAccessProjectIntelligence,
   isAuditPersona,
@@ -45,15 +45,15 @@ export default async function EpicDetailPage({
   if (!canAccessProjectIntelligence(persona)) notFound();
 
   const { id } = await params;
-  const epic = getEpic(id);
+  const epic = await getEpic(id);
   if (!epic) notFound();
   const audit = isAuditPersona(persona);
 
-  const brief = epic.requirementBriefId
-    ? getRequirementBrief(epic.requirementBriefId)
-    : null;
-  const prd = epic.draftPrdId ? getDraftPrd(epic.draftPrdId) : null;
-  const stories = listStoriesForEpic(epic.id);
+  const [brief, prd, stories] = await Promise.all([
+    epic.requirementBriefId ? getRequirementBrief(epic.requirementBriefId) : Promise.resolve(null),
+    epic.draftPrdId ? getDraftPrd(epic.draftPrdId) : Promise.resolve(null),
+    listStoriesForEpic(epic.id),
+  ]);
 
   return (
     <div className="space-y-8" data-testid="epic-detail">

@@ -24,7 +24,7 @@ import {
   listStories,
   listStoriesForEpic,
   SEED_TENANT_ID,
-} from "@/lib/intelligence/mock-data";
+} from "@/lib/intelligence/data";
 import {
   canAccessProjectIntelligence,
   escalationPersonaLabel,
@@ -115,10 +115,12 @@ export default async function ProjectIntelligencePage({
   const params = await searchParams;
   const activeStage = parseStage(params.stage);
 
-  const epics = listEpics();
-  const stories = listStories();
-  const briefs = listRequirementBriefs();
-  const drafts = listDraftPrds();
+  const [epics, stories, briefs, drafts] = await Promise.all([
+    listEpics(),
+    listStories(),
+    listRequirementBriefs(),
+    listDraftPrds(),
+  ]);
 
   return (
     <div className="space-y-8" data-testid="project-intelligence">
@@ -158,7 +160,7 @@ export default async function ProjectIntelligencePage({
             <EpicCard
               key={e.id}
               epic={e}
-              storyCount={listStoriesForEpic(e.id).length}
+              storyCount={stories.filter((s) => s.epicId === e.id).length}
               isAudit={audit}
             />
           ))}
