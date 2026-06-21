@@ -1,0 +1,31 @@
+{
+  "name": "@fora/tenancy-lint",
+  "version": "0.1.0",
+  "description": "FORA tenancy lint — fails the build on ad-hoc DDL outside `migrations/`, on `BYPASSRLS` outside `migrations/` and `audit/`, and warns on multi-tenant tables without an `ENABLE ROW LEVEL SECURITY` + `tenant_isolation` policy. See FORA-124 acceptance bar #5 and FORA-165 (0.7.2d).",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "tenancy-lint": "bin/tenancy-lint.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "lint": "node bin/tenancy-lint.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

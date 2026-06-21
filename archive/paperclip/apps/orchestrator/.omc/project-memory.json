@@ -1,0 +1,219 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1781710429311,
+  "projectRoot": "/home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/_default/apps/orchestrator",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": ">=20",
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "fastify",
+        "version": "5.0.0",
+        "category": "backend"
+      },
+      {
+        "name": "vitest",
+        "version": "2.1.0",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "pnpm",
+    "runtime": "Node.js 20"
+  },
+  "build": {
+    "buildCommand": "timeout 120 node node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/bin/tsc --noEmit 2>&1 | grep -E \"ports\\.ts|gate_wiring\\.ts|test-doubles\\.ts|cost-budget-env\\.ts|gate-wiring\\.test\\.ts|config\\.ts\" 2>&1 | head -20",
+    "testCommand": "rtk curl -sS -X POST -H \"Authorization: Bearer $PAPERCLIP_API_KEY\" -H \"Content-Type: application/json\" -d '{\n  \"kind\": \"request_confirmation\",\n  \"payload\": {\n    \"version\": 1,\n    \"prompt\": \"FORA-514 ships the realtime WS bridge between the orchestrator NATS bus and the Forge dashboards. Two commits: dec56da0 (forge hook + 2 wired widgets) and 4a742206 (orchestrator /v1/events endpoint). 19 tests green (15 forge vitest + 4 orchestrator smoke). Cross-tenant leak test closes with 1011 + audit. Accept to close FORA-514 and FORA-383.\",\n    \"allowDeclineReason\": true,\n    \"supersedeOnUserComment\": true\n  },\n  \"idempotencyKey\": \"confirmation:9d9038e0-9c44-4886-9959-ccb8b01649e2:plan:fora-514-ship\"\n}' \"$PAPERCLIP_API_URL/api/issues/9d9038e0-9c44-4886-9959-ccb8b01649e2/interactions\" 2>&1 | python3 -c \"import json,sys; d=json.load(sys.stdin); print('interaction_id:', d.get('id', d)); print('error:', d.get('error', 'none'))\"",
+    "lintCommand": null,
+    "devCommand": "pnpm dev",
+    "scripts": {
+      "build": "tsc -p tsconfig.json",
+      "typecheck": "tsc -p tsconfig.json --noEmit",
+      "start": "node bin/fora-orchestrator.mjs",
+      "dev": "node --watch bin/fora-orchestrator.mjs",
+      "test": "vitest run"
+    }
+  },
+  "conventions": {
+    "namingStyle": "camelCase/PascalCase",
+    "importStyle": null,
+    "testPattern": "*.test.ts",
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": true,
+    "workspaces": [],
+    "mainDirectories": [
+      "bin",
+      "src",
+      "test"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "bin": {
+      "path": "bin",
+      "purpose": "Executable scripts",
+      "fileCount": 2,
+      "lastAccessed": 1781710429297,
+      "keyFiles": [
+        "fora-orchestrator-worker.mjs",
+        "fora-orchestrator.mjs"
+      ]
+    },
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 54,
+      "lastAccessed": 1781710429299,
+      "keyFiles": [
+        "approvals-repo-pg.d.ts",
+        "approvals-repo-pg.js",
+        "approvals-repo-pg.js.map",
+        "config.d.ts",
+        "config.js"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 19,
+      "lastAccessed": 1781710429306,
+      "keyFiles": [
+        "approvals-repo-pg.ts",
+        "config.ts",
+        "gate_wiring.ts",
+        "gates.ts",
+        "idempotency.ts"
+      ]
+    },
+    "test": {
+      "path": "test",
+      "purpose": "Test files",
+      "fileCount": 15,
+      "lastAccessed": 1781710429308,
+      "keyFiles": [
+        "_debug.test.ts",
+        "_debug2.test.ts",
+        "approvals-repo-pg.live.test.ts",
+        "approvals-repo-pg.test.ts",
+        "approvals.test.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src/server.ts",
+      "accessCount": 23,
+      "lastAccessed": 1781959564792,
+      "type": "file"
+    },
+    {
+      "path": "src/test-doubles.ts",
+      "accessCount": 8,
+      "lastAccessed": 1781710845282,
+      "type": "file"
+    },
+    {
+      "path": "src/index.ts",
+      "accessCount": 7,
+      "lastAccessed": 1781959259866,
+      "type": "file"
+    },
+    {
+      "path": "test/v1-events-ws.test.ts",
+      "accessCount": 6,
+      "lastAccessed": 1781959064375,
+      "type": "file"
+    },
+    {
+      "path": "test/gate-wiring.test.ts",
+      "accessCount": 4,
+      "lastAccessed": 1781710863261,
+      "type": "file"
+    },
+    {
+      "path": "src/repo.ts",
+      "accessCount": 4,
+      "lastAccessed": 1781711003699,
+      "type": "file"
+    },
+    {
+      "path": "test/lifecycle.test.ts",
+      "accessCount": 3,
+      "lastAccessed": 1781711058720,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 3,
+      "lastAccessed": 1781958435938,
+      "type": "file"
+    },
+    {
+      "path": "src/ports.ts",
+      "accessCount": 2,
+      "lastAccessed": 1781710908506,
+      "type": "file"
+    },
+    {
+      "path": "src/ws.ts",
+      "accessCount": 2,
+      "lastAccessed": 1781958286057,
+      "type": "file"
+    },
+    {
+      "path": "src/types.ts",
+      "accessCount": 1,
+      "lastAccessed": 1781710437216,
+      "type": "file"
+    },
+    {
+      "path": "src/router.ts",
+      "accessCount": 1,
+      "lastAccessed": 1781710437711,
+      "type": "file"
+    },
+    {
+      "path": "src/gates.ts",
+      "accessCount": 1,
+      "lastAccessed": 1781710438148,
+      "type": "file"
+    },
+    {
+      "path": "src/gate_wiring.ts",
+      "accessCount": 1,
+      "lastAccessed": 1781710471594,
+      "type": "file"
+    },
+    {
+      "path": "test/smoke/v1-events-ws.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1781958042758,
+      "type": "file"
+    },
+    {
+      "path": "src/cost-budget-env.ts",
+      "accessCount": 1,
+      "lastAccessed": 1781958351145,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fora.local/schemas/merge_block_rules.schema.json",
+  "title": "FORA MergeBlockRuleSet",
+  "description": "Versioned registry of merge-block rules (FORA-495 / Phase 3 §D of FORA-394). The set is the single source of truth for autonomous merge blocks. Every block is human-clearable through a typed escalation; no autonomous clears. Append-only within a major version; relaxing a block (or removing the no-autonomous-clears pin) is a major version bump plus a board approval.",
+  "type": "object",
+  "required": ["contractId", "contractVersion", "issuedAt", "rules"],
+  "additionalProperties": false,
+  "properties": {
+    "contractId": {
+      "type": "string",
+      "const": "agents.devops.merge_block_rules",
+      "description": "Audit join key. Stable across the major version."
+    },
+    "contractVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semver. A major bump signals a breaking shape change OR any relaxation of a block (including dropping the no-autonomous-clears pin). Major bumps require a board approval via request_board_approval (ADR-0008)."
+    },
+    "issuedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp when this revision was published."
+    },
+    "issuedBy": {
+      "type": "string",
+      "description": "agent:<id> or user:<id>. Defaults to agent:devops."
+    },
+    "supersedes": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-fA-F-]{36}$",
+      "description": "Optional UUID of the prior rule-set revision. Populated for minor and major bumps; null for the initial revision."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Free-form human-readable rationale for this revision (e.g. 'add qa.tier.not_implemented rule')."
+    },
+    "rules": {
+      "type": "array",
+      "description": "Append-only within a major version. Each rule carries the full MergeBlockRule shape.",
+      "items": { "$ref": "#/$defs/MergeBlockRule" },
+      "minItems": 1
+    }
+  },
+  "$defs": {
+    "Severity": {
+      "type": "string",
+      "enum": ["info", "low", "medium", "high", "critical"],
+      "description": "The minimum severity of the upstream finding that triggers the rule."
+    },
+    "Source": {
+      "type": "string",
+      "enum": ["testReport", "securityReport", "complianceReport", "convention", "dependencyScan", "secretsScan", "coverageReport"],
+      "description": "Where the predicate looks. convention covers BranchProtectionPolicy (FORA-245) and the synthetic no-autonomous-clears pin."
+    },
+    "Escalation": {
+      "type": "string",
+      "enum": ["human", "qa_lead", "security_lead", "architect", "devops_lead", "cto", "board"],
+      "description": "Role-of-record for the human-clear path. 'human' = the requesting developer on the PR. 'board' triggers a request_board_approval interaction (ADR-0008)."
+    },
+    "AuditEventKind": {
+      "type": "string",
+      "enum": ["artifact.rejected.merge", "artifact.cleared.merge"],
+      "description": "The audit event type emitted by this rule."
+    },
+    "Predicate": {
+      "type": "object",
+      "description": "A minimal, declarative predicate over the upstream artifact. The first matching rule wins; later rules are shadowed.",
+      "required": ["kind", "expression"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["jsonpath", "equals", "contains", "gte", "lte", "and", "or", "not", "always"],
+          "description": "The predicate flavour. 'jsonpath' matches a JSONPath expression against the upstream artifact; the others are small literal comparators."
+        },
+        "expression": {
+          "type": "string",
+          "description": "The expression body. For 'jsonpath' this is the path (e.g. '$.verdict'); for 'equals' / 'gte' / 'lte' this is a field name; for 'and' / 'or' / 'not' this is a JSON array of nested Predicate objects."
+        },
+        "value": {
+          "description": "The literal to compare against. Required for equals / contains / gte / lte. Omitted for jsonpath (truthy by presence), and, or, not, always.",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "boolean" },
+            { "type": "array" },
+            { "type": "object" }
+          ]
+        }
+      }
+    },
+    "MergeBlockRule": {
+      "type": "object",
+      "description": "One merge-block rule. The full shape every rule in the default set carries.",
+      "required": [
+        "ruleId",
+        "description",
+        "severity",
+        "source",
+        "predicate",
+        "blocks",
+        "escalation",
+        "slaHours",
+        "auditEventType"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "ruleId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+){1,}$",
+          "description": "Stable dotted identifier. Append-only within a major version. Namespacing convention: <sourceFamily>.<findingShape>.<scope>."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable summary of the rule. One sentence."
+        },
+        "severity": { "$ref": "#/$defs/Severity" },
+        "source": { "$ref": "#/$defs/Source" },
+        "predicate": { "$ref": "#/$defs/Predicate" },
+        "blocks": {
+          "type": "boolean",
+          "description": "If true, a matching upstream artifact blocks the merge autonomously. If false, the rule produces a warning only (audit event still emitted, but no gate). coverage.regression is the canonical warn-only rule."
+        },
+        "escalation": {
+          "type": "array",
+          "description": "One or more roles. A block requires every named role to clear. 'board' is exclusive (no other role can be combined).",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Escalation" },
+          "uniqueItems": true
+        },
+        "slaHours": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 168,
+          "description": "Hours the human has to clear after the block fires. 0 means immediate (no clearing path; the block is sticky). 168 = 1 week cap."
+        },
+        "auditEventType": { "$ref": "#/$defs/AuditEventKind" },
+        "externalPolicyRef": {
+          "type": "string",
+          "description": "Optional reference to an external policy that owns the predicate evaluation. convention.branch_protection points at FORA-245's BranchProtectionPolicy (mcp-github is the source of truth; no wrapper)."
+        },
+        "warnOnly": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, the rule never blocks regardless of the blocks field. Reserved for coverage.regression and future warn-only rules."
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Free-form structured annotation. Tooling may surface it on the PR; humans see description."
+        }
+      },
+      "allOf": [
+        {
+          "description": "If blocks is true the rule must escalate to at least one human role. A non-escalating block is a misconfiguration.",
+          "if": { "required": ["blocks"], "properties": { "blocks": { "const": true } } },
+          "then": {
+            "properties": {
+              "escalation": {
+                "minItems": 1,
+                "contains": { "enum": ["human", "qa_lead", "security_lead", "architect", "devops_lead", "cto", "board"] }
+              }
+            }
+          }
+        },
+        {
+          "description": "warnOnly rules never block. blocks must be false.",
+          "if": { "required": ["warnOnly"], "properties": { "warnOnly": { "const": true } } },
+          "then": { "properties": { "blocks": { "const": false } } }
+        },
+        {
+          "description": "If escalation includes 'board' it must be the only entry.",
+          "if": { "required": ["escalation"], "properties": { "escalation": { "contains": { "const": "board" } } } },
+          "then": { "properties": { "escalation": { "maxItems": 1 } } }
+        },
+        {
+          "description": "slaHours=0 is reserved for the secrets.detected rule (and any future sticky-block rule). blocks must be true.",
+          "if": { "required": ["slaHours"], "properties": { "slaHours": { "const": 0 } } },
+          "then": { "properties": { "blocks": { "const": true } } }
+        }
+      ]
+    },
+    "PinnedRule": {
+      "description": "A synthetic rule whose only purpose is to pin a Phase-3 invariant. The convention.no_autonomous_clears rule is the canonical example: it pins 'no autonomous clears', so relaxing it requires a major version bump AND a board approval.",
+      "allOf": [
+        { "$ref": "#/$defs/MergeBlockRule" }
+      ]
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rtk pnpm install --config.confirmModulesPurge=false 2>&1 | tail -10; echo \\\"---\\\"; rtk read /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3...",
+  "error": "Exit code 1\nok\n---",
+  "timestamp": "2026-06-17T01:06:43.101Z",
+  "retry_count": 2
+}
