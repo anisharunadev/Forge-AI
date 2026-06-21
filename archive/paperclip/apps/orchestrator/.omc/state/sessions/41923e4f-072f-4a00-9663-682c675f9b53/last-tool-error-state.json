@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk ls -la packages/event-bus/.omc/state/ 2>&1\\necho \\\"---\\\"\\nls -la packages/.omc/ 2>&1\",\"description\":\"Check omc state dirs\"}",
-  "error": "Exit code 2\n/usr/bin/ls: cannot access 'packages/event-bus/.omc/state/': No such file or directory\n---\nls: cannot access 'packages/.omc/': No such file or directory",
-  "timestamp": "2026-06-17T15:25:14.632Z",
-  "retry_count": 1
-}

@@ -1,5 +1,0 @@
-packages:
-  - ../../packages/oidc-clients
-  - ../../packages/session-tokens
-allowBuilds:
-  esbuild: set this to true or false
