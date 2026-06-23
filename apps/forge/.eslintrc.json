@@ -1,0 +1,34 @@
+{
+  "$comment": "ESLint scaffolding for Forge AI frontend. Full ESLint adoption (with Next.js plugin) is a follow-up to Plan 0.5-01; this minimal config exists so editor extensions flag hex/HSL literals as the new code is written. The Phase 0.5-05/06 sweeps will remove all existing violations during the token swap.",
+  "root": true,
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/^#[0-9a-fA-F]{3,8}$/]",
+        "message": "Use semantic tokens (bg-primary, text-agent, etc.) instead of raw hex literals. See lib/design-system/forge-color-tokens.ts for the brand-locked palette."
+      },
+      {
+        "selector": "TemplateElement[value.raw=/^#[0-9a-fA-F]{3,8}$/]",
+        "message": "Use semantic tokens (bg-primary, text-agent, etc.) instead of raw hex literals."
+      },
+      {
+        "selector": "Literal[value=/^hsl\\(/]",
+        "message": "Tailwind utilities should reference CSS variables (hsl(var(--token))), not raw HSL values. The HSL values live in app/globals.css."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "lib/design-system/**/*.{ts,tsx}",
+        "tailwind.config.ts",
+        "app/globals.css"
+      ],
+      "rules": {
+        "no-restricted-syntax": "off"
+      }
+    }
+  ]
+}
