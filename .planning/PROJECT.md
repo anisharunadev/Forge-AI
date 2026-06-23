@@ -56,7 +56,7 @@ Hypotheses for the pilot-readiness milestone. Each must be testable end-to-end b
 - [ ] **PILOT-05**: Approval workflow shows pending decisions on a dedicated **Approval Timeline** with one-click approve/reject from the UI, wired through `approval_workflow.py`.
 - [ ] **PILOT-06**: Terminal Center streams live agent execution (logs, tool calls, file diffs) over WebSocket with replay capability.
 - [ ] **PILOT-07**: Connectors can be added via the **Connector Marketplace** UI without restart; auth secrets resolved through `mcp-secrets` (AWS Secrets Manager).
-- [ ] **PILOT-08**: OQ-005 (deployment topology), OQ-006 (knowledge graph substrate), OQ-007 (source-of-truth conflict policy) are **researched and documented** at the start of Phase 1 — each gets an ADR.
+- [ ] **PILOT-08**: OQ-005/006/007 are **LOCKED** via ADR-001 (AWS), ADR-002 (PostgreSQL 17 + Apache AGE + pgvector), ADR-003 (hybrid MDM + Steward priority) — accepted 2026-06-20. Pilot-cutover follow-ups (OQ-P1 deploy, OQ-P2 KG ceiling, OQ-P3 conflict volume) become **ADR-009/010/011** before Phase 2 plan commits.
 - [ ] **PILOT-09**: The Constitution (`docs/architecture/CONSTITUTION.md` or similar) is rendered in the UI as a visible rulebook with a per-rule health indicator (green/yellow/red) showing real-time compliance status.
 - [ ] **PILOT-10**: All 40+ REST routers under `/api/v1/*` have a corresponding **page or panel** in the UI — no backend-only capability.
 
@@ -105,7 +105,7 @@ Explicit boundaries for this milestone. Each carries its reason to prevent re-ad
 - **Visualization-first**: Every capability must have a UI surface. No "API-only" capability survives pilot review.
 - **Pilot scope**: One tenant. One workflow. Polish on the chosen path is more valuable than breadth across all paths.
 - **Stack drift (Tailwind 4 vs 3.4.14)**: Must be reconciled in CLAUDE.md or stack reality before the roadmap is finalized, or downstream plan-phase will keep making the wrong assumption.
-- **Open PRD blockers (OQ-005/006/007)**: Must be researched at the start of Phase 1. Each gets an ADR before downstream phases commit decisions that depend on them.
+- **Open PRD blockers (OQ-005/006/007)**: **LOCKED** via ADR-001/002/003 (accepted 2026-06-20). Pilot-cutover follow-ups (OQ-P1/P2/P3 — deploy strategy, KG ceiling, conflict volume) become ADR-009/010/011 before Phase 2 plan commits.
 
 ## Key Decisions
 
@@ -119,7 +119,8 @@ Explicit boundaries for this milestone. Each carries its reason to prevent re-ad
 | **PostgreSQL + Apache AGE + pgvector** for the KG | Single datastore, RLS-enforced, graph + vector in one place. Reduces cross-system sync bugs. | ✓ Good — built, but OQ-006 wants explicit validation |
 | **Multi-tenant by RLS, not by schema** | Multi-tenant by default (Rule 2) — RLS keeps ops simple, prevents app-layer bypass. | ✓ Good — built |
 | **No `@fora/*` scope in v2.0** | v2.0 naming convention; clarity over historical continuity. | ✓ Good — enforced |
-| **Tailwind 3.4.14 installed vs Tailwind 4 declared** | Discovered drift; needs reconciliation. | ⚠️ Revisit — Phase 0 fix |
+| **Tailwind 3.4.14 installed vs Tailwind 4 declared** | STACK research recommends staying on 3.4.x for pilot, update docs to match reality. | ⚠️ Revisit — Phase 0 fix |
+| **OQ-005/006/007 LOCKED (ADR-001/002/003)** | Architecture research confirmed all three are accepted 2026-06-20, not open. Pilot-cutover follow-ups are OQ-P1/P2/P3 → ADR-009/010/011. | ✓ Good — locked |
 
 ---
 
