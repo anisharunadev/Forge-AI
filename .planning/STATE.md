@@ -2,15 +2,19 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-current_phase: 0
-current_phase_name: Pre-Roadmap Hygiene
+current_phase: 0.5
+current_phase_name: UI Foundation
 status: executing
-stopped_at: context exhaustion at 78% (2026-06-23)
-last_updated: "2026-06-23T07:51:25.305Z"
+stopped_at: in-progress (2026-06-23)
+last_updated: "2026-06-23T20:35:00.000Z"
 last_activity: 2026-06-23
-last_activity_desc: ROADMAP.md and STATE.md initialized from REQUIREMENTS.md (35 v1) and research/SUMMARY.md (5-phase cutover)
+last_activity_desc: Phase 0.5-06 complete — 5 typed React Flow nodes + 4 graph views + virtualized audit timeline + approval timeline + 3 AI-native panels
 progress:
-  percent: 0
+  total_phases: 5
+  completed_phases: 0
+  total_plans: 5
+  completed_plans: 2
+  percent: 40
 ---
 
 # Project State
@@ -21,30 +25,31 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 **Core value:** Every shipped capability is visible, governed, and traceable end-to-end — from requirement → ADR → task → code → test → deployment — through a unified React Flow UI, with multi-tenant isolation, auditability, and human approval gates as constitutional invariants.
 
-**Current focus:** Phase 0 — Pre-Roadmap Hygiene (Tailwind drift, node-pty refactor, Rule 1 grep gate, DEV_AUTH_BYPASS startup guard)
+**Current focus:** Phase 0.5 — UI Foundation (design tokens, shell primitives, error/loading boundaries, visualization screens)
 
 ## Current Position
 
-Phase: 0 of 5 (Pre-Roadmap Hygiene)
-Plan: 0 of 4 in current phase
-Status: Ready to execute
-Last activity: 2026-06-23 — ROADMAP.md and STATE.md initialized from REQUIREMENTS.md (35 v1) and research/SUMMARY.md (5-phase cutover)
+Phase: 0.5 of 5 (UI Foundation)
+Plan: 2 of 5 in current phase
+Status: In progress
+Last activity: 2026-06-23 — Phase 0.5-06 complete: 5 typed React Flow node components (Artifact/RepoFile/Service/AgentStep/Approval), 4 graph views (Knowledge/Repository/Workflow/AgentExecution), virtualized AuditTimeline (>1000 records via @tanstack/react-virtual), ApprovalTimeline with Approve/Reject, 3 AI-native panels (TokenStream/ToolCallCard/AgentTraceTimeline); Knowledge Center + Audit Center pages wired to the new components
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
+- Total plans completed: 2
 - Average duration: — min
-- Total execution time: 0 hours
+- Total execution time: <1 hour
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 0. Pre-Roadmap Hygiene | 0 | 4 | — |
+| 0.5. UI Foundation | 2 | 5 | <60m |
 | 1. Substrate Lock | 0 | 9 | — |
 | 2. Pilot Cutover Hardening | 0 | 15 | — |
 | 3. Pilot Volume Scaling | 0 | 4 | — |
@@ -52,8 +57,8 @@ Progress: [░░░░░░░░░░] 0%
 
 **Recent Trend:**
 
-- Last 5 plans: — (no plans executed yet)
-- Trend: —
+- Last 5 plans: Phase 0.5-02 (StatusPill + 7 badge migrations + 3 boundaries), Phase 0.5-06 (5 typed React Flow nodes + 4 graph views + virtualized audit/approval timelines + 3 AI-native panels)
+- Trend: UI Foundation kicked off; design tokens from 0.5-01 are now consumed by a real primitive layer + a typed graph layer
 
 *Updated after each plan completion*
 
@@ -75,6 +80,8 @@ Recent decisions affecting current work:
 - Phase 2: Cross-region read replica required for audit DB (NFR-014 RPO ≤ 24h, RTO ≤ 4h).
 - Phase 4: Tenant-isolation smoke test runs *before* any second-tenant onboarding — PITFALL-4 closure.
 - Phase 4: Per-tenant CMK deferred to tenant #3 or #5 (single key fine for one-tenant pilot).
+- Phase 0.5-02: StatusPill is the single source of truth for state-bearing chips; 7 bespoke badges (RunStatusBadge, HealthBadge, ApprovalStatusBadge, ScoreBadge, FreshnessBadge, SeverityBadge, ConnectorStatusPill) delegate to it (PILOT-01/05/09 alignment).
+- Phase 0.5-06: 5 typed React Flow node components (Artifact/RepoFile/Service/AgentStep/Approval) read status from `toneClasses` + `agentStates`; 4 graph views compose them via `nodeTypes={forgeNodeTypes}`; AuditTimelineVirtualized handles >1000 records via @tanstack/react-virtual (PILOT-03/04/05/06 alignment).
 
 ### Pending Todos
 
@@ -102,6 +109,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-23T06:56:51.564Z
-Stopped at: context exhaustion at 78% (2026-06-23)
+Last session: 2026-06-23T20:35:00.000Z
+Stopped at: Phase 0.5-06 complete; 3 plans remaining in Phase 0.5
 Resume file: None

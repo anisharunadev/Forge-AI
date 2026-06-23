@@ -2,10 +2,9 @@
 
 import * as React from 'react';
 import { Network } from 'lucide-react';
-import { ReactFlowProvider } from 'reactflow';
 
 import { AdminShell } from '@/components/admin/AdminShell';
-import { KnowledgeGraphView } from '@/components/knowledge-center/KnowledgeGraphView';
+import { KnowledgeGraphView } from '@/components/graph';
 import { GraphControls } from '@/components/knowledge-center/GraphControls';
 import { GraphLegend } from '@/components/knowledge-center/GraphLegend';
 import { GraphSearch } from '@/components/knowledge-center/GraphSearch';
@@ -48,8 +47,7 @@ export default function KnowledgeCenterPage() {
 
   return (
     <AdminShell>
-      <ReactFlowProvider>
-        <div className="flex flex-col gap-4" data-testid="knowledge-graph-page">
+      <div className="flex flex-col gap-4" data-testid="knowledge-graph-page">
           <header className="flex flex-col gap-2">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">
               Center
@@ -121,7 +119,6 @@ export default function KnowledgeCenterPage() {
             }}
           />
         </div>
-      </ReactFlowProvider>
     </AdminShell>
   );
 }
