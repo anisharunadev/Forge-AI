@@ -26,7 +26,7 @@ Forge AI is an enterprise SDLC Agent Operating System. It ingests a tenant's rep
 
 | Layer | Technology | ADR / Source |
 |---|---|---|
-| Frontend | Next.js 15, React 19, TypeScript 5.x, Shadcn/UI, Tailwind CSS 4 | project-context.md |
+| Frontend | Next.js 15, React 19, TypeScript 5.x, Shadcn/UI, Tailwind CSS 3.4.x | project-context.md |
 | State / Data | TanStack Query, Zustand | project-context.md |
 | Visualization | React Flow, Recharts | project-context.md |
 | Terminal Emulator | xterm.js + xterm-addon-fit | [ADR-006](decisions/0006-terminal-center-xterm-native-pty.md) |
@@ -34,6 +34,8 @@ Forge AI is an enterprise SDLC Agent Operating System. It ingests a tenant's rep
 | Backend | FastAPI, Python 3.13, Pydantic v2 | project-context.md |
 | Agent Runtime | LangGraph, LangChain, LiteLLM, OpenTelemetry | [ADR-007](decisions/0007-langgraph-sdlc-agent-orchestrator.md) |
 | Database | PostgreSQL 17 + pgvector | [ADR-002](decisions/0002-postgresql-17-apache-age-pgvector.md) |
+
+**Note:** Tailwind 4 migration is deferred to post-pilot (see REQUIREMENTS.md "Out of Scope" — Tailwind 4 migration). Pinned at 3.4.14 in apps/forge/package.json.
 | Graph | Apache AGE (PostgreSQL extension) | [ADR-002](decisions/0002-postgresql-17-apache-age-pgvector.md) |
 | Cache / Queue | Redis | project-context.md |
 | Auth | Keycloak, OIDC, SAML, RBAC | project-context.md |

@@ -33,12 +33,14 @@ Next.js 15
 React 19
 TypeScript 5.x
 Shadcn/UI
-Tailwind CSS 4
+Tailwind CSS 3.4.x
 TanStack Query
 Zustand
 React Flow
 Recharts
 ```
+
+> Note: Tailwind 4 migration is deferred to post-pilot (see REQUIREMENTS.md "Out of Scope" — Tailwind 4 migration). Pinned at 3.4.14 in apps/forge/package.json.
 
 ### Backend
 
@@ -92,6 +94,54 @@ Terraform
 GitHub Actions
 AWS
 ```
+
+---
+
+## MCP Tooling — Next.js Devtools
+
+A project-local `.mcp.json` is configured at the repo root with the **`next-devtools-mcp`** server. It exposes live application state to coding agents when the Next.js dev server is running.
+
+```json
+// .mcp.json (project root — NOT global)
+{
+  "mcpServers": {
+    "next-devtools": {
+      "command": "npx",
+      "args": ["-y", "next-devtools-mcp@latest"]
+    }
+  }
+}
+```
+
+### When debugging is required
+
+Before falling back to filesystem greps or manual reproduction for any `apps/forge` issue, prefer the MCP tools. They query the running dev server directly.
+
+| Tool                       | Use it for                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------- |
+| `get_errors`               | Current build errors, runtime errors, and TypeScript type errors from the dev server        |
+| `get_logs`                 | Path to the dev log file (browser console + server output)                                  |
+| `get_page_metadata`        | Routes, components, and rendering details for a specific page                              |
+| `get_project_metadata`     | Project structure, configuration, and running dev server URL                                |
+| `get_routes`               | All entry-point routes grouped by `appRouter` / `pagesRouter` (dynamic segments preserved)  |
+| `get_server_action_by_id`  | Resolve a Server Action ID back to its source file and function name                       |
+
+### Workflow
+
+1. Confirm the Next.js dev server is running (`pnpm --filter forge-dashboard dev` or the `pnpm dev` root script).
+2. Call `get_errors` first when investigating a reported bug — live errors beat grep.
+3. Use `get_routes` + `get_page_metadata` to confirm where a page or layout actually renders before editing.
+4. Cross-check static analysis (`pnpm typecheck`) against `get_errors` — they surface different classes of issues.
+5. Only fall back to `Read`/`Grep`/`Bash` when the MCP query returns nothing useful.
+
+### Compatibility note (2026-06-24)
+
+`next-devtools-mcp` officially requires **Next.js 16+**. `apps/forge` is currently on **Next.js 15.0.3**, so MCP capabilities may be partial or non-functional until the Next.js 16 upgrade lands. The `.mcp.json` file is in place regardless; revisit it as part of the Next.js 16 migration plan.
+
+### Scope rules
+
+- This MCP server is **project-local only** (`.mcp.json` at repo root). Do not register it in user-global MCP config.
+- Do not add additional MCP servers to `.mcp.json` without an explicit ADR — every server broadens the agent's attack surface and must be justified.
 
 ---
 
@@ -409,7 +459,7 @@ The following step-02 categories remain unfilled because the repository is green
 - The 5 pending categories (Language, Framework, Testing, Code Quality, Workflow, Don't-Miss) should be filled in before architecture finalization — but architecture can proceed with constitutional Rules 1–8 already locked
 - Resolve OQ-005, OQ-006, OQ-007 before architecture commits decisions that depend on them
 
-Last Updated: 2026-06-20
+Last Updated: 2026-06-24 (added MCP Tooling — Next.js Devtools section)
 ---
 
 ## v2.0 Naming Convention (LOCKED)
