@@ -106,16 +106,55 @@ Deferred to post-pilot. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HYG-01, HYG-02, HYG-03, HYG-04 | Phase 0 | Pending |
-| OPS-01..14, OPS-05..11 | Phase 1 | Pending |
-| PILOT-01, PILOT-02, PILOT-03, PILOT-04, PILOT-05, PILOT-06, PILOT-07, PILOT-09, PILOT-10 | Phase 2 | Pending |
-| OPS-15..22 | Phase 2 | Pending |
-| PILOT-V1..V4 | Phase 3 | Pending |
-| PILOT-04-MT..MT5 | Phase 4 | Pending |
+| HYG-01 | Phase 0 | Pending |
+| HYG-02 | Phase 0 | Pending |
+| HYG-03 | Phase 0 | Pending |
+| HYG-04 | Phase 0 | Pending |
+| OPS-01 | Phase 1 | Pending |
+| OPS-02 | Phase 1 | Pending |
+| OPS-03 | Phase 1 | Pending |
+| OPS-04 | Phase 1 | Pending |
+| OPS-05 | Phase 1 | Pending |
+| OPS-06 | Phase 1 | Pending |
+| OPS-07 | Phase 1 | Pending |
+| OPS-08 | Phase 1 | Pending |
+| OPS-09 | Phase 1 | Pending |
+| OPS-10 | Phase 1 | Pending |
+| OPS-11 | Phase 1 | Pending |
+| OPS-12 | Phase 1 | Pending |
+| OPS-13 | Phase 1 | Pending |
+| OPS-14 | Phase 1 | Pending |
+| PILOT-01 | Phase 2 | Pending |
+| PILOT-02 | Phase 2 | Pending |
+| PILOT-03 | Phase 2 | Pending |
+| PILOT-04 | Phase 2 | Pending |
+| PILOT-05 | Phase 2 | Pending |
+| PILOT-06 | Phase 2 | Pending |
+| PILOT-07 | Phase 2 | Pending |
+| PILOT-09 | Phase 2 | Pending |
+| PILOT-10 | Phase 2 | Pending |
+| OPS-15 | Phase 2 | Pending |
+| OPS-16 | Phase 2 | Pending |
+| OPS-17 | Phase 2 | Pending |
+| OPS-18 | Phase 2 | Pending |
+| OPS-19 | Phase 2 | Pending |
+| OPS-20 | Phase 2 | Pending |
+| OPS-21 | Phase 2 | Pending |
+| OPS-22 | Phase 2 | Pending |
+| PILOT-V1 | Phase 3 | Pending |
+| PILOT-V2 | Phase 3 | Pending |
+| PILOT-V3 | Phase 3 | Pending |
+| PILOT-V4 | Phase 3 | Pending |
+| PILOT-04-MT | Phase 4 | Pending |
+| PILOT-04-MT2 | Phase 4 | Pending |
+| PILOT-04-MT3 | Phase 4 | Pending |
+| PILOT-04-MT4 | Phase 4 | Pending |
+| PILOT-04-MT5 | Phase 4 | Pending |
 
 **Coverage:**
-- v1 requirements: 35 total
-- Mapped to phases: 35
+- v1 requirements: 35 total (4 HYG + 14 OPS substrate + 9 PILOT + 8 OPS pilot-cutover = 35; PILOT-08 validated via ADR-001/002/003 LOCKED, no separate checkbox)
+- v2 requirements: 9 (4 PILOT-V + 5 PILOT-04-MT) — tracked separately, mapped to Phase 3/4
+- Mapped to phases: 35 v1 + 9 v2 = 44 total
 - Unmapped: 0 ✓
 
 ---
