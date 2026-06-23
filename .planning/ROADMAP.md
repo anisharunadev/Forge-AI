@@ -9,6 +9,7 @@ The 5-phase cutover is driven by risk reduction: hygiene first (so plan-phase as
 ## Phases
 
 **Phase Numbering:**
+
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
@@ -23,37 +24,55 @@ The 5-phase cutover is driven by risk reduction: hygiene first (so plan-phase as
 ## Phase Details
 
 ### Phase 0: Pre-Roadmap Hygiene
+
 **Goal**: Eliminate known stack drifts and repo smells so plan-phase assumptions are stable for the rest of the roadmap.
 **Mode**: mvp
 **Depends on**: Nothing (first phase)
 **Requirements**: HYG-01, HYG-02, HYG-03, HYG-04
 **Success Criteria** (what must be TRUE):
+
   1. `CLAUDE.md` and `docs/architecture/overview.md` declare "Tailwind 3.4.x" matching the installed `apps/forge/package.json` pin (no more 3.4.14 vs 4 drift).
   2. `node-pty` and `terminal-server.mjs` live inside `packages/forge-terminal-server` and are imported from there by `apps/forge`; no direct `node-pty` import remains in `apps/forge/`.
   3. CI fails the build if any file other than `backend/app/services/litellm_client.py` contains `import litellm`, OR if `apps/forge/lib/**/*.ts` contains a UUID literal.
   4. Service refuses to start (raises on import) when `DEV_AUTH_BYPASS=1` and `settings.environment != "development"`.
+
 **Plans**: TBD
 
 Plans:
+**Wave 1**
+
 - [ ] 00-01: Tailwind drift reconciliation (CLAUDE.md + overview.md)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 00-02: `node-pty` refactor into `packages/forge-terminal-server`
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 00-03: CI grep gate (Rule 1 enforcement + UUID literal ban)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 00-04: Startup assertion for DEV_AUTH_BYPASS
 
 ### Phase 1: Substrate Lock
+
 **Goal**: Make pilot traffic safe by enforcing deterministic gates, cost admission, and tool-bundle boundaries before any pilot cutover.
 **Mode**: mvp
 **Depends on**: Phase 0
 **Requirements**: OPS-01, OPS-02, OPS-03, OPS-04, OPS-05, OPS-06, OPS-07, OPS-08, OPS-09, OPS-10, OPS-11, OPS-12, OPS-13, OPS-14
 **Success Criteria** (what must be TRUE):
+
   1. Every artifact-writing route is decorated with `@require_approval_phase(...)`; a direct API call cannot bypass Architecture/Security/Deployment gates (PITFALL-1 closed).
   2. `litellm_client.py` derives per-call projected cost from prompt estimate × model price, enforces a cumulative cap, and surfaces "Run budget: $X / Used: $Y" in the UI before a run starts (PITFALL-2 closed).
   3. `BasePhaseNode` writes mutations through `audit_service.record` by default; `OTEL_EXPORTER_OTLP_ENDPOINT` is wired in `docker-compose.yml`; `/healthz` exposes `audit_sink=` and `otel_exporter_configured=` probes (PITFALL-5 closed).
   4. `APPROVAL_EXPIRED` scheduler fires for runs past their timeout, the UI shows a "Stale approval" badge, and per-phase/per-tenant timeout is configurable (PITFALL-6 closed).
   5. Code Validator sub-graph (F-501), Merge Gate (F-503), Tool Bundles (F-505), Workflow Budget (NFR-044), Day-One Bootstrap (F-507), Refactor Agent (F-601), and Steering Rules Engine (F-504) are wired and emit typed artifacts (`ValidationReport`, `MigrationPlan`); ADR-009/010/011 schemas are accepted.
+
 **Plans**: TBD
 
 Plans:
+
 - [ ] 01-01: Approval gate decorator + frozen run-state (PITFALL-1)
 - [ ] 01-02: Pre-call cost admission in `litellm_client.py` (PITFALL-2)
 - [ ] 01-03: Audit/OTel default sink wiring (PITFALL-5)
@@ -65,20 +84,24 @@ Plans:
 - [ ] 01-09: ADR-009 cost ledger + ADR-010 conflict schema + ADR-011 KMS
 
 ### Phase 2: Pilot Cutover Hardening
+
 **Goal**: Land the pilot end-to-end — one tenant completes the full SDLC workflow with every capability visualized, every gate live, and operational safety at production-grade.
 **Mode**: mvp
 **Depends on**: Phase 1
 **Requirements**: PILOT-01, PILOT-02, PILOT-03, PILOT-04, PILOT-05, PILOT-06, PILOT-07, PILOT-09, PILOT-10, OPS-15, OPS-16, OPS-17, OPS-18, OPS-19, OPS-20, OPS-21, OPS-22
 **Success Criteria** (what must be TRUE):
+
   1. An internal pilot user completes onboarding in under 30 minutes through a single wizard (project name, primary connector, LLM provider, sample repo URL) without code changes (PILOT-01).
   2. The SDLC supervisor runs `discovery → planning → architecture → implementation → testing → security → review → deployment` end-to-end on a sample project, with HITL interrupts only at the three constitutional gates (PILOT-02).
   3. Every artifact is visible in the React Flow Knowledge Graph with status-based coloring (draft / approved / conflicted / deployed), the Audit Timeline shows `{agent, model, prompt, tool, cost, artifact, timestamp, result}`, and the Approval Timeline shows pending decisions with one-click approve/reject (PILOT-03, PILOT-04, PILOT-05).
   4. The Constitution rulebook page renders all 8 rules with a green/yellow/red health indicator driven by live compliance queries; all 40+ `/api/v1/*` routers have a corresponding page or panel (PILOT-09, PILOT-10).
   5. Terminal Center streams live agent execution over WebSocket with replay; the Connector Marketplace lets an admin add a connector without a restart, with secrets resolved through `mcp-secrets` (PILOT-06, PILOT-07).
   6. Production deploy is blue/green via CodeDeploy with a 10% canary + `BeforeAllowTraffic` Code Validator hook; the audit database has a cross-region read replica with a tested failover runbook; LiteLLM Proxy + per-MCP-server circuit-breakers raise typed `UpstreamUnavailable`; conflict-volume guard enforces a per-tenant daily budget with auto/escalation lanes; AGE has a 30s default / 120s cap statement timeout with NetworkX offload above 10K nodes; Audit Timeline renders >1000 events smoothly with rationale capture; `architecture.section.*` events stream over WebSocket with a 24h KG pre-warm; frontend RBAC matches backend permission strings via `<RequirePermission>` (OPS-15..22).
+
 **Plans**: TBD
 
 Plans:
+
 - [ ] 02-01: Pilot onboarding wizard (PILOT-01)
 - [ ] 02-02: SDLC supervisor end-to-end run + gate wiring (PILOT-02)
 - [ ] 02-03: Knowledge Graph visualization with status coloring (PILOT-03)
@@ -96,36 +119,44 @@ Plans:
 - [ ] 02-15: Frontend RBAC enforcement (OPS-22)
 
 ### Phase 3: Pilot Volume Scaling
+
 **Goal**: Tune the pilot substrate to 30 days of real traffic so cost, conflict, and KG behavior hold at actual load.
 **Mode**: mvp
 **Depends on**: Phase 2
 **Requirements**: PILOT-V1, PILOT-V2, PILOT-V3, PILOT-V4
 **Success Criteria** (what must be TRUE):
+
   1. Per-tenant conflict budget thresholds are tuned from observed pilot data (PILOT-V1).
   2. AGE query plan review identifies and offloads any tenant exceeding 3-hop / 10K-node traversals to NetworkX (PILOT-V2).
   3. LiteLLM virtual-key quotas are tuned per tenant to match actual usage (PILOT-V3).
   4. Audit chain anchor frequency is reviewed and adjusted to keep WORM verification cost bounded (PILOT-V4).
+
 **Plans**: TBD
 
 Plans:
+
 - [ ] 03-01: Conflict budget tuning from pilot data
 - [ ] 03-02: AGE query plan observation + Tier-2 offload decision
 - [ ] 03-03: LiteLLM virtual-key quota tuning per tenant
 - [ ] 03-04: Audit chain anchor frequency review
 
 ### Phase 4: Expansion (Multi-Tenant Verification)
+
 **Goal**: Verify multi-tenancy end-to-end before any second tenant is onboarded — Rule 2 + Rule 5 must hold under real cross-tenant queries.
 **Mode**: mvp
 **Depends on**: Phase 3
 **Requirements**: PILOT-04-MT, PILOT-04-MT2, PILOT-04-MT3, PILOT-04-MT4, PILOT-04-MT5
 **Success Criteria** (what must be TRUE):
+
   1. A second tenant can be provisioned and a non-admin user from tenant B sees empty (or 403) responses when listing tenant A's artifacts, audit, and cost rows — verified by an automated smoke test (PILOT-04-MT).
   2. Every ideation / cost / audit signature raises `TypeError` when `tenant_id` or `project_id` is missing — no `= None` defaults remain (PILOT-04-MT2).
   3. `IDEATION_JIRA_PROJECT_KEY` is wired from connector config, not hard-coded (PILOT-04-MT3).
   4. Multi-region active-active LiteLLM Proxy is live with per-tenant rate limits; per-tenant CMK is rolled out at tenant #3 or #5 (PILOT-04-MT4, PILOT-04-MT5).
+
 **Plans**: TBD
 
 Plans:
+
 - [ ] 04-01: Tenant-isolation smoke test (PILOT-04-MT)
 - [ ] 04-02: Required tenant_id/project_id on ideation/cost/audit signatures (PILOT-04-MT2)
 - [ ] 04-03: IDEATION_JIRA_PROJECT_KEY from connector config (PILOT-04-MT3)
