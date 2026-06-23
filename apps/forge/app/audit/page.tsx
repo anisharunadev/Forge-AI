@@ -5,15 +5,12 @@ import { Shield } from 'lucide-react';
 
 import { AdminShell } from '@/components/admin/AdminShell';
 import { AuditFilter, type AuditFilterState } from '@/components/audit/AuditFilter';
-import { AuditTimelineVirtualized } from '@/components/audit/AuditTimelineVirtualized';
-import {
-  ApprovalTimeline,
-  type ApprovalTimelineItem,
-} from '@/components/audit/ApprovalTimeline';
+import { AuditTimeline } from '@/components/audit/AuditTimeline';
 import { AuditDetailPanel } from '@/components/audit/AuditDetailPanel';
 import { AuditHashChain } from '@/components/audit/AuditHashChain';
 import { AuditExportButton } from '@/components/audit/AuditExportButton';
 import { useApiData } from '@/hooks/use-api-data';
+import { PageHeader } from '@/components/shell';
 import {
   listAuditActions,
   listAuditTargetTypes,
@@ -61,69 +58,16 @@ export default function AuditCenterPage() {
     setOpen(true);
   };
 
-  // Synthesize an ApprovalTimeline view from approval-target audit
-  // records so the side panel colocates the timeline + approval
-  // queue. Phase 2 ships a dedicated approval fetch seam.
-  const approvalItems = React.useMemo<ReadonlyArray<ApprovalTimelineItem>>(
-    () =>
-      filtered
-        .filter((r) => r.target.type === 'approval')
-        .map((r) => {
-          const phaseRaw = r.payload['phase'];
-          const phase =
-            phaseRaw === 'Architecture' ||
-            phaseRaw === 'Security' ||
-            phaseRaw === 'Deployment'
-              ? (phaseRaw as 'Architecture' | 'Security' | 'Deployment')
-              : 'Architecture';
-          const runState: ApprovalTimelineItem['runState'] =
-            r.action === 'approval_decided'
-              ? r.payload['decision'] === 'rejected'
-                ? 'rejected'
-                : 'approved'
-              : 'waiting_approval';
-          return {
-            id: r.id,
-            title: r.target.label,
-            phase,
-            runState,
-            requestedBy: r.actor.name,
-            requestedAt: r.timestamp,
-          };
-        }),
-    [filtered],
-  );
-
-  const handleApprovalDecide = (
-    item: ApprovalTimelineItem,
-    decision: 'approve' | 'reject',
-  ) => {
-    // eslint-disable-next-line no-console
-    console.info('[audit-center] approval decision', {
-      id: item.id,
-      decision,
-    });
-  };
-
   return (
     <AdminShell>
       <div className="flex flex-col gap-6" data-testid="audit-center">
-        <header className="flex flex-col gap-2">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            Center
-          </p>
-          <div className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
-            <h1 className="flex items-center gap-2 text-2xl font-semibold">
-              <Shield className="h-5 w-5" aria-hidden="true" />
-              Audit Center
-            </h1>
-            <AuditExportButton records={filtered} />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Append-only, tamper-evident audit trail. Click any record for the
-            full payload and hash chain link.
-          </p>
-        </header>
+        <PageHeader
+          eyebrow="Center"
+          title="Audit Center"
+          icon={<Shield className="h-4 w-4" aria-hidden="true" />}
+          description="Append-only, tamper-evident audit trail. Click any record for the full payload and hash chain link."
+          action={<AuditExportButton records={filtered} />}
+        />
 
         <AuditFilter
           actors={actors}
@@ -133,12 +77,12 @@ export default function AuditCenterPage() {
           onChange={setFilter}
         />
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
           <section data-testid="audit-timeline-section">
             <h2 className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">
-              Audit Timeline (virtualized, {filtered.length} of {all.length})
+              Timeline ({filtered.length} of {all.length})
             </h2>
-            <AuditTimelineVirtualized
+            <AuditTimeline
               records={filtered}
               selectedId={selected?.id}
               onSelect={handleSelect}
@@ -146,17 +90,7 @@ export default function AuditCenterPage() {
             />
           </section>
 
-          <aside className="flex flex-col gap-4" data-testid="audit-side-panel">
-            <section data-testid="approval-timeline-section">
-              <h2 className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">
-                Approval Timeline
-              </h2>
-              <ApprovalTimeline
-                approvals={approvalItems}
-                onDecide={handleApprovalDecide}
-                emptyMessage="No approval activity recorded yet."
-              />
-            </section>
+          <aside className="flex flex-col gap-3" data-testid="audit-side-panel">
             <AuditHashChain records={filtered} />
           </aside>
         </div>

@@ -11,7 +11,13 @@
  * SSR pattern matches `eng-lead/page.tsx`: server fetches the run
  * list once for hydration, then `<RealtimeRunsList>` takes over
  * client-side via the `useRealtime` hook.
+ *
+ * Phase 0.5-05: redesigned with `PageHeader` + `SectionCard` +
+ * `EmptyState` from `@/components/shell`. Semantic tokens only
+ * (no `forge-*` literal color classes).
  */
+
+import { Activity } from 'lucide-react';
 
 import { getRunsView, seedAliasFor } from '@/lib/api';
 import { OrchestratorUnreachable } from '@/components/OrchestratorNotice';
@@ -19,6 +25,7 @@ import { RealtimeRunsList } from '@/components/RealtimeRunsList';
 import { RunStatusBadge } from '@/components/RunStatusBadge';
 import { listRuns } from '@/lib/api';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
+import { EmptyState, PageHeader, SectionCard } from '@/components/shell';
 import type { RunRecord } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -40,39 +47,36 @@ export default async function IssueDashboard() {
   return (
     <DashboardShell>
       <div className="space-y-8" data-testid="issue-dashboard">
-        <header>
-          <p className="text-xs uppercase tracking-wider text-forge-300">Dashboard</p>
-          <h1 className="text-2xl font-semibold">All runs</h1>
-          <p className="text-sm text-forge-200">
-            Realtime via WebSocket; polls every 5 s while the socket is reconnecting.
-          </p>
-        </header>
+        <PageHeader
+          eyebrow="Dashboard"
+          title="All runs"
+          description="Realtime via WebSocket; polls every 5 s while the socket is reconnecting."
+        />
 
         {view.state === 'unreachable' ? (
           <OrchestratorUnreachable view={view} />
         ) : null}
 
         {view.state === 'ok' ? (
-          <section className="card" aria-labelledby="dashboard-h">
-            <h2 id="dashboard-h" className="text-lg font-semibold">
-              Runs
-            </h2>
+          <SectionCard
+            title="Runs"
+            data-testid="dashboard-section"
+          >
             <RealtimeRunsList
               initialRuns={initialRuns}
               fetcher={fetchRuns}
               hideActions
             />
-          </section>
+          </SectionCard>
         ) : null}
 
         {view.state === 'empty' ? (
-          <section className="card" aria-labelledby="dashboard-empty-h">
-            <h2 id="dashboard-empty-h" className="text-lg font-semibold">
-              No runs yet
-            </h2>
-            <p className="mt-2 text-sm text-forge-200">
-              Seed <code>demo-run-001</code> via <code>./scripts/dev-up.sh</code>.
-            </p>
+          <section data-testid="dashboard-empty-h">
+            <EmptyState
+              icon={<Activity className="h-5 w-5" aria-hidden="true" />}
+              title="No runs yet"
+              description="Seed demo-run-001 via ./scripts/dev-up.sh."
+            />
           </section>
         ) : null}
       </div>

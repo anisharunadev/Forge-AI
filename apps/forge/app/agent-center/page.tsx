@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useApiData } from '@/hooks/use-api-data';
+import { PageHeader } from '@/components/shell';
 import {
   TASK_TYPES,
   type Agent,
@@ -76,15 +77,12 @@ export default function AgentCenterPage() {
   return (
     <AdminShell>
       <div className="flex flex-col gap-6" data-testid="agent-center">
-        <header className="flex flex-col gap-2">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            Center
-          </p>
-          <div className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
-            <h1 className="flex items-center gap-2 text-2xl font-semibold">
-              <Bot className="h-5 w-5" aria-hidden="true" />
-              Agent Center
-            </h1>
+        <PageHeader
+          eyebrow="Center"
+          title="Agent Center"
+          icon={<Bot className="h-4 w-4" aria-hidden="true" />}
+          description="Manage the AI agents, model providers, and task assignments available to this tenant."
+          action={
             <CreateAgentDialog
               onCreate={(input) => {
                 // M2 — live wiring pending. Local-only acknowledgement.
@@ -92,12 +90,8 @@ export default function AgentCenterPage() {
                 console.info('[agent-center] register', input);
               }}
             />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Manage the AI agents, model providers, and task assignments
-            available to this tenant.
-          </p>
-        </header>
+          }
+        />
 
         <Tabs defaultValue="agents" className="w-full">
           <TabsList aria-label="Agent Center sections">

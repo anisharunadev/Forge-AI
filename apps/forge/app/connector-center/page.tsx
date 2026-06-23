@@ -19,6 +19,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useApiData } from '@/hooks/use-api-data';
+import { useToast } from '@/hooks/use-toast';
+import { useInstallConnector } from '@/lib/hooks/useConnectorLifecycle';
+import { PageHeader, EmptyState, SectionCard } from '@/components/shell';
 import type {
   Connector,
   ConnectorHealthStatus,
@@ -36,12 +39,50 @@ const STATUS_OPTIONS: ReadonlyArray<ConnectorHealthStatus | 'all'> = [
   'quarantined',
 ];
 
+/**
+ * Project seam for the install call. Mirrors the canonical seed used
+ * by the rest of the forge (`project-forge-demo`). Phase 4 doesn't
+ * expose a project picker on the Connector Center; the value is
+ * pulled from a future `useTenantProject()` hook (FORA-128 §4.2).
+ */
+const SEED_PROJECT_ID = 'project-forge-demo';
+
 export default function ConnectorCenterM2Page() {
   const [statusFilter, setStatusFilter] = React.useState<ConnectorHealthStatus | 'all'>(
     'all',
   );
   const [selected, setSelected] = React.useState<Connector | null>(null);
   const [detailOpen, setDetailOpen] = React.useState(false);
+  const { toast } = useToast();
+  const installMutation = useInstallConnector();
+  const connectorsRefresh = useApiData<Connector[]>('/v1/connector-center/connectors').refresh;
+
+  const handleInstall = React.useCallback(
+    async (input: {
+      type: string;
+      name: string;
+      project_id: string;
+      config: Record<string, unknown>;
+    }) => {
+      try {
+        const result = await installMutation.mutateAsync(input);
+        toast({
+          title: 'Connector installed',
+          description: `${input.name} is live (${result.connector_id}).`,
+          variant: 'default',
+        });
+        connectorsRefresh();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Install failed.';
+        toast({
+          title: 'Install failed',
+          description: message,
+          variant: 'destructive',
+        });
+      }
+    },
+    [installMutation, toast, connectorsRefresh],
+  );
 
   // Live data from the orchestrator proxy. Empty state surfaces an
   // info card when the API is unreachable.
@@ -101,28 +142,24 @@ export default function ConnectorCenterM2Page() {
   return (
     <AdminShell>
       <div className="flex flex-col gap-6" data-testid="connector-center-m2">
-        <header className="flex flex-col gap-2">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            Center
-          </p>
-          <div className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
-            <h1 className="flex items-center gap-2 text-2xl font-semibold">
-              <Plug className="h-5 w-5" aria-hidden="true" />
-              Connector Center
-            </h1>
+        <PageHeader
+          eyebrow="Center"
+          title="Connector Center"
+          icon={<Plug className="h-4 w-4" aria-hidden="true" />}
+          description="Manage integrations with external systems, browse the marketplace, and review connector health."
+          action={
             <AddConnectorDialog
-              onAdd={(input) => {
-                // M2 — live wiring pending. Local-only acknowledgement.
-                // eslint-disable-next-line no-console
-                console.info('[connector-center] add', input);
-              }}
+              onAdd={(input) =>
+                void handleInstall({
+                  type: input.category,
+                  name: input.name,
+                  project_id: SEED_PROJECT_ID,
+                  config: { base_url: input.baseUrl, category: input.category },
+                })
+              }
             />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Manage integrations with external systems, browse the marketplace,
-            and review connector health.
-          </p>
-        </header>
+          }
+        />
 
         <Tabs defaultValue="connected" className="w-full">
           <TabsList aria-label="Connector Center sections">
@@ -167,17 +204,29 @@ export default function ConnectorCenterM2Page() {
                 </SelectContent>
               </Select>
             </div>
-            <ConnectorGrid connectors={filteredConnectors} onSelect={handleSelect} />
+            {filteredConnectors.length === 0 ? (
+              <EmptyState
+                icon={<Plug className="h-5 w-5" aria-hidden="true" />}
+                title="No connectors match the current filter"
+                description="Try a different status filter, or install a new connector from the marketplace."
+                testId="connector-empty"
+              />
+            ) : (
+              <ConnectorGrid connectors={filteredConnectors} onSelect={handleSelect} />
+            )}
           </TabsContent>
 
           <TabsContent value="marketplace">
             <MarketplaceGrid
               connectors={marketplace}
-              onInstall={(c: MarketplaceConnector) => {
-                // M2 — install flow wired in a future PR.
-                // eslint-disable-next-line no-console
-                console.info('[connector-center] install', c.id);
-              }}
+              onInstall={(c: MarketplaceConnector) =>
+                void handleInstall({
+                  type: c.id,
+                  name: c.name,
+                  project_id: SEED_PROJECT_ID,
+                  config: { category: c.category, publisher: c.publisher },
+                })
+              }
             />
           </TabsContent>
 
@@ -187,14 +236,14 @@ export default function ConnectorCenterM2Page() {
                 (k) => (
                   <div
                     key={k}
-                    className="card flex items-center justify-between"
+                    className="flex items-center justify-between rounded-lg border border-border bg-card p-4"
                     data-testid={`health-cell-${k}`}
                   >
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-forge-300">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
                         {k}
                       </p>
-                      <p className="text-2xl font-semibold text-forge-50">
+                      <p className="text-2xl font-semibold text-foreground">
                         {healthBreakdown[k]}
                       </p>
                     </div>
@@ -206,7 +255,18 @@ export default function ConnectorCenterM2Page() {
           </TabsContent>
 
           <TabsContent value="activity">
-            <SyncHistoryTable records={history} />
+            {history.length === 0 ? (
+              <EmptyState
+                icon={<History className="h-5 w-5" aria-hidden="true" />}
+                title="No sync activity yet"
+                description="Connector sync history will appear here once a connector runs its first sync."
+                testId="activity-empty"
+              />
+            ) : (
+              <SectionCard title="Recent sync activity">
+                <SyncHistoryTable records={history} />
+              </SectionCard>
+            )}
           </TabsContent>
         </Tabs>
 

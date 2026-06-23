@@ -21,6 +21,7 @@ import {
 import { TraceabilityGraph } from '@/components/architecture/TraceabilityGraph';
 import { VersionTimeline } from '@/components/architecture/VersionTimeline';
 import { useApiData } from '@/hooks/use-api-data';
+import { PageHeader, EmptyState } from '@/components/shell';
 import type {
   ADR,
   APIContract,
@@ -75,27 +76,20 @@ export default function ArchitectureCenterPage() {
   return (
     <AdminShell>
       <div className="flex flex-col gap-6" data-testid="architecture-center">
-        <header className="flex flex-col gap-2">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            Center
-          </p>
-          <div className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
-            <h1 className="flex items-center gap-2 text-2xl font-semibold">
-              <Network className="h-5 w-5" aria-hidden="true" />
-              Architecture Center
-            </h1>
+        <PageHeader
+          eyebrow="Center"
+          title="Architecture Center"
+          icon={<Network className="h-4 w-4" aria-hidden="true" />}
+          description="ADRs, API contracts, task breakdowns, risk registers, and full traceability from requirement to test."
+          action={
             <ADRCreateDialog
               onCreate={(input) => {
                 // eslint-disable-next-line no-console
                 console.info('[architecture] create ADR', input);
               }}
             />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            ADRs, API contracts, task breakdowns, risk registers, and full
-            traceability from requirement to test.
-          </p>
-        </header>
+          }
+        />
 
         <Tabs defaultValue="adrs" className="w-full">
           <TabsList aria-label="Architecture Center sections">
@@ -108,18 +102,27 @@ export default function ArchitectureCenterPage() {
           </TabsList>
 
           <TabsContent value="adrs">
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr]">
-              <ADRSidebar
-                adrs={adrs}
-                selectedId={selectedADR?.id}
-                onSelect={setSelectedADR}
+            {adrs.length === 0 ? (
+              <EmptyState
+                icon={<Network className="h-5 w-5" aria-hidden="true" />}
+                title="No ADRs yet"
+                description="ADRs are produced by the architecture pipeline. Create one to get started."
+                testId="adrs-empty"
               />
-              <div>
-                {selectedADR ? <ADRViewer adr={selectedADR} /> : (
-                  <p className="text-sm text-forge-300">Select an ADR from the left rail.</p>
-                )}
+            ) : (
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr]">
+                <ADRSidebar
+                  adrs={adrs}
+                  selectedId={selectedADR?.id}
+                  onSelect={setSelectedADR}
+                />
+                <div>
+                  {selectedADR ? <ADRViewer adr={selectedADR} /> : (
+                    <p className="text-sm text-muted-foreground">Select an ADR from the left rail.</p>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </TabsContent>
 
           <TabsContent value="contracts" className="space-y-4">
@@ -163,8 +166,8 @@ export default function ArchitectureCenterPage() {
 
           <TabsContent value="trace">
             <div className="space-y-2">
-              <h3 className="text-sm font-semibold">{traceability.title}</h3>
-              <p className="text-xs text-forge-300">
+              <h3 className="text-sm font-semibold text-foreground">{traceability.title}</h3>
+              <p className="text-xs text-muted-foreground">
                 Requirement → ADR → Task → Test → Risk.
               </p>
               <TraceabilityGraph graph={traceability} />

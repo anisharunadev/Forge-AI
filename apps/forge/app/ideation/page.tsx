@@ -19,7 +19,10 @@ import { RoadmapView } from '@/components/ideation/RoadmapView';
 import { PRDList, PRDViewer } from '@/components/ideation/PRDViewer';
 import { ArchPreviewGraph } from '@/components/ideation/ArchPreviewGraph';
 import { ApprovalQueuePanel } from '@/components/ideation/ApprovalQueuePanel';
+import { IngestIndicator } from '@/components/ideation/IngestIndicator';
 import { useApiData } from '@/hooks/use-api-data';
+import { useIdeationIngestStatus } from '@/lib/hooks/useIdeationIngestStatus';
+import { PageHeader } from '@/components/shell';
 import {
   type Approval,
   type ArchPreview,
@@ -67,6 +70,15 @@ export default function IdeationCenterPage() {
     }
   }, [approvalsRes.data, approvals.length]);
 
+  // Phase 3: daily ideation ingest indicator. Polls
+  // `GET /v1/ideation/ingest/status` every 30s and surfaces the
+  // most recent run as a badge near the page header.
+  const ingestStatusRes = useIdeationIngestStatus();
+  const ingestStatus = ingestStatusRes.data?.status ?? 'never';
+  const ingestIdeasCreatedToday =
+    ingestStatusRes.data?.ideas_created_today ?? 0;
+  const ingestLastRunAt = ingestStatusRes.data?.last_run_at ?? null;
+
   const filtered = React.useMemo(
     () =>
       statusFilter === 'all'
@@ -96,27 +108,27 @@ export default function IdeationCenterPage() {
   return (
     <AdminShell>
       <div className="flex flex-col gap-6" data-testid="ideation-center">
-        <header className="flex flex-col gap-2">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            Center
-          </p>
-          <div className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
-            <h1 className="flex items-center gap-2 text-2xl font-semibold">
-              <Lightbulb className="h-5 w-5" aria-hidden="true" />
-              Ideation Center
-            </h1>
-            <IdeaIntakeDialog
-              onCreate={(input) => {
-                // eslint-disable-next-line no-console
-                console.info('[ideation] submit', input);
-              }}
-            />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Capture ideas, score them, plan the roadmap, draft PRDs, and
-            preview architecture before any code is written.
-          </p>
-        </header>
+        <PageHeader
+          eyebrow="Center"
+          title="Ideation Center"
+          icon={<Lightbulb className="h-4 w-4" aria-hidden="true" />}
+          description="Capture ideas, score them, plan the roadmap, draft PRDs, and preview architecture before any code is written."
+          action={
+            <div className="flex items-center gap-2">
+              <IngestIndicator
+                status={ingestStatus}
+                ideas_created_today={ingestIdeasCreatedToday}
+                last_run_at={ingestLastRunAt}
+              />
+              <IdeaIntakeDialog
+                onCreate={(input) => {
+                  // eslint-disable-next-line no-console
+                  console.info('[ideation] submit', input);
+                }}
+              />
+            </div>
+          }
+        />
 
         <Tabs defaultValue="ideas" className="w-full">
           <TabsList aria-label="Ideation Center sections">
@@ -180,8 +192,8 @@ export default function IdeationCenterPage() {
           <TabsContent value="arch" className="space-y-4">
             {previews.map((p) => (
               <div key={p.id} className="flex flex-col gap-2">
-                <h3 className="text-sm font-semibold">{p.title}</h3>
-                <p className="text-xs text-forge-300">{p.description}</p>
+                <h3 className="text-sm font-semibold text-foreground">{p.title}</h3>
+                <p className="text-xs text-muted-foreground">{p.description}</p>
                 <ArchPreviewGraph preview={p} />
               </div>
             ))}
