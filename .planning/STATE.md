@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-current_phase: 0.5
-current_phase_name: UI Foundation
-status: executing
-stopped_at: in-progress (2026-06-23)
-last_updated: "2026-06-23T20:50:00.000Z"
+current_phase: 0
+current_phase_name: Pre-Roadmap Hygiene
+status: ready
+stopped_at: Phase 0.5 complete; Phase 0 next (2026-06-23)
+last_updated: "2026-06-23T23:30:00.000Z"
 last_activity: 2026-06-23
-last_activity_desc: Phase 0.5-03 complete — Shell, sidebar, command palette, topbar, breadcrumbs, mobile drawer, page container
+last_activity_desc: Phase 0.5 UI Foundation closed at 5/5 plans (100%): SUMMARY files generated for 0.5-05 + 0.5-06; AuditTimelineVirtualized wired into `/audit` (closes 0.5-06 Task 7); 20/20 tests pass in tests/graph + tests/ai-native + tests/audit. Phase 0 (Pre-Roadmap Hygiene) ready to execute — 4 plans ready, all deps met.
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 5
-  completed_plans: 3
-  percent: 60
+  completed_plans: 5
+  percent: 100
 ---
 
 # Project State
@@ -29,27 +29,27 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Current Position
 
-Phase: 0.5 of 5 (UI Foundation)
-Plan: 3 of 5 in current phase
-Status: In progress
-Last activity: 2026-06-23 — Phase 0.5-03 complete: application shell (Sidebar/Topbar/CommandPalette/PageContainer/Breadcrumbs/MobileNav) landed; `app/layout.tsx` refactored to compose the shell; `nav-config.ts` extracted as the single source of truth for navigation; 33 new shell tests passing (4 files: breadcrumbs, command-palette, nav-config, status-pill).
+Phase: 0 of 5 (Pre-Roadmap Hygiene) — next up
+Phase 0.5 (UI Foundation): 5 of 5 plans complete (100%)
+Status: Ready to execute Phase 0
+Last activity: 2026-06-23 — Phase 0.5 closed: SUMMARY files generated for 0.5-05 + 0.5-06; AuditTimelineVirtualized wired into `/audit` (closes 0.5-06 Task 7); 20/20 tests pass in tests/graph + tests/ai-native + tests/audit. Phase 0 has 4 plans ready (00-01 Tailwind drift, 00-02 node-pty refactor, 00-03 CI grep gate, 00-04 DEV_AUTH_BYPASS startup guard).
 
-Progress: [██████░░░░] 60%
+Progress: [██████████] 100% (Phase 0.5) — Phase 0 ready, not yet started
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 3
-- Average duration: — min
-- Total execution time: <2 hours
+- Total plans completed: 5
+- Average duration: <40 min
+- Total execution time: <4 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 0. Pre-Roadmap Hygiene | 0 | 4 | — |
-| 0.5. UI Foundation | 3 | 5 | <40m |
+| 0.5. UI Foundation | 5 | 5 | <40m |
 | 1. Substrate Lock | 0 | 9 | — |
 | 2. Pilot Cutover Hardening | 0 | 15 | — |
 | 3. Pilot Volume Scaling | 0 | 4 | — |
@@ -61,6 +61,11 @@ Progress: [██████░░░░] 60%
 - Trend: UI Foundation on track; 2 plans remaining (0.5-04 DataTable sweep, 0.5-05/06 already done)
 
 *Updated after each plan completion*
+
+**Recent Trend:**
+
+- Last 5 plans: Phase 0.5-02 (StatusPill + 7 badge migrations + 3 boundaries), Phase 0.5-06 (5 typed React Flow nodes + 4 graph views + virtualized audit/approval timelines + 3 AI-native panels), Phase 0.5-03 (shell: sidebar/topbar/CMD-K palette/breadcrumbs/mobile drawer/page container), Phase 0.5-04 (DataTable/Form/Chart + 9 missing shadcn primitives), Phase 0.5 close-out (SUMMARYs + AuditTimelineVirtualized wire-up)
+- Trend: Phase 0.5 UI Foundation closed at 5/5 plans, 100%; Phase 0 (Pre-Roadmap Hygiene) ready to execute
 
 ## Accumulated Context
 
@@ -84,11 +89,13 @@ Recent decisions affecting current work:
 - Phase 0.5-02: StatusPill is the single source of truth for state-bearing chips; 7 bespoke badges (RunStatusBadge, HealthBadge, ApprovalStatusBadge, ScoreBadge, FreshnessBadge, SeverityBadge, ConnectorStatusPill) delegate to it (PILOT-01/05/09 alignment).
 - Phase 0.5-03: Shell (Sidebar/Topbar/CommandPalette/PageContainer/Breadcrumbs/MobileNav) lives in `components/shell/*`; `nav-config.ts` is the single source of truth for NAV; the CMD-K palette is owned by `<ShellProvider>` and reachable from every route; the global Cmd/Ctrl-K listener is suppressed when the user is typing in an input/textarea/contenteditable; mobile nav uses the same grouped list as desktop via a shared `NavList` primitive.
 - Phase 0.5-04: DataTable (TanStack Table v8), Form (react-hook-form + zod), and Chart wrappers (Recharts) are the data primitives 0.5-05/06/07 compose against; 9 missing shadcn primitives (table/pagination/breadcrumb/avatar/accordion/form/radio-group/switch/slider) added so all later phases can compose against a stable surface. Chart series colors read from CSS variables — flipping dark/light re-skins every chart with zero JS changes (PILOT-03/04/05/10 alignment).
-- Phase 0.5-06: 5 typed React Flow node components (Artifact/RepoFile/Service/AgentStep/Approval) read status from `toneClasses` + `agentStates`; 4 graph views compose them via `nodeTypes={forgeNodeTypes}`; AuditTimelineVirtualized handles >1000 records via @tanstack/react-virtual (PILOT-03/04/05/06 alignment).
+- Phase 0.5-06: 5 typed React Flow node components (Artifact/RepoFile/Service/AgentStep/Approval) read status from `toneClasses` + `agentStates`; 4 graph views compose them via `nodeTypes={forgeNodeTypes}`; AuditTimelineVirtualized handles >1000 records via @tanstack/react-virtual (PILOT-03/04/05/06 alignment). Verified zero direct hex literals via grep; 20/20 tests pass.
+- Phase 0.5 close-out: `AuditTimelineVirtualized` is now wired into `app/audit/page.tsx` (was previously built + tested but not integrated); SUMMARY files generated for 0.5-05 + 0.5-06 so plan metadata matches disk state. UI Foundation phase is now 5/5 plans, 100% complete.
 
 ### Pending Todos
 
-None yet.
+- **TS-5 Approval Timeline page existence** — verified resolved: `apps/forge/app/governance-center/page.tsx` exists with PageHeader + Alert + StatusPill chrome. PILOT-05 / BLOCKING per research SUMMARY closed.
+- Pre-existing typecheck errors in `lib/hooks/use{ApprovalDecide,ConnectorLifecycle,IdeaEnhance,JiraSync,PushIdeaToJira,IdeationIngestStatus,PersonaMemory}.ts`, `lib/design-system/forge-light-theme.ts`, and `tests/intelligence/ideation-approval-decide.test.tsx` — out of scope for 0.5-05/06; will need a dedicated cleanup pass before Phase 2.
 
 ### Blockers/Concerns
 
@@ -112,6 +119,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-23T20:50:00.000Z
-Stopped at: Phase 0.5-03 complete; 2 plans remaining in Phase 0.5
+Last session: 2026-06-23T23:30:00.000Z
+Stopped at: Phase 0.5 UI Foundation closed (5/5 plans, 100%); Phase 0 (Pre-Roadmap Hygiene) ready to execute next
 Resume file: None
