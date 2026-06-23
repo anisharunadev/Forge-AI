@@ -1,36 +1,39 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '@/lib/utils';
+import { StatusPill } from '@/components/shell';
+import type { StateGlyph, StatusTone } from '@/lib/design-system/status';
 
 export interface ScoreBadgeProps {
   score: number;
   className?: string;
 }
 
-function scoreTone(score: number): string {
-  if (score >= 8) {
-    return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300';
-  }
-  if (score >= 6) {
-    return 'border-amber-500/40 bg-amber-500/10 text-amber-300';
-  }
-  return 'border-rose-500/40 bg-rose-500/10 text-rose-300';
+/**
+ * ScoreBadge — colored chip for an ideation score (0..10).
+ *
+ * Mapping:
+ *   - score >= 8 → success ✓
+ *   - score >= 6 → review  ◑
+ *   - score  < 6 → danger  ✕
+ */
+function scoreTone(score: number): { tone: StatusTone; glyph: StateGlyph } {
+  if (score >= 8) return { tone: 'success', glyph: '✓' };
+  if (score >= 6) return { tone: 'review',  glyph: '◑' };
+  return { tone: 'danger', glyph: '✕' };
 }
 
 export function ScoreBadge({ score, className }: ScoreBadgeProps) {
+  const { tone, glyph } = scoreTone(score);
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold',
-        scoreTone(score),
-        className,
-      )}
+    <StatusPill
+      tone={tone}
+      glyph={glyph}
+      label={score.toFixed(1)}
       data-testid="score-badge"
       data-score={score}
       aria-label={`Score ${score.toFixed(1)}`}
-    >
-      {score.toFixed(1)}
-    </span>
+      className={`font-mono ${className ?? ''}`}
+    />
   );
 }

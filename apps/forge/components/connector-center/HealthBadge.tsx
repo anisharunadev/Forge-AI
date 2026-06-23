@@ -1,22 +1,51 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '@/lib/utils';
+import { StatusPill } from '@/components/shell';
+import type { PulseKind, StateGlyph, StatusTone } from '@/lib/design-system/status';
 import type { ConnectorHealthStatus } from '@/lib/connector-center/data';
 
-const TONE: Record<ConnectorHealthStatus, string> = {
-  healthy: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
-  syncing: 'border-sky-500/40 bg-sky-500/10 text-sky-300',
-  stale: 'border-amber-500/40 bg-amber-500/10 text-amber-300',
-  failed: 'border-rose-500/40 bg-rose-500/10 text-rose-300',
-  quarantined: 'border-violet-500/40 bg-violet-500/10 text-violet-300',
+/**
+ * HealthBadge — connector health state, delegating to <StatusPill>.
+ *
+ * Mapping (per curated spec §6):
+ *   - healthy      → success  ✓
+ *   - syncing      → info     ◐  (blue, "active" work)
+ *   - stale        → warn     ◑
+ *   - failed       → danger   ✕
+ *   - quarantined  → review   ◑
+ *
+ * The original testid/data-status/aria-label attributes are preserved.
+ */
+const TONE: Record<ConnectorHealthStatus, StatusTone> = {
+  healthy:     'success',
+  syncing:     'info',
+  stale:       'warn',
+  failed:      'danger',
+  quarantined: 'review',
+};
+
+const GLYPH: Record<ConnectorHealthStatus, StateGlyph> = {
+  healthy:     '✓',
+  syncing:     '◐',
+  stale:       '◑',
+  failed:      '✕',
+  quarantined: '◑',
+};
+
+const PULSE: Record<ConnectorHealthStatus, PulseKind> = {
+  healthy:     'none',
+  syncing:     'slow',
+  stale:       'none',
+  failed:      'none',
+  quarantined: 'slow',
 };
 
 const LABEL: Record<ConnectorHealthStatus, string> = {
-  healthy: 'Healthy',
-  syncing: 'Syncing',
-  stale: 'Stale',
-  failed: 'Failed',
+  healthy:     'Healthy',
+  syncing:     'Syncing',
+  stale:       'Stale',
+  failed:      'Failed',
   quarantined: 'Quarantined',
 };
 
@@ -27,18 +56,16 @@ export interface HealthBadgeProps {
 
 export function HealthBadge({ status, className }: HealthBadgeProps) {
   return (
-    <span
+    <StatusPill
+      tone={TONE[status]}
+      glyph={GLYPH[status]}
+      pulse={PULSE[status]}
+      label={LABEL[status]}
+      size="sm"
       data-testid="connector-health-badge"
       data-status={status}
-      role="status"
       aria-label={`Health: ${LABEL[status]}`}
-      className={cn(
-        'inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide',
-        TONE[status],
-        className,
-      )}
-    >
-      {LABEL[status]}
-    </span>
+      className={className}
+    />
   );
 }
