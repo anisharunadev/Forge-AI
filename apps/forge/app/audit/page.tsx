@@ -5,7 +5,7 @@ import { Shield } from 'lucide-react';
 
 import { AdminShell } from '@/components/admin/AdminShell';
 import { AuditFilter, type AuditFilterState } from '@/components/audit/AuditFilter';
-import { AuditTimeline } from '@/components/audit/AuditTimeline';
+import { AuditTimelineVirtualized } from '@/components/audit/AuditTimelineVirtualized';
 import { AuditDetailPanel } from '@/components/audit/AuditDetailPanel';
 import { AuditHashChain } from '@/components/audit/AuditHashChain';
 import { AuditExportButton } from '@/components/audit/AuditExportButton';
@@ -80,9 +80,9 @@ export default function AuditCenterPage() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
           <section data-testid="audit-timeline-section">
             <h2 className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">
-              Timeline ({filtered.length} of {all.length})
+              Audit Timeline (virtualized) ({filtered.length} of {all.length})
             </h2>
-            <AuditTimeline
+            <AuditTimelineVirtualized
               records={filtered}
               selectedId={selected?.id}
               onSelect={handleSelect}
