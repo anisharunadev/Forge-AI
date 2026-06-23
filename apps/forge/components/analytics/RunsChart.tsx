@@ -50,7 +50,7 @@ export function RunsChart({ data, height = 240 }: RunsChartProps) {
               fontSize: 12,
             }}
             labelStyle={{ color: '#c4cfe5' }}
-            formatter={(v: number) => [v, 'Runs']}
+            formatter={(v: any) => [v, 'Runs']}
           />
           <Bar dataKey="count">
             {data.map((entry) => (

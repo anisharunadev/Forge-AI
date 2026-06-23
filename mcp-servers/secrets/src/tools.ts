@@ -66,7 +66,7 @@ const UseForInput = z.object({
         "Unknown intents return code='unknown_intent'.",
     ),
   payload: z
-    .record(z.unknown())
+    .record(z.string(), z.unknown())
     .describe(
       "Intent-specific data (commit message, channel/text, bucket/key, " +
         "etc.). Must be a plain object.",

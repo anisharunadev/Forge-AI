@@ -41,7 +41,7 @@ export function LatencyHistogram({ data, height = 240 }: LatencyHistogramProps) 
               fontSize: 12,
             }}
             labelStyle={{ color: '#c4cfe5' }}
-            formatter={(v: number) => [v, 'Approvals']}
+            formatter={(v: any) => [v, 'Approvals']}
           />
           <Bar dataKey="count" fill="#a78bfa" />
         </BarChart>

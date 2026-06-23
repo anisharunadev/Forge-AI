@@ -47,7 +47,7 @@ const RunJobShape = {
   confirm: z.literal(true).describe("Must be true. Acknowledges that this will trigger a workspace job run."),
   jar_params: z.array(z.string()).optional()
     .describe("Optional spark jar task parameters. Ignored for non-jar tasks."),
-  notebook_params: z.record(z.string()).optional()
+  notebook_params: z.record(z.string(), z.string()).optional()
     .describe("Optional notebook task parameters, mapped to widget values. Ignored for non-notebook tasks."),
 };
 

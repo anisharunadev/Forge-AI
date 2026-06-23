@@ -46,7 +46,7 @@ export function AgentUsageChart({ data, height = 240 }: AgentUsageChartProps) {
               fontSize: 12,
             }}
             labelStyle={{ color: '#c4cfe5' }}
-            formatter={(v: number, key: string) =>
+            formatter={(v: any, key: any) =>
               key === 'invocations' ? [v, 'Invocations'] : [`$${v.toFixed(2)}`, 'Cost']
             }
           />

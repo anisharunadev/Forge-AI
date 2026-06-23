@@ -55,7 +55,7 @@ export function AcceptanceChart({ data, height = 240 }: AcceptanceChartProps) {
               fontSize: 12,
             }}
             labelStyle={{ color: '#c4cfe5' }}
-            formatter={(v: number, name: string) => [v, name]}
+            formatter={(v: any, name: any) => [v, name]}
           />
         </PieChart>
       </ResponsiveContainer>

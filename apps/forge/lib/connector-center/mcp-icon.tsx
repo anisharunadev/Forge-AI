@@ -20,23 +20,34 @@ import {
   CheckSquare,
   Cloud,
   Database,
-  Github,
   GitBranch,
   Headphones,
   Key,
+  LayoutGrid,
+  MessageSquare,
   Network,
+  Palette,
   PenTool,
   Plug,
   Shield,
-  Slack,
   Sparkles,
-  Trello,
   BookOpen,
-  Figma,
 } from 'lucide-react';
 
 import { getMCPServer } from '@/lib/mcp-registry';
 import type { MCPCategory } from '@/lib/mcp-registry';
+
+// Lucide dropped brand icons in 1.x (Github, Slack, Trello, Figma). For
+// Forge's brand-icon registry entries we use the closest generic
+// semantic match so the connector marketplace still reads correctly:
+//
+//   Github   -> GitBranch   (source-control metaphor)
+//   Slack    -> MessageSquare (chat / communication)
+//   Trello   -> LayoutGrid  (board / card metaphor)
+//   Figma    -> Palette     (design tool metaphor)
+//
+// If a downstream consumer needs the real brand mark, swap these for
+// a `simple-icons` import in their own module.
 
 /** Connectors whose lucide icon name doesn't match the registry's `icon` field. */
 const ID_OVERRIDES: Readonly<Record<string, LucideIcon>> = {
@@ -51,11 +62,11 @@ const ID_OVERRIDES: Readonly<Record<string, LucideIcon>> = {
 
 /** Direct mapping from the registry's `icon` string to a lucide icon. */
 const ICON_BY_NAME: Readonly<Record<string, LucideIcon>> = {
-  Github,
-  Trello,
+  Github: GitBranch,
+  Trello: LayoutGrid,
   BookOpen,
-  Figma,
-  Slack,
+  Figma: Palette,
+  Slack: MessageSquare,
   Cloud,
   GitBranch,
   Shield,
@@ -73,8 +84,8 @@ const ICON_BY_CATEGORY: Readonly<Record<MCPCategory, LucideIcon>> = {
   version_control: GitBranch,
   project_management: CheckSquare,
   documentation: BookOpen,
-  design: Figma,
-  communication: Slack,
+  design: Palette,
+  communication: MessageSquare,
   cloud: Cloud,
   security: Shield,
   analytics: Database,

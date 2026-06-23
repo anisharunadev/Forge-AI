@@ -45,7 +45,7 @@ export function CostChart({ data, height = 240 }: CostChartProps) {
               fontSize: 12,
             }}
             labelStyle={{ color: '#c4cfe5' }}
-            formatter={(v: number) => [`$${v.toFixed(2)}`, 'Cost']}
+            formatter={(v: any) => [`$${v.toFixed(2)}`, 'Cost']}
           />
           <Line
             type="monotone"

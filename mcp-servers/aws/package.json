@@ -25,14 +25,14 @@
     "node": ">=18.17"
   },
   "dependencies": {
-    "@aws-sdk/client-cloudcontrol": "^3.658.0",
-    "@aws-sdk/client-cloudformation": "^3.658.0",
-    "@aws-sdk/client-sts": "^3.658.0",
-    "@modelcontextprotocol/sdk": "^1.0.4",
-    "zod": "^3.23.8"
+    "@aws-sdk/client-cloudcontrol": "^3.1075.0",
+    "@aws-sdk/client-cloudformation": "^3.1075.0",
+    "@aws-sdk/client-sts": "^3.1075.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "^22.5.0",
-    "typescript": "^5.6.0"
+    "@types/node": "^26.0.0",
+    "typescript": "^6.0.3"
   }
 }
