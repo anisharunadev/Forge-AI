@@ -18,60 +18,64 @@
  * ============================================================================ */
 
 @layer base {
-  /* Light theme (defined for parity; dark is the default). */
+  /* Light theme (companion; dark is the default per the curated spec). */
   :root {
     /* Surfaces */
-    --background: 0 0% 98%;
-    --foreground: 240 5% 10%;
-    --surface: 240 5% 96%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 5% 10%;
+    --background: 0 0% 100%;      /* #FFFFFF */
+    --foreground: 240 6% 6%;      /* #09090B */
+    --surface: 240 6% 97%;        /* #F8F8FA */
+    --card: 0 0% 100%;            /* #FFFFFF */
+    --hover: 240 6% 95%;          /* #F2F2F5 */
+    --card-foreground: 240 6% 6%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 5% 10%;
+    --popover-foreground: 240 6% 6%;
 
     /* Brand & actions */
-    --primary: 244 75% 57%;
+    --primary: 239 84% 67%;       /* #6366F1 */
     --primary-foreground: 0 0% 98%;
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 5% 10%;
-    --accent: 263 70% 51%;
+    --secondary: 240 6% 97%;
+    --secondary-foreground: 240 6% 6%;
+    --accent: 258 90% 66%;
     --accent-foreground: 0 0% 98%;
 
     /* Status */
-    --success: 142 71% 36%;
-    --warning: 38 92% 50%;
-    --destructive: 0 72% 51%;
+    --success: 142 71% 45%;       /* #22C55E */
+    --warning: 38 92% 50%;        /* #F59E0B */
+    --destructive: 0 84% 60%;     /* #EF4444 */
     --destructive-foreground: 0 0% 98%;
 
     /* Muted / borders */
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
-    --border: 240 6% 90%;
+    --muted: 240 6% 97%;
+    --muted-foreground: 240 4% 32%; /* #52525B */
+    --subtle: 240 4% 65%;         /* #A1A1AA */
+    --border: 240 6% 90%;         /* #E4E4E7 */
     --input: 240 6% 90%;
-    --ring: 244 75% 57%;
+    --ring: 239 84% 67%;
 
     /* AI-native channels */
-    --agent: 192 91% 36%;
-    --execution: 263 70% 51%;
-    --review: 21 90% 48%;
+    --agent: 189 94% 43%;         /* #06B6D4 — identity */
+    --thinking: 217 91% 60%;      /* #3B82F6 — state (distinct from agent) */
+    --execution: 258 90% 66%;     /* #8B5CF6 */
+    --review: 20 90% 48%;         /* #F97316 */
     --cost: 38 92% 50%;
 
-    --radius: 0.625rem;
+    --radius: 0.5rem;             /* 8px — cards per curated spec */
   }
 
-  /* Dark theme — PRIMARY per the Phase 0.5 design vision. */
+  /* Dark theme — PRIMARY per the curated spec. */
   .dark {
     /* Surfaces */
-    --background: 240 10% 4%;   /* #09090B */
-    --foreground: 0 0% 98%;     /* #FAFAFA */
-    --surface: 240 6% 7%;       /* #111113 */
-    --card: 240 5% 10%;         /* #18181B */
+    --background: 240 10% 4%;     /* #09090B */
+    --foreground: 0 0% 98%;       /* #FAFAFA */
+    --surface: 240 6% 7%;         /* #111113 */
+    --card: 240 5% 10%;           /* #18181B */
+    --hover: 240 5% 12%;          /* #1F1F23 */
     --card-foreground: 0 0% 98%;
     --popover: 240 5% 10%;
     --popover-foreground: 0 0% 98%;
 
     /* Brand & actions */
-    --primary: 239 84% 67%;     /* #6366F1 */
+    --primary: 239 84% 67%;       /* #6366F1 */
     --primary-foreground: 0 0% 98%;
     --secondary: 240 5% 16%;
     --secondary-foreground: 0 0% 98%;
@@ -79,25 +83,27 @@
     --accent-foreground: 0 0% 98%;
 
     /* Status */
-    --success: 142 71% 45%;     /* #22C55E */
-    --warning: 38 92% 50%;      /* #F59E0B */
-    --destructive: 0 84% 60%;   /* #EF4444 */
+    --success: 142 71% 45%;       /* #22C55E */
+    --warning: 38 92% 50%;        /* #F59E0B */
+    --destructive: 0 84% 60%;     /* #EF4444 */
     --destructive-foreground: 0 0% 98%;
 
     /* Muted / borders */
     --muted: 240 5% 16%;
     --muted-foreground: 240 4% 65%; /* #A1A1AA */
-    --border: 240 5% 16%;       /* #27272A */
+    --subtle: 240 4% 45%;         /* #71717A — idle state */
+    --border: 240 5% 16%;         /* #27272A */
     --input: 240 5% 16%;
     --ring: 239 84% 67%;
 
     /* AI-native channels */
-    --agent: 189 94% 43%;       /* #06B6D4 */
-    --execution: 258 90% 66%;   /* #8B5CF6 */
-    --review: 20 90% 48%;       /* #F97316 */
+    --agent: 189 94% 43%;         /* #06B6D4 — identity */
+    --thinking: 217 91% 60%;      /* #3B82F6 — state (distinct from agent) */
+    --execution: 258 90% 66%;     /* #8B5CF6 */
+    --review: 20 90% 48%;         /* #F97316 */
     --cost: 38 92% 50%;
 
-    --radius: 0.625rem;
+    --radius: 0.5rem;             /* 8px — cards per curated spec */
   }
 
   /* Border + body — the @layer base wrapper means this beats any

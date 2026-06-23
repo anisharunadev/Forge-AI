@@ -77,9 +77,15 @@ const config: Config = {
           foreground: 'hsl(var(--primary-foreground))',
         },
 
-        // AI-native channels (NEW — the heart of Forge's visual identity)
+        // AI-native channels (curated spec — Phase 0.5 amendment)
+        // `agent` is the IDENTITY channel (cyan). `thinking` is a STATE
+        // (blue) and is intentionally a separate token.
         agent: {
           DEFAULT: 'hsl(var(--agent))',
+          foreground: 'hsl(var(--primary-foreground))',
+        },
+        thinking: {
+          DEFAULT: 'hsl(var(--thinking))',
           foreground: 'hsl(var(--primary-foreground))',
         },
         execution: {
@@ -93,6 +99,17 @@ const config: Config = {
         cost: {
           DEFAULT: 'hsl(var(--cost))',
           foreground: 'hsl(var(--primary-foreground))',
+        },
+
+        // Subtle / idle — for off-state text and quiet surfaces
+        subtle: {
+          DEFAULT: 'hsl(var(--subtle))',
+          foreground: 'hsl(var(--primary-foreground))',
+        },
+
+        // Hover surface — between card and surface, for card-on-canvas hover
+        hover: {
+          DEFAULT: 'hsl(var(--hover))',
         },
 
         // === Refreshed brand palette (kept for chart series + gradients) ===
@@ -177,13 +194,10 @@ const config: Config = {
       },
       borderRadius: {
         none: '0',
-        sm: '0.375rem',   // 6px
-        md: '0.625rem',   // 10px  <-- base (matches shadcn default)
-        lg: '0.875rem',   // 14px
-        xl: '1.125rem',   // 18px
-        '2xl': '1.5rem',  // 24px
-        '3xl': '2rem',    // 32px
-        full: '9999px',
+        sm: '0.375rem',   //  6px — controls (buttons, inputs, tabs)
+        md: '0.5rem',     //  8px — cards (matches shadcn convention)
+        lg: '0.75rem',    // 12px — modals
+        full: '9999px',   // pills, avatars
       },
       boxShadow: {
         // Subtle elevation (linear-style)
@@ -252,30 +266,40 @@ const config: Config = {
         ],
       },
       fontSize: {
-        '2xs': ['0.6875rem', { lineHeight: '1rem', letterSpacing: '0.04em' }], // 11px
-        xs:    ['0.75rem',   { lineHeight: '1.1rem' }],                          // 12px
-        sm:    ['0.875rem',  { lineHeight: '1.4rem' }],                          // 14px
-        base:  ['1rem',      { lineHeight: '1.55rem' }],                          // 16px
-        lg:    ['1.125rem',  { lineHeight: '1.6rem'  }],                          // 18px
-        xl:    ['1.25rem',   { lineHeight: '1.7rem'  }],                          // 20px
-        '2xl': ['1.5rem',    { lineHeight: '1.85rem', letterSpacing: '-0.01em' }],// 24px
-        '3xl': ['1.875rem',  { lineHeight: '2.2rem',  letterSpacing: '-0.015em' }],
-        '4xl': ['2.25rem',   { lineHeight: '2.5rem',  letterSpacing: '-0.02em'  }],
-        '5xl': ['3rem',      { lineHeight: '3.25rem', letterSpacing: '-0.025em' }],
-        '6xl': ['3.75rem',   { lineHeight: '4rem',    letterSpacing: '-0.03em'  }],
-        '7xl': ['4.5rem',    { lineHeight: '4.75rem', letterSpacing: '-0.035em' }],
+        // 1.25 modular scale per the curated spec: 12, 13, 14, 16, 20, 24, 32, 48
+        '12': ['0.75rem',   { lineHeight: '1rem',   letterSpacing: '0'        }],
+        '13': ['0.8125rem', { lineHeight: '1.2rem', letterSpacing: '0'        }],
+        '14': ['0.875rem',  { lineHeight: '1.4rem', letterSpacing: '0'        }],
+        '16': ['1rem',      { lineHeight: '1.5rem', letterSpacing: '0'        }],
+        '20': ['1.25rem',   { lineHeight: '1.75rem', letterSpacing: '-0.01em' }],
+        '24': ['1.5rem',    { lineHeight: '2rem',   letterSpacing: '-0.015em' }],
+        '32': ['2rem',      { lineHeight: '2.5rem', letterSpacing: '-0.02em'  }],
+        '48': ['3rem',      { lineHeight: '3.5rem', letterSpacing: '-0.025em' }],
+        // shadcn fallback aliases (so existing classes still resolve)
+        xs:    ['0.75rem',  { lineHeight: '1rem'   }],
+        sm:    ['0.875rem', { lineHeight: '1.25rem'}],
+        base:  ['1rem',     { lineHeight: '1.5rem' }],
+        lg:    ['1.125rem', { lineHeight: '1.75rem'}],
+        xl:    ['1.25rem',  { lineHeight: '1.75rem'}],
+        '2xl': ['1.5rem',   { lineHeight: '2rem',   letterSpacing: '-0.01em'  }],
+        '3xl': ['1.875rem', { lineHeight: '2.25rem',letterSpacing: '-0.02em'  }],
+        '4xl': ['2.25rem',  { lineHeight: '2.5rem', letterSpacing: '-0.025em' }],
+        '5xl': ['3rem',     { lineHeight: '1'      , letterSpacing: '-0.025em' }],
+        '6xl': ['3.75rem',  { lineHeight: '1'      , letterSpacing: '-0.025em' }],
+        '7xl': ['4.5rem',   { lineHeight: '1'      , letterSpacing: '-0.025em' }],
       },
       transitionDuration: {
         DEFAULT: '200ms',
-        fast: '150ms',
-        base: '200ms',
-        slow: '250ms',
-        slower: '300ms',
+        instant: '0ms',
+        micro:   '150ms',
+        standard:'200ms',
+        state:   '250ms',
       },
       transitionTimingFunction: {
-        standard: 'cubic-bezier(0.2, 0, 0, 1)',
-        decelerate: 'cubic-bezier(0, 0, 0.2, 1)',
-        accelerate: 'cubic-bezier(0.4, 0, 1, 1)',
+        DEFAULT: 'cubic-bezier(0, 0, 0.2, 1)',
+        out:   'cubic-bezier(0, 0, 0.2, 1)',
+        in:    'cubic-bezier(0.4, 0, 1, 1)',
+        inOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
       },
     },
   },
