@@ -50,7 +50,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 00-03: CI grep gate (Rule 1 enforcement + UUID literal ban)
+- [x] 00-03: CI grep gate (Rule 1 enforcement + UUID literal ban)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -171,7 +171,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 0. Pre-Roadmap Hygiene | 1/4 | In progress | 2026-06-24 (00-02) |
+| 0. Pre-Roadmap Hygiene | 2/4 | In progress | 2026-06-24 (00-02, 00-03) |
 | 1. Substrate Lock | 0/9 | Not started | - |
 | 2. Pilot Cutover Hardening | 0/15 | Not started | - |
 | 3. Pilot Volume Scaling | 0/4 | Not started | - |

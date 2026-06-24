@@ -5,16 +5,16 @@ milestone_name: milestone
 current_phase: 0
 current_phase_name: Pre-Roadmap Hygiene
 status: in_progress
-stopped_at: plan 00-02 complete (2026-06-24)
-last_updated: "2026-06-24T11:20:00.000Z"
+stopped_at: plan 00-03 complete (2026-06-24)
+last_updated: "2026-06-24T11:35:00.000Z"
 last_activity: 2026-06-24
-last_activity_desc: "Phase 0 plan 00-02 complete: node-pty and terminal-server.mjs moved into new packages/forge-terminal-server workspace package; apps/forge consumes via workspace:* link; pnpm-lock.yaml regenerated. HYG-02 closed. Phase 0 now 1/4 plans done."
+last_activity_desc: "Phase 0 plan 00-03 complete: new .github/workflows/ci-hygiene-grep.yml enforces Rule 1 (import litellm allowlist on backend/app/services/litellm_client.py) and Rule 2 (no UUID literals in apps/forge/lib/) on every push/PR to main. UUID constants moved to apps/forge/config/dev-seeds.ts (escapes the gated glob). Two pre-existing UUID literals in apps/forge/lib/{ideation,connectors}/data.ts also cleaned up. HYG-03 closed. Phase 0 now 2/4 plans done."
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 7
-  completed_plans: 2
-  percent: 14
+  completed_plans: 3
+  percent: 17
 ---
 
 # Project State
@@ -29,12 +29,12 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Current Position
 
-Phase: 0 of 5 (Pre-Roadmap Hygiene) — in progress, 1/4 plans complete (00-02 done)
+Phase: 0 of 5 (Pre-Roadmap Hygiene) — in progress, 2/4 plans complete (00-02 + 00-03 done)
 Phase 0.5 (UI Foundation): 5 of 5 plans complete (100%)
-Status: Executing Phase 0 — HYG-02 closed; HYG-01, HYG-03, HYG-04 still open
-Last activity: 2026-06-24 — Plan 00-02 complete: new `packages/forge-terminal-server/` workspace package owns the `node-pty` native binding and the 131-line PTY sidecar. `apps/forge/package.json` now consumes the package via `workspace:*`; old `apps/forge/bin/terminal-server.mjs` deleted; lockfile regenerated (+2340/-13 lines). Two auto-fixed deviations: dependency reference dropped the `@` prefix to match the package's own `name` field (pnpm workspace resolution rule), and build script updated to `mkdir -p dist && cp ...` (original one-liner omitted mkdir).
+Status: Executing Phase 0 — HYG-02 + HYG-03 closed; HYG-01, HYG-04 still open
+Last activity: 2026-06-24 — Plan 00-03 complete: two-step CI grep gate on ubuntu-24.04. UUID constants moved to apps/forge/config/dev-seeds.ts; the sibling directory escapes the apps/forge/lib/ glob without weakening the gate. STEP1_OK + STEP2_OK + sanity-test-passed all verified locally. Auto-fixed deviation: two pre-existing UUID literals in lib/ideation/data.ts and lib/connectors/data.ts cleaned up (not enumerated by plan but would have failed the post-move gate).
 
-Progress: [████░░░░░░] 14% overall; Phase 0 at 1/4 plans (HYG-02 closed)
+Progress: [█████░░░░░] 17% overall; Phase 0 at 2/4 plans (HYG-02 + HYG-03 closed)
 
 ## Performance Metrics
 
