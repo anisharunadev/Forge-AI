@@ -486,6 +486,18 @@ class DayOneBootstrapService:
             counts=counts,
         )
 
+        # 7. Post-commit seed hook (F-821 / Plan B commit 5).
+        # The kn-base reference seed is applied AFTER the bootstrap commits
+        # so a seed failure cannot roll back the project bootstrap state.
+        # If the seed is unavailable or fails, the bootstrap remains
+        # successful — the seed is a best-effort content overlay that the
+        # admin can re-trigger from /admin/seeds.
+        await self._apply_kn_base_post_commit(
+            tenant_id=tid,
+            project_id=pid,
+            actor_id=actor_id,
+        )
+
         return await self.get_status(project_id=pid, tenant_id=tid)
 
     # ----- status & rerun ---------------------------------------------------
@@ -952,6 +964,90 @@ class DayOneBootstrapService:
             tenant_id or "00000000-0000-0000-0000-000000000000", project_id
         )
         return run is not None and run.status == BootstrapStatus.COMPLETED
+
+    # ----- F-821 / Plan B commit 5: post-commit kn-base seed hook --------
+
+    async def _apply_kn_base_post_commit(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        actor_id: UUID | str | None,
+    ) -> None:
+        """Apply the ``kn-base`` reference seed after the bootstrap commits.
+
+        This hook is called from :meth:`load_baseline` AFTER every step
+        has committed, so a failure here cannot roll back the project
+        bootstrap state. The hook is best-effort: any exception is
+        logged and swallowed so the bootstrap returns ``COMPLETED``
+        even when the seed package is missing or broken.
+
+        The actor_id is a system UUID when the bootstrap is triggered
+        by F-021 onboarding; the seed's audit trail captures it so
+        the timeline shows ``triggered_by='bootstrap'``.
+        """
+        try:
+            # Lazy import: avoid a circular dep between services and
+            # the seed framework, and let the CLI exist without the
+            # bootstrap importing it.
+            from uuid import UUID as _UUID
+
+            from backend.seeds.framework.seed_runner import SeedRunner
+
+            system_actor: _UUID
+            try:
+                system_actor = _UUID(str(actor_id)) if actor_id else _UUID(int=0)
+            except (ValueError, AttributeError, TypeError):
+                system_actor = _UUID(int=0)
+
+            runner = SeedRunner(
+                session_factory=get_session_factory(),
+                audit_service=audit_service,
+                env=__import__(
+                    "app.core.config", fromlist=["settings"]
+                ).settings.environment,
+            )
+            try:
+                await runner.apply(
+                    seed_name="kn-base",
+                    actor_id=system_actor,
+                    triggered_by="bootstrap",
+                )
+                logger.info(
+                    "bootstrap.kn_base.applied",
+                    project_id=project_id,
+                    tenant_id=tenant_id,
+                )
+            except Exception as apply_exc:  # noqa: BLE001 — best-effort
+                # Seed package may not be on disk yet (Plan D ships
+                # the data); treat that as a no-op with a warning.
+                logger.warning(
+                    "bootstrap.kn_base.skipped",
+                    project_id=project_id,
+                    tenant_id=tenant_id,
+                    error=str(apply_exc),
+                )
+                try:
+                    await audit_service.record(
+                        tenant_id=tenant_id,
+                        project_id=project_id,
+                        actor_id=actor_id,
+                        action="seed.bootstrap.skipped",
+                        target_type="seed",
+                        target_id="kn-base",
+                        payload={"reason": str(apply_exc)},
+                    )
+                except Exception:  # noqa: BLE001 — audit failure must not bubble
+                    pass
+        except Exception as exc:  # noqa: BLE001 — final safety net
+            # Anything in the import path / runner construction that
+            # fails must NOT propagate to the bootstrap caller.
+            logger.warning(
+                "bootstrap.kn_base.unavailable",
+                project_id=project_id,
+                tenant_id=tenant_id,
+                error=str(exc),
+            )
 
 
 # Module-level singleton — matches the rest of the backend.
