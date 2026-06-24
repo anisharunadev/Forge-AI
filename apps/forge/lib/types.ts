@@ -123,3 +123,20 @@ export const PERSONAS: ReadonlyArray<PersonaMeta> = [
     href: '/personas/cto',
   },
 ];
+
+/**
+ * UI view-model for the demo seed (Plan F / Plan G).
+ *
+ * Derived from `SeedStatusRead` by the Plan F hook suite; the shape
+ * is kept here so `DemoBanner` and any per-Center demo-state surface
+ * (Plan G commit 4) can import it without pulling the full seeds
+ * data seam.
+ */
+export interface DemoSeedStatus {
+  isDemoTenant: boolean;
+  seedName: string;
+  applied: boolean;
+  rowCount: number;
+  checksumStatus: 'match' | 'drift' | 'unknown';
+  lastRunAt: string | null;
+}

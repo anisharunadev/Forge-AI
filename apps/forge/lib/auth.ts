@@ -19,6 +19,16 @@ export const SEED_TENANT_ID = process.env.FORA_SEED_TENANT_ID ?? 'acme-corp';
 export const SEED_TENANT_NAME =
   process.env.FORA_SEED_TENANT_NAME ?? 'Acme Corp (Dev Demo)';
 
+/**
+ * Demo-tenant slug for the `acme-corp` seed (Plan F / Plan G).
+ *
+ * Plan F's `lib/seeds/data.ts` and the Plan G `DemoBanner` use this
+ * to decide when to surface the demo-only sticky alert. Matches the
+ * `name` field in `backend/seeds/packages/acme-corp/manifest.json`
+ * (Plan E) and the slug pinned in `backend/app/services/day_one_bootstrap.py`.
+ */
+export const SEED_TENANT_SLUG = 'acme-corp';
+
 const COOKIE_NAME = 'forge.persona';
 
 export function isPersona(value: unknown): value is Persona {
