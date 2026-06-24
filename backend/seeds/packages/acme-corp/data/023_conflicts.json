@@ -1,0 +1,109 @@
+{
+  "rows": [
+    {
+      "id": "cfcfcfcf-0000-0000-0000-000000000001",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "conflict_key": "repo-ownership-checkout-vs-payment",
+      "title": "Repo ownership dispute: acme-checkout vs acme-payment-api",
+      "description": "Both acme-checkout (service 4) and acme-payment (service 5) claim ownership of the acme-payment-api repository. This contradicts ADR-001 (one-team-one-repo policy) and creates ambiguity in the deployment graph. The conflict was discovered when acme-checkout CI tried to release acme-payment-api and was rejected by the deployment gate.",
+      "severity": "medium",
+      "status": "open",
+      "sources": [
+        {
+          "source_type": "graph_edge",
+          "source_id": "acedace0-edge-acme-checkout-acme-payment",
+          "rationale": "edge from services:acme-checkout -> repos:acme-payment-api (owns)"
+        },
+        {
+          "source_type": "graph_edge",
+          "source_id": "acedace0-edge-acme-payment-acme-payment",
+          "rationale": "edge from services:acme-payment -> repos:acme-payment-api (owns)"
+        },
+        {
+          "source_type": "adr",
+          "source_id": "77777777-aaaa-aaaa-aaaa-aaaaaaaaaa01",
+          "rationale": "ADR-001 mandates one-team-one-repo"
+        }
+      ],
+      "resolution_path": "steward_review",
+      "resolved_by": null,
+      "resolved_at": null,
+      "tags": ["repo", "ownership", "adr-001", "steward-review-pending"],
+      "related_node_ids": [
+        "5e5e5e5e-0000-0000-0000-000000000004",
+        "5e5e5e5e-0000-0000-0000-000000000005",
+        "55555555-5555-5555-5555-555555550005"
+      ],
+      "is_demo": true
+    },
+    {
+      "id": "cfcfcfcf-0000-0000-0000-000000000002",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "conflict_key": "api-contract-payment-grpc-vs-rest",
+      "title": "API contract violation: acme-payment-v3 declares gRPC, ADR-006 mandates REST/JSON",
+      "description": "api-contract-payment-v3 was generated for acme-payment service 5 using gRPC + Protocol Buffers, but ADR-006 (canonical service interface policy) mandates REST/JSON for all synchronous service-to-service traffic. gRPC is allowed only for streaming-internal use cases (ADR-009). The contract was promoted to v3 without steward approval during the Q1 2027 roadmap push. This is a high-severity conflict because it breaks the canonical interface contract for the entire payment domain.",
+      "severity": "high",
+      "status": "open",
+      "sources": [
+        {
+          "source_type": "api_contract",
+          "source_id": "88888888-aaaa-aaaa-aaaa-aaaaaaaaaa05",
+          "rationale": "api-contract-payment-v3 declares gRPC transport"
+        },
+        {
+          "source_type": "adr",
+          "source_id": "77777777-aaaa-aaaa-aaaa-aaaaaaaaaa06",
+          "rationale": "ADR-006 mandates REST/JSON for sync traffic"
+        },
+        {
+          "source_type": "adr",
+          "source_id": "77777777-aaaa-aaaa-aaaa-aaaaaaaaaa09",
+          "rationale": "ADR-009 restricts gRPC to streaming internal"
+        }
+      ],
+      "resolution_path": "steward_review",
+      "resolved_by": null,
+      "resolved_at": null,
+      "tags": ["api-contract", "transport", "adr-006", "adr-009", "steward-review-pending"],
+      "related_node_ids": [
+        "88888888-aaaa-aaaa-aaaa-aaaaaaaaaa05",
+        "77777777-aaaa-aaaa-aaaa-aaaaaaaaaa06",
+        "77777777-aaaa-aaaa-aaaa-aaaaaaaaaa09"
+      ],
+      "is_demo": true
+    },
+    {
+      "id": "cfcfcfcf-0000-0000-0000-000000000003",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "conflict_key": "deploy-strategy-frontend-canary-vs-bluegreen",
+      "title": "Deployment strategy mismatch: acme-frontend uses canary, ADR-007 mandates blue/green",
+      "description": "acme-frontend (service 1) deployment pipeline still uses Argo Rollouts canary strategy from a 2025 experiment. ADR-007 (deployment strategy standardization, ratified 2026-Q2) mandates blue/green for all customer-facing services. The migration was deprioritized after the canary experiment succeeded. Low severity because canary is functionally safe, but it is a standards violation that the steward must resolve before the 2027 audit cycle.",
+      "severity": "low",
+      "status": "open",
+      "sources": [
+        {
+          "source_type": "service_config",
+          "source_id": "5e5e5e5e-0000-0000-0000-000000000001",
+          "rationale": "acme-frontend deployment.yaml uses canary strategy"
+        },
+        {
+          "source_type": "adr",
+          "source_id": "77777777-aaaa-aaaa-aaaa-aaaaaaaaaa15",
+          "rationale": "ADR-007 mandates blue/green for customer-facing services"
+        }
+      ],
+      "resolution_path": "steward_review",
+      "resolved_by": null,
+      "resolved_at": null,
+      "tags": ["deployment", "standards", "adr-007", "steward-review-pending"],
+      "related_node_ids": [
+        "5e5e5e5e-0000-0000-0000-000000000001",
+        "77777777-aaaa-aaaa-aaaa-aaaaaaaaaa15"
+      ],
+      "is_demo": true
+    }
+  ]
+}
