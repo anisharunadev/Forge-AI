@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.ai/schemas/seed-manifest.v1.json",
+  "title": "Forge Seed Manifest",
+  "description": "JSON Schema 2020-12 contract for a Forge seed package (F-821). A seed is a versioned bundle of ordered idempotent data files applied via UPSERT.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "version",
+    "tenant_type",
+    "data_files"
+  ],
+  "properties": {
+    "name": {
+      "description": "Slug identifying the seed package (matches the directory name).",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{2,40}$"
+    },
+    "version": {
+      "description": "Manifest version. Monotonic integer; increment on any data-file change.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "tenant_type": {
+      "description": "Tenant classification. Demo seeds are blocked in env=production without --allow-in-prod.",
+      "type": "string",
+      "enum": ["demo", "reference", "customer_seed"]
+    },
+    "description": {
+      "description": "Human-readable summary, surfaced in /admin/seeds.",
+      "type": "string",
+      "maxLength": 500
+    },
+    "depends_on": {
+      "description": "Ordered list of seed names that must be applied first. Checked against seed_migrations.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]{2,40}$"
+      },
+      "uniqueItems": true
+    },
+    "data_files": {
+      "description": "Ordered list of JSON data files applied via UPSERT.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "file",
+          "table",
+          "order",
+          "idempotency_key"
+        ],
+        "properties": {
+          "file": {
+            "description": "Filename relative to the seed's data/ directory.",
+            "type": "string",
+            "pattern": "^[0-9]{3}_[a-z_]+\\.json$"
+          },
+          "table": {
+            "description": "Postgres table name the file's rows are upserted into.",
+            "type": "string",
+            "pattern": "^[a-z_]+$"
+          },
+          "order": {
+            "description": "1-based application order; data files apply in ascending order.",
+            "type": "integer",
+            "minimum": 1
+          },
+          "idempotency_key": {
+            "description": "Column names forming the natural key used by ON CONFLICT.",
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "depends_on_files": {
+            "description": "Filenames that must apply before this one (must precede in order).",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[0-9]{3}_[a-z_]+\\.json$"
+            },
+            "uniqueItems": true
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      }
+    },
+    "row_counts_expected": {
+      "description": "Expected row counts per table after apply; used as a smoke test.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "post_insert_hooks": {
+      "description": "Optional named hooks that run after every data file applies successfully.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z_]+$"
+          },
+          "args": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      }
+    },
+    "production_safety": {
+      "description": "Production gating rules.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allow_in_prod"],
+      "properties": {
+        "allow_in_prod": {
+          "description": "Default false. When true, the seed may apply in env=production without --allow-in-prod.",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  }
+}
