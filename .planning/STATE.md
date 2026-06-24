@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 0
 current_phase_name: Pre-Roadmap Hygiene
 status: in_progress
-stopped_at: plan 00-03 complete (2026-06-24)
-last_updated: "2026-06-24T11:35:00.000Z"
+stopped_at: plan 00-04 complete (2026-06-24)
+last_updated: "2026-06-24T12:00:00.000Z"
 last_activity: 2026-06-24
-last_activity_desc: "Phase 0 plan 00-03 complete: new .github/workflows/ci-hygiene-grep.yml enforces Rule 1 (import litellm allowlist on backend/app/services/litellm_client.py) and Rule 2 (no UUID literals in apps/forge/lib/) on every push/PR to main. UUID constants moved to apps/forge/config/dev-seeds.ts (escapes the gated glob). Two pre-existing UUID literals in apps/forge/lib/{ideation,connectors}/data.ts also cleaned up. HYG-03 closed. Phase 0 now 2/4 plans done."
+last_activity_desc: "Phase 0 plan 00-04 complete: Pydantic v2 model_validator(mode='after') on Settings refuses to boot when DEV_AUTH_BYPASS=1 and ENVIRONMENT != development. Process exits non-zero at module import (before FastAPI boots). Three pytest tests cover block/allow/no-op branches. PART B end-to-end import-time fail-fast verification passes all three cases. HYG-04 closed. Phase 0 now 3/4 plans done."
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 7
-  completed_plans: 3
+  completed_plans: 4
   percent: 17
 ---
 
@@ -29,12 +29,12 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Current Position
 
-Phase: 0 of 5 (Pre-Roadmap Hygiene) — in progress, 2/4 plans complete (00-02 + 00-03 done)
+Phase: 0 of 5 (Pre-Roadmap Hygiene) — in progress, 3/4 plans complete (00-02 + 00-03 + 00-04 done)
 Phase 0.5 (UI Foundation): 5 of 5 plans complete (100%)
-Status: Executing Phase 0 — HYG-02 + HYG-03 closed; HYG-01, HYG-04 still open
-Last activity: 2026-06-24 — Plan 00-03 complete: two-step CI grep gate on ubuntu-24.04. UUID constants moved to apps/forge/config/dev-seeds.ts; the sibling directory escapes the apps/forge/lib/ glob without weakening the gate. STEP1_OK + STEP2_OK + sanity-test-passed all verified locally. Auto-fixed deviation: two pre-existing UUID literals in lib/ideation/data.ts and lib/connectors/data.ts cleaned up (not enumerated by plan but would have failed the post-move gate).
+Status: Executing Phase 0 — HYG-02 + HYG-03 + HYG-04 closed; HYG-01 still open
+Last activity: 2026-06-24 — Plan 00-04 complete: Pydantic v2 model_validator(mode='after') on Settings refuses to boot when DEV_AUTH_BYPASS=1 and ENVIRONMENT != development. Process exits non-zero at module import. Three pytest tests cover block/allow/no-op branches. End-to-end PART B verification passes all three scenarios (bypass+prod fails with ValidationError, development+no-bypass passes, defaults pass). Auto-fixed deviation: dev_auth_bypass field added (was missing — validator needs a target).
 
-Progress: [█████░░░░░] 17% overall; Phase 0 at 2/4 plans (HYG-02 + HYG-03 closed)
+Progress: [█████░░░░░] 17% overall; Phase 0 at 3/4 plans (HYG-02 + HYG-03 + HYG-04 closed)
 
 ## Performance Metrics
 
