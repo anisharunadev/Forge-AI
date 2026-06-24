@@ -12,6 +12,7 @@
  */
 
 import type { LifecycleVerb, RunId, RunRecord, StageRecord } from './types';
+import { DEV_TENANT_UUID, SEED_RUN_UUID, SEED_RUN_ALIAS } from '../config/dev-seeds';
 
 export { FORGE_WS_BASE_URL } from './forge-api';
 
@@ -19,13 +20,30 @@ const ENV_BASE = process.env.FORA_FORGE_API_URL;
 
 function resolveStubPort(): string | null {
   if (ENV_BASE) return null; // env wins
+  // Node-only branch. Two layered defenses so webpack can compile the
+  // client bundle without choking on the `node:` URI scheme:
+  //
+  //   1. `typeof window !== 'undefined'` is the runtime guard — the
+  //      browser never reads `.stub-port` (it doesn't exist there), so
+  //      we skip the FS lookup entirely. The env var or the default
+  //      `http://localhost:4000` is used instead via `PUBLIC_BASE`.
+  //
+  //   2. `(0, eval)('require')` defeats webpack's *static* analysis of
+  //      `require('node:fs')`. Webpack never sees the `node:` URI as a
+  //      literal string, so it doesn't try to bundle Node built-ins
+  //      for the browser (the failure mode was
+  //      `UnhandledSchemeError: Reading from "node:fs"`). At runtime
+  //      in Node, `(0, eval)('require')` returns the real CommonJS
+  //      `require` — identical behaviour to the original code.
+  if (typeof window !== 'undefined') return null;
   try {
     // Same trick as `app/api/proxy/[...path]/route.ts` — the dev stub
     // writes `.stub-port` on startup, so server-side fetches in
     // `lib/api.ts` (runs, etc.) resolve to the same port the UI hits.
     // Production: env var takes over; this is a no-op.
-    const fs = require('node:fs') as typeof import('node:fs');
-    const path = require('node:path') as typeof import('node:path');
+    const req = (0, eval)('require') as NodeJS.Require;
+    const fs = req('node:fs') as typeof import('node:fs');
+    const path = req('node:path') as typeof import('node:path');
     const portFile = path.join(process.cwd(), '.stub-port');
     if (fs.existsSync(portFile)) {
       const p = fs.readFileSync(portFile, 'utf8').trim();
@@ -45,8 +63,6 @@ const PUBLIC_BASE =
   ENV_BASE ??
   (STUB_PORT ? `http://localhost:${STUB_PORT}` : 'http://localhost:4000');
 
-
-const DEV_TENANT_UUID = '00000000-0000-4000-8000-000000000ace';
 
 function base(): string {
   return typeof window === 'undefined' ? SERVER_BASE : PUBLIC_BASE;
@@ -193,17 +209,9 @@ export async function getRunsView(): Promise<RunsView> {
 }
 
 /**
- * Canonical seed run id written by `scripts/dev-up.sh` step 6c. The
- * orchestrator maps the human-friendly alias `demo-run-001` to this
- * UUID on `GET /v1/runs/{id}` and `GET /v1/runs/{id}/stages` (see
- * `DEMO_RUN_ALIAS` in apps/orchestrator/src/server.ts). Persona pages
- * render the alias next to the UUID so the smoke gate's
- * `grep 'demo-run-001'` and the human operator's
- * "where is the seeded run?" question both resolve to the same row.
+ * `SEED_RUN_UUID` and `SEED_RUN_ALIAS` are imported from
+ * `apps/forge/config/dev-seeds.ts`. See that file for provenance.
  */
-export const SEED_RUN_UUID = '00000000-0000-4000-8000-000000000001';
-export const SEED_RUN_ALIAS = 'demo-run-001';
-
 export function seedAliasFor(id: string): string | null {
   return id === SEED_RUN_UUID ? SEED_RUN_ALIAS : null;
 }
@@ -221,6 +229,46 @@ export async function runLifecycle(
   return request<RunRecord>(`/v1/runs/${encodeURIComponent(id)}/${verb}`, {
     method: 'POST',
     idempotencyKey: key,
+  });
+}
+
+/**
+ * Request body for `POST /v1/runs` — creating a new run. Mirrors
+ * the orchestrator's `SDLCRunCreateRequest` shape (FORA-50 §4.1).
+ *
+ *   - `project_id`     is required by the orchestrator contract; the
+ *                      UI defaults to the canonical seed project
+ *                      `project-forge-demo`.
+ *   - `initial_context` is a free-form string the human operator
+ *                      passes as the run's intent — the orchestrator
+ *                      stores it in the run's `context` envelope and
+ *                      exposes it to the first stage (ideation).
+ *   - `workspace_path` and `repo_path` are optional; the orchestrator
+ *                      falls back to its tenant-level defaults when
+ *                      the caller omits them.
+ */
+export interface CreateRunInput {
+  readonly project_id: string;
+  readonly initial_context?: string;
+  readonly workspace_path?: string;
+  readonly repo_path?: string;
+}
+
+/**
+ * POST /v1/runs — create a new run. The orchestrator returns 201 with
+ * the freshly-seeded `RunRecord` (id, status: 'created', current_stage:
+ * 'ideation'). The caller is expected to `router.push(\`/runs/\${id}\`)`
+ * on success so the operator lands directly on the new run's detail view.
+ *
+ * Idempotency-Key is sent on every call so the audit log captures the
+ * operator's click and the orchestrator can dedupe accidental retries.
+ */
+export async function createRun(input: CreateRunInput): Promise<RunRecord> {
+  const key = crypto.randomUUID();
+  return request<RunRecord>('/v1/runs', {
+    method: 'POST',
+    idempotencyKey: key,
+    body: JSON.stringify(input),
   });
 }
 
