@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: milestone
 current_phase: 0
 current_phase_name: Pre-Roadmap Hygiene
-status: ready
-stopped_at: Phase 0.5 complete; Phase 0 next (2026-06-23)
-last_updated: "2026-06-23T23:30:00.000Z"
-last_activity: 2026-06-23
-last_activity_desc: Phase 0.5 UI Foundation closed at 5/5 plans (100%): SUMMARY files generated for 0.5-05 + 0.5-06; AuditTimelineVirtualized wired into `/audit` (closes 0.5-06 Task 7); 20/20 tests pass in tests/graph + tests/ai-native + tests/audit. Phase 0 (Pre-Roadmap Hygiene) ready to execute — 4 plans ready, all deps met.
+status: in_progress
+stopped_at: plan 00-02 complete (2026-06-24)
+last_updated: "2026-06-24T11:20:00.000Z"
+last_activity: 2026-06-24
+last_activity_desc: "Phase 0 plan 00-02 complete: node-pty and terminal-server.mjs moved into new packages/forge-terminal-server workspace package; apps/forge consumes via workspace:* link; pnpm-lock.yaml regenerated. HYG-02 closed. Phase 0 now 1/4 plans done."
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 0
-  total_plans: 5
-  completed_plans: 5
-  percent: 100
+  total_plans: 7
+  completed_plans: 2
+  percent: 14
 ---
 
 # Project State
@@ -29,12 +29,12 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Current Position
 
-Phase: 0 of 5 (Pre-Roadmap Hygiene) — next up
+Phase: 0 of 5 (Pre-Roadmap Hygiene) — in progress, 1/4 plans complete (00-02 done)
 Phase 0.5 (UI Foundation): 5 of 5 plans complete (100%)
-Status: Ready to execute Phase 0
-Last activity: 2026-06-23 — Phase 0.5 closed: SUMMARY files generated for 0.5-05 + 0.5-06; AuditTimelineVirtualized wired into `/audit` (closes 0.5-06 Task 7); 20/20 tests pass in tests/graph + tests/ai-native + tests/audit. Phase 0 has 4 plans ready (00-01 Tailwind drift, 00-02 node-pty refactor, 00-03 CI grep gate, 00-04 DEV_AUTH_BYPASS startup guard).
+Status: Executing Phase 0 — HYG-02 closed; HYG-01, HYG-03, HYG-04 still open
+Last activity: 2026-06-24 — Plan 00-02 complete: new `packages/forge-terminal-server/` workspace package owns the `node-pty` native binding and the 131-line PTY sidecar. `apps/forge/package.json` now consumes the package via `workspace:*`; old `apps/forge/bin/terminal-server.mjs` deleted; lockfile regenerated (+2340/-13 lines). Two auto-fixed deviations: dependency reference dropped the `@` prefix to match the package's own `name` field (pnpm workspace resolution rule), and build script updated to `mkdir -p dist && cp ...` (original one-liner omitted mkdir).
 
-Progress: [██████████] 100% (Phase 0.5) — Phase 0 ready, not yet started
+Progress: [████░░░░░░] 14% overall; Phase 0 at 1/4 plans (HYG-02 closed)
 
 ## Performance Metrics
 
@@ -48,7 +48,7 @@ Progress: [██████████] 100% (Phase 0.5) — Phase 0 ready, n
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 0. Pre-Roadmap Hygiene | 0 | 4 | — |
+| 0. Pre-Roadmap Hygiene | 1 | 4 | ~50m |
 | 0.5. UI Foundation | 5 | 5 | <40m |
 | 1. Substrate Lock | 0 | 9 | — |
 | 2. Pilot Cutover Hardening | 0 | 15 | — |
@@ -64,10 +64,14 @@ Progress: [██████████] 100% (Phase 0.5) — Phase 0 ready, n
 
 **Recent Trend:**
 
-- Last 5 plans: Phase 0.5-02 (StatusPill + 7 badge migrations + 3 boundaries), Phase 0.5-06 (5 typed React Flow nodes + 4 graph views + virtualized audit/approval timelines + 3 AI-native panels), Phase 0.5-03 (shell: sidebar/topbar/CMD-K palette/breadcrumbs/mobile drawer/page container), Phase 0.5-04 (DataTable/Form/Chart + 9 missing shadcn primitives), Phase 0.5 close-out (SUMMARYs + AuditTimelineVirtualized wire-up)
-- Trend: Phase 0.5 UI Foundation closed at 5/5 plans, 100%; Phase 0 (Pre-Roadmap Hygiene) ready to execute
+- Last 5 plans: Phase 0-02 (node-pty + terminal-server.mjs moved to packages/forge-terminal-server workspace package; HYG-02 closed), Phase 0.5-02 (StatusPill + 7 badge migrations + 3 boundaries), Phase 0.5-06 (5 typed React Flow nodes + 4 graph views + virtualized audit/approval timelines + 3 AI-native panels), Phase 0.5-03 (shell: sidebar/topbar/CMD-K palette/breadcrumbs/mobile drawer/page container), Phase 0.5-04 (DataTable/Form/Chart + 9 missing shadcn primitives)
+- Trend: Phase 0 in progress; HYG-02 closed; HYG-01/03/04 still open
 
 ## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 5 added: Custom Workflows — n8n-style node editor for the Command Center (F-018). Out-of-band workstream inserted mid-milestone; depends on nothing. Plans 5-01 (Phase C: executor + sandbox), 5-02 (Phase D: editor UI), 5-03 (Phase E: verification + audit + docs) ready to execute.
 
 ### Decisions
 
@@ -119,6 +123,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-23T23:30:00.000Z
-Stopped at: Phase 0.5 UI Foundation closed (5/5 plans, 100%); Phase 0 (Pre-Roadmap Hygiene) ready to execute next
+Last session: 2026-06-24T09:21:21.704Z
+Stopped at: context exhaustion at 75% (2026-06-24)
 Resume file: None

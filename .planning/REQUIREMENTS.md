@@ -56,7 +56,7 @@ Pilot-readiness milestone. Each requirement maps to a roadmap phase.
 ### Hygiene
 
 - [ ] **HYG-01**: **Tailwind drift reconciled** — `CLAUDE.md` and `overview.md` updated to "Tailwind 3.4.x" (matching reality), OR committed Tailwind 4 migration scope.
-- [ ] **HYG-02**: **`node-pty` package refactor** — `node-pty` + `terminal-server.mjs` moved into `packages/forge-terminal-server`.
+- [x] **HYG-02**: **`node-pty` package refactor** — `node-pty` + `terminal-server.mjs` moved into `packages/forge-terminal-server`.
 - [ ] **HYG-03**: **CI grep gate** — only `backend/app/services/litellm_client.py` may `import litellm`; no UUID literals in `apps/forge/lib/`.
 - [ ] **HYG-04**: **Startup assertion** — refuses to boot when `DEV_AUTH_BYPASS=1` and `environment != "development"`.
 
@@ -107,7 +107,7 @@ Deferred to post-pilot. Tracked but not in current roadmap.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | HYG-01 | Phase 0 | Pending |
-| HYG-02 | Phase 0 | Pending |
+| HYG-02 | Phase 0 | Complete (2026-06-24, plan 00-02) |
 | HYG-03 | Phase 0 | Pending |
 | HYG-04 | Phase 0 | Pending |
 | OPS-01 | Phase 1 | Pending |

@@ -20,6 +20,7 @@ The 5-phase cutover is driven by risk reduction: hygiene first (so plan-phase as
 - [ ] **Phase 2: Pilot Cutover Hardening** - Pilot UI (wizard, KG, Audit, Approval, Constitution rulebook, Connector Marketplace, Terminal), blue/green deploy, cross-region audit, circuit-breakers, RBAC
 - [ ] **Phase 3: Pilot Volume Scaling** - Tune conflict budget, AGE plan observation, LiteLLM quota, audit chain anchors after 30 days of pilot traffic
 - [ ] **Phase 4: Expansion (Multi-Tenant Verification)** - Tenant-isolation smoke test, required tenant_id/project_id, multi-region LiteLLM, per-tenant CMK (deferred to tenant #3/#5)
+- [ ] **Phase 5: Custom Workflows (F-018)** - n8n-style node editor for the Command Center (Phase A migration + Phase B persistence already complete; this phase delivers C executor+sandbox, D editor UI, E verification+audit+docs)
 
 ## Phase Details
 
@@ -45,7 +46,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 00-02: `node-pty` refactor into `packages/forge-terminal-server`
+- [x] 00-02: `node-pty` refactor into `packages/forge-terminal-server`
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -170,13 +171,36 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 0. Pre-Roadmap Hygiene | 0/4 | Not started | - |
+| 0. Pre-Roadmap Hygiene | 1/4 | In progress | 2026-06-24 (00-02) |
 | 1. Substrate Lock | 0/9 | Not started | - |
 | 2. Pilot Cutover Hardening | 0/15 | Not started | - |
 | 3. Pilot Volume Scaling | 0/4 | Not started | - |
 | 4. Expansion (Multi-Tenant Verification) | 0/5 | Not started | - |
+| 5. Custom Workflows (F-018) | 0/3 | Planned, ready to execute | - |
 
 **UI hint**: Phase 2 is the load-bearing UI phase (PILOT-01 wizard, PILOT-03 KG, PILOT-04/05 Audit + Approval Timelines, PILOT-06 Terminal, PILOT-07 Marketplace, PILOT-09 Constitution rulebook, PILOT-10 router coverage). Phases 0/1/3/4 ship backend substrate and are not UI-driven.
+
+### Phase 5: Custom Workflows — n8n-style node editor for the Command Center (F-018)
+
+**Goal:** Land a tenant-scoped, n8n-style workflow editor under `/custom-workflows` so users can compose, save, and re-run their own DAGs of forge-* commands, manual approval gates, and sandboxed scripts. Phases A (React Flow v11→v12 migration) and B (backend persistence + REST API) are already complete. This phase delivers C (executor + sandbox + missing `/commands/{name}/run` route), D (frontend editor + runner UI), and E (verification + audit + docs).
+**Mode:** mvp
+**Depends on:** Nothing (workstream is independent of Phases 0–4 — Phase 5 was added mid-milestone to track the custom-workflows workstream)
+**Requirements:** F-018, Rule 2 (multi-tenancy), Rule 3 (approval gates), Rule 4 (typed artifacts), Rule 6 (auditability)
+**Success Criteria** (what must be TRUE):
+
+  1. `WorkflowExecutor` (DAG runner) and `ScriptSandbox` (RLIMIT + seccomp + no-network) are wired into the FastAPI backend; an approval-decide call resumes a paused run with idempotency.
+  2. `POST /api/v1/commands/{name}/run` is the canonical dispatch route; `useForgeCommands().run()` no longer falls back to "Backend unreachable — simulated success".
+  3. SSE stream at `/api/v1/workflows/runs/{runId}/events` emits `step_started / step_succeeded / step_failed / approval_pending / run_completed` events.
+  4. `/custom-workflows` route ships the editor (palette + canvas + properties panel) and run-history drawer; vitest covers editor + round-trip; no direct `reactflow@11` import remains.
+  5. Every workflow step writes an `AuditRecord`; cross-tenant denial is enforced at the API layer; `/gsd-secure-phase` reports no high-severity findings on the script sandbox.
+
+**Plans:** 3 plans (5-01: Phase C executor + sandbox, 5-02: Phase D frontend editor, 5-03: Phase E verification + audit + docs)
+
+Plans:
+
+- [ ] 5-01: Workflow executor (DAG runner) + script sandbox + missing `/commands/{name}/run` route + approvals-resume hook
+- [ ] 5-02: Frontend custom-workflows editor (palette + canvas + properties panel) + runner UI + run-history drawer + vitest
+- [ ] 5-03: Verification (e2e round-trip) + security audit (`/gsd-secure-phase`) + UI audit (`/gsd-ui-review`) + docs (`REQUIREMENTS.md`, `STATE.md`, `CLAUDE.md`)
 
 ---
 *Roadmap created: 2026-06-23*
