@@ -1,0 +1,4989 @@
+{
+  "rows": [
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000001",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "de0161ae6b93773b7d9921ae2407ca91d1f06730329d2d92b25cb266542e372c",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A001: Use structured logging",
+        "number": 1,
+        "decision_summary": "Adopt Use structured logging platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Use structured logging adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000002",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "105df67b4e538217ebf5c07b1b14d47cdf33bc41fe43f21820d434d45d2d44f2",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A002: Adopt dependency pinning",
+        "number": 2,
+        "decision_summary": "Adopt Adopt dependency pinning platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Adopt dependency pinning adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000003",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "a0a944380c2f58d295a04690c55b3cf1dea8b8c5e111406c100e3dd2f0e035ce",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A003: Enforce code review SLA",
+        "number": 3,
+        "decision_summary": "Adopt Enforce code review SLA platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Enforce code review SLA adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000004",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "417655f7488988b6244bca6a9c27d3957d7b299f97284d0395fee2fe9728d75a",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A004: Standardize error responses",
+        "number": 4,
+        "decision_summary": "Adopt Standardize error responses platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Standardize error responses adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000005",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "37ef55f72f0db5be96da6c3db1560bdd0197b16607a68fff8d22beac66b80a76",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A005: Adopt feature flags",
+        "number": 5,
+        "decision_summary": "Adopt Adopt feature flags platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Adopt feature flags adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000006",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "bce632a6176cc226328f43aef8170c05e6aadec5c3875bc55d5e425b8a643a82",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A006: Cache invalidation strategy",
+        "number": 6,
+        "decision_summary": "Adopt Cache invalidation strategy platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Cache invalidation strategy adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000007",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "5109fbc8a8777fa8cbc373a8a68c122031c007ceec740745f97de6f39674ed85",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A007: Use idempotency keys",
+        "number": 7,
+        "decision_summary": "Adopt Use idempotency keys platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Use idempotency keys adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000008",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "5f0f054b47cea9ae3189f25c1f239b544f898c04c4517743301b2da8ee52c831",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A008: Standardize pagination",
+        "number": 8,
+        "decision_summary": "Adopt Standardize pagination platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Standardize pagination adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000009",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "5ffa5825f1255bd2bc8e57a72f4bd5f484db1fd860f4e2e26226c2d0ee4cad05",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A009: Add circuit breakers",
+        "number": 9,
+        "decision_summary": "Adopt Add circuit breakers platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Add circuit breakers adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000010",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "211e8949878eb799c2c2adaee20ddd4920053498a86997e26c23d50089262676",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A010: Adopt tracing context propagation",
+        "number": 10,
+        "decision_summary": "Adopt Adopt tracing context propagation platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Adopt tracing context propagation adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000011",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "f037d8dd6faa84ab04db105aeecc714acb7da04cc67c224265bb87e91eba3fa2",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A011: Standardize health checks",
+        "number": 11,
+        "decision_summary": "Adopt Standardize health checks platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Standardize health checks adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000012",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "b90922016f6e392787efae4a4d0fb23311bc9bce4cc9b72bae3f7dc49558fad9",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A012: Use connection pooling",
+        "number": 12,
+        "decision_summary": "Adopt Use connection pooling platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Use connection pooling adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000013",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "8d8241b5853bc9896e98124b1a7d71c81a8c2b85d16ef95dc74d1708c9a5a92a",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A013: Implement bulkheads",
+        "number": 13,
+        "decision_summary": "Adopt Implement bulkheads platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Implement bulkheads adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000014",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "9f70281027e1d666d7f5bac36f841ecf1db55765cc40d3899ee72ed48859c13d",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A014: Adopt chaos engineering",
+        "number": 14,
+        "decision_summary": "Adopt Adopt chaos engineering platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Adopt chaos engineering adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000015",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "fa02b609390ba315c7f17c3ba67e4656041d466a79c120e0c8424c2c69dff485",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A015: Standardize secret rotation",
+        "number": 15,
+        "decision_summary": "Adopt Standardize secret rotation platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Standardize secret rotation adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000016",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "cae221da94b918c43fb705f48b44fd40cf0dd179eaf9cc3094c0d0e9093000d3",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A016: Add audit log streaming",
+        "number": 16,
+        "decision_summary": "Adopt Add audit log streaming platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Add audit log streaming adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000017",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "dc791c1ded6302782049b57b9624bf6dea9fa3418bcff8699e4c746c0ff6af96",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A017: Adopt multi-AZ failover",
+        "number": 17,
+        "decision_summary": "Adopt Adopt multi-AZ failover platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Adopt multi-AZ failover adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000018",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "f0e03409dba1327b9d2edbdc5bc87d811efd4066aa6c16d5e36991370a7bf512",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A018: Use canary for ML models",
+        "number": 18,
+        "decision_summary": "Adopt Use canary for ML models platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Use canary for ML models adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000019",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "a788926aad69c57a33832e30fd91457bda47c3be54aaa5139085af46bcba3696",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A019: Standardize metrics",
+        "number": 19,
+        "decision_summary": "Adopt Standardize metrics platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Standardize metrics adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000020",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "2d4e9ca8a2afac0f87c057b295ffab7fe03cb54c150700efeb35873e8e38f07e",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A020: Adopt schema versioning",
+        "number": 20,
+        "decision_summary": "Adopt Adopt schema versioning platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Adopt schema versioning adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000021",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "12778f62498c035dc8829d1f0358f9033012133f5c421d9227db63aa89bc4a6c",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A021: Use protobuf for service-to-service",
+        "number": 21,
+        "decision_summary": "Adopt Use protobuf for service-to-service platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Use protobuf for service-to-service adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000022",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "69fefca1017b23079dcb072c55345aee385a11aae36cf9e170a89af1cff73421",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A022: Standardize timeout budgets",
+        "number": 22,
+        "decision_summary": "Adopt Standardize timeout budgets platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Standardize timeout budgets adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000023",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "ad6bbe13f4f1c19dd5fd7aa181708d9dbaa16d81f7bc891c49a4a39151d0c9c4",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A023: Add GDPR data export",
+        "number": 23,
+        "decision_summary": "Adopt Add GDPR data export platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Add GDPR data export adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000024",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "aeb82877fe4b4286e1305a5415e185623fc74dc752a0ed35523dd1e992021691",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A024: Adopt JWT rotation",
+        "number": 24,
+        "decision_summary": "Adopt Adopt JWT rotation platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Adopt JWT rotation adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000025",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "376cc5e60caace7dd887ac90c8c114ea17646998c0787e8c3f16fede37d85cef",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A025: Standardize webhook signing",
+        "number": 25,
+        "decision_summary": "Adopt Standardize webhook signing platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Standardize webhook signing adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000026",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "18cf4ba67af194fcac26d2237ca5f88f1b598a00f1b70da4a2f050e99cbb3df8",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A026: Add SBOM attestation",
+        "number": 26,
+        "decision_summary": "Adopt Add SBOM attestation platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Add SBOM attestation adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000027",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "4af125f21974d68e5492b60bcbc4dde988e78874f5ec9922075a4bcc043437dc",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A027: Standardize runbook format",
+        "number": 27,
+        "decision_summary": "Adopt Standardize runbook format platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Standardize runbook format adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000028",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "276e013f03a3149337014df4a9d0bbac03b8ccca50d7f9233c8b9da5a36bcda6",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A028: Use ephemeral preview envs",
+        "number": 28,
+        "decision_summary": "Adopt Use ephemeral preview envs platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Use ephemeral preview envs adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000029",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "1eea0a59ab04521bf345c4ae0a5614a92619d31790b37b677f6d245ef95e6832",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A029: Adopt progressive delivery",
+        "number": 29,
+        "decision_summary": "Adopt Adopt progressive delivery platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Adopt progressive delivery adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000030",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "adr",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "2136d3f2c03b4955461bc45be846545a399efe26ad6334b2a181722105d8a3a9",
+      "payload": {
+        "is_demo": true,
+        "title": "ADR-A030: Standardize incident command",
+        "number": 30,
+        "decision_summary": "Adopt Standardize incident command platform-wide.",
+        "sections": {
+          "context": "Platform consistency requirement.",
+          "decision": "Standardize incident command adopted.",
+          "consequences": {
+            "positive": [
+              "Standardization across 12 services"
+            ],
+            "negative": [
+              "Initial adoption cost"
+            ]
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000031",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "4517b3ed73badf7f2ebac2371106b983b8111dc946c426cdd300040a91efce8b",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-001",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #001",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/1": {
+            "get": {
+              "summary": "Internal endpoint #1"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000032",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "dcd8cc822fce114d91b480c4c049402d2e96a8f862ed295c149b16aab6b84347",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-002",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #002",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/2": {
+            "get": {
+              "summary": "Internal endpoint #2"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000033",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "80547435a6f86a3b791752ed10cd8198ad82255374a14e3fce2878934d8344b2",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-003",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #003",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/3": {
+            "get": {
+              "summary": "Internal endpoint #3"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000034",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "028b9e265965e333e0c15b93dce64c4ba66e16ae5ffffc6f7bdaaafbd39dff70",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-004",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #004",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/4": {
+            "get": {
+              "summary": "Internal endpoint #4"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000035",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "854319693b152f7740e9eeb95e2f7d65e5379112cab4a5c6a9674eda5dbdfe03",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-005",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #005",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/5": {
+            "get": {
+              "summary": "Internal endpoint #5"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000036",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "25c18b8d37e3fc67ab4b4842da24b136a70505ec937377426de2d7a2b51a13cf",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-006",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #006",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/6": {
+            "get": {
+              "summary": "Internal endpoint #6"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000037",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "f5371cfa42086846f773819688a49765a538a3b5aa8490e80f071109921cbe41",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-007",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #007",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/7": {
+            "get": {
+              "summary": "Internal endpoint #7"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000038",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "b7b5c763bd5b17eaff4e8e4af704ce87b99130a2fc0e952ed5f32b1a3010c03c",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-008",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #008",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/8": {
+            "get": {
+              "summary": "Internal endpoint #8"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000039",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "3b441d93054249c48f9cca5ca98d6c4ae39be01cf33c638e4a550a0d1e8b9d46",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-009",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #009",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/9": {
+            "get": {
+              "summary": "Internal endpoint #9"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000040",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "837e5806df6e4a731d068b4d110314a3bf6e17e0397ee4908261c73517cbd22c",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-010",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #010",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/10": {
+            "get": {
+              "summary": "Internal endpoint #10"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000041",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "05908f6f6932a07820d356fda12022b2b2329015e38e7f5e1921468ece2f6213",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-011",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #011",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/11": {
+            "get": {
+              "summary": "Internal endpoint #11"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000042",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "2fda1b2c54226aad8a0d934550c938144cc131c09dafa3c2c7e19d6541b98267",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-012",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #012",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/12": {
+            "get": {
+              "summary": "Internal endpoint #12"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000043",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "7776bf866be5ed6df97388d006bc94ba849757861fd49429dd6d19266fa1b82c",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-013",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #013",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/13": {
+            "get": {
+              "summary": "Internal endpoint #13"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000044",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "f10f48d877e2538807c64c69626f80f9730bbb0ecb7edaf5aab06bf74acb833e",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-014",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #014",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/14": {
+            "get": {
+              "summary": "Internal endpoint #14"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000045",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "618b6b3198a73254957a337fd68db9f6bd28bb650a7b305fb1ea9bbef9844169",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-015",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #015",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/15": {
+            "get": {
+              "summary": "Internal endpoint #15"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000046",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "f106541f401c0e54ad2bf8c62e24559b3d62f0e2dbec34da54acdbc248121182",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-016",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #016",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/16": {
+            "get": {
+              "summary": "Internal endpoint #16"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000047",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "e800dc941fab5a738f5a6c7ba5c23ca091c40a0b5fdb55cd624c361053be879a",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-017",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #017",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/17": {
+            "get": {
+              "summary": "Internal endpoint #17"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000048",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "673e8963ac7747b5765d1fea7982182f26e3fb1190454896899b82d784507644",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-018",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #018",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/18": {
+            "get": {
+              "summary": "Internal endpoint #18"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000049",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "a962380b4d2b7e92d19560f02b7a229d36d56f9e39447806c2356286f36ac5d7",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-019",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #019",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/19": {
+            "get": {
+              "summary": "Internal endpoint #19"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000050",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "9277c2fe2d7a3fd53e061a55eb9caf8e9280e1fb6f8698ca1da2369906f80160",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-020",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #020",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/20": {
+            "get": {
+              "summary": "Internal endpoint #20"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000051",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "9b05f91b122d5edc299308770fb677647ddaebd29a2afb527fbbaa07b0fcab75",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-021",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #021",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/21": {
+            "get": {
+              "summary": "Internal endpoint #21"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000052",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "461b3d2edad7fcdc7d01f20c6cb387304898f965d75b99e5349bf32b8d71b1c2",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-022",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #022",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/22": {
+            "get": {
+              "summary": "Internal endpoint #22"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000053",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "768310cd9f8db426860b8f9918cebff63840cbbc363453152186e6a44816f5cc",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-023",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #023",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/23": {
+            "get": {
+              "summary": "Internal endpoint #23"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000054",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "a3151caa855834c3748c1e931b76b08d0c1153a63bfb1415dde35cb8774e2c93",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-024",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #024",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/24": {
+            "get": {
+              "summary": "Internal endpoint #24"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000055",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "1828d8e95e16ed36b5f82d2c3a3babfa91179da45a0ccdbde903a80fcfbee6a4",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-025",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #025",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/25": {
+            "get": {
+              "summary": "Internal endpoint #25"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000056",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "7cea41cebbb892373f4edd1eade59541a367b999b187529f031e04a6f1c00941",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-026",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #026",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/26": {
+            "get": {
+              "summary": "Internal endpoint #26"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000057",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "92957f9daefba2853ea9a0b6510366e8867aae9097c4408fec01bc8d10adcaae",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-027",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #027",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/27": {
+            "get": {
+              "summary": "Internal endpoint #27"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000058",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "cf510a0bee9ed9389e8dc280902d9d1239ca331f10ee66966d780cc83b10c51a",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-028",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #028",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/28": {
+            "get": {
+              "summary": "Internal endpoint #28"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000059",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "c8eeff9332012373729d18a222fb48224e4fdbb8edb0e729324cafcdb179e7e2",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-029",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #029",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/29": {
+            "get": {
+              "summary": "Internal endpoint #29"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000060",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "api_contract",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "091432856fd5b9a04ceb421f99c28aee0fe45b2c7220e4fb092970cef8ee1f98",
+      "payload": {
+        "is_demo": true,
+        "name": "acme-internal-030",
+        "version": "0.1.0",
+        "spec_type": "openapi",
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Acme Internal API #030",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/internal/30": {
+            "get": {
+              "summary": "Internal endpoint #30"
+            }
+          }
+        }
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000061",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "88fb18effa158900bcb7fbcb67c1a475044b7cef2dd490a4c99d0db0ba089999",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: payment outage recovery",
+        "scenario": "payment outage recovery",
+        "severity": "P1",
+        "estimated_resolution_minutes": 30,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000062",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "5e3053e035e80f3c64f3a97bfd3d78de91d9bd4a8bfd65aa256e672792b2eb9b",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: checkout 5xx spike",
+        "scenario": "checkout 5xx spike",
+        "severity": "P2",
+        "estimated_resolution_minutes": 35,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000063",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "01483c0d92b564cbb891dd263ce86f1d6ee3103af0ffebd358e7e89269caf80a",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: search latency degradation",
+        "scenario": "search latency degradation",
+        "severity": "P3",
+        "estimated_resolution_minutes": 40,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000064",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "11f8324a864434c166a82ea6590eeda7853668fe2e130b132a4e17916f46330b",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: cart write-path failure",
+        "scenario": "cart write-path failure",
+        "severity": "P1",
+        "estimated_resolution_minutes": 45,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000065",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "b3638f9e773dc380a3e6ff3babba2114f2a4b3d11685d57e10edad4973c77e90",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: fulfillment saga compensation",
+        "scenario": "fulfillment saga compensation",
+        "severity": "P2",
+        "estimated_resolution_minutes": 50,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000066",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "9fbb475328d79b9c0a4999764c5703f99802fad6bbc65f3d940b5a9c54bcfc05",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: shipping rate timeout",
+        "scenario": "shipping rate timeout",
+        "severity": "P3",
+        "estimated_resolution_minutes": 55,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000067",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "5b7374ccb25a3b6c8d1c6f4dac202b833e14f4cf2f1da638281af51af5a01e6f",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: notification queue backlog",
+        "scenario": "notification queue backlog",
+        "severity": "P1",
+        "estimated_resolution_minutes": 60,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000068",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "f623aa25f3e2a35e6b0def408d2e451f11d848e426b26d53f5c97900aad624c0",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: inventory drift detection",
+        "scenario": "inventory drift detection",
+        "severity": "P2",
+        "estimated_resolution_minutes": 65,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000069",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "f7530f0e8a7ae7bf30c1757250c50df9b2f4ccbc81486bdc444ec1f05d4f5ece",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: catalog cache stampede",
+        "scenario": "catalog cache stampede",
+        "severity": "P3",
+        "estimated_resolution_minutes": 70,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000070",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "d887ec7734ac5e4f770f16d810c4aed9594f78bde55dde546eee0e1118bd83d5",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: frontend CDN origin shield",
+        "scenario": "frontend CDN origin shield",
+        "severity": "P1",
+        "estimated_resolution_minutes": 75,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000071",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "0b8396a5d7cab00665bac0f24603004f24f452481d4f3bef9a56660f24538425",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: API gateway rate limit exceeded",
+        "scenario": "API gateway rate limit exceeded",
+        "severity": "P2",
+        "estimated_resolution_minutes": 80,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000072",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "bb1a3588439006c0f0a6472dfb0b7c0a47cd0cc8403a2205f9aee08c96abeb99",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: recommendations model staleness",
+        "scenario": "recommendations model staleness",
+        "severity": "P3",
+        "estimated_resolution_minutes": 85,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000073",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "1960caa0d330f26ca384b4f161fc2c72f02abfb0cccdcc157f21fc8b8e06c0de",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: Postgres replica lag",
+        "scenario": "Postgres replica lag",
+        "severity": "P1",
+        "estimated_resolution_minutes": 90,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000074",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "8cb6db638c012daba487fe859e067496719578ec2c297aedff783ced1555c71a",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: Redis memory pressure",
+        "scenario": "Redis memory pressure",
+        "severity": "P2",
+        "estimated_resolution_minutes": 95,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000075",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "d10123e643f1e7fa52bc7d77f75d0e30591c9f6c519137d7740665c4f0240a69",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: Elasticsearch shard imbalance",
+        "scenario": "Elasticsearch shard imbalance",
+        "severity": "P3",
+        "estimated_resolution_minutes": 100,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000076",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "07793dd8133b16f6adcf6a4de7ffd20a115c95404ecb36bf79590a9cac5cd995",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: Istio control plane degraded",
+        "scenario": "Istio control plane degraded",
+        "severity": "P1",
+        "estimated_resolution_minutes": 105,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000077",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "02ff9172a3a0d882012e3e568ef2be9ae19a3d923df851fe9bd397b3cac7d1e2",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: Blue/green rollback procedure",
+        "scenario": "Blue/green rollback procedure",
+        "severity": "P2",
+        "estimated_resolution_minutes": 110,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000078",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "fc7dbecb83d392ff4e0276ede1377c56ae2ab2fceacd8dec44ca61851ea3a03a",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: PagerDuty escalation failure",
+        "scenario": "PagerDuty escalation failure",
+        "severity": "P3",
+        "estimated_resolution_minutes": 115,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000079",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "cad465660b5b4d4282758c79e9751b2146b85ef5b8aa0c2313a913920a66c2c7",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: Slack webhook outage",
+        "scenario": "Slack webhook outage",
+        "severity": "P1",
+        "estimated_resolution_minutes": 30,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000080",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "629f17fb5cb0a14b4bf4d9486d7ae446dd85180aebfc5d875211d0a378b2c79c",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: Jira webhook outage",
+        "scenario": "Jira webhook outage",
+        "severity": "P2",
+        "estimated_resolution_minutes": 35,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000081",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "fd59c19964f922df18c98684eb3dbb8f5ffc3e8ae45b98aa757282c9b06b2745",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: GitHub rate limit hit",
+        "scenario": "GitHub rate limit hit",
+        "severity": "P3",
+        "estimated_resolution_minutes": 40,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000082",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "7e59eb1cd5bc893df20a5201de04d1ed89d654aad609bd6d134aa5d952c8b644",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: AWS region failover",
+        "scenario": "AWS region failover",
+        "severity": "P1",
+        "estimated_resolution_minutes": 45,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000083",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "e7433baba0f1e04919558e9c693cb0e0a42585db839fbccb105f99f97d38b13d",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: EU GDPR data subject request",
+        "scenario": "EU GDPR data subject request",
+        "severity": "P2",
+        "estimated_resolution_minutes": 50,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000084",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "46060c57b5325eb0f33ed9e58f174b3d32ceeab22e542390cc69019dea784d39",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: PCI scope expansion alert",
+        "scenario": "PCI scope expansion alert",
+        "severity": "P3",
+        "estimated_resolution_minutes": 55,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000085",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "a253049b414a431a4a92bffe9d2cce5d6e6e99e596c8970ed0c7eb31bc10ffbc",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: SOC2 evidence collection",
+        "scenario": "SOC2 evidence collection",
+        "severity": "P1",
+        "estimated_resolution_minutes": 60,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000086",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "cdf1418ab376dfd0852ecd70528cbb12aa90f72b8693c841af8ffca8c250135c",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: Daily backup restore drill",
+        "scenario": "Daily backup restore drill",
+        "severity": "P2",
+        "estimated_resolution_minutes": 65,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000087",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "98e72d181768c271cbdaa31fc34a645120585ca1af7ebba4589b3055642c765e",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: Emergency CVE patching",
+        "scenario": "Emergency CVE patching",
+        "severity": "P3",
+        "estimated_resolution_minutes": 70,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000088",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "7aa22caea4408725529c30231a05ccdba27876558dfd6a6c59a7e270594a4783",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: TLS certificate rotation",
+        "scenario": "TLS certificate rotation",
+        "severity": "P1",
+        "estimated_resolution_minutes": 75,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000089",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "9e9a0a57fb8006cb655728efb3322d8ad35a0c6955a3d6d300b144b4c0a5900f",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: DNS failover test",
+        "scenario": "DNS failover test",
+        "severity": "P2",
+        "estimated_resolution_minutes": 80,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000090",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "runbook",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "50b5e7833df6f3a4138ba5ab9a01c39bf74bcc25c6c85b80996178f5e3cee6e2",
+      "payload": {
+        "is_demo": true,
+        "title": "Runbook: Disaster recovery game day",
+        "scenario": "Disaster recovery game day",
+        "severity": "P3",
+        "estimated_resolution_minutes": 85,
+        "steps": [
+          "Detect",
+          "Page on-call",
+          "Mitigate",
+          "Resolve",
+          "Postmortem"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000091",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "c919be74de77457effbfa18e90027c5abcf8c82a689e2dbcbbe329d68692953f",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: SQL injection in search",
+        "threat": "SQL injection in search",
+        "severity": "critical",
+        "status": "open",
+        "affected_services": [
+          "acme-search"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000092",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "f6fdd567be30c0a77dc1cad94e564ed1289bafedafc71adae3b03a5993815b5b",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: SSRF in webhook handler",
+        "threat": "SSRF in webhook handler",
+        "severity": "high",
+        "status": "in_progress",
+        "affected_services": [
+          "acme-notifications"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000093",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "b4a442679d3e0fc8d69ad40823cc964c578b13fddf7c4bdb9ab9e87a6eedf311",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: XSS in product reviews",
+        "threat": "XSS in product reviews",
+        "severity": "medium",
+        "status": "resolved",
+        "affected_services": [
+          "acme-frontend"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000094",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "f405f6b14df653ab090e7a0722a83d451f3761b0687902c91082c0a02800e744",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: CSRF on checkout",
+        "threat": "CSRF on checkout",
+        "severity": "low",
+        "status": "accepted",
+        "affected_services": [
+          "acme-checkout"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000095",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "c7c93a81c61f88cc5935a292c469809bc8fe5b8fd93a9d870c81df7427c747a7",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: XXE in catalog import",
+        "threat": "XXE in catalog import",
+        "severity": "critical",
+        "status": "open",
+        "affected_services": [
+          "acme-search"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000096",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "431b1156678161a43218aeb272ba22d67b78ca6de216c1ebe9948888d03fc2d7",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Path traversal in upload",
+        "threat": "Path traversal in upload",
+        "severity": "high",
+        "status": "in_progress",
+        "affected_services": [
+          "acme-notifications"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000097",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "14f3765faf6e4e618425af832d1282282c569f4ff8d7377f043fe5de6eaccf35",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Auth bypass via header injection",
+        "threat": "Auth bypass via header injection",
+        "severity": "medium",
+        "status": "resolved",
+        "affected_services": [
+          "acme-frontend"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000098",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "09ffde1212fa40dfcb1c263d956976521ce02e3b3976480d2ee37e413fb9e6b7",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Insecure deserialization",
+        "threat": "Insecure deserialization",
+        "severity": "low",
+        "status": "accepted",
+        "affected_services": [
+          "acme-checkout"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000099",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "9a0e1952c0e87d1807383efc4be476feca3bcd561b992b6c01369c61695d4eba",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Open redirect",
+        "threat": "Open redirect",
+        "severity": "critical",
+        "status": "open",
+        "affected_services": [
+          "acme-search"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000100",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "75a01e1109cb852b3ccbf3d2f277a8aecf24543e62f2c44425bfeee273c501cb",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: JWT algorithm confusion",
+        "threat": "JWT algorithm confusion",
+        "severity": "high",
+        "status": "in_progress",
+        "affected_services": [
+          "acme-notifications"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000101",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "5bb34cdc6f61eb8d6cee48b7d1bc2274dd3d3e87ed9e166eb14afe23e8528bf8",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: IDOR on order lookup",
+        "threat": "IDOR on order lookup",
+        "severity": "medium",
+        "status": "resolved",
+        "affected_services": [
+          "acme-frontend"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000102",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "daafa1cf071dd371061b9ee7a2a9ea892730b68cd12236048f50b7868dc6d053",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Privilege escalation",
+        "threat": "Privilege escalation",
+        "severity": "low",
+        "status": "accepted",
+        "affected_services": [
+          "acme-checkout"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000103",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "ade71ac368c40f0c515a5b2d5b358a379bcce70e3cd9ceef89e95fd73cfd4ae9",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Hardcoded secret in repo",
+        "threat": "Hardcoded secret in repo",
+        "severity": "critical",
+        "status": "open",
+        "affected_services": [
+          "acme-search"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000104",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "98cef03bdf1da30f0465cf2a1517491ad7cbafd9e473118aa94e59352cef03d7",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Exposed S3 bucket",
+        "threat": "Exposed S3 bucket",
+        "severity": "high",
+        "status": "in_progress",
+        "affected_services": [
+          "acme-notifications"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000105",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "4ba26e19e518b9dc24fac60f4148bdf0afcd71a7cb33f742fd03a4044feab40e",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: DNS rebinding",
+        "threat": "DNS rebinding",
+        "severity": "medium",
+        "status": "resolved",
+        "affected_services": [
+          "acme-frontend"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000106",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "54abdaec621eb1c0c3780960dcf9a7e97aedcf8e7847118b9735466ea020da7f",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Race condition in inventory adjust",
+        "threat": "Race condition in inventory adjust",
+        "severity": "low",
+        "status": "accepted",
+        "affected_services": [
+          "acme-checkout"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000107",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "77a1034fe4bace96942f6144f228d511043771ffc237014e5c93974c03c8b876",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Replay attack on payment intent",
+        "threat": "Replay attack on payment intent",
+        "severity": "critical",
+        "status": "open",
+        "affected_services": [
+          "acme-search"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000108",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "6ad10211130e03366277c3c37645b714e138963a1b1f8443297b48fceaa6392c",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Clickjacking on admin",
+        "threat": "Clickjacking on admin",
+        "severity": "high",
+        "status": "in_progress",
+        "affected_services": [
+          "acme-notifications"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000109",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "25061e78d47158aa02aebe78b2a8acb7dd7d3cc711b0630a6453b83ac1f83d0b",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Subdomain takeover",
+        "threat": "Subdomain takeover",
+        "severity": "medium",
+        "status": "resolved",
+        "affected_services": [
+          "acme-frontend"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000110",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "e6b8504216bc5a6392eae6adfc1cf6bf608953247add2f683e94c41c8d629322",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Dependency confusion",
+        "threat": "Dependency confusion",
+        "severity": "low",
+        "status": "accepted",
+        "affected_services": [
+          "acme-checkout"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000111",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "4ed27855f4aba19e9664c759d7b14a0d867adb269380dede7cbed3615b47f586",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Prototype pollution",
+        "threat": "Prototype pollution",
+        "severity": "critical",
+        "status": "open",
+        "affected_services": [
+          "acme-search"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000112",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "a10a86653308a39e80d07302a93794da8f2c09f9525a78349fff8a12db3820de",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Mass assignment",
+        "threat": "Mass assignment",
+        "severity": "high",
+        "status": "in_progress",
+        "affected_services": [
+          "acme-notifications"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000113",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "f84f22fd6a2e63491a4c6c4817bd233a13fdfbc981c034343cc306ac3bc795cd",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Session fixation",
+        "threat": "Session fixation",
+        "severity": "medium",
+        "status": "resolved",
+        "affected_services": [
+          "acme-frontend"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000114",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "3af3f4a113edb96426851636e662bb360536c549aa30b54e59d96c149d0949ed",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Click-to-copy clipboard hijack",
+        "threat": "Click-to-copy clipboard hijack",
+        "severity": "low",
+        "status": "accepted",
+        "affected_services": [
+          "acme-checkout"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000115",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "eab5fec2525c9fbd27d1badf49b756d510ad77e39fc9b48479decedf72c561ba",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Tabnabbing",
+        "threat": "Tabnabbing",
+        "severity": "critical",
+        "status": "open",
+        "affected_services": [
+          "acme-search"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000116",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "aad9ca891e418b48d8ca47d7cb24071f34c5b4b413f2d089c425e8d197d29ea1",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Insufficient rate limiting",
+        "threat": "Insufficient rate limiting",
+        "severity": "high",
+        "status": "in_progress",
+        "affected_services": [
+          "acme-notifications"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000117",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "c8c7ef11845c7a72be7d57f308f2673906736853a1ad2e2e406850210b79a479",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Log injection",
+        "threat": "Log injection",
+        "severity": "medium",
+        "status": "resolved",
+        "affected_services": [
+          "acme-frontend"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000118",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "a6058edb112e392ad3bb81df18caabb32ebd576307852d0aa3aa383541740287",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: CSV formula injection",
+        "threat": "CSV formula injection",
+        "severity": "low",
+        "status": "accepted",
+        "affected_services": [
+          "acme-checkout"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000119",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "01308a5b45adaedb750632c5eadde2c13d6dc7c236e34dbe1abc08b8db0c6e01",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Credential stuffing",
+        "threat": "Credential stuffing",
+        "severity": "critical",
+        "status": "open",
+        "affected_services": [
+          "acme-search"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000120",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "security_report",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "b12f73afe91122020f520de79b1c66067c789fbf45e9f05bcb4ccecd782e96f7",
+      "payload": {
+        "is_demo": true,
+        "title": "Security Report: Account enumeration",
+        "threat": "Account enumeration",
+        "severity": "high",
+        "status": "in_progress",
+        "affected_services": [
+          "acme-notifications"
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000121",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "3fe9db551568f3f341422a01cced06612ce87cf689171ad87964132e1ae4b728",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Add product filtering",
+        "feature": "Add product filtering",
+        "total_tasks": 5,
+        "total_estimate_hours": 16.0,
+        "tasks": [
+          {
+            "id": "T-1-1",
+            "title": "Add product filtering - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-1-2",
+            "title": "Add product filtering - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-1-3",
+            "title": "Add product filtering - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-1-4",
+            "title": "Add product filtering - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-1-5",
+            "title": "Add product filtering - step 5",
+            "estimate_hours": 5
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000122",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "43d6f6a6f17fcec3494114bd6728286eeffeeb7954d032c0373c64a7e9a2f8e3",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Implement guest checkout",
+        "feature": "Implement guest checkout",
+        "total_tasks": 6,
+        "total_estimate_hours": 18.0,
+        "tasks": [
+          {
+            "id": "T-2-1",
+            "title": "Implement guest checkout - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-2-2",
+            "title": "Implement guest checkout - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-2-3",
+            "title": "Implement guest checkout - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-2-4",
+            "title": "Implement guest checkout - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-2-5",
+            "title": "Implement guest checkout - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-2-6",
+            "title": "Implement guest checkout - step 6",
+            "estimate_hours": 6
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000123",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "6733ce4fa3d53b2462fe45d5c4dbbb77b93337090782ce6af6ab7fe94eebacc0",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Add Apple Pay",
+        "feature": "Add Apple Pay",
+        "total_tasks": 7,
+        "total_estimate_hours": 20.0,
+        "tasks": [
+          {
+            "id": "T-3-1",
+            "title": "Add Apple Pay - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-3-2",
+            "title": "Add Apple Pay - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-3-3",
+            "title": "Add Apple Pay - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-3-4",
+            "title": "Add Apple Pay - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-3-5",
+            "title": "Add Apple Pay - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-3-6",
+            "title": "Add Apple Pay - step 6",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-3-7",
+            "title": "Add Apple Pay - step 7",
+            "estimate_hours": 4
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000124",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "59e63e74f60178ccac826c6040e514ef0039eac95b0463626fe60e0a8d060679",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Implement order tracking",
+        "feature": "Implement order tracking",
+        "total_tasks": 8,
+        "total_estimate_hours": 22.0,
+        "tasks": [
+          {
+            "id": "T-4-1",
+            "title": "Implement order tracking - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-4-2",
+            "title": "Implement order tracking - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-4-3",
+            "title": "Implement order tracking - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-4-4",
+            "title": "Implement order tracking - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-4-5",
+            "title": "Implement order tracking - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-4-6",
+            "title": "Implement order tracking - step 6",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-4-7",
+            "title": "Implement order tracking - step 7",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-4-8",
+            "title": "Implement order tracking - step 8",
+            "estimate_hours": 5
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000125",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "f61f2de2e7258aeeac57b41670640ac4e159401ba8c5febad79f1f47a2437609",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Add product recommendations widget",
+        "feature": "Add product recommendations widget",
+        "total_tasks": 5,
+        "total_estimate_hours": 24.0,
+        "tasks": [
+          {
+            "id": "T-5-1",
+            "title": "Add product recommendations widget - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-5-2",
+            "title": "Add product recommendations widget - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-5-3",
+            "title": "Add product recommendations widget - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-5-4",
+            "title": "Add product recommendations widget - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-5-5",
+            "title": "Add product recommendations widget - step 5",
+            "estimate_hours": 5
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000126",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "742f1fa226157caffc861d6d8a4d22577f22f7b527b7a6e3e21cde5e385382b3",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Implement inventory alerts",
+        "feature": "Implement inventory alerts",
+        "total_tasks": 6,
+        "total_estimate_hours": 26.0,
+        "tasks": [
+          {
+            "id": "T-6-1",
+            "title": "Implement inventory alerts - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-6-2",
+            "title": "Implement inventory alerts - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-6-3",
+            "title": "Implement inventory alerts - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-6-4",
+            "title": "Implement inventory alerts - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-6-5",
+            "title": "Implement inventory alerts - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-6-6",
+            "title": "Implement inventory alerts - step 6",
+            "estimate_hours": 6
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000127",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "392dc77f21416b87796569c00da9e33de08967cb78967472194af16e275642f6",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Add size chart",
+        "feature": "Add size chart",
+        "total_tasks": 7,
+        "total_estimate_hours": 28.0,
+        "tasks": [
+          {
+            "id": "T-7-1",
+            "title": "Add size chart - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-7-2",
+            "title": "Add size chart - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-7-3",
+            "title": "Add size chart - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-7-4",
+            "title": "Add size chart - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-7-5",
+            "title": "Add size chart - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-7-6",
+            "title": "Add size chart - step 6",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-7-7",
+            "title": "Add size chart - step 7",
+            "estimate_hours": 4
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000128",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "68f515f9d5fc0c00906d1bdbe47d00b528c7332dce979d1fcf9c7813af05a192",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Implement wishlist sharing",
+        "feature": "Implement wishlist sharing",
+        "total_tasks": 8,
+        "total_estimate_hours": 30.0,
+        "tasks": [
+          {
+            "id": "T-8-1",
+            "title": "Implement wishlist sharing - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-8-2",
+            "title": "Implement wishlist sharing - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-8-3",
+            "title": "Implement wishlist sharing - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-8-4",
+            "title": "Implement wishlist sharing - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-8-5",
+            "title": "Implement wishlist sharing - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-8-6",
+            "title": "Implement wishlist sharing - step 6",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-8-7",
+            "title": "Implement wishlist sharing - step 7",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-8-8",
+            "title": "Implement wishlist sharing - step 8",
+            "estimate_hours": 5
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000129",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "cd091936e109fc2b62456b6e8fca5816097a8d59a18de3f4679bbb466e601bdc",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Add product comparison",
+        "feature": "Add product comparison",
+        "total_tasks": 5,
+        "total_estimate_hours": 32.0,
+        "tasks": [
+          {
+            "id": "T-9-1",
+            "title": "Add product comparison - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-9-2",
+            "title": "Add product comparison - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-9-3",
+            "title": "Add product comparison - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-9-4",
+            "title": "Add product comparison - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-9-5",
+            "title": "Add product comparison - step 5",
+            "estimate_hours": 5
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000130",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "draft",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "63ae9b99a79b23426c7d6296b9d0b5f50dadff15f1523e4f32a5b1ac95eb3294",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Implement bulk order upload",
+        "feature": "Implement bulk order upload",
+        "total_tasks": 6,
+        "total_estimate_hours": 34.0,
+        "tasks": [
+          {
+            "id": "T-10-1",
+            "title": "Implement bulk order upload - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-10-2",
+            "title": "Implement bulk order upload - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-10-3",
+            "title": "Implement bulk order upload - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-10-4",
+            "title": "Implement bulk order upload - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-10-5",
+            "title": "Implement bulk order upload - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-10-6",
+            "title": "Implement bulk order upload - step 6",
+            "estimate_hours": 6
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000131",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "bf69238b6d28c51a8a498a3f38105d5bbcbfbc49926b5677d096a652db3fd25f",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Add loyalty program",
+        "feature": "Add loyalty program",
+        "total_tasks": 7,
+        "total_estimate_hours": 36.0,
+        "tasks": [
+          {
+            "id": "T-11-1",
+            "title": "Add loyalty program - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-11-2",
+            "title": "Add loyalty program - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-11-3",
+            "title": "Add loyalty program - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-11-4",
+            "title": "Add loyalty program - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-11-5",
+            "title": "Add loyalty program - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-11-6",
+            "title": "Add loyalty program - step 6",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-11-7",
+            "title": "Add loyalty program - step 7",
+            "estimate_hours": 4
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000132",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "237b6d85c0300ade20f5accfd39097707a1af3460437d4ae130dfc1ea90cd4a6",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Implement subscription checkout",
+        "feature": "Implement subscription checkout",
+        "total_tasks": 8,
+        "total_estimate_hours": 38.0,
+        "tasks": [
+          {
+            "id": "T-12-1",
+            "title": "Implement subscription checkout - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-12-2",
+            "title": "Implement subscription checkout - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-12-3",
+            "title": "Implement subscription checkout - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-12-4",
+            "title": "Implement subscription checkout - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-12-5",
+            "title": "Implement subscription checkout - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-12-6",
+            "title": "Implement subscription checkout - step 6",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-12-7",
+            "title": "Implement subscription checkout - step 7",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-12-8",
+            "title": "Implement subscription checkout - step 8",
+            "estimate_hours": 5
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000133",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "c02f933e4b51ddddd29b08727e85376f961338cebd35d18361182ab97a45e1c5",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Add gift cards",
+        "feature": "Add gift cards",
+        "total_tasks": 5,
+        "total_estimate_hours": 40.0,
+        "tasks": [
+          {
+            "id": "T-13-1",
+            "title": "Add gift cards - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-13-2",
+            "title": "Add gift cards - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-13-3",
+            "title": "Add gift cards - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-13-4",
+            "title": "Add gift cards - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-13-5",
+            "title": "Add gift cards - step 5",
+            "estimate_hours": 5
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000134",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "4df90597688306e1e8dc269084e5f5e509ade2b1bf9bb2b6f3720c43fb21505d",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Implement address validation",
+        "feature": "Implement address validation",
+        "total_tasks": 6,
+        "total_estimate_hours": 42.0,
+        "tasks": [
+          {
+            "id": "T-14-1",
+            "title": "Implement address validation - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-14-2",
+            "title": "Implement address validation - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-14-3",
+            "title": "Implement address validation - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-14-4",
+            "title": "Implement address validation - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-14-5",
+            "title": "Implement address validation - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-14-6",
+            "title": "Implement address validation - step 6",
+            "estimate_hours": 6
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000135",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "a54a007bba28fe61b0d3362815fda44f54152bf10fac8af014cfa9f8781c08b8",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Add tax calculator",
+        "feature": "Add tax calculator",
+        "total_tasks": 7,
+        "total_estimate_hours": 44.0,
+        "tasks": [
+          {
+            "id": "T-15-1",
+            "title": "Add tax calculator - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-15-2",
+            "title": "Add tax calculator - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-15-3",
+            "title": "Add tax calculator - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-15-4",
+            "title": "Add tax calculator - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-15-5",
+            "title": "Add tax calculator - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-15-6",
+            "title": "Add tax calculator - step 6",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-15-7",
+            "title": "Add tax calculator - step 7",
+            "estimate_hours": 4
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000136",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "efb9725a69113645cab3289868372319c062faa724b9131c037bdfc3eeef0eee",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Implement shipping estimator",
+        "feature": "Implement shipping estimator",
+        "total_tasks": 8,
+        "total_estimate_hours": 46.0,
+        "tasks": [
+          {
+            "id": "T-16-1",
+            "title": "Implement shipping estimator - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-16-2",
+            "title": "Implement shipping estimator - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-16-3",
+            "title": "Implement shipping estimator - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-16-4",
+            "title": "Implement shipping estimator - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-16-5",
+            "title": "Implement shipping estimator - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-16-6",
+            "title": "Implement shipping estimator - step 6",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-16-7",
+            "title": "Implement shipping estimator - step 7",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-16-8",
+            "title": "Implement shipping estimator - step 8",
+            "estimate_hours": 5
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000137",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "f64b058b830e7c1345f4fdbc484fc3346721f4ed8efc218df694625539ffb0d5",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Add product Q&A",
+        "feature": "Add product Q&A",
+        "total_tasks": 5,
+        "total_estimate_hours": 16.0,
+        "tasks": [
+          {
+            "id": "T-17-1",
+            "title": "Add product Q&A - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-17-2",
+            "title": "Add product Q&A - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-17-3",
+            "title": "Add product Q&A - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-17-4",
+            "title": "Add product Q&A - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-17-5",
+            "title": "Add product Q&A - step 5",
+            "estimate_hours": 5
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000138",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "5523cdb4bce699af18cb56cc27c43c01624ebe1c0fb6bc58a8d861f26a94ad48",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Implement product reviews",
+        "feature": "Implement product reviews",
+        "total_tasks": 6,
+        "total_estimate_hours": 18.0,
+        "tasks": [
+          {
+            "id": "T-18-1",
+            "title": "Implement product reviews - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-18-2",
+            "title": "Implement product reviews - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-18-3",
+            "title": "Implement product reviews - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-18-4",
+            "title": "Implement product reviews - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-18-5",
+            "title": "Implement product reviews - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-18-6",
+            "title": "Implement product reviews - step 6",
+            "estimate_hours": 6
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000139",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "28f34091358ba6c0d2a97c468876b57718a981cbe19e449e245be6c24d0bcb45",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Add live chat",
+        "feature": "Add live chat",
+        "total_tasks": 7,
+        "total_estimate_hours": 20.0,
+        "tasks": [
+          {
+            "id": "T-19-1",
+            "title": "Add live chat - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-19-2",
+            "title": "Add live chat - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-19-3",
+            "title": "Add live chat - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-19-4",
+            "title": "Add live chat - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-19-5",
+            "title": "Add live chat - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-19-6",
+            "title": "Add live chat - step 6",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-19-7",
+            "title": "Add live chat - step 7",
+            "estimate_hours": 4
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000140",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "0d0af1ea64255fa0c6223dd44751137fca7ebd94cae4aa7c4af106402af6d16f",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Implement abandoned cart recovery",
+        "feature": "Implement abandoned cart recovery",
+        "total_tasks": 8,
+        "total_estimate_hours": 22.0,
+        "tasks": [
+          {
+            "id": "T-20-1",
+            "title": "Implement abandoned cart recovery - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-20-2",
+            "title": "Implement abandoned cart recovery - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-20-3",
+            "title": "Implement abandoned cart recovery - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-20-4",
+            "title": "Implement abandoned cart recovery - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-20-5",
+            "title": "Implement abandoned cart recovery - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-20-6",
+            "title": "Implement abandoned cart recovery - step 6",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-20-7",
+            "title": "Implement abandoned cart recovery - step 7",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-20-8",
+            "title": "Implement abandoned cart recovery - step 8",
+            "estimate_hours": 5
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000141",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "faf171ad9e33f325c7b1653d84d8443a8b170a561db8da06d238874d4958cf05",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Add SMS order updates",
+        "feature": "Add SMS order updates",
+        "total_tasks": 5,
+        "total_estimate_hours": 24.0,
+        "tasks": [
+          {
+            "id": "T-21-1",
+            "title": "Add SMS order updates - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-21-2",
+            "title": "Add SMS order updates - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-21-3",
+            "title": "Add SMS order updates - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-21-4",
+            "title": "Add SMS order updates - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-21-5",
+            "title": "Add SMS order updates - step 5",
+            "estimate_hours": 5
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000142",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "6a46f7bc6b2a2adcceddb8101ec66ebcfbc88c5a806de1610bf6275ad1bcfee7",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Implement push notifications",
+        "feature": "Implement push notifications",
+        "total_tasks": 6,
+        "total_estimate_hours": 26.0,
+        "tasks": [
+          {
+            "id": "T-22-1",
+            "title": "Implement push notifications - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-22-2",
+            "title": "Implement push notifications - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-22-3",
+            "title": "Implement push notifications - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-22-4",
+            "title": "Implement push notifications - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-22-5",
+            "title": "Implement push notifications - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-22-6",
+            "title": "Implement push notifications - step 6",
+            "estimate_hours": 6
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000143",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "b75eb31590de9265b28832bc6088d9bb58ea3b271b51d5d7eed13d4e090c78ff",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Add customer accounts",
+        "feature": "Add customer accounts",
+        "total_tasks": 7,
+        "total_estimate_hours": 28.0,
+        "tasks": [
+          {
+            "id": "T-23-1",
+            "title": "Add customer accounts - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-23-2",
+            "title": "Add customer accounts - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-23-3",
+            "title": "Add customer accounts - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-23-4",
+            "title": "Add customer accounts - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-23-5",
+            "title": "Add customer accounts - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-23-6",
+            "title": "Add customer accounts - step 6",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-23-7",
+            "title": "Add customer accounts - step 7",
+            "estimate_hours": 4
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000144",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "dab69a58e07f829ea14775061d6bb8183c8ab18d1d406bba71bc76e20592b5c4",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Implement order history export",
+        "feature": "Implement order history export",
+        "total_tasks": 8,
+        "total_estimate_hours": 30.0,
+        "tasks": [
+          {
+            "id": "T-24-1",
+            "title": "Implement order history export - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-24-2",
+            "title": "Implement order history export - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-24-3",
+            "title": "Implement order history export - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-24-4",
+            "title": "Implement order history export - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-24-5",
+            "title": "Implement order history export - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-24-6",
+            "title": "Implement order history export - step 6",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-24-7",
+            "title": "Implement order history export - step 7",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-24-8",
+            "title": "Implement order history export - step 8",
+            "estimate_hours": 5
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000145",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "22b0a08b562b60e589c2e0116314eab310822593c9a21535e49c51831455ee48",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Add product video",
+        "feature": "Add product video",
+        "total_tasks": 5,
+        "total_estimate_hours": 32.0,
+        "tasks": [
+          {
+            "id": "T-25-1",
+            "title": "Add product video - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-25-2",
+            "title": "Add product video - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-25-3",
+            "title": "Add product video - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-25-4",
+            "title": "Add product video - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-25-5",
+            "title": "Add product video - step 5",
+            "estimate_hours": 5
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000146",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "5037868b6e7fc1803225be31f5b187140e63191f18521cc5fab208d77e0fa9c7",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Implement AR try-on",
+        "feature": "Implement AR try-on",
+        "total_tasks": 6,
+        "total_estimate_hours": 34.0,
+        "tasks": [
+          {
+            "id": "T-26-1",
+            "title": "Implement AR try-on - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-26-2",
+            "title": "Implement AR try-on - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-26-3",
+            "title": "Implement AR try-on - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-26-4",
+            "title": "Implement AR try-on - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-26-5",
+            "title": "Implement AR try-on - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-26-6",
+            "title": "Implement AR try-on - step 6",
+            "estimate_hours": 6
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000147",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "59fd0fa44bf06d633440beb9009fc4c308c8fd5ad5a12d43716a41fece727ca0",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Add size recommender",
+        "feature": "Add size recommender",
+        "total_tasks": 7,
+        "total_estimate_hours": 36.0,
+        "tasks": [
+          {
+            "id": "T-27-1",
+            "title": "Add size recommender - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-27-2",
+            "title": "Add size recommender - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-27-3",
+            "title": "Add size recommender - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-27-4",
+            "title": "Add size recommender - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-27-5",
+            "title": "Add size recommender - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-27-6",
+            "title": "Add size recommender - step 6",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-27-7",
+            "title": "Add size recommender - step 7",
+            "estimate_hours": 4
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000148",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "ffb8a109ead18dca635c5a8eb049f86947524d9c0e15722744d941be78d97239",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Implement voice search",
+        "feature": "Implement voice search",
+        "total_tasks": 8,
+        "total_estimate_hours": 38.0,
+        "tasks": [
+          {
+            "id": "T-28-1",
+            "title": "Implement voice search - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-28-2",
+            "title": "Implement voice search - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-28-3",
+            "title": "Implement voice search - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-28-4",
+            "title": "Implement voice search - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-28-5",
+            "title": "Implement voice search - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-28-6",
+            "title": "Implement voice search - step 6",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-28-7",
+            "title": "Implement voice search - step 7",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-28-8",
+            "title": "Implement voice search - step 8",
+            "estimate_hours": 5
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000149",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "bbe58f779ca60468477b263eb57bc4a18cc2cca364993378a30f7dab4bf1a127",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Add multi-currency",
+        "feature": "Add multi-currency",
+        "total_tasks": 5,
+        "total_estimate_hours": 40.0,
+        "tasks": [
+          {
+            "id": "T-29-1",
+            "title": "Add multi-currency - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-29-2",
+            "title": "Add multi-currency - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-29-3",
+            "title": "Add multi-currency - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-29-4",
+            "title": "Add multi-currency - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-29-5",
+            "title": "Add multi-currency - step 5",
+            "estimate_hours": 5
+          }
+        ]
+      },
+      "is_demo": true
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000150",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "project_id": "22222222-2222-2222-2222-222222222222",
+      "type": "task_breakdown",
+      "version": 1,
+      "status": "active",
+      "created_by": "33333333-3333-3333-3333-333333330002",
+      "superseded_by_id": null,
+      "superseded_at": null,
+      "content_hash": "078a66feab992fca0656a5d80e797a87ac997953d9285f26b89254259e0e42c1",
+      "payload": {
+        "is_demo": true,
+        "title": "Task Breakdown: Implement multi-language",
+        "feature": "Implement multi-language",
+        "total_tasks": 6,
+        "total_estimate_hours": 42.0,
+        "tasks": [
+          {
+            "id": "T-30-1",
+            "title": "Implement multi-language - step 1",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-30-2",
+            "title": "Implement multi-language - step 2",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-30-3",
+            "title": "Implement multi-language - step 3",
+            "estimate_hours": 6
+          },
+          {
+            "id": "T-30-4",
+            "title": "Implement multi-language - step 4",
+            "estimate_hours": 4
+          },
+          {
+            "id": "T-30-5",
+            "title": "Implement multi-language - step 5",
+            "estimate_hours": 5
+          },
+          {
+            "id": "T-30-6",
+            "title": "Implement multi-language - step 6",
+            "estimate_hours": 6
+          }
+        ]
+      },
+      "is_demo": true
+    }
+  ]
+}
