@@ -8,7 +8,7 @@ start. Defaults are only provided for non-security-critical, dev-only values.
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -87,6 +87,41 @@ class Settings(BaseSettings):
     # GitHub webhook shared secret (HMAC SHA-256). Empty disables
     # signature verification — only acceptable in local dev.
     github_webhook_secret: str = Field(default="", description="HMAC secret")
+
+    # F-HYG-04 — DEV_AUTH_BYPASS guard
+    # When True, the auth layer synthesizes a `dev@forge.local` principal
+    # with `forge:admin` and every `ideation:*` permission. HYG-04 mandates
+    # this is only legal in development; production must boot with this
+    # disabled. The `model_validator` below enforces the rule at import
+    # time so a misconfigured process exits non-zero before FastAPI starts.
+    dev_auth_bypass: bool = Field(
+        default=False,
+        description="DEV_AUTH_BYPASS env var. Synthesizes dev@forge.local principal. Dev-only.",
+    )
+
+    @model_validator(mode="after")
+    def _dev_bypass_only_in_dev(self) -> "Settings":
+        """Refuse to boot if DEV_AUTH_BYPASS is enabled outside development.
+
+        HYG-04 closes the PITFALL where ``DEV_AUTH_BYPASS=1`` silently
+        granted a synthetic ``dev@forge.local`` principal (with
+        ``forge:admin`` and every ``ideation:*`` permission) in production.
+        Pydantic v2's ``mode="after"`` runs after field validation, so
+        ``self.dev_auth_bypass`` and ``self.environment`` are already
+        coerced to their declared types (``bool`` and ``Literal[...]``)
+        by the time this fires.
+
+        The validator runs at ``Settings()`` instantiation. Because
+        ``settings = get_settings()`` is evaluated at module import
+        (bottom of this file), a misconfigured deployment exits non-zero
+        at import — before FastAPI boots, before any request is served.
+        """
+        if self.dev_auth_bypass and self.environment != "development":
+            raise ValueError(
+                f"DEV_AUTH_BYPASS=1 is only allowed when ENVIRONMENT=development. "
+                f"Got ENVIRONMENT={self.environment!r}. Refusing to boot."
+            )
+        return self
 
 
 @lru_cache
