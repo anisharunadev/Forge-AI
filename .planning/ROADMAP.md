@@ -15,7 +15,7 @@ The 5-phase cutover is driven by risk reduction: hygiene first (so plan-phase as
 
 **Mode:** mvp (Vertical MVP — one tenant, one workflow, full visualization)
 
-- [ ] **Phase 0: Pre-Roadmap Hygiene** - Reconcile stack drift, refactor terminal-server, enforce Rule 1 grep gate, add startup guard
+- [x] **Phase 0: Pre-Roadmap Hygiene** - Reconcile stack drift, refactor terminal-server, enforce Rule 1 grep gate, add startup guard
 - [ ] **Phase 1: Substrate Lock** - Code Validator, Merge Gate, Tool Bundles, Workflow Budget, Day-One Bootstrap, Refactor Agent, Steering Rules, ADR-009/010/011
 - [ ] **Phase 2: Pilot Cutover Hardening** - Pilot UI (wizard, KG, Audit, Approval, Constitution rulebook, Connector Marketplace, Terminal), blue/green deploy, cross-region audit, circuit-breakers, RBAC
 - [ ] **Phase 3: Pilot Volume Scaling** - Tune conflict budget, AGE plan observation, LiteLLM quota, audit chain anchors after 30 days of pilot traffic
@@ -42,7 +42,7 @@ The 5-phase cutover is driven by risk reduction: hygiene first (so plan-phase as
 Plans:
 **Wave 1**
 
-- [ ] 00-01: Tailwind drift reconciliation (CLAUDE.md + overview.md)
+- [x] 00-01: Tailwind drift reconciliation (CLAUDE.md + overview.md)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -171,7 +171,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 0. Pre-Roadmap Hygiene | 3/4 | In progress | 2026-06-24 (00-02, 00-03, 00-04) |
+| 0. Pre-Roadmap Hygiene | 4/4 | Complete | 2026-06-25 (HYG-01..04 closed) |
 | 1. Substrate Lock | 0/9 | Not started | - |
 | 2. Pilot Cutover Hardening | 0/15 | Not started | - |
 | 3. Pilot Volume Scaling | 0/4 | Not started | - |

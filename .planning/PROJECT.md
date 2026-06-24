@@ -76,7 +76,7 @@ Explicit boundaries for this milestone. Each carries its reason to prevent re-ad
 ## Context
 
 **Technical environment:**
-- Multi-package monorepo (pnpm): `apps/forge` (Next.js 15 / React 19 / TS 5.9), `backend/` (FastAPI / Python 3.13), `packages/{mcp-router,connector-events,gsd-core-stub,gsd-pi-stub}` (shared libraries), `mcp-servers/*` (13 connector packages), `infra/` (Terraform), `scripts/`, `docs-site/` (Astro Starlight), `agents/` (LangGraph agent definitions), `tenants/` (multi-tenant seed data), `tests/`.
+- Multi-package monorepo (pnpm): `apps/forge` (Next.js 15 / React 19 / TS 5.9), `backend/` (FastAPI / Python 3.13), `packages/{mcp-router,connector-events,forge-core}` (shared libraries), `mcp-servers/*` (13 connector packages), `infra/` (Terraform), `scripts/`, `docs-site/` (Astro Starlight), `agents/` (LangGraph agent definitions), `tenants/` (multi-tenant seed data), `tests/`.
 - Database: PostgreSQL 17 + Apache AGE (graph) + pgvector (embeddings) + RLS.
 - Runtime services: Redis 7 Pub/Sub + cache, Keycloak 26 (OIDC), LiteLLM Proxy (multi-provider LLM gateway), Floci (task orchestration), AWS S3 (artifacts), MCP servers over stdio.
 - Observability: OpenTelemetry → OTLP exporter; structured JSON logs via structlog.
@@ -93,7 +93,6 @@ Explicit boundaries for this milestone. Each carries its reason to prevent re-ad
 
 **Known issues:**
 - `docs/architecture/pillar1-prd-amendments.md` and `pillar1-execution-plan.md` are large (~60KB) and contain unresolved references to OQ-005/006/007.
-- CLAUDE.md flags **Tailwind CSS 4** as the target version, but the installed version is **3.4.14** — a known version drift in stack declarations.
 - Codebase map (`CONCERNS.md`, 290 lines) flags v2.0 violations and tech debt that should be triaged during pilot readiness.
 
 ## Constraints
@@ -119,7 +118,7 @@ Explicit boundaries for this milestone. Each carries its reason to prevent re-ad
 | **PostgreSQL + Apache AGE + pgvector** for the KG | Single datastore, RLS-enforced, graph + vector in one place. Reduces cross-system sync bugs. | ✓ Good — built, but OQ-006 wants explicit validation |
 | **Multi-tenant by RLS, not by schema** | Multi-tenant by default (Rule 2) — RLS keeps ops simple, prevents app-layer bypass. | ✓ Good — built |
 | **No `@fora/*` scope in v2.0** | v2.0 naming convention; clarity over historical continuity. | ✓ Good — enforced |
-| **Tailwind 3.4.14 installed vs Tailwind 4 declared** | STACK research recommends staying on 3.4.x for pilot, update docs to match reality. | ⚠️ Revisit — Phase 0 fix |
+| **Tailwind 3.4.14 installed vs Tailwind 4 declared** | STACK research recommends staying on 3.4.x for pilot, update docs to match reality. | ✓ Good — Phase 0 HYG-01 closed 2026-06-25 |
 | **OQ-005/006/007 LOCKED (ADR-001/002/003)** | Architecture research confirmed all three are accepted 2026-06-20, not open. Pilot-cutover follow-ups are OQ-P1/P2/P3 → ADR-009/010/011. | ✓ Good — locked |
 
 ---

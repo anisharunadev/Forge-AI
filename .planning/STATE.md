@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: milestone
 current_phase: 0
 current_phase_name: Pre-Roadmap Hygiene
-status: in_progress
-stopped_at: plan 00-04 complete (2026-06-24)
-last_updated: "2026-06-24T12:00:00.000Z"
-last_activity: 2026-06-24
-last_activity_desc: "Phase 0 plan 00-04 complete: Pydantic v2 model_validator(mode='after') on Settings refuses to boot when DEV_AUTH_BYPASS=1 and ENVIRONMENT != development. Process exits non-zero at module import (before FastAPI boots). Three pytest tests cover block/allow/no-op branches. PART B end-to-end import-time fail-fast verification passes all three cases. HYG-04 closed. Phase 0 now 3/4 plans done."
+status: complete
+stopped_at: phase 0 complete (2026-06-25)
+last_updated: "2026-06-25T00:00:00.000Z"
+last_activity: 2026-06-25
+last_activity_desc: "Phase 0 close-out: HYG-01 (Tailwind drift) metadata promoted to closed — ROADMAP.md checkboxes flipped, STATE.md status: complete. HYG-01/02/03/04 all closed. Phase 1 (Substrate Lock) planning next."
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 2
   total_plans: 7
   completed_plans: 4
-  percent: 17
+  percent: 33
 ---
 
 # Project State
@@ -29,12 +29,12 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Current Position
 
-Phase: 0 of 5 (Pre-Roadmap Hygiene) — in progress, 3/4 plans complete (00-02 + 00-03 + 00-04 done)
+Phase: 0 of 5 (Pre-Roadmap Hygiene) — **closed 4/4 plans (HYG-01..04 all done)**; Phase 1 planning next
 Phase 0.5 (UI Foundation): 5 of 5 plans complete (100%)
-Status: Executing Phase 0 — HYG-02 + HYG-03 + HYG-04 closed; HYG-01 still open
-Last activity: 2026-06-24 — Plan 00-04 complete: Pydantic v2 model_validator(mode='after') on Settings refuses to boot when DEV_AUTH_BYPASS=1 and ENVIRONMENT != development. Process exits non-zero at module import. Three pytest tests cover block/allow/no-op branches. End-to-end PART B verification passes all three scenarios (bypass+prod fails with ValidationError, development+no-bypass passes, defaults pass). Auto-fixed deviation: dev_auth_bypass field added (was missing — validator needs a target).
+Status: Phase 0 closed; Phase 1 (Substrate Lock) planning next
+Last activity: 2026-06-25 — Phase 0 close-out: HYG-01 (Tailwind 3.4.x drift) metadata promoted to closed; ROADMAP.md checkboxes flipped; STATE.md advanced. All four HYG-NN success criteria from ROADMAP.md lines 33-38 verified TRUE.
 
-Progress: [█████░░░░░] 17% overall; Phase 0 at 3/4 plans (HYG-02 + HYG-03 + HYG-04 closed)
+Progress: [██████████] 33% overall; Phase 0 closed 4/4 (HYG-01..04); Phase 1 (Substrate Lock) planning next
 
 ## Performance Metrics
 
@@ -64,8 +64,8 @@ Progress: [█████░░░░░] 17% overall; Phase 0 at 3/4 plans (HY
 
 **Recent Trend:**
 
-- Last 5 plans: Phase 0-02 (node-pty + terminal-server.mjs moved to packages/forge-terminal-server workspace package; HYG-02 closed), Phase 0.5-02 (StatusPill + 7 badge migrations + 3 boundaries), Phase 0.5-06 (5 typed React Flow nodes + 4 graph views + virtualized audit/approval timelines + 3 AI-native panels), Phase 0.5-03 (shell: sidebar/topbar/CMD-K palette/breadcrumbs/mobile drawer/page container), Phase 0.5-04 (DataTable/Form/Chart + 9 missing shadcn primitives)
-- Trend: Phase 0 in progress; HYG-02 closed; HYG-01/03/04 still open
+- Last 5 plans: Phase 0-01 (Tailwind 3.4.x + post-pilot deferral note in CLAUDE.md + overview.md; HYG-01 closed 2026-06-25 via close-out commit), Phase 0-02 (node-pty + terminal-server.mjs moved to packages/forge-terminal-server workspace package; HYG-02 closed), Phase 0.5-02 (StatusPill + 7 badge migrations + 3 boundaries), Phase 0.5-06 (5 typed React Flow nodes + 4 graph views + virtualized audit/approval timelines + 3 AI-native panels), Phase 0.5-03 (shell: sidebar/topbar/CMD-K palette/breadcrumbs/mobile drawer/page container)
+- Trend: Phase 0 closed 4/4 (HYG-01..04); Phase 1 (Substrate Lock) planning next; Phase 5 (Custom Workflows F-018) plans already drafted (3 plans, independent workstream)
 
 ## Accumulated Context
 
@@ -123,6 +123,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-24T09:21:21.704Z
+Last session: 2026-06-24T17:53:39.318Z
 Stopped at: context exhaustion at 75% (2026-06-24)
 Resume file: None
