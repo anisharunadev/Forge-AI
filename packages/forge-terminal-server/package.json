@@ -10,7 +10,7 @@
   },
   "main": "./dist/server.mjs",
   "scripts": {
-    "build": "node -e \"require('fs').copyFileSync('src/server.mjs','dist/server.mjs')\" || cp src/server.mjs dist/server.mjs",
+    "build": "mkdir -p dist && cp src/server.mjs dist/server.mjs",
     "typecheck": "echo 'no TS sources — pass'",
     "test": "echo 'no tests yet — pass'",
     "lint": "echo 'no lint config — pass'"
