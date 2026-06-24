@@ -1,0 +1,101 @@
+{
+  "rows": [
+    {
+      "id": "44444444-4444-4444-4444-444444440001",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "name": "steward",
+      "description": "Platform Steward — full administrative control of the Forge tenant including seeds, RBAC, and reset scope=all",
+      "permissions": [
+        "tenant:manage",
+        "seeds:view",
+        "seeds:manage",
+        "seeds:reset:demo_only",
+        "seeds:reset:all",
+        "rbac:manage",
+        "audit:view",
+        "users:manage"
+      ],
+      "parent_role_id": null,
+      "metadata": {"is_demo": true, "level": 1, "owner": "platform-eng"}
+    },
+    {
+      "id": "44444444-4444-4444-4444-444444440002",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "name": "tech_lead",
+      "description": "Technical Lead — orchestrates architecture, ideation, and approval gates within project scope",
+      "permissions": [
+        "artifact:create",
+        "artifact:approve",
+        "workflow:run",
+        "workflow:approve",
+        "ideation:manage",
+        "roadmap:approve",
+        "prd:approve"
+      ],
+      "parent_role_id": null,
+      "metadata": {"is_demo": true, "level": 2, "owner": "platform-eng"}
+    },
+    {
+      "id": "44444444-4444-4444-4444-444444440003",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "name": "architect",
+      "description": "Principal Architect — authors ADRs, API contracts, risk registers, and architecture previews",
+      "permissions": [
+        "artifact:create:adr",
+        "artifact:create:api_contract",
+        "artifact:create:risk_register",
+        "artifact:create:security_report",
+        "artifact:read",
+        "graph:read"
+      ],
+      "parent_role_id": null,
+      "metadata": {"is_demo": true, "level": 3, "owner": "architecture"}
+    },
+    {
+      "id": "44444444-4444-4444-4444-444444440004",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "name": "developer",
+      "description": "Senior Developer — runs workflows, generates code and tests, manages deployment plans within owned services",
+      "permissions": [
+        "workflow:run",
+        "artifact:create:deployment_plan",
+        "artifact:create:task_breakdown",
+        "service:deploy:owned",
+        "connector:trigger:github"
+      ],
+      "parent_role_id": null,
+      "metadata": {"is_demo": true, "level": 4, "owner": "engineering"}
+    },
+    {
+      "id": "44444444-4444-4444-4444-444444440005",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "name": "security",
+      "description": "Security Engineer — owns threat modeling, security reports, secrets policy, and vulnerability SLAs",
+      "permissions": [
+        "artifact:create:security_report",
+        "artifact:approve:security_report",
+        "audit:view",
+        "secret:manage",
+        "connector:trigger:sonarqube",
+        "policy:override:security"
+      ],
+      "parent_role_id": null,
+      "metadata": {"is_demo": true, "level": 3, "owner": "security"}
+    },
+    {
+      "id": "44444444-4444-4444-4444-444444440006",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "name": "sponsor",
+      "description": "Executive Sponsor — approves Architecture, Security, and Deployment boundary crossings",
+      "permissions": [
+        "boundary:approve:architecture",
+        "boundary:approve:security",
+        "boundary:approve:deployment",
+        "roadmap:approve:final",
+        "audit:view"
+      ],
+      "parent_role_id": null,
+      "metadata": {"is_demo": true, "level": 2, "owner": "executive"}
+    }
+  ]
+}

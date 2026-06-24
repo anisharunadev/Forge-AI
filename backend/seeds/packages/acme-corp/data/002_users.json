@@ -1,0 +1,132 @@
+{
+  "rows": [
+    {
+      "id": "33333333-3333-3333-3333-333333330001",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "keycloak_sub": "kc-acme-sarah-chen",
+      "email": "sarah.chen@acme-corp.dev",
+      "display_name": "Sarah Chen",
+      "mfa_enabled": true,
+      "role_ids": [],
+      "profile": {
+        "is_demo": true,
+        "title": "Platform Steward",
+        "team": "Platform Engineering",
+        "timezone": "America/Los_Angeles",
+        "initials": "SC"
+      }
+    },
+    {
+      "id": "33333333-3333-3333-3333-333333330002",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "keycloak_sub": "kc-acme-mike-patel",
+      "email": "mike.patel@acme-corp.dev",
+      "display_name": "Mike Patel",
+      "mfa_enabled": true,
+      "role_ids": [],
+      "profile": {
+        "is_demo": true,
+        "title": "Tech Lead",
+        "team": "Platform Engineering",
+        "timezone": "America/Los_Angeles",
+        "initials": "MP"
+      }
+    },
+    {
+      "id": "33333333-3333-3333-3333-333333330003",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "keycloak_sub": "kc-acme-elena-rodriguez",
+      "email": "elena.rodriguez@acme-corp.dev",
+      "display_name": "Elena Rodriguez",
+      "mfa_enabled": true,
+      "role_ids": [],
+      "profile": {
+        "is_demo": true,
+        "title": "Principal Architect",
+        "team": "Architecture",
+        "timezone": "Europe/Madrid",
+        "initials": "ER"
+      }
+    },
+    {
+      "id": "33333333-3333-3333-3333-333333330004",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "keycloak_sub": "kc-acme-james-wright",
+      "email": "james.wright@acme-corp.dev",
+      "display_name": "James Wright",
+      "mfa_enabled": true,
+      "role_ids": [],
+      "profile": {
+        "is_demo": true,
+        "title": "Senior Developer",
+        "team": "Checkout Squad",
+        "timezone": "America/New_York",
+        "initials": "JW"
+      }
+    },
+    {
+      "id": "33333333-3333-3333-3333-333333330005",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "keycloak_sub": "kc-acme-priya-nair",
+      "email": "priya.nair@acme-corp.dev",
+      "display_name": "Priya Nair",
+      "mfa_enabled": true,
+      "role_ids": [],
+      "profile": {
+        "is_demo": true,
+        "title": "Security Engineer",
+        "team": "Security",
+        "timezone": "America/Los_Angeles",
+        "initials": "PN"
+      }
+    },
+    {
+      "id": "33333333-3333-3333-3333-333333330006",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "keycloak_sub": "kc-acme-robert-kim",
+      "email": "robert.kim@acme-corp.dev",
+      "display_name": "Robert Kim",
+      "mfa_enabled": false,
+      "role_ids": [],
+      "profile": {
+        "is_demo": true,
+        "title": "VP Engineering (Sponsor)",
+        "team": "Executive",
+        "timezone": "America/Los_Angeles",
+        "initials": "RK"
+      }
+    },
+    {
+      "id": "33333333-3333-3333-3333-333333330007",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "keycloak_sub": "kc-acme-alex-morgan",
+      "email": "alex.morgan@acme-corp.dev",
+      "display_name": "Alex Morgan",
+      "mfa_enabled": true,
+      "role_ids": [],
+      "profile": {
+        "is_demo": true,
+        "title": "DevOps Engineer",
+        "team": "SRE",
+        "timezone": "America/Los_Angeles",
+        "initials": "AM"
+      }
+    },
+    {
+      "id": "33333333-3333-3333-3333-333333330008",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "keycloak_sub": "kc-acme-lisa-zhang",
+      "email": "lisa.zhang@acme-corp.dev",
+      "display_name": "Lisa Zhang",
+      "mfa_enabled": true,
+      "role_ids": [],
+      "profile": {
+        "is_demo": true,
+        "title": "Platform DevOps Engineer",
+        "team": "SRE",
+        "timezone": "Europe/London",
+        "initials": "LZ"
+      }
+    }
+  ]
+}

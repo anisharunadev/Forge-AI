@@ -1,0 +1,25 @@
+{
+  "rows": [
+    {
+      "id": "22222222-2222-2222-2222-222222222222",
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "name": "Acme Platform",
+      "slug": "acme-platform",
+      "status": "active",
+      "settings": {
+        "is_demo": true,
+        "description": "Acme Corp e-commerce platform — 12-service microservices stack serving B2C customers in US and EU",
+        "domain": "e-commerce",
+        "tier": "tier-1",
+        "monthly_users": 2000000,
+        "annual_revenue_usd": 50000000,
+        "compliance": ["SOC2-Type2", "PCI-DSS", "GDPR"],
+        "environments": ["dev", "staging", "production"],
+        "languages": ["typescript", "go", "python", "java", "node"],
+        "primary_region": "us-west-2",
+        "secondary_region": "eu-west-1",
+        "slo_target_uptime_pct": 99.95
+      }
+    }
+  ]
+}

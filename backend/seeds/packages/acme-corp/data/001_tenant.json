@@ -1,0 +1,23 @@
+{
+  "rows": [
+    {
+      "id": "11111111-1111-1111-1111-111111111111",
+      "name": "Acme Corp",
+      "slug": "acme-corp",
+      "status": "active",
+      "settings": {
+        "is_demo": true,
+        "industry": "e-commerce",
+        "business_model": "B2C",
+        "arr_usd": 50000000,
+        "monthly_active_users": 2000000,
+        "markets": ["US", "EU"],
+        "headquarters": "San Francisco, CA",
+        "founded": 2018,
+        "team_size": 240,
+        "primary_currency": "USD",
+        "compliance_frameworks": ["SOC2-Type2", "PCI-DSS", "GDPR"]
+      }
+    }
+  ]
+}
