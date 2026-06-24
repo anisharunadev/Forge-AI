@@ -93,6 +93,32 @@ async def decide_approval(
         project_id=principal.project_id,
         actor_id=principal.user_id,
     )
+
+    # F-018: when the approval was raised by the workflow executor,
+    # resume the paused run. The executor is idempotent — a no-op if
+    # the run is already terminal or not in WAITING_APPROVAL.
+    payload = approval.payload or {}
+    if payload.get("kind") == "workflow":
+        run_id = payload.get("run_id")
+        if run_id:
+            try:
+                from app.services.workflow_executor import get_executor
+
+                await get_executor().resume(
+                    db,
+                    tenant_id=principal.tenant_id,
+                    run_id=UUID(run_id),
+                    approval_id=approval.id,
+                    decision=body.status.value,
+                )
+            except Exception as exc:  # noqa: BLE001 — never break the approval write
+                logger.warning(
+                    "workflow_executor.resume_failed",
+                    run_id=run_id,
+                    approval_id=str(approval.id),
+                    error=str(exc),
+                )
+
     return ApprovalRead.model_validate(approval)
 
 

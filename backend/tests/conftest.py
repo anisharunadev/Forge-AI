@@ -8,6 +8,17 @@ from __future__ import annotations
 
 import os
 
+# Module-level env setup so pydantic-settings can construct ``Settings``
+# at *import* time (e.g. ``from app.db.session import get_session_factory``
+# triggers ``Settings()`` before any fixtures run).
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
+os.environ.setdefault("LITELLM_PROXY_URL", "http://localhost:4000")
+os.environ.setdefault("LITELLM_API_KEY", "test-key")
+os.environ.setdefault("KEYCLOAK_URL", "http://localhost:8080")
+os.environ.setdefault("JWT_SECRET", "test-secret")
+os.environ.setdefault("ENVIRONMENT", "test")
+
 import pytest
 import pytest_asyncio
 
@@ -90,6 +101,7 @@ async def sqlite_db(monkeypatch: pytest.MonkeyPatch):
         template,
         tenant,
         user,
+        workflow,
         workflow_budget,
     )
 

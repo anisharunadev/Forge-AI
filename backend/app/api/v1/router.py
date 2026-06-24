@@ -10,6 +10,7 @@ from app.api.v1 import (
     agent_runtimes,
     agents,
     approvals,
+    commands,
     architecture,
     artifacts,
     audit,
@@ -104,5 +105,7 @@ api_router.include_router(architecture.traceability.router)
 api_router.include_router(architecture.versions.router)
 # NFR-044 Workflow Budget Guardrails
 api_router.include_router(workflows.router)
+# F-018 — Custom workflow command dispatch (closes the useForgeCommands "Backend unreachable" gap)
+api_router.include_router(commands.router)
 
 __all__ = ["api_router"]
