@@ -19,6 +19,8 @@ exclude = ["tests*", "alembic*"]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 addopts = "-ra -q"
+# Make the `app` package importable when pytest is run from the backend/ root.
+pythonpath = ["."]  # pytest ≥7 adds this dir to sys.path so `from app...` resolves
 
 [tool.ruff]
 line-length = 100
