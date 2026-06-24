@@ -25,6 +25,7 @@ import { RealtimeRunsList } from '@/components/RealtimeRunsList';
 import { RunStatusBadge } from '@/components/RunStatusBadge';
 import { listRuns } from '@/lib/api';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
+import { DemoStateCard } from '@/components/seeds/DemoStateCard';
 import { EmptyState, PageHeader, SectionCard } from '@/components/shell';
 import type { RunRecord } from '@/lib/types';
 
@@ -52,6 +53,13 @@ export default async function IssueDashboard() {
           title="All runs"
           description="Realtime via WebSocket; polls every 5 s while the socket is reconnecting."
         />
+
+        {/*
+         * Plan G commit 4 — per-Center demo state. The card renders
+         * nothing on non-demo tenants and surfaces the active seed's
+         * status / row count / checksum drift in dev demos.
+         */}
+        <DemoStateCard seedName="acme-corp" />
 
         {view.state === 'unreachable' ? (
           <OrchestratorUnreachable view={view} />

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Network } from 'lucide-react';
+import { Network, AlertTriangle } from 'lucide-react';
 
 import { AdminShell } from '@/components/admin/AdminShell';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,8 +20,10 @@ import {
 } from '@/components/architecture/RiskRegisterTable';
 import { TraceabilityGraph } from '@/components/architecture/TraceabilityGraph';
 import { VersionTimeline } from '@/components/architecture/VersionTimeline';
+import { DemoStateCard } from '@/components/seeds/DemoStateCard';
 import { useApiData } from '@/hooks/use-api-data';
 import { PageHeader, EmptyState } from '@/components/shell';
+import { Badge } from '@/components/ui/badge';
 import type {
   ADR,
   APIContract,
@@ -63,6 +65,16 @@ export default function ArchitectureCenterPage() {
   const versions = versionsRes.data ?? [];
   const traceability = traceabilityRes.data ?? EMPTY_TRACEABILITY;
 
+  // ---------------------------------------------------------------------------
+  // Demo-state (Plan G commit 4) — the acme-corp seed ships with three
+  // intentional conflicts to demo the ADR-003 ("resolve drift before
+  // merge") workflow. We surface the count as a header badge so the user
+  // knows the seed is loaded and where to look for the conflicts. The
+  // raw conflict data lives in `data/22_conflicts.json`; a dedicated
+  // `/v1/architecture/conflicts` API is tracked outside Plan G's scope.
+  // ---------------------------------------------------------------------------
+  const DEMO_CONFLICT_COUNT = 3;
+
   const [selectedADR, setSelectedADR] = React.useState<ADR | null>(adrs[0] ?? null);
   const [selectedContract, setSelectedContract] = React.useState<APIContract | null>(
     contracts[0] ?? null,
@@ -82,14 +94,38 @@ export default function ArchitectureCenterPage() {
           icon={<Network className="h-4 w-4" aria-hidden="true" />}
           description="ADRs, API contracts, task breakdowns, risk registers, and full traceability from requirement to test."
           action={
-            <ADRCreateDialog
-              onCreate={(input) => {
-                // eslint-disable-next-line no-console
-                console.info('[architecture] create ADR', input);
-              }}
-            />
+            <div className="flex items-center gap-2">
+              {/*
+               * Plan G commit 4 — demo conflict badge. The acme-corp
+               * seed ships 3 intentional conflicts so reviewers can
+               * walk through the resolve-drift workflow against
+               * ADR-003 ("Resolve Drift Before Merge"). The badge
+               * is a static count today; once a `/v1/architecture/
+               * conflicts` API lands it can be wired to the live
+               * value without touching the page.
+               */}
+              <Badge
+                variant="destructive"
+                data-testid="architecture-conflict-badge"
+                aria-label={`${DEMO_CONFLICT_COUNT} intentional demo conflicts`}
+              >
+                <AlertTriangle
+                  className="mr-1 h-3 w-3"
+                  aria-hidden="true"
+                />
+                Demo: {DEMO_CONFLICT_COUNT} intentional conflicts
+              </Badge>
+              <ADRCreateDialog
+                onCreate={(input) => {
+                  // eslint-disable-next-line no-console
+                  console.info('[architecture] create ADR', input);
+                }}
+              />
+            </div>
           }
         />
+
+        <DemoStateCard seedName="acme-corp" />
 
         <Tabs defaultValue="adrs" className="w-full">
           <TabsList aria-label="Architecture Center sections">
