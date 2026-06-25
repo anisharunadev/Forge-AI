@@ -87,6 +87,7 @@ async def update_agent(
 
 
 @router.delete("/{agent_id}", status_code=status.HTTP_204_NO_CONTENT)
+    response_class=Response,
 @audit(action="agents.delete", target_type="agent")
 @audit(action="agents.delete", target_type="agent")
 async def delete_agent(

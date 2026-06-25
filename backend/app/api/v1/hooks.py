@@ -98,6 +98,7 @@ async def update_hook(
 
 
 @router.delete("/{hook_id}", status_code=status.HTTP_204_NO_CONTENT)
+    response_class=Response,
 @audit(action="hooks.delete", target_type="hook")
 @audit(action="hooks.delete", target_type="hook")
 async def delete_hook(

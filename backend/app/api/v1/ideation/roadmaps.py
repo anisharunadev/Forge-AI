@@ -182,6 +182,7 @@ async def add_to_roadmap(
 
 
 @router.delete("/{roadmap_id}/items/{idea_id}", status_code=status.HTTP_204_NO_CONTENT)
+    response_class=Response,
 @audit(action="ideation.roadmap.remove_item", target_type="roadmap")
 @audit(action="ideation.roadmap.remove_item", target_type="roadmap")
 async def remove_from_roadmap(

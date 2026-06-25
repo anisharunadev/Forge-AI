@@ -97,6 +97,7 @@ async def update_connector(
 
 
 @router.delete("/{connector_id}", status_code=status.HTTP_204_NO_CONTENT)
+    response_class=Response,
 @audit(action="connectors.delete", target_type="connector")
 @audit(action="connectors.delete", target_type="connector")
 async def delete_connector(

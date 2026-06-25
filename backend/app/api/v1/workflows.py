@@ -265,6 +265,7 @@ async def update_workflow(
 
 
 @router.delete("/{workflow_id}", status_code=status.HTTP_204_NO_CONTENT)
+    response_class=Response,
 @audit(action="workflows.delete", target_type="workflow")
 async def delete_workflow(
     workflow_id: UUID,

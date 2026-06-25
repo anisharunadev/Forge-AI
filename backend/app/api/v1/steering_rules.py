@@ -68,6 +68,7 @@ async def create_steering_rule(
 
 
 @router.delete("/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
+    response_class=Response,
 @audit(action="steering_rules.delete", target_type="steering_rule")
 async def delete_steering_rule(
     rule_id: str,

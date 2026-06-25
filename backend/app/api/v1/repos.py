@@ -221,6 +221,7 @@ async def get_status(
 
 
 @router.delete("/ingestions/{run_id}", status_code=status.HTTP_204_NO_CONTENT)
+    response_class=Response,
 @audit(action="repos.cancel_ingestion", target_type="ingestion_run")
 @audit(action="repos.cancel_ingestion", target_type="ingestion_run")
 async def cancel_ingestion(

@@ -88,6 +88,7 @@ async def history(
 
 
 @router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+    response_class=Response,
 @audit(action="qa.clear", target_type="qa_session")
 @audit(action="qa.clear", target_type="qa_session")
 async def clear(
