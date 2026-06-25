@@ -5,6 +5,7 @@ Reads from environment variables (12-factor). All settings required by the
 start. Defaults are only provided for non-security-critical, dev-only values.
 """
 
+from decimal import Decimal
 from functools import lru_cache
 from typing import Literal
 
@@ -53,6 +54,55 @@ class Settings(BaseSettings):
     litellm_api_key: str = Field(..., description="Bearer token for the LiteLLM Proxy")
     litellm_default_model: str = "gpt-4o-mini"
 
+    # F-829 — LiteLLM Integration Layer (Phase A foundation)
+    # Bearer token for LiteLLM management endpoints. Distinct from the
+    # chat key above; admin key is long-lived, chat key is the
+    # per-tenant Virtual Key minted at runtime.
+    # Defaults to empty so the service can boot in local dev when no
+    # proxy is reachable; production deployments MUST set
+    # ``LITELLM_ADMIN_KEY`` (or ``docker-compose.yml`` will inject a
+    # default from ``LITELLM_MASTER_KEY``). When empty, admin calls to
+    # the proxy will fail with 401 — the service still serves traffic
+    # but the LiteLLM integration layer is effectively disabled.
+    litellm_admin_key: str = Field(
+        default="",
+        description="Bearer token for LiteLLM management endpoints (distinct from chat key)",
+    )
+    # TTL for the in-process cache of per-tenant Virtual Keys (seconds).
+    # 5 minutes by default — short enough to keep the auth surface
+    # responsive to revocations, long enough to avoid hammering
+    # Secrets Manager on the hot path.
+    litellm_key_cache_ttl_seconds: int = 300
+    # AWS Secrets Manager path prefix for per-tenant Virtual Keys.
+    aws_secrets_manager_prefix: str = "forge/tenants/"
+    # Optional KMS CMK used to encrypt per-tenant secrets in AWS.
+    # When None, AWS uses the default key for the account/region.
+    aws_secrets_manager_kms_key_id: str | None = None
+
+    # F-829 — LiteLLM Integration Layer (Phase A — budgets, health, feature flags)
+    # Default tenant-level budget applied at tenant creation (OQ-32).
+    litellm_budget_default_usd: Decimal = Decimal("500.00")
+    # Budget period — LiteLLM Budgets API expects "monthly" | "daily" | "weekly".
+    litellm_budget_default_period: str = "monthly"
+    # How often the LiteLLMHealthMonitor pings /health/liveliness (seconds).
+    litellm_health_check_interval_seconds: int = 30
+    # How long the usage analytics cache stays fresh (seconds).
+    litellm_usage_cache_ttl_seconds: int = 60
+
+    # F-829 — Feature flags (per-tenant controls live in LiteLLM Team metadata;
+    # these are global defaults applied at integration startup).
+    # Master toggle — when False the integration layer is disabled and the
+    # legacy LiteLLMClient path remains active for graceful rollout.
+    litellm_integration_enabled: bool = True
+    # Auto-provision per-tenant Virtual Keys on tenant creation.
+    litellm_auto_provision_keys: bool = True
+    # Hard-enforce LiteLLM Budgets (block at 100%) vs soft-warn.
+    litellm_budget_hard_limit: bool = True
+    # Default guardrails applied to new tenants unless overridden per-tenant.
+    litellm_guardrail_pii_default: bool = True
+    litellm_guardrail_content_default: bool = True
+    litellm_guardrail_injection_default: bool = True
+
     # Keycloak / OIDC
     keycloak_url: str = Field(..., description="Keycloak realm base URL")
     keycloak_realm: str = "forge"
@@ -97,6 +147,46 @@ class Settings(BaseSettings):
     dev_auth_bypass: bool = Field(
         default=False,
         description="DEV_AUTH_BYPASS env var. Synthesizes dev@forge.local principal. Dev-only.",
+    )
+
+    # F-800 — Forge Co-pilot (Plan 0.1 foundation)
+    # Master toggle for the Co-pilot surface. When False, every
+    # /api/v1/copilot/* endpoint returns 404 and the frontend
+    # hides the Cmd+J hotkey + nav entry. Per-tenant overrides land
+    # in the next iteration via the existing ``tenants`` config table.
+    copilot_enabled: bool = Field(
+        default=False,
+        description="COPILOT_ENABLED env var. Master toggle for the Co-pilot surface.",
+    )
+    # Per-conversation USD ceiling enforced by workflow_budget admission
+    # control. ``copilot_service`` declares a synthetic WorkflowBudget
+    # row on conversation creation with this ceiling; ``LiteLLMClient``
+    # blocks calls that would breach it. Overridable per tenant later.
+    copilot_default_budget_usd: float = Field(
+        default=1.00,
+        description="COPILOT_DEFAULT_BUDGET_USD. Per-conversation budget ceiling.",
+    )
+    # Hard cap on tool-call turns per agent_loop invocation. Prevents
+    # runaway loops where the model keeps calling tools without
+    # converging on a final answer. ``ToolLoopExhausted`` is raised
+    # at the cap (copilot_service maps to 503).
+    copilot_tool_call_max: int = Field(
+        default=5,
+        description="COPILOT_TOOL_CALL_MAX. Tool-call turns per agent_loop.",
+    )
+    # Per-user message rate limit (POST /copilot/conversations).
+    # Enforced by copilot_rate_limit (Plan 5). 10 msg/min keeps an
+    # individual user from monopolizing shared capacity.
+    copilot_rate_limit_per_min: int = Field(
+        default=10,
+        description="COPILOT_RATE_LIMIT_PER_MIN. Per-user request cap.",
+    )
+    # When True, the /welcome page stub shows the Co-pilot intro
+    # card on first visit. F-805 will own this surface; the stub
+    # shipped in Plan 4 only renders when this is True.
+    copilot_welcome_enabled: bool = Field(
+        default=True,
+        description="COPILOT_WELCOME_ENABLED. Render the welcome shim on /welcome.",
     )
 
     @model_validator(mode="after")

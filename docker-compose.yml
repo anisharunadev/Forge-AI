@@ -123,6 +123,10 @@ services:
       DATABASE_URL: "postgresql://${POSTGRES_USER:-forge}:${POSTGRES_PASSWORD:-forge}@postgres:5432/litellm"
       REDIS_HOST: "redis"
       REDIS_PORT: "6379"
+      # DL-025 + infra/litellm/config.yaml:63 — the proxy refuses to
+      # boot without this. Read from .env; falls back to the dev
+      # placeholder so first-time `docker compose up` still works.
+      LITELLM_MASTER_KEY: "${LITELLM_MASTER_KEY:-sk-1234}"
     ports:
       - "${LITELLM_PORT:-4000}:4000"
     depends_on:
@@ -193,6 +197,11 @@ services:
       # DL-025: backend never talks to provider SDKs directly.
       LITELLM_PROXY_URL: "http://litellm:4000"
       LITELLM_API_KEY: "${LITELLM_MASTER_KEY:-sk-1234}"
+      # F-829 admin key — defaults to the same value as the chat key
+      # so a fresh `docker compose up` boots without manual env wiring.
+      # In production, set LITELLM_ADMIN_KEY explicitly to a long-lived
+      # distinct value (see .env.example for the convention).
+      LITELLM_ADMIN_KEY: "${LITELLM_ADMIN_KEY:-${LITELLM_MASTER_KEY:-sk-1234}}"
       # ADR-001: S3-compatible object storage.
       FLOCI_URL: "http://floci:4566"
       FLOCI_PUBLIC_URL: "${FLOCI_PUBLIC_URL:-http://localhost:4566}"
@@ -220,7 +229,7 @@ services:
   forge-ui:
     build:
       context: .
-      dockerfile: apps/forge/Dockerfile
+      dockerfile: apps/forge/Dockerfile.dev
     container_name: forge-ui
     restart: unless-stopped
     environment:
@@ -232,6 +241,24 @@ services:
       - "${FORGE_UI_PORT:-3000}:3000"
     depends_on:
       - backend
+    # F-829 fix: the production Dockerfile (apps/forge/Dockerfile) only
+    # copies .next/, public/, package.json, next.config.mjs, and
+    # node_modules/ to the runner stage — NOT the app/ source directory.
+    # With NODE_ENV=development that image triggers `next dev`, which
+    # needs the source tree and fails with "Couldn't find any pages or
+    # app directory". Switch to Dockerfile.dev (which runs `pnpm run dev`)
+    # and bind-mount the source so HMR + fast refresh work.
+    volumes:
+      - ./apps/forge:/app/apps/forge
+      - ./apps/forge/app:/app/apps/forge/app
+      - ./apps/forge/components:/app/apps/forge/components
+      - ./apps/forge/lib:/app/apps/forge/lib
+      - ./apps/forge/hooks:/app/apps/forge/hooks
+      - ./apps/forge/public:/app/apps/forge/public
+      - ./apps/forge/tests:/app/apps/forge/tests
+      - ./apps/forge/next.config.mjs:/app/apps/forge/next.config.mjs
+      - ./apps/forge/tsconfig.json:/app/apps/forge/tsconfig.json
+      - ./apps/forge/components.json:/app/apps/forge/components.json
     networks:
       - forge-net
 
