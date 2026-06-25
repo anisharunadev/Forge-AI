@@ -22,10 +22,11 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
 from app.api.deps import DbSession, Principal, require_permission
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.schemas.copilot import (
@@ -84,9 +85,8 @@ def _service(
 @audit(action="copilot.conversation.chat", target_type="copilot_conversation")
 async def post_chat(
     request: CopilotChatRequest,
-    principal: Principal,
     db: DbSession,
-    _perm: Principal = require_permission(COPILOT_PERMISSION_USE),
+    principal: AuthenticatedPrincipal = Depends(require_permission(COPILOT_PERMISSION_USE)),
 ) -> CopilotChatResponse:
     """Run one chat turn end-to-end.
 

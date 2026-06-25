@@ -223,7 +223,14 @@ class CopilotService:
                         project_id=conversation.project_id,
                         event_type=EventType.COPILOT_BUDGET_BLOCKED,
                     )
-                    raise
+                    # Convert to the Co-pilot-specific subclass so
+                    # callers can distinguish a Co-pilot block from
+                    # any other admission failure.
+                    raise CopilotBudgetBlocked(
+                        workflow_id=exc.workflow_id,
+                        spent=exc.spent,
+                        ceiling=exc.ceiling,
+                    ) from exc
 
             assistant_text = self._extract_assistant_text(response)
             tool_call_records = self._build_tool_call_records(tool_calls, tool_results)
@@ -288,6 +295,11 @@ class CopilotService:
             turn_span.set_attribute(
                 "model", self._settings.litellm_default_model
             )
+
+            # Persist the entire turn in one commit so cross-session
+            # reads (other tests, downstream consumers) see the full
+            # message + cost aggregation atomically.
+            await self._db.commit()
 
             return CopilotChatResponse(
                 conversation_id=conversation.id,
@@ -389,6 +401,8 @@ class CopilotService:
                 message_count=row.message_count or 0,
                 total_cost_usd=Decimal(str(row.total_cost_usd or 0)),
                 archived_at=row.archived_at,
+                created_at=row.created_at,
+                updated_at=row.updated_at,
             )
             for row in rows
         ]
@@ -452,6 +466,7 @@ class CopilotService:
             target_id=str(conversation.id),
             payload={},
         )
+        await self._db.commit()
 
     async def submit_feedback(
         self, message_id: UUID, request: CopilotFeedbackRequest
@@ -487,6 +502,7 @@ class CopilotService:
                 "conversation_id": str(conversation.id),
             },
         )
+        await self._db.commit()
 
     async def list_tools(self) -> list[CopilotToolRead]:
         """Return metadata for every registered tool (Steward-facing)."""

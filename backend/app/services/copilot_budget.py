@@ -37,6 +37,12 @@ logger = get_logger(__name__)
 # workflow_id (important for idempotency).
 COPILOT_WORKFLOW_NAMESPACE = uuid.UUID("a1b2c3d4-e5f6-5789-abcd-1234567890ab")
 
+# Zero-UUID sentinel used when a Co-pilot conversation is tenant-wide
+# (no project selected). The ``WorkflowBudget`` model requires a
+# NOT NULL ``project_id``; the audit_service pattern uses the same
+# sentinel for the same reason.
+ZERO_PROJECT_SENTINEL = uuid.UUID("00000000-0000-0000-0000-000000000000")
+
 
 def copilot_synthetic_workflow_id(conversation_id: uuid.UUID) -> uuid.UUID:
     """Derive a deterministic workflow_id for a Co-pilot conversation.
@@ -88,10 +94,14 @@ async def ensure_conversation_budget(
     # tag goes into ``metadata_`` so the cost ledger can self-describe
     # the spend without joining to copilot_conversations.
     reason = f"copilot_conversation:{conversation.id}"
+    # Co-pilot conversations are nullable on ``project_id`` (some
+    # threads are tenant-wide), but ``workflow_budgets.project_id`` is
+    # NOT NULL — substitute the zero-UUID sentinel so the row inserts.
+    budget_project_id = conversation.project_id or ZERO_PROJECT_SENTINEL
     row = WorkflowBudget(
         workflow_id=workflow_id,
         tenant_id=conversation.tenant_id,
-        project_id=conversation.project_id,
+        project_id=budget_project_id,
         ceiling_usd=ceiling_usd,
         spent_usd=Decimal("0"),
         status=WorkflowBudgetStatus.ACTIVE,
