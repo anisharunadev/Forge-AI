@@ -220,6 +220,7 @@ async def get_conversation(
 @router.delete(
     "/conversations/{conversation_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
 )
 @audit(action="copilot.conversation.delete", target_type="copilot_conversation")
 async def delete_conversation(
@@ -227,7 +228,7 @@ async def delete_conversation(
     principal: Principal,
     db: DbSession,
     _perm: Principal = require_permission(COPILOT_PERMISSION_USE),
-) -> Response:
+):
     """Soft-delete (archive) the caller's conversation."""
     _ensure_enabled()
     service = _service(principal, db)
