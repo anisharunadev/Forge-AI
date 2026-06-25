@@ -22,7 +22,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-from app.core.config import settings
+from app.core.config import get_settings
 
 router = APIRouter(prefix="/system", tags=["system"])
 
@@ -60,13 +60,19 @@ async def get_features() -> SystemFeatures:
     When per-tenant override storage lands (existing ``tenants.config``
     JSONB is the natural home), this endpoint will resolve the caller's
     tenant_id from the bearer token and prefer the tenant row.
+
+    Resolves settings via ``get_settings()`` (lru_cache) instead of
+    the module-level singleton so tests can ``cache_clear()`` between
+    assertions. In production the cache stays warm for the process
+    lifetime so the lookup is a single dict read.
     """
+    s = get_settings()
     return SystemFeatures(
-        COPILOT_ENABLED=settings.copilot_enabled,
+        COPILOT_ENABLED=s.copilot_enabled,
         COPILOT_STREAMING=False,  # V1.1 deferred
-        COPILOT_DEFAULT_BUDGET_USD=settings.copilot_default_budget_usd,
-        COPILOT_TOOL_CALL_MAX=settings.copilot_tool_call_max,
-        COPILOT_RATE_LIMIT_PER_MIN=settings.copilot_rate_limit_per_min,
+        COPILOT_DEFAULT_BUDGET_USD=s.copilot_default_budget_usd,
+        COPILOT_TOOL_CALL_MAX=s.copilot_tool_call_max,
+        COPILOT_RATE_LIMIT_PER_MIN=s.copilot_rate_limit_per_min,
     )
 
 
