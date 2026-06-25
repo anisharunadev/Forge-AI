@@ -15,6 +15,7 @@ os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 os.environ.setdefault("LITELLM_PROXY_URL", "http://localhost:4000")
 os.environ.setdefault("LITELLM_API_KEY", "test-key")
+os.environ.setdefault("LITELLM_ADMIN_KEY", "test-admin-key")
 os.environ.setdefault("KEYCLOAK_URL", "http://localhost:8080")
 os.environ.setdefault("JWT_SECRET", "test-secret")
 os.environ.setdefault("ENVIRONMENT", "test")
@@ -36,6 +37,7 @@ def _set_test_env(monkeypatch: pytest.MonkeyPatch) -> None:
         os.environ.get("LITELLM_PROXY_URL", "http://localhost:4000"),
     )
     monkeypatch.setenv("LITELLM_API_KEY", os.environ.get("LITELLM_API_KEY", "test-key"))
+    monkeypatch.setenv("LITELLM_ADMIN_KEY", os.environ.get("LITELLM_ADMIN_KEY", "test-admin-key"))
     monkeypatch.setenv("KEYCLOAK_URL", os.environ.get("KEYCLOAK_URL", "http://localhost:8080"))
     monkeypatch.setenv("JWT_SECRET", os.environ.get("JWT_SECRET", "test-secret"))
     monkeypatch.setenv("ENVIRONMENT", "test")
@@ -68,7 +70,56 @@ async def sqlite_db(monkeypatch: pytest.MonkeyPatch):
     from app.db import base as base_mod
     from app.db.session import get_session_factory as _prod_get_session_factory  # noqa: F401
 
-    # Stub the missing projects table.
+    # Ensure all model modules are imported so metadata is populated.
+    # Imports must happen BEFORE the projects stub check below, otherwise
+    # the now-real ``app.db.models.project.Project`` table conflicts with
+    # the legacy stub (Plan 0 — project schema anchor).
+    from app.db.models import (  # noqa: F401
+        agent,
+        approval,
+        architecture,
+        architecture_services,
+        artifact,
+        audit,
+        command_run,
+        connector,
+        conflict,
+        copilot,
+        cost,
+        graph,
+        hook,
+        ideation,
+        ideation_signal,
+        litellm_budget_config,
+        litellm_call_record,
+        litellm_guardrail_violation,
+        litellm_key_audit,
+        litellm_model_assignment,
+        litellm_team_mapping,
+        marketplace,
+        model_provider,
+        observability,
+        onboarding,
+        persona_memory,
+        policy,
+        project,
+        repo_ingestion,
+        role,
+        seed,
+        standard,
+        steering_rule,
+        template,
+        tenant,
+        terminal_cost,
+        tool_bundle,
+        user,
+        workflow,
+        workflow_budget,
+    )
+
+    # Legacy fallback: only stub ``projects`` if no real model owns the
+    # table. As of Plan 0 (project schema anchor), ``app.db.models.project.Project``
+    # is the authoritative definition.
     if "projects" not in base_mod.metadata.tables:
         Table(
             "projects",
@@ -80,30 +131,6 @@ async def sqlite_db(monkeypatch: pytest.MonkeyPatch):
 
     engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
     factory = async_sessionmaker(bind=engine, expire_on_commit=False, autoflush=False)
-
-    # Ensure all model modules are imported so metadata is populated.
-    from app.db.models import (  # noqa: F401
-        agent,
-        approval,
-        artifact,
-        audit,
-        connector,
-        cost,
-        hook,
-        ideation,
-        marketplace,
-        model_provider,
-        onboarding,
-        policy,
-        role,
-        standard,
-        steering_rule,
-        template,
-        tenant,
-        user,
-        workflow,
-        workflow_budget,
-    )
 
     async with engine.begin() as conn:
         await conn.run_sync(base_mod.metadata.create_all)
@@ -119,5 +146,18 @@ async def sqlite_db(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(session_mod, "_engine", None)
     monkeypatch.setattr(session_mod, "_session_factory", None)
     # Drop the stub to avoid contaminating other tests' metadata.
-    base_mod.metadata.remove(base_mod.metadata.tables["projects"])
+    # Only drop when we created the stub ourselves (real Project model
+    # must NOT be removed from shared metadata).
+    if "projects" in base_mod.metadata.tables and base_mod.metadata.tables["projects"].schema is None:
+        # Heuristic: stub was Table(..., base_mod.metadata, ...) with no schema;
+        # real Project registers via DeclarativeBase which also has no schema,
+        # so we additionally guard on the absence of the Tenant FK the real
+        # model carries (``ForeignKey("tenants.id")``).
+        proj = base_mod.metadata.tables["projects"]
+        has_tenant_fk = any(
+            c.foreign_keys and any(fk.column.table.name == "tenants" for fk in c.foreign_keys)
+            for c in proj.columns
+        )
+        if not has_tenant_fk:
+            base_mod.metadata.remove(proj)
 
