@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 
+import { CopilotPanel } from '@/components/copilot/CopilotPanel';
 import { CommandPalette } from './CommandPalette';
 
 interface ShellContextValue {
@@ -13,35 +14,46 @@ interface ShellContextValue {
   readonly setMobileNavOpen: (b: boolean) => void;
   readonly openMobileNav: () => void;
   readonly closeMobileNav: () => void;
+  readonly copilotOpen: boolean;
+  readonly setCopilotOpen: (b: boolean) => void;
+  readonly openCopilot: () => void;
+  readonly closeCopilot: () => void;
 }
 
 const ShellContext = React.createContext<ShellContextValue | null>(null);
 
 /**
- * The shell owns two global UI states: the CMD+K command palette and
- * the mobile navigation drawer. Both are mounted once at the layout
- * boundary and exposed via `useShell()` to the rest of the tree.
+ * The shell owns global UI states: the CMD+K command palette, the
+ * mobile navigation drawer, and the CMD+J Co-pilot panel. All three
+ * are mounted once at the layout boundary and exposed via `useShell()`
+ * to the rest of the tree.
  *
- * The global Cmd/Ctrl-K keyboard listener also lives here so we have
- * exactly one listener for the whole document.
+ * The global Cmd/Ctrl-K and Cmd/Ctrl-J keyboard listeners also live
+ * here so we have exactly one listener pair for the whole document.
  */
 export function ShellProvider({ children }: { children: React.ReactNode }) {
   const [paletteOpen, setPaletteOpen] = React.useState(false);
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
+  const [copilotOpen, setCopilotOpen] = React.useState(false);
 
   const openPalette = React.useCallback(() => setPaletteOpen(true), []);
   const closePalette = React.useCallback(() => setPaletteOpen(false), []);
   const openMobileNav = React.useCallback(() => setMobileNavOpen(true), []);
   const closeMobileNav = React.useCallback(() => setMobileNavOpen(false), []);
+  const openCopilot = React.useCallback(() => setCopilotOpen(true), []);
+  const closeCopilot = React.useCallback(() => setCopilotOpen(false), []);
 
-  // Cmd/Ctrl-K listener — suppressed when the user is typing in an
-  // input, textarea, select, or contenteditable so the keystroke
-  // reaches the field instead of hijacking it.
+  // Global keydown handler — same suppression rules apply to both
+  // Cmd/Ctrl-K (palette) and Cmd/Ctrl-J (co-pilot): if the user is
+  // typing in an INPUT, TEXTAREA, SELECT, or contenteditable, the
+  // keystroke reaches the field instead of hijacking it.
   React.useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       const isMod = e.metaKey || e.ctrlKey;
       if (!isMod) return;
-      if (e.key.toLowerCase() !== 'k') return;
+      const key = e.key.toLowerCase();
+      if (key !== 'k' && key !== 'j') return;
+
       const target = e.target as HTMLElement | null;
       if (target) {
         const tag = target.tagName;
@@ -52,8 +64,14 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
           target.isContentEditable;
         if (isEditable) return;
       }
+
       e.preventDefault();
-      setPaletteOpen((prev) => !prev);
+      if (key === 'k') {
+        setPaletteOpen((prev) => !prev);
+      } else {
+        // TODO(F-800 Plan 6): gate on COPILOT_ENABLED flag.
+        setCopilotOpen((prev) => !prev);
+      }
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -69,6 +87,10 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
       setMobileNavOpen,
       openMobileNav,
       closeMobileNav,
+      copilotOpen,
+      setCopilotOpen,
+      openCopilot,
+      closeCopilot,
     }),
     [
       paletteOpen,
@@ -77,6 +99,9 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
       mobileNavOpen,
       openMobileNav,
       closeMobileNav,
+      copilotOpen,
+      openCopilot,
+      closeCopilot,
     ],
   );
 
@@ -84,6 +109,7 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
     <ShellContext.Provider value={value}>
       {children}
       <CommandPalette />
+      <CopilotPanel />
     </ShellContext.Provider>
   );
 }
