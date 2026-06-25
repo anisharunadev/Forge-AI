@@ -3,6 +3,7 @@
 import * as React from 'react';
 
 import { CopilotPanel } from '@/components/copilot/CopilotPanel';
+import { FirstRunNudge } from '@/components/copilot/FirstRunNudge';
 import { CommandPalette } from './CommandPalette';
 
 interface ShellContextValue {
@@ -110,6 +111,7 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
       {children}
       <CommandPalette />
       <CopilotPanel />
+      <FirstRunNudge />
     </ShellContext.Provider>
   );
 }
