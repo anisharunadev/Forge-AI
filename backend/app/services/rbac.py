@@ -13,6 +13,48 @@ from app.services.policy_engine import PolicyEngine, PolicyResult, policy_engine
 logger = get_logger(__name__)
 
 
+# F-800 — Co-pilot permission catalog.
+#
+# Permissions are strings; the JWT carries the granted subset under the
+# ``forge.permissions`` claim. The catalog below is the source of truth
+# for what strings exist; the API deps (``require_permission``) and the
+# tool dispatcher reference these constants so a typo shows up at
+# import time, not at request time.
+COPILOT_PERMISSION_USE = "copilot:use"
+COPILOT_PERMISSION_TOOLS_PREFIX = "copilot:tool:"
+
+# Per-tool permission constants — one per V1 tool from spec §3.3.
+# Use :func:`copilot_tool_permission` if you only have a tool name.
+COPILOT_PERMISSION_TOOL_SEARCH_KNOWLEDGE = "copilot:tool:search_knowledge"
+COPILOT_PERMISSION_TOOL_GET_SERVICE = "copilot:tool:get_service"
+COPILOT_PERMISSION_TOOL_GET_ADR = "copilot:tool:get_adr"
+COPILOT_PERMISSION_TOOL_LIST_RECENT_ADRS = "copilot:tool:list_recent_adrs"
+COPILOT_PERMISSION_TOOL_GET_STANDARDS = "copilot:tool:get_standards"
+COPILOT_PERMISSION_TOOL_GET_TEMPLATE = "copilot:tool:get_template"
+COPILOT_PERMISSION_TOOL_NAVIGATE_TO = "copilot:tool:navigate_to"
+COPILOT_PERMISSION_TOOL_DRAFT_ARTIFACT = "copilot:tool:draft_artifact"
+COPILOT_PERMISSION_TOOL_RUN_COMMAND = "copilot:tool:run_command"
+COPILOT_PERMISSION_TOOL_CHECK_BUDGET = "copilot:tool:check_budget"
+COPILOT_PERMISSION_TOOL_AUDIT_EVENT = "copilot:tool:audit_event"
+
+
+def copilot_tool_permission(tool_name: str) -> str:
+    """Return the canonical ``copilot:tool:<name>`` permission string.
+
+    Args:
+        tool_name: The tool's canonical name (matches ``Tool.name``).
+
+    Returns:
+        The permission string the RBAC layer checks.
+
+    Raises:
+        ValueError: If ``tool_name`` is empty.
+    """
+    if not tool_name or not isinstance(tool_name, str):
+        raise ValueError("tool_name must be a non-empty string")
+    return f"{COPILOT_PERMISSION_TOOLS_PREFIX}{tool_name}"
+
+
 @dataclass(frozen=True)
 class Permission:
     """A `<resource>:<action>` permission."""
@@ -103,4 +145,22 @@ class RBACService:
 rbac = RBACService()
 
 
-__all__ = ["RBACService", "Permission", "rbac"]
+__all__ = [
+    "RBACService",
+    "Permission",
+    "rbac",
+    "COPILOT_PERMISSION_USE",
+    "COPILOT_PERMISSION_TOOLS_PREFIX",
+    "COPILOT_PERMISSION_TOOL_SEARCH_KNOWLEDGE",
+    "COPILOT_PERMISSION_TOOL_GET_SERVICE",
+    "COPILOT_PERMISSION_TOOL_GET_ADR",
+    "COPILOT_PERMISSION_TOOL_LIST_RECENT_ADRS",
+    "COPILOT_PERMISSION_TOOL_GET_STANDARDS",
+    "COPILOT_PERMISSION_TOOL_GET_TEMPLATE",
+    "COPILOT_PERMISSION_TOOL_NAVIGATE_TO",
+    "COPILOT_PERMISSION_TOOL_DRAFT_ARTIFACT",
+    "COPILOT_PERMISSION_TOOL_RUN_COMMAND",
+    "COPILOT_PERMISSION_TOOL_CHECK_BUDGET",
+    "COPILOT_PERMISSION_TOOL_AUDIT_EVENT",
+    "copilot_tool_permission",
+]  # noqa: E501
