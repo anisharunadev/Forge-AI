@@ -2,160 +2,250 @@
   "name": "acme-corp",
   "version": 1,
   "tenant_type": "demo",
-  "description": "Acme Corp e-commerce platform demo — 12 microservices, 8 users, 6 named roles, full project intelligence, 3 intentional conflicts for ADR-003 demo.",
+  "description": "Acme Corp e-commerce platform demo \u2014 12 microservices, 8 users, 6 named roles, full project intelligence, 3 intentional conflicts for ADR-003 demo.",
   "data_files": [
     {
       "file": "001_tenant.json",
       "table": "tenants",
       "order": 1,
-      "idempotency_key": ["slug"],
+      "idempotency_key": [
+        "slug"
+      ],
       "description": "Acme Corp tenant (B2C e-commerce, US+EU markets)"
     },
     {
       "file": "002_users.json",
       "table": "users",
       "order": 2,
-      "idempotency_key": ["tenant_id", "email"],
+      "idempotency_key": [
+        "tenant_id",
+        "email"
+      ],
       "description": "8 demo users (Steward, Tech Lead, Architect, Developer, Security, Sponsor, 2 DevOps)"
     },
     {
       "file": "003_roles.json",
       "table": "roles",
       "order": 3,
-      "idempotency_key": ["tenant_id", "name"],
+      "idempotency_key": [
+        "tenant_id",
+        "name"
+      ],
       "description": "6 named roles: steward, tech_lead, architect, developer, security, sponsor"
     },
     {
       "file": "004_rbac_assignments.json",
       "table": "rbac_assignments",
       "order": 4,
-      "idempotency_key": ["tenant_id", "user_id", "role_id"],
+      "idempotency_key": [
+        "tenant_id",
+        "user_id",
+        "role_id"
+      ],
       "description": "Role assignments per user (24 assignments across 8 users)"
     },
     {
       "file": "005_projects.json",
       "table": "projects",
       "order": 5,
-      "idempotency_key": ["tenant_id", "name"],
+      "idempotency_key": [
+        "tenant_id",
+        "name"
+      ],
       "description": "Acme Platform project (anchors all TenantScopedMixin rows)"
     },
     {
       "file": "006_repos.json",
       "table": "repos",
       "order": 6,
-      "idempotency_key": ["tenant_id", "source_url"],
-      "description": "14 repositories — 12 microservices + 2 shared libraries"
+      "idempotency_key": [
+        "tenant_id",
+        "source_url"
+      ],
+      "description": "14 repositories \u2014 12 microservices + 2 shared libraries"
     },
     {
       "file": "007_connectors.json",
       "table": "connectors",
       "order": 7,
-      "idempotency_key": ["tenant_id", "project_id", "type"],
+      "idempotency_key": [
+        "tenant_id",
+        "project_id",
+        "type"
+      ],
       "description": "5 connectors (GitHub, Jira, Slack, PagerDuty, AWS)"
     },
     {
       "file": "008_architecture_adrs.json",
       "table": "architecture_adrs",
       "order": 8,
-      "idempotency_key": ["tenant_id", "project_id", "number"],
-      "description": "18 ADRs — one per service + 6 cross-cutting"
+      "idempotency_key": [
+        "tenant_id",
+        "project_id",
+        "number"
+      ],
+      "description": "18 ADRs \u2014 one per service + 6 cross-cutting"
     },
     {
       "file": "009_api_contracts.json",
       "table": "architecture_api_contracts",
       "order": 9,
-      "idempotency_key": ["tenant_id", "project_id", "name", "version"],
+      "idempotency_key": [
+        "tenant_id",
+        "project_id",
+        "name",
+        "version"
+      ],
       "description": "12 API contracts (one per service)"
     },
     {
       "file": "010_risk_registers.json",
       "table": "architecture_risk_registers",
       "order": 10,
-      "idempotency_key": ["tenant_id", "project_id", "name"],
+      "idempotency_key": [
+        "tenant_id",
+        "project_id",
+        "name"
+      ],
       "description": "8 risk registers covering data breach, payment, scaling, deps, sec patches, 3rd-party API, DB, compliance"
     },
     {
       "file": "011_agents.json",
       "table": "agents",
       "order": 11,
-      "idempotency_key": ["tenant_id", "name"],
+      "idempotency_key": [
+        "tenant_id",
+        "name"
+      ],
       "description": "15 agents across all 6 centers (architect, developer, security, ideation, devops)"
     },
     {
       "file": "012_artifacts.json",
       "table": "artifacts",
       "order": 12,
-      "idempotency_key": ["tenant_id", "type", "version"],
+      "idempotency_key": [
+        "tenant_id",
+        "type",
+        "version"
+      ],
       "description": "150 typed artifacts (ADRs, API contracts, runbooks, security reports, task breakdowns)"
     },
     {
       "file": "013_hooks.json",
       "table": "hooks",
       "order": 13,
-      "idempotency_key": ["tenant_id", "name"],
-      "description": "10 webhook hooks — 5 for connectors + 5 internal workflow hooks"
+      "idempotency_key": [
+        "tenant_id",
+        "name"
+      ],
+      "description": "10 webhook hooks \u2014 5 for connectors + 5 internal workflow hooks"
     },
     {
       "file": "014_roadmaps.json",
       "table": "roadmaps",
       "order": 14,
-      "idempotency_key": ["tenant_id", "project_id", "name"],
+      "idempotency_key": [
+        "tenant_id",
+        "project_id",
+        "name"
+      ],
       "description": "4 roadmaps (Q3 2026, Q4 2026, Q1 2027, Q2 2027)"
     },
     {
       "file": "015_ideas.json",
       "table": "ideas",
       "order": 15,
-      "idempotency_key": ["tenant_id", "project_id", "title"],
+      "idempotency_key": [
+        "tenant_id",
+        "project_id",
+        "title"
+      ],
       "description": "50 ideas in various statuses"
     },
     {
       "file": "016_idea_analyses.json",
       "table": "idea_analyses",
       "order": 16,
-      "idempotency_key": ["tenant_id", "idea_id"],
+      "idempotency_key": [
+        "tenant_id",
+        "idea_id"
+      ],
       "description": "50 LLM-produced analyses"
     },
     {
       "file": "017_opportunity_scores.json",
       "table": "opportunity_scores",
       "order": 17,
-      "idempotency_key": ["tenant_id", "idea_id"],
+      "idempotency_key": [
+        "tenant_id",
+        "idea_id"
+      ],
       "description": "50 opportunity scores (RICE + custom dimensions)"
     },
     {
       "file": "018_prds.json",
       "table": "prds",
       "order": 18,
-      "idempotency_key": ["tenant_id", "project_id", "idea_id", "version"],
+      "idempotency_key": [
+        "tenant_id",
+        "project_id",
+        "idea_id",
+        "version"
+      ],
       "description": "6 PRDs (Product Requirements Documents)"
     },
     {
       "file": "019_workflow_sessions.json",
       "table": "workflow_sessions",
       "order": 19,
-      "idempotency_key": ["tenant_id", "project_id", "name"],
+      "idempotency_key": [
+        "tenant_id",
+        "project_id",
+        "name"
+      ],
       "description": "30 ideation workflow sessions"
     },
     {
       "file": "020_workflow_steps.json",
       "table": "workflow_steps",
       "order": 20,
-      "idempotency_key": ["tenant_id", "session_id", "step_number"],
+      "idempotency_key": [
+        "tenant_id",
+        "session_id",
+        "step_number"
+      ],
       "description": "120 workflow steps (4 per session)"
     },
     {
-      "file": "021_graph.json",
+      "file": "021_graph_nodes.json",
       "table": "graph_nodes",
       "order": 21,
-      "idempotency_key": ["tenant_id", "node_key"],
-      "description": "200 graph nodes (combined with edges)"
+      "idempotency_key": [
+        "tenant_id",
+        "node_key"
+      ],
+      "description": "Knowledge graph nodes \u2014 every ADR/API contract/repo/service/agent/artifact/PRD/idea"
     },
     {
-      "file": "022_conflicts.json",
-      "table": "conflicts",
+      "file": "022_graph_edges.json",
+      "table": "graph_edges",
       "order": 22,
-      "idempotency_key": ["tenant_id", "title"],
+      "idempotency_key": [
+        "tenant_id",
+        "source_node_key",
+        "target_node_key",
+        "edge_kind"
+      ],
+      "description": "Knowledge graph edges \u2014 references / implements / governs / documents / depends_on / deploys / owns"
+    },
+    {
+      "file": "023_conflicts.json",
+      "table": "conflicts",
+      "order": 23,
+      "idempotency_key": [
+        "tenant_id",
+        "title"
+      ],
       "description": "3 intentional conflicts for ADR-003 demo"
     }
   ],
@@ -184,5 +274,7 @@
     "graph_edges": 250,
     "conflicts": 3
   },
-  "production_safety": {"allow_in_prod": false}
+  "production_safety": {
+    "allow_in_prod": false
+  }
 }
