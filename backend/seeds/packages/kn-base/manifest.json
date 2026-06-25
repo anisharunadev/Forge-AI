@@ -1,0 +1,43 @@
+{
+  "name": "kn-base",
+  "version": 1,
+  "tenant_type": "reference",
+  "description": "KnackForge reference standards, templates, policies, and tool bundles. Applied on every new tenant via F-507 day-one bootstrap.",
+  "data_files": [
+    {
+      "file": "001_standards.json",
+      "table": "standards",
+      "order": 1,
+      "idempotency_key": ["tenant_id", "name"],
+      "description": "KFG engineering, security, architecture, observability, data, API, deployment, governance standards"
+    },
+    {
+      "file": "002_templates.json",
+      "table": "templates",
+      "order": 2,
+      "idempotency_key": ["tenant_id", "type", "name", "version"],
+      "description": "ADR, runbook, security-report, task-breakdown, risk-register templates"
+    },
+    {
+      "file": "003_policies.json",
+      "table": "policies",
+      "order": 3,
+      "idempotency_key": ["tenant_id", "name"],
+      "description": "ADR-required, tests-required, security-scan-required, peer-review-required policies"
+    },
+    {
+      "file": "004_tool_bundles.json",
+      "table": "tool_bundles",
+      "order": 4,
+      "idempotency_key": ["tenant_id", "bundle_key"],
+      "description": "Tool bundles for architecture, development, security, deployment, ideation, refactor"
+    }
+  ],
+  "row_counts_expected": {
+    "standards": 8,
+    "templates": 5,
+    "policies": 4,
+    "tool_bundles": 6
+  },
+  "production_safety": {"allow_in_prod": true}
+}

@@ -1,0 +1,1551 @@
+{
+  "$schema": "https://forge.ai/schemas/forge-core-catalog.v1.json",
+  "generatedAt": "2026-06-24T08:10:24.903Z",
+  "engineVersion": "1.6.0-rc.3",
+  "enginePackage": "@forge-ai/forge-core",
+  "commandCount": 69,
+  "commands": [
+    {
+      "id": "forge-add-tests",
+      "name": "forge-add-tests",
+      "label": "Add Tests",
+      "description": "Generate tests for a completed phase based on UAT criteria and implementation",
+      "category": "testing",
+      "icon": "TestTube",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/add-tests.md",
+      "skillFile": "skills/forge-add-tests/SKILL.md",
+      "frontmatter": {
+        "name": "forge:add-tests",
+        "description": "Generate tests for a completed phase based on UAT criteria and implementation",
+        "argument-hint": "<phase> [additional instructions]",
+        "allowed-tools": "",
+        "argument-instructions": "|",
+        "requires": [
+          "phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-ai-integration-phase",
+      "name": "forge-ai-integration-phase",
+      "label": "Ai Integration Phase",
+      "description": "Generate an AI-SPEC.md design contract for phases that involve building AI systems.",
+      "category": "operational",
+      "icon": "Layers",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/ai-integration-phase.md",
+      "skillFile": "skills/forge-ai-integration-phase/SKILL.md",
+      "frontmatter": {
+        "name": "forge:ai-integration-phase",
+        "description": "Generate an AI-SPEC.md design contract for phases that involve building AI systems.",
+        "argument-hint": [
+          "phase number"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-audit-fix",
+      "name": "forge-audit-fix",
+      "label": "Audit Fix",
+      "description": "Autonomous audit-to-fix pipeline — find issues, classify, fix, test, commit",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/audit-fix.md",
+      "skillFile": "skills/forge-audit-fix/SKILL.md",
+      "frontmatter": {
+        "type": "prompt",
+        "name": "forge:audit-fix",
+        "description": "Autonomous audit-to-fix pipeline — find issues, classify, fix, test, commit",
+        "argument-hint": "--source <audit-uat> [--severity <medium|high|all>] [--max N] [--dry-run]",
+        "allowed-tools": "",
+        "requires": [
+          "audit-uat"
+        ]
+      }
+    },
+    {
+      "id": "forge-audit-milestone",
+      "name": "forge-audit-milestone",
+      "label": "Audit Milestone",
+      "description": "Audit milestone completion against original intent before archiving",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/audit-milestone.md",
+      "skillFile": "skills/forge-audit-milestone/SKILL.md",
+      "frontmatter": {
+        "name": "forge:audit-milestone",
+        "description": "Audit milestone completion against original intent before archiving",
+        "argument-hint": [
+          "version"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "execute-phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-audit-uat",
+      "name": "forge-audit-uat",
+      "label": "Audit Uat",
+      "description": "Cross-phase audit of all outstanding UAT and verification items",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/audit-uat.md",
+      "skillFile": "skills/forge-audit-uat/SKILL.md",
+      "frontmatter": {
+        "name": "forge:audit-uat",
+        "description": "Cross-phase audit of all outstanding UAT and verification items",
+        "allowed-tools": ""
+      }
+    },
+    {
+      "id": "forge-autonomous",
+      "name": "forge-autonomous",
+      "label": "Autonomous",
+      "description": "Run all remaining phases autonomously — discuss→plan→execute per phase",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/autonomous.md",
+      "skillFile": "skills/forge-autonomous/SKILL.md",
+      "frontmatter": {
+        "name": "forge:autonomous",
+        "description": "Run all remaining phases autonomously — discuss→plan→execute per phase",
+        "argument-hint": [
+          "--from N] [--to N] [--only N] [--interactive] [--converge"
+        ],
+        "effort": "max",
+        "allowed-tools": "",
+        "requires": [
+          "cleanup",
+          "phase",
+          "progress"
+        ]
+      }
+    },
+    {
+      "id": "forge-capture",
+      "name": "forge-capture",
+      "label": "Capture",
+      "description": "Capture ideas, tasks, notes, and seeds to their destination",
+      "category": "operational",
+      "icon": "BookmarkPlus",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/capture.md",
+      "skillFile": "skills/forge-capture/SKILL.md",
+      "frontmatter": {
+        "name": "forge:capture",
+        "description": "Capture ideas, tasks, notes, and seeds to their destination",
+        "argument-hint": [
+          "--note | --backlog | --seed | --list | --list-seeds] [text"
+        ],
+        "allowed-tools": ""
+      }
+    },
+    {
+      "id": "forge-cleanup",
+      "name": "forge-cleanup",
+      "label": "Cleanup",
+      "description": "Archive accumulated phase directories from completed milestones",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/cleanup.md",
+      "skillFile": "skills/forge-cleanup/SKILL.md",
+      "frontmatter": {
+        "name": "forge:cleanup",
+        "description": "Archive accumulated phase directories from completed milestones",
+        "allowed-tools": "",
+        "requires": [
+          "phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-code-review",
+      "name": "forge-code-review",
+      "label": "Code Review",
+      "description": "Review source files changed during a phase for bugs, security issues, and code quality problems",
+      "category": "operational",
+      "icon": "GitPullRequestArrow",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/code-review.md",
+      "skillFile": "skills/forge-code-review/SKILL.md",
+      "frontmatter": {
+        "name": "forge:code-review",
+        "description": "Review source files changed during a phase for bugs, security issues, and code quality problems",
+        "argument-hint": "<phase-number> [--depth=quick|standard|deep] [--files file1,file2,...] [--fix [--all] [--auto]]",
+        "allowed-tools": "",
+        "requires": [
+          "config",
+          "import",
+          "phase",
+          "quick",
+          "review"
+        ]
+      }
+    },
+    {
+      "id": "forge-complete-milestone",
+      "name": "forge-complete-milestone",
+      "label": "Complete Milestone",
+      "description": "Archive completed milestone and prepare for next version",
+      "category": "milestones",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/complete-milestone.md",
+      "skillFile": "skills/forge-complete-milestone/SKILL.md",
+      "frontmatter": {
+        "type": "prompt",
+        "name": "forge:complete-milestone",
+        "description": "Archive completed milestone and prepare for next version",
+        "argument-hint": "<version>",
+        "allowed-tools": "",
+        "requires": [
+          "audit-milestone",
+          "discuss-phase",
+          "execute-phase",
+          "new-milestone",
+          "phase",
+          "plan-phase",
+          "stats",
+          "update"
+        ]
+      }
+    },
+    {
+      "id": "forge-config",
+      "name": "forge-config",
+      "label": "Config",
+      "description": "Configure GSD settings — workflow toggles, advanced knobs, integrations, and model profile",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/config.md",
+      "skillFile": "skills/forge-config/SKILL.md",
+      "frontmatter": {
+        "name": "forge:config",
+        "description": "Configure GSD settings — workflow toggles, advanced knobs, integrations, and model profile",
+        "argument-hint": [
+          "--advanced | --integrations | --profile <name>"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "code-review",
+          "review",
+          "settings"
+        ]
+      }
+    },
+    {
+      "id": "forge-debug",
+      "name": "forge-debug",
+      "label": "Debug",
+      "description": "Systematic debugging with persistent state across context resets",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/debug.md",
+      "skillFile": "skills/forge-debug/SKILL.md",
+      "frontmatter": {
+        "name": "forge:debug",
+        "description": "Systematic debugging with persistent state across context resets",
+        "argument-hint": [
+          "list | status <slug> | continue <slug> | --diagnose] [issue description"
+        ],
+        "allowed-tools": ""
+      }
+    },
+    {
+      "id": "forge-discuss-phase",
+      "name": "forge-discuss-phase",
+      "label": "Discuss Phase",
+      "description": "Gather phase context through adaptive questioning before planning.",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/discuss-phase.md",
+      "skillFile": "skills/forge-discuss-phase/SKILL.md",
+      "frontmatter": {
+        "name": "forge:discuss-phase",
+        "description": "Gather phase context through adaptive questioning before planning.",
+        "argument-hint": "<phase> [--all] [--auto] [--chain] [--batch] [--analyze] [--text] [--power] [--assumptions]",
+        "allowed-tools": "",
+        "requires": [
+          "config",
+          "phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-docs-update",
+      "name": "forge-docs-update",
+      "label": "Docs Update",
+      "description": "Generate or update project documentation verified against the codebase",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/docs-update.md",
+      "skillFile": "skills/forge-docs-update/SKILL.md",
+      "frontmatter": {
+        "name": "forge:docs-update",
+        "description": "Generate or update project documentation verified against the codebase",
+        "argument-hint": [
+          "--force] [--verify-only"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "update"
+        ]
+      }
+    },
+    {
+      "id": "forge-eval-review",
+      "name": "forge-eval-review",
+      "label": "Eval Review",
+      "description": "Audit an executed AI phase's evaluation coverage and produce an EVAL-REVIEW.md remediation plan.",
+      "category": "operational",
+      "icon": "GitPullRequestArrow",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/eval-review.md",
+      "skillFile": "skills/forge-eval-review/SKILL.md",
+      "frontmatter": {
+        "name": "forge:eval-review",
+        "description": "Audit an executed AI phase's evaluation coverage and produce an EVAL-REVIEW.md remediation plan.",
+        "argument-hint": [
+          "phase number"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-execute-phase",
+      "name": "forge-execute-phase",
+      "label": "Execute Phase",
+      "description": "Execute all plans in a phase with wave-based parallelization",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/execute-phase.md",
+      "skillFile": "skills/forge-execute-phase/SKILL.md",
+      "frontmatter": {
+        "name": "forge:execute-phase",
+        "description": "Execute all plans in a phase with wave-based parallelization",
+        "argument-hint": "<phase-number> [--wave N] [--gaps-only] [--interactive] [--tdd]",
+        "effort": "max",
+        "allowed-tools": "",
+        "requires": [
+          "phase",
+          "verify-work"
+        ]
+      }
+    },
+    {
+      "id": "forge-explore",
+      "name": "forge-explore",
+      "label": "Explore",
+      "description": "Socratic ideation and idea routing — think through ideas before committing to plans",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/explore.md",
+      "skillFile": "skills/forge-explore/SKILL.md",
+      "frontmatter": {
+        "name": "forge:explore",
+        "description": "Socratic ideation and idea routing — think through ideas before committing to plans",
+        "allowed-tools": ""
+      }
+    },
+    {
+      "id": "forge-extract-learnings",
+      "name": "forge-extract-learnings",
+      "label": "Extract Learnings",
+      "description": "Extract decisions, lessons, patterns, and surprises from completed phase artifacts",
+      "category": "operational",
+      "icon": "BookmarkPlus",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/extract-learnings.md",
+      "skillFile": "skills/forge-extract-learnings/SKILL.md",
+      "frontmatter": {
+        "name": "forge:extract-learnings",
+        "description": "Extract decisions, lessons, patterns, and surprises from completed phase artifacts",
+        "argument-hint": "<phase-number>",
+        "allowed-tools": "",
+        "type": "prompt",
+        "requires": [
+          "phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-fast",
+      "name": "forge-fast",
+      "label": "Fast",
+      "description": "Execute a trivial task inline — no subagents, no planning overhead",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/fast.md",
+      "skillFile": "skills/forge-fast/SKILL.md",
+      "frontmatter": {
+        "name": "forge:fast",
+        "description": "Execute a trivial task inline — no subagents, no planning overhead",
+        "argument-hint": [
+          "task description"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "config",
+          "quick"
+        ]
+      }
+    },
+    {
+      "id": "forge-forensics",
+      "name": "forge-forensics",
+      "label": "Forensics",
+      "description": "Post-mortem investigation for failed GSD workflows — diagnoses what went wrong.",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/forensics.md",
+      "skillFile": "skills/forge-forensics/SKILL.md",
+      "frontmatter": {
+        "type": "prompt",
+        "name": "forge:forensics",
+        "description": "Post-mortem investigation for failed GSD workflows — diagnoses what went wrong.",
+        "argument-hint": [
+          "problem description"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "phase",
+          "progress",
+          "update"
+        ]
+      }
+    },
+    {
+      "id": "forge-graphify",
+      "name": "forge-graphify",
+      "label": "Graphify",
+      "description": "Build, query, and inspect the project knowledge graph in .planning/graphs/",
+      "category": "operational",
+      "icon": "Database",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/graphify.md",
+      "skillFile": "skills/forge-graphify/SKILL.md",
+      "frontmatter": {
+        "name": "forge:graphify",
+        "description": "Build, query, and inspect the project knowledge graph in .planning/graphs/",
+        "argument-hint": [
+          "build|query <term>|status|diff"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "config",
+          "fast",
+          "phase",
+          "update"
+        ]
+      }
+    },
+    {
+      "id": "forge-health",
+      "name": "forge-health",
+      "label": "Health",
+      "description": "Diagnose planning directory health and optionally repair issues",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/health.md",
+      "skillFile": "skills/forge-health/SKILL.md",
+      "frontmatter": {
+        "name": "forge:health",
+        "description": "Diagnose planning directory health and optionally repair issues",
+        "argument-hint": [
+          "--repair] [--context"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "thread"
+        ]
+      }
+    },
+    {
+      "id": "forge-help",
+      "name": "forge-help",
+      "label": "Help",
+      "description": "Show available GSD commands and usage guide",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/help.md",
+      "skillFile": "skills/forge-help/SKILL.md",
+      "frontmatter": {
+        "name": "forge:help",
+        "description": "Show available GSD commands and usage guide",
+        "argument-hint": [
+          "--brief | --full | <topic> | --brief <topic>"
+        ],
+        "allowed-tools": ""
+      }
+    },
+    {
+      "id": "forge-import",
+      "name": "forge-import",
+      "label": "Import",
+      "description": "Ingest external plans with conflict detection against project decisions before writing anything.",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/import.md",
+      "skillFile": "skills/forge-import/SKILL.md",
+      "frontmatter": {
+        "name": "forge:import",
+        "description": "Ingest external plans with conflict detection against project decisions before writing anything.",
+        "argument-hint": "--from <filepath> | --from-forge2",
+        "allowed-tools": ""
+      }
+    },
+    {
+      "id": "forge-inbox",
+      "name": "forge-inbox",
+      "label": "Inbox",
+      "description": "Triage and review open GitHub issues and PRs against project templates and contribution guidelines.",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/inbox.md",
+      "skillFile": "skills/forge-inbox/SKILL.md",
+      "frontmatter": {
+        "name": "forge:inbox",
+        "description": "Triage and review open GitHub issues and PRs against project templates and contribution guidelines.",
+        "argument-hint": [
+          "--issues] [--prs] [--label] [--close-incomplete] [--repo owner/repo"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "review"
+        ]
+      }
+    },
+    {
+      "id": "forge-ingest-docs",
+      "name": "forge-ingest-docs",
+      "label": "Ingest Docs",
+      "description": "Bootstrap or merge a .planning/ setup from existing ADRs, PRDs, SPECs, and docs in a repo.",
+      "category": "operational",
+      "icon": "Database",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/ingest-docs.md",
+      "skillFile": "skills/forge-ingest-docs/SKILL.md",
+      "frontmatter": {
+        "name": "forge:ingest-docs",
+        "description": "Bootstrap or merge a .planning/ setup from existing ADRs, PRDs, SPECs, and docs in a repo.",
+        "argument-hint": [
+          "path] [--mode new|merge] [--manifest <file>] [--resolve auto|interactive"
+        ],
+        "allowed-tools": ""
+      }
+    },
+    {
+      "id": "forge-manager",
+      "name": "forge-manager",
+      "label": "Manager",
+      "description": "Interactive command center for managing multiple phases from one terminal",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/manager.md",
+      "skillFile": "skills/forge-manager/SKILL.md",
+      "frontmatter": {
+        "name": "forge:manager",
+        "description": "Interactive command center for managing multiple phases from one terminal",
+        "argument-hint": [
+          "--analyze-deps"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-map-codebase",
+      "name": "forge-map-codebase",
+      "label": "Map Codebase",
+      "description": "Analyze codebase with parallel mapper agents to produce .planning/codebase/ documents",
+      "category": "operational",
+      "icon": "Network",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/map-codebase.md",
+      "skillFile": "skills/forge-map-codebase/SKILL.md",
+      "frontmatter": {
+        "name": "forge:map-codebase",
+        "description": "Analyze codebase with parallel mapper agents to produce .planning/codebase/ documents",
+        "argument-hint": [
+          "--fast [--focus tech|arch|quality|concerns]] [--query <term>|status|diff|refresh] [area"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "config",
+          "new-project",
+          "plan-phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-mempalace-capture",
+      "name": "forge-mempalace-capture",
+      "label": "Mempalace Capture",
+      "description": "File a phase artifact into MemPalace; mirror decision facts into its temporal KG",
+      "category": "operational",
+      "icon": "BookmarkPlus",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/mempalace-capture.md",
+      "skillFile": "skills/forge-mempalace-capture/SKILL.md",
+      "frontmatter": {
+        "name": "forge:mempalace-capture",
+        "description": "File a phase artifact into MemPalace; mirror decision facts into its temporal KG",
+        "argument-hint": [
+          "CONTEXT.md|PLAN.md|SUMMARY.md"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "config"
+        ]
+      }
+    },
+    {
+      "id": "forge-mempalace-recall",
+      "name": "forge-mempalace-recall",
+      "label": "Mempalace Recall",
+      "description": "Recall decisions, patterns, and surprises from MemPalace before planning",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/mempalace-recall.md",
+      "skillFile": "skills/forge-mempalace-recall/SKILL.md",
+      "frontmatter": {
+        "name": "forge:mempalace-recall",
+        "description": "Recall decisions, patterns, and surprises from MemPalace before planning",
+        "argument-hint": [
+          "phase-slug"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "config"
+        ]
+      }
+    },
+    {
+      "id": "forge-milestone-summary",
+      "name": "forge-milestone-summary",
+      "label": "Milestone Summary",
+      "description": "Generate a comprehensive project summary from milestone artifacts for team onboarding and review",
+      "category": "operational",
+      "icon": "FileText",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/milestone-summary.md",
+      "skillFile": "skills/forge-milestone-summary/SKILL.md",
+      "frontmatter": {
+        "type": "prompt",
+        "name": "forge:milestone-summary",
+        "description": "Generate a comprehensive project summary from milestone artifacts for team onboarding and review",
+        "argument-hint": [
+          "version"
+        ],
+        "allowed-tools": ""
+      }
+    },
+    {
+      "id": "forge-mvp-phase",
+      "name": "forge-mvp-phase",
+      "label": "Mvp Phase",
+      "description": "Plan a phase as a vertical MVP slice — user story, SPIDR splitting, then plan-phase",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/mvp-phase.md",
+      "skillFile": "skills/forge-mvp-phase/SKILL.md",
+      "frontmatter": {
+        "name": "forge:mvp-phase",
+        "description": "Plan a phase as a vertical MVP slice — user story, SPIDR splitting, then plan-phase",
+        "argument-hint": "<phase-number>",
+        "allowed-tools": "",
+        "requires": [
+          "new-project",
+          "phase",
+          "plan-phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-new-milestone",
+      "name": "forge-new-milestone",
+      "label": "New Milestone",
+      "description": "Start a new milestone cycle — update PROJECT.md and route to requirements",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/new-milestone.md",
+      "skillFile": "skills/forge-new-milestone/SKILL.md",
+      "frontmatter": {
+        "name": "forge:new-milestone",
+        "description": "Start a new milestone cycle — update PROJECT.md and route to requirements",
+        "argument-hint": [
+          "milestone name",
+          "e.g.",
+          "v1.1 Notifications"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "new-project",
+          "phase",
+          "plan-phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-new-project",
+      "name": "forge-new-project",
+      "label": "New Project",
+      "description": "Initialize a new project with deep context gathering and PROJECT.md",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/new-project.md",
+      "skillFile": "skills/forge-new-project/SKILL.md",
+      "frontmatter": {
+        "name": "forge:new-project",
+        "description": "Initialize a new project with deep context gathering and PROJECT.md",
+        "argument-hint": [
+          "--auto"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "config",
+          "phase",
+          "plan-phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-ns-context",
+      "name": "forge-ns-context",
+      "label": "Ns Context",
+      "description": "codebase intel | map graphify docs learnings mempalace",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/ns-context.md",
+      "skillFile": "skills/forge-ns-context/SKILL.md",
+      "frontmatter": {
+        "name": "forge-context",
+        "description": "codebase intel | map graphify docs learnings mempalace",
+        "argument-hint": "",
+        "allowed-tools": "",
+        "requires": [
+          "map-codebase",
+          "graphify",
+          "docs-update",
+          "extract-learnings",
+          "mempalace-recall",
+          "mempalace-capture"
+        ]
+      }
+    },
+    {
+      "id": "forge-ns-ideate",
+      "name": "forge-ns-ideate",
+      "label": "Ns Ideate",
+      "description": "exploration capture | explore sketch spike spec capture",
+      "category": "operational",
+      "icon": "Lightbulb",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/ns-ideate.md",
+      "skillFile": "skills/forge-ns-ideate/SKILL.md",
+      "frontmatter": {
+        "name": "forge-ideate",
+        "description": "exploration capture | explore sketch spike spec capture",
+        "argument-hint": "",
+        "allowed-tools": "",
+        "requires": [
+          "capture",
+          "explore",
+          "sketch",
+          "spike",
+          "spec-phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-ns-manage",
+      "name": "forge-ns-manage",
+      "label": "Ns Manage",
+      "description": "config workspace | workstreams thread update ship inbox",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/ns-manage.md",
+      "skillFile": "skills/forge-ns-manage/SKILL.md",
+      "frontmatter": {
+        "name": "forge-manage",
+        "description": "config workspace | workstreams thread update ship inbox",
+        "argument-hint": "",
+        "allowed-tools": "",
+        "requires": [
+          "config",
+          "workspace",
+          "workstreams",
+          "thread",
+          "pause-work",
+          "resume-work",
+          "update",
+          "ship",
+          "inbox",
+          "pr-branch",
+          "undo",
+          "cleanup",
+          "health",
+          "manager",
+          "settings",
+          "stats",
+          "surface",
+          "help"
+        ]
+      }
+    },
+    {
+      "id": "forge-ns-project",
+      "name": "forge-ns-project",
+      "label": "Ns Project",
+      "description": "project lifecycle | milestones audits summary",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/ns-project.md",
+      "skillFile": "skills/forge-ns-project/SKILL.md",
+      "frontmatter": {
+        "name": "forge-project",
+        "description": "project lifecycle | milestones audits summary",
+        "argument-hint": "",
+        "allowed-tools": "",
+        "requires": [
+          "new-project",
+          "new-milestone",
+          "complete-milestone",
+          "audit-milestone",
+          "milestone-summary",
+          "import",
+          "ingest-docs",
+          "profile-user",
+          "review-backlog"
+        ]
+      }
+    },
+    {
+      "id": "forge-ns-review",
+      "name": "forge-ns-review",
+      "label": "Ns Review",
+      "description": "quality gates | code review debug audit security eval ui",
+      "category": "operational",
+      "icon": "GitPullRequestArrow",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/ns-review.md",
+      "skillFile": "skills/forge-ns-review/SKILL.md",
+      "frontmatter": {
+        "name": "forge-quality",
+        "description": "quality gates | code review debug audit security eval ui",
+        "argument-hint": "",
+        "allowed-tools": "",
+        "requires": [
+          "code-review",
+          "audit-uat",
+          "secure-phase",
+          "eval-review",
+          "ui-review",
+          "validate-phase",
+          "debug",
+          "forensics",
+          "audit-fix",
+          "review",
+          "ui-phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-ns-workflow",
+      "name": "forge-ns-workflow",
+      "label": "Ns Workflow",
+      "description": "workflow | discuss plan execute verify phase progress",
+      "category": "operational",
+      "icon": "Workflow",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/ns-workflow.md",
+      "skillFile": "skills/forge-ns-workflow/SKILL.md",
+      "frontmatter": {
+        "name": "forge-workflow",
+        "description": "workflow | discuss plan execute verify phase progress",
+        "argument-hint": "",
+        "allowed-tools": "",
+        "requires": [
+          "discuss-phase",
+          "spec-phase",
+          "plan-phase",
+          "execute-phase",
+          "verify-work",
+          "phase",
+          "progress",
+          "ultraplan-phase",
+          "plan-review-convergence",
+          "add-tests",
+          "ai-integration-phase",
+          "autonomous",
+          "fast",
+          "mvp-phase",
+          "quick"
+        ]
+      }
+    },
+    {
+      "id": "forge-pause-work",
+      "name": "forge-pause-work",
+      "label": "Pause Work",
+      "description": "Create context handoff when pausing work mid-phase",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/pause-work.md",
+      "skillFile": "skills/forge-pause-work/SKILL.md",
+      "frontmatter": {
+        "name": "forge:pause-work",
+        "description": "Create context handoff when pausing work mid-phase",
+        "argument-hint": [
+          "--report"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "phase",
+          "progress"
+        ]
+      }
+    },
+    {
+      "id": "forge-phase",
+      "name": "forge-phase",
+      "label": "Phase",
+      "description": "CRUD for phases in ROADMAP.md — add, insert, remove, or edit phases",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/phase.md",
+      "skillFile": "skills/forge-phase/SKILL.md",
+      "frontmatter": {
+        "name": "forge:phase",
+        "description": "CRUD for phases in ROADMAP.md — add, insert, remove, or edit phases",
+        "argument-hint": "[--insert | --remove | --edit] <phase-name-or-number>",
+        "allowed-tools": ""
+      }
+    },
+    {
+      "id": "forge-plan-phase",
+      "name": "forge-plan-phase",
+      "label": "Plan Phase",
+      "description": "Create detailed phase plan (PLAN.md) with verification loop",
+      "category": "operational",
+      "icon": "Workflow",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/plan-phase.md",
+      "skillFile": "skills/forge-plan-phase/SKILL.md",
+      "frontmatter": {
+        "name": "forge:plan-phase",
+        "description": "Create detailed phase plan (PLAN.md) with verification loop",
+        "argument-hint": [
+          "phase] [--auto] [--research] [--skip-research] [--research-phase <N>] [--view] [--gaps] [--skip-verify] [--prd <file>] [--ingest <path-or-glob>] [--ingest-format <auto|nygard|madr|narrative>] [--reviews] [--text] [--tdd] [--mvp"
+        ],
+        "effort": "max",
+        "allowed-tools": "",
+        "requires": [
+          "discuss-phase",
+          "phase",
+          "review",
+          "update"
+        ]
+      }
+    },
+    {
+      "id": "forge-plan-review-convergence",
+      "name": "forge-plan-review-convergence",
+      "label": "Plan Review Convergence",
+      "description": "Cross-AI plan convergence - replan until review concerns are resolved.",
+      "category": "operational",
+      "icon": "GitPullRequestArrow",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/plan-review-convergence.md",
+      "skillFile": "skills/forge-plan-review-convergence/SKILL.md",
+      "frontmatter": {
+        "name": "forge:plan-review-convergence",
+        "description": "Cross-AI plan convergence - replan until review concerns are resolved.",
+        "argument-hint": "<phase> [--codex] [--gemini] [--claude] [--opencode] [--ollama] [--lm-studio] [--llama-cpp] [--text] [--ws <name>] [--all] [--max-cycles N]",
+        "allowed-tools": "",
+        "requires": [
+          "phase",
+          "review"
+        ]
+      }
+    },
+    {
+      "id": "forge-pr-branch",
+      "name": "forge-pr-branch",
+      "label": "Pr Branch",
+      "description": "Create a clean PR branch by filtering out .planning/ commits — ready for code review",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/pr-branch.md",
+      "skillFile": "skills/forge-pr-branch/SKILL.md",
+      "frontmatter": {
+        "name": "forge:pr-branch",
+        "description": "Create a clean PR branch by filtering out .planning/ commits — ready for code review",
+        "argument-hint": [
+          "target branch",
+          "default: main"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "review"
+        ]
+      }
+    },
+    {
+      "id": "forge-profile-user",
+      "name": "forge-profile-user",
+      "label": "Profile User",
+      "description": "Generate developer behavioral profile and create Claude-discoverable artifacts",
+      "category": "operational",
+      "icon": "UserPlus",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/profile-user.md",
+      "skillFile": "skills/forge-profile-user/SKILL.md",
+      "frontmatter": {
+        "name": "forge:profile-user",
+        "description": "Generate developer behavioral profile and create Claude-discoverable artifacts",
+        "argument-hint": [
+          "--questionnaire] [--refresh"
+        ],
+        "allowed-tools": ""
+      }
+    },
+    {
+      "id": "forge-progress",
+      "name": "forge-progress",
+      "label": "Progress",
+      "description": "Check progress, advance workflow, or dispatch freeform intent — the unified GSD situational command",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/progress.md",
+      "skillFile": "skills/forge-progress/SKILL.md",
+      "frontmatter": {
+        "name": "forge:progress",
+        "description": "Check progress, advance workflow, or dispatch freeform intent — the unified GSD situational command",
+        "argument-hint": [
+          "--forensic | --next [--auto] [--converge] | --do \\\"task description\\"
+        ],
+        "effort": "low",
+        "allowed-tools": "",
+        "requires": [
+          "phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-quick",
+      "name": "forge-quick",
+      "label": "Quick",
+      "description": "Execute a quick task with GSD guarantees (atomic commits, state tracking) but skip optional agents",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/quick.md",
+      "skillFile": "skills/forge-quick/SKILL.md",
+      "frontmatter": {
+        "name": "forge:quick",
+        "description": "Execute a quick task with GSD guarantees (atomic commits, state tracking) but skip optional agents",
+        "argument-hint": [
+          "list | status <slug> | resume <slug> | --full] [--validate] [--discuss] [--research] [task description"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-resume-work",
+      "name": "forge-resume-work",
+      "label": "Resume Work",
+      "description": "Resume work from previous session with full context restoration",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/resume-work.md",
+      "skillFile": "skills/forge-resume-work/SKILL.md",
+      "frontmatter": {
+        "name": "forge:resume-work",
+        "description": "Resume work from previous session with full context restoration",
+        "allowed-tools": ""
+      }
+    },
+    {
+      "id": "forge-review-backlog",
+      "name": "forge-review-backlog",
+      "label": "Review Backlog",
+      "description": "Review and promote backlog items to active milestone",
+      "category": "operational",
+      "icon": "GitPullRequestArrow",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/review-backlog.md",
+      "skillFile": "skills/forge-review-backlog/SKILL.md",
+      "frontmatter": {
+        "name": "forge:review-backlog",
+        "description": "Review and promote backlog items to active milestone",
+        "allowed-tools": "",
+        "requires": [
+          "phase",
+          "review"
+        ]
+      }
+    },
+    {
+      "id": "forge-review",
+      "name": "forge-review",
+      "label": "Review",
+      "description": "Request cross-AI peer review of phase plans from external AI CLIs",
+      "category": "operational",
+      "icon": "GitPullRequestArrow",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/review.md",
+      "skillFile": "skills/forge-review/SKILL.md",
+      "frontmatter": {
+        "name": "forge:review",
+        "description": "Request cross-AI peer review of phase plans from external AI CLIs",
+        "argument-hint": "--phase N [--gemini] [--claude] [--codex] [--opencode] [--qwen] [--cursor] [--agy] [--all]",
+        "allowed-tools": "",
+        "requires": [
+          "config",
+          "phase",
+          "plan-phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-secure-phase",
+      "name": "forge-secure-phase",
+      "label": "Secure Phase",
+      "description": "Retroactively verify threat mitigations for a completed phase",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/secure-phase.md",
+      "skillFile": "skills/forge-secure-phase/SKILL.md",
+      "frontmatter": {
+        "name": "forge:secure-phase",
+        "description": "Retroactively verify threat mitigations for a completed phase",
+        "argument-hint": [
+          "phase number"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-settings",
+      "name": "forge-settings",
+      "label": "Settings",
+      "description": "Configure GSD workflow toggles and model profile",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/settings.md",
+      "skillFile": "skills/forge-settings/SKILL.md",
+      "frontmatter": {
+        "name": "forge:settings",
+        "description": "Configure GSD workflow toggles and model profile",
+        "allowed-tools": "",
+        "requires": [
+          "quick"
+        ]
+      }
+    },
+    {
+      "id": "forge-ship",
+      "name": "forge-ship",
+      "label": "Ship",
+      "description": "Create PR, run review, and prepare for merge after verification passes",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/ship.md",
+      "skillFile": "skills/forge-ship/SKILL.md",
+      "frontmatter": {
+        "name": "forge:ship",
+        "description": "Create PR, run review, and prepare for merge after verification passes",
+        "argument-hint": [
+          "phase number or milestone",
+          "e.g.",
+          "4' or 'v1.0"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "review",
+          "verify-work"
+        ]
+      }
+    },
+    {
+      "id": "forge-sketch",
+      "name": "forge-sketch",
+      "label": "Sketch",
+      "description": "Sketch UI/design ideas with throwaway HTML mockups, or propose what to sketch next (frontier mode)",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/sketch.md",
+      "skillFile": "skills/forge-sketch/SKILL.md",
+      "frontmatter": {
+        "name": "forge:sketch",
+        "description": "Sketch UI/design ideas with throwaway HTML mockups, or propose what to sketch next (frontier mode)",
+        "argument-hint": [
+          "design idea to explore] [--quick] [--text] [--wrap-up] or [frontier"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "spike"
+        ]
+      }
+    },
+    {
+      "id": "forge-spec-phase",
+      "name": "forge-spec-phase",
+      "label": "Spec Phase",
+      "description": "Clarify WHAT a phase delivers with ambiguity scoring; produces a SPEC.md before discuss-phase.",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/spec-phase.md",
+      "skillFile": "skills/forge-spec-phase/SKILL.md",
+      "frontmatter": {
+        "name": "forge:spec-phase",
+        "description": "Clarify WHAT a phase delivers with ambiguity scoring; produces a SPEC.md before discuss-phase.",
+        "argument-hint": "<phase> [--auto] [--text]",
+        "allowed-tools": "",
+        "requires": [
+          "discuss-phase",
+          "execute-phase",
+          "phase",
+          "plan-phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-spike",
+      "name": "forge-spike",
+      "label": "Spike",
+      "description": "Spike an idea through experiential exploration, or propose what to spike next (frontier mode)",
+      "category": "operational",
+      "icon": "FlaskConical",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/spike.md",
+      "skillFile": "skills/forge-spike/SKILL.md",
+      "frontmatter": {
+        "name": "forge:spike",
+        "description": "Spike an idea through experiential exploration, or propose what to spike next (frontier mode)",
+        "argument-hint": [
+          "idea to validate] [--quick] [--text] [--wrap-up] or [frontier"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          ""
+        ]
+      }
+    },
+    {
+      "id": "forge-stats",
+      "name": "forge-stats",
+      "label": "Stats",
+      "description": "Display project statistics — phases, plans, requirements, git metrics, and timeline",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/stats.md",
+      "skillFile": "skills/forge-stats/SKILL.md",
+      "frontmatter": {
+        "name": "forge:stats",
+        "description": "Display project statistics — phases, plans, requirements, git metrics, and timeline",
+        "effort": "low",
+        "allowed-tools": "",
+        "requires": [
+          "phase",
+          "progress"
+        ]
+      }
+    },
+    {
+      "id": "forge-surface",
+      "name": "forge-surface",
+      "label": "Surface",
+      "description": "Toggle which skills are surfaced — apply a profile, list, or disable a cluster without reinstall",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/surface.md",
+      "skillFile": "skills/forge-surface/SKILL.md",
+      "frontmatter": {
+        "name": "forge:surface",
+        "description": "Toggle which skills are surfaced — apply a profile, list, or disable a cluster without reinstall",
+        "argument-hint": [
+          "list|status|profile <name>|disable <cluster>|enable <cluster>|reset"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "config",
+          "update"
+        ]
+      }
+    },
+    {
+      "id": "forge-thread",
+      "name": "forge-thread",
+      "label": "Thread",
+      "description": "Manage persistent context threads for cross-session work",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/thread.md",
+      "skillFile": "skills/forge-thread/SKILL.md",
+      "frontmatter": {
+        "name": "forge:thread",
+        "description": "Manage persistent context threads for cross-session work",
+        "argument-hint": [
+          "list [--open | --resolved] | close <slug> | status <slug> | name | description"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-ui-phase",
+      "name": "forge-ui-phase",
+      "label": "Ui Phase",
+      "description": "Generate UI design contract (UI-SPEC.md) for frontend phases",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/ui-phase.md",
+      "skillFile": "skills/forge-ui-phase/SKILL.md",
+      "frontmatter": {
+        "name": "forge:ui-phase",
+        "description": "Generate UI design contract (UI-SPEC.md) for frontend phases",
+        "argument-hint": [
+          "phase"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-ui-review",
+      "name": "forge-ui-review",
+      "label": "Ui Review",
+      "description": "Retroactive 6-pillar visual audit of implemented frontend code",
+      "category": "operational",
+      "icon": "GitPullRequestArrow",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/ui-review.md",
+      "skillFile": "skills/forge-ui-review/SKILL.md",
+      "frontmatter": {
+        "name": "forge:ui-review",
+        "description": "Retroactive 6-pillar visual audit of implemented frontend code",
+        "argument-hint": [
+          "phase"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-ultraplan-phase",
+      "name": "forge-ultraplan-phase",
+      "label": "Ultraplan Phase",
+      "description": "[BETA] Offload plan phase to Claude Code's ultraplan cloud; review in browser and import back.",
+      "category": "operational",
+      "icon": "Workflow",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/ultraplan-phase.md",
+      "skillFile": "skills/forge-ultraplan-phase/SKILL.md",
+      "frontmatter": {
+        "name": "forge:ultraplan-phase",
+        "description": "[BETA] Offload plan phase to Claude Code's ultraplan cloud; review in browser and import back.",
+        "argument-hint": [
+          "phase-number"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "import",
+          "phase",
+          "plan-phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-undo",
+      "name": "forge-undo",
+      "label": "Undo",
+      "description": "Safe git revert. Roll back phase or plan commits using the phase manifest with dependency checks.",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/undo.md",
+      "skillFile": "skills/forge-undo/SKILL.md",
+      "frontmatter": {
+        "name": "forge:undo",
+        "description": "Safe git revert. Roll back phase or plan commits using the phase manifest with dependency checks.",
+        "argument-hint": "--last N | --phase NN | --plan NN-MM",
+        "allowed-tools": "",
+        "requires": [
+          "phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-update",
+      "name": "forge-update",
+      "label": "Update",
+      "description": "Update GSD to latest version with changelog display",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/update.md",
+      "skillFile": "skills/forge-update/SKILL.md",
+      "frontmatter": {
+        "name": "forge:update",
+        "description": "Update GSD to latest version with changelog display",
+        "argument-hint": [
+          "--sync | --reapply | --next | --rc"
+        ],
+        "allowed-tools": ""
+      }
+    },
+    {
+      "id": "forge-validate-phase",
+      "name": "forge-validate-phase",
+      "label": "Validate Phase",
+      "description": "Retroactively audit and fill Nyquist validation gaps for a completed phase",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/validate-phase.md",
+      "skillFile": "skills/forge-validate-phase/SKILL.md",
+      "frontmatter": {
+        "name": "forge:validate-phase",
+        "description": "Retroactively audit and fill Nyquist validation gaps for a completed phase",
+        "argument-hint": [
+          "phase number"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-verify-work",
+      "name": "forge-verify-work",
+      "label": "Verify Work",
+      "description": "Validate built features through conversational UAT",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/verify-work.md",
+      "skillFile": "skills/forge-verify-work/SKILL.md",
+      "frontmatter": {
+        "name": "forge:verify-work",
+        "description": "Validate built features through conversational UAT",
+        "argument-hint": [
+          "phase number",
+          "e.g.",
+          "4'] [--ws <name>"
+        ],
+        "allowed-tools": "",
+        "requires": [
+          "execute-phase",
+          "phase"
+        ]
+      }
+    },
+    {
+      "id": "forge-workspace",
+      "name": "forge-workspace",
+      "label": "Workspace",
+      "description": "Manage GSD workspaces — create, list, or remove isolated workspace environments",
+      "category": "operational",
+      "icon": "FolderPlus",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/workspace.md",
+      "skillFile": "skills/forge-workspace/SKILL.md",
+      "frontmatter": {
+        "name": "forge:workspace",
+        "description": "Manage GSD workspaces — create, list, or remove isolated workspace environments",
+        "argument-hint": [
+          "--new | --list | --remove] [name"
+        ],
+        "allowed-tools": ""
+      }
+    },
+    {
+      "id": "forge-workstreams",
+      "name": "forge-workstreams",
+      "label": "Workstreams",
+      "description": "Manage parallel workstreams — list, create, switch, status, progress, complete, and resume",
+      "category": "operational",
+      "icon": "Wand2",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge/workstreams.md",
+      "skillFile": "skills/forge-workstreams/SKILL.md",
+      "frontmatter": {
+        "name": "forge:workstreams",
+        "description": "Manage parallel workstreams — list, create, switch, status, progress, complete, and resume",
+        "allowed-tools": "",
+        "requires": [
+          "new-milestone",
+          "phase",
+          "progress",
+          "resume-work"
+        ]
+      }
+    }
+  ]
+}

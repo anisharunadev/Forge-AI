@@ -1,0 +1,97 @@
+{
+  "rows": [
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "bundle_key": "architecture-readonly",
+      "name": "Architecture Read-Only",
+      "description": "Read-only access to architecture artifacts (ADRs, API contracts, dependency graph). Used by the ideation and review phases to gather context without modifying state.",
+      "tier": "read_only",
+      "tools": [
+        {"name": "adr.search", "args": {}},
+        {"name": "adr.read", "args": {}},
+        {"name": "contract.read", "args": {}},
+        {"name": "graph.query", "args": {"depth": 3}}
+      ],
+      "requires_approval": false,
+      "tags": ["architecture", "ideation", "review"]
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "bundle_key": "development-write",
+      "name": "Development Write",
+      "description": "Write access to source repositories, work items, and test artifacts. Bounded by repository branch protection rules and the connected VCS provider's permission model.",
+      "tier": "write",
+      "tools": [
+        {"name": "repo.read", "args": {}},
+        {"name": "repo.write", "args": {"max_files": 50}},
+        {"name": "workitem.create", "args": {}},
+        {"name": "workitem.update", "args": {}},
+        {"name": "test.run", "args": {}}
+      ],
+      "requires_approval": false,
+      "tags": ["development", "coding", "work-items"]
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "bundle_key": "security-scan",
+      "name": "Security Scan",
+      "description": "Read-only access combined with execution of security scanning tools (SCA, SAST, secret scanning). Findings are written as typed artifacts but do not modify application state.",
+      "tier": "execute",
+      "tools": [
+        {"name": "repo.read", "args": {}},
+        {"name": "scan.sca", "args": {}},
+        {"name": "scan.sast", "args": {}},
+        {"name": "scan.secrets", "args": {}},
+        {"name": "finding.write", "args": {}}
+      ],
+      "requires_approval": false,
+      "tags": ["security", "scanning", "compliance"]
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "bundle_key": "deployment-prod-gated",
+      "name": "Production Deployment (Gated)",
+      "description": "Production deployment execution. ALWAYS requires an explicit human approval gate per Forge Rule 3; the gate is enforced by the policy engine before any tool in this bundle runs.",
+      "tier": "gated",
+      "tools": [
+        {"name": "deploy.production", "args": {}},
+        {"name": "deploy.rollback", "args": {}},
+        {"name": "migration.apply", "args": {}},
+        {"name": "feature_flag.toggle", "args": {}}
+      ],
+      "requires_approval": true,
+      "tags": ["deployment", "production", "gated"]
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "bundle_key": "ideation-propose",
+      "name": "Ideation Propose",
+      "description": "Read-only access to project intelligence plus the ability to propose (but not commit) new artifacts. Proposals are surfaced in the Ideation Center for human review.",
+      "tier": "propose",
+      "tools": [
+        {"name": "knowledge.search", "args": {}},
+        {"name": "knowledge.read", "args": {}},
+        {"name": "adr.propose", "args": {}},
+        {"name": "task.propose", "args": {}},
+        {"name": "requirement.propose", "args": {}}
+      ],
+      "requires_approval": false,
+      "tags": ["ideation", "propose", "knowledge"]
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "bundle_key": "refactor-execute",
+      "name": "Refactor Execute",
+      "description": "Execution of bounded refactors across the codebase with automatic rollback on test failure. Refactors are restricted to files explicitly listed in the run; no exploratory changes are permitted.",
+      "tier": "execute",
+      "tools": [
+        {"name": "repo.read", "args": {}},
+        {"name": "repo.write", "args": {"allowlist_required": true}},
+        {"name": "refactor.run", "args": {"auto_rollback": true}},
+        {"name": "test.run", "args": {}}
+      ],
+      "requires_approval": false,
+      "tags": ["refactor", "execution", "code-quality"]
+    }
+  ]
+}

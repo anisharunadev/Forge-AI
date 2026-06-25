@@ -1,0 +1,311 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - link "Forge AI — back to dashboard" [ref=e5] [cursor=pointer]:
+        - /url: /dashboard
+        - generic [ref=e7]: F
+        - generic [ref=e8]:
+          - paragraph [ref=e9]: Forge AI
+          - paragraph [ref=e10]: Agent OS
+      - navigation "Primary" [ref=e15]:
+        - generic [ref=e16]:
+          - paragraph [ref=e17]: Workspace
+          - list [ref=e18]:
+            - listitem [ref=e19]:
+              - link "Dashboard" [ref=e20] [cursor=pointer]:
+                - /url: /dashboard
+                - img [ref=e21]
+                - generic [ref=e24]: Dashboard
+        - generic [ref=e25]:
+          - paragraph [ref=e26]: Centers
+          - list [ref=e27]:
+            - listitem [ref=e28]:
+              - link "Agents" [ref=e29] [cursor=pointer]:
+                - /url: /agent-center
+                - img [ref=e30]
+                - generic [ref=e33]: Agents
+            - listitem [ref=e34]:
+              - link "Projects" [ref=e35] [cursor=pointer]:
+                - /url: /project-intelligence
+                - img [ref=e36]
+                - generic [ref=e40]: Projects
+            - listitem [ref=e41]:
+              - link "Stories" [ref=e42] [cursor=pointer]:
+                - /url: /project-intelligence?tab=stories
+                - img [ref=e43]
+                - generic [ref=e46]: Stories
+            - listitem [ref=e47]:
+              - link "Workflows" [ref=e48] [cursor=pointer]:
+                - /url: /forge-command-center
+                - img [ref=e49]
+                - generic [ref=e53]: Workflows
+            - listitem [ref=e54]:
+              - link "Knowledge" [ref=e55] [cursor=pointer]:
+                - /url: /knowledge-center
+                - img [ref=e56]
+                - generic [ref=e58]: Knowledge
+            - listitem [ref=e59]:
+              - link "Artifacts" [ref=e60] [cursor=pointer]:
+                - /url: /organization-knowledge
+                - img [ref=e61]
+                - generic [ref=e65]: Artifacts
+            - listitem [ref=e66]:
+              - link "Ideation" [ref=e67] [cursor=pointer]:
+                - /url: /ideation
+                - img [ref=e68]
+                - generic [ref=e70]: Ideation
+            - listitem [ref=e71]:
+              - link "Architecture" [ref=e72] [cursor=pointer]:
+                - /url: /architecture
+                - img [ref=e73]
+                - generic [ref=e78]: Architecture
+            - listitem [ref=e79]:
+              - link "Connectors" [ref=e80] [cursor=pointer]:
+                - /url: /connector-center
+                - img [ref=e81]
+                - generic [ref=e87]: Connectors
+        - generic [ref=e88]:
+          - paragraph [ref=e89]: Lifecycle
+          - list [ref=e90]:
+            - listitem [ref=e91]:
+              - link "Onboarding" [ref=e92] [cursor=pointer]:
+                - /url: /project-onboarding
+                - img [ref=e93]
+                - generic [ref=e96]: Onboarding
+            - listitem [ref=e97]:
+              - link "Governance" [ref=e98] [cursor=pointer]:
+                - /url: /governance-center
+                - img [ref=e99]
+                - generic [ref=e101]: Governance
+            - listitem [ref=e102]:
+              - link "Audit" [ref=e103] [cursor=pointer]:
+                - /url: /audit
+                - img [ref=e104]
+                - generic [ref=e106]: Audit
+            - listitem [ref=e107]:
+              - link "Analytics" [ref=e108] [cursor=pointer]:
+                - /url: /analytics
+                - img [ref=e109]
+                - generic [ref=e112]: Analytics
+            - listitem [ref=e113]:
+              - link "Terminal" [ref=e114] [cursor=pointer]:
+                - /url: /forge-terminal
+                - img [ref=e115]
+                - generic [ref=e118]: Terminal
+            - listitem [ref=e119]:
+              - link "Runs" [ref=e120] [cursor=pointer]:
+                - /url: /runs
+                - img [ref=e121]
+                - generic [ref=e123]: Runs
+            - listitem [ref=e124]:
+              - link "Command" [ref=e125] [cursor=pointer]:
+                - /url: /forge-command-center
+                - img [ref=e126]
+                - generic [ref=e129]: Command
+            - listitem [ref=e130]:
+              - link "Settings" [ref=e131] [cursor=pointer]:
+                - /url: /admin
+                - img [ref=e132]
+                - generic [ref=e135]: Settings
+      - generic [ref=e136]:
+        - generic "acme-corp" [ref=e138]: tenant · Acme Corp (Dev Demo)
+        - generic [ref=e139]: acme-corp
+        - generic [ref=e140]:
+          - link "health" [ref=e141] [cursor=pointer]:
+            - /url: /healthz
+            - text: health
+          - link "Settings" [ref=e143] [cursor=pointer]:
+            - /url: /admin
+            - img [ref=e144]
+    - generic [ref=e147]:
+      - banner [ref=e148]:
+        - button "Open command palette" [ref=e149] [cursor=pointer]:
+          - generic [ref=e150]:
+            - img
+            - generic [ref=e151]: Search centers, runs, agents…
+          - generic [ref=e152]: CtrlK
+        - generic [ref=e153]:
+          - link "health" [ref=e154] [cursor=pointer]:
+            - /url: /healthz
+            - generic [ref=e156]: health
+          - generic "Acme Corp (Dev Demo)" [ref=e157]
+          - button "Switch to light theme" [ref=e158] [cursor=pointer]:
+            - img
+            - img
+      - navigation "Breadcrumb" [ref=e159]:
+        - list [ref=e160]:
+          - listitem [ref=e161]:
+            - link "Home" [ref=e162] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=e163]
+            - img [ref=e166]
+          - listitem [ref=e168]:
+            - generic [ref=e169]: Forge command center
+      - main [ref=e170]:
+        - generic [ref=e172]:
+          - generic [ref=e173]:
+            - paragraph [ref=e174]: Forge Command Center
+            - heading "Run a forge-* command" [level=1] [ref=e175]:
+              - img [ref=e176]
+              - text: Run a forge-* command
+            - paragraph [ref=e178]:
+              - text: Browse, search, and execute the white-labeled
+              - code [ref=e179]: forge-*
+              - text: command catalog. All commands are routed through the backend orchestrator.
+          - generic [ref=e180]:
+            - generic [ref=e181]:
+              - img
+              - textbox "Search forge commands" [ref=e182]:
+                - /placeholder: Search forge-* commands…
+            - generic [ref=e183]:
+              - img [ref=e184]
+              - text: History is captured per command. Recent runs surface here.
+          - generic [ref=e188]:
+            - navigation "Command categories" [ref=e189]:
+              - paragraph [ref=e190]: Categories
+              - button "Onboarding Bootstrap a new Forge workspace, project, or developer." [ref=e191] [cursor=pointer]:
+                - generic [ref=e192]: Onboarding
+                - generic [ref=e193]: Bootstrap a new Forge workspace, project, or developer.
+              - button "Project Intelligence Ingest sources, build graphs, and surface project context." [ref=e194] [cursor=pointer]:
+                - generic [ref=e195]: Project Intelligence
+                - generic [ref=e196]: Ingest sources, build graphs, and surface project context.
+              - button "Ideation Generate and prioritize product or technical ideas." [ref=e197] [cursor=pointer]:
+                - generic [ref=e198]: Ideation
+                - generic [ref=e199]: Generate and prioritize product or technical ideas.
+              - button "Architecture Author ADRs, diagrams, and subsystem decisions." [ref=e200] [cursor=pointer]:
+                - generic [ref=e201]: Architecture
+                - generic [ref=e202]: Author ADRs, diagrams, and subsystem decisions.
+              - 'button "Development Run coding workflows: features, fixes, refactors." [ref=e203] [cursor=pointer]':
+                - generic [ref=e204]: Development
+                - generic [ref=e205]: "Run coding workflows: features, fixes, refactors."
+              - button "Testing Generate and run unit, integration, and e2e tests." [ref=e206] [cursor=pointer]:
+                - generic [ref=e207]: Testing
+                - generic [ref=e208]: Generate and run unit, integration, and e2e tests.
+              - button "Security Scan, threat-model, and remediate vulnerabilities." [ref=e209] [cursor=pointer]:
+                - generic [ref=e210]: Security
+                - generic [ref=e211]: Scan, threat-model, and remediate vulnerabilities.
+              - button "Code Review Review pull requests and enforce quality bars." [ref=e212] [cursor=pointer]:
+                - generic [ref=e213]: Code Review
+                - generic [ref=e214]: Review pull requests and enforce quality bars.
+              - button "Deployment Build, release, and roll back services." [ref=e215] [cursor=pointer]:
+                - generic [ref=e216]: Deployment
+                - generic [ref=e217]: Build, release, and roll back services.
+              - button "Milestones Plan, track, and report on milestones and OKRs." [ref=e218] [cursor=pointer]:
+                - generic [ref=e219]: Milestones
+                - generic [ref=e220]: Plan, track, and report on milestones and OKRs.
+              - button "Learning Capture, retrieve, and surface organizational learning." [ref=e221] [cursor=pointer]:
+                - generic [ref=e222]: Learning
+                - generic [ref=e223]: Capture, retrieve, and surface organizational learning.
+              - button "Workflow Configure pipelines, policies, and approvals." [ref=e224] [cursor=pointer]:
+                - generic [ref=e225]: Workflow
+                - generic [ref=e226]: Configure pipelines, policies, and approvals.
+              - button "Environment Manage workspaces, agents, and runtime configuration." [ref=e227] [cursor=pointer]:
+                - generic [ref=e228]: Environment
+                - generic [ref=e229]: Manage workspaces, agents, and runtime configuration.
+              - 'button "Operational Engine operations: planning, debugging, capture, audit, help." [ref=e230] [cursor=pointer]':
+                - generic [ref=e231]: Operational
+                - generic [ref=e232]: "Engine operations: planning, debugging, capture, audit, help."
+            - list [ref=e234]:
+              - listitem [ref=e235]:
+                - generic [ref=e236]:
+                  - generic [ref=e237]:
+                    - img [ref=e239]
+                    - generic [ref=e242]:
+                      - generic [ref=e243]: New feature
+                      - code [ref=e244]: forge-dev-new-feature
+                  - generic [ref=e245]:
+                    - generic [ref=e246]: Plan, scaffold, implement, and self-review a new product feature end-to-end.
+                    - generic [ref=e247]:
+                      - generic [ref=e248]: development
+                      - generic [ref=e249]: ~900s
+                  - generic [ref=e250]:
+                    - link "View history" [ref=e251] [cursor=pointer]:
+                      - /url: /forge-command-center?history=forge-dev-new-feature
+                    - button "Run" [ref=e252] [cursor=pointer]
+              - listitem [ref=e253]:
+                - generic [ref=e254]:
+                  - generic [ref=e255]:
+                    - img [ref=e257]
+                    - generic [ref=e266]:
+                      - generic [ref=e267]: Fix bug
+                      - code [ref=e268]: forge-dev-fix-bug
+                  - generic [ref=e269]:
+                    - generic [ref=e270]: Reproduce, root-cause, and fix a reported bug with regression tests.
+                    - generic [ref=e271]:
+                      - generic [ref=e272]: development
+                      - generic [ref=e273]: ~600s
+                  - generic [ref=e274]:
+                    - link "View history" [ref=e275] [cursor=pointer]:
+                      - /url: /forge-command-center?history=forge-dev-fix-bug
+                    - button "Run" [ref=e276] [cursor=pointer]
+              - listitem [ref=e277]:
+                - generic [ref=e278]:
+                  - generic [ref=e279]:
+                    - img [ref=e281]
+                    - generic [ref=e289]:
+                      - generic [ref=e290]: Refactor
+                      - code [ref=e291]: forge-dev-refactor
+                  - generic [ref=e292]:
+                    - generic [ref=e293]: Refactor a module or package while preserving external behavior and tests.
+                    - generic [ref=e294]:
+                      - generic [ref=e295]: development
+                      - generic [ref=e296]: ~600s
+                  - generic [ref=e297]:
+                    - link "View history" [ref=e298] [cursor=pointer]:
+                      - /url: /forge-command-center?history=forge-dev-refactor
+                    - button "Run" [ref=e299] [cursor=pointer]
+              - listitem [ref=e300]:
+                - generic [ref=e301]:
+                  - generic [ref=e302]:
+                    - img [ref=e304]
+                    - generic [ref=e307]:
+                      - generic [ref=e308]: Add tests
+                      - code [ref=e309]: forge-dev-add-test
+                  - generic [ref=e310]:
+                    - generic [ref=e311]: Add missing unit, integration, or e2e tests for an existing change.
+                    - generic [ref=e312]:
+                      - generic [ref=e313]: development
+                      - generic [ref=e314]: ~300s
+                  - generic [ref=e315]:
+                    - link "View history" [ref=e316] [cursor=pointer]:
+                      - /url: /forge-command-center?history=forge-dev-add-test
+                    - button "Run" [ref=e317] [cursor=pointer]
+              - listitem [ref=e318]:
+                - generic [ref=e319]:
+                  - generic [ref=e320]:
+                    - img [ref=e322]
+                    - generic [ref=e326]:
+                      - generic [ref=e327]: Update dependencies
+                      - code [ref=e328]: forge-dev-update-deps
+                  - generic [ref=e329]:
+                    - generic [ref=e330]: Bump dependencies, run lockfile refresh, and surface breaking-change risk.
+                    - generic [ref=e331]:
+                      - generic [ref=e332]: development
+                      - generic [ref=e333]: ~300s
+                  - generic [ref=e334]:
+                    - link "View history" [ref=e335] [cursor=pointer]:
+                      - /url: /forge-command-center?history=forge-dev-update-deps
+                    - button "Run" [ref=e336] [cursor=pointer]
+              - listitem [ref=e337]:
+                - generic [ref=e338]:
+                  - generic [ref=e339]:
+                    - img [ref=e341]
+                    - generic [ref=e344]:
+                      - generic [ref=e345]: Migrate
+                      - code [ref=e346]: forge-dev-migrate
+                  - generic [ref=e347]:
+                    - generic [ref=e348]: Run a codemod or framework migration across the repository.
+                    - generic [ref=e349]:
+                      - generic [ref=e350]: development
+                      - generic [ref=e351]: ~900s
+                  - generic [ref=e352]:
+                    - link "View history" [ref=e353] [cursor=pointer]:
+                      - /url: /forge-command-center?history=forge-dev-migrate
+                    - button "Run" [ref=e354] [cursor=pointer]
+          - textbox [ref=e356]
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e362] [cursor=pointer]:
+    - img [ref=e363]

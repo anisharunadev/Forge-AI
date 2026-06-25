@@ -1,0 +1,174 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - link "Forge AI — back to dashboard" [ref=e5] [cursor=pointer]:
+        - /url: /dashboard
+        - generic [ref=e7]: F
+        - generic [ref=e8]:
+          - paragraph [ref=e9]: Forge AI
+          - paragraph [ref=e10]: Agent OS
+      - navigation "Primary" [ref=e15]:
+        - generic [ref=e16]:
+          - paragraph [ref=e17]: Workspace
+          - list [ref=e18]:
+            - listitem [ref=e19]:
+              - link "Dashboard" [ref=e20] [cursor=pointer]:
+                - /url: /dashboard
+                - img [ref=e21]
+                - generic [ref=e24]: Dashboard
+        - generic [ref=e25]:
+          - paragraph [ref=e26]: Centers
+          - list [ref=e27]:
+            - listitem [ref=e28]:
+              - link "Agents" [ref=e29] [cursor=pointer]:
+                - /url: /agent-center
+                - img [ref=e30]
+                - generic [ref=e33]: Agents
+            - listitem [ref=e34]:
+              - link "Projects" [ref=e35] [cursor=pointer]:
+                - /url: /project-intelligence
+                - img [ref=e36]
+                - generic [ref=e40]: Projects
+            - listitem [ref=e41]:
+              - link "Stories" [ref=e42] [cursor=pointer]:
+                - /url: /project-intelligence?tab=stories
+                - img [ref=e43]
+                - generic [ref=e46]: Stories
+            - listitem [ref=e47]:
+              - link "Workflows" [ref=e48] [cursor=pointer]:
+                - /url: /forge-command-center
+                - img [ref=e49]
+                - generic [ref=e53]: Workflows
+            - listitem [ref=e54]:
+              - link "Knowledge" [ref=e55] [cursor=pointer]:
+                - /url: /knowledge-center
+                - img [ref=e56]
+                - generic [ref=e58]: Knowledge
+            - listitem [ref=e59]:
+              - link "Artifacts" [ref=e60] [cursor=pointer]:
+                - /url: /organization-knowledge
+                - img [ref=e61]
+                - generic [ref=e65]: Artifacts
+            - listitem [ref=e66]:
+              - link "Ideation" [ref=e67] [cursor=pointer]:
+                - /url: /ideation
+                - img [ref=e68]
+                - generic [ref=e70]: Ideation
+            - listitem [ref=e71]:
+              - link "Architecture" [ref=e72] [cursor=pointer]:
+                - /url: /architecture
+                - img [ref=e73]
+                - generic [ref=e78]: Architecture
+            - listitem [ref=e79]:
+              - link "Connectors" [ref=e80] [cursor=pointer]:
+                - /url: /connector-center
+                - img [ref=e81]
+                - generic [ref=e87]: Connectors
+        - generic [ref=e88]:
+          - paragraph [ref=e89]: Lifecycle
+          - list [ref=e90]:
+            - listitem [ref=e91]:
+              - link "Onboarding" [ref=e92] [cursor=pointer]:
+                - /url: /project-onboarding
+                - img [ref=e93]
+                - generic [ref=e96]: Onboarding
+            - listitem [ref=e97]:
+              - link "Governance" [ref=e98] [cursor=pointer]:
+                - /url: /governance-center
+                - img [ref=e99]
+                - generic [ref=e101]: Governance
+            - listitem [ref=e102]:
+              - link "Audit" [ref=e103] [cursor=pointer]:
+                - /url: /audit
+                - img [ref=e104]
+                - generic [ref=e106]: Audit
+            - listitem [ref=e107]:
+              - link "Analytics" [ref=e108] [cursor=pointer]:
+                - /url: /analytics
+                - img [ref=e109]
+                - generic [ref=e112]: Analytics
+            - listitem [ref=e113]:
+              - link "Terminal" [ref=e114] [cursor=pointer]:
+                - /url: /forge-terminal
+                - img [ref=e115]
+                - generic [ref=e118]: Terminal
+            - listitem [ref=e119]:
+              - link "Runs" [ref=e120] [cursor=pointer]:
+                - /url: /runs
+                - img [ref=e121]
+                - generic [ref=e123]: Runs
+            - listitem [ref=e124]:
+              - link "Command" [ref=e125] [cursor=pointer]:
+                - /url: /forge-command-center
+                - img [ref=e126]
+                - generic [ref=e129]: Command
+            - listitem [ref=e130]:
+              - link "Settings" [ref=e131] [cursor=pointer]:
+                - /url: /admin
+                - img [ref=e132]
+                - generic [ref=e135]: Settings
+      - generic [ref=e136]:
+        - generic "acme-corp" [ref=e138]: tenant · Acme Corp (Dev Demo)
+        - generic [ref=e139]: acme-corp
+        - generic [ref=e140]:
+          - link "health" [ref=e141] [cursor=pointer]:
+            - /url: /healthz
+            - text: health
+          - link "Settings" [ref=e143] [cursor=pointer]:
+            - /url: /admin
+            - img [ref=e144]
+    - generic [ref=e147]:
+      - banner [ref=e148]:
+        - button "Open command palette" [ref=e149] [cursor=pointer]:
+          - generic [ref=e150]:
+            - img
+            - generic [ref=e151]: Search centers, runs, agents…
+          - generic [ref=e152]: CtrlK
+        - generic [ref=e153]:
+          - link "health" [ref=e154] [cursor=pointer]:
+            - /url: /healthz
+            - generic [ref=e156]: health
+          - generic "Acme Corp (Dev Demo)" [ref=e157]
+          - button "Switch to light theme" [ref=e158] [cursor=pointer]:
+            - img
+            - img
+      - navigation "Breadcrumb" [ref=e159]:
+        - list [ref=e160]:
+          - listitem [ref=e161]:
+            - link "Home" [ref=e162] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=e163]
+            - img [ref=e166]
+          - listitem [ref=e168]:
+            - generic [ref=e169]: Ideation
+      - main [ref=e170]:
+        - generic [ref=e172]:
+          - generic [ref=e174]:
+            - generic [ref=e175]:
+              - paragraph [ref=e176]: Center
+              - generic [ref=e177]:
+                - img [ref=e179]
+                - heading "Ideation Center" [level=1] [ref=e181]
+              - paragraph [ref=e182]: Capture ideas, score them, plan the roadmap, draft PRDs, and preview architecture before any code is written.
+            - generic [ref=e184]:
+              - generic "No ingest runs recorded yet" [ref=e185]: "Daily ingest: never run"
+              - button "New Idea" [ref=e186] [cursor=pointer]:
+                - img
+                - text: New Idea
+          - generic [ref=e187]:
+            - tablist "Ideation Center sections" [ref=e188]:
+              - tab "Ideas" [selected] [ref=e189] [cursor=pointer]
+              - tab "Roadmap" [ref=e190] [cursor=pointer]
+              - tab "PRDs" [ref=e191] [cursor=pointer]
+              - tab "Architecture Previews" [ref=e192] [cursor=pointer]
+              - tab "My Approvals" [ref=e193] [cursor=pointer]
+            - tabpanel "Ideas" [ref=e194]:
+              - generic [ref=e195]:
+                - combobox [ref=e196] [cursor=pointer]:
+                  - img [ref=e197]
+                - combobox [ref=e199]
+              - generic [ref=e200]: No ideas match the current filter.
+  - region "Notifications (F8)":
+    - list

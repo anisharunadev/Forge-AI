@@ -1,0 +1,68 @@
+{
+  "rows": [
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "name": "KFG-STD-001",
+      "content": "## Engineering Standards\n\nAll code MUST pass peer review before merge and MUST be covered by automated tests. Line coverage on changed files MUST be at or above the project baseline (default 80%). Every public function MUST have at least one unit test; integration tests MUST cover cross-service paths.\n\nContinuous integration is mandatory. Every push MUST trigger the CI pipeline which MUST run lint, type-check, unit tests, and security scan. Failed pipelines MUST block merge. The CI pipeline MUST produce a single, machine-readable status artifact (SARIF or JUnit XML) consumed by the audit trail.\n\nDeployment is fully automated via the platform's delivery accelerators. Manual deployments are forbidden outside a declared incident. Rollback MUST be a one-command operation that restores the previous artifact and database snapshot.",
+      "status": "published",
+      "version": 1,
+      "metadata": {"domain": "engineering", "severity": "block", "owner": "platform-eng"}
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "name": "KFG-STD-002",
+      "content": "## Security Standards\n\nNo secrets in source control under any circumstance. All credentials MUST flow through the connector credentials vault; detected secret-like patterns (API keys, private keys, tokens) MUST fail the build via secret scanning. Local development MUST use the vault's local-equivalent helper.\n\nEvery change MUST be scanned for known vulnerabilities (SCA) before merge and on a daily cadence against production. Critical and high findings MUST be remediated or explicitly waived by the security steward within the SLA defined in the security policy.\n\nThreat modeling is required for every architecture-significant change. The output MUST be a typed `Security Report` artifact linked to the ADR it informs. Residual risk MUST be acknowledged by an owner and reviewed quarterly.",
+      "status": "published",
+      "version": 1,
+      "metadata": {"domain": "security", "severity": "block", "owner": "security"}
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "name": "KFG-STD-003",
+      "content": "## Architecture Standards\n\nEvery architecture-significant change MUST be accompanied by a typed ADR artifact. The ADR MUST capture context, decision, consequences, alternatives considered, and traceability to the requirement(s) that drove the decision. Superseded ADRs MUST be marked but never deleted.\n\nCross-service contracts MUST be declared as typed API Contracts (OpenAPI 3.1 for REST, Protobuf for gRPC, GraphQL SDL for GraphQL). Breaking changes require a new contract major version and a deprecation window of at least one minor release.\n\nDecision records are immutable once accepted. New information MUST trigger a new ADR that supersedes the previous one. The ADR registry MUST be queryable from the Architecture Center.",
+      "status": "published",
+      "version": 1,
+      "metadata": {"domain": "architecture", "severity": "warn", "owner": "architecture"}
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "name": "KFG-STD-004",
+      "content": "## Observability Standards\n\nAll services MUST emit OpenTelemetry traces, metrics, and structured logs from day one. Sampling is configurable per service but production traces MUST be retained for at least 14 days at full fidelity.\n\nLogs MUST be structured JSON with stable field names: `timestamp`, `level`, `service`, `trace_id`, `span_id`, `tenant_id`, `project_id`, `actor_id`, `message`, and an extensible `attributes` object. Free-form `printf`-style logs are forbidden in production services.\n\nService-Level Objectives (SLOs) MUST be declared for every user-facing service. SLO breaches MUST page on-call. Runbooks MUST link to their SLO dashboards.",
+      "status": "published",
+      "version": 1,
+      "metadata": {"domain": "observability", "severity": "warn", "owner": "sre"}
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "name": "KFG-STD-005",
+      "content": "## Data Standards\n\nEvery persisted dataset MUST declare its schema, ownership, and classification (public, internal, confidential, restricted). Schemas are versioned; breaking changes require a migration with a documented rollback path.\n\nSchema evolution MUST go through the migration framework (Alembic for Postgres). Manual DDL outside the framework is forbidden. Migrations MUST be reversible or carry an explicit irreversible flag with rationale.\n\nData classification drives downstream controls: confidential and restricted data MUST be encrypted at rest and in transit, and access MUST be audited. PII MUST flow through the privacy-preserving connector layer; raw PII MUST NOT be persisted in analytics stores.",
+      "status": "published",
+      "version": 1,
+      "metadata": {"domain": "data", "severity": "block", "owner": "data-platform"}
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "name": "KFG-STD-006",
+      "content": "## API Standards\n\nPublic HTTP APIs MUST follow REST resource modeling with plural noun collection paths, JSON request and response bodies, and HTTP status codes that match the outcome (no 200 for errors). Every endpoint MUST be documented in an OpenAPI 3.1 contract under `/contracts/`.\n\nGraphQL is permitted for read-heavy, schema-driven surfaces. gRPC is permitted for service-to-service traffic. All three styles MUST coexist under one gateway with consistent auth, rate limiting, and observability.\n\nVersioning is mandatory. Breaking changes MUST bump the major version. Deprecated endpoints MUST continue to function for at least one minor release cycle and MUST emit a `Sunset` response header with the removal date.",
+      "status": "published",
+      "version": 1,
+      "metadata": {"domain": "api", "severity": "warn", "owner": "api-platform"}
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "name": "KFG-STD-007",
+      "content": "## Deployment Standards\n\nProduction deployments MUST use a safe rollout strategy: blue/green or canary with automated health gates. A failed health gate MUST trigger automatic rollback without human intervention.\n\nEvery deployment MUST be reproducible from source: the deployment artifact, configuration, and database migrations MUST be derivable from the commit SHA. Ad-hoc production changes are forbidden outside a declared incident with an attached incident record.\n\nRollback MUST be a single command, exercised in every release rehearsal. Database migrations MUST be backward-compatible with the previous release so rollback does not require a forward migration.",
+      "status": "published",
+      "version": 1,
+      "metadata": {"domain": "deployment", "severity": "block", "owner": "platform-eng"}
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "name": "KFG-STD-008",
+      "content": "## Governance Standards\n\nWorkflows MUST NOT cross the Architecture, Security, or Deployment boundaries automatically. Each boundary crossing requires a typed approval gate with an explicit approver, timestamp, and rationale captured in the audit trail.\n\nRole-Based Access Control (RBAC) is mandatory. Roles are derived from the connector identity provider (Keycloak by default); inline roles are forbidden. Permission decisions MUST be logged.\n\nThe audit trail is the system of record for compliance. Every state-changing action by an agent or user MUST produce an immutable audit event including `actor_id`, `tenant_id`, `project_id`, `action`, `target_type`, `target_id`, and `payload`. Audit retention is 7 years for security and compliance events.",
+      "status": "published",
+      "version": 1,
+      "metadata": {"domain": "governance", "severity": "block", "owner": "governance"}
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "forge-core",
+  "displayName": "Forge Core",
+  "version": "1.6.0-rc.3",
+  "description": "Forge Core is a meta-prompting, context engineering, and spec-driven development system for AI coding agents.",
+  "author": {
+    "name": "forge-ai",
+    "url": "https://github.com/forge-ai"
+  },
+  "homepage": "https://github.com/forge-ai/forge-core",
+  "repository": "https://github.com/forge-ai/forge-core",
+  "license": "MIT",
+  "keywords": [
+    "spec-driven-development",
+    "planning",
+    "workflow",
+    "context-engineering",
+    "claude-code",
+    "forge"
+  ],
+  "commands": "./commands/forge/",
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json"
+}

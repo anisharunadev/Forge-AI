@@ -1,0 +1,57 @@
+{
+  "rows": [
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "name": "adr-required",
+      "description": "Architecture-significant changes MUST be accompanied by an accepted ADR artifact linked to the change. The policy blocks promotion when no ADR is present.",
+      "expression": {
+        "all": [
+          {"var": "artifact.adr_id"},
+          {"!=": [{"var": "artifact.adr_id"}, null]},
+          {"in": [{"var": "artifact.adr_status"}, ["accepted", "proposed"]]}
+        ]
+      },
+      "severity": "block",
+      "enabled": true
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "name": "tests-required",
+      "description": "Pull requests MUST have a green test run before they can be merged. Coverage delta MUST be at or above the project baseline.",
+      "expression": {
+        "all": [
+          {"==": [{"var": "pr.test_status"}, "passed"]},
+          {">=": [{"var": "pr.coverage_delta"}, 0]}
+        ]
+      },
+      "severity": "block",
+      "enabled": true
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "name": "security-scan-required",
+      "description": "Security scanning MUST pass before any deployment to a non-development environment. Critical and high findings MUST be remediated or explicitly waived by the security steward.",
+      "expression": {
+        "all": [
+          {"==": [{"var": "build.security_scan_status"}, "passed"]},
+          {"!=": [{"var": "environment"}, "development"]}
+        ]
+      },
+      "severity": "block",
+      "enabled": true
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "name": "peer-review-required",
+      "description": "Every pull request MUST be approved by at least one peer reviewer who is not the author before it can be merged.",
+      "expression": {
+        "all": [
+          {">=": [{"var": "pr.approver_count"}, 1]},
+          {"!=": [{"var": "pr.approver_ids.0"}, {"var": "pr.author_id"}]}
+        ]
+      },
+      "severity": "warn",
+      "enabled": true
+    }
+  ]
+}

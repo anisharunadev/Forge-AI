@@ -1,0 +1,62 @@
+# syntax=docker/dockerfile:1.7
+#
+# apps/forge/Dockerfile.dev — Next.js 15 + React 19 development image.
+#
+# Runs `next dev` with HMR enabled. Mounted volumes provide the source
+# tree from the host so file edits are picked up live.
+#
+# Differences from apps/forge/Dockerfile (the production image):
+# - CMD is `next dev` (HMR + fast refresh), not `next start`
+# - All source files are copied (no .next/ drop)
+# - Runs as root so chokidar can read any host-mounted file
+# - Watches the source tree; rely on volume mounts + CHOKIDAR_USEPOLLING
+#   for reliable inotify across the host/docker boundary
+
+FROM node:24-alpine
+
+WORKDIR /app
+
+# Build tools: `forge-terminal-server` (a workspace dev-dep of
+# apps/forge) depends on `node-pty`, which compiles native bindings
+# via node-gyp. Without Python+make+g++ the postinstall step fails
+# and `pnpm install` aborts before creating `node_modules/.bin/`
+# symlinks — leaving the dev server with `next: not found`. We could
+# sidestep with `--ignore-scripts`, but that disables node-pty's
+# native bindings (which the terminal feature actually needs).
+RUN apk add --no-cache python3 make g++ \
+    && ln -sf python3 /usr/bin/python
+
+# Pin pnpm to the version declared in the lockfile (matches root package.json).
+# Keep pnpm installed (unlike the production image, which strips it to
+# prevent corepack from auto-upgrading). Dev image needs pnpm on PATH
+# so `command: pnpm run dev` in docker-compose.yml resolves.
+RUN npm install -g pnpm@9.15.0
+
+ENV NODE_ENV=development \
+    NEXT_TELEMETRY_DISABLED=1 \
+    HOSTNAME=0.0.0.0 \
+    PORT=3000 \
+    PATH="/usr/local/bin:${PATH}" \
+    # chokidar polls inside Docker on Linux because inotify events from
+    # the host filesystem are not propagated to the container by default.
+    CHOKIDAR_USEPOLLING=true \
+    CHOKIDAR_INTERVAL=300 \
+    # Next.js dev: force polling watcher (webpack uses watchpack under the
+    # hood; this is the supported knob for cross-fs change detection).
+    WATCHPACK_POLLING=true
+
+# Copy workspace manifests + the forge app's package.json so the install
+# layer caches independently of the source tree.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/forge/package.json ./apps/forge/
+COPY packages ./packages
+
+# Install with the lockfile (falls back to a non-frozen install if the
+# lockfile drifts, mirroring the production Dockerfile's behaviour).
+RUN pnpm install --frozen-lockfile --no-frozen-lockfile 2>&1 | tail -20 || \
+    pnpm install --no-frozen-lockfile 2>&1 | tail -20
+
+# Source is provided by the volume mount in docker-compose.yml, but we
+# also COPY it as a fallback so the image is self-contained.
+WORKDIR /app/apps/forge
+CMD ["pnpm", "run", "dev"]

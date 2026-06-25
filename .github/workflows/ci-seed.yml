@@ -1,0 +1,95 @@
+name: ci-seed
+
+# Plan J commit 4 — applies the kn-base seed before backend integration
+# tests and asserts that re-apply is idempotent.
+#
+# Triggers on any PR that touches:
+#   - backend/seeds/**           (manifests, data files, framework)
+#   - backend/app/services/seed_service.py
+#   - backend/app/services/day_one_bootstrap.py
+#   - backend/app/api/v1/seeds.py
+#   - this workflow file itself
+#
+# The job is intentionally a thin shim over `apply_seed` — the seed
+# runner is the single source of truth for "is this seed healthy?".
+# Future content packs (e.g. `acme-corp`) can extend the matrix or
+# be added as additional steps.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/seeds/**"
+      - "backend/app/services/seed_service.py"
+      - "backend/app/services/day_one_bootstrap.py"
+      - "backend/app/api/v1/seeds.py"
+      - ".github/workflows/ci-seed.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/seeds/**"
+      - "backend/app/services/seed_service.py"
+      - "backend/app/services/day_one_bootstrap.py"
+      - "backend/app/api/v1/seeds.py"
+      - ".github/workflows/ci-seed.yml"
+
+env:
+  PYTHON_DEFAULT_VERSION: "3.13"
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PIP_NO_CACHE_DIR: "0"
+
+jobs:
+  apply-kn-base:
+    name: apply kn-base (idempotency check)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: forge_test
+          POSTGRES_USER: forge
+          POSTGRES_PASSWORD: forge
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U forge"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+asyncpg://forge:forge@localhost:5432/forge_test
+      TESTING: "true"
+      ENVIRONMENT: test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup Python ${{ env.PYTHON_DEFAULT_VERSION }}
+        uses: actions/setup-python@v5.4.0
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
+          cache: "pip"
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
+            backend/pyproject.toml
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip==24.2
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run migrations
+        working-directory: backend
+        run: alembic upgrade head
+
+      - name: Apply kn-base seed (first run)
+        working-directory: backend
+        run: python -m backend.seeds.framework.apply_seed kn-base --env=test
+
+      - name: Re-apply kn-base seed (idempotency check)
+        working-directory: backend
+        run: python -m backend.seeds.framework.apply_seed kn-base --env=test

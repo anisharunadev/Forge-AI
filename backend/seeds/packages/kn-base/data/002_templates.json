@@ -1,0 +1,150 @@
+{
+  "rows": [
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "type": "adr",
+      "name": "ADR-Microservice",
+      "version": 1,
+      "content": {
+        "sections": [
+          "Title",
+          "Status",
+          "Context",
+          "Decision",
+          "Consequences",
+          "Alternatives Considered",
+          "References"
+        ],
+        "placeholders": {
+          "title": "",
+          "status": "proposed",
+          "deciders": [],
+          "requirements": []
+        },
+        "body_template": "## {{title}}\n\n**Status**: {{status}}\n\n### Context\n\nThe forces at play including the requirement(s) driving this decision.\n\n### Decision\n\nThe change we propose or have agreed to implement.\n\n### Consequences\n\nThe resulting context after applying the decision — positive, negative, and neutral.\n\n### Alternatives Considered\n\nOther options evaluated and why each was rejected.\n\n### References\n\nLinked requirements, tasks, ADRs, and external material."
+      },
+      "variables": [
+        {"name": "title", "type": "string", "required": true},
+        {"name": "status", "type": "enum", "values": ["proposed", "accepted", "superseded", "deprecated"], "required": true},
+        {"name": "deciders", "type": "list<string>", "required": true},
+        {"name": "requirements", "type": "list<uuid>", "required": false}
+      ]
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "type": "adr",
+      "name": "ADR-Data",
+      "version": 1,
+      "content": {
+        "sections": [
+          "Title",
+          "Status",
+          "Schema",
+          "Migrations",
+          "Ownership",
+          "Classification",
+          "Retention",
+          "References"
+        ],
+        "placeholders": {
+          "title": "",
+          "status": "proposed",
+          "owner": "",
+          "classification": "internal"
+        },
+        "body_template": "## {{title}}\n\n**Status**: {{status}}\n**Owner**: {{owner}}\n**Classification**: {{classification}}\n\n### Schema\n\nTables, columns, indexes, and relationships affected.\n\n### Migrations\n\nForward and reverse migration plan with reversibility assessment.\n\n### Ownership\n\nService or team accountable for the dataset.\n\n### Retention\n\nRetention period, archival strategy, and deletion procedure."
+      },
+      "variables": [
+        {"name": "title", "type": "string", "required": true},
+        {"name": "status", "type": "enum", "values": ["proposed", "accepted", "superseded"], "required": true},
+        {"name": "owner", "type": "string", "required": true},
+        {"name": "classification", "type": "enum", "values": ["public", "internal", "confidential", "restricted"], "required": true}
+      ]
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "type": "runbook",
+      "name": "Runbook",
+      "version": 1,
+      "content": {
+        "sections": [
+          "Service",
+          "Trigger",
+          "Severity",
+          "Detection",
+          "Triage Steps",
+          "Mitigation",
+          "Escalation",
+          "Postmortem Checklist"
+        ],
+        "placeholders": {
+          "service": "",
+          "trigger": "",
+          "severity": "sev3",
+          "on_call": ""
+        },
+        "body_template": "## Runbook: {{service}}\n\n**Severity**: {{severity}}\n**On-call**: {{on_call}}\n\n### Trigger\n\n{{trigger}}\n\n### Detection\n\nHow this runbook's incident is detected (alert, dashboard, user report).\n\n### Triage Steps\n\n1. Confirm scope and blast radius.\n2. Capture current state (logs, metrics, recent deploys).\n3. Classify severity.\n\n### Mitigation\n\nConcrete commands and decision points. Each step MUST be reversible or carry an explicit risk note.\n\n### Escalation\n\nWhen and how to escalate. Include paging tree and war-room channel.\n\n### Postmortem Checklist\n\nOpen the postmortem doc, schedule the review, schedule the action items."
+      },
+      "variables": [
+        {"name": "service", "type": "string", "required": true},
+        {"name": "trigger", "type": "string", "required": true},
+        {"name": "severity", "type": "enum", "values": ["sev1", "sev2", "sev3", "sev4"], "required": true},
+        {"name": "on_call", "type": "string", "required": true}
+      ]
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "type": "security_report",
+      "name": "Security-Report",
+      "version": 1,
+      "content": {
+        "sections": [
+          "Title",
+          "Scope",
+          "Threat Model",
+          "STRIDE Coverage",
+          "Controls",
+          "Residual Risk",
+          "Sign-off"
+        ],
+        "placeholders": {
+          "title": "",
+          "scope": "",
+          "owner": ""
+        },
+        "body_template": "## {{title}}\n\n**Scope**: {{scope}}\n**Owner**: {{owner}}\n\n### Threat Model\n\nAssets, adversaries, and attack surfaces in scope.\n\n### STRIDE Coverage\n\nSpoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege — each addressed or explicitly out of scope.\n\n### Controls\n\nPreventive and detective controls mapped to threats.\n\n### Residual Risk\n\nRisks accepted with rationale, owner, and review date.\n\n### Sign-off\n\nSecurity steward and architecture steward approval."
+      },
+      "variables": [
+        {"name": "title", "type": "string", "required": true},
+        {"name": "scope", "type": "string", "required": true},
+        {"name": "owner", "type": "string", "required": true}
+      ]
+    },
+    {
+      "tenant_id": "00000000-0000-0000-0000-000000000000",
+      "type": "task_breakdown",
+      "name": "Task-Breakdown",
+      "version": 1,
+      "content": {
+        "sections": [
+          "Parent Artifact",
+          "Goal",
+          "Acceptance Criteria",
+          "Tasks",
+          "Estimates",
+          "Dependencies",
+          "Definition of Done"
+        ],
+        "placeholders": {
+          "parent_artifact_id": "",
+          "estimate_unit": "points"
+        },
+        "body_template": "## Task Breakdown\n\n**Parent**: {{parent_artifact_id}}\n\n### Goal\n\nOne-sentence outcome.\n\n### Acceptance Criteria\n\nGiven/When/Then statements that MUST all hold.\n\n### Tasks\n\nOrdered list of tasks with estimates.\n\n### Dependencies\n\nExternal dependencies and unblock conditions.\n\n### Definition of Done\n\nTests green, docs updated, telemetry added, ADR linked, deployed to staging."
+      },
+      "variables": [
+        {"name": "parent_artifact_id", "type": "uuid", "required": true},
+        {"name": "estimate_unit", "type": "enum", "values": ["points", "hours", "days"], "required": true}
+      ]
+    }
+  ]
+}
