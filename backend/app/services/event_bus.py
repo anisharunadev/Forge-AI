@@ -66,6 +66,23 @@ class EventType(str, enum.Enum):
     COST_INCURRED = "cost.incurred"
     POLICY_EVALUATED = "policy.evaluated"
 
+    # F-829 — LiteLLM Integration Layer events
+    LITELLM_KEY_MINTED = "litellm.key.minted"
+    LITELLM_BUDGET_DECLARED = "litellm.budget.declared"
+    LITELLM_CALL_COMPLETED = "litellm.call.completed"
+    # F-829i — Guardrail violation ingest (Phase C compliance feed)
+    COMPLIANCE_VIOLATION = "compliance.violation"
+
+    # F-800 — Co-pilot domain events (Plan 1). Only the events that
+    # require in-process or cross-process fanout live here; the rest of
+    # the audit trail is captured as ``audit_events`` rows by
+    # :func:`audit_service.record`.
+    COPILOT_CONVERSATION_CREATED = "copilot.conversation.created"
+    COPILOT_MESSAGE_RECORDED = "copilot.message.recorded"
+    COPILOT_TOOL_EXECUTED = "copilot.tool.executed"
+    COPILOT_COST_INCURRED = "copilot.cost.incurred"
+    COPILOT_BUDGET_BLOCKED = "copilot.budget.blocked"
+
 
 @dataclass
 class Event:
