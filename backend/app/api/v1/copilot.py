@@ -39,6 +39,11 @@ from app.schemas.copilot import (
     CopilotToolRead,
 )
 from app.services._litellm_tools import ToolLoopExhausted
+from app.services.audit_service import audit_service
+from app.services.copilot_rate_limit import (
+    RateLimitExceeded,
+    copilot_rate_limiter,
+)
 from app.services.copilot_service import (
     CopilotBudgetBlocked,
     CopilotService,
@@ -95,6 +100,40 @@ async def post_chat(
     caller).
     """
     _ensure_enabled()
+
+    # Per-user rate limit (Plan 5). Sliding 60s window keyed by
+    # (user_id, tenant_id); 429 with Retry-After when the cap is hit.
+    try:
+        await copilot_rate_limiter.check_and_record(
+            principal.user_id, principal.tenant_id
+        )
+    except RateLimitExceeded as exc:
+        # Audit the block so we can detect rate-limit abuse patterns
+        # (sudden spikes from a single user, etc.).
+        try:
+            await audit_service.record(
+                tenant_id=principal.tenant_id,
+                project_id=principal.project_id,
+                actor_id=principal.user_id,
+                action="copilot.rate_limit_blocked",
+                target_type="copilot_conversation",
+                target_id="",
+                payload={
+                    "retry_after_seconds": exc.retry_after_seconds,
+                    "limit": settings.copilot_rate_limit_per_min,
+                },
+            )
+        except Exception:  # noqa: BLE001
+            logger.warning("copilot.api.rate_limit_audit_failed")
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "error": "copilot.rate_limit_exceeded",
+                "retry_after_seconds": exc.retry_after_seconds,
+            },
+            headers={"Retry-After": str(exc.retry_after_seconds)},
+        ) from exc
+
     service = _service(principal, db)
     try:
         return await service.chat(request)
