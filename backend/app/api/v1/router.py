@@ -6,6 +6,7 @@ from fastapi import APIRouter
 
 from app.api.v1 import (
     admin,
+    admin_llm_gateway,
     agent_assignments,
     agent_runtimes,
     agents,
@@ -15,6 +16,7 @@ from app.api.v1 import (
     artifacts,
     audit,
     connectors,
+    copilot,
     health,
     hooks,
     ideation,
@@ -30,6 +32,7 @@ from app.api.v1 import (
     repos,
     runs,
     runtime_management,
+    seeds,
     standards,
     steering_rules,
     templates,
@@ -47,6 +50,8 @@ from app.api.v1 import (
 api_router = APIRouter()
 api_router.include_router(health.router)
 api_router.include_router(standards.router)
+# F-821 — Seeds API (Plan C — Phase 0.7)
+api_router.include_router(seeds.router)
 api_router.include_router(steering_rules.router)
 api_router.include_router(templates.router)
 api_router.include_router(policies.router)
@@ -66,6 +71,8 @@ api_router.include_router(hooks.router)
 api_router.include_router(onboarding.router)
 api_router.include_router(projects.router)
 api_router.include_router(admin.router)
+# F-829 — LLM Gateway admin surface (Phase B)
+api_router.include_router(admin_llm_gateway.router)
 api_router.include_router(runs.router)
 api_router.include_router(terminal_commands.router)
 api_router.include_router(terminal_costs.router)
@@ -107,5 +114,7 @@ api_router.include_router(architecture.versions.router)
 api_router.include_router(workflows.router)
 # F-018 — Custom workflow command dispatch (closes the useForgeCommands "Backend unreachable" gap)
 api_router.include_router(commands.router)
+# F-800 — Forge Co-pilot (Plan 1)
+api_router.include_router(copilot.router)
 
 __all__ = ["api_router"]
