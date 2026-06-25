@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import or_, select
+from sqlalchemy import select
 
 from app.core.logging import get_logger
 from app.core.security import AuthenticatedPrincipal
@@ -87,13 +87,18 @@ class SearchKnowledgeTool:
                 stmt = stmt.where(KGNode.project_id == str(project_id))
             if node_types:
                 stmt = stmt.where(KGNode.node_type.in_(node_types))
-            # Naive LIKE search — postgres ILIKE / pgvector replace this.
+            # Search in ``name`` via portable ILIKE. The JSONB properties
+            # column is filtered in Python below so this query works on
+            # both Postgres (where JSONB ``->>`` would be ideal) and the
+            # SQLite test engine (where ``astext`` is unavailable).
             like = f"%{query.strip()}%"
-            stmt = stmt.where(
-                or_(KGNode.name.ilike(like), KGNode.properties["name"].astext.ilike(like))
-            )
-            stmt = stmt.order_by(KGNode.updated_at.desc()).limit(limit)
+            stmt = stmt.where(KGNode.name.ilike(like))
+            # Bound the candidate set — production uses pgvector + tsquery.
+            stmt = stmt.order_by(KGNode.updated_at.desc()).limit(max(limit * 4, 50))
             rows = list((await session.execute(stmt)).scalars().all())
+
+        needle = query.strip().lower()
+        rows = [r for r in rows if _matches(r, needle)][:limit]  # noqa: E501
 
         nodes = [
             {
@@ -125,6 +130,21 @@ def _snippet(properties: dict[str, Any] | None) -> str:
             text = val.strip()
             return text if len(text) <= 240 else f"{text[:237]}..."
     return ""
+
+
+def _matches(row: KGNode, needle: str) -> bool:
+    """Return True if the row's name or properties mention the needle."""
+    if needle in (row.name or "").lower():
+        return True
+    props = row.properties or {}
+    name = props.get("name")
+    if isinstance(name, str) and needle in name.lower():
+        return True
+    for key in ("description", "summary", "doc", "decision", "content"):
+        val = props.get(key)
+        if isinstance(val, str) and needle in val.lower():
+            return True
+    return False
 
 
 # Register on import.
