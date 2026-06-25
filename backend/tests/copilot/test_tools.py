@@ -20,6 +20,7 @@ import uuid
 from unittest.mock import AsyncMock, patch
 
 import pytest
+import pytest_asyncio
 
 # Importing the modules so their SQLAlchemy tables register on the
 # global metadata BEFORE ``sqlite_db`` calls ``metadata.create_all``.
@@ -31,6 +32,72 @@ from app.db.models.copilot import CopilotConversation as _Conv  # noqa: F401
 from app.db.models.standard import Standard as _Standard  # noqa: F401
 from app.db.models.template import Template as _Template  # noqa: F401
 from app.services.knowledge_graph import KGNode as _KGNode  # noqa: F401
+
+
+@pytest.fixture(autouse=True)
+def _restore_real_session_factory(monkeypatch, request):
+    """Defensive: ``tests/test_litellm_tools.py`` permanently stubs
+    ``app.db.session.get_session_factory`` at module-import time, so
+    any service module that did ``from app.db.session import
+    get_session_factory`` AFTER the stub was set captured the stub
+    itself. There is no way to recover the original function from
+    ``app.db.session.__dict__`` because the stub overwrote it.
+
+    Strategy: replace ``app.db.session.get_session_factory`` with a
+    closure that delegates to the live ``_session_factory`` global,
+    which the ``sqlite_db`` fixture has already monkey-patched. Then
+    walk every ``app.services.*`` module and rebind any cached
+    ``get_session_factory`` reference to this new delegating wrapper.
+    """
+    import app.db.session as session_mod
+
+    def delegating_get_session_factory():
+        """Return whatever ``_session_factory`` is currently bound to.
+
+        ``sqlite_db`` monkey-patches ``_session_factory`` to an in-memory
+        SQLite factory; production code in ``app.db.session`` does the
+        same lazy-init dance. We mirror that contract here.
+        """
+        sf = session_mod._session_factory
+        if sf is None:
+            from app.db.session import get_engine  # noqa: WPS433 (lazy)
+            from sqlalchemy.ext.asyncio import async_sessionmaker
+
+            sf = async_sessionmaker(
+                bind=get_engine(),
+                expire_on_commit=False,
+                autoflush=False,
+            )
+            session_mod._session_factory = sf
+        return sf
+
+    # Re-install the delegating factory on the source module so the
+    # *next* import picks up the right thing (and so code that reads
+    # ``app.db.session.get_session_factory`` directly works).
+    monkeypatch.setattr(session_mod, "get_session_factory", delegating_get_session_factory)
+
+    # Re-bind every module that captured the stub.
+    import sys
+
+    captured_count = 0
+    for mod_name, mod in list(sys.modules.items()):
+        if mod is None or not isinstance(mod_name, str):
+            continue
+        if not mod_name.startswith("app."):
+            continue
+        if not hasattr(mod, "get_session_factory"):
+            continue
+        current = getattr(mod, "get_session_factory", None)
+        if current is delegating_get_session_factory:
+            continue
+        # Skip the source module (already rebound above) and the test
+        # module that owns the stub itself (it would re-stub).
+        if mod is session_mod or mod_name.startswith("tests."):
+            continue
+        monkeypatch.setattr(mod, "get_session_factory", delegating_get_session_factory)
+        captured_count += 1
+    yield
+    return
 
 
 # ---------------------------------------------------------------------------
