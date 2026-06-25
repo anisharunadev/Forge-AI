@@ -28,6 +28,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { useConversation } from '@/hooks/use-copilot';
+import { useCopilotEnabled } from '@/lib/feature-flags';
 import { useCopilotStore } from '@/lib/store/copilot';
 import type { CopilotSuggestedAction } from '@/lib/api/copilot';
 
@@ -41,12 +42,21 @@ import { MessageList } from './MessageList';
 import { PermissionDeniedBanner } from './PermissionDeniedBanner';
 
 export function CopilotPanel() {
+  // Plan 6 — master toggle. When ``COPILOT_ENABLED`` is off
+  // (server-side flag flip or the user is in a tenant that has
+  // disabled Co-pilot), we render nothing so the panel cannot
+  // appear even if the store says ``open === true``. The Cmd+J
+  // hotkey is also gated (see ShellProvider) so this is a
+  // defense-in-depth check.
+  const copilotEnabled = useCopilotEnabled();
   const open = useCopilotStore((s) => s.open);
   const setOpen = useCopilotStore((s) => s.setOpen);
   const activeConversationId = useCopilotStore((s) => s.activeConversationId);
   const lastError = useCopilotStore((s) => s.lastError);
 
   const conversation = useConversation(activeConversationId);
+
+  if (!copilotEnabled) return null;
 
   // Modal state — owned by the panel so the modals persist across
   // message list re-renders and suggested-action re-dispatches.

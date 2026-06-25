@@ -2,13 +2,14 @@
  * F-800 — Feature flags consumer.
  *
  * The Co-pilot is feature-flagged server-side. The backend exposes
- * `GET /api/v1/system/features` (lands in Plan 6 — F-800 §6) which
- * returns the canonical flag dict for the current tenant.
+ * `GET /api/v1/system/features` (Plan 6 — F-800 §6) which returns the
+ * canonical flag dict for the current tenant. Plan 6 wired the
+ * endpoint; this module's primary path now reads from it.
  *
- * Until Plan 6 ships, the endpoint may 404 in dev. We fall back to a
- * sane local default (enabled in dev, disabled in prod-ish envs)
- * based on `NEXT_PUBLIC_COPILOT_ENABLED`. This lets the panel render
- * during development without blocking Plan 3.
+ * The DEFAULT_FEATURES fallback still kicks in for transient network
+ * failures and for Storybook/local-only renders where the backend
+ * isn't running. It is NOT the canonical source — production
+ * deployments MUST set the backend flags in `backend/.env`.
  *
  * Single TanStack Query hook: `useFeatures()`. Convenience selector
  * `useCopilotEnabled()` for hotkey + nav gating.
@@ -37,7 +38,8 @@ const DEFAULT_FEATURES: Features = {
 
 /**
  * Fetch the feature flag dict. Falls back to defaults on any failure
- * (the endpoint may not exist in dev yet — Plan 6 wires it for real).
+ * (network blip, backend down for maintenance, Storybook renders).
+ * The endpoint is wired in Plan 6 and is the canonical source.
  */
 async function fetchFeatures(): Promise<Features> {
   try {
@@ -49,7 +51,8 @@ async function fetchFeatures(): Promise<Features> {
     const body = (await res.json()) as Partial<Features>;
     return { ...DEFAULT_FEATURES, ...body };
   } catch {
-    // Network failure, endpoint missing, or parse error — use defaults.
+    // Network failure or parse error — use defaults so the UI stays
+    // responsive. The next query refetch will retry.
     return DEFAULT_FEATURES;
   }
 }
