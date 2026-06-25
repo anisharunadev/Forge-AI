@@ -35,6 +35,7 @@ from app.api.v1 import (
     seeds,
     standards,
     steering_rules,
+    system,
     templates,
     terminal_broadcast,
     terminal_commands,
@@ -116,5 +117,8 @@ api_router.include_router(workflows.router)
 api_router.include_router(commands.router)
 # F-800 — Forge Co-pilot (Plan 1)
 api_router.include_router(copilot.router)
+# F-800 — System features endpoint (Plan 6 — exposes the 5 copilot
+# flags to the frontend for hotkey + nav gating).
+api_router.include_router(system.router)
 
 __all__ = ["api_router"]
