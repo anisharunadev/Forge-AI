@@ -220,6 +220,7 @@ async def get_conversation(
 @router.delete(
     "/conversations/{conversation_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
     response_class=Response,
 )
 @audit(action="copilot.conversation.delete", target_type="copilot_conversation")
@@ -228,7 +229,7 @@ async def delete_conversation(
     principal: Principal,
     db: DbSession,
     _perm: Principal = require_permission(COPILOT_PERMISSION_USE),
-):
+) -> Response:
     """Soft-delete (archive) the caller's conversation."""
     _ensure_enabled()
     service = _service(principal, db)
@@ -236,12 +237,16 @@ async def delete_conversation(
         await service.delete_conversation(conversation_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    # Explicit empty body — FastAPI's `serialize_response` would otherwise
+    # try to JSON-encode the response and trip
+    # `assert is_body_allowed_for_status_code(...)` in routing.py:509.
+    return Response(status_code=status.HTTP_204_NO_CONTENT, content=b"")
 
 
 @router.post(
     "/messages/{message_id}/feedback",
     status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
     response_class=Response,
 )
 @audit(action="copilot.feedback.submit", target_type="copilot_message")
@@ -251,7 +256,7 @@ async def submit_feedback(
     principal: Principal,
     db: DbSession,
     _perm: Principal = require_permission(COPILOT_PERMISSION_USE),
-):
+) -> Response:
     """Record a thumbs-up/down + comment on an assistant message."""
     _ensure_enabled()
     service = _service(principal, db)
@@ -259,7 +264,8 @@ async def submit_feedback(
         await service.submit_feedback(message_id, request)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    # Explicit empty body — see note on delete_conversation above.
+    return Response(status_code=status.HTTP_204_NO_CONTENT, content=b"")
 
 
 @router.get(
