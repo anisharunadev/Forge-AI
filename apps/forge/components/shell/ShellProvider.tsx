@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { CopilotPanel } from '@/components/copilot/CopilotPanel';
 import { FirstRunNudge } from '@/components/copilot/FirstRunNudge';
+import { useCopilotEnabled } from '@/lib/feature-flags';
 import { CommandPalette } from './CommandPalette';
 
 interface ShellContextValue {
@@ -37,6 +38,11 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
   const [copilotOpen, setCopilotOpen] = React.useState(false);
 
+  // Co-pilot is feature-flagged server-side. Cmd+J is gated on
+  // `COPILOT_ENABLED` so disabling the flag in production silently
+  // drops the hotkey without breaking the rest of the shell.
+  const copilotEnabled = useCopilotEnabled();
+
   const openPalette = React.useCallback(() => setPaletteOpen(true), []);
   const closePalette = React.useCallback(() => setPaletteOpen(false), []);
   const openMobileNav = React.useCallback(() => setMobileNavOpen(true), []);
@@ -55,6 +61,11 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
       const key = e.key.toLowerCase();
       if (key !== 'k' && key !== 'j') return;
 
+      // Cmd+J is gated on COPILOT_ENABLED — when the flag is off,
+      // we let the keystroke pass through to whatever the host
+      // page wants to do with it.
+      if (key === 'j' && !copilotEnabled) return;
+
       const target = e.target as HTMLElement | null;
       if (target) {
         const tag = target.tagName;
@@ -70,13 +81,12 @@ export function ShellProvider({ children }: { children: React.ReactNode }) {
       if (key === 'k') {
         setPaletteOpen((prev) => !prev);
       } else {
-        // TODO(F-800 Plan 6): gate on COPILOT_ENABLED flag.
         setCopilotOpen((prev) => !prev);
       }
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [copilotEnabled]);
 
   const value = React.useMemo<ShellContextValue>(
     () => ({

@@ -38,6 +38,7 @@ import {
   Workflow,
   Database,
   LineChart,
+  Sparkles,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -62,7 +63,8 @@ export type IconName =
   | 'FileText'
   | 'Workflow'
   | 'Database'
-  | 'LineChart';
+  | 'LineChart'
+  | 'Sparkles';
 
 /** Grouping used by Sidebar + MobileNav + CommandPalette. */
 export type NavGroup = 'workspace' | 'centers' | 'lifecycle';
@@ -101,6 +103,7 @@ export const ICONS: Record<IconName, LucideIcon> = {
   Workflow: Workflow,
   Database: Database,
   LineChart: LineChart,
+  Sparkles: Sparkles,
 };
 
 /**
@@ -110,6 +113,12 @@ export const ICONS: Record<IconName, LucideIcon> = {
 export const NAV: ReadonlyArray<NavItem> = [
   // Workspace
   { href: '/dashboard', label: 'Dashboard', iconName: 'Home', group: 'workspace' },
+
+  // Co-pilot (F-800) — primary conversational surface. The /copilot
+  // route ships a thin page that opens the panel; the panel itself is
+  // always reachable via Cmd+J (see ShellProvider) or the Topbar
+  // "Co-pilot" button.
+  { href: '/copilot', label: 'Co-pilot', iconName: 'Sparkles', group: 'workspace', keywords: ['ai', 'chat', 'assistant', 'cmd+j', '⌘j'] },
 
   // Agents
   { href: '/agent-center', label: 'Agents', iconName: 'Bot', group: 'centers', keywords: ['agent', 'registry'] },
