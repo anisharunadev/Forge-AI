@@ -30,7 +30,7 @@ import json
 from typing import AsyncIterator
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 from fastapi.responses import StreamingResponse
 
 from app.api.deps import DbSession, Principal
@@ -264,7 +264,12 @@ async def update_workflow(
     return _workflow_to_read(wf)
 
 
-@router.delete("/{workflow_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{workflow_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
+    response_class=Response,
+)
     response_class=Response,
 @audit(action="workflows.delete", target_type="workflow")
 async def delete_workflow(

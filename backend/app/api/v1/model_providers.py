@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Response, status
 
 from app.api.deps import Principal, require_permission
 from app.core.audit import audit
@@ -91,7 +91,12 @@ async def update_provider(
     return ModelProviderRead.model_validate(updated)
 
 
-@router.delete("/{provider_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{provider_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
+    response_class=Response,
+)
     response_class=Response,
 @audit(action="model_providers.delete", target_type="model_provider")
 @audit(action="model_providers.delete", target_type="model_provider")

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 
 from app.api.deps import Principal, require_permission
 from app.core.audit import audit
@@ -220,7 +220,12 @@ async def get_status(
     )
 
 
-@router.delete("/ingestions/{run_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/ingestions/{run_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
+    response_class=Response,
+)
     response_class=Response,
 @audit(action="repos.cancel_ingestion", target_type="ingestion_run")
 @audit(action="repos.cancel_ingestion", target_type="ingestion_run")

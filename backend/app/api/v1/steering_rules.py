@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Response, status
 
 from app.api.deps import Principal
 from app.core.audit import audit
@@ -67,7 +67,12 @@ async def create_steering_rule(
     )
 
 
-@router.delete("/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{rule_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
+    response_class=Response,
+)
     response_class=Response,
 @audit(action="steering_rules.delete", target_type="steering_rule")
 async def delete_steering_rule(

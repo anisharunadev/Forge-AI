@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 
 from app.api.deps import DbSession, Principal, require_permission
 from app.core.audit import audit
@@ -96,7 +96,12 @@ async def update_connector(
     return ConnectorRead.model_validate(updated)
 
 
-@router.delete("/{connector_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{connector_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
+    response_class=Response,
+)
     response_class=Response,
 @audit(action="connectors.delete", target_type="connector")
 @audit(action="connectors.delete", target_type="connector")

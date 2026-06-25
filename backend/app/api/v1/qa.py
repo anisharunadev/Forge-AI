@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Response, status
 
 from app.api.deps import Principal, require_permission
 from app.core.audit import audit
@@ -87,7 +87,12 @@ async def history(
     )
 
 
-@router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/sessions/{session_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
+    response_class=Response,
+)
     response_class=Response,
 @audit(action="qa.clear", target_type="qa_session")
 @audit(action="qa.clear", target_type="qa_session")

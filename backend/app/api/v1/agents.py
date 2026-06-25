@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 
 from app.api.deps import Principal, require_permission
 from app.core.audit import audit
@@ -86,7 +86,12 @@ async def update_agent(
     return AgentRead.model_validate(updated)
 
 
-@router.delete("/{agent_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{agent_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
+    response_class=Response,
+)
     response_class=Response,
 @audit(action="agents.delete", target_type="agent")
 @audit(action="agents.delete", target_type="agent")
