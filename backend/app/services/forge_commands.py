@@ -266,7 +266,7 @@ def route_to_gsd(
     cmd = get_forge_command(forge_cmd)
     # Imported lazily to keep this module importable without the full
     # agent toolchain (e.g. for `python -c "from ... import FORGE_COMMAND_MAP"`).
-    from backend.app.agents.tools.gsd_wrapper import GSDWrapper  # noqa: WPS433
+    from app.agents.tools.gsd_wrapper import GSDWrapper  # noqa: WPS433
 
     wrapper = GSDWrapper(FORGE_COMMAND_MAP)
     result = wrapper.execute(

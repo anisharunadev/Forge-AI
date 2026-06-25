@@ -38,7 +38,7 @@ from app.schemas.seeds import (
 from app.services.audit_service import AuditService
 from app.services.seed_service import SeedService
 
-from backend.seeds.framework.exceptions import (
+from seeds.framework.exceptions import (
     ApplyRolledBackError,
     BrokenReferenceError,
     DependencyNotSatisfiedError,

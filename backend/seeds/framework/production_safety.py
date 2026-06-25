@@ -17,7 +17,7 @@ from uuid import UUID
 from app.core.logging import get_logger
 from app.db.models.seed import SeedTenantType
 from app.services.audit_service import AuditService
-from backend.seeds.framework.exceptions import ProductionSeedBlockedError
+from seeds.framework.exceptions import ProductionSeedBlockedError
 
 logger = get_logger(__name__)
 

@@ -39,8 +39,8 @@ from app.schemas.seeds import (
 )
 from app.services.audit_service import AuditService
 
-from backend.seeds.framework.exceptions import SeedNotFoundError
-from backend.seeds.framework.seed_runner import (
+from seeds.framework.exceptions import SeedNotFoundError
+from seeds.framework.seed_runner import (
     SEEDS_ROOT,
     SeedDiff,
     SeedRun,

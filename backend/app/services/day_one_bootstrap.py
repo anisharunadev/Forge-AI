@@ -992,7 +992,7 @@ class DayOneBootstrapService:
             # bootstrap importing it.
             from uuid import UUID as _UUID
 
-            from backend.seeds.framework.seed_runner import SeedRunner
+            from seeds.framework.seed_runner import SeedRunner
 
             system_actor: _UUID
             try:

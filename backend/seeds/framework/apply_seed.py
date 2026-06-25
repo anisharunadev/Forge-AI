@@ -36,18 +36,18 @@ from typing import Any, Sequence
 # prevent the CLI from running — the runner is useful even without
 # spans (local dev, CI, offline laptops).
 try:
-    from backend.app.core.telemetry import init_telemetry
+    from app.core.telemetry import init_telemetry
 
     init_telemetry()
 except Exception:  # noqa: BLE001
     pass
 
-from backend.app.core.config import settings  # noqa: E402
-from backend.app.db.session import get_session_factory  # noqa: E402
-from backend.app.services.audit_service import audit_service  # noqa: E402
+from app.core.config import settings  # noqa: E402
+from app.db.session import get_session_factory  # noqa: E402
+from app.services.audit_service import audit_service  # noqa: E402
 
-from backend.seeds.framework import exit_codes as ec  # noqa: E402
-from backend.seeds.framework.exceptions import (  # noqa: E402
+from seeds.framework import exit_codes as ec  # noqa: E402
+from seeds.framework.exceptions import (  # noqa: E402
     ApplyRolledBackError,
     BrokenReferenceError,
     DependencyNotSatisfiedError,
@@ -57,7 +57,7 @@ from backend.seeds.framework.exceptions import (  # noqa: E402
     SeedError,
     SeedNotFoundError,
 )
-from backend.seeds.framework.seed_runner import SeedRunner  # noqa: E402
+from seeds.framework.seed_runner import SeedRunner  # noqa: E402
 
 
 def _build_parser() -> argparse.ArgumentParser:

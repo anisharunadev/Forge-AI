@@ -48,8 +48,8 @@ from app.db.models.seed import (
 )
 from app.services.audit_service import AuditService
 
-from backend.seeds.framework.checksum import compute_checksum, compute_row_count_checksum
-from backend.seeds.framework.exceptions import (
+from seeds.framework.checksum import compute_checksum, compute_row_count_checksum
+from seeds.framework.exceptions import (
     ApplyRolledBackError,
     BrokenReferenceError,
     DependencyNotSatisfiedError,
@@ -57,8 +57,8 @@ from backend.seeds.framework.exceptions import (
     SchemaMismatchError,
     SeedNotFoundError,
 )
-from backend.seeds.framework.production_safety import check_production_safety
-from backend.seeds.framework.upsert_helpers import build_upsert_sql, chunk_rows, flatten_row
+from seeds.framework.production_safety import check_production_safety
+from seeds.framework.upsert_helpers import build_upsert_sql, chunk_rows, flatten_row
 
 logger = get_logger(__name__)
 _tracer = get_tracer("forge.seeds")
