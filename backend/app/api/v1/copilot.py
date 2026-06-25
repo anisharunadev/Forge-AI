@@ -242,6 +242,7 @@ async def delete_conversation(
 @router.post(
     "/messages/{message_id}/feedback",
     status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
 )
 @audit(action="copilot.feedback.submit", target_type="copilot_message")
 async def submit_feedback(
@@ -250,7 +251,7 @@ async def submit_feedback(
     principal: Principal,
     db: DbSession,
     _perm: Principal = require_permission(COPILOT_PERMISSION_USE),
-) -> Response:
+):
     """Record a thumbs-up/down + comment on an assistant message."""
     _ensure_enabled()
     service = _service(principal, db)
