@@ -26,6 +26,7 @@ _session_factory: async_sessionmaker[AsyncSession] | None = None
 
 def get_engine() -> AsyncEngine:
     """Lazy engine singleton."""
+    global _engine
     if _engine is None:
         logger.info("db.engine.create", url=_safe_url())
         _engine = create_async_engine(
