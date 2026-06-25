@@ -30,7 +30,6 @@ depends_on: Union[str, Sequence[str], None] = None
 # Tenant-scoped tables that already exist in the baseline migration.
 # Each gets an ``is_demo BOOLEAN NOT NULL DEFAULT FALSE`` column.
 _TENANT_SCOPED_TABLES: tuple[str, ...] = (
-    "tenants",
     "users",
     "roles",
     "standards",
