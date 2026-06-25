@@ -36,7 +36,7 @@ export function ToolCallCard({ toolCall }: ToolCallCardProps) {
         isError ? 'border-destructive/40' : 'border-border',
       )}
       data-testid="copilot-tool-call"
-      data-tool={toolCall.tool}
+      data-tool-name={toolCall.tool}
       data-result-status={toolCall.result_status}
     >
       <Button
@@ -46,6 +46,7 @@ export function ToolCallCard({ toolCall }: ToolCallCardProps) {
         className="h-auto w-full justify-between gap-2 px-2 py-1.5 text-left font-normal hover:bg-transparent"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
+        data-testid={`copilot-tool-call-${toolCall.tool}`}
       >
         <span className="flex min-w-0 items-center gap-2">
           {isError ? (

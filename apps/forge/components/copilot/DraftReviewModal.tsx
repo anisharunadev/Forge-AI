@@ -87,7 +87,7 @@ export function DraftReviewModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent data-testid="copilot-draft-review-modal">
+      <DialogContent data-testid="copilot-draft-modal">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileEdit className="h-4 w-4" aria-hidden="true" />

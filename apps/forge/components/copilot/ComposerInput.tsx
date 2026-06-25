@@ -117,7 +117,7 @@ export function ComposerInput() {
           rows={1}
           className="flex min-h-[36px] w-full resize-none rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="Co-pilot message"
-          data-testid="copilot-composer"
+          data-testid="copilot-composer-input"
         />
         <Button
           type="button"
@@ -125,7 +125,7 @@ export function ComposerInput() {
           onClick={handleSend}
           disabled={!canSend}
           aria-label="Send message"
-          data-testid="copilot-send"
+          data-testid="copilot-send-button"
         >
           {sendMessage.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />

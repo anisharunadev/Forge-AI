@@ -48,7 +48,7 @@ export function CitationChip({ citation, className }: CitationChipProps) {
         className,
       )}
       title={citation.snippet}
-      data-testid="copilot-citation"
+      data-testid="copilot-citation-chip"
       data-citation-type={citation.type}
     >
       <span className="truncate">{citation.label}</span>

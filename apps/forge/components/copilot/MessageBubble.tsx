@@ -36,7 +36,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     return (
       <div
         className="ml-auto max-w-[85%] rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm"
-        data-testid="copilot-message"
+        data-testid="copilot-message-user"
         data-role="user"
       >
         <p className="whitespace-pre-wrap break-words">{message.content}</p>
@@ -79,7 +79,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       className={cn(
         'mr-auto flex max-w-[90%] flex-col gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm',
       )}
-      data-testid="copilot-message"
+      data-testid="copilot-message-assistant"
       data-role="assistant"
     >
       <div className="prose prose-sm max-w-none text-foreground">

@@ -80,7 +80,7 @@ describe('<CitationChip>', () => {
 
     render(<CitationChip citation={citation} />, { wrapper: makeWrapper() });
 
-    const link = screen.getByTestId('copilot-citation');
+    const link = screen.getByTestId('copilot-citation-chip');
     expect(link.getAttribute('href')).toBe(
       'https://example.com/services/auth-api',
     );
@@ -113,7 +113,7 @@ describe('<MessageBubble>', () => {
 
     render(<MessageBubble message={message} />, { wrapper: makeWrapper() });
 
-    const root = screen.getByTestId('copilot-message');
+    const root = screen.getByTestId('copilot-message-assistant');
     expect(root.getAttribute('data-role')).toBe('assistant');
     // Markdown heading + bold text both render.
     expect(root.querySelector('h1')?.textContent).toBe('Heading');
@@ -141,7 +141,7 @@ describe('<MessageBubble>', () => {
 
     render(<MessageBubble message={message} />, { wrapper: makeWrapper() });
 
-    const root = screen.getByTestId('copilot-message');
+    const root = screen.getByTestId('copilot-message-user');
     expect(root.getAttribute('data-role')).toBe('user');
     expect(root.textContent).toContain('hi there');
   });

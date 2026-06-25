@@ -122,7 +122,11 @@ export function SuggestedActions({
           variant="outline"
           className="h-7 gap-1 px-2 text-[11px]"
           onClick={() => handleClick(a)}
-          data-testid="copilot-suggested-action"
+          data-testid={
+            a.action_type === 'draft' || a.action_type === 'run_command'
+              ? `copilot-suggested-action-${a.action_type}`
+              : 'copilot-suggested-action'
+          }
           data-action-type={a.action_type}
         >
           {ICON[a.action_type]}
