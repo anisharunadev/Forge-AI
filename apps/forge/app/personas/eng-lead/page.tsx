@@ -1,8 +1,5 @@
-import Link from 'next/link';
-import { getRunsView, seedAliasFor } from '@/lib/api';
+import { getRunsView } from '@/lib/api';
 import { OrchestratorUnreachable } from '@/components/OrchestratorNotice';
-import { RunStatusBadge } from '@/components/RunStatusBadge';
-import { RunActions } from '@/components/RunActions';
 import { RealtimeRunsList } from '@/components/RealtimeRunsList';
 import { SEED_TENANT_NAME } from '@/lib/auth';
 

@@ -83,6 +83,22 @@ class EventType(str, enum.Enum):
     COPILOT_COST_INCURRED = "copilot.cost.incurred"
     COPILOT_BUDGET_BLOCKED = "copilot.budget.blocked"
 
+    # F-503 / F-829 — Workflow executor + lifecycle events. These flow
+    # through the bus during run execution and feed the SSE run-events
+    # stream (`/api/v1/workflows/runs/{run_id}/events`).
+    WORKFLOW_CREATED = "workflow.created"
+    WORKFLOW_UPDATED = "workflow.updated"
+    WORKFLOW_DELETED = "workflow.deleted"
+    WORKFLOW_RUN_STARTED = "workflow.run.started"
+    WORKFLOW_STEP_STARTED = "workflow.step.started"
+    WORKFLOW_STEP_COMPLETED = "workflow.step.completed"
+    WORKFLOW_STEP_FAILED = "workflow.step.failed"
+    WORKFLOW_RUN_PAUSED = "workflow.run.paused"
+    WORKFLOW_RUN_RESUMED = "workflow.run.resumed"
+    WORKFLOW_RUN_COMPLETED = "workflow.run.completed"
+    WORKFLOW_RUN_FAILED = "workflow.run.failed"
+    WORKFLOW_RUN_CANCELLED = "workflow.run.cancelled"
+
 
 @dataclass
 class Event:

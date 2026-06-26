@@ -1,0 +1,82 @@
+{
+  "$schema": "https://forge.ai/schemas/forge-package-catalog.v1.json",
+  "generatedAt": "2026-06-27T00:00:00.000Z",
+  "engineVersion": "0.1.0",
+  "enginePackage": "@forge-ai/forge-pi",
+  "packageCategory": "product-intelligence",
+  "commandCount": 6,
+  "commands": [
+    {
+      "id": "forge-pi-scan",
+      "name": "forge-pi-scan",
+      "label": "Scan Codebase",
+      "description": "Trigger a forge-pi codebase scan. Discovers services, dependencies, and secrets across the project tree.",
+      "category": "intelligence",
+      "icon": "ScanSearch",
+      "estimatedDuration": 90,
+      "sourceFile": "commands/forge-pi/scan.md",
+      "skillFile": "skills/forge-pi-scan/SKILL.md",
+      "package": "@forge-ai/forge-pi"
+    },
+    {
+      "id": "forge-pi-build-graph",
+      "name": "forge-pi-build-graph",
+      "label": "Build Knowledge Graph",
+      "description": "Fuse code, tickets, and docs into one queryable knowledge graph for the active project.",
+      "category": "intelligence",
+      "icon": "Network",
+      "estimatedDuration": 120,
+      "sourceFile": "commands/forge-pi/build-graph.md",
+      "skillFile": "skills/forge-pi-build-graph/SKILL.md",
+      "package": "@forge-ai/forge-pi"
+    },
+    {
+      "id": "forge-pi-score-idea",
+      "name": "forge-pi-score-idea",
+      "label": "Score Idea",
+      "description": "Run an idea through the forge-pi scorer — RAG + LLM + chain-of-thought — and surface the verdict.",
+      "category": "ideation",
+      "icon": "Sparkles",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge-pi/score-idea.md",
+      "skillFile": "skills/forge-pi-score-idea/SKILL.md",
+      "package": "@forge-ai/forge-pi"
+    },
+    {
+      "id": "forge-pi-cluster-voice",
+      "name": "forge-pi-cluster-voice",
+      "label": "Cluster Customer Voice",
+      "description": "Auto-group Zendesk / Jira Service Desk tickets by theme and surface top pain points.",
+      "category": "intelligence",
+      "icon": "MessagesSquare",
+      "estimatedDuration": 45,
+      "sourceFile": "commands/forge-pi/cluster-voice.md",
+      "skillFile": "skills/forge-pi-cluster-voice/SKILL.md",
+      "package": "@forge-ai/forge-pi"
+    },
+    {
+      "id": "forge-pi-market-signals",
+      "name": "forge-pi-market-signals",
+      "label": "Extract Market Signals",
+      "description": "Pull from configured sources, extract signals, and match them to the current project.",
+      "category": "intelligence",
+      "icon": "Radar",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge-pi/market-signals.md",
+      "skillFile": "skills/forge-pi-market-signals/SKILL.md",
+      "package": "@forge-ai/forge-pi"
+    },
+    {
+      "id": "forge-pi-draft-prd",
+      "name": "forge-pi-draft-prd",
+      "label": "Draft PRD",
+      "description": "Generate a typed PRD draft from an idea, customer cluster, or market signal.",
+      "category": "ideation",
+      "icon": "FileText",
+      "estimatedDuration": 120,
+      "sourceFile": "commands/forge-pi/draft-prd.md",
+      "skillFile": "skills/forge-pi-draft-prd/SKILL.md",
+      "package": "@forge-ai/forge-pi"
+    }
+  ]
+}

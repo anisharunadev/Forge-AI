@@ -51,7 +51,7 @@ export function AddProviderDialog({ open, onOpenChange }: AddProviderDialogProps
   const create = useCreateProvider();
   const { toast } = useToast();
 
-  const form = useZodForm(providerCreateSchema, {
+  const form = useZodForm<typeof providerCreateSchema, ProviderCreateForm>(providerCreateSchema, {
     defaultValues: {
       name: '',
       type: 'anthropic',

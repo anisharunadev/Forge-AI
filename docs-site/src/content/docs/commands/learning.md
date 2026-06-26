@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Learning Commands
 description: The 4 learning commands — capture, summarize, promote, search.
 ---

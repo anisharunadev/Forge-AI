@@ -43,6 +43,41 @@ export interface KPISnapshot {
   totalRuns: number;
 }
 
+/** One day of approval latency percentiles (ms). */
+export interface ApprovalLatencyPoint {
+  /** YYYY-MM-DD */
+  date: string;
+  /** Median latency in ms. Optional — backend may aggregate only. */
+  p50?: number;
+  p95?: number;
+  p99?: number;
+  /** Backend-supplied average; used as a fallback when percentiles are absent. */
+  avg?: number;
+}
+
+/** Tokens consumed by a single model. */
+export interface TokenUsageByModel {
+  model: string;
+  tokens: number;
+}
+
+/** One row of the per-provider cost stack. */
+export interface ProviderCostRow {
+  /** YYYY-MM-DD */
+  date: string;
+  /** Per-provider spend in USD, keyed by provider name. */
+  byProvider: Record<string, number>;
+}
+
+/** One row in the provider leaderboard. */
+export interface ProviderLeaderboardRow {
+  provider: string;
+  spendUsd: number;
+  invocations?: number;
+  /** Daily spend trend for the sparkline. */
+  trend?: ReadonlyArray<number>;
+}
+
 const SERVER_BASE = process.env.FORA_FORGE_API_URL ?? 'http://localhost:4000';
 
 async function safeJson<T>(res: Response): Promise<T | null> {
@@ -124,4 +159,42 @@ export async function getLatencyHistogram(): Promise<ReadonlyArray<LatencyBin>> 
     cache: 'no-store',
   });
   return safeArray<LatencyBin>(res);
+}
+
+/**
+ * GET /v1/analytics/approval-latency — daily p50/p95/p99 (ms).
+ *
+ * Falls back to an empty array when the endpoint is unavailable so
+ * the page can render the chart with a "no data" affordance rather
+ * than throwing.
+ */
+export async function getApprovalLatency(): Promise<ReadonlyArray<ApprovalLatencyPoint>> {
+  const res = await fetch(`${SERVER_BASE}/v1/analytics/approval-latency`, {
+    cache: 'no-store',
+  });
+  return safeArray<ApprovalLatencyPoint>(res);
+}
+
+/** GET /v1/analytics/token-usage-by-model */
+export async function getTokenUsageByModel(): Promise<ReadonlyArray<TokenUsageByModel>> {
+  const res = await fetch(`${SERVER_BASE}/v1/analytics/token-usage-by-model`, {
+    cache: 'no-store',
+  });
+  return safeArray<TokenUsageByModel>(res);
+}
+
+/** GET /v1/analytics/provider-cost — per-provider daily cost rows. */
+export async function getProviderCost(): Promise<ReadonlyArray<ProviderCostRow>> {
+  const res = await fetch(`${SERVER_BASE}/v1/analytics/provider-cost`, {
+    cache: 'no-store',
+  });
+  return safeArray<ProviderCostRow>(res);
+}
+
+/** GET /v1/analytics/provider-leaderboard */
+export async function getProviderLeaderboard(): Promise<ReadonlyArray<ProviderLeaderboardRow>> {
+  const res = await fetch(`${SERVER_BASE}/v1/analytics/provider-leaderboard`, {
+    cache: 'no-store',
+  });
+  return safeArray<ProviderLeaderboardRow>(res);
 }

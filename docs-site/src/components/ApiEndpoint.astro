@@ -1,0 +1,19 @@
+---
+/**
+ * ApiEndpoint.astro — METHOD + path + description block
+ *
+ *   <ApiEndpoint method="POST" path="/api/v1/runs" description="Create a new run" />
+ */
+export interface Props {
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  path: string;
+  description: string;
+}
+const { method, path, description } = Astro.props;
+const m = method.toLowerCase();
+---
+<div class="api-endpoint">
+  <span class={`api-method ${m}`}>{method}</span>
+  <code class="api-path">{path}</code>
+  <span class="api-desc">{description}</span>
+</div>

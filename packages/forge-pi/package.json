@@ -1,0 +1,69 @@
+{
+  "name": "@forge-ai/forge-pi",
+  "version": "1.0.0",
+  "description": "Forge Product Intelligence — codebase scanning, knowledge graph building, idea scoring, PRD generation, customer voice clustering, and market signal processing. Powers the Ideation Center and Project Intelligence layers.",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./scanner": "./src/scanner.ts",
+    "./knowledge-graph": "./src/knowledge-graph.ts",
+    "./idea-scorer": "./src/idea-scorer.ts",
+    "./customer-voice": "./src/customer-voice.ts",
+    "./market-signals": "./src/market-signals.ts",
+    "./prd-generator": "./src/prd-generator.ts",
+    "./catalog": "./forge-pi.catalog.json",
+    "./skills": "./skills/index.ts",
+    "./agents": "./agents/index.ts",
+    "./commands": "./commands/index.ts",
+    "./capabilities": "./capabilities/index.ts",
+    "./skills/*": "./skills/*",
+    "./agents/*": "./agents/*",
+    "./commands/*": "./commands/*",
+    "./capabilities/*": "./capabilities/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "skills",
+    "agents",
+    "commands",
+    "capabilities",
+    "forge-pi.catalog.json",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "echo 'forge-pi: source-only package — no compile step required'",
+    "dev": "tsc --watch --noEmit",
+    "test": "echo 'forge-pi: no test suite yet — see forge-core/tests for pattern'",
+    "lint": "echo 'forge-pi: lint runs at monorepo root'",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "forge-ai",
+    "forge",
+    "product-intelligence",
+    "knowledge-graph",
+    "ideation",
+    "codebase-scanner",
+    "idea-scorer",
+    "customer-voice",
+    "market-signals",
+    "prd-generator",
+    "ai-agents"
+  ],
+  "author": "Forge AI Team",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@forge-ai/forge-core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Multi-tenancy
 description: How Forge isolates tenants — RLS, per-tenant KMS keys, isolated audit topology.
 ---

@@ -6,7 +6,7 @@
  * Adding a new node type means adding one file and one entry here.
  */
 
-import type { NodeTypes } from 'reactflow';
+import type { NodeTypes } from '@xyflow/react';
 
 import { ArtifactNode } from './ArtifactNode';
 import { RepoFileNode } from './RepoFileNode';

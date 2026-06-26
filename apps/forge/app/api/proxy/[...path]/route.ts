@@ -46,7 +46,7 @@ function resolveBaseUrl(): string {
 
 const DEV_TENANT_UUID = '00000000-0000-4000-8000-000000000ace';
 
-async function proxy(req: NextRequest, _paramsPromise?: Promise<{ path?: string[] }>) {
+async function proxy(req: NextRequest, _ctx?: { params: Promise<{ path: string[] }> }) {
   // Derive the path from the request URL directly. This is more
   // robust than depending on the dynamic-params shape, which has
   // shifted across Next.js 13/14/15. The catch-all `[...path]`

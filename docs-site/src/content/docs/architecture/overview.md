@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Architecture Overview
 description: A single-page summary of the Forge AI architecture — anchored to the eight locked ADRs.
 ---

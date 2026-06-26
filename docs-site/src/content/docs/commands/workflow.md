@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Workflow Commands
 description: The 4 workflow commands — plan, run, cancel, status.
 ---

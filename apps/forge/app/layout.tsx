@@ -3,15 +3,15 @@ import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 
 import { Providers } from '@/components/providers';
-import { DemoBanner } from '@/components/seeds/DemoBanner';
+import { ConnectorProvider } from '@/lib/connectors/provider';
+import { Toaster } from "sonner";
 import {
   ShellProvider,
   Sidebar,
   Topbar,
   MobileNav,
-  ShellBreadcrumbs,
   PageContainer,
-} from '@/components/shell';
+} from "@/components/shell";
 
 /**
  * Font registration via `next/font/google`.
@@ -73,28 +73,50 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         <Providers>
           <ShellProvider>
-            <div className="flex min-h-screen">
-              <Sidebar />
-              <div className="flex min-w-0 flex-1 flex-col">
-                {/*
-                 * DemoBanner (Plan G commit 3) — sticky amber alert that
-                 * surfaces on every page when the demo `acme-corp` seed
-                 * is applied. Mounted ABOVE the Topbar so it remains the
-                 * first thing the user sees on scroll. The banner self-
-                 * returns null when the seed has not been applied, so
-                 * non-demo tenants incur zero render cost.
-                 */}
-                <DemoBanner />
-                <Topbar />
-                <ShellBreadcrumbs />
-                <main id="main-content" className="min-w-0 flex-1">
-                  <PageContainer>{children}</PageContainer>
-                </main>
+            {/*
+             * ConnectorProvider — makes the cross-cutting connector
+             * context available to any page. Powers
+             * `<ConnectorPicker>`, `<ConnectorActionButton>`,
+             * `<ConnectorHealthIndicator>` and
+             * `<ConnectorCredentialsBadge>` from anywhere in the app.
+             */}
+            <ConnectorProvider>
+              <div className="flex min-h-screen">
+                <Sidebar />
+                <div className="flex min-w-0 flex-1 flex-col">
+                  {/*
+                   * DemoBanner (Plan G commit 3) — sticky amber alert that
+                   * surfaces on every page when the demo `acme-corp` seed
+                   * is applied. Mounted ABOVE the Topbar so it remains the
+                   * first thing the user sees on scroll. The banner self-
+                   * returns null when the seed has not been applied, so
+                   * non-demo tenants incur zero render cost.
+                   */}
+                  {/* <DemoBanner /> */}
+                  <Topbar />
+                  <main
+                    id="main-content"
+                    className="min-w-0 flex-1"
+                  >
+                    <PageContainer>{children}</PageContainer>
+                  </main>
+                </div>
+                <MobileNav />
               </div>
-              <MobileNav />
-            </div>
+            </ConnectorProvider>
           </ShellProvider>
         </Providers>
+        <Toaster
+          position="bottom-right"
+          theme="dark"
+          toastOptions={{
+            className:
+              "rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-elevated)] text-[var(--fg-primary)] shadow-[var(--shadow-md)]",
+            duration: 4000,
+          }}
+          richColors
+          closeButton
+        />
       </body>
     </html>
   );

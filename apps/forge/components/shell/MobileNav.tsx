@@ -61,7 +61,7 @@ export function MobileNav() {
           </SheetDescription>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto px-3 py-2">
-          <NavList pathname={pathname} onNavigate={closeMobileNav} />
+          <NavList pathname={pathname} collapsed={false} onNavigate={closeMobileNav} />
         </div>
       </SheetContent>
     </Sheet>

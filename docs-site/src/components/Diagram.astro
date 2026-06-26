@@ -1,0 +1,28 @@
+---
+/**
+ * Diagram.astro — ASCII or Mermaid diagram
+ *
+ *   <Diagram type="ascii">
+ *     +----+    +----+
+ *     | A | -> | B |
+ *     +----+    +----+
+ *   </Diagram>
+ */
+export interface Props {
+  type?: 'ascii' | 'mermaid';
+  title?: string;
+}
+const { type = 'ascii', title } = Astro.props;
+---
+{type === 'ascii' && (
+  <figure class="diagram-figure">
+    {title && <figcaption class="diagram-title">{title}</figcaption>}
+    <pre class="diagram-ascii"><slot /></pre>
+  </figure>
+)}
+{type === 'mermaid' && (
+  <figure class="diagram-figure">
+    {title && <figcaption class="diagram-title">{title}</figcaption>}
+    <pre class="mermaid"><slot /></pre>
+  </figure>
+)}

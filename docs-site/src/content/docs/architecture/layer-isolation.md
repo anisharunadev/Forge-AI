@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Layer Isolation
 description: How Forge separates Organization Knowledge from Project Intelligence — RLS, scopes, conflict resolution.
 ---

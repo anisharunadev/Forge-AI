@@ -38,6 +38,7 @@ export const dynamic = "force-dynamic";
 const PERSONA_LABEL: Record<ConnectorCenterPersona, string> = {
   pm: "Product Manager",
   "eng-lead": "Engineering Lead",
+  steward: "Steward",
   cto: "CTO",
 };
 

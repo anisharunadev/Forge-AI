@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Architecture Commands
 description: The 6 architecture commands — diagram, component-map, contract-spec, data-model, adr, drift.
 ---

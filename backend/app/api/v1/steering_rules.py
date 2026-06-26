@@ -73,7 +73,6 @@ async def create_steering_rule(
     response_model=None,
     response_class=Response,
 )
-    response_class=Response,
 @audit(action="steering_rules.delete", target_type="steering_rule")
 async def delete_steering_rule(
     rule_id: str,

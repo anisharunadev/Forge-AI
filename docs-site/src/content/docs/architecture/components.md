@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Components
 description: Per-component responsibilities, ownership, and interfaces.
 ---

@@ -46,9 +46,12 @@ export function AddEnvVarDialog({ open, onOpenChange }: AddEnvVarDialogProps) {
   const create = useCreateEnvVar();
   const { toast } = useToast();
 
-  const form = useZodForm(envVarCreateSchema, {
-    defaultValues: { key: '', value: '', scope: 'all' },
-  });
+  const form = useZodForm<typeof envVarCreateSchema, EnvVarCreateForm>(
+    envVarCreateSchema,
+    {
+      defaultValues: { key: '', value: '', scope: 'all' },
+    },
+  );
 
   React.useEffect(() => {
     if (!open) form.reset();
@@ -59,7 +62,7 @@ export function AddEnvVarDialog({ open, onOpenChange }: AddEnvVarDialogProps) {
       await create.mutateAsync({
         key: values.key,
         value: values.value,
-        scope: values.scope as 'workflow' | 'agent' | 'all',
+        scope: values.scope,
       });
       toast({ title: 'Variable created', variant: 'default' });
       onOpenChange(false);

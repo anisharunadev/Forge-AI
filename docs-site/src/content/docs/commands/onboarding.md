@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Onboarding Commands
 description: The 4 onboarding commands — welcome a new tenant, detect the stack, bootstrap, resume.
 ---

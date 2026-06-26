@@ -93,7 +93,6 @@ async def history(
     response_model=None,
     response_class=Response,
 )
-    response_class=Response,
 @audit(action="qa.clear", target_type="qa_session")
 @audit(action="qa.clear", target_type="qa_session")
 async def clear(

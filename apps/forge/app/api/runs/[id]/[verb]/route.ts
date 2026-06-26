@@ -18,16 +18,17 @@ function isVerb(value: string): value is LifecycleVerb {
  */
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { id: string; verb: string } },
+  { params }: { params: Promise<{ id: string; verb: string }> },
 ) {
-  if (!isVerb(params.verb)) {
+  const { id, verb } = await params;
+  if (!isVerb(verb)) {
     return NextResponse.json(
-      { message: `unknown verb ${params.verb}` },
+      { message: `unknown verb ${verb}` },
       { status: 400 },
     );
   }
   try {
-    const run = await runLifecycle(params.id, params.verb);
+    const run = await runLifecycle(id, verb);
     return NextResponse.json(run);
   } catch (err) {
     const status =

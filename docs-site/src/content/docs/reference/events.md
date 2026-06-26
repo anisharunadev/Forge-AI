@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Events
 description: The event types emitted by Forge AI — audit, workflow, approval, connector.
 ---

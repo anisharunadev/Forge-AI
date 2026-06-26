@@ -23,8 +23,8 @@ import { redirect } from 'next/navigation';
 import { PERSONA_COOKIE_NAME } from '@/lib/auth';
 import { cookies } from 'next/headers';
 
-export default function HomePage(): never {
-  const cookieStore = cookies();
+export default async function HomePage(): Promise<never> {
+  const cookieStore = await cookies();
   const persona = cookieStore.get(PERSONA_COOKIE_NAME)?.value;
   redirect(persona ? '/dashboard' : '/welcome');
 }

@@ -1,16 +1,16 @@
 'use client';
 
 import * as React from 'react';
-import ReactFlow, {
+import { ReactFlow,
   Background,
   Controls,
   MarkerType,
   ReactFlowProvider,
   type Edge,
   type Node,
-} from 'reactflow';
+} from '@xyflow/react';
 
-import 'reactflow/dist/style.css';
+import '@xyflow/react/dist/style.css';
 import { forgeNodeTypes } from './index';
 import type { NodeAgentStepData, NodeApprovalData } from './types';
 
@@ -36,8 +36,8 @@ const GATE_PHASES = ['Architecture', 'Security', 'Deployment'] as const;
 
 function buildNodes(
   steps: ReadonlyArray<WorkflowStepInput>,
-): Array<Node<NodeAgentStepData | NodeApprovalData>> {
-  const startNode: Node<NodeAgentStepData> = {
+): Array<Node<(NodeAgentStepData | NodeApprovalData) & Record<string, unknown>>> {
+  const startNode: Node<NodeAgentStepData & Record<string, unknown>> = {
     id: 'start',
     type: 'agentStep',
     position: { x: 0, y: 0 },
@@ -49,7 +49,7 @@ function buildNodes(
     },
   };
 
-  const stepNodes: Array<Node<NodeAgentStepData>> = steps.map((s, i) => ({
+  const stepNodes: Array<Node<NodeAgentStepData & Record<string, unknown>>> = steps.map((s, i) => ({
     id: s.id,
     type: 'agentStep',
     position: { x: (i + 1) * 220, y: 0 },
@@ -62,7 +62,7 @@ function buildNodes(
     },
   }));
 
-  const gateNodes: Array<Node<NodeApprovalData>> = GATE_PHASES.map((phase, i) => ({
+  const gateNodes: Array<Node<NodeApprovalData & Record<string, unknown>>> = GATE_PHASES.map((phase, i) => ({
     id: `gate:${phase}`,
     type: 'approval',
     position: { x: (steps.length + 1 + i) * 220, y: 0 },
@@ -75,7 +75,7 @@ function buildNodes(
     },
   }));
 
-  const doneNode: Node<NodeAgentStepData> = {
+  const doneNode: Node<NodeAgentStepData & Record<string, unknown>> = {
     id: 'done',
     type: 'agentStep',
     position: { x: (steps.length + 1 + GATE_PHASES.length) * 220, y: 0 },

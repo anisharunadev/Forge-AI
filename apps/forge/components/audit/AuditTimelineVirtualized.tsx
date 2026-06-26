@@ -2,11 +2,12 @@
 
 import * as React from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Activity } from 'lucide-react';
+import { Activity, Shield } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { toneClasses, type StatusTone } from '@/lib/design-system/status';
+import { EmptyState } from '@/src/components/empty-state';
 import type { AuditRecord, AuditAction } from '@/lib/audit/data';
 
 /**
@@ -75,9 +76,18 @@ export function AuditTimelineVirtualized({
     return (
       <div
         data-testid="audit-timeline-virtualized-empty"
-        className="rounded-md border bg-card p-4 text-13 text-muted-foreground"
+        className="rounded-md border bg-card"
       >
-        {emptyMessage ?? 'No audit records match the current filters.'}
+        <EmptyState
+          compact
+          illustration={emptyMessage ? <Activity size={28} strokeWidth={1.5} /> : <Shield size={28} strokeWidth={1.5} />}
+          title={emptyMessage ? 'No audit records match the current filters' : 'Audit trail is empty'}
+          description={
+            emptyMessage
+              ? 'Try clearing your filters to see every audit record.'
+              : 'Agent activity, approvals, and policy decisions will appear here as they happen.'
+          }
+        />
       </div>
     );
   }

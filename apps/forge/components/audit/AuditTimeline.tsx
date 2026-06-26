@@ -1,10 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import { Activity } from 'lucide-react';
+import { Activity, Shield } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/src/components/empty-state';
 import type { AuditRecord } from '@/lib/audit/data';
 
 const ACTION_TONE: Record<AuditRecord['action'], string> = {
@@ -35,8 +36,17 @@ export function AuditTimeline({
 }: AuditTimelineProps) {
   if (records.length === 0) {
     return (
-      <div className="card text-sm text-forge-300" data-testid="audit-timeline-empty">
-        {emptyMessage ?? 'No audit records match the current filters.'}
+      <div data-testid="audit-timeline-empty" className="card">
+        <EmptyState
+          compact
+          illustration={emptyMessage ? <Activity size={28} strokeWidth={1.5} /> : <Shield size={28} strokeWidth={1.5} />}
+          title={emptyMessage ? 'No audit records match the current filters' : 'Audit trail is empty'}
+          description={
+            emptyMessage
+              ? 'Try clearing your filters to see every audit record.'
+              : 'Agent activity, approvals, and policy decisions will appear here as they happen.'
+          }
+        />
       </div>
     );
   }

@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Pilot Program
 description: How to run a Forge AI pilot — phases, gates, KPIs, exit criteria.
 ---

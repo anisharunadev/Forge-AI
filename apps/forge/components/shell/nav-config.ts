@@ -123,10 +123,13 @@ export const NAV: ReadonlyArray<NavItem> = [
   // Agents
   { href: '/agent-center', label: 'Agents', iconName: 'Bot', group: 'centers', keywords: ['agent', 'registry'] },
 
-  // Projects / Stories / Workflows
+  // Projects / Stories / Workflows.
+  // Stories points to its own top-level route (`/stories`) as of Step
+  // 44 — no longer nested under Project Intelligence. Projects and
+  // Stories are independent peers in the IA.
   { href: '/project-intelligence', label: 'Projects', iconName: 'Layers', group: 'centers', keywords: ['epic', 'brief', 'draft prd'] },
-  { href: '/project-intelligence?tab=stories', label: 'Stories', iconName: 'FileText', group: 'centers', legacy: true, keywords: ['story'] },
-  { href: '/forge-command-center', label: 'Workflows', iconName: 'Workflow', group: 'centers' },
+  { href: '/stories', label: 'Stories', iconName: 'FileText', group: 'centers', keywords: ['story', 'kanban', 'backlog'] },
+  { href: '/workflows', label: 'Workflows', iconName: 'Workflow', group: 'centers' },
 
   // Knowledge & Artifacts
   { href: '/knowledge-center', label: 'Knowledge', iconName: 'Library', group: 'centers', keywords: ['kg', 'graph'] },
@@ -191,25 +194,28 @@ function stripQuery(href: string): string {
  *   - the next char in pathname (if any) is `/` or the pathname is
  *     exactly the href.
  *
- * This lets `/project-intelligence/epics/abc` highlight the
- * `Projects` row.
+ * This lets `/stories/abc` highlight the `Stories` row, and
+ * `/project-intelligence/epics/abc` highlight the `Projects` row.
+ *
+ * Step 38 fix: a sibling item whose href is a `?tab=` deep link to a
+ * base route no longer matches the bare base pathname — the two
+ * adjacent nav entries (`Projects` and `Stories`) must highlight one
+ * at a time, never both. A `?tab=` item now only highlights when the
+ * live pathname actually carries that tab query.
  */
 export function isNavMatch(pathname: string, item: NavItem): boolean {
   const href = stripQuery(item.href);
   if (pathname === href) return true;
   if (pathname.startsWith(href + '/')) return true;
-  // The `?tab=` deep links: `/stories?tab=foo` should still match the
-  // Stories item whose href is `/project-intelligence?tab=stories`.
+  // `?tab=` deep links: only match when the live pathname carries the
+  // exact `?key=value` pair from the nav entry. (Previously matched
+  // bare base too, which made `Projects` + `Stories` both highlight
+  // on `/project-intelligence`.)
   if (item.href.includes('?')) {
     const [base, query] = item.href.split('?');
-    if (base !== undefined && query !== undefined) {
-      if (pathname === base) {
-        // No tab in the live pathname, but the entry itself has one.
-        // Treat as a match when the user is on the base route.
-        return true;
-      }
-      const tabKey = query.split('=')[0];
-      if (tabKey && pathname.includes(`?${tabKey}=`)) {
+    if (base !== undefined && query !== undefined && query.includes('=')) {
+      const needle = `?${query}`;
+      if (pathname.startsWith(base) && pathname.includes(needle)) {
         return true;
       }
     }

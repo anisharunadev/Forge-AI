@@ -88,7 +88,6 @@ describe('<ApprovalQueuePanel> + useApprovalDecide', () => {
     renderWithClient(
       <ApprovalQueuePanel
         approvals={[sampleApproval]}
-        ideas={[sampleIdea]}
         onDecide={onDecide}
       />,
     );
@@ -166,7 +165,6 @@ describe('<ApprovalQueuePanel> + useApprovalDecide', () => {
         <>
           <ApprovalQueuePanel
             approvals={rows}
-            ideas={[sampleIdea]}
             onDecide={(approval) => {
               // Optimistic update — flip immediately, reconcile on
               // response.
@@ -303,8 +301,7 @@ describe('<ApprovalQueuePanel> + useApprovalDecide', () => {
     renderWithClient(
       <ApprovalQueuePanel
         approvals={[sampleApproval]}
-        ideas={[sampleIdea]}
-        onDecide={onDecide}
+        onDecide={onDecide as unknown as (approval: Approval, decision: 'approve' | 'reject') => void}
       />,
     );
 

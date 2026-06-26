@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Success Metrics
 description: The seven KPIs that define Forge AI success — definitions, measurement, targets, owners.
 ---

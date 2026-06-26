@@ -29,5 +29,13 @@
     "node": ">=20",
     "pnpm": ">=9"
   },
-  "packageManager": "pnpm@9.15.0"
+  "packageManager": "pnpm@9.15.0",
+  "workspaces": [
+    "packages/forge-core",
+    "packages/forge-pi",
+    "packages/forge-browser",
+    "apps/forge",
+    "apps/docs-site",
+    "mcp-servers/*"
+  ]
 }

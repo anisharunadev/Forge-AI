@@ -1,4 +1,5 @@
 ---
+draft: false
 title: ADR-006 — Terminal Center with native PTY
 description: Agents run in a native PTY streamed to the browser via xterm.js. Every byte is audited.
 ---

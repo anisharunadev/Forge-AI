@@ -22,12 +22,12 @@ export const forgeDarkTheme = {
   // Semantic aliases
   canvas:     forgeDark.background,
   divider:    forgeDark.border,
-  textBody:   forgeDark.foreground,
+  textBody:   forgeDark.text,
   textMuted:  forgeDark.muted,
   interactive:forgeDark.primary,
   positive:   forgeDark.success,
   alert:      forgeDark.warning,
-  critical:   forgeDark.destructive,
+  critical:   forgeDark.error,
   // AI-native channels
   channelAgent:    forgeDark.agent,
   channelExecution:forgeDark.execution,

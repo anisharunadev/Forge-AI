@@ -1,16 +1,16 @@
 'use client';
 
 import * as React from 'react';
-import ReactFlow, {
+import { ReactFlow,
   Background,
   Controls,
   MarkerType,
   ReactFlowProvider,
   type Edge,
   type Node,
-} from 'reactflow';
+} from '@xyflow/react';
 
-import 'reactflow/dist/style.css';
+import '@xyflow/react/dist/style.css';
 import { forgeNodeTypes } from './index';
 import type { NodeRepoFileData, NodeServiceData } from './types';
 
@@ -35,8 +35,8 @@ export interface RepositoryGraphViewProps {
 function buildNodes(
   repo: { id: string; name: string },
   files: ReadonlyArray<RepoFileInput>,
-): Array<Node<NodeServiceData | NodeRepoFileData>> {
-  const repoNode: Node<NodeServiceData> = {
+): Array<Node<(NodeServiceData | NodeRepoFileData) & Record<string, unknown>>> {
+  const repoNode: Node<NodeServiceData & Record<string, unknown>> = {
     id: `repo:${repo.id}`,
     type: 'service',
     position: { x: 0, y: 0 },
@@ -57,7 +57,7 @@ function buildNodes(
     byFolder.set(folder, arr);
   }
 
-  const fileNodes: Array<Node<NodeRepoFileData>> = [];
+  const fileNodes: Array<Node<NodeRepoFileData & Record<string, unknown>>> = [];
   let col = 1;
   for (const [folder, arr] of byFolder) {
     arr.forEach((f, row) => {

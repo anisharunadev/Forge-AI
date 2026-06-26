@@ -191,13 +191,54 @@ const config: Config = {
           finished: 'hsl(var(--success))',
           done: 'hsl(var(--success))',
         },
+
+        // ==========================================================================
+        // Phase 1 — DESIGN SYSTEM FOUNDATION
+        // The canonical token layer new components consume. Backed by raw hex
+        // CSS variables in `app/globals.css` (not HSL, so utility output is
+        // identical to the spec). Existing HSL primitives above remain for
+        // backwards compatibility.
+        // ==========================================================================
+
+        // Layered surfaces — depth-aware instead of flat #000/#FFF.
+        // Use: bg-base (canvas), bg-surface (panels), bg-elevated (cards),
+        //      bg-inset (wells, code, nested inputs).
+        'bg-base':     'var(--bg-base)',
+        'bg-surface':  'var(--bg-surface)',
+        'bg-elevated': 'var(--bg-elevated)',
+        'bg-inset':    'var(--bg-inset)',
+
+        // Hairline borders — subtle/default/strong ramp over rgba whites.
+        // Use: border-subtle (1px hairlines), border-default, border-strong.
+        'border-subtle':  'var(--border-subtle)',
+        'border-default': 'var(--border-default)',
+        'border-strong':  'var(--border-strong)',
+
+        // Semantic foreground — text on surfaces.
+        // Use: text-fg-primary (body), text-fg-secondary (label),
+        //      text-fg-tertiary (caption), text-fg-muted (disabled/quiet).
+        'fg-primary':   'var(--fg-primary)',
+        'fg-secondary': 'var(--fg-secondary)',
+        'fg-tertiary':  'var(--fg-tertiary)',
+        'fg-muted':     'var(--fg-muted)',
+
+        // Accent channels — beyond just the primary. Bound to the user-locked
+        // hex values from the Phase 1 spec.
+        // Use: text-accent-primary, bg-accent-cyan, ring-accent-emerald, etc.
+        'accent-primary': 'var(--accent-primary)',
+        'accent-cyan':    'var(--accent-cyan)',
+        'accent-emerald': 'var(--accent-emerald)',
+        'accent-amber':   'var(--accent-amber)',
+        'accent-rose':    'var(--accent-rose)',
+        'accent-violet':  'var(--accent-violet)',
       },
       borderRadius: {
         none: '0',
-        sm: '0.375rem',   //  6px — controls (buttons, inputs, tabs)
-        md: '0.5rem',     //  8px — cards (matches shadcn convention)
-        lg: '0.75rem',    // 12px — modals
-        full: '9999px',   // pills, avatars
+        sm: 'var(--radius-sm)',   //  6px — controls (buttons, inputs, tabs)
+        md: 'var(--radius-md)',   //  8px — cards (matches shadcn convention)
+        lg: 'var(--radius-lg)',   // 12px — modals
+        xl: 'var(--radius-xl)',   // 16px — large hero panels
+        full: '9999px',           // pills, avatars
       },
       boxShadow: {
         // Subtle elevation (linear-style)
@@ -213,6 +254,15 @@ const config: Config = {
         'glow-review':   '0 0 0 1px rgb(249 115 22 / 0.4),  0 0 24px -4px rgb(249 115 22 / 0.4)',
         'glow-success':  '0 0 0 1px rgb(34 197 94 / 0.4),   0 0 24px -4px rgb(34 197 94 / 0.4)',
         'glow-destructive': '0 0 0 1px rgb(239 68 68 / 0.4), 0 0 24px -4px rgb(239 68 68 / 0.4)',
+
+        // Phase 1 — canonical shadow scale bound to CSS variables.
+        // Overrides Tailwind's built-in `shadow-sm/md/lg` so utility
+        // output reads from the foundation --shadow-* CSS vars.
+        // Use: shadow-sm, shadow-md, shadow-lg + shadow-glow-primary.
+        sm: 'var(--shadow-sm)',
+        md: 'var(--shadow-md)',
+        lg: 'var(--shadow-lg)',
+        'glow-primary-token': 'var(--shadow-glow-primary)',
       },
       keyframes: {
         'accordion-down': {
@@ -275,14 +325,20 @@ const config: Config = {
         '24': ['1.5rem',    { lineHeight: '2rem',   letterSpacing: '-0.015em' }],
         '32': ['2rem',      { lineHeight: '2.5rem', letterSpacing: '-0.02em'  }],
         '48': ['3rem',      { lineHeight: '3.5rem', letterSpacing: '-0.025em' }],
-        // shadcn fallback aliases (so existing classes still resolve)
-        xs:    ['0.75rem',  { lineHeight: '1rem'   }],
-        sm:    ['0.875rem', { lineHeight: '1.25rem'}],
-        base:  ['1rem',     { lineHeight: '1.5rem' }],
-        lg:    ['1.125rem', { lineHeight: '1.75rem'}],
-        xl:    ['1.25rem',  { lineHeight: '1.75rem'}],
-        '2xl': ['1.5rem',   { lineHeight: '2rem',   letterSpacing: '-0.01em'  }],
-        '3xl': ['1.875rem', { lineHeight: '2.25rem',letterSpacing: '-0.02em'  }],
+
+        // Phase 1 — canonical type scale bound to CSS variables.
+        // Overrides Tailwind's shadcn defaults so utility output matches
+        // the user-locked spec: text-xs 12/16, text-sm 13/18,
+        // text-base 14/20, text-md 15/22, text-lg 17/24,
+        // text-xl 20/28, text-2xl 24/32, text-3xl 30/36.
+        xs:    ['var(--text-xs)',   { lineHeight: 'var(--leading-xs)'  }],
+        sm:    ['var(--text-sm)',   { lineHeight: 'var(--leading-sm)'  }],
+        base:  ['var(--text-base)', { lineHeight: 'var(--leading-base)'}],
+        md:    ['var(--text-md)',   { lineHeight: 'var(--leading-md)'  }],
+        lg:    ['var(--text-lg)',   { lineHeight: 'var(--leading-lg)'  }],
+        xl:    ['var(--text-xl)',   { lineHeight: 'var(--leading-xl)'  }],
+        '2xl': ['var(--text-2xl)',  { lineHeight: 'var(--leading-2xl)' }],
+        '3xl': ['var(--text-3xl)',  { lineHeight: 'var(--leading-3xl)' }],
         '4xl': ['2.25rem',  { lineHeight: '2.5rem', letterSpacing: '-0.025em' }],
         '5xl': ['3rem',     { lineHeight: '1'      , letterSpacing: '-0.025em' }],
         '6xl': ['3.75rem',  { lineHeight: '1'      , letterSpacing: '-0.025em' }],
@@ -292,14 +348,24 @@ const config: Config = {
         DEFAULT: '200ms',
         instant: '0ms',
         micro:   '150ms',
-        standard:'200ms',
         state:   '250ms',
+
+        // Phase 1 — canonical motion scale bound to CSS variables.
+        // Use: duration-standard (200ms) [also DEFAULT], duration-fast (100ms),
+        //      duration-slow (400ms).
+        fast:     'var(--motion-fast)',
+        standard: 'var(--motion-standard)',
+        slow:     'var(--motion-slow)',
       },
       transitionTimingFunction: {
         DEFAULT: 'cubic-bezier(0, 0, 0.2, 1)',
         out:   'cubic-bezier(0, 0, 0.2, 1)',
         in:    'cubic-bezier(0.4, 0, 1, 1)',
         inOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
+
+        // Phase 1 — canonical easing curve bound to CSS variable.
+        // Use: ease-out-soft (cubic-bezier(0.16, 1, 0.3, 1)).
+        'out-soft': 'var(--motion-ease-out)',
       },
     },
   },

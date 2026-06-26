@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Troubleshooting
 description: Common Forge AI issues and how to resolve them.
 ---

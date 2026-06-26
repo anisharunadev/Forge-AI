@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Handle, Position, type NodeProps } from 'reactflow';
+import { Handle, Position, type Node, type NodeProps } from '@xyflow/react';
 
 import { cn } from '@/lib/utils';
 import { toneClasses } from '@/lib/design-system/status';
@@ -15,7 +15,7 @@ import type { NodeRepoFileData } from './types';
  * Thresholds are intentionally generous so a single 1k-line file does
  * not flash red.
  */
-export type RepoFileNodeProps = NodeProps<NodeRepoFileData>;
+export type RepoFileNodeProps = NodeProps<Node<NodeRepoFileData & Record<string, unknown>, 'repoFile'>>;
 
 function toneForLoc(loc: number | undefined): 'idle' | 'warn' | 'danger' {
   if (loc === undefined) return 'idle';

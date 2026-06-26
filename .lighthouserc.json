@@ -1,0 +1,27 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "pnpm --filter forge-dashboard start",
+      "startServerReadyPattern": "Ready in",
+      "startServerReadyTimeout": 60000,
+      "numberOfRuns": 1,
+      "url": [
+        "http://localhost:3000/agent-center",
+        "http://localhost:3000/ideation"
+      ],
+      "settings": {
+        "preset": "desktop",
+        "skipAudits": ["uses-http2", "is-on-https"]
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:accessibility": ["error", { "minScore": 0.95 }],
+        "categories:performance": ["error", { "minScore": 0.9 }]
+      }
+    },
+    "upload": {
+      "target": "filesystem"
+    }
+  }
+}

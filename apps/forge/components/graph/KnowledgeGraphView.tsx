@@ -1,16 +1,17 @@
 'use client';
 
 import * as React from 'react';
-import ReactFlow, {
+import {
+  ReactFlow,
   Background,
   Controls,
   MarkerType,
   ReactFlowProvider,
   type Edge,
   type Node,
-} from 'reactflow';
+} from '@xyflow/react';
 
-import 'reactflow/dist/style.css';
+import '@xyflow/react/dist/style.css';
 import { kgStateTone, toneClasses } from '@/lib/design-system/status';
 import type { KGEdge, KGNode, NodeKind } from '@/lib/knowledge-center/data';
 import { forgeNodeTypes } from './index';
@@ -61,7 +62,7 @@ function buildFlowNodes(
   visible: ReadonlyArray<NodeKind>,
   selectedId: string | undefined,
   layout: 'LR' | 'TB',
-): Array<Node<NodeArtifactData>> {
+): Array<Node<NodeArtifactData & Record<string, unknown>>> {
   const visibleSet = new Set(visible);
   const kindOrder = new Map<NodeKind, number>(visible.map((k, i) => [k, i]));
   const filtered = nodes.filter((n) => visibleSet.has(n.kind));

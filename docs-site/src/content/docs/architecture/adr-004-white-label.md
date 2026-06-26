@@ -1,4 +1,5 @@
 ---
+draft: false
 title: ADR-004 — White-labeling (DL-024)
 description: All internal commands are exposed to users as forge-* names.
 ---

@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Project Intelligence Commands
 description: The 6 intel commands — scan repos, deps, services, secrets; summarize; trend.
 ---

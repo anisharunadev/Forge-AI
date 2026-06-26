@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Environment Commands
 description: The 4 environment commands — list, diff, sync, promote.
 ---

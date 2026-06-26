@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Testing Commands
 description: The 5 testing commands — plan, unit, integration, e2e, coverage.
 ---

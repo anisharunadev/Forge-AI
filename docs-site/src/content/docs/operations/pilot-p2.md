@@ -1,4 +1,5 @@
 ---
+draft: false
 title: P2 — Execution
 description: 4-week execution phase — directional improvement on ≥2 of 3 artifact types.
 ---

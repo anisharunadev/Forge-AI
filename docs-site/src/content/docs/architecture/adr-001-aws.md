@@ -1,4 +1,5 @@
 ---
+draft: false
 title: ADR-001 — Cloud-only AWS deployment
 description: V1 commits Forge to AWS as the single cloud provider.
 ---

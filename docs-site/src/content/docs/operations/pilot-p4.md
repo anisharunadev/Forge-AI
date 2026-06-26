@@ -1,4 +1,5 @@
 ---
+draft: false
 title: P4 — Expansion
 description: Steady state — sustain TTTD reduction across waves and additional teams.
 ---

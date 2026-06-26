@@ -1,4 +1,5 @@
 ---
+draft: false
 title: HTTP API
 description: The Forge AI HTTP API — REST endpoints, WebSocket endpoints, authentication.
 ---

@@ -7,7 +7,7 @@
  * page tells the PM who to ask.
  */
 
-export type ConnectorCenterPersona = "pm" | "eng-lead" | "cto";
+export type ConnectorCenterPersona = "pm" | "eng-lead" | "steward" | "cto";
 
 const ALLOWED: ReadonlyArray<ConnectorCenterPersona> = ["eng-lead", "cto"];
 
@@ -36,5 +36,6 @@ export function escalationPersonaLabel(persona: ConnectorCenterPersona): string 
 const PERSONA_LABEL: Record<ConnectorCenterPersona, string> = {
   pm: "Product Manager",
   "eng-lead": "Engineering Lead",
+  steward: "Steward",
   cto: "CTO",
 };

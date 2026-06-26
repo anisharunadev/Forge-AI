@@ -15,7 +15,7 @@
  * The empty-state for a blocked persona tells the human who to ask.
  */
 
-export type ProjectIntelligencePersona = "pm" | "eng-lead" | "cto";
+export type ProjectIntelligencePersona = "pm" | "eng-lead" | "steward" | "cto";
 
 /**
  * Personas that can view Project Intelligence read-write. Today this is
@@ -75,5 +75,6 @@ export function escalationPersonaLabel(
 const PERSONA_LABEL: Record<ProjectIntelligencePersona, string> = {
   pm: "Product Manager",
   "eng-lead": "Engineering Lead",
+  steward: "Steward",
   cto: "CTO",
 };

@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Rollback Procedures
 description: How to roll back a Forge AI deployment — commands, decision tree, audit.
 ---

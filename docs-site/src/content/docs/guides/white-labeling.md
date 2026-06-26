@@ -1,4 +1,5 @@
 ---
+draft: false
 title: White-labeling
 description: Enforce the forge-* namespace in user-facing surfaces.
 ---

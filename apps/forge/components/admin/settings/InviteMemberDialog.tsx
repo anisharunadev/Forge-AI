@@ -59,7 +59,7 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
   const invite = useInviteMember();
   const { toast } = useToast();
 
-  const form = useZodForm(inviteMemberSchema, {
+  const form = useZodForm<typeof inviteMemberSchema, InviteMemberForm>(inviteMemberSchema, {
     defaultValues: { email: '', roleId: '' },
   });
 

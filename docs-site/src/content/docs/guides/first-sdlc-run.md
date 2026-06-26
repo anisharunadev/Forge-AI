@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Your First SDLC Run
 description: Walk a sample feature from ideation through deployment using forge-* commands.
 ---

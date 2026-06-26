@@ -1,4 +1,5 @@
 ---
+draft: false
 title: forge-* Commands Reference
 description: The executable reference for all 63 forge-* commands across 13 categories.
 ---

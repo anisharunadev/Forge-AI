@@ -1,4 +1,5 @@
 ---
+draft: false
 title: ADR-005 — LiteLLM Proxy for model-provider abstraction
 description: All LLM traffic flows through the LiteLLM Proxy — no direct provider calls.
 ---

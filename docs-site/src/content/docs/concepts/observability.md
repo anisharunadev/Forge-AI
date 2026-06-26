@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Observability
 description: How Forge instruments every layer — traces, metrics, logs from day one.
 ---

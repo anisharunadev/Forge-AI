@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Architecture Tour
 description: A guided walkthrough of the Forge AI architecture — concepts mapped onto components.
 ---

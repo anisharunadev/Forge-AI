@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Audit Codes
 description: The error and status codes used in the audit ledger and HTTP API.
 ---

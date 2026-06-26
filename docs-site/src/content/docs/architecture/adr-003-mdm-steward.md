@@ -1,4 +1,5 @@
 ---
+draft: false
 title: ADR-003 — Hybrid MDM with Steward priority
 description: When two sources of truth disagree, the Steward decides.
 ---

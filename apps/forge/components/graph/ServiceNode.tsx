@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Handle, Position, type NodeProps } from 'reactflow';
+import { Handle, Position, type Node, type NodeProps } from '@xyflow/react';
 
 import { cn } from '@/lib/utils';
 import { toneClasses } from '@/lib/design-system/status';
@@ -13,7 +13,7 @@ import type { NodeServiceData } from './types';
  * Tone derives from health status (healthy/success, degraded/warn,
  * down/danger, idle/idle). Region is shown as an eyebrow when present.
  */
-export type ServiceNodeProps = NodeProps<NodeServiceData>;
+export type ServiceNodeProps = NodeProps<Node<NodeServiceData & Record<string, unknown>, 'service'>>;
 
 const STATUS_TONE = {
   healthy: 'success',

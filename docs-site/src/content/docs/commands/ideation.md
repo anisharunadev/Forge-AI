@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Ideation Commands
 description: The 5 ideation commands — brainstorm, refine, compare, prune, crystallize.
 ---

@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Adding Connectors
 description: How to add a new external system as a forge connector.
 ---

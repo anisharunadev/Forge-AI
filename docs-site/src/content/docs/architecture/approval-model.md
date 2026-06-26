@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Approval Model
 description: How HITL gates work — three mandatory gates, optional gates, decision types, audit.
 ---

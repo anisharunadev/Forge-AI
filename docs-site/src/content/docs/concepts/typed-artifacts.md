@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Typed Artifacts
 description: The six typed outputs of Forge workflows — what each one is, when it's produced, and how it's reviewed.
 ---

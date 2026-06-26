@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Handle, Position, type NodeProps } from 'reactflow';
+import { Handle, Position, type Node, type NodeProps } from '@xyflow/react';
 
 import { cn } from '@/lib/utils';
 import {
@@ -19,7 +19,7 @@ import type { NodeApprovalData } from './types';
  * rejected=danger. The phase label is rendered as an eyebrow so a user
  * can scan a workflow graph and see exactly which gate is blocking.
  */
-export type ApprovalNodeProps = NodeProps<NodeApprovalData>;
+export type ApprovalNodeProps = NodeProps<Node<NodeApprovalData & Record<string, unknown>, 'approval'>>;
 
 export function ApprovalNode({ data, selected }: ApprovalNodeProps) {
   const tone = toneClasses[runStateTone[data.runState] ?? 'idle'];

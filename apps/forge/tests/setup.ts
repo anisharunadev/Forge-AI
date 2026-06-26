@@ -13,8 +13,6 @@ class ResizeObserverPolyfill {
   disconnect(): void {}
 }
 
-// @ts-expect-error — attach the polyfill only when missing.
 if (typeof globalThis.ResizeObserver === 'undefined') {
-  // @ts-expect-error — see above.
-  globalThis.ResizeObserver = ResizeObserverPolyfill
+  globalThis.ResizeObserver = ResizeObserverPolyfill as unknown as typeof ResizeObserver
 }

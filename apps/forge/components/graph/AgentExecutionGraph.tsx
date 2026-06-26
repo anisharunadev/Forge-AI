@@ -1,16 +1,17 @@
 'use client';
 
 import * as React from 'react';
-import ReactFlow, {
+import {
+  ReactFlow,
   Background,
   Controls,
   MarkerType,
   ReactFlowProvider,
   type Edge,
   type Node,
-} from 'reactflow';
+} from '@xyflow/react';
 
-import 'reactflow/dist/style.css';
+import '@xyflow/react/dist/style.css';
 import { forgeNodeTypes } from './index';
 import type { NodeAgentStepData } from './types';
 
@@ -34,7 +35,7 @@ export interface AgentExecutionGraphProps {
 
 function buildNodes(
   steps: ReadonlyArray<AgentExecutionStep>,
-): Array<Node<NodeAgentStepData>> {
+): Array<Node<NodeAgentStepData & Record<string, unknown>>> {
   return steps.map((s, i) => ({
     id: s.id,
     type: 'agentStep',

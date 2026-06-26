@@ -103,7 +103,6 @@ async def update_hook(
     response_model=None,
     response_class=Response,
 )
-    response_class=Response,
 @audit(action="hooks.delete", target_type="hook")
 @audit(action="hooks.delete", target_type="hook")
 async def delete_hook(

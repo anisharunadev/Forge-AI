@@ -1,0 +1,16 @@
+---
+/**
+ * CommandExample.astro — terminal-style example for forge-* commands
+ *
+ *   <CommandExample command="forge-architecture-plan" description="Generate an ADR from a story." />
+ */
+export interface Props {
+  command: string;
+  description: string;
+}
+const { command, description } = Astro.props;
+---
+<div class="command-example">
+  <code>$ {command}</code>
+  <p>{description}</p>
+</div>

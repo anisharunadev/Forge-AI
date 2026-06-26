@@ -1,4 +1,5 @@
 ---
+draft: false
 title: What is an SDLC Operating System?
 description: The category of software Forge belongs to, and why "operating system" is the right frame.
 ---

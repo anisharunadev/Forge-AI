@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Knowledge Graph
 description: The project intelligence knowledge graph — what it stores, how it's queried, how conflicts are resolved.
 ---

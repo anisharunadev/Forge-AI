@@ -1,60 +1,123 @@
 'use client';
 
 /**
- * F-800 — Co-pilot right-side sheet panel.
+ * Step 37 — Co-pilot panel polish.
  *
- * Mounted once at the ShellProvider boundary. Visibility is driven
- * by `useCopilotStore.open`. Renders header + conversation list +
- * messages (or empty state) + composer + modal outlets for the
- * draft + command confirm flows.
+ * Two render modes:
+ *   - `"panel"` (default) — renders inside a custom sheet
+ *     (`CoPanelSheet`) that slides in from the right edge of the
+ *     viewport. Backdrop is hidden on desktop (≥1024px) and shown
+ *     on mobile so the panel gets full focus on small screens.
+ *   - `"fullscreen"` — renders as a page-level layout (no sheet).
+ *     Used by `/copilot`.
  *
- * Plan 3 wires the full vertical:
- *   - `ConversationList` (top)
- *   - `MessageList` (middle) when a conversation is active
- *   - `EmptyState` when no conversation is active
- *   - `ComposerInput` (bottom)
- *   - `PermissionDeniedBanner` mounted at root for 403s
- *   - `DraftReviewModal` + `CommandConfirmModal` mounted once,
- *     opened by `SuggestedActions` handlers.
+ * Open state is sourced from `useCopilotStore.open` so the FAB, the
+ * ⌘J hotkey, and the `/copilot` page all stay in sync.
  *
- * Focus trap and ESC-to-close are handled by Radix (via Sheet).
+ * Vertical composition (panel mode):
+ *
+ *   [CopilotHeader]               — minimal: title + More + Close
+ *   [ErrorBanner]   (when 403/err) — compact dismissible
+ *   [PermissionDeniedBanner] (when 403)
+ *   ┌──────────────────────────────┐
+ *   │  Chat view:                  │
+ *   │    EmptyState | MessageList  │
+ *   │    ComposerInput             │
+ *   │                              │
+ *   │  History view (sub-panel):   │
+ *   │    HistoryPanel              │
+ *   └──────────────────────────────┘
+ *
+ * Two CopilotPanels can be alive at once — one mounted globally by
+ * `ShellProvider` (mode="panel") and one mounted by the `/copilot`
+ * page (mode="fullscreen"). When the user is on `/copilot`, the
+ * global panel returns null so the page-level fullscreen instance
+ * owns the UI.
  */
 
 import * as React from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { ArrowLeft, Sparkles, X } from 'lucide-react';
 
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-} from '@/components/ui/sheet';
-import { useConversation } from '@/hooks/use-copilot';
+import { Button } from '@/components/ui/button';
+import { useConversation, useConversations } from '@/hooks/use-copilot';
 import { useCopilotEnabled } from '@/lib/feature-flags';
-import { useCopilotStore } from '@/lib/store/copilot';
+import {
+  useCopilotStore,
+  useHydrateCopilotFlags,
+} from '@/lib/store/copilot';
 import type { CopilotSuggestedAction } from '@/lib/api/copilot';
+import { cn } from '@/lib/utils';
 
+import { CoPanelSheet } from './CoPanelSheet';
 import { CommandConfirmModal } from './CommandConfirmModal';
 import { ComposerInput } from './ComposerInput';
-import { ConversationList } from './ConversationList';
 import { CopilotHeader } from './CopilotHeader';
 import { DraftReviewModal } from './DraftReviewModal';
 import { EmptyState } from './EmptyState';
+import { ErrorBanner } from './ErrorBanner';
+import { HistoryPanel } from './HistoryPanel';
 import { MessageList } from './MessageList';
 import { PermissionDeniedBanner } from './PermissionDeniedBanner';
 
-export function CopilotPanel() {
-  // Plan 6 — master toggle. When ``COPILOT_ENABLED`` is off
-  // (server-side flag flip or the user is in a tenant that has
-  // disabled Co-pilot), we render nothing so the panel cannot
-  // appear even if the store says ``open === true``. The Cmd+J
-  // hotkey is also gated (see ShellProvider) so this is a
-  // defense-in-depth check.
+export interface CopilotPanelProps {
+  /** `"panel"` (default) renders inside a right-side sheet.
+   *  `"fullscreen"` renders as a full-page layout (used by `/copilot`). */
+  readonly mode?: 'panel' | 'fullscreen';
+  /** Optional back-link href for the fullscreen header. */
+  readonly backHref?: string;
+}
+
+type View = 'chat' | 'history';
+
+export function CopilotPanel({ mode = 'panel', backHref = '/dashboard' }: CopilotPanelProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // Two CopilotPanels can be alive at once — bail on `/copilot` so
+  // the page-level fullscreen instance owns the UI.
+  if (mode === 'panel' && pathname !== null && (pathname === '/copilot' || pathname.startsWith('/copilot/'))) {
+    return null;
+  }
+
+  // Plan 6 — master toggle.
   const copilotEnabled = useCopilotEnabled();
   const open = useCopilotStore((s) => s.open);
   const setOpen = useCopilotStore((s) => s.setOpen);
   const activeConversationId = useCopilotStore((s) => s.activeConversationId);
-  const lastError = useCopilotStore((s) => s.lastError);
+  const permissionDenied = useCopilotStore((s) => s.permissionDenied);
+  const setPermissionDenied = useCopilotStore((s) => s.setPermissionDenied);
 
+  // Close handler used by the fullscreen X button.
+  const handleFullscreenClose = React.useCallback(() => {
+    if (mode === 'fullscreen') {
+      setOpen(false);
+      router.push(backHref);
+    } else {
+      setOpen(false);
+    }
+  }, [mode, backHref, router, setOpen]);
+
+  // Hydrate client-only flags from localStorage.
+  useHydrateCopilotFlags();
+
+  // Conversations fetch — moved up here so we can show the
+  // ErrorBanner at the panel level instead of inside ConversationList.
+  // This keeps the welcome state visible underneath while the error
+  // is being addressed (Step 37 FIX 1).
+  const conversations = useConversations();
   const conversation = useConversation(activeConversationId);
+
+  React.useEffect(() => {
+    if (
+      conversation.isError &&
+      // forgeFetch throws ForgeApiError with `.status === 403`.
+      (conversation.error as { status?: number } | null)?.status === 403
+    ) {
+      setPermissionDenied(true);
+    }
+  }, [conversation.isError, conversation.error, setPermissionDenied]);
 
   if (!copilotEnabled) return null;
 
@@ -66,6 +129,8 @@ export function CopilotPanel() {
     React.useState<CopilotSuggestedAction | null>(null);
   const [draftOpen, setDraftOpen] = React.useState(false);
   const [commandOpen, setCommandOpen] = React.useState(false);
+  // Step 37 — local view state for the History sub-panel.
+  const [view, setView] = React.useState<View>('chat');
 
   const handleRunCommand = React.useCallback((action: CopilotSuggestedAction) => {
     setCommandAction(action);
@@ -77,57 +142,164 @@ export function CopilotPanel() {
     setDraftOpen(true);
   }, []);
 
+  // Step 37 — listen for the "open_history" / "open_settings" custom
+  // events dispatched from the More menu in CopilotHeader. Keeping
+  // them as window events avoids prop-drilling through the header
+  // when the panel needs to react.
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    function onHistory() {
+      setView('history');
+    }
+    function onSettings() {
+      // Settings used to be a popover anchored to the header. Step
+      // 37 moves it into the More menu (no separate surface). We
+      // intentionally no-op here so the menu stays open for tweaks.
+    }
+    window.addEventListener('copilot:open_history', onHistory);
+    window.addEventListener('copilot:open_settings', onSettings);
+    return () => {
+      window.removeEventListener('copilot:open_history', onHistory);
+      window.removeEventListener('copilot:open_settings', onSettings);
+    };
+  }, []);
+
+  // Fullscreen mode forces the panel open once on mount.
+  React.useEffect(() => {
+    if (mode === 'fullscreen') {
+      setOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+
+  // ─── Body ────────────────────────────────────────────────────────
+  const conversationsError = conversations.isError;
+  const conversationsLoading = conversations.isLoading;
+
+  const errorBanner = conversationsError ? (
+    <ErrorBanner
+      message="Couldn't load conversations"
+      detail="Your chats are safe."
+      actionLabel="Retry"
+      secondaryLabel="Start new"
+      onAction={() => conversations.refetch()}
+      onSecondary={() => useCopilotStore.getState().setActiveConversation(null)}
+      testId="copilot-conversations-error"
+    />
+  ) : null;
+
+  const loadingStrip = conversationsLoading ? (
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex items-center gap-2 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]/40 px-3 py-1.5 text-[10px] text-[var(--fg-tertiary)]"
+      data-testid="copilot-conversation-list-loading"
+    >
+      <span className="inline-flex h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--accent-cyan)]" />
+      Loading conversations…
+    </div>
+  ) : null;
+
+  const chatBody = (
+    <>
+      {errorBanner}
+      {permissionDenied ? <PermissionDeniedBanner /> : null}
+      {loadingStrip}
+
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {activeConversationId ? (
+          conversation.isLoading ? (
+            <div className="flex flex-1 items-center justify-center text-xs text-muted-foreground">
+              Loading conversation…
+            </div>
+          ) : conversation.isError ? (
+            <ErrorBanner
+              message="Couldn't load this conversation"
+              actionLabel="Retry"
+              onAction={() => conversation.refetch?.()}
+              testId="copilot-conversation-load-error"
+            />
+          ) : (
+            <MessageList messages={conversation.data?.messages ?? []} />
+          )
+        ) : (
+          <EmptyState />
+        )}
+        <ComposerInput />
+      </div>
+    </>
+  );
+
+  const historyBody = (
+    <HistoryPanel onClose={() => setView('chat')} />
+  );
+
+  const body = view === 'history' ? historyBody : chatBody;
+
   return (
     <>
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent
-          side="right"
-          className="flex w-full flex-col gap-0 p-0 sm:max-w-[420px]"
+      {mode === 'panel' ? (
+        <CoPanelSheet
+          open={open}
+          onOpenChange={setOpen}
+          aria-describedby={undefined}
           data-testid="copilot-panel"
         >
-          {/* SheetTitle is required by Radix for a11y; visually hidden. */}
-          <SheetTitle className="sr-only">Forge Co-pilot</SheetTitle>
-
           <CopilotHeader />
+          {body}
+        </CoPanelSheet>
+      ) : (
+        // Fullscreen mode — used by `/copilot`.
+        <div
+          className={cn(
+            'flex h-full min-h-0 flex-1 flex-col overflow-hidden',
+            'rounded-[var(--radius-xl)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] shadow-[var(--shadow-md)]',
+          )}
+          data-testid="copilot-panel-fullscreen"
+          role="region"
+          aria-labelledby="copilot-title"
+        >
+          {/* Fullscreen header — back link + title + close. Distinct
+              from the slide-out header because we don't need a "new
+              conversation" button next to a screen-wide layout. */}
+          <header className="flex h-14 shrink-0 items-center gap-3 border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-5">
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              aria-label="Back to dashboard"
+            >
+              <Link href={backHref}>
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </Button>
+            <h1
+              id="copilot-title"
+              className="flex items-center gap-2 text-base font-semibold text-[var(--fg-primary)]"
+            >
+              <Sparkles
+                className="h-5 w-5 text-[var(--accent-cyan)]"
+                aria-hidden="true"
+              />
+              Forge Co-pilot
+            </h1>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="ml-auto h-8 w-8"
+              onClick={handleFullscreenClose}
+              aria-label="Close Co-pilot and return to dashboard"
+              data-testid="copilot-fullscreen-close"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          </header>
 
-          <PermissionDeniedBanner
-            className={lastError && lastError.includes('403') ? '' : 'hidden'}
-            message={
-              lastError && lastError.includes('403')
-                ? lastError
-                : undefined
-            }
-          />
-
-          <div className="flex flex-1 flex-col overflow-hidden">
-            <ConversationList />
-
-            <div className="flex flex-1 flex-col overflow-hidden">
-              {activeConversationId ? (
-                conversation.isLoading ? (
-                  <div className="flex flex-1 items-center justify-center text-xs text-muted-foreground">
-                    Loading conversation…
-                  </div>
-                ) : conversation.isError ? (
-                  <div
-                    role="alert"
-                    className="m-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive"
-                  >
-                    Failed to load conversation.
-                  </div>
-                ) : (
-                  <MessageList
-                    messages={conversation.data?.messages ?? []}
-                  />
-                )
-              ) : (
-                <EmptyState />
-              )}
-              <ComposerInput />
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+          <div className="flex min-h-0 flex-1 overflow-hidden">{body}</div>
+        </div>
+      )}
 
       {/* Modal outlets — mounted once so they survive message list re-renders. */}
       <DraftReviewModal
@@ -141,10 +313,6 @@ export function CopilotPanel() {
         action={commandAction}
       />
 
-      {/* The SuggestedActions handler needs to reach into the panel's
-          state, so we expose handlers via a tiny custom event so the
-          component (which lives inside MessageBubble) doesn't need
-          direct prop wiring. */}
       <CopilotActionBridge
         onRunCommand={handleRunCommand}
         onDraft={handleDraft}
@@ -159,8 +327,6 @@ export function CopilotPanel() {
  * parent panel's handlers. Lets `SuggestedActions` (rendered deep
  * in MessageBubble) open modals owned by the panel without prop
  * drilling.
- *
- * Hidden — has no DOM output.
  */
 interface CopilotActionBridgeProps {
   onRunCommand: (action: CopilotSuggestedAction) => void;

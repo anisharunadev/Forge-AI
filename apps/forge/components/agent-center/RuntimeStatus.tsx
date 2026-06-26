@@ -1,9 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { Server, Cpu, MemoryStick, Clock } from 'lucide-react';
+import { Server, Cpu, MemoryStick, Clock, Plus } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { EmptyState } from '@/src/components/empty-state';
 import type { Agent, Runtime } from '@/lib/agent-center/data';
 
 const STATUS_TONE: Record<Runtime['status'], string> = {
@@ -30,6 +31,7 @@ function fmtUptime(sec: number): string {
 export interface RuntimeStatusProps {
   runtimes: ReadonlyArray<Runtime>;
   agents: ReadonlyArray<Agent>;
+  onRegisterRuntime?: () => void;
 }
 
 function Bar({ value, label }: { value: number; label: string }) {
@@ -58,11 +60,28 @@ function Bar({ value, label }: { value: number; label: string }) {
   );
 }
 
-export function RuntimeStatus({ runtimes, agents }: RuntimeStatusProps) {
+export function RuntimeStatus({ runtimes, agents, onRegisterRuntime }: RuntimeStatusProps) {
   const agentById = React.useMemo(
     () => new Map(agents.map((a) => [a.id, a])),
     [agents],
   );
+
+  if (runtimes.length === 0) {
+    return (
+      <div data-testid="runtime-list-empty">
+        <EmptyState
+          illustration={<Server size={40} strokeWidth={1.5} />}
+          title="No runtimes registered"
+          description="Runtimes are sandboxes where agents execute."
+          primaryAction={
+            onRegisterRuntime
+              ? { label: 'Register Runtime', onClick: onRegisterRuntime, icon: <Plus size={14} /> }
+              : undefined
+          }
+        />
+      </div>
+    );
+  }
 
   return (
     <ul

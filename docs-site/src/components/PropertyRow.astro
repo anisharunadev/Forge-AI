@@ -1,0 +1,17 @@
+---
+/**
+ * PropertyRow.astro — key / value / type row
+ *
+ *   <PropertyRow key="tenant_id" value="UUID" type="string" />
+ */
+export interface Props {
+  key: string;
+  value: string;
+  type?: string;
+}
+const { key, value, type } = Astro.props;
+---
+<div class="property-row">
+  <div class="property-row-key">{key}{type && <span class="property-row-type">{type}</span>}</div>
+  <div class="property-row-value">{value}</div>
+</div>

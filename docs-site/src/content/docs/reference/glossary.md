@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Glossary
 description: Terminology across Forge, the stack, and the constitutional rules.
 ---

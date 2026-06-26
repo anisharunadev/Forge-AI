@@ -50,7 +50,7 @@ describe("<BlockedByList>", () => {
     render(<BlockedByList blockedBy={["story-forge-501-list"]} blocks={[]} />);
     const chip = screen.getByTestId("blocked-by-chip");
     expect(chip.getAttribute("href")).toBe(
-      "/project-intelligence/stories/story-forge-501-list",
+      "/stories/story-forge-501-list",
     );
   });
 });

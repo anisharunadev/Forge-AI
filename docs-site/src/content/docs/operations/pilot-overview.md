@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Pilot Operations Overview
 description: The 12-week pilot engagement — phases, KPIs, RACI, exit gates.
 ---

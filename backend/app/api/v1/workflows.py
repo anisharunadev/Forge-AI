@@ -270,7 +270,6 @@ async def update_workflow(
     response_model=None,
     response_class=Response,
 )
-    response_class=Response,
 @audit(action="workflows.delete", target_type="workflow")
 async def delete_workflow(
     workflow_id: UUID,

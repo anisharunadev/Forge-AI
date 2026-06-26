@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Security Commands
 description: The 5 security commands — scan, sbom, policy-check, incident, audit-export.
 ---

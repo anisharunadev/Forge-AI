@@ -1,4 +1,5 @@
 ---
+draft: false
 title: P1 — Kickoff
 description: 2-week kickoff phase — first Aha Time, first accepted typed artifact.
 ---

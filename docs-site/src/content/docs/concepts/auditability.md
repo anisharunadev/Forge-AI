@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Auditability
 description: The append-only audit ledger — what it records, how it is anchored, and how to query it.
 ---

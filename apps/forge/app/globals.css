@@ -1,9 +1,371 @@
+/* This should be imported first so that the xterm canvas is styled before any other global styles are applied. */
+/* xterm.js base styles (official CSS). */
+@import '@xterm/xterm/css/xterm.css';
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* xterm.js base styles (official CSS). */
-@import '@xterm/xterm/css/xterm.css';
+/* Step 6 — POLISH & AUDIT — motion primitives.
+ * All motion is gated by the global prefers-reduced-motion block at the
+ * bottom of the file; this adds the standardized timings and a shimmer
+ * sweep used by skeletons and the AI streaming indicator.
+ */
+@keyframes shimmer-sweep {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes animate-gradient {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes fade-slide-up {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes backdrop-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Skeleton shimmer — used in place of spinners.
+ * Width/height come from the consumer via classes; this only sets the
+ * background gradient + the sweep animation. */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-inset) 0%,
+    rgba(255, 255, 255, 0.04) 50%,
+    var(--bg-inset) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-sweep 1.4s linear infinite;
+  border-radius: var(--radius-md);
+}
+
+/* Route transitions — applied at the PageContainer level.
+ * fade 150ms + translate-y 4 → 0. The full-page container receives
+ * the class; children inherit the timing. */
+.route-enter {
+  animation: fade-slide-up 150ms var(--motion-ease-out) both;
+}
+
+/* AI streaming/gradient text. Pair with `bg-clip-text text-transparent`. */
+.animate-gradient {
+  background-image: linear-gradient(
+    90deg,
+    var(--accent-cyan) 0%,
+    var(--accent-primary) 50%,
+    var(--accent-violet) 100%
+  );
+  background-size: 200% 100%;
+  animation: animate-gradient 4s ease-in-out infinite;
+}
+
+/* Toast region defaults — Sonner emits its own role=status; this is
+ * a fallback for the shadcn toaster so screen readers always pick up
+ * new toasts. */
+[role='status']:empty { display: none; }
+
+/* Pulse dot for AI "thinking" indicator — 1.6s so it feels alive but
+ * not jittery. */
+@keyframes ai-thinking-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.15); }
+}
+.ai-thinking-dot {
+  animation: ai-thinking-pulse 1.6s ease-in-out infinite;
+}
+
+/* Step 26 — Dashboard polish motion primitives.
+ *   - tile-pulse: a 1.1s emerald glow used when a widget is "jumped to"
+ *     from the customize drawer.
+ *   - refresh-spin: 1s rotation for the manual refresh button.
+ *   - stale-pulse: gentle rose blink used by stale badges when the
+ *     orchestrator has been gone >5 minutes.
+ *   - refresh-glow: 1s emerald border glow that flashes every tile
+ *     after a successful manual refresh.
+ *
+ * All four are gated by the prefers-reduced-motion block at the
+ * bottom of the file. */
+@keyframes tile-pulse-glow {
+  0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.0), 0 0 0 1px rgba(16, 185, 129, 0.0); }
+  35%  { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.18), 0 0 0 1px rgba(16, 185, 129, 0.55); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.0), 0 0 0 1px rgba(16, 185, 129, 0.0); }
+}
+.tile-pulse {
+  animation: tile-pulse-glow 1.1s ease-out 1;
+  border-radius: var(--radius-lg);
+}
+
+@keyframes refresh-spin {
+  to { transform: rotate(360deg); }
+}
+.refresh-spin {
+  animation: refresh-spin 1s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes stale-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+.stale-pulse {
+  animation: stale-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes refresh-glow {
+  0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.0), 0 0 0 1px rgba(16, 185, 129, 0.0); }
+  40%  { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.20), 0 0 0 1px rgba(16, 185, 129, 0.60); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.0), 0 0 0 1px rgba(16, 185, 129, 0.0); }
+}
+.refresh-glow {
+  animation: refresh-glow 1s ease-out 1;
+}
+
+/* Subtle 1px amber border tint applied to stale tiles. */
+.stale-border {
+  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.15);
+}
+
+/* Step 43 — Agent Center first-run motion primitives.
+ *   - aurora-frame: a slow conic-gradient sweep masked to the explainer
+ *     hero so the first-run surface has a subtle aurora feel.
+ *   - diagram-arrow-line: marching-ants dashed cyan line between the
+ *     four mental-model boxes (2s loop).
+ *   - agent-emerald-pulse: a 1.4s emerald glow used when the wizard
+ *     lands on a freshly-registered agent.
+ *   - wizard-step-pop: scale-in for wizard step transitions.
+ *
+ * All four are gated by the prefers-reduced-motion block at the
+ * bottom of the file so the global audit checklist stays green. */
+@keyframes aurora-spin {
+  to { transform: rotate(360deg); }
+}
+.aurora-frame::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from 0deg,
+    rgba(99, 102, 241, 0.55),
+    rgba(34, 211, 238, 0.45),
+    rgba(168, 85, 247, 0.50),
+    rgba(16, 185, 129, 0.40),
+    rgba(99, 102, 241, 0.55)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: aurora-spin 12s linear infinite;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+@keyframes marching-ants {
+  to { background-position: 16px 0, -16px 0; }
+}
+.diagram-arrow-line {
+  background-image:
+    linear-gradient(90deg, var(--accent-cyan) 50%, transparent 50%),
+    linear-gradient(90deg, transparent 50%, var(--accent-cyan) 50%);
+  background-size: 8px 2px, 8px 2px;
+  background-repeat: repeat-x;
+  animation: marching-ants 1.5s linear infinite;
+}
+
+@keyframes agent-emerald-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55), 0 0 0 1px rgba(16, 185, 129, 0.0); }
+  60%  { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0.0),  0 0 0 1px rgba(16, 185, 129, 0.55); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.0),  0 0 0 1px rgba(16, 185, 129, 0.0); }
+}
+.agent-emerald-pulse {
+  animation: agent-emerald-pulse 1.4s ease-out 2;
+  border-radius: var(--radius-lg);
+}
+
+@keyframes wizard-step-pop {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+.wizard-step-pop {
+  animation: wizard-step-pop 220ms var(--motion-ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile-pulse,
+  .refresh-spin,
+  .stale-pulse,
+  .refresh-glow,
+  .aurora-frame::before,
+  .diagram-arrow-line {
+    animation: none !important;
+  }
+  .agent-emerald-pulse,
+  .wizard-step-pop {
+    animation: none !important;
+  }
+}
+
+/* Step 19 — Co-pilot FAB animations.
+ * Kept as CSS keyframes (not framer-motion) so they run on the GPU
+ * compositor thread and survive the FAB being unmounted/remounted
+ * across navigations. The prefers-reduced-motion block at the bottom
+ * disables them for users who request reduced motion.
+ */
+@keyframes copilot-fab-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+@keyframes copilot-orbiting-dot {
+  0%   { transform: rotate(0deg)   translateX(0)    rotate(0deg); opacity: 0.6; }
+  50%  { transform: rotate(180deg) translateX(0)   rotate(-180deg); opacity: 1; }
+  100% { transform: rotate(360deg) translateX(0)   rotate(-360deg); opacity: 0.6; }
+}
+@keyframes copilot-unread-pulse {
+  0%, 100% { transform: scale(1);    box-shadow: 0 0 0 2px var(--bg-base), 0 0 0 0 rgba(244, 63, 94, 0.5); }
+  50%      { transform: scale(1.08); box-shadow: 0 0 0 2px var(--bg-base), 0 0 0 6px rgba(244, 63, 94, 0); }
+}
+@keyframes copilot-thinking-dot {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40%           { transform: scale(1);   opacity: 1; }
+}
+
+/* Standardized focus ring — 2px accent-primary + 2px offset.
+ * Belt-and-braces on top of the Tailwind focus-visible utilities
+ * so every interactive element gets the same focus style. */
+:where(button, a, [role='button'], [role='tab'], [role='option'], [role='checkbox'], [role='radio'], input, select, textarea):focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Standardized button press — 50ms scale 0.97. Composable with the
+ * existing button variants. */
+.btn-press:active {
+  transform: scale(0.97);
+  transition: transform 50ms ease-out;
+}
+
+/* Card hover lift — interactive cards only. Non-interactive cards
+ * should NOT receive the `.card-hover` class (the spec is explicit
+ * that we must not animate decorative cards). */
+.card-hover {
+  transition: transform 200ms var(--motion-ease-out),
+              box-shadow 200ms var(--motion-ease-out),
+              border-color 200ms var(--motion-ease-out);
+  will-change: transform;
+}
+.card-hover:hover {
+  transform: scale(1.005);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-default);
+}
+
+/* Tab pill slide — when the SegmentedControl owner adds `data-pill-id`
+ * to the active child, we fade between states. Framer Motion is NOT
+ * installed; this CSS-only fallback uses a transform on the active
+ * segment that matches the layout. */
+.seg-pill {
+  transition: transform 200ms var(--motion-ease-out),
+              background-color 200ms var(--motion-ease-out),
+              color 200ms var(--motion-ease-out);
+}
+
+/* Step 5 — Ideation Center thin scrollbar for kanban / timeline / roadmap. */
+.thin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 3px;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--border-default);
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thin-scrollbar {
+    scroll-behavior: auto;
+  }
+}
+
+/* Step 19 — disable FAB decorative animations for reduced-motion users.
+ * The FAB itself stays visible (functional), but the gentle pulse,
+ * orbital dot, unread ping, and thinking dots all freeze.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [data-testid="copilot-launcher"] *,
+  [data-testid="copilot-launcher"]::before,
+  [data-testid="copilot-launcher"]::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Step 4 — Agent Center hero card animated border. */
+@keyframes hero-border-spin {
+  to { transform: rotate(360deg); }
+}
+
+.hero-border {
+  position: relative;
+  isolation: isolate;
+}
+
+.hero-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  background: conic-gradient(
+    from 0deg,
+    var(--accent-primary) 0%,
+    var(--accent-violet) 33%,
+    var(--accent-cyan) 66%,
+    var(--accent-primary) 100%
+  );
+  animation: hero-border-spin 8s linear infinite;
+  border-radius: inherit;
+  filter: blur(6px);
+  opacity: 0.55;
+}
+
+.hero-border::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--bg-surface);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-border::before {
+    animation: none;
+  }
+}
+
 
 /* ============================================================================
  * Forge AI design tokens — Phase 0.5
@@ -60,6 +422,76 @@
     --cost: 38 92% 50%;
 
     --radius: 0.5rem;             /* 8px — cards per curated spec */
+
+    /* ==========================================================================
+     * Phase 1 — DESIGN SYSTEM FOUNDATION (LIGHT)
+     * Layered surfaces, semantic color tokens, type scale, radius, shadow,
+     * and motion primitives. The canonical tokens new components consume.
+     * ========================================================================== */
+
+    /* Layered surfaces (LIGHT) — depth-aware instead of flat white */
+    --bg-base:     #FFFFFF;
+    --bg-surface:  #F8F8FA;
+    --bg-elevated: #FFFFFF;
+    --bg-inset:    #F4F4F5;
+
+    /* Hairline borders */
+    --border-subtle:  rgba(24, 24, 27, 0.06);
+    --border-default: rgba(24, 24, 27, 0.10);
+    --border-strong:  rgba(24, 24, 27, 0.16);
+
+    /* Semantic foreground */
+    --fg-primary:   #09090B;
+    --fg-secondary: #52525B;
+    --fg-tertiary:  #71717A;
+    --fg-muted:     #A1A1AA;
+
+    /* Accent channels */
+    --accent-primary: #6366F1;
+    --accent-cyan:    #06B6D4;
+    --accent-emerald: #10B981;
+    --accent-amber:   #F59E0B;
+    --accent-rose:    #F43F5E;
+    --accent-violet:  #A855F7;
+
+    /* Type scale (size / line-height) */
+    --text-xs:  12px;  --leading-xs:  16px;
+    --text-sm:  13px;  --leading-sm:  18px;
+    --text-base:14px;  --leading-base:20px;
+    --text-md:  15px;  --leading-md:  22px;
+    --text-lg:  17px;  --leading-lg:  24px;
+    --text-xl:  20px;  --leading-xl:  28px;
+    --text-2xl: 24px;  --leading-2xl: 32px;
+    --text-3xl: 30px;  --leading-3xl: 36px;
+
+    /* Font weights */
+    --font-weight-regular:  400;
+    --font-weight-medium:   500;
+    --font-weight-semibold: 600;
+    --font-weight-bold:     700;
+
+    /* Radius */
+    --radius-sm:  6px;
+    --radius-md:  8px;
+    --radius-lg:  12px;
+    --radius-xl:  16px;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+    --shadow-glow-primary: 0 0 0 1px rgb(99 102 241 / 0.4), 0 0 24px -4px rgb(99 102 241 / 0.4);
+
+    /* Modal/sheet backdrop scrim — tokenized so light + dark themes
+     * share one source. The dark theme overrides this to a darker
+     * value below. */
+    --scrim: rgba(24, 24, 27, 0.55);
+
+    /* Motion */
+    --motion-fast:     100ms;
+    --motion-standard: 200ms;
+    --motion-slow:     400ms;
+    --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   /* Dark theme — PRIMARY per the curated spec. */
@@ -104,6 +536,73 @@
     --cost: 38 92% 50%;
 
     --radius: 0.5rem;             /* 8px — cards per curated spec */
+
+    /* ==========================================================================
+     * Phase 1 — DESIGN SYSTEM FOUNDATION (DARK)
+     * ========================================================================== */
+
+    /* Layered surfaces (DARK) — depth-aware instead of flat #000 */
+    --bg-base:     #09090B;       /* page canvas */
+    --bg-surface:  #131316;       /* section dividers, popovers */
+    --bg-elevated: #1A1A1F;       /* cards, modals */
+    --bg-inset:    #0E0E11;       /* wells, code blocks, nested inputs */
+
+    /* Hairline borders */
+    --border-subtle:  rgba(255, 255, 255, 0.06);
+    --border-default: rgba(255, 255, 255, 0.10);
+    --border-strong:  rgba(255, 255, 255, 0.16);
+
+    /* Semantic foreground */
+    --fg-primary:   #FAFAFA;
+    --fg-secondary: #A1A1AA;
+    --fg-tertiary:  #71717A;
+    --fg-muted:     #52525B;
+
+    /* Accent channels */
+    --accent-primary: #6366F1;
+    --accent-cyan:    #22D3EE;
+    --accent-emerald: #10B981;
+    --accent-amber:   #F59E0B;
+    --accent-rose:    #F43F5E;
+    --accent-violet:  #A855F7;
+
+    /* Type scale (size / line-height) — same in both modes */
+    --text-xs:  12px;  --leading-xs:  16px;
+    --text-sm:  13px;  --leading-sm:  18px;
+    --text-base:14px;  --leading-base:20px;
+    --text-md:  15px;  --leading-md:  22px;
+    --text-lg:  17px;  --leading-lg:  24px;
+    --text-xl:  20px;  --leading-xl:  28px;
+    --text-2xl: 24px;  --leading-2xl: 32px;
+    --text-3xl: 30px;  --leading-3xl: 36px;
+
+    /* Font weights */
+    --font-weight-regular:  400;
+    --font-weight-medium:   500;
+    --font-weight-semibold: 600;
+    --font-weight-bold:     700;
+
+    /* Radius */
+    --radius-sm:  6px;
+    --radius-md:  8px;
+    --radius-lg:  12px;
+    --radius-xl:  16px;
+
+    /* Shadows — stronger contrast against dark surfaces */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.40);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.45), 0 2px 4px -2px rgb(0 0 0 / 0.40);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.55), 0 4px 6px -4px rgb(0 0 0 / 0.45);
+    --shadow-glow-primary: 0 0 0 1px rgb(99 102 241 / 0.55), 0 0 28px -4px rgb(99 102 241 / 0.55);
+
+    /* Dark-mode scrim — heavier than light to keep contrast against
+     * the layered surfaces. */
+    --scrim: rgba(0, 0, 0, 0.72);
+
+    /* Motion — same in both modes */
+    --motion-fast:     100ms;
+    --motion-standard: 200ms;
+    --motion-slow:     400ms;
+    --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   /* Border + body — the @layer base wrapper means this beats any
@@ -114,7 +613,12 @@
 
   html,
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased;
+    /* Phase 1 — bind the canvas to the layered surface stack so the
+       foundation --bg-base token is the single source of truth for the
+       page background (replaces bg-background as the canvas color). */
+    background-color: var(--bg-base);
+    color: var(--fg-primary);
     font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system,
       'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     font-feature-settings: 'cv11', 'ss01', 'ss03';
@@ -132,7 +636,9 @@
 }
 
 /* Respect prefers-reduced-motion at the global layer.
-   Plan 0.5-07 verifies this with a Playwright test. */
+   Plan 0.5-07 verifies this with a Playwright test.
+   Step 6 — extended to also stop the new shimmer / animate-gradient /
+   ai-thinking pulse / card hover lift so the audit checklist stays green. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -141,6 +647,21 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .shimmer,
+  .animate-gradient,
+  .ai-thinking-dot {
+    animation: none !important;
+    background: var(--bg-inset);
+  }
+  .card-hover:hover {
+    transform: none;
+  }
+  .btn-press:active {
+    transform: none;
+  }
+  .hero-border::before {
+    animation: none !important;
   }
 }
 

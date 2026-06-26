@@ -1,0 +1,56 @@
++-----------------------------------------------------------------------------------------+
+|  TARGET: ForgeAgentOS - RECOMMENDED DESIGN SYSTEM                                       |
++-----------------------------------------------------------------------------------------+
+|                                                                                          |
+|  PATTERN: App Store Style Landing                                                       |
+|     Conversion: Show real screenshots. Include ratings (4.5+ stars). QR code for mobile. Platform-specific CTAs.|
+|     CTA: Download buttons prominent (App Store + Play Store) throughout                 |
+|     Sections:                                                                           |
+|       1. 1. Hero with device mockup, 2. Screenshots carousel, 3. Features with icons, 4. Reviews/ratings, 5. Download CTAs|
+|                                                                                          |
+|  STYLE: Vibrant & Block-based                                                           |
+|     Keywords: Bold, energetic, playful, block layout, geometric shapes, high color      |
+|     contrast, duotone, modern, energetic                                                |
+|     Best For: Startups, creative agencies, gaming, social media, youth-focused,         |
+|     entertainment, consumer                                                             |
+|     Performance: ⚡ Good | Accessibility: ◐ Ensure WCAG                                  |
+|                                                                                          |
+|  COLORS:                                                                                |
+|     Primary:    #1E293B                                                                 |
+|     Secondary:  #334155                                                                 |
+|     CTA:        #22C55E                                                                 |
+|     Background: #0F172A                                                                 |
+|     Text:       #F8FAFC                                                                 |
+|     Notes: Code dark + run green                                                        |
+|                                                                                          |
+|  TYPOGRAPHY: Plus Jakarta Sans / Plus Jakarta Sans                                      |
+|     Mood: friendly, modern, saas, clean, approachable, professional                     |
+|     Best For: SaaS products, web apps, dashboards, B2B, productivity tools              |
+|     Google Fonts: https://fonts.google.com/share?selection.family=Plus+Jakarta+Sans:wght@300;400;500;600;700|
+|     CSS Import: @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+San...|
+|                                                                                          |
+|  KEY EFFECTS:                                                                           |
+|     Large sections (48px+ gaps), animated patterns, bold hover (color shift),           |
+|     scroll-snap, large type (32px+), 200-300ms                                          |
+|                                                                                          |
+|  AVOID (Anti-patterns):                                                                 |
+|     Flat design without depth + Text-heavy pages                                        |
+|                                                                                          |
+|  PRE-DELIVERY CHECKLIST:                                                                |
+|     [ ] No emojis as icons (use SVG: Heroicons/Lucide)                                  |
+|     [ ] cursor-pointer on all clickable elements                                        |
+|     [ ] Hover states with smooth transitions (150-300ms)                                |
+|     [ ] Light mode: text contrast 4.5:1 minimum                                         |
+|     [ ] Focus states visible for keyboard nav                                           |
+|     [ ] prefers-reduced-motion respected                                                |
+|     [ ] Responsive: 375px, 768px, 1024px, 1440px                                        |
+|                                                                                          |
++-----------------------------------------------------------------------------------------+
+
+============================================================
+✅ Design system persisted to design-system/forgeagentos/
+   📄 design-system/forgeagentos/MASTER.md (Global Source of Truth)
+
+📖 Usage: When building a page, check design-system/forgeagentos/pages/[page].md first.
+   If exists, its rules override MASTER.md. Otherwise, use MASTER.md.
+============================================================

@@ -1,14 +1,18 @@
 /**
- * Next.js middleware — Forge persona header (Pillar 1 Phase 3).
+ * Next.js proxy — Forge persona header (Pillar 1 Phase 3).
+ *
+ * In Next.js 16, the `middleware` file convention is deprecated in
+ * favor of `proxy` (same shape, new name, runs on the same Edge
+ * runtime). This file is the renamed `middleware.ts`.
  *
  * Reads the `forge.persona` cookie on every request and exposes it to
  * downstream handlers (the FastAPI orchestrator in particular) via
  * the `X-Forge-Persona` request header. If the cookie is absent the
- * middleware falls back to the tenant default persona (`developer`)
+ * proxy falls back to the tenant default persona (`developer`)
  * — the backend `Tenant.default_persona` column also defaults to
  * `'developer'`, so the two sides stay in lockstep.
  *
- * The middleware does NOT block requests. Persona is a context value,
+ * The proxy does NOT block requests. Persona is a context value,
  * not an auth gate: anonymous tenants still see the same shell.
  *
  * Matching scope is intentionally narrow (`/((?!_next|api|.*\\..*).*)`)
@@ -49,7 +53,7 @@ export function readPersonaFromRequest(request: NextRequest): string {
   return trimmed.length > 0 ? trimmed : FORGE_PERSONA_DEFAULT;
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const persona = readPersonaFromRequest(request);
   // Clone the incoming request headers so we can forward `X-Forge-Persona`
   // to the orchestrator without mutating the read-only `request.headers`.

@@ -1,6 +1,9 @@
 'use client';
 
+import { Inbox } from 'lucide-react';
+
 import { RoadmapItem } from './RoadmapItem';
+import { EmptyState } from '@/src/components/empty-state';
 import type {
   RoadmapColumn,
   RoadmapItem as RoadmapItemType,
@@ -16,9 +19,20 @@ const COLUMNS: ReadonlyArray<{ key: RoadmapColumn; label: string }> = [
 export interface RoadmapViewProps {
   items: ReadonlyArray<RoadmapItemType>;
   onSelect?: (item: RoadmapItemType) => void;
+  onReviewPending?: () => void;
 }
 
-export function RoadmapView({ items, onSelect }: RoadmapViewProps) {
+export function RoadmapView({ items, onSelect, onReviewPending }: RoadmapViewProps) {
+  if (items.length === 0) {
+    return (
+      <EmptyState
+        illustration={<Inbox size={40} strokeWidth={1.5} />}
+        title="No ideas in the roadmap"
+        description="Approve ideas to move them onto the roadmap."
+        primaryAction={onReviewPending ? { label: 'Review pending ideas', onClick: onReviewPending } : undefined}
+      />
+    );
+  }
   return (
     <div
       className="grid grid-cols-1 gap-3 md:grid-cols-4"

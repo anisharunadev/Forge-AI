@@ -1,0 +1,18 @@
+---
+/**
+ * ImagePlaceholder.astro — visual placeholder for screenshots during development
+ *
+ *   <ImagePlaceholder caption="Co-pilot panel docked on the right" alt="Screenshot of co-pilot" />
+ */
+export interface Props {
+  caption?: string;
+  alt?: string;
+}
+const { caption, alt = 'Screenshot placeholder' } = Astro.props;
+---
+<figure class="image-placeholder-figure">
+  <div class="image-placeholder" role="img" aria-label={alt}>
+    <slot>{alt}</slot>
+  </div>
+  {caption && <figcaption class="image-placeholder-caption">{caption}</figcaption>}
+</figure>

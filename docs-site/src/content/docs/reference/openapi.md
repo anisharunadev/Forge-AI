@@ -1,4 +1,5 @@
 ---
+draft: false
 title: OpenAPI Reference
 description: The OpenAPI 3 schema for the Forge AI HTTP API.
 ---

@@ -1,4 +1,5 @@
 ---
+draft: false
 title: P1.5 — Validation
 description: 2-week validation phase — 15+ artifacts across 3+ types; ≥80% acceptance rate.
 ---

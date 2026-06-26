@@ -1,4 +1,5 @@
 ---
+draft: false
 title: ADR-007 — LangGraph SDLC agent orchestrator
 description: Workflows are LangGraph state machines with checkpoints and HITL gates.
 ---

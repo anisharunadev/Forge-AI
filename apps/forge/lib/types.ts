@@ -90,7 +90,7 @@ export interface OrchestratorError {
 }
 
 /** The persona a human is currently "logged in" as. */
-export type Persona = 'pm' | 'eng-lead' | 'cto';
+export type Persona = 'pm' | 'eng-lead' | 'steward' | 'cto';
 
 export interface PersonaMeta {
   id: Persona;

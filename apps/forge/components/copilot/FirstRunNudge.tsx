@@ -16,14 +16,25 @@
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
-import { useCopilotStore } from '@/lib/store/copilot';
+import {
+  useCopilotStore,
+  useHydrateCopilotFlags,
+} from '@/lib/store/copilot';
 
 export function FirstRunNudge() {
   const firstRunDismissed = useCopilotStore((s) => s.firstRunDismissed);
   const dismissFirstRun = useCopilotStore((s) => s.dismissFirstRun);
 
-  // Guard for SSR — the store defaults `firstRunDismissed` to `false`
-  // on the server, so we wait for hydration before mounting the UI.
+  // Hydrate `firstRunDismissed` from localStorage on the client.
+  // Must run BEFORE the first paint that depends on the value so we
+  // don't flash the nudge for users who already dismissed it.
+  // The store defaults to ``false``; this hook bumps it to ``true``
+  // post-mount if localStorage says so.
+  useHydrateCopilotFlags();
+
+  // Guard for SSR — even after the store hydration runs, the very
+  // first client render matches the server output (``false``), and
+  // only after the next effect tick do we know the real value.
   const [hydrated, setHydrated] = React.useState(false);
   React.useEffect(() => {
     setHydrated(true);

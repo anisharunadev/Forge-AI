@@ -77,6 +77,37 @@ export const PACKAGE_WIRING: readonly PackageWiringRow[] = [
       'adapters will land when @opengsd/gsd-pi is published.',
   },
   {
+    package: 'forge-pi',
+    npmName: '@forge-ai/forge-pi',
+    state: 'WIRED',
+    consumers: [
+      'lib/ideation/forge-pi-client.ts',
+      'lib/project-intelligence/forge-pi-client.ts',
+      'lib/copilot/forge-pi-client.ts',
+      'lib/forge-commands-catalog.ts',
+    ],
+    notes:
+      'v2.0 fork of @opengsd/gsd-pi. Powers Ideation Center, Project ' +
+      'Intelligence, and Co-pilot context. Optional — degrades gracefully ' +
+      'when not installed. See packages/forge-pi/README.md.',
+  },
+  {
+    package: 'forge-browser',
+    npmName: '@forge-ai/forge-browser',
+    state: 'WIRED',
+    consumers: [
+      'lib/forge-commands-catalog.ts',
+      'app/architecture/page.tsx',
+      'app/stories/[id]/page.tsx',
+      'lib/audit/visual-uat.ts',
+    ],
+    notes:
+      'v2.0 fork. Powers the Verify phase, forge-audit-uat visual mode, ' +
+      'and post-deploy smoke tests. Independent of forge-pi — installable ' +
+      'separately. Optional — degrades gracefully. See ' +
+      'packages/forge-browser/README.md.',
+  },
+  {
     package: 'mcp-router',
     npmName: 'forge-ai/mcp-router',
     state: 'READY',

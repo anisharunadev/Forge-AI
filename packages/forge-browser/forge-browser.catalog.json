@@ -1,0 +1,82 @@
+{
+  "$schema": "https://forge.ai/schemas/forge-package-catalog.v1.json",
+  "generatedAt": "2026-06-27T00:00:00.000Z",
+  "engineVersion": "0.1.0",
+  "enginePackage": "@forge-ai/forge-browser",
+  "packageCategory": "browser-automation",
+  "commandCount": 6,
+  "commands": [
+    {
+      "id": "forge-browser-screenshot",
+      "name": "forge-browser-screenshot",
+      "label": "Capture Screenshot",
+      "description": "Open a URL and capture a screenshot for visual verification.",
+      "category": "verification",
+      "icon": "Camera",
+      "estimatedDuration": 30,
+      "sourceFile": "commands/forge-browser/screenshot.md",
+      "skillFile": "skills/forge-browser-screenshot/SKILL.md",
+      "package": "@forge-ai/forge-browser"
+    },
+    {
+      "id": "forge-browser-visual-test",
+      "name": "forge-browser-visual-test",
+      "label": "Run Visual Test",
+      "description": "Diff a URL against a baseline screenshot for visual regression.",
+      "category": "verification",
+      "icon": "ImagePlus",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge-browser/visual-test.md",
+      "skillFile": "skills/forge-browser-visual-test/SKILL.md",
+      "package": "@forge-ai/forge-browser"
+    },
+    {
+      "id": "forge-browser-ui-review",
+      "name": "forge-browser-ui-review",
+      "label": "Review UI",
+      "description": "Run a multi-viewport UI review and capture responsive findings.",
+      "category": "review",
+      "icon": "LayoutTemplate",
+      "estimatedDuration": 90,
+      "sourceFile": "commands/forge-browser/ui-review.md",
+      "skillFile": "skills/forge-browser-ui-review/SKILL.md",
+      "package": "@forge-ai/forge-browser"
+    },
+    {
+      "id": "forge-browser-a11y-audit",
+      "name": "forge-browser-a11y-audit",
+      "label": "Audit Accessibility",
+      "description": "Run a WCAG accessibility audit against a URL.",
+      "category": "review",
+      "icon": "Accessibility",
+      "estimatedDuration": 90,
+      "sourceFile": "commands/forge-browser/a11y-audit.md",
+      "skillFile": "skills/forge-browser-a11y-audit/SKILL.md",
+      "package": "@forge-ai/forge-browser"
+    },
+    {
+      "id": "forge-browser-deploy-verify",
+      "name": "forge-browser-deploy-verify",
+      "label": "Verify Deployment",
+      "description": "Compare pre-deploy vs post-deploy screenshots and flag regressions.",
+      "category": "verification",
+      "icon": "Rocket",
+      "estimatedDuration": 60,
+      "sourceFile": "commands/forge-browser/deploy-verify.md",
+      "skillFile": "skills/forge-browser-deploy-verify/SKILL.md",
+      "package": "@forge-ai/forge-browser"
+    },
+    {
+      "id": "forge-browser-journey",
+      "name": "forge-browser-journey",
+      "label": "Run Customer Journey",
+      "description": "Execute a multi-step customer journey and capture screenshots for review.",
+      "category": "verification",
+      "icon": "Route",
+      "estimatedDuration": 180,
+      "sourceFile": "commands/forge-browser/journey.md",
+      "skillFile": "skills/forge-browser-journey/SKILL.md",
+      "package": "@forge-ai/forge-browser"
+    }
+  ]
+}

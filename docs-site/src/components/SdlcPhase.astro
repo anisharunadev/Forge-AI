@@ -1,0 +1,34 @@
+---
+/**
+ * SdlcPhase.astro — single phase in the SDLC pipeline visualization
+ *
+ *   <SdlcPhase icon="sparkles" name="Ideation" description="..." count="6 commands" color="amber" />
+ */
+export interface Props {
+  icon: string;
+  name: string;
+  description: string;
+  count: string;
+  color?: 'indigo' | 'cyan' | 'violet' | 'amber' | 'emerald' | 'rose';
+}
+import Icon from './Icon.astro';
+const { icon, name, description, count, color = 'indigo' } = Astro.props;
+
+const colorMap: Record<string, string> = {
+  indigo:  '#6366f1',
+  cyan:    '#22d3ee',
+  violet:  '#8b5cf6',
+  amber:   '#fbbf24',
+  emerald: '#34d399',
+  rose:    '#fb7185',
+};
+const accent = colorMap[color] ?? colorMap.indigo;
+---
+<div class="sdlc-phase" style={`--accent-color: ${accent};`}>
+  <div class="sdlc-phase-icon">
+    <Icon name={icon} size={18} color={accent} />
+  </div>
+  <h4>{name}</h4>
+  <p>{description}</p>
+  <div class="sdlc-phase-count">{count}</div>
+</div>

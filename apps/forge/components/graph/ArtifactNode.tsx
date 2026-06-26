@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Handle, Position, type NodeProps } from 'reactflow';
+import { Handle, Position, type Node, type NodeProps } from '@xyflow/react';
 
 import { cn } from '@/lib/utils';
 import { toneClasses, kgStateTone, agentStateGlyph } from '@/lib/design-system/status';
@@ -15,7 +15,7 @@ import type { NodeArtifactData } from './types';
  * kind (every kind gets a stable circle/dot/checkmark so it reads
  * even in monochrome).
  */
-export type ArtifactNodeProps = NodeProps<NodeArtifactData>;
+export type ArtifactNodeProps = NodeProps<Node<NodeArtifactData & Record<string, unknown>, 'artifact'>>;
 
 const ARTIFACT_GLYPH: Record<string, string> = {
   ADR: '◆',

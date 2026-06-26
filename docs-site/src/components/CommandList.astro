@@ -1,0 +1,30 @@
+---
+/**
+ * CommandList.astro — vertical list of forge-* commands with descriptions
+ *
+ *   <CommandList category="Architecture">
+ *     <CommandExample command="forge-architecture-plan" description="..." />
+ *     <CommandExample command="forge-architecture-adr" description="..." />
+ *   </CommandList>
+ */
+export interface Props {
+  category?: string;
+}
+const { category } = Astro.props;
+---
+{category && <h3 class="command-list-category">{category}</h3>}
+<ul class="command-list">
+  <slot />
+</ul>
+
+<style>
+  .command-list-category {
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-tertiary, #71717A);
+  }
+</style>

@@ -15,6 +15,7 @@ import type { LifecycleVerb, RunId, RunRecord, StageRecord } from './types';
 import { DEV_TENANT_UUID, SEED_RUN_UUID, SEED_RUN_ALIAS } from '../config/dev-seeds';
 
 export { FORGE_WS_BASE_URL } from './forge-api';
+export type { RunRecord, StageRecord };
 
 const ENV_BASE = process.env.FORA_FORGE_API_URL;
 

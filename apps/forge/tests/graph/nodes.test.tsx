@@ -8,7 +8,7 @@
 import * as React from 'react';
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { ReactFlowProvider } from 'reactflow';
+import { ReactFlowProvider } from '@xyflow/react';
 
 import {
   ArtifactNode,
@@ -24,26 +24,25 @@ import type {
   NodeAgentStepData,
   NodeApprovalData,
 } from '@/components/graph';
-import type { NodeProps } from 'reactflow';
+import type { Node, NodeProps } from '@xyflow/react';
 
 /**
  * React Flow renders node components via `<NodeWrapper data={...} />`,
  * but the node component itself only reads `data` (and `selected`).
  * The `<Handle>` children use zustand internally, so we wrap each
  * render in a `ReactFlowProvider`.
+ *
+ * The component constraint is intentionally `ComponentType<any>` so
+ * each production node's `NodeProps<Node<TData, 'kind'>>` shape
+ * passes through without us re-creating the per-node generic. The
+ * cast inside is the bridge.
  */
-function mountNode<T>(
-  Comp: React.ComponentType<NodeProps<T>>,
-  data: T,
-  selected = false,
-): void {
+function mountNode(Comp: React.ComponentType<any>, data: unknown, selected = false): void {
   // NodeProps has many fields; the node components only consume
   // `data` and `selected`. Cast the stub so we don't fabricate 15
   // optional fields.
-  const stub = {
-    data,
-    selected,
-  } as unknown as NodeProps<T>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const stub = { data, selected } as any;
   render(
     <ReactFlowProvider>
       <Comp {...stub} />

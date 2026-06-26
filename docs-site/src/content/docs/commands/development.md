@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Development Commands
 description: The 7 development commands — scaffold, implement, refactor, format, lint, hotfix, migrate.
 ---

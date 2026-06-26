@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Handle, Position, type NodeProps } from 'reactflow';
+import { Handle, Position, type Node, type NodeProps } from '@xyflow/react';
 
 import { cn } from '@/lib/utils';
 import {
@@ -19,7 +19,7 @@ import type { NodeAgentStepData } from './types';
  * thinking step reads as slow-pulse blue, executing as spinning
  * violet, completed as static green, failed as a one-shot red pulse.
  */
-export type AgentStepNodeProps = NodeProps<NodeAgentStepData>;
+export type AgentStepNodeProps = NodeProps<Node<NodeAgentStepData & Record<string, unknown>, 'agentStep'>>;
 
 const PULSE_CLASS: Record<ReturnType<typeof agentStatePulse>, string> = {
   none: '',

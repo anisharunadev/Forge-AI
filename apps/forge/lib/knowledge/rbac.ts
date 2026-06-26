@@ -20,6 +20,7 @@ export type KnowledgeCenterPersona = Persona;
 const PERSONA_LABEL: Record<KnowledgeCenterPersona, string> = {
   pm: "Product Manager",
   "eng-lead": "Engineering Lead",
+  steward: "Steward",
   cto: "CTO",
 };
 

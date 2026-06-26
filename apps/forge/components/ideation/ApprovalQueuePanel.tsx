@@ -1,9 +1,10 @@
 'use client';
 
-import { Check, Clock } from 'lucide-react';
+import { Check, Clock, Inbox } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/src/components/empty-state';
 import type { Approval } from '@/lib/ideation/data';
 
 export interface ApprovalQueuePanelProps {
@@ -17,6 +18,18 @@ export function ApprovalQueuePanel({
 }: ApprovalQueuePanelProps) {
   const pending = approvals.filter((a) => a.status === 'pending');
   const recent = approvals.filter((a) => a.status !== 'pending').slice(0, 3);
+
+  if (pending.length === 0 && recent.length === 0) {
+    return (
+      <div data-testid="approval-queue-panel">
+        <EmptyState
+          illustration={<Inbox size={40} strokeWidth={1.5} />}
+          title="Inbox zero"
+          description="You're all caught up. New approvals will appear here."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4" data-testid="approval-queue-panel">

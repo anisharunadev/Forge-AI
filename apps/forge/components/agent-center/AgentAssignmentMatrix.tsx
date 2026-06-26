@@ -1,9 +1,11 @@
 'use client';
 
 import * as React from 'react';
+import { Users, Plus } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/src/components/empty-state';
 import type {
   Agent,
   AgentAssignment,
@@ -15,6 +17,7 @@ export interface AgentAssignmentMatrixProps {
   providers: ReadonlyArray<ModelProvider>;
   assignments: ReadonlyArray<AgentAssignment>;
   taskTypes: ReadonlyArray<string>;
+  onCreateAssignment?: () => void;
 }
 
 export function AgentAssignmentMatrix({
@@ -22,6 +25,7 @@ export function AgentAssignmentMatrix({
   providers,
   assignments,
   taskTypes,
+  onCreateAssignment,
 }: AgentAssignmentMatrixProps) {
   const agentById = React.useMemo(
     () => new Map(agents.map((a) => [a.id, a])),
@@ -31,6 +35,23 @@ export function AgentAssignmentMatrix({
     () => new Map(providers.map((p) => [p.id, p])),
     [providers],
   );
+
+  if (agents.length === 0) {
+    return (
+      <div data-testid="assignment-matrix-empty">
+        <EmptyState
+          illustration={<Users size={40} strokeWidth={1.5} />}
+          title="No assignments yet"
+          description="Assign agents to projects to start orchestrating work."
+          primaryAction={
+            onCreateAssignment
+              ? { label: 'Create Assignment', onClick: onCreateAssignment, icon: <Plus size={14} /> }
+              : undefined
+          }
+        />
+      </div>
+    );
+  }
 
   return (
     <div

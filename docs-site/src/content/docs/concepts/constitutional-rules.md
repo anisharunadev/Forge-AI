@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Constitutional Rules
 description: The eight immutable rules that govern the Forge platform.
 ---

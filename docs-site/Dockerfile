@@ -8,7 +8,7 @@
 # .astro cache and source tree are dropped on the floor.
 
 # ---- Dependencies -------------------------------------------------------
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /app
 
 # Copy manifests first so the install layer is cached independently
@@ -21,7 +21,7 @@ RUN if [ ! -f package-lock.json ]; then \
 RUN npm ci --no-audit --no-fund || npm install --no-audit --no-fund
 
 # ---- Build --------------------------------------------------------------
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 
 # Reuse the resolved dependency tree from the deps stage.
@@ -32,7 +32,7 @@ COPY . .
 RUN npm run build
 
 # ---- Runtime ------------------------------------------------------------
-FROM node:20-alpine AS runtime
+FROM node:22-alpine AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production \

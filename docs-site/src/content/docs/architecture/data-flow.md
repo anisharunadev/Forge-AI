@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Data Flow
 description: Sequence diagrams for the canonical SDLC flows — discovery, ideation, deploy, rollback.
 ---

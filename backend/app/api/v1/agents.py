@@ -92,7 +92,6 @@ async def update_agent(
     response_model=None,
     response_class=Response,
 )
-    response_class=Response,
 @audit(action="agents.delete", target_type="agent")
 @audit(action="agents.delete", target_type="agent")
 async def delete_agent(

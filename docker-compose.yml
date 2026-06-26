@@ -135,7 +135,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health/liveliness || exit 1"]
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:4000/health/liveliness', timeout=3).status == 200 else 1)\" || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -186,7 +186,10 @@ services:
     restart: unless-stopped
     environment:
       # ADR-002: single Postgres for OLTP + graph + vectors.
-      DATABASE_URL: "postgresql://${POSTGRES_USER:-forge}:${POSTGRES_PASSWORD:-forge}@postgres:5432/${POSTGRES_DB:-forge}"
+      # The backend is async-native (sqlalchemy[asyncio] + asyncpg) — must
+      # use the explicit asyncpg URL prefix or SQLAlchemy falls back to
+      # psycopg2 (sync, not installed) at engine creation time.
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-forge}:${POSTGRES_PASSWORD:-forge}@postgres:5432/${POSTGRES_DB:-forge}"
       REDIS_URL: "redis://redis:6379/0"
       # OIDC: backend validates tokens issued by the local Keycloak
       # realm. Issuer URL must match what Keycloak prints on

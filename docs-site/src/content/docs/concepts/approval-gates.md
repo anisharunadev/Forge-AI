@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Approval Gates (HITL)
 description: Where human approval is required, how the gate is enforced, and how decisions are audited.
 ---

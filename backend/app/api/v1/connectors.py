@@ -102,7 +102,6 @@ async def update_connector(
     response_model=None,
     response_class=Response,
 )
-    response_class=Response,
 @audit(action="connectors.delete", target_type="connector")
 @audit(action="connectors.delete", target_type="connector")
 async def delete_connector(

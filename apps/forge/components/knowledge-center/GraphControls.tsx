@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useReactFlow } from 'reactflow';
+import { useReactFlow } from '@xyflow/react';
 
 import { Button } from '@/components/ui/button';
 

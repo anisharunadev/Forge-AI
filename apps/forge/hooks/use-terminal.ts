@@ -7,6 +7,22 @@ import { WebLinksAddon } from '@xterm/addon-web-links';
 
 import { openForgeWebSocket, type ForgeWebSocketHandle } from '@/lib/websocket';
 import { FORGE_TERMINAL_WS_URL } from '@/lib/forge-api';
+import {
+  FORGE_DARK_THEME,
+  FORGE_TERMINAL_FONT,
+  FORGE_TERMINAL_FONT_SIZE,
+} from '@/lib/terminal-theme';
+import { useTerminalStore } from '@/lib/store';
+
+/**
+ * Exposes the high-level connection state so banners and status bars
+ * can render the correct badge without subscribing to every WS event.
+ */
+export type TerminalConnectionState =
+  | 'connecting'
+  | 'connected'
+  | 'reconnecting'
+  | 'failed';
 
 /**
  * Manages the xterm.js lifecycle for a single TerminalPane:
@@ -14,6 +30,11 @@ import { FORGE_TERMINAL_WS_URL } from '@/lib/forge-api';
  *   - attaches FitAddon + WebLinksAddon
  *   - opens a WebSocket to the supplied WS path and pipes bytes both ways
  *   - resizes on ResizeObserver / window resize
+ *   - reports connection state upward so banners / badges stay in sync
+ *
+ * WebLinksAddon is configured to open links in a new tab — important
+ * for terminal workflows where clicking a URL shouldn't navigate the
+ * user away from the session.
  */
 export function useTerminal(opts: {
   /**
@@ -25,12 +46,18 @@ export function useTerminal(opts: {
    */
   wsPath?: string;
   welcome?: string;
+  /** Optional session id — when set, the hook flips the session
+   * status to 'active' / 'error' as the socket opens / fails. */
+  sessionId?: string;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const termRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
   const socketRef = useRef<ForgeWebSocketHandle | null>(null);
-  const [connected, setConnected] = useState<boolean>(false);
+  const [connectionState, setConnectionState] =
+    useState<TerminalConnectionState>('connecting');
+  const [latencyMs, setLatencyMs] = useState<number | undefined>(undefined);
+  const setSessionStatus = useTerminalStore((s) => s.setSessionStatus);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -38,30 +65,18 @@ export function useTerminal(opts: {
     const term = new Terminal({
       convertEol: true,
       cursorBlink: true,
-      fontFamily:
-        'ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace',
-      fontSize: 13,
-      theme: {
-        // Refreshed (Phase B) — match the forge-950 background and the
-        // new indigo accent palette.
-        background: '#070b16',
-        foreground: '#e6ebf5',
-        cursor: '#6366f1',
-        cursorAccent: '#0b1020',
-        selectionBackground: '#4338ca',
-        black: '#0b1020',
-        red: '#f43f5e',
-        green: '#10b981',
-        yellow: '#f59e0b',
-        blue: '#6366f1',
-        magenta: '#8b5cf6',
-        cyan: '#0ea5e9',
-        white: '#e2e8f0',
-      },
+      fontFamily: FORGE_TERMINAL_FONT,
+      fontSize: FORGE_TERMINAL_FONT_SIZE,
+      theme: FORGE_DARK_THEME,
+      allowProposedApi: true,
     });
     const fit = new FitAddon();
     term.loadAddon(fit);
-    term.loadAddon(new WebLinksAddon());
+    // WebLinksAddon — open links in a new tab so users don't lose
+    // their terminal session when a URL appears in the output.
+    term.loadAddon(new WebLinksAddon((_e, uri) => {
+      window.open(uri, '_blank', 'noopener,noreferrer');
+    }));
 
     term.open(containerRef.current);
     try {
@@ -87,20 +102,35 @@ export function useTerminal(opts: {
     // The default URL is the local PTY sidecar; override via env or
     // pass `wsPath` to repoint.
     const url = opts.wsPath ?? FORGE_TERMINAL_WS_URL;
+    let openedAt = 0;
     socketRef.current = openForgeWebSocket(url, {
       onOpen: () => {
-        setConnected(true);
+        openedAt = performance.now();
+        setConnectionState('connected');
+        setSessionStatus(opts.sessionId ?? '', 'active');
         term.writeln('\x1b[1;32m✓ connected\x1b[0m');
       },
       onClose: () => {
-        setConnected(false);
-        term.writeln('\x1b[1;33m⚠ disconnected\x1b[0m — start the sidecar with `pnpm dev:terminal`');
+        setConnectionState('reconnecting');
+        setSessionStatus(opts.sessionId ?? '', 'error');
+        setLatencyMs(undefined);
+        term.writeln(
+          '\x1b[1;33m⚠ disconnected\x1b[0m — start the sidecar with `pnpm dev:terminal`',
+        );
       },
       onError: () => {
-        setConnected(false);
-        term.writeln('\x1b[1;31m✗ sidecar unreachable\x1b[0m — run `pnpm dev:terminal` then retry');
+        setConnectionState('reconnecting');
+        setSessionStatus(opts.sessionId ?? '', 'error');
+        term.writeln(
+          '\x1b[1;31m✗ sidecar unreachable\x1b[0m — run `pnpm dev:terminal` then retry',
+        );
       },
       onMessage: (event) => {
+        if (openedAt > 0 && latencyMs === undefined) {
+          // Heuristic: ping latency from open → first inbound byte.
+          const ms = Math.round(performance.now() - openedAt);
+          if (Number.isFinite(ms) && ms >= 0) setLatencyMs(ms);
+        }
         term.write(typeof event.data === 'string' ? event.data : '');
       },
     });
@@ -116,22 +146,36 @@ export function useTerminal(opts: {
     ro.observe(containerRef.current);
     window.addEventListener('resize', handleResize);
 
+    // Listen for paste events filtered by this session's id — the
+    // toolbar dispatches a generic 'paste' event with the text and we
+    // forward it into the local PTY socket.
+    const onWsSend = (e: Event) => {
+      const detail = (e as CustomEvent<{ sessionId?: string; text: string }>).detail;
+      if (!detail?.text) return;
+      if (detail.sessionId && detail.sessionId !== opts.sessionId) return;
+      socketRef.current?.send(detail.text);
+    };
+    window.addEventListener('forge:terminal:ws-send', onWsSend);
+
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('forge:terminal:ws-send', onWsSend);
       ro.disconnect();
       socketRef.current?.close();
       socketRef.current = null;
       term.dispose();
       termRef.current = null;
       fitRef.current = null;
-      setConnected(false);
+      setLatencyMs(undefined);
+      setConnectionState('connecting');
     };
     // opts.wsPath intentionally triggers reconnect.
-  }, [opts.wsPath, opts.welcome]);
+  }, [opts.wsPath, opts.welcome, opts.sessionId, setSessionStatus]);
 
   return {
     containerRef,
-    connected,
+    connectionState,
+    latencyMs,
     write: (data: string): void => termRef.current?.write(data),
     writeln: (line: string): void => termRef.current?.writeln(line),
     fit: (): void => {
@@ -140,6 +184,53 @@ export function useTerminal(opts: {
       } catch {
         /* noop */
       }
+    },
+    focus: (): void => termRef.current?.focus(),
+    clear: (): void => termRef.current?.clear(),
+    /**
+     * Native xterm search — scans the scrollback for the next case-
+     * insensitive match of `query`. Highlights + selects the first match
+     * found starting from `direction` ('next' | 'prev') of the cursor.
+     * Returns the match info (or null if none) so the caller can drive
+     * a "1/3" counter UI.
+     *
+     * Implemented locally because `@xterm/addon-search` isn't part of
+     * the dependency set yet; this gets us the same UX without the
+     * extra CSS + bundle weight.
+     */
+    search: (query: string, direction: 'next' | 'prev' = 'next') => {
+      const term = termRef.current;
+      if (!term || !query) return null;
+      const buf = term.buffer.active;
+      const totalRows = buf.length;
+      const cursorRow = buf.cursorY + buf.viewportY;
+      const rowsToScan = Array.from({ length: totalRows }, (_, i) => i);
+      if (direction === 'prev') rowsToScan.reverse();
+      const startAt = cursorRow;
+      const ordered = [
+        ...rowsToScan.filter((r) => (direction === 'next' ? r > startAt : r < startAt)),
+        ...rowsToScan.filter((r) => (direction === 'next' ? r <= startAt : r >= startAt)),
+      ];
+      const needle = query.toLowerCase();
+      for (const r of ordered) {
+        const line = buf.getLine(r);
+        if (!line) continue;
+        const text = line.translateToString(true).toLowerCase();
+        const col = text.indexOf(needle);
+        if (col >= 0) {
+          term.select(col, r, query.length);
+          // Scroll the match into view (best-effort).
+          try {
+            (term as unknown as { scrollToLine?: (n: number) => void }).scrollToLine?.(r);
+          } catch {
+            /* noop */
+          }
+          return { row: r, col, length: query.length };
+        }
+      }
+      // No match — clear selection so the user gets visual feedback.
+      try { term.select(0, 0, 0); } catch { /* noop */ }
+      return null;
     },
   };
 }

@@ -173,7 +173,7 @@ export function StoryCard({ story, isAudit }: StoryCardProps) {
             </Link>
           ) : null}
           <Link
-            href={`/project-intelligence/stories/${story.id}`}
+            href={`/stories/${story.id}`}
             className="rounded-sm border border-forge-700 bg-forge-800 px-3 py-1 font-medium text-forge-50 hover:border-forge-500"
             data-testid="story-open"
             aria-label={`Open ${story.identifier} story`}

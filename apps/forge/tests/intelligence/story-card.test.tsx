@@ -35,7 +35,7 @@ describe("<StoryCard>", () => {
     expect(root.getAttribute("data-story-priority")).toBe("high");
     const open = screen.getByTestId("story-open");
     expect(open.getAttribute("href")).toBe(
-      "/project-intelligence/stories/story-forge-501-list",
+      "/stories/story-forge-501-list",
     );
   });
 

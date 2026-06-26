@@ -172,7 +172,7 @@ export function renderMarkdown(md: string): React.ReactNode {
     const olMatch = line.match(/^\d+\.\s+(.+)$/);
     if (ulMatch || olMatch) {
       const type = ulMatch ? 'ul' : 'ol';
-      const text = (ulMatch ?? olMatch)![1];
+      const text = (ulMatch ?? olMatch)![1] ?? '';
       if (listBuf && listBuf.type === type) {
         listBuf.items.push(text);
       } else {

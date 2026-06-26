@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { useForm, type UseFormProps, type UseFormReturn, type FieldValues } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import type { ZodType } from 'zod'
+import type { z } from 'zod'
 
 import { Form } from '@/components/ui/form'
 
@@ -21,19 +21,21 @@ import { Form } from '@/components/ui/form'
  * Zod 4 / react-hook-form v7 / @hookform/resolvers v5 compatibility:
  *   Zod 4's `ZodType<Output, Input>` defaults to `<unknown, unknown>`,
  *   which doesn't satisfy `react-hook-form`'s `FieldValues` constraint
- *   at the type level. The call-site cast below is the documented
- *   escape hatch for the resolver signature, which the v5 adapter
- *   accepts for both Zod 3 and Zod 4 schemas.
+ *   at the type level. We accept the schema as a Zod 4 `ZodTypeAny`
+ *   and bind `T = z.infer<S>` (the Output type) so enums and literals
+ *   stay narrow all the way through `form.handleSubmit`'s
+ *   SubmitHandler. The previous `ZodType<T, any>` constraint widened
+ *   those to `string` because the Input slot defaulted to `unknown`.
  */
-export function useZodForm<T extends FieldValues>(
-  schema: ZodType<T, any>,
+export function useZodForm<S extends z.ZodTypeAny, T extends FieldValues>(
+  schema: S,
   options?: Omit<UseFormProps<T>, 'resolver'>,
 ): UseFormReturn<T> {
   return useForm<T>({
     ...(options ?? {}),
     // The v5 zodResolver signature is a discriminated union over
     // Zod 3 and Zod 4 internal types; the cast bridges the v4
-    // `ZodType<T, any>` shape to the union. The runtime schema is
+    // `ZodType<S>` shape to the union. The runtime schema is
     // identical between Zod 3 and Zod 4, so this is type-only.
     resolver: zodResolver(
       schema as unknown as Parameters<typeof zodResolver>[0],

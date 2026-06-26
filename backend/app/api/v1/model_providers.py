@@ -97,7 +97,6 @@ async def update_provider(
     response_model=None,
     response_class=Response,
 )
-    response_class=Response,
 @audit(action="model_providers.delete", target_type="model_provider")
 @audit(action="model_providers.delete", target_type="model_provider")
 async def delete_provider(

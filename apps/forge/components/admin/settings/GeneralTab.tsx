@@ -49,7 +49,7 @@ export function GeneralTab() {
 
   const project = projectQuery.data;
 
-  const form = useZodForm(projectUpdateSchema, {
+  const form = useZodForm<typeof projectUpdateSchema, ProjectUpdateForm>(projectUpdateSchema, {
     defaultValues: {
       name: project?.name ?? '',
       slug: project?.slug ?? '',

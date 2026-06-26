@@ -15,13 +15,16 @@
  */
 
 import Link from 'next/link';
+import { Activity } from 'lucide-react';
 
 import { RunStatusBadge } from '@/components/RunStatusBadge';
 import { seedAliasFor } from '@/lib/api';
+import { EmptyState } from '@/src/components/empty-state';
 import type { RunRecord } from '@/lib/types';
 
 export interface RunIndexTableProps {
   runs: ReadonlyArray<RunRecord>;
+  onClearFilters?: () => void;
 }
 
 function formatStarted(iso: string | null): string {
@@ -40,14 +43,21 @@ function formatStarted(iso: string | null): string {
   }
 }
 
-export function RunIndexTable({ runs }: RunIndexTableProps) {
+export function RunIndexTable({ runs, onClearFilters }: RunIndexTableProps) {
   if (runs.length === 0) {
     return (
-      <div
-        className="rounded-md border border-dashed border-border bg-card/40 px-4 py-8 text-center text-sm text-muted-foreground"
-        data-testid="runs-empty-row"
-      >
-        No runs match the current filter.
+      <div data-testid="runs-empty-row" className="rounded-md border border-dashed border-border bg-card/40">
+        <EmptyState
+          compact
+          illustration={<Activity size={28} strokeWidth={1.5} />}
+          title="No runs match the current filter"
+          description="Clear your filters to see every run, or dispatch a new one to populate the timeline."
+          primaryAction={
+            onClearFilters
+              ? { label: 'Clear filters', onClick: onClearFilters }
+              : undefined
+          }
+        />
       </div>
     );
   }

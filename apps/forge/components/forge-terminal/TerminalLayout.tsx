@@ -6,7 +6,7 @@ import { LayoutGrid, Maximize2, Columns, Rows } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { useTerminalStore, type LayoutMode } from '@/lib/store';
+import { useTerminalStore, type LayoutMode, type SessionStatus } from '@/lib/store';
 import { TerminalPane } from '@/components/forge-terminal/TerminalPane';
 
 const LAYOUTS: { id: LayoutMode; label: string; icon: React.ComponentType<{ className?: string }> }[] =
@@ -17,16 +17,18 @@ const LAYOUTS: { id: LayoutMode; label: string; icon: React.ComponentType<{ clas
     { id: 'grid-2x2', label: 'Grid 2×2', icon: LayoutGrid },
   ];
 
-function PaneSlot({ sessionId, agent, workspace }: {
+function PaneSlot({ sessionId, agent, workspace, status }: {
   sessionId: string;
   agent: string;
   workspace: string;
+  status: SessionStatus;
 }) {
   return (
     <TerminalPane
       sessionId={sessionId}
       agent={agent}
       workspace={workspace}
+      status={status}
       wsPath={`/ws/terminal/${sessionId}`}
     />
   );
@@ -84,6 +86,7 @@ export function TerminalLayout() {
             sessionId={active.id}
             agent={active.agent}
             workspace={active.workspace}
+            status={active.status}
           />
         )}
 
@@ -94,6 +97,7 @@ export function TerminalLayout() {
                 sessionId={active.id}
                 agent={active.agent}
                 workspace={active.workspace}
+                status={active.status}
               />
             </div>
             {extras[0] ? (
@@ -102,6 +106,7 @@ export function TerminalLayout() {
                   sessionId={extras[0].id}
                   agent={extras[0].agent}
                   workspace={extras[0].workspace}
+                status={extras[0].status}
                 />
               </div>
             ) : null}
@@ -115,6 +120,7 @@ export function TerminalLayout() {
                 sessionId={active.id}
                 agent={active.agent}
                 workspace={active.workspace}
+                status={active.status}
               />
             </div>
             {extras[0] ? (
@@ -123,6 +129,7 @@ export function TerminalLayout() {
                   sessionId={extras[0].id}
                   agent={extras[0].agent}
                   workspace={extras[0].workspace}
+                status={extras[0].status}
                 />
               </div>
             ) : null}
@@ -139,12 +146,14 @@ export function TerminalLayout() {
               sessionId={active.id}
               agent={active.agent}
               workspace={active.workspace}
+              status={active.status}
             />
             {extras[0] ? (
               <PaneSlot
                 sessionId={extras[0].id}
                 agent={extras[0].agent}
                 workspace={extras[0].workspace}
+                status={extras[0].status}
               />
             ) : null}
             {extras[1] ? (
@@ -152,6 +161,7 @@ export function TerminalLayout() {
                 sessionId={extras[1].id}
                 agent={extras[1].agent}
                 workspace={extras[1].workspace}
+                status={extras[1].status}
               />
             ) : null}
             {extras[2] ? (
@@ -159,6 +169,7 @@ export function TerminalLayout() {
                 sessionId={extras[2].id}
                 agent={extras[2].agent}
                 workspace={extras[2].workspace}
+                status={extras[2].status}
               />
             ) : null}
           </div>

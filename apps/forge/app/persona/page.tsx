@@ -22,7 +22,7 @@ import { PersonaMemoryPanel } from '@/components/persona/PersonaMemoryPanel';
 import {
   FORGE_PERSONA_COOKIE,
   FORGE_PERSONA_DEFAULT,
-} from '@/middleware';
+} from '@/proxy';
 import {
   readPersonaMemory,
   type PersonaMemoryEntry,

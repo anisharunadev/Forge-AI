@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Quickstart
 description: From git clone to a running Forge AI stack in roughly fifteen minutes.
 ---

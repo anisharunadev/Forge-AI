@@ -77,7 +77,7 @@ export function EditAgentConfigDialog({
   const update = useUpdateAgentConfig();
   const { toast } = useToast();
 
-  const form = useZodForm(agentConfigSchema, {
+  const form = useZodForm<typeof agentConfigSchema, AgentConfigForm>(agentConfigSchema, {
     defaultValues: {
       systemPrompt: '',
       temperature: 0,

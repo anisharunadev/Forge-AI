@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Forge Commands Overview
 description: The 63 forge-* commands across 13 categories — the executable surface of Forge AI.
 ---

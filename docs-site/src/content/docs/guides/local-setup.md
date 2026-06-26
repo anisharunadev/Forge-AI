@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Local Setup
 description: Set up a Forge AI development environment on Linux or macOS.
 ---

@@ -23,6 +23,7 @@ import { DataTable } from '@/components/data';
 import { useApiData } from '@/hooks/use-api-data';
 
 import { listAgents, type Agent } from '@/lib/agent-center/data';
+import { withStep45Agents } from '@/lib/agent-center/step45-agents';
 import { EditAgentConfigDialog } from './EditAgentConfigDialog';
 
 const agentColumns: ReadonlyArray<ColumnDef<Agent>> = [
@@ -72,7 +73,9 @@ const agentColumns: ReadonlyArray<ColumnDef<Agent>> = [
 
 export function AgentsTab() {
   const agentsQ = useApiData<ReadonlyArray<Agent>>('/v1/agent-center/agents');
-  const agents = agentsQ.data ?? [];
+  // Step 45 — merge the 3 package-backed agents (PM, QA, Canary) into the
+  // orchestrator-provided list. The orchestrator wins on id collision.
+  const agents = withStep45Agents(agentsQ.data ?? []);
   const [open, setOpen] = React.useState(false);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [selectedName, setSelectedName] = React.useState<string | undefined>(

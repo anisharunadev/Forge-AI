@@ -1,0 +1,29 @@
+---
+/**
+ * BeforeAfter.astro — "if you have" / "Forge gives you" comparison row
+ *
+ *   <BeforeAfter
+ *     problem="A single AI agent that hallucinates contracts"
+ *     solution="A typed-artifact pipeline with HITL gates"
+ *   />
+ */
+export interface Props {
+  problem: string;
+  solution: string;
+  problemLabel?: string;
+  solutionLabel?: string;
+}
+const { problem, solution, problemLabel = 'If you have', solutionLabel = 'Forge gives you' } = Astro.props;
+---
+<div class="before-after">
+  <div class="before-after-col problem">
+    <div class="before-after-label">— {problemLabel}</div>
+    <h3>{problem}</h3>
+    <slot name="problem" />
+  </div>
+  <div class="before-after-col solution">
+    <div class="before-after-label">+ {solutionLabel}</div>
+    <h3>{solution}</h3>
+    <slot name="solution" />
+  </div>
+</div>

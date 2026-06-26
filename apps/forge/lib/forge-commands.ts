@@ -20,7 +20,8 @@ export type ForgeCommandCategoryId =
   | 'milestones'
   | 'learning'
   | 'workflow'
-  | 'environment';
+  | 'environment'
+  | 'operational';
 
 export interface ForgeCommandCategory {
   id: ForgeCommandCategoryId;
@@ -96,6 +97,12 @@ export const FORGE_COMMAND_CATEGORIES: readonly ForgeCommandCategory[] = [
   },
 ] as const;
 
+/** Source package of a Forge command — drives the Command Center category. */
+export type ForgeCommandPackageId =
+  | 'forge-core'
+  | 'forge-pi'
+  | 'forge-browser';
+
 export interface ForgeCommand {
   /** Slash-command name as shown to the user (e.g. `forge-dev-new-feature`). */
   name: string;
@@ -108,6 +115,12 @@ export interface ForgeCommand {
   icon: string;
   /** Approximate runtime estimate in seconds; UI uses for progress UI. */
   estimatedDuration?: number;
+  /**
+   * Originating package. Defaults to `forge-core` for legacy entries.
+   * The Command Center uses this to render the
+   * "Core workflow" / "Product intelligence" / "Browser automation" tabs.
+   */
+  package?: ForgeCommandPackageId;
 }
 
 export const FORGE_COMMANDS: readonly ForgeCommand[] = [

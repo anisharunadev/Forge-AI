@@ -9,8 +9,7 @@ beforeAll(() => {
     unobserve() {}
     disconnect() {}
   }
-  // @ts-expect-error -- jsdom doesn't define ResizeObserver; cmdk needs it.
-  globalThis.ResizeObserver = ResizeObserverMock;
+  globalThis.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
 
   if (!Element.prototype.scrollIntoView) {
     Element.prototype.scrollIntoView = function () {

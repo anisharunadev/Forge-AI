@@ -1,4 +1,5 @@
 ---
+draft: false
 title: ADR-002 — PostgreSQL 17 + Apache AGE + pgvector
 description: The single-database substrate for graph, vector, and relational data with row-level security.
 ---

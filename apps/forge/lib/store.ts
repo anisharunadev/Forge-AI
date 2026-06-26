@@ -6,9 +6,27 @@
  */
 
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
-export type AgentId = 'claude-code' | 'codex' | 'gemini-cli' | 'custom';
+export type AgentId = 'claude-code' | 'codex' | 'gemini-cli' | 'aider' | 'cursor' | 'custom';
 export type LayoutMode = 'single' | 'split-horizontal' | 'split-vertical' | 'grid-2x2';
+
+/** Color tag ids — must stay in sync with `SESSION_COLOR_TAGS` in
+ * `components/forge-terminal/NewSessionDialog.tsx`. */
+export type SessionColorId =
+  | 'indigo'
+  | 'cyan'
+  | 'emerald'
+  | 'amber'
+  | 'rose'
+  | 'violet'
+  | 'slate'
+  | 'lime';
+
+/** Session lifecycle — drives the tab status dot and the empty/error
+ * panes. New sessions start as 'creating' and flip to 'active' once
+ * the WebSocket opens. */
+export type SessionStatus = 'creating' | 'active' | 'closed' | 'error';
 
 export interface TerminalSession {
   id: string;
@@ -17,6 +35,10 @@ export interface TerminalSession {
   workspace: string;
   createdAt: string;
   commandCount: number;
+  /** Tab visual differentiator. */
+  color: SessionColorId;
+  /** Lifecycle state. */
+  status: SessionStatus;
 }
 
 export interface AuditEntry {
@@ -24,6 +46,8 @@ export interface AuditEntry {
   sessionId: string;
   command: string;
   timestamp: string;
+  /** Process exit code — surfaced as a colored badge in the audit log. */
+  exitCode?: number;
 }
 
 interface TerminalState {
@@ -36,12 +60,28 @@ interface TerminalState {
   /** Map of sessionId -> layout slot index (for split/grid layouts). */
   layoutSlots: Record<string, number>;
 
-  createSession: (input?: { title?: string; agent?: AgentId }) => string;
+  createSession: (input?: {
+    title?: string;
+    agent?: AgentId;
+    workspace?: string;
+    color?: SessionColorId;
+  }) => string;
+  /**
+   * Mark a session as closed (its tab fades to muted; the row stays in
+   * the list with a Reopen action). Use `removeSession` to hard-delete.
+   */
   closeSession: (sessionId: string) => void;
+  /** Permanently delete a session from the list. */
+  removeSession: (sessionId: string) => void;
+  /** Reopen a previously-closed session — flips status back to active. */
+  reopenSession: (sessionId: string) => void;
   setActiveSession: (sessionId: string) => void;
   setAgent: (agent: AgentId) => void;
   setWorkspace: (workspace: string) => void;
   setLayout: (layout: LayoutMode) => void;
+  /** Reorder tabs (drag-to-reorder from the tab bar). */
+  reorderSessions: (orderedIds: string[]) => void;
+  setSessionStatus: (sessionId: string, status: SessionStatus) => void;
   appendAudit: (entry: Omit<AuditEntry, 'id' | 'timestamp'>) => void;
   bumpCommandCount: (sessionId: string) => void;
 }
@@ -60,7 +100,7 @@ export const useTerminalStore = create<TerminalState>((set) => ({
   audit: [],
   layoutSlots: {},
 
-  createSession: ({ title, agent } = {}) => {
+  createSession: ({ title, agent, workspace, color } = {}) => {
     const id = makeSessionId();
     const createdAt = new Date().toISOString();
     set((state) => ({
@@ -70,9 +110,13 @@ export const useTerminalStore = create<TerminalState>((set) => ({
           id,
           title: title ?? `Session ${state.sessions.length + 1}`,
           agent: agent ?? state.agent,
-          workspace: state.workspace,
+          workspace: workspace ?? state.workspace,
           createdAt,
           commandCount: 0,
+          color: color ?? 'indigo',
+          // New sessions enter the 'creating' state and flip to 'active'
+          // once the WebSocket attaches in `useTerminal`.
+          status: 'creating' as const,
         },
       ],
       activeSessionId: id,
@@ -83,16 +127,69 @@ export const useTerminalStore = create<TerminalState>((set) => ({
   closeSession: (sessionId) =>
     set((state) => {
       const remaining = state.sessions.filter((s) => s.id !== sessionId);
+      const closed = state.sessions.find((s) => s.id === sessionId);
+      const next = closed
+        ? state.sessions.map((s) =>
+            s.id === sessionId ? { ...s, status: 'closed' as const } : s,
+          )
+        : state.sessions;
+      // If the closed tab was active, fall back to the first non-closed
+      // session so the user is never stranded on a closed tab.
+      const fallback =
+        state.activeSessionId === sessionId
+          ? (next.find((s) => s.status !== 'closed')?.id ?? null)
+          : state.activeSessionId;
+      return {
+        sessions: next,
+        activeSessionId: fallback,
+      };
+    }),
+
+  removeSession: (sessionId) =>
+    set((state) => {
+      const remaining = state.sessions.filter((s) => s.id !== sessionId);
       return {
         sessions: remaining,
         activeSessionId:
           state.activeSessionId === sessionId
-            ? (remaining[0]?.id ?? null)
+            ? (remaining.find((s) => s.status !== 'closed')?.id ??
+               remaining[0]?.id ??
+               null)
             : state.activeSessionId,
       };
     }),
 
+  reopenSession: (sessionId) =>
+    set((state) => ({
+      sessions: state.sessions.map((s) =>
+        s.id === sessionId ? { ...s, status: 'active' as const } : s,
+      ),
+      activeSessionId: sessionId,
+    })),
+
   setActiveSession: (sessionId) => set({ activeSessionId: sessionId }),
+
+  reorderSessions: (orderedIds) =>
+    set((state) => {
+      const byId = new Map(state.sessions.map((s) => [s.id, s]));
+      const next: typeof state.sessions = [];
+      for (const id of orderedIds) {
+        const s = byId.get(id);
+        if (s) next.push(s);
+      }
+      // Defensive: any session not in the order list is appended.
+      for (const s of state.sessions) {
+        if (!orderedIds.includes(s.id)) next.push(s);
+      }
+      return { sessions: next };
+    }),
+
+  setSessionStatus: (sessionId, status) =>
+    set((state) => ({
+      sessions: state.sessions.map((s) =>
+        s.id === sessionId ? { ...s, status } : s,
+      ),
+    })),
 
   setAgent: (agent) =>
     set((state) => ({
@@ -133,25 +230,99 @@ export const useTerminalStore = create<TerminalState>((set) => ({
 }));
 
 /**
- * Project Onboarding wizard state (M2 — F-021).
+ * Project Onboarding wizard state (M2 — F-021, modernized F-022).
  *
  * Tracks the current step index and per-step data so the wizard
- * survives navigation away and back. Data is typed loosely to allow
- * each step component to define its own shape.
+ * survives navigation, reloads, and deep links. State is also
+ * mirrored into the URL `?step=` search param (deep-linkable) and
+ * persisted to `localStorage` via `zustand/middleware` so refresh
+ * doesn't lose progress — matching the spec's URL + Zustand
+ * persistence requirement.
+ *
+ * Data is typed loosely to allow each step component to define
+ * its own shape; consumers narrow at the boundary.
  */
 interface OnboardingState {
   currentStep: number;
   stepData: Record<number, unknown>;
+  /** Per-step validation flag — true once the user has blurred a field. */
+  stepTouched: Record<number, boolean>;
   setStep: (step: number) => void;
   setStepData: (step: number, data: unknown) => void;
+  markTouched: (step: number) => void;
   reset: () => void;
 }
 
-export const useOnboardingStore = create<OnboardingState>((set) => ({
-  currentStep: 1,
-  stepData: {},
-  setStep: (step) => set({ currentStep: step }),
-  setStepData: (step, data) =>
-    set((state) => ({ stepData: { ...state.stepData, [step]: data } })),
-  reset: () => set({ currentStep: 1, stepData: {} }),
-}));
+const STORAGE_KEY = 'forge:onboarding:v2';
+
+/** Coerce a URL `?step=` value into a valid 1..10 step. */
+function parseStepParam(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const n = Number.parseInt(value, 10);
+  if (!Number.isFinite(n) || n < 1 || n > 10) return null;
+  return n;
+}
+
+export const useOnboardingStore = create<OnboardingState>()(
+  persist(
+    (set) => ({
+      currentStep: 1,
+      stepData: {},
+      stepTouched: {},
+      setStep: (step) => set({ currentStep: step }),
+      setStepData: (step, data) =>
+        set((state) => ({ stepData: { ...state.stepData, [step]: data } })),
+      markTouched: (step) =>
+        set((state) => ({ stepTouched: { ...state.stepTouched, [step]: true } })),
+      reset: () =>
+        set({ currentStep: 1, stepData: {}, stepTouched: {} }),
+    }),
+    {
+      name: STORAGE_KEY,
+      storage: createJSONStorage(() => localStorage),
+      // Only persist the data fields; do not persist actions.
+      partialize: (state) => ({
+        currentStep: state.currentStep,
+        stepData: state.stepData,
+        stepTouched: state.stepTouched,
+      }),
+      // Bump the schema version if the shape changes incompatibly.
+      version: 2,
+      // v1 -> v2 added provider + governance + provisioning steps;
+      // reset progress so users land on the new welcome screen.
+      migrate: (persistedState, _version) => {
+        const state = (persistedState ?? {}) as Partial<OnboardingState>;
+        return {
+          currentStep: 1,
+          stepData: {},
+          stepTouched: {},
+          ...state,
+        };
+      },
+    },
+  ),
+);
+
+/**
+ * Sync the URL `?step=` search param with the active wizard step.
+ * Run once on mount inside a client effect — never on the server,
+ * because `window` and `history` are unavailable during SSR.
+ */
+export function syncStepFromUrl(): void {
+  if (typeof window === 'undefined') return;
+  const step = parseStepParam(new URL(window.location.href).searchParams.get('step'));
+  if (step !== null) {
+    useOnboardingStore.getState().setStep(step);
+  }
+}
+
+export function pushStepToUrl(step: number): void {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  if (url.searchParams.get('step') === String(step)) return;
+  url.searchParams.set('step', String(step));
+  // `replaceState` avoids polluting the back stack on every step change.
+  window.history.replaceState({}, '', url.toString());
+}
+
+export { STORAGE_KEY as ONBOARDING_STORAGE_KEY };

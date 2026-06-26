@@ -1,10 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import { FileText } from 'lucide-react';
+import { FileText, FilePlus2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/src/components/empty-state';
 import type { PRD } from '@/lib/ideation/data';
 
 function renderMarkdown(md: string): React.ReactNode {
@@ -162,54 +163,5 @@ export interface PRDListProps {
   prds: ReadonlyArray<PRD>;
   selectedId?: string;
   onSelect?: (prd: PRD) => void;
-}
-
-export function PRDList({ prds, selectedId, onSelect }: PRDListProps) {
-  if (prds.length === 0) {
-    return (
-      <div className="card text-sm text-forge-300" data-testid="prd-list-empty">
-        No PRDs available.
-      </div>
-    );
-  }
-  return (
-    <ul
-      role="list"
-      aria-label="PRDs"
-      data-testid="prd-list"
-      className="grid gap-3"
-    >
-      {prds.map((p) => (
-        <li key={p.id}>
-          <button
-            type="button"
-            onClick={() => onSelect?.(p)}
-            className={cn(
-              'flex w-full items-center justify-between rounded-md border bg-forge-900/30 p-3 text-left transition-colors',
-              selectedId === p.id
-                ? 'border-forge-300'
-                : 'border-forge-700/40 hover:border-forge-500',
-            )}
-            data-testid="prd-list-item"
-            data-prd-id={p.id}
-          >
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">{p.title}</span>
-              <span className="font-mono text-[10px] text-forge-300">
-                {p.id} · {p.owner}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-[10px]">
-                {p.status}
-              </Badge>
-              <span className="font-mono text-[10px] text-forge-300">
-                {new Date(p.updatedAt).toLocaleDateString()}
-              </span>
-            </div>
-          </button>
-        </li>
-      ))}
-    </ul>
-  );
+  onGenerate?: () => void;
 }

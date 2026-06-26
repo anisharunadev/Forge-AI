@@ -66,7 +66,7 @@ export function BlockedByList({
           blockedBy.map((id) => (
             <Link
               key={`bb-${id}`}
-              href={`/project-intelligence/stories/${id}`}
+              href={`/stories/${id}`}
               className="rounded-sm border border-rose-500/40 bg-rose-500/10 px-2 py-0.5 font-mono text-rose-200 hover:border-rose-500/70"
               data-testid="blocked-by-chip"
               data-blocked-id={id}
@@ -93,7 +93,7 @@ export function BlockedByList({
           blocks.map((id) => (
             <Link
               key={`bx-${id}`}
-              href={`/project-intelligence/stories/${id}`}
+              href={`/stories/${id}`}
               className="rounded-sm border border-sky-500/40 bg-sky-500/10 px-2 py-0.5 font-mono text-sky-200 hover:border-sky-500/70"
               data-testid="blocks-chip"
               data-block-id={id}

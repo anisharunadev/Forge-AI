@@ -1,15 +1,15 @@
 'use client';
 
 import * as React from 'react';
-import ReactFlow, {
+import { ReactFlow,
   Background,
   Controls,
   MarkerType,
   type Edge,
   type Node,
-} from 'reactflow';
+} from '@xyflow/react';
 
-import 'reactflow/dist/style.css';
+import '@xyflow/react/dist/style.css';
 import type { DependencyGraph, ServiceNode } from '@/lib/project-intelligence/data';
 
 const KIND_COLOR: Record<ServiceNode['kind'], string> = {

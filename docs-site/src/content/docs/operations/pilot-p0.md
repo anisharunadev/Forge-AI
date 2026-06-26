@@ -1,4 +1,5 @@
 ---
+draft: false
 title: P0 — Pre-Pilot
 description: 4-week pre-pilot phase — stand up the platform, measure baseline TTTD.
 ---

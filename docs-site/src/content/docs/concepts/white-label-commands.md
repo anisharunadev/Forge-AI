@@ -1,4 +1,5 @@
 ---
+draft: false
 title: White-label Commands
 description: Why every internal action is exposed as a forge-* command, and how the FORGE_COMMAND_MAP works.
 ---

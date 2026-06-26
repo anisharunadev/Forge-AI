@@ -1,4 +1,5 @@
 ---
+draft: false
 title: Why Forge AI?
 description: The problems Forge solves, the value it provides, and the principles it is built on.
 ---

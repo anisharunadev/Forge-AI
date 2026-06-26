@@ -1,0 +1,37 @@
+---
+/**
+ * FeatureCard.astro — single card for feature highlights
+ *
+ *   <FeatureCard icon="layers" title="Project Intelligence"
+ *     color="indigo" description="Scan repos..." />
+ *
+ * color choices: indigo | cyan | violet | amber | emerald | rose
+ */
+export interface Props {
+  icon: string;
+  title: string;
+  description: string;
+  color?: 'indigo' | 'cyan' | 'violet' | 'amber' | 'emerald' | 'rose';
+  href?: string;
+}
+import Icon from './Icon.astro';
+const { icon, title, description, color = 'indigo', href } = Astro.props;
+
+const colorMap: Record<string, string> = {
+  indigo:  '#6366f1',
+  cyan:    '#22d3ee',
+  violet:  '#8b5cf6',
+  amber:   '#fbbf24',
+  emerald: '#34d399',
+  rose:    '#fb7185',
+};
+const accent = colorMap[color] ?? colorMap.indigo;
+const Wrapper = href ? 'a' : 'div';
+---
+<Wrapper class="feature-card" href={href} style={`--accent-color: ${accent};`}>
+  <span class="feature-card-icon">
+    <Icon name={icon} size={20} color={accent} />
+  </span>
+  <h3>{title}</h3>
+  <p>{description}</p>
+</Wrapper>

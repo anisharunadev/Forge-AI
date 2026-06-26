@@ -1,0 +1,67 @@
+{
+  "name": "@forge-ai/forge-browser",
+  "version": "1.0.0",
+  "description": "Forge Browser — AI browser automation for visual testing, UI review, screenshot analysis, and accessibility audits. Powers the Verify phase, deployment verification, and UAT.",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./agent": "./src/agent.ts",
+    "./visual-test": "./src/visual-test.ts",
+    "./ui-review": "./src/ui-review.ts",
+    "./deploy-verify": "./src/deploy-verify.ts",
+    "./journey": "./src/journey.ts",
+    "./a11y": "./src/a11y.ts",
+    "./catalog": "./forge-browser.catalog.json",
+    "./skills": "./skills/index.ts",
+    "./agents": "./agents/index.ts",
+    "./commands": "./commands/index.ts",
+    "./capabilities": "./capabilities/index.ts",
+    "./skills/*": "./skills/*",
+    "./agents/*": "./agents/*",
+    "./commands/*": "./commands/*",
+    "./capabilities/*": "./capabilities/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "skills",
+    "agents",
+    "commands",
+    "capabilities",
+    "forge-browser.catalog.json",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "echo 'forge-browser: source-only package — no compile step required'",
+    "dev": "tsc --watch --noEmit",
+    "test": "echo 'forge-browser: no test suite yet — see forge-core/tests for pattern'",
+    "lint": "echo 'forge-browser: lint runs at monorepo root'",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "forge-ai",
+    "forge",
+    "browser-automation",
+    "visual-testing",
+    "ui-review",
+    "accessibility",
+    "wcag",
+    "screenshot",
+    "ai-agents"
+  ],
+  "author": "Forge AI Team",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@forge-ai/forge-core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

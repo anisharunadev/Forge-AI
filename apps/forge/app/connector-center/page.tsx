@@ -1,281 +1,325 @@
 'use client';
 
-import * as React from 'react';
-import { Plug, ShoppingBag, Stethoscope, History } from 'lucide-react';
-
-import { AdminShell } from '@/components/admin/AdminShell';
-import { ConnectorGrid } from '@/components/connector-center/ConnectorGrid';
-import { ConnectorDetailPanel } from '@/components/connector-center/ConnectorDetailPanel';
-import { MarketplaceGrid } from '@/components/connector-center/MarketplaceGrid';
-import { AddConnectorDialog } from '@/components/connector-center/AddConnectorDialog';
-import { HealthBadge } from '@/components/connector-center/HealthBadge';
-import { SyncHistoryTable } from '@/components/connector-center/SyncHistoryTable';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { useApiData } from '@/hooks/use-api-data';
-import { useToast } from '@/hooks/use-toast';
-import { useInstallConnector } from '@/lib/hooks/useConnectorLifecycle';
-import { PageHeader, EmptyState, SectionCard } from '@/components/shell';
-import type {
-  Connector,
-  ConnectorHealthStatus,
-  MarketplaceConnector,
-  SyncRecord,
-} from '@/lib/connector-center/data';
-import { listMarketplaceFromRegistry } from '@/lib/connector-center/mcp-adapter';
-
-const STATUS_OPTIONS: ReadonlyArray<ConnectorHealthStatus | 'all'> = [
-  'all',
-  'healthy',
-  'syncing',
-  'stale',
-  'failed',
-  'quarantined',
-];
-
 /**
- * Project seam for the install call. Mirrors the canonical seed used
- * by the rest of the forge (`project-forge-demo`). Phase 4 doesn't
- * expose a project picker on the Connector Center; the value is
- * pulled from a future `useTenantProject()` hook (FORA-128 §4.2).
+ * Connector Center — Step 31 modernization.
+ *
+ * Replaces the Step 10 page (4 tabs) with a 7-tab experience and
+ * delegates all data + capability lookup to `@/lib/connectors`.
+ *
+ * Zones covered:
+ *   - Z1 Hero band + global tools
+ *   - Z2 7-tab segmented control
+ *   - Z3–Z9 tab bodies (delegated to ./tabs/*)
+ *   - Z11 Connections graph (extra view triggered from Overview)
+ *   - Z12 Keyboard shortcuts (⌘⇧C picker, ⌘⇧K credential, ⌘⇧W webhook)
  */
-const SEED_PROJECT_ID = 'project-forge-demo';
 
-export default function ConnectorCenterM2Page() {
-  const [statusFilter, setStatusFilter] = React.useState<ConnectorHealthStatus | 'all'>(
-    'all',
-  );
-  const [selected, setSelected] = React.useState<Connector | null>(null);
-  const [detailOpen, setDetailOpen] = React.useState(false);
-  const { toast } = useToast();
-  const installMutation = useInstallConnector();
-  const connectorsRefresh = useApiData<Connector[]>('/v1/connector-center/connectors').refresh;
+import * as React from 'react';
+import { motion } from 'framer-motion';
+import {
+  BookText,
+  HelpCircle,
+  MoreVertical,
+  Plug,
+  Plus,
+  type LucideIcon,
+} from 'lucide-react';
 
-  const handleInstall = React.useCallback(
-    async (input: {
-      type: string;
-      name: string;
-      project_id: string;
-      config: Record<string, unknown>;
-    }) => {
-      try {
-        const result = await installMutation.mutateAsync(input);
-        toast({
-          title: 'Connector installed',
-          description: `${input.name} is live (${result.connector_id}).`,
-          variant: 'default',
-        });
-        connectorsRefresh();
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Install failed.';
-        toast({
-          title: 'Install failed',
-          description: message,
-          variant: 'destructive',
-        });
-      }
-    },
-    [installMutation, toast, connectorsRefresh],
-  );
+import { PageContainer } from '@/components/shell/PageContainer';
+import { PageHeader } from '@/components/shell/PageHeader';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ConnectorPicker } from '@/components/connectors/ConnectorPicker';
+import { ConnectorProvider, listConnected, listMarketplace, listCredentials, computeRollup } from '@/lib/connectors';
+import { cn } from '@/lib/utils';
 
-  // Live data from the orchestrator proxy. Empty state surfaces an
-  // info card when the API is unreachable.
-  const connectorsQ = useApiData<Connector[]>('/v1/connector-center/connectors');
-  const historyQ = useApiData<SyncRecord[]>('/v1/connector-center/sync-history');
+import { OverviewTab } from '@/components/connector-center/tabs/OverviewTab';
+import { ConnectedTab } from '@/components/connector-center/tabs/ConnectedTab';
+import { MarketplaceTab } from '@/components/connector-center/tabs/MarketplaceTab';
+import { HealthTab } from '@/components/connector-center/tabs/HealthTab';
+import { ActivityTab } from '@/components/connector-center/tabs/ActivityTab';
+import { CredentialsTab } from '@/components/connector-center/tabs/CredentialsTab';
+import { WebhooksTab } from '@/components/connector-center/tabs/WebhooksTab';
+import { ConnectionsTab } from '@/components/connector-center/tabs/ConnectionsTab';
+import { TABS, type TabValue } from '@/components/connector-center/constants';
 
-  const connectors: ReadonlyArray<Connector> = connectorsQ.data ?? [];
-  const history: ReadonlyArray<SyncRecord> = historyQ.data ?? [];
+const TAB_LABEL: Record<TabValue, string> = {
+  overview: 'Overview',
+  connected: 'Connected',
+  marketplace: 'Marketplace',
+  health: 'Health',
+  activity: 'Activity',
+  credentials: 'Credentials',
+  webhooks: 'Webhooks',
+};
 
-  // Marketplace is sourced from the MCP registry (real catalog of 13
-  // servers). The orchestrator marketplace endpoint is the secondary
-  // fallback when the registry is empty (e.g., during UI-only demos).
-  const marketplaceFromRegistry = listMarketplaceFromRegistry();
-  const [marketplaceFromApi, setMarketplaceFromApi] =
-    React.useState<ReadonlyArray<MarketplaceConnector>>([]);
+function isTabValue(v: string | null): v is TabValue {
+  return v === 'overview' || v === 'connected' || v === 'marketplace' || v === 'health' || v === 'activity' || v === 'credentials' || v === 'webhooks';
+}
+
+export default function ConnectorCenterPage() {
+  const [tab, setTab] = React.useState<TabValue>('overview');
+  const [pickerOpen, setPickerOpen] = React.useState(false);
+
+  // Sync tab with URL hash for shareable links (#tab=health).
   React.useEffect(() => {
-    let cancelled = false;
-    fetch('/api/proxy/v1/connector-center/marketplace', { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((rows: ReadonlyArray<MarketplaceConnector>) => {
-        if (!cancelled) setMarketplaceFromApi(rows);
-      })
-      .catch(() => {
-        if (!cancelled) setMarketplaceFromApi([]);
-      });
-    return () => {
-      cancelled = true;
+    const fromHash = () => {
+      const m = /tab=([a-z]+)/.exec(window.location.hash);
+      const v = m?.[1] ?? null;
+      if (isTabValue(v)) setTab(v);
     };
+    fromHash();
+    window.addEventListener('hashchange', fromHash);
+    return () => window.removeEventListener('hashchange', fromHash);
   }, []);
-  const marketplace: ReadonlyArray<MarketplaceConnector> =
-    marketplaceFromRegistry.length > 0
-      ? marketplaceFromRegistry
-      : marketplaceFromApi;
 
-  const filteredConnectors = React.useMemo(() => {
-    if (statusFilter === 'all') return connectors;
-    return connectors.filter((c) => c.status === statusFilter);
-  }, [connectors, statusFilter]);
+  const setTabAndHash = (v: TabValue) => {
+    setTab(v);
+    window.history.replaceState(null, '', `#tab=${v}`);
+  };
 
-  const healthBreakdown = React.useMemo(() => {
-    const out: Record<ConnectorHealthStatus, number> = {
-      healthy: 0,
-      syncing: 0,
-      stale: 0,
-      failed: 0,
-      quarantined: 0,
+  // Global shortcuts per Zone 12.
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const meta = e.metaKey || e.ctrlKey;
+      if (meta && e.shiftKey && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        setPickerOpen(true);
+      }
+      if (meta && e.shiftKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setTabAndHash('credentials');
+      }
+      if (meta && e.shiftKey && e.key.toLowerCase() === 'w') {
+        e.preventDefault();
+        setTabAndHash('webhooks');
+      }
+      if (meta && e.key === '/') {
+        e.preventDefault();
+        // hint: simple alert so the user sees the binding; would be a popover
+        window.alert('Shortcuts\n⌘⇧C · Connector picker\n⌘⇧K · New credential\n⌘⇧W · New webhook\n⌘/ · Show shortcuts');
+      }
     };
-    for (const c of connectors) out[c.status] += 1;
-    return out;
-  }, [connectors]);
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
-  const handleSelect = (c: Connector) => {
-    setSelected(c);
-    setDetailOpen(true);
+  const rollup = computeRollup();
+  const connectedCount = listConnected().length;
+  const marketplaceCount = listMarketplace().length;
+  const credentialsCount = listCredentials().length;
+
+  const counts: Record<'connected' | 'marketplace' | 'credentials', number> = {
+    connected: connectedCount,
+    marketplace: marketplaceCount,
+    credentials: credentialsCount,
   };
 
   return (
-    <AdminShell>
-      <div className="flex flex-col gap-6" data-testid="connector-center-m2">
-        <PageHeader
-          eyebrow="Center"
-          title="Connector Center"
-          icon={<Plug className="h-4 w-4" aria-hidden="true" />}
-          description="Manage integrations with external systems, browse the marketplace, and review connector health."
-          action={
-            <AddConnectorDialog
-              onAdd={(input) =>
-                void handleInstall({
-                  type: input.category,
-                  name: input.name,
-                  project_id: SEED_PROJECT_ID,
-                  config: { base_url: input.baseUrl, category: input.category },
-                })
-              }
-            />
-          }
-        />
+    <ConnectorProvider>
+      <PageContainer>
+        <div className="flex flex-col gap-6" data-testid="connector-center-page">
+          <HeroBand
+            connected={rollup.connected}
+            failing={rollup.failed + rollup.quarantined}
+            syncsToday={rollup.syncsToday}
+            onAddConnector={() => setTabAndHash('marketplace')}
+          />
 
-        <Tabs defaultValue="connected" className="w-full">
-          <TabsList aria-label="Connector Center sections">
-            <TabsTrigger value="connected" data-testid="tab-connected">
-              Connected
-            </TabsTrigger>
-            <TabsTrigger value="marketplace" data-testid="tab-marketplace">
-              <ShoppingBag className="h-3 w-3" aria-hidden="true" />
-              Marketplace
-            </TabsTrigger>
-            <TabsTrigger value="health" data-testid="tab-health">
-              <Stethoscope className="h-3 w-3" aria-hidden="true" />
-              Health
-            </TabsTrigger>
-            <TabsTrigger value="activity" data-testid="tab-activity">
-              <History className="h-3 w-3" aria-hidden="true" />
-              Activity
-            </TabsTrigger>
-          </TabsList>
+          <TabBar tab={tab} counts={counts} onChange={setTabAndHash} />
 
-          <TabsContent value="connected" className="space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Status:</span>
-              <Select
-                value={statusFilter}
-                onValueChange={(v) =>
-                  setStatusFilter(v as ConnectorHealthStatus | 'all')
-                }
-              >
-                <SelectTrigger
-                  className="w-40"
-                  data-testid="connector-status-filter"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s === 'all' ? 'All statuses' : s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div data-testid={`connector-tab-${tab}`}>
+            {tab === 'overview' ? <OverviewTab /> : null}
+            {tab === 'connected' ? <ConnectedTab /> : null}
+            {tab === 'marketplace' ? <MarketplaceTab /> : null}
+            {tab === 'health' ? <HealthTab /> : null}
+            {tab === 'activity' ? <ActivityTab /> : null}
+            {tab === 'credentials' ? <CredentialsTab /> : null}
+            {tab === 'webhooks' ? <WebhooksTab /> : null}
+          </div>
+        </div>
+      </PageContainer>
+
+      {/* Global shortcut: ⌘⇧C */}
+      {pickerOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-start justify-center pt-24"
+          onClick={() => setPickerOpen(false)}
+        >
+          <div className="absolute inset-0 bg-black/60" aria-hidden="true" />
+          <div
+            className="relative w-[420px] max-w-[92vw] rounded-md border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-[var(--shadow-md)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="mb-3 text-base font-semibold text-fg-primary">Pick a connector anywhere</h3>
+            <p className="mb-4 text-xs text-fg-tertiary">
+              Choose a capability, then a connector that supports it. Used by Ideation sources, Workflow nodes, Co-pilot @mentions and agent contexts.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {(['send_message', 'pull_issues', 'trigger_deploy', 'query_database'] as const).map((cap) => (
+                <div key={cap} className="flex flex-col gap-1 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-base)] p-2">
+                  <span className="text-[10px] uppercase tracking-wider text-fg-tertiary">{cap.replace(/_/g, ' ')}</span>
+                  <ConnectorPicker capability={cap} defaultOpen />
+                </div>
+              ))}
             </div>
-            {filteredConnectors.length === 0 ? (
-              <EmptyState
-                icon={<Plug className="h-5 w-5" aria-hidden="true" />}
-                title="No connectors match the current filter"
-                description="Try a different status filter, or install a new connector from the marketplace."
-                testId="connector-empty"
-              />
-            ) : (
-              <ConnectorGrid connectors={filteredConnectors} onSelect={handleSelect} />
+          </div>
+        </div>
+      ) : null}
+    </ConnectorProvider>
+  );
+}
+
+interface HeroBandProps {
+  connected: number;
+  failing: number;
+  syncsToday: number;
+  onAddConnector: () => void;
+}
+
+function HeroBand({ connected, failing, syncsToday }: HeroBandProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+      className="relative overflow-hidden rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-6 hero-border"
+      data-testid="connector-hero"
+    >
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-wider text-fg-tertiary">Center</p>
+          <div className="mt-1 flex items-center gap-2">
+            <Plug className="h-7 w-7 text-[var(--accent-cyan)]" aria-hidden="true" />
+            <h1 className="text-3xl font-bold tracking-tight text-fg-primary">Connector Center</h1>
+          </div>
+          <p className="mt-2 max-w-2xl text-sm text-fg-secondary">
+            Manage integrations with external systems, browse the marketplace, review connector health, vault credentials and wire webhooks.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Composite health overview pill */}
+          <div
+            className={cn(
+              'inline-flex items-center gap-3 rounded-full border px-3 py-1.5 text-xs',
+              failing > 0
+                ? 'border-[var(--accent-amber)]/40 bg-[var(--accent-amber)]/10 text-[var(--accent-amber)]'
+                : 'border-[var(--accent-emerald)]/40 bg-[var(--accent-emerald)]/10 text-[var(--accent-emerald)]',
             )}
-          </TabsContent>
-
-          <TabsContent value="marketplace">
-            <MarketplaceGrid
-              connectors={marketplace}
-              onInstall={(c: MarketplaceConnector) =>
-                void handleInstall({
-                  type: c.id,
-                  name: c.name,
-                  project_id: SEED_PROJECT_ID,
-                  config: { category: c.category, publisher: c.publisher },
-                })
-              }
-            />
-          </TabsContent>
-
-          <TabsContent value="health" className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-5">
-              {(Object.keys(healthBreakdown) as ReadonlyArray<ConnectorHealthStatus>).map(
-                (k) => (
-                  <div
-                    key={k}
-                    className="flex items-center justify-between rounded-lg border border-border bg-card p-4"
-                    data-testid={`health-cell-${k}`}
-                  >
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                        {k}
-                      </p>
-                      <p className="text-2xl font-semibold text-foreground">
-                        {healthBreakdown[k]}
-                      </p>
-                    </div>
-                    <HealthBadge status={k} />
-                  </div>
-                ),
+            data-testid="connector-hero-health"
+            aria-label={`${connected} connected · ${failing} failing · ${syncsToday} syncs today`}
+          >
+            <span
+              className={cn(
+                'h-1.5 w-1.5 rounded-full',
+                failing > 0
+                  ? 'bg-[var(--accent-amber)] shadow-[0_0_6px_var(--accent-amber)] animate-pulse'
+                  : 'bg-[var(--accent-emerald)] shadow-[0_0_6px_var(--accent-emerald)]',
               )}
-            </div>
-          </TabsContent>
+              aria-hidden="true"
+            />
+            <span className="font-medium text-fg-primary">{connected} connected</span>
+            <span aria-hidden="true">·</span>
+            <span className={failing > 0 ? 'font-medium' : 'text-fg-secondary'}>{failing} failing</span>
+            <span aria-hidden="true">·</span>
+            <span className="text-fg-secondary">{syncsToday} syncs today</span>
+          </div>
 
-          <TabsContent value="activity">
-            {history.length === 0 ? (
-              <EmptyState
-                icon={<History className="h-5 w-5" aria-hidden="true" />}
-                title="No sync activity yet"
-                description="Connector sync history will appear here once a connector runs its first sync."
-                testId="activity-empty"
-              />
-            ) : (
-              <SectionCard title="Recent sync activity">
-                <SyncHistoryTable records={history} />
-              </SectionCard>
-            )}
-          </TabsContent>
-        </Tabs>
+          <Button size="sm">
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+            Add Connector
+          </Button>
 
-        <ConnectorDetailPanel
-          connector={selected}
-          open={detailOpen}
-          onOpenChange={setDetailOpen}
-        />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="ghost" className="h-8 w-8 p-0" aria-label="More">
+                <MoreVertical className="h-3.5 w-3.5" aria-hidden="true" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>
+                <BookText className="h-3.5 w-3.5" aria-hidden="true" />
+                API documentation
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                Request new connector
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                Help
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
-    </AdminShell>
+    </motion.div>
+  );
+}
+
+interface TabBarProps {
+  tab: TabValue;
+  counts: { connected: number; marketplace: number; credentials: number };
+  onChange: (v: TabValue) => void;
+}
+
+function TabBar({ tab, counts, onChange }: TabBarProps) {
+  return (
+    <nav
+      role="tablist"
+      aria-label="Connector center tabs"
+      className="inline-flex w-fit rounded-md border border-[var(--border-default)] bg-[var(--bg-elevated)] p-0.5"
+      data-testid="connector-tab-bar"
+    >
+      {TABS.map((t) => {
+        const Icon = t.Icon as LucideIcon;
+        const active = t.value === tab;
+        const count = t.badgeKey ? counts[t.badgeKey] : null;
+        return (
+          <button
+            key={t.value}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(t.value)}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-sm px-3 py-1.5 text-xs font-medium transition-colors',
+              active
+                ? 'bg-[var(--bg-surface)] text-fg-primary'
+                : 'text-fg-tertiary hover:text-fg-secondary',
+            )}
+            data-testid={`connector-tab-${t.value}-tab`}
+          >
+            <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+            {t.label}
+            {count !== null ? (
+              <span
+                className={cn(
+                  'rounded-full px-1.5 text-[10px]',
+                  active
+                    ? 'bg-[var(--accent-cyan)]/10 text-[var(--accent-cyan)]'
+                    : 'bg-[var(--bg-inset)] text-fg-tertiary',
+                )}
+              >
+                {count}
+              </span>
+            ) : null}
+            {t.liveDot ? (
+              <span
+                className="ml-0.5 h-1.5 w-1.5 rounded-full bg-[var(--accent-emerald)] shadow-[0_0_6px_var(--accent-emerald)] animate-pulse"
+                aria-hidden="true"
+              />
+            ) : null}
+          </button>
+        );
+      })}
+    </nav>
   );
 }

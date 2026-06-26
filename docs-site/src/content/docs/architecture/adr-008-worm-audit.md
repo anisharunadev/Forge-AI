@@ -1,4 +1,5 @@
 ---
+draft: false
 title: ADR-008 — Append-only WORM audit trail
 description: The audit ledger is append-only, hash-chained, and mirrored to a separate AWS account with S3 Object Lock.
 ---

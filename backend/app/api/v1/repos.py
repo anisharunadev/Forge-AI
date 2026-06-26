@@ -226,7 +226,6 @@ async def get_status(
     response_model=None,
     response_class=Response,
 )
-    response_class=Response,
 @audit(action="repos.cancel_ingestion", target_type="ingestion_run")
 @audit(action="repos.cancel_ingestion", target_type="ingestion_run")
 async def cancel_ingestion(

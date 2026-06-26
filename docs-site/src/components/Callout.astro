@@ -1,0 +1,31 @@
+---
+/**
+ * Callout.astro — note / warning / success / danger / tip
+ *
+ *   <Callout type="warning" title="Approval required">
+ *     Architecture changes pause for human review...
+ *   </Callout>
+ */
+export interface Props {
+  type?: 'info' | 'warning' | 'success' | 'danger' | 'tip';
+  title?: string;
+}
+import Icon from './Icon.astro';
+const { type = 'info', title } = Astro.props;
+
+const meta: Record<string, { icon: string; defaultTitle: string }> = {
+  info:    { icon: 'info',       defaultTitle: 'Note' },
+  warning: { icon: 'alerttri',   defaultTitle: 'Warning' },
+  success: { icon: 'checkcircle', defaultTitle: 'Success' },
+  danger:  { icon: 'alertact',   defaultTitle: 'Danger' },
+  tip:     { icon: 'sparkles',   defaultTitle: 'Tip' },
+};
+const m = meta[type] ?? meta.info;
+---
+<aside class={`callout ${type}`}>
+  <span class="callout-icon"><Icon name={m.icon} size={14} /></span>
+  <div class="callout-body">
+    <p class="callout-title">{title ?? m.defaultTitle}</p>
+    <slot />
+  </div>
+</aside>
