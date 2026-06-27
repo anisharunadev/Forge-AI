@@ -7,29 +7,19 @@ import {
   Bell,
   ChevronRight,
   Home,
-  LogOut,
   Menu,
   Search,
-  Settings as SettingsIcon,
-  Shield,
   Sun,
   Moon,
-  User,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from './ThemeToggle';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { useShell } from './ShellProvider';
 import { pathnameToSegments } from './Breadcrumbs';
+import { TenantSwitcher } from '@/components/tenant-switcher';
+import { UserMenu } from '@/components/user-menu';
 
 /**
  * Top bar — 56px sticky, layered on top of the content column.
@@ -165,6 +155,10 @@ export function Topbar() {
 
       {/* Right cluster */}
       <div className="flex items-center gap-1">
+        {/* Tenant switcher (step-52 Zone 6) — shows the active workspace
+            and lets the user bounce to another one. */}
+        <TenantSwitcher />
+
         {/* Theme toggle */}
         <ThemeInlineToggle
           isDark={resolvedTheme === 'dark'}
@@ -184,62 +178,8 @@ export function Topbar() {
           />
         </Link>
 
-        {/* User menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              aria-label="User menu"
-              className="ml-1 flex h-9 items-center gap-2 rounded-md px-1.5 text-sm text-[var(--fg-secondary)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--fg-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-base)]"
-            >
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[var(--accent-violet)] to-[var(--accent-primary)] text-[10px] font-bold text-white" aria-hidden="true">
-                AR
-              </div>
-              <span className="hidden font-medium lg:inline">Arun</span>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            sideOffset={6}
-            className="w-56 border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--fg-primary)]"
-          >
-            <DropdownMenuLabel className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--fg-tertiary)]">
-              Signed in as
-            </DropdownMenuLabel>
-            <div className="px-2 pb-2">
-              <p className="text-sm font-semibold text-[var(--fg-primary)]">Arun R.</p>
-              <p className="truncate text-xs text-[var(--fg-tertiary)]">arun@acme-corp.com</p>
-            </div>
-            <DropdownMenuSeparator className="bg-[var(--border-subtle)]" />
-            <DropdownMenuItem className="gap-2 focus:bg-[rgba(255,255,255,0.06)] focus:text-[var(--fg-primary)]">
-              <User className="h-4 w-4" aria-hidden="true" /> Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2 focus:bg-[rgba(255,255,255,0.06)] focus:text-[var(--fg-primary)]">
-              <SettingsIcon className="h-4 w-4" aria-hidden="true" /> Workspace settings
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="gap-2 focus:bg-[rgba(255,255,255,0.06)] focus:text-[var(--fg-primary)]"
-              onSelect={(e) => {
-                e.preventDefault();
-                setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
-              }}
-            >
-              {resolvedTheme === 'dark' ? (
-                <Sun className="h-4 w-4" aria-hidden="true" />
-              ) : (
-                <Moon className="h-4 w-4" aria-hidden="true" />
-              )}{' '}
-              Theme
-            </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2 focus:bg-[rgba(255,255,255,0.06)] focus:text-[var(--fg-primary)]">
-              <Shield className="h-4 w-4" aria-hidden="true" /> Governance
-            </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-[var(--border-subtle)]" />
-            <DropdownMenuItem className="gap-2 text-[var(--accent-rose)] focus:bg-[rgba(255,255,255,0.06)]">
-              <LogOut className="h-4 w-4" aria-hidden="true" /> Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* User menu (step-52 Zone 8) — wired to useAuth(). */}
+        <UserMenu />
       </div>
     </header>
   );

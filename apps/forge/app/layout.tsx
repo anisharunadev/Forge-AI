@@ -5,13 +5,8 @@ import { Inter, JetBrains_Mono } from 'next/font/google';
 import { Providers } from '@/components/providers';
 import { ConnectorProvider } from '@/lib/connectors/provider';
 import { Toaster } from "sonner";
-import {
-  ShellProvider,
-  Sidebar,
-  Topbar,
-  MobileNav,
-  PageContainer,
-} from "@/components/shell";
+import { ShellProvider } from "@/components/shell";
+import { ShellChrome } from "@/components/shell/ShellChrome";
 
 /**
  * Font registration via `next/font/google`.
@@ -79,30 +74,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
              * `<ConnectorPicker>`, `<ConnectorActionButton>`,
              * `<ConnectorHealthIndicator>` and
              * `<ConnectorCredentialsBadge>` from anywhere in the app.
+             *
+             * ShellChrome (step-52) — renders the Sidebar/Topbar/MobileNav
+             * for authenticated workspace routes, and a chrome-free canvas
+             * for the (auth) route group (`/login`, `/auth/callback`).
              */}
             <ConnectorProvider>
-              <div className="flex min-h-screen">
-                <Sidebar />
-                <div className="flex min-w-0 flex-1 flex-col">
-                  {/*
-                   * DemoBanner (Plan G commit 3) — sticky amber alert that
-                   * surfaces on every page when the demo `acme-corp` seed
-                   * is applied. Mounted ABOVE the Topbar so it remains the
-                   * first thing the user sees on scroll. The banner self-
-                   * returns null when the seed has not been applied, so
-                   * non-demo tenants incur zero render cost.
-                   */}
-                  {/* <DemoBanner /> */}
-                  <Topbar />
-                  <main
-                    id="main-content"
-                    className="min-w-0 flex-1"
-                  >
-                    <PageContainer>{children}</PageContainer>
-                  </main>
-                </div>
-                <MobileNav />
-              </div>
+              <ShellChrome>{children}</ShellChrome>
             </ConnectorProvider>
           </ShellProvider>
         </Providers>
