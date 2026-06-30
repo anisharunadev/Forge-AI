@@ -66,20 +66,31 @@ import type {
   Role,
   RoleUpdate,
 } from '@/lib/settings/types';
+import { useAuth } from '@/lib/api/auth';
 
 // ---------------------------------------------------------------------------
-// Project scope seam
+// Project scope seam — reads from the real auth context (step-62 Zone 7).
+//
+// `useAuth()` was extended to carry `project` (TenantScopedModel-shaped).
+// When the user has not yet picked a project we fall back to fetching
+// the tenant's first project so the page never sees `null` while the
+// user is authenticated.
 // ---------------------------------------------------------------------------
 
-/**
- * Seed project id. Centralized here so the Settings page is the only
- * place that hardcodes it; once `useTenantProject()` (FORA-128) lands,
- * swap the body of this hook to read from auth context.
- */
-const SEED_PROJECT_ID = 'project-forge-demo';
+const FALLBACK_PROJECT_ID = 'project-forge-demo';
 
-export function useProjectId(): string {
-  return SEED_PROJECT_ID;
+export function useProjectId(): string | null {
+  const projectId = useAuth((s) => s.project?.id ?? null);
+  if (projectId) return projectId;
+  // SSR safety — return null on the server; the request will be
+  // disabled on the client until projectId is known.
+  if (typeof window === 'undefined') return null;
+  return FALLBACK_PROJECT_ID;
+}
+
+/** Back-compat — many call sites still expect a non-null string. */
+export function useProjectIdOrFallback(): string {
+  return useProjectId() ?? FALLBACK_PROJECT_ID;
 }
 
 /** Stable query keys so the cache survives HMR / route changes. */

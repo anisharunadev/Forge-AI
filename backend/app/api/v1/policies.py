@@ -1,62 +1,73 @@
-"""F-003 — Policies CRUD."""
+"""F-003 — Policies alias for LiteLLM guardrails."""
 
 from __future__ import annotations
 
-from fastapi import APIRouter, status
+from typing import Any
 
-from app.api.deps import DbSession, Principal, require_permission
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel, Field
+
+from app.api.deps import Principal, get_current_tenant, require_permission
 from app.core.audit import audit
-from app.schemas.policies import PolicyCreate, PolicyRead
+from app.services.litellm_admin import list_guardrails, update_guardrail
 
 router = APIRouter(prefix="/policies", tags=["policies"])
 
 
+class PolicyRead(BaseModel):
+    """Forge view of a LiteLLM guardrail."""
+
+    id: str
+    name: str
+    type: str
+    config: dict[str, Any]
+    enabled: bool
+    applies_to: list[str] = Field(default_factory=list)
+
+
+class PolicyUpdate(BaseModel):
+    config: dict[str, Any] | None = None
+    enabled: bool | None = None
+
+
 @router.get("", response_model=list[PolicyRead])
-@audit(action="policies.list", target_type="policy")
+@audit(action="policies.list", target_type="guardrail")
 async def list_policies(
-    principal: Principal,
+    principal: Principal = Depends(get_current_tenant),
     _perm: Principal = require_permission("policies:read"),
-    db: DbSession = None,  # type: ignore[assignment]
 ) -> list[PolicyRead]:
-    from sqlalchemy import select
+    """List guardrails — proxied from LiteLLM."""
+    raw = await list_guardrails()
+    return [
+        PolicyRead(
+            id=g.get("guardrail_name", g.get("name", "")),
+            name=g.get("guardrail_name", g.get("name", "")),
+            type=g.get("type", "custom"),
+            config=g.get("litellm_params", g.get("config", {})),
+            enabled=g.get("enabled", True),
+            applies_to=g.get("applies_to", []),
+        )
+        for g in raw
+    ]
 
-    from app.db.models.policy import Policy
 
-    stmt = select(Policy).where(Policy.tenant_id == principal.tenant_id)
-    rows = (await db.execute(stmt)).scalars().all()
-    return [PolicyRead.model_validate(r) for r in rows]
-
-
-@router.post("", response_model=PolicyRead, status_code=status.HTTP_201_CREATED)
-@audit(action="policies.create", target_type="policy")
-async def create_policy(
-    body: PolicyCreate,
-    principal: Principal,
-    _perm: Principal = require_permission("policies:create"),
-    db: DbSession = None,  # type: ignore[assignment]
+@router.patch("/{policy_id}", response_model=PolicyRead)
+@audit(action="policies.update", target_type="guardrail")
+async def update_policy(
+    policy_id: str,
+    body: PolicyUpdate,
+    principal: Principal = Depends(get_current_tenant),
 ) -> PolicyRead:
-    from app.db.models.policy import Policy
-    from app.services.policy_engine import policy_engine
-
-    policy = Policy(
-        tenant_id=principal.tenant_id,
-        name=body.name,
-        description=body.description,
-        expression=body.expression,
-        severity=body.severity,
-        enabled=body.enabled,
+    """Update a guardrail — proxied to LiteLLM."""
+    config = body.config or {}
+    result = await update_guardrail(policy_id, {"enabled": body.enabled, **config})
+    return PolicyRead(
+        id=policy_id,
+        name=policy_id,
+        type=result.get("type", "custom"),
+        config=result.get("litellm_params", config),
+        enabled=result.get("enabled", body.enabled or True),
     )
-    db.add(policy)
-    await db.commit()
-    await db.refresh(policy)
-
-    # Warm the in-memory cache so the next evaluation is fast.
-    policy_engine.register(
-        policy.id,
-        policy.expression,
-        tenant_id=principal.tenant_id,
-    )
-    return PolicyRead.model_validate(policy)
 
 
 __all__ = ["router"]

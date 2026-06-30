@@ -96,6 +96,9 @@ class Workflow(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     project_id: Mapped[UUID] = mapped_column(GUID(), nullable=False)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default="draft", default="draft"
+    )
     definition: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     created_by: Mapped[UUID] = mapped_column(GUID(), nullable=False)
     latest_run_id: Mapped[UUID | None] = mapped_column(GUID(), nullable=True)

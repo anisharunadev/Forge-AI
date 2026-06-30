@@ -92,7 +92,6 @@ async def sqlite_db(monkeypatch: pytest.MonkeyPatch):
         ideation_signal,
         litellm_budget_config,
         litellm_call_record,
-        litellm_guardrail_violation,
         litellm_key_audit,
         litellm_model_assignment,
         litellm_team_mapping,

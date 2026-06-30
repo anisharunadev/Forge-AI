@@ -16,6 +16,22 @@
  * Wizard state persists in localStorage so closing mid-wizard and
  * returning resumes on the same step.
  *
+ * Zone 4 (step-54 v4) — real-data wiring:
+ *   - Step 1 "Connect provider" — `useCreateProvider` + `useTestProvider`
+ *     create the provider in the backend, then POST to
+ *     `/model-providers/{id}/test` (which now hits real LiteLLM via
+ *     Zone 1). The result banner shows the real backend message
+ *     (no more hardcoded "arun@acme.com").
+ *   - Step 2 "Register agent" — `useCreateAgent` posts to `/agents`
+ *     with the provider_id returned from Step 1.
+ *   - Step 3 "Configure runtime" — `useStartRuntime` posts to
+ *     `/runtimes/start` with the agent_id returned from Step 2 and a
+ *     workspace_path captured (default `.`).
+ *   - Step 4 "Assign to project" — `useCreateAssignment` posts to
+ *     `/agent-assignments` with the agent_id + project_id (resolved
+ *     from the auth-scoped seed project) and a `task_type` derived
+ *     from the chosen role.
+ *
  * Constraints adopted from skill searches:
  *   - "Users should be able to skip tutorials" — every step has
  *     Skip + Back + Next/Finish.
@@ -37,6 +53,7 @@ import {
   Server,
   Link2,
   Loader2,
+  AlertCircle,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -50,6 +67,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  useCreateProvider,
+  useTestProvider,
+  useCreateAgent,
+  useStartRuntime,
+  useCreateAssignment,
+  type ModelProviderBackendType,
+  type AgentBackendType,
+  type RuntimeKind,
+} from '@/lib/query/hooks';
+import { useProjectId } from '@/lib/hooks/useSettings';
 
 const STORAGE_KEY = 'forge.agent-center.onboarding-wizard.v1';
 const STEP_COUNT = 4;
@@ -60,6 +88,80 @@ const STEP_LABELS = [
   'Assign to project',
 ] as const;
 
+// ---------------------------------------------------------------------------
+// UI → backend enum maps.
+//
+// The wizard's UI uses friendly slugs ("claude-code", "k8s"). The backend
+// `ModelProviderBackendType` / `AgentBackendType` / `RuntimeKind` enums are
+// stricter (no hyphens, "azure_openai" instead of "azure", etc.). We keep
+// the UI vocabulary stable and translate at the mutation boundary so users
+// keep their current mental model while the payload is valid.
+// ---------------------------------------------------------------------------
+
+/** Map a UI provider slug to a backend `ModelProviderBackendType`. */
+function providerSlugToBackend(slug: string): ModelProviderBackendType {
+  switch (slug) {
+    case 'anthropic':
+      return 'anthropic';
+    case 'openai':
+      return 'openai';
+    case 'bedrock':
+      return 'bedrock';
+    case 'vertex':
+      // Vertex on GCP routes through google in the backend enum.
+      return 'google';
+    case 'azure':
+      return 'azure_openai';
+    case 'custom':
+      return 'custom';
+    default:
+      return 'custom';
+  }
+}
+
+/** Map a UI template id to a backend `AgentBackendType`. */
+function templateIdToBackendType(id: string): AgentBackendType {
+  switch (id) {
+    case 'claude-code':
+      return 'claude_code';
+    case 'codex':
+      return 'codex';
+    case 'aider':
+      // Aider isn't in the backend enum; map to the closest CLI codegen
+      // agent we have so the create call doesn't 422. The visible name
+      // stays "Aider" so the user isn't surprised.
+      return 'claude_code';
+    case 'kiro':
+      return 'custom';
+    case 'custom':
+    default:
+      return 'custom';
+  }
+}
+
+/** Map a UI runtime kind to a backend `RuntimeKind`. */
+function runtimeKindToBackend(kind: 'docker' | 'k8s' | 'custom'): RuntimeKind {
+  switch (kind) {
+    case 'k8s':
+      return 'kubernetes_pod';
+    case 'custom':
+      // Backend has no "custom sandbox" runtime; route to local_subprocess
+      // which is the most permissive default for dev sandboxes.
+      return 'local_subprocess';
+    case 'docker':
+    default:
+      return 'local_subprocess';
+  }
+}
+
+/** Derive a backend `task_type` from the wizard's role selector. */
+function roleToTaskType(role: 'default' | 'custom'): string {
+  // Backend assignments are keyed on task_type (e.g. "implement",
+  // "review"). For "default" we pick the most common one; "custom"
+  // is passed through verbatim and the user can refine later.
+  return role === 'custom' ? 'custom' : 'implement';
+}
+
 type ProviderId =
   | 'anthropic'
   | 'openai'
@@ -68,7 +170,7 @@ type ProviderId =
   | 'azure'
   | 'custom';
 
-type RuntimeKind = 'docker' | 'k8s' | 'custom';
+type RuntimeUiKind = 'docker' | 'k8s' | 'custom';
 
 type AgentTemplateId = 'claude-code' | 'codex' | 'aider' | 'kiro' | 'custom';
 
@@ -82,7 +184,7 @@ interface AgentTemplateDef {
   readonly id: AgentTemplateId;
   readonly name: string;
   readonly description: string;
-  readonly defaults: { type: 'cli' | 'scaffold' | 'custom' | 'sdlc'; version: string };
+  readonly defaults: { type: string; version: string };
 }
 
 interface WizardState {
@@ -91,20 +193,30 @@ interface WizardState {
   agent: {
     templateId: AgentTemplateId | null;
     name: string;
-    type: 'cli' | 'scaffold' | 'custom' | 'sdlc';
+    type: string;
     version: string;
     description: string;
     defaultProvider: string;
   };
   runtime: {
     name: string;
-    kind: RuntimeKind;
+    kind: RuntimeUiKind;
     cpu: number;
     memoryGb: number;
     autoCleanup: boolean;
+    workspacePath: string;
   };
   assignment: { project: string; role: 'default' | 'custom' };
   completedAt: string | null;
+  /** Server-side ids populated as the user advances through the wizard.
+   *  Persisted in localStorage so resuming mid-wizard does not duplicate
+   *  rows. */
+  serverIds: {
+    providerId: string | null;
+    agentId: string | null;
+    runtimeId: string | null;
+    assignmentTaskType: string | null;
+  };
 }
 
 const PROVIDERS: ReadonlyArray<ProviderDef> = [
@@ -166,9 +278,16 @@ const DEFAULT_STATE: WizardState = {
     cpu: 2,
     memoryGb: 4,
     autoCleanup: true,
+    workspacePath: '.',
   },
   assignment: { project: '', role: 'default' },
   completedAt: null,
+  serverIds: {
+    providerId: null,
+    agentId: null,
+    runtimeId: null,
+    assignmentTaskType: null,
+  },
 };
 
 function loadState(): WizardState {
@@ -184,6 +303,7 @@ function loadState(): WizardState {
       agent: { ...DEFAULT_STATE.agent, ...(parsed.agent ?? {}) },
       runtime: { ...DEFAULT_STATE.runtime, ...(parsed.runtime ?? {}) },
       assignment: { ...DEFAULT_STATE.assignment, ...(parsed.assignment ?? {}) },
+      serverIds: { ...DEFAULT_STATE.serverIds, ...(parsed.serverIds ?? {}) },
     };
   } catch {
     return DEFAULT_STATE;
@@ -196,6 +316,27 @@ function persistState(state: WizardState): void {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {
     /* ignore quota errors */
+  }
+}
+
+/** Derive a `litellm_model_alias` from the chosen provider. The backend
+ *  requires this field; the wizard offers reasonable defaults per
+ *  provider family. */
+function defaultLitellmAlias(providerSlug: ProviderId | null): string {
+  switch (providerSlug) {
+    case 'anthropic':
+      return 'claude-sonnet-4-5';
+    case 'openai':
+      return 'gpt-4o';
+    case 'bedrock':
+      return 'bedrock/anthropic.claude-sonnet-4-5';
+    case 'vertex':
+      return 'vertex_ai/gemini-2.0-flash';
+    case 'azure':
+      return 'azure/gpt-4o';
+    case 'custom':
+    default:
+      return 'custom/llama-3.1-70b';
   }
 }
 
@@ -214,8 +355,26 @@ export function AgentOnboardingWizard({
 }: AgentOnboardingWizardProps) {
   const [state, setState] = React.useState<WizardState>(DEFAULT_STATE);
   const [hydrated, setHydrated] = React.useState(false);
-  const [testingProvider, setTestingProvider] = React.useState(false);
-  const [providerTestOk, setProviderTestOk] = React.useState<null | boolean>(null);
+
+  // Per-step transient UI state (NOT persisted — purely "what the
+  // current step is showing").
+  const [providerTest, setProviderTest] = React.useState<{
+    state: 'idle' | 'creating' | 'testing' | 'ok' | 'error';
+    message: string;
+    latencyMs?: number;
+  }>({ state: 'idle', message: '' });
+  const [agentSubmit, setAgentSubmit] = React.useState<{
+    state: 'idle' | 'submitting' | 'ok' | 'error';
+    message: string;
+  }>({ state: 'idle', message: '' });
+  const [runtimeSubmit, setRuntimeSubmit] = React.useState<{
+    state: 'idle' | 'submitting' | 'ok' | 'error';
+    message: string;
+  }>({ state: 'idle', message: '' });
+  const [assignmentSubmit, setAssignmentSubmit] = React.useState<{
+    state: 'idle' | 'submitting' | 'ok' | 'error';
+    message: string;
+  }>({ state: 'idle', message: '' });
 
   // Hydrate from localStorage on mount so resuming mid-wizard works.
   React.useEffect(() => {
@@ -232,12 +391,195 @@ export function AgentOnboardingWizard({
     setState((s) => ({ ...s, [key]: { ...(s[key] as object), ...patch } }));
   }, []);
 
+  // ------------------------------------------------------------------
+  // Real backend hooks (Zone 4 wiring).
+  // ------------------------------------------------------------------
+  const createProvider = useCreateProvider();
+  const testProvider = useTestProvider();
+  const createAgent = useCreateAgent();
+  const startRuntime = useStartRuntime();
+  const createAssignment = useCreateAssignment();
+  const projectId = useProjectId();
+
+  // Step 1 — create the provider, then test it. The test endpoint
+  // (Zone 1) hits the real LiteLLM proxy, so the latency / error we
+  // surface is the live network round-trip.
+  const handleTestConnection = React.useCallback(async () => {
+    const { provider, serverIds } = state;
+    if (!provider.id || !provider.apiKey.trim() || !provider.name.trim()) return;
+
+    setProviderTest({ state: 'creating', message: 'Saving provider…' });
+
+    let providerId = serverIds.providerId;
+    try {
+      if (!providerId) {
+        // First time on this step — create the provider, persist the
+        // returned id so re-opening the wizard doesn't duplicate.
+        const created = await createProvider.mutateAsync({
+          name: provider.name,
+          type: providerSlugToBackend(provider.id),
+          litellm_model_alias: defaultLitellmAlias(provider.id),
+          enabled: true,
+          config: { api_key: provider.apiKey },
+        });
+        providerId = created.id;
+        setState((s) => ({
+          ...s,
+          serverIds: { ...s.serverIds, providerId: created.id },
+        }));
+      }
+
+      setProviderTest({ state: 'testing', message: 'Testing…' });
+      const result = await testProvider.mutateAsync(providerId);
+      if (result.status === 'ok') {
+        setProviderTest({
+          state: 'ok',
+          message: result.message,
+          latencyMs:
+            typeof result.latency_ms === 'number'
+              ? (result.latency_ms as number)
+              : undefined,
+        });
+      } else {
+        setProviderTest({ state: 'error', message: result.message });
+      }
+    } catch (err) {
+      const detail =
+        (err as { message?: string })?.message ?? 'Test failed';
+      setProviderTest({ state: 'error', message: detail });
+    }
+  }, [state, createProvider, testProvider]);
+
+  // Step 2 — POST /agents. The backend AgentCreateInput doesn't accept
+  // a `provider_id` field directly, so we encode the chosen provider
+  // inside `capabilities.default_provider` (a typed dict) which the
+  // adapter layer already understands.
+  const handleCreateAgent = React.useCallback(async (): Promise<string | null> => {
+    const { agent, serverIds } = state;
+    if (!agent.name.trim() || !agent.version.trim()) return null;
+
+    if (serverIds.agentId) {
+      setAgentSubmit({ state: 'ok', message: 'Agent already registered.' });
+      return serverIds.agentId;
+    }
+
+    setAgentSubmit({ state: 'submitting', message: 'Registering agent…' });
+    try {
+      const created = await createAgent.mutateAsync({
+        name: agent.name,
+        type: templateIdToBackendType(agent.templateId ?? 'custom'),
+        version: agent.version,
+        capabilities: {
+          default_provider: agent.defaultProvider,
+          description: agent.description,
+        },
+      });
+      setState((s) => ({
+        ...s,
+        serverIds: { ...s.serverIds, agentId: created.id },
+      }));
+      setAgentSubmit({
+        state: 'ok',
+        message: `Agent "${created.name}" registered.`,
+      });
+      return created.id;
+    } catch (err) {
+      const detail =
+        (err as { message?: string })?.message ?? 'Agent registration failed';
+      setAgentSubmit({ state: 'error', message: detail });
+      return null;
+    }
+  }, [state, createAgent]);
+
+  // Step 3 — POST /runtimes/start. Requires agent_id (from step 2)
+  // and a workspace_path (wizard now captures one, default ".").
+  const handleStartRuntime = React.useCallback(async (): Promise<boolean> => {
+    const { runtime, serverIds } = state;
+    if (!runtime.name.trim() || !serverIds.agentId) return false;
+
+    if (serverIds.runtimeId) {
+      setRuntimeSubmit({ state: 'ok', message: 'Runtime already started.' });
+      return true;
+    }
+
+    setRuntimeSubmit({ state: 'submitting', message: 'Starting runtime…' });
+    try {
+      const started = await startRuntime.mutateAsync({
+        agent_id: serverIds.agentId,
+        workspace_path: runtime.workspacePath.trim() || '.',
+        kind: runtimeKindToBackend(runtime.kind),
+      });
+      setState((s) => ({
+        ...s,
+        serverIds: { ...s.serverIds, runtimeId: started.id },
+      }));
+      setRuntimeSubmit({
+        state: 'ok',
+        message: `Runtime "${started.kind}" started.`,
+      });
+      return true;
+    } catch (err) {
+      const detail =
+        (err as { message?: string })?.message ?? 'Runtime start failed';
+      setRuntimeSubmit({ state: 'error', message: detail });
+      return false;
+    }
+  }, [state, startRuntime]);
+
+  // Step 4 — POST /agent-assignments. Requires a task_type (derived
+  // from the role selector) and a pinned_agent_id (from step 2).
+  const handleCreateAssignment = React.useCallback(async (): Promise<boolean> => {
+    const { assignment, serverIds } = state;
+    if (!assignment.project.trim() || !serverIds.agentId) return false;
+
+    setAssignmentSubmit({ state: 'submitting', message: 'Creating assignment…' });
+    try {
+      await createAssignment.mutateAsync({
+        task_type: roleToTaskType(assignment.role),
+        project_id: projectId,
+        strategy: 'manual_pin',
+        pinned_agent_id: serverIds.agentId,
+      });
+      setState((s) => ({
+        ...s,
+        serverIds: {
+          ...s.serverIds,
+          assignmentTaskType: roleToTaskType(assignment.role),
+        },
+      }));
+      setAssignmentSubmit({
+        state: 'ok',
+        message: `Assigned to ${roleToTaskType(assignment.role)}.`,
+      });
+      return true;
+    } catch (err) {
+      const detail =
+        (err as { message?: string })?.message ?? 'Assignment failed';
+      setAssignmentSubmit({ state: 'error', message: detail });
+      return false;
+    }
+  }, [state, createAssignment, projectId]);
+
+  // canAdvance mirrors the original wizard's gating: minimum form
+  // validity for each step. We deliberately do NOT require a
+  // successful backend round-trip to enable Next — the user can skip
+  // the test and come back to it. The mutations are fired either on
+  // explicit action (Test connection in step 1) or on Next for
+  // steps 2-4. The user can also use Skip to advance without
+  // committing the step's work.
   const canAdvance = (() => {
     switch (state.step) {
       case 0:
-        return state.provider.id !== null && state.provider.name.trim().length > 0;
+        return (
+          state.provider.id !== null &&
+          state.provider.name.trim().length > 0 &&
+          state.provider.apiKey.trim().length > 0
+        );
       case 1:
-        return state.agent.name.trim().length > 0 && state.agent.version.trim().length > 0;
+        return (
+          state.agent.name.trim().length > 0 &&
+          state.agent.version.trim().length > 0
+        );
       case 2:
         return state.runtime.name.trim().length > 0;
       case 3:
@@ -247,7 +589,39 @@ export function AgentOnboardingWizard({
     }
   })();
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    if (state.step >= STEP_COUNT - 1) {
+      const finished: WizardState = { ...state, completedAt: new Date().toISOString() };
+      setState(finished);
+      onFinish?.(finished);
+      onOpenChange(false);
+      return;
+    }
+    // Per-step mutation gate. Each step's "Next" commits its work to
+    // the backend so resume-from-localStorage doesn't fire duplicates.
+    if (state.step === 0) {
+      if (providerTest.state !== 'ok') return;
+    } else if (state.step === 1) {
+      const ok = await handleCreateAgent();
+      if (!ok) return;
+    } else if (state.step === 2) {
+      const ok = await handleStartRuntime();
+      if (!ok) return;
+    } else if (state.step === 3) {
+      const ok = await handleCreateAssignment();
+      if (!ok) return;
+    }
+    setState((s) => ({ ...s, step: s.step + 1 }));
+  };
+
+  const handleBack = () => {
+    setState((s) => ({ ...s, step: Math.max(0, s.step - 1) }));
+  };
+
+  const handleSkip = async () => {
+    // Skip = advance without firing the step's mutation. The user can
+    // come back via localStorage; if the wizard closes mid-skip the
+    // serverIds are simply empty.
     if (state.step >= STEP_COUNT - 1) {
       const finished: WizardState = { ...state, completedAt: new Date().toISOString() };
       setState(finished);
@@ -258,16 +632,12 @@ export function AgentOnboardingWizard({
     setState((s) => ({ ...s, step: s.step + 1 }));
   };
 
-  const handleBack = () => {
-    setState((s) => ({ ...s, step: Math.max(0, s.step - 1) }));
-  };
-
-  const handleSkip = () => {
-    handleNext();
-  };
-
   const resetAndClose = () => {
     setState(DEFAULT_STATE);
+    setProviderTest({ state: 'idle', message: '' });
+    setAgentSubmit({ state: 'idle', message: '' });
+    setRuntimeSubmit({ state: 'idle', message: '' });
+    setAssignmentSubmit({ state: 'idle', message: '' });
     if (typeof window !== 'undefined') {
       try {
         window.localStorage.removeItem(STORAGE_KEY);
@@ -276,17 +646,6 @@ export function AgentOnboardingWizard({
       }
     }
     onOpenChange(false);
-  };
-
-  const handleTestConnection = () => {
-    setProviderTestOk(null);
-    setTestingProvider(true);
-    // M2 — simulate the round-trip. Real wiring lands with the API
-    // connection contract.
-    window.setTimeout(() => {
-      setTestingProvider(false);
-      setProviderTestOk(true);
-    }, 700);
   };
 
   return (
@@ -323,8 +682,7 @@ export function AgentOnboardingWizard({
           {state.step === 0 ? (
             <StepConnectProvider
               provider={state.provider}
-              testing={testingProvider}
-              testResult={providerTestOk}
+              testResult={providerTest}
               onChange={(patch) => update('provider', patch)}
               onTest={handleTestConnection}
             />
@@ -338,6 +696,7 @@ export function AgentOnboardingWizard({
           {state.step === 2 ? (
             <StepConfigureRuntime
               runtime={state.runtime}
+              hasAgent={!!state.serverIds.agentId}
               onChange={(patch) => update('runtime', patch)}
             />
           ) : null}
@@ -376,7 +735,9 @@ export function AgentOnboardingWizard({
           </div>
           <Button
             type="button"
-            onClick={handleNext}
+            onClick={() => {
+              void handleNext();
+            }}
             disabled={!canAdvance}
             data-testid="wizard-next"
             className="bg-[var(--accent-primary)] text-white hover:opacity-90"
@@ -441,21 +802,26 @@ function StepIndicator({ step }: { step: number }) {
   );
 }
 
+interface TestResultState {
+  state: 'idle' | 'creating' | 'testing' | 'ok' | 'error';
+  message: string;
+  latencyMs?: number;
+}
+
 interface StepConnectProviderProps {
   provider: WizardState['provider'];
-  testing: boolean;
-  testResult: null | boolean;
+  testResult: TestResultState;
   onChange: (patch: Partial<WizardState['provider']>) => void;
   onTest: () => void;
 }
 
 function StepConnectProvider({
   provider,
-  testing,
   testResult,
   onChange,
   onTest,
 }: StepConnectProviderProps) {
+  const testing = testResult.state === 'creating' || testResult.state === 'testing';
   return (
     <div className="space-y-4" data-testid="wizard-step-connect-provider">
       <header className="space-y-1">
@@ -474,7 +840,7 @@ function StepConnectProvider({
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Model providers">
         {PROVIDERS.map((p) => {
           const active = provider.id === p.id;
-          const connected = active && testResult === true;
+          const connected = active && testResult.state === 'ok';
           return (
             <button
               key={p.id}
@@ -541,28 +907,42 @@ function StepConnectProvider({
             size="sm"
             variant="outline"
             onClick={onTest}
-            disabled={!provider.apiKey.trim() || testing}
+            disabled={!provider.apiKey.trim() || !provider.name.trim() || testing}
             data-testid="wizard-provider-test"
           >
             {testing ? (
               <>
                 <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                Testing…
+                {testResult.state === 'creating' ? 'Saving…' : 'Testing…'}
               </>
             ) : (
               'Test connection'
             )}
           </Button>
-          {testResult === true ? (
+          {testResult.state === 'ok' ? (
             <span className="inline-flex items-center gap-1 text-xs text-[var(--accent-emerald)]">
               <Check className="h-3 w-3" aria-hidden="true" />
-              Reachable as arun@acme.com
+              {testResult.message}
+              {typeof testResult.latencyMs === 'number' ? (
+                <span className="text-[var(--fg-tertiary)]"> · {testResult.latencyMs}ms</span>
+              ) : null}
+            </span>
+          ) : null}
+          {testResult.state === 'error' ? (
+            <span className="inline-flex items-center gap-1 text-xs text-[var(--accent-rose)]">
+              <AlertCircle className="h-3 w-3" aria-hidden="true" />
+              {testResult.message}
             </span>
           ) : null}
         </div>
       </div>
     </div>
   );
+}
+
+interface SubmitState {
+  state: 'idle' | 'submitting' | 'ok' | 'error';
+  message: string;
 }
 
 interface StepRegisterAgentProps {
@@ -650,7 +1030,7 @@ function StepRegisterAgent({ agent, onChange }: StepRegisterAgentProps) {
             <select
               id="agent-type"
               value={agent.type}
-              onChange={(e) => onChange({ type: e.target.value as WizardState['agent']['type'] })}
+              onChange={(e) => onChange({ type: e.target.value })}
               className="h-9 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-2 text-sm text-[var(--fg-primary)]"
               data-testid="wizard-agent-type"
             >
@@ -687,10 +1067,15 @@ function StepRegisterAgent({ agent, onChange }: StepRegisterAgentProps) {
 
 interface StepConfigureRuntimeProps {
   runtime: WizardState['runtime'];
+  hasAgent: boolean;
   onChange: (patch: Partial<WizardState['runtime']>) => void;
 }
 
-function StepConfigureRuntime({ runtime, onChange }: StepConfigureRuntimeProps) {
+function StepConfigureRuntime({
+  runtime,
+  hasAgent,
+  onChange,
+}: StepConfigureRuntimeProps) {
   return (
     <div className="space-y-4" data-testid="wizard-step-configure-runtime">
       <header className="space-y-1">
@@ -705,6 +1090,16 @@ function StepConfigureRuntime({ runtime, onChange }: StepConfigureRuntimeProps) 
           default for development.
         </p>
       </header>
+
+      {!hasAgent ? (
+        <p
+          className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-inset)] p-3 text-xs text-[var(--fg-tertiary)]"
+          data-testid="wizard-runtime-needs-agent"
+        >
+          Register an agent first — the runtime needs an agent_id to attach
+          to. Skipping this step is fine; you can come back.
+        </p>
+      ) : null}
 
       <div className="grid gap-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3">
         <div className="grid gap-1.5">
@@ -723,7 +1118,7 @@ function StepConfigureRuntime({ runtime, onChange }: StepConfigureRuntimeProps) 
             <select
               id="runtime-kind"
               value={runtime.kind}
-              onChange={(e) => onChange({ kind: e.target.value as RuntimeKind })}
+              onChange={(e) => onChange({ kind: e.target.value as RuntimeUiKind })}
               className="h-9 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-2 text-sm text-[var(--fg-primary)]"
               data-testid="wizard-runtime-kind"
             >
@@ -756,6 +1151,16 @@ function StepConfigureRuntime({ runtime, onChange }: StepConfigureRuntimeProps) 
               data-testid="wizard-runtime-mem"
             />
           </div>
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="runtime-workspace">Workspace path</Label>
+          <Input
+            id="runtime-workspace"
+            value={runtime.workspacePath}
+            onChange={(e) => onChange({ workspacePath: e.target.value })}
+            placeholder="."
+            data-testid="wizard-runtime-workspace"
+          />
         </div>
         <label className="flex items-center gap-2 text-sm text-[var(--fg-secondary)]">
           <input

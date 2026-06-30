@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/lib/api/auth';
+import { buildKeycloakLogoutUrl } from '@/lib/auth/oidc';
 
 function initials(name?: string | null, email?: string | null): string {
   const trimmedName = name?.trim() ?? '';
@@ -64,8 +65,23 @@ export function UserMenu() {
   const fallback = initials(displayName, displayEmail);
 
   const handleLogout = () => {
+    // step-53 Zone 9 — clear Forge tokens first, then bounce the
+    // browser through Keycloak's end_session endpoint so the SSO
+    // session ends too. The Keycloak logout endpoint accepts a
+    // post_logout_redirect_uri that brings the user back to /login
+    // once the IdP has cleared its cookies. This is the same shape
+    // as the spec's logout block at the bottom of Zone 9.
     logout();
     toast.success('Signed out');
+    if (typeof window !== 'undefined') {
+      const logoutUrl = buildKeycloakLogoutUrl(
+        `${window.location.origin}/login`,
+      );
+      if (logoutUrl) {
+        window.location.href = logoutUrl;
+        return;
+      }
+    }
     router.replace('/login');
   };
 

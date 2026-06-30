@@ -1018,6 +1018,27 @@ class DayOneBootstrapService:
                     project_id=project_id,
                     tenant_id=tenant_id,
                 )
+                # ponytail: also seed the ideation pipeline (Step-57-v2
+                # Zone 4) — `seed_ideation.seed()` is idempotent and
+                # no-ops when ideas already exist, so it's safe to call
+                # on every bootstrap. Runs only for the acme-corp
+                # tenant (guarded inside the seed itself).
+                try:
+                    from scripts.seed_ideation import seed as seed_ideation
+
+                    await seed_ideation()
+                    logger.info(
+                        "bootstrap.ideation.applied",
+                        project_id=project_id,
+                        tenant_id=tenant_id,
+                    )
+                except Exception as ideation_exc:  # noqa: BLE001
+                    logger.warning(
+                        "bootstrap.ideation.skipped",
+                        project_id=project_id,
+                        tenant_id=tenant_id,
+                        error=str(ideation_exc),
+                    )
             except Exception as apply_exc:  # noqa: BLE001 — best-effort
                 # Seed package may not be on disk yet (Plan D ships
                 # the data); treat that as a no-op with a warning.

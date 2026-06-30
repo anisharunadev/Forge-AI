@@ -1,27 +1,29 @@
 /**
- * Governance Center — Enterprise AI control plane (Step 35 rebuild).
+ * Governance Center — Enterprise AI control plane (Step 35 → Step 59).
  *
  * 8 tabs: Overview / Policies / Guardrails / Standards / LLM Control /
- * Board / RBAC / Audit. Mocked LiteLLM integration; mock policy test
- * playground. All data is client-side (governance-v2 fixtures).
+ * Board / RBAC / Audit. Step 59 rewire: every tab now reads from the
+ * real LiteLLM-backed backend via TanStack Query hooks in
+ * `lib/hooks/useLiteLLM.ts`. The previous fixture-based mock has been
+ * retired — see `lib/governance-v2/` for the legacy shapes.
  *
  * Reconciles with:
- *   - Rule 1 (model-provider agnostic) — LiteLLM abstraction shown
- *   - Rule 2 (multi-tenant by default) — tenant_id / project_id on every audit entry
- *   - Rule 3 (human approval gates) — Board tab + Convene board
- *   - Rule 4 (typed artifacts) — Policies, Standards, Audit all typed
- *   - Rule 6 (auditability) — full audit log + decision detail drawer
+ *   - Rule 1 (model-provider agnostic) — backend proxies LiteLLM
+ *   - Rule 2 (multi-tenant by default) — tenant context from JWT cookie
+ *   - Rule 3 (human approval gates) — Board tab + Convene board (kept)
+ *   - Rule 4 (typed artifacts) — typed SDK in lib/litellm/data.ts
+ *   - Rule 6 (auditability) — Audit tab merges Forge + LiteLLM
  *   - Rule 8 (configurable everything) — provider/model/route swaps
  *
- * Server boundary: thin. The shell is a client component that renders
- * 8 tabs from local fixtures; the previous Board token lookup is kept
- * to preserve the existing persona → token shape.
+ * Server boundary: thin. Reads the persona from the cookie for
+ * display purposes only; `boardTokenPresent` is now a stub (the
+ * legacy `readBoardTokenForPersona` helper has been removed —
+ * board tokens are looked up client-side via `useTenantLLMConfig`).
  */
 
 import { cookies } from 'next/headers';
 
 import { readPersonaFromCookieHeader } from '@/lib/auth';
-import { readBoardTokenForPersona } from '@/lib/governance/data';
 
 import { GovernanceCenterShell } from '@/components/governance-v2/governance-center-shell';
 
@@ -44,13 +46,16 @@ export default async function GovernanceCenterPage() {
     .getAll()
     .map((c) => `${c.name}=${c.value}`)
     .join('; ');
-  const persona: Persona = readPersonaFromCookieHeader(cookieHeader) as Persona;
-  const boardToken = readBoardTokenForPersona(persona);
-  const boardTokenPresent = Boolean(boardToken);
+  const persona = readPersonaFromCookieHeader(cookieHeader) as Persona;
+  // Step 59: board token presence is determined client-side from
+  // `useTenantLLMConfig` (litellm_team_id + has_virtual_key). The
+  // server stub returns true so the HeroBand pill renders the
+  // "present" state until the hook resolves.
+  const boardTokenPresent = true;
 
   return (
     <GovernanceCenterShell
-      persona={PERSONA_LABEL[persona]}
+      persona={PERSONA_LABEL[persona] ?? persona}
       boardTokenPresent={boardTokenPresent}
     />
   );

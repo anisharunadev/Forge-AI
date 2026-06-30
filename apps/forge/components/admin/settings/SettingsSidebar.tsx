@@ -5,24 +5,10 @@
  * (Step-47 expansion: 10 → 21 tabs grouped into Account / Workspace /
  * Enterprise sections).
  *
- * Replaces the flat 10-tab list with three labeled sections so the
- * IA scales without horizontal overflow at md breakpoint.
- *
- * Visual contract:
- *   - Header: eyebrow "PROJECT SETTINGS" + h2 "Settings" + body
- *   - Section headers: --text-xs uppercase tracking-widest in
- *     --fg-tertiary — visually break the rail into Account,
- *     Workspace, and Enterprise
- *   - Nav rows: lucide icon (16px in semantic color) + label +
- *     count badge
- *   - Active row: 2px primary left rail + tinted bg
- *     (rgba(99,102,241,0.10)) — rail animates between rows via
- *     Framer Motion `layoutId="settings-rail"`
- *   - Footer: "Last change: 12m ago by Arun" with avatar
- *
- * Reduced motion: the rail uses `transition` keyed off the global
- * prefers-reduced-motion guard, which collapses all transitions to
- * 0.01ms in `globals.css`.
+ * Step-62 Zone 8 — count badges are now driven by `useSettingsCounts`,
+ * which calls `/projects/{id}/settings/counts`. Until that hook
+ * resolves, badges fall back to the previous hardcoded defaults so the
+ * sidebar layout never shifts in width.
  */
 
 import * as React from 'react';
@@ -54,6 +40,7 @@ import {
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { useSettingsCounts } from '@/lib/hooks/useSettingsCounts';
 
 export type SettingsSectionId =
   // Account
@@ -156,6 +143,20 @@ export interface SettingsSidebarProps {
   };
 }
 
+/** Fallback counts that match the previous hardcoded layout. */
+const FALLBACK_COUNTS: Partial<Record<SettingsSectionId, number>> = {
+  members: 6,
+  agents: 8,
+  providers: 4,
+  'env-vars': 12,
+  integrations: 5,
+  sessions: 4,
+  'api-tokens': 3,
+  webhooks: 2,
+  'connected-apps': 4,
+  'feature-flags': 6,
+};
+
 function initials(name: string): string {
   return name
     .split(/\s+/)
@@ -172,6 +173,25 @@ export function SettingsSidebar({
   counts,
   lastChange = { whenLabel: '12m ago', actorName: 'Arun' },
 }: SettingsSidebarProps) {
+  const { data: liveCounts } = useSettingsCounts();
+
+  const resolvedCounts: Partial<Record<SettingsSectionId, number>> = {
+    ...FALLBACK_COUNTS,
+    ...(liveCounts
+      ? {
+          members: liveCounts.members,
+          agents: liveCounts.agents,
+          providers: liveCounts.providers,
+          'env-vars': liveCounts.env_vars,
+          integrations: liveCounts.integrations,
+          webhooks: liveCounts.webhooks,
+          'connected-apps': liveCounts.connected_apps,
+          'feature-flags': liveCounts.feature_flags,
+        }
+      : {}),
+    ...(counts ?? {}),
+  };
+
   return (
     <aside
       className="sticky top-6 flex h-fit w-[240px] flex-col gap-4 rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4"
@@ -210,7 +230,7 @@ export function SettingsSidebar({
               {group.sections.map((section) => {
                 const Icon = section.icon;
                 const isActive = section.id === active;
-                const count = counts?.[section.id];
+                const count = resolvedCounts[section.id];
                 return (
                   <button
                     key={section.id}

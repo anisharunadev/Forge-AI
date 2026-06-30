@@ -4,6 +4,14 @@
  * PoliciesTable — Policies registry table for the Governance Center
  * (Phase 0.5-08 redesign).
  *
+ * Step-59 migration: was reading the `Policy` type from
+ * `@/lib/governance/data`. Now wires to the LiteLLM-backed hooks
+ * from `useLiteLLM.ts` (`useGuardrails` + `useStandards`) so the
+ * Policies tab reflects the canonical source of truth (LiteLLM is the
+ * authority for guardrail config per step-59 Zone 4). The component
+ * accepts an optional `policies` prop for callers that want to
+ * override the live fetch (kept for prop-interface compatibility).
+ *
  * Per spec:
  *   - shadcn Table
  *   - Columns: Name | Scope (tenant / project / global) | Enforcement
@@ -11,7 +19,7 @@
  *   - Filter input + "New policy" primary button on the right
  *
  * Scope and Enforcement are derived deterministically from the
- * Policy.title hash so the page is deterministic across SSR + CSR.
+ * source row's id hash so the page is deterministic across SSR + CSR.
  */
 
 import * as React from 'react';
@@ -34,10 +42,50 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import type { Policy } from '@/lib/governance/data';
+import {
+  useGuardrails,
+  useStandards,
+  type LiteLLMGuardrail,
+  type StandardRead,
+} from '@/lib/hooks/useLiteLLM';
 
 type Scope = 'tenant' | 'project' | 'global';
 type Enforcement = 'strict' | 'advisory' | 'off';
+
+/** Row shape consumed by the table — adapter from the live hooks. */
+export interface Policy {
+  readonly id: string;
+  readonly title: string;
+  readonly summary: string;
+  readonly status: 'active' | 'archived';
+  readonly version: string;
+  readonly updatedAt: string;
+  readonly updatedBy: { readonly displayName: string; readonly id: string };
+}
+
+function guardrailToPolicy(g: LiteLLMGuardrail): Policy {
+  return {
+    id: `gr:${g.id}`,
+    title: g.name,
+    summary: g.description ?? `${g.type} guardrail — applies to ${g.applies_to.join(', ') || 'all'}.`,
+    status: g.enabled ? 'active' : 'archived',
+    version: 'v1',
+    updatedAt: '—',
+    updatedBy: { displayName: 'LiteLLM', id: 'litellm' },
+  };
+}
+
+function standardToPolicy(s: StandardRead): Policy {
+  return {
+    id: `std:${s.id}`,
+    title: s.name,
+    summary: s.description ?? `${s.category} standard — source ${s.source}.`,
+    status: s.status === 'active' ? 'active' : 'archived',
+    version: 'v1',
+    updatedAt: s.attested_at ?? '—',
+    updatedBy: { displayName: 'Forge', id: 'forge' },
+  };
+}
 
 function hashSeed(s: string): number {
   let h = 0;
@@ -84,13 +132,27 @@ function enforcementClasses(e: Enforcement): string {
 }
 
 export interface PoliciesTableProps {
-  policies: ReadonlyArray<Policy>;
+  /** Optional override — when omitted, the component fetches live
+   *  guardrails + standards from the LiteLLM-backed hooks. */
+  policies?: ReadonlyArray<Policy>;
 }
 
-export function PoliciesTable({ policies }: PoliciesTableProps) {
+export function PoliciesTable({ policies: policiesProp }: PoliciesTableProps) {
   const { toast } = useToast();
   const [filter, setFilter] = React.useState('');
   const [creating, setCreating] = React.useState(false);
+
+  // Live data — fetch from LiteLLM-backed governance endpoints.
+  const guardrails = useGuardrails();
+  const standards = useStandards();
+
+  const policies: ReadonlyArray<Policy> = React.useMemo(() => {
+    if (policiesProp) return policiesProp;
+    const rows: Policy[] = [];
+    if (guardrails.data) rows.push(...guardrails.data.map(guardrailToPolicy));
+    if (standards.data) rows.push(...standards.data.map(standardToPolicy));
+    return rows;
+  }, [policiesProp, guardrails.data, standards.data]);
 
   const filtered = React.useMemo(() => {
     const q = filter.trim().toLowerCase();

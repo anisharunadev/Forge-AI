@@ -20,6 +20,7 @@ import {
   EyeOff,
   History,
   Key,
+  Loader2,
   Lock,
   RefreshCw,
   RotateCw,
@@ -37,13 +38,18 @@ import {
   CATEGORY_LABEL,
   CREDENTIAL_TYPE_LABEL,
   SCOPE_LABEL,
-  listConnected,
   listCredentials,
   resolveIcon,
   type ConnectorCredential,
 } from '@/lib/connectors';
 import { fmtTimeAgo, maskSecret } from '../constants';
 import { cn } from '@/lib/utils';
+import {
+  useCredentials,
+  useRevealCredential,
+  useRotateCredential,
+  useRevokeCredential,
+} from '@/lib/hooks/useConnectors';
 
 type CredentialRow = ReturnType<typeof listCredentials>[number];
 
@@ -56,8 +62,28 @@ export function CredentialsTab() {
   const [revealTimer, setRevealTimer] = React.useState<number | null>(null);
   const [copiedAt, setCopiedAt] = React.useState<number | null>(null);
   const [toast, setToast] = React.useState<string | null>(null);
+  const [revealedSecret, setRevealedSecret] = React.useState<string | null>(null);
+  const [rotateSecret, setRotateSecret] = React.useState('');
 
-  const credentials = listCredentials();
+  // Step 55: real data with mock fallback.
+  const liveCredentials = useCredentials();
+  const mockCredentials = listCredentials();
+  const liveRows = liveCredentials.data ?? [];
+  const credentials: ReadonlyArray<CredentialRow> = liveRows.length > 0
+    ? liveRows.map((cred) => ({
+        credential: cred,
+        connector: {
+          id: cred.id,
+          displayName: cred.name,
+          category: 'custom' as ConnectorCredential['type'] extends string ? 'custom' : 'custom',
+          status: cred.status,
+        },
+      }))
+    : mockCredentials;
+
+  const reveal = useRevealCredential();
+  const rotate = useRotateCredential();
+  const revoke = useRevokeCredential();
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -86,12 +112,15 @@ export function CredentialsTab() {
   };
 
   const handleCopy = () => {
+    if (!revealedSecret) return;
+    navigator.clipboard?.writeText(revealedSecret).catch(() => undefined);
     setCopiedAt(Date.now());
     showToast('Copied — clipboard will auto-clear in 60s');
     setTimeout(() => setCopiedAt(null), 60_000);
   };
 
   const handleRotate = () => {
+    setRotateSecret('');
     setAuthModal('rotate');
   };
 
@@ -99,23 +128,46 @@ export function CredentialsTab() {
     setAuthModal('revoke');
   };
 
-  const confirmAuth = () => {
+  const confirmAuth = async () => {
     const action = authModal;
+    const targetId = selected?.id;
     setAuthModal(null);
+    if (!targetId) return;
     if (action === 'reveal') {
-      setRevealing(true);
-      showToast('Reveal granted — auto-hides in 30s');
-      const t = window.setTimeout(() => {
-        setRevealing(false);
-        showToast('Reveal auto-hidden');
-      }, 30_000);
-      setRevealTimer(t);
+      try {
+        const res = await reveal.mutateAsync(targetId);
+        setRevealedSecret(res.secret);
+        setRevealing(true);
+        showToast('Reveal granted — auto-hides in 30s');
+        const t = window.setTimeout(() => {
+          setRevealing(false);
+          setRevealedSecret(null);
+          showToast('Reveal auto-hidden');
+        }, 30_000);
+        setRevealTimer(t);
+      } catch {
+        // toast handled by the hook
+      }
     }
     if (action === 'rotate') {
-      showToast('Rotation requested — fingerprint issued');
+      if (!rotateSecret) {
+        showToast('Enter a new secret value first.');
+        return;
+      }
+      try {
+        await rotate.mutateAsync({ id: targetId, newSecret: rotateSecret });
+        showToast('Rotation requested — fingerprint issued');
+      } catch {
+        /* toast handled by the hook */
+      }
     }
     if (action === 'revoke') {
-      showToast('Credential revoked — downstream workflows will be blocked');
+      try {
+        await revoke.mutateAsync(targetId);
+        showToast('Credential revoked — downstream workflows will be blocked');
+      } catch {
+        /* toast handled by the hook */
+      }
     }
   };
 
@@ -244,6 +296,21 @@ export function CredentialsTab() {
               {authModal === 'rotate' && 'Rotating credentials affects all workflows using this connector.'}
               {authModal === 'revoke' && 'Revoking will immediately block downstream workflows. This cannot be undone.'}
             </p>
+            {authModal === 'rotate' ? (
+              <div className="mt-4">
+                <label className="block text-[10px] uppercase tracking-wider text-fg-tertiary">
+                  New secret value
+                </label>
+                <Input
+                  type="password"
+                  placeholder="paste the new secret"
+                  className="mt-1 h-9 font-mono text-xs"
+                  autoFocus
+                  value={rotateSecret}
+                  onChange={(e) => setRotateSecret(e.target.value)}
+                />
+              </div>
+            ) : null}
             <div className="mt-4 flex items-center gap-2">
               <Lock className="h-4 w-4 text-fg-tertiary" aria-hidden="true" />
               <Input type="password" placeholder="Password" className="h-9 text-sm" autoFocus />
@@ -256,7 +323,10 @@ export function CredentialsTab() {
               <Button variant="ghost" size="sm" onClick={() => setAuthModal(null)}>
                 Cancel
               </Button>
-              <Button size="sm" onClick={confirmAuth}>
+              <Button size="sm" onClick={confirmAuth} disabled={reveal.isPending || rotate.isPending || revoke.isPending}>
+                {(reveal.isPending || rotate.isPending || revoke.isPending) ? (
+                  <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+                ) : null}
                 Confirm
               </Button>
             </div>
@@ -328,8 +398,8 @@ function CredentialDetail({
         className="flex items-center justify-between gap-2 rounded-md border border-[var(--border-default)] bg-[var(--bg-inset)] px-3 py-2"
         data-testid="credential-secret"
       >
-        <code className="select-all font-mono text-sm text-fg-primary">
-          {revealing ? 'sk_live_4f9a82bd6e11f4c0a8d4' : maskSecret(credential.lengthChars || 24)}
+        <code className="select-all truncate font-mono text-sm text-fg-primary">
+          {revealing ? revealedSecret ?? '••••••••••••' : maskSecret(credential.lengthChars || 24)}
         </code>
         <div className="flex shrink-0 items-center gap-1">
           <Button
@@ -338,11 +408,12 @@ function CredentialDetail({
             className="h-7 px-2 text-[11px]"
             onClick={() => (revealing ? setRevealing(false) : onReveal())}
             aria-pressed={revealing}
+            data-testid="credential-reveal"
           >
             {revealing ? <EyeOff className="h-3.5 w-3.5" aria-hidden="true" /> : <Eye className="h-3.5 w-3.5" aria-hidden="true" />}
             {revealing ? 'Hide' : 'Reveal'}
           </Button>
-          <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={onCopy}>
+          <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={onCopy} disabled={!revealing}>
             <Clipboard className="h-3.5 w-3.5" aria-hidden="true" />
             {copiedAt ? 'Copied' : 'Copy'}
           </Button>

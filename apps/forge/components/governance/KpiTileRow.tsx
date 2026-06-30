@@ -4,6 +4,13 @@
  * KpiTileRow — 4-tile KPI strip for the Governance Center hero
  * (Phase 0.5-08 redesign).
  *
+ * Step-59 migration: was reading from `@/lib/governance/data` (mock
+ * layer pointing at port 4000). Now wires to the LiteLLM-backed hooks
+ * from `useLiteLLM.ts` (`useGuardrails`, `useStandards`,
+ * `useSpendByTeam`) for the tiles that have a real backend. RBAC
+ * roles + board confirmations + pending approvals still come from
+ * `useForgeFixtures.ts` until their endpoints ship.
+ *
  * Each tile: number · label · 40px Recharts sparkline · delta
  * (semantic color). Per the style rule "Color Only", every status is
  * also a textual label, never just a colored dot.
@@ -17,7 +24,15 @@ import * as React from 'react';
 import { Area, AreaChart, ResponsiveContainer } from 'recharts';
 
 import { cn } from '@/lib/utils';
-import type { ApprovalRequest, Policy, RbacRole, BoardConfirmation } from '@/lib/governance/data';
+import {
+  FIXTURE_BOARD_CONFIRMATIONS,
+  FIXTURE_PENDING_APPROVALS,
+  FIXTURE_RBAC_ROLES,
+  type ApprovalRequest,
+  type BoardConfirmation,
+  type RbacRole,
+} from '@/lib/hooks/useForgeFixtures';
+import { useGuardrails, useStandards } from '@/lib/hooks/useLiteLLM';
 
 export interface KpiTile {
   key: string;
@@ -33,10 +48,18 @@ export interface KpiTile {
 }
 
 export interface KpiTileRowProps {
-  pendingApprovals: ReadonlyArray<ApprovalRequest>;
-  boardConfirmations: ReadonlyArray<BoardConfirmation>;
-  policies: ReadonlyArray<Policy>;
-  rbacRoles: ReadonlyArray<RbacRole>;
+  /** Legacy prop — ignored, data is now fetched live. Kept for prop
+   *  interface compatibility with existing callers. */
+  pendingApprovals?: ReadonlyArray<ApprovalRequest>;
+  /** Legacy prop — ignored, data is now fetched live. Kept for prop
+   *  interface compatibility with existing callers. */
+  boardConfirmations?: ReadonlyArray<BoardConfirmation>;
+  /** Legacy prop — ignored, data is now fetched live. Kept for prop
+   *  interface compatibility with existing callers. */
+  policies?: ReadonlyArray<unknown>;
+  /** Legacy prop — ignored, data is now fetched live. Kept for prop
+   *  interface compatibility with existing callers. */
+  rbacRoles?: ReadonlyArray<RbacRole>;
 }
 
 function buildSpark(seed: number, count = 12): ReadonlyArray<number> {
@@ -47,48 +70,6 @@ function buildSpark(seed: number, count = 12): ReadonlyArray<number> {
     out.push(((seed * 7 + i * 13 + (seed % 5)) % 11) + 4);
   }
   return out;
-}
-
-function buildTiles(props: KpiTileRowProps): ReadonlyArray<KpiTile> {
-  const { pendingApprovals, boardConfirmations, policies, rbacRoles } = props;
-  return [
-    {
-      key: 'pending-approvals',
-      label: 'Pending Approvals',
-      value: pendingApprovals.length,
-      delta: pendingApprovals.length > 0 ? `+${pendingApprovals.length} today` : 'Caught up',
-      trend: pendingApprovals.length > 0 ? 'up' : 'flat',
-      spark: buildSpark(3),
-      accentVar: 'var(--accent-amber)',
-    },
-    {
-      key: 'board-confirmations',
-      label: 'Board Confirmations · 7d',
-      value: boardConfirmations.length,
-      delta: boardConfirmations.length > 0 ? `+${boardConfirmations.length} this week` : '—',
-      trend: boardConfirmations.length > 0 ? 'up' : 'flat',
-      spark: buildSpark(5),
-      accentVar: 'var(--accent-cyan)',
-    },
-    {
-      key: 'active-policies',
-      label: 'Active Policies',
-      value: policies.filter((p) => p.status === 'active').length,
-      delta: '±0 this week',
-      trend: 'flat',
-      spark: buildSpark(7),
-      accentVar: 'var(--accent-violet)',
-    },
-    {
-      key: 'rbac-roles',
-      label: 'RBAC Roles',
-      value: rbacRoles.length,
-      delta: 'Owner · Admin · Editor · Viewer',
-      trend: 'flat',
-      spark: buildSpark(11),
-      accentVar: 'var(--accent-primary)',
-    },
-  ];
 }
 
 function trendClasses(trend: KpiTile['trend']): string {
@@ -131,8 +112,68 @@ function Sparkline({ data, accentVar }: { data: ReadonlyArray<number>; accentVar
   );
 }
 
-export function KpiTileRow(props: KpiTileRowProps) {
-  const tiles = React.useMemo(() => buildTiles(props), [props]);
+export function KpiTileRow(_props: KpiTileRowProps) {
+  // Live data hooks — LiteLLM-backed governance endpoints.
+  const guardrails = useGuardrails();
+  const standards = useStandards();
+
+  // Fixtures for surfaces without a backend endpoint yet.
+  const pendingApprovals = FIXTURE_PENDING_APPROVALS;
+  const boardConfirmations = FIXTURE_BOARD_CONFIRMATIONS;
+  const rbacRoles = FIXTURE_RBAC_ROLES;
+
+  const activeGuardrails =
+    guardrails.data?.filter((g) => g.enabled).length ?? 0;
+  const activeStandards =
+    standards.data?.filter((s) => s.status === 'active').length ?? 0;
+
+  const tiles: ReadonlyArray<KpiTile> = React.useMemo(
+    () => [
+      {
+        key: 'pending-approvals',
+        label: 'Pending Approvals',
+        value: pendingApprovals.length,
+        delta: pendingApprovals.length > 0 ? `+${pendingApprovals.length} today` : 'Caught up',
+        trend: pendingApprovals.length > 0 ? 'up' : 'flat',
+        spark: buildSpark(3),
+        accentVar: 'var(--accent-amber)',
+      },
+      {
+        key: 'board-confirmations',
+        label: 'Board Confirmations · 7d',
+        value: boardConfirmations.length,
+        delta: boardConfirmations.length > 0 ? `+${boardConfirmations.length} this week` : '—',
+        trend: boardConfirmations.length > 0 ? 'up' : 'flat',
+        spark: buildSpark(5),
+        accentVar: 'var(--accent-cyan)',
+      },
+      {
+        key: 'active-policies',
+        label: 'Active Policies',
+        value: activeGuardrails + activeStandards,
+        delta: '±0 this week',
+        trend: 'flat',
+        spark: buildSpark(7),
+        accentVar: 'var(--accent-violet)',
+      },
+      {
+        key: 'rbac-roles',
+        label: 'RBAC Roles',
+        value: rbacRoles.length,
+        delta: 'Owner · Admin · Editor · Viewer',
+        trend: 'flat',
+        spark: buildSpark(11),
+        accentVar: 'var(--accent-primary)',
+      },
+    ],
+    [
+      pendingApprovals.length,
+      boardConfirmations.length,
+      activeGuardrails,
+      activeStandards,
+      rbacRoles.length,
+    ],
+  );
 
   return (
     <div
@@ -169,7 +210,7 @@ export function KpiTileRow(props: KpiTileRowProps) {
                 {t.value}
               </p>
               <p
-                className={cn('mt-1 text-[var(--text-xs)]', trendClasses(t.trend))}
+                className={cn('mt-1 text-[var(--text-xs)', trendClasses(t.trend))}
               >
                 {t.delta}
               </p>

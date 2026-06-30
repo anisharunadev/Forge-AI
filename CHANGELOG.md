@@ -3,6 +3,161 @@
 All notable changes to the Forge AI dashboard (Forge v2.0) are recorded here.
 Dates are absolute (ISO 8601).
 
+## 2026-06-29 — Step 60 v1 — Final closure: DESIGN_SYSTEM.md + CHANGELOG.md
+
+- **NEW `DESIGN_SYSTEM.md`** at repo root — canonical visual + interaction reference (~640 lines, 23 sections).
+- **CHANGELOG.md** updated with Steps 13–60 (this entry).
+- **References** `forge-design-system.md` + `forge-theme-system.md` as historical, superseded.
+- **Single source of truth**: `apps/forge/lib/design-system/` (TypeScript tokens) + `apps/forge/app/globals.css` (CSS layer).
+
+## 2026-06-29 — Step 59 v1 — Governance reorientation: Forge = LiteLLM frontend
+
+- **Strategic shift**: Forge AI is now a UI on top of LiteLLM, not a competing LLM platform.
+- **DELETE duplicates**: `policy_engine.py`, `governance_violation.py` (LiteLLM provides natively).
+- **NEW SDK**: `backend/app/services/litellm_admin.py` — typed async client for all LiteLLM admin endpoints.
+- **Cost tracking rewritten**: `terminal_costs.py` now proxies `/spend/logs`, `/spend/teams`, `/global/spend`.
+- **Policies rewritten**: `policies.py` now lists `/guardrails/list` from LiteLLM.
+- **Standards rewritten**: `standards.py` combines LiteLLM guardrails + manual attestations.
+- **Violations rewritten**: `governance_violations.py` reads failed requests from `/spend/logs`.
+- **NEW team sync**: `backend/app/services/team_sync.py` — tenant ↔ LiteLLM team mapping.
+- **Seed 4 LiteLLM guardrails**: `pii_masking`, `prompt_injection_detection`, `content_moderation`, `secret_detection`.
+- **Test script**: `backend/scripts/test_litellm_proxy.py` — 15/15 passed (4 direct + 11 proxies).
+- **Files affected**: `backend/app/services/litellm_admin.py`, `team_sync.py`, all rewritten `api/v1/*.py`, `infra/litellm/config.yaml`, `apps/forge/app/governance-center/page.tsx`, `apps/forge/app/audit/page.tsx`.
+
+## 2026-06-29 — Step 58 v2 — Projects + Stories + Architecture: real data
+
+- **Seed 3 projects + 5 epics + 3 sprints + ~30 stories + 6 ADRs + 5 contracts + 5 risks + 2 task breakdowns + 3 approvals + 4 attestations + 1 version**.
+- **Stories Center**: real hooks already wired; mock-data kept as offline fallback only.
+- **Architecture Center**: all 9 tabs wired to backend.
+- **Traceability**: matrix linking ADRs → contracts → services → stories.
+- **Files affected**: `backend/scripts/seed_projects.py`, `seed_stories.py`, `seed_architecture.py`, `backend/scripts/test_architecture_api.py`, `apps/forge/lib/hooks/useArchitecture.ts`.
+
+## 2026-06-29 — Step 57 v2 — Knowledge Graph + Ideation + Org Knowledge: real data
+
+- **Seed 40+ KG nodes + 25+ edges**: people, teams, services, modules, docs, ADRs, policies, runbooks, tools.
+- **Seed 6 ideas + 4 analyses + 4 scores + 1 roadmap + 2 PRDs + 3 approvals**.
+- **Seed 13 org knowledge docs** across 4 categories (standards/templates/policies/best-practices).
+- **Real hooks**: `useKnowledgeGraph`, `useIdeation` with TanStack Query.
+- **Files affected**: `backend/scripts/seed_knowledge_graph.py`, `seed_ideation.py`, `seed_org_knowledge.py`, `backend/scripts/test_knowledge_api.py`, `apps/forge/lib/hooks/useKnowledgeGraph.ts`, `apps/forge/lib/hooks/useIdeation.ts`.
+
+## 2026-06-29 — Step 56 v2 — Workflows + Runs: real data + working run stream
+
+- **Seed 6 workflows + 3 runs**: PR Review Pipeline, Idea → Story → Jira Sync, Nightly Security Scan, Deploy to Production, Story Refinement Workshop, Architecture Review.
+- **Run states**: 1 running, 1 succeeded, 1 failed.
+- **SSE event stream**: `GET /workflows/runs/{id}/events` working with `useRunLiveEvents`.
+- **Decision**: Runs Center now shows workflow runs (not SDLC runs) for clearer user value.
+- **Files affected**: `backend/scripts/seed_workflows.py`, `backend/scripts/test_workflows_api.py`, `apps/forge/components/workflows/WorkflowCenter.tsx`, `apps/forge/components/workflows/WorkflowRunDetail.tsx`, `apps/forge/lib/api.ts`.
+
+## 2026-06-29 — Step 55 v2 — Connectors: real backend, kill mock data
+
+- **Seed 6 connectors**: GitHub, Jira, Slack, Confluence, Figma, AWS.
+- **`LiveConnectorDataProvider` fix**: distinguish API loading vs API returned empty vs API errored. Only fall back to mocks on error (not empty).
+- **Test script** `backend/scripts/test_connectors_api.py` — 12/12 passed.
+- **Files affected**: `backend/scripts/seed_connectors.py`, `backend/scripts/test_connectors_api.py`, `apps/forge/components/connector-center/LiveConnectorDataProvider.tsx`.
+
+## 2026-06-29 — Step 54 v4 — Real LiteLLM Test Connection + Real Dashboard Metrics
+
+- **Real LiteLLM test**: `POST /model-providers/{id}/test` now calls upstream provider API with real credentials; returns `latency_ms` or real error (401 / 403 / 404 / timeout).
+- **Top providers widget**: now reads from `/dashboard/top-providers?days=7` aggregating real run data (model, run_count, total_cost, success_rate).
+- **Filter test data**: Agent list endpoint now filters out test-prefixed names.
+- **Files affected**: `backend/app/api/v1/model_providers.py`, `backend/app/api/v1/dashboard.py`, `apps/forge/lib/query/hooks.ts`.
+
+## 2026-06-29 — Step 54 — Phase 2 v3: Agents + Providers (real backend)
+
+- **6 agents seeded**: Code reviewer, Refactor agent, Sync agent, Test runner, Doc generator, Security auditor.
+- **4 model providers seeded**: Anthropic, OpenAI, AWS Bedrock, Google Vertex.
+- **2 runtimes seeded**: `local-docker`, `production-k8s`.
+- **Test script** `backend/scripts/test_agents_api.py` — 12/12 passed.
+- **Removed "Test agent patched X" entries** — production-clean data.
+- **Files affected**: `backend/app/api/v1/agents.py`, `model_providers.py`, `agent_runtimes.py`, `agent_assignments.py`, `backend/scripts/seed_agents.py`, `apps/forge/lib/agent-center/adapter.ts`.
+
+## 2026-06-28 — Step 50 — Dashboard polish
+
+- **Polish fixes per Step 42**: card density, hover states, KPI deltas.
+- **Hero gradient border** via `.hero-border` class.
+- **"Recently active"** widget with sparklines.
+
+## 2026-06-28 — Step 35 — Governance Center rebuild
+
+- **8 tabs**: Overview / Policies / Guardrails / Standards / LLM Control / Board / RBAC / Audit.
+- **NOTE**: "Mocked LiteLLM integration" — replaced in Step 59 with real proxy.
+
+## 2026-06-28 — Step 31 — Connector Center modernization
+
+- **7-tab experience**: Overview / Connected / Marketplace / Health / Activity / Credentials / Webhooks.
+- **ConnectorPicker** (cross-cutting) — capability-aware selector used in Ideation, Workflows, Co-pilot.
+- **Mock data → live data** via `LiveConnectorDataProvider`.
+
+## 2026-06-28 — Step 30 — Architecture Center modernization (9 tabs)
+
+- **Single-page rewrite** of `apps/forge/app/architecture/page.tsx`.
+- **9 tabs**: ADRs / API Contracts / Risk Registers / Standards / Acceptance / Approvals / Task Breakdowns / Traceability / Versions.
+- **Defensive `resolveSelected` helper** — empty state ONLY fires when source array is truly empty.
+- **Cross-tab chips** linking ADRs → Contracts → Risks.
+
+## 2026-06-27 — Step 22 — Workflow gallery
+
+- **Template catalog** at `/workflows` index — "From scratch" + "Use template" CTAs.
+- **Legacy mode A → mode B canvas toggle** kept at `/workflows/{id}/edit`.
+- **WorkflowCard** — name, description, last run status, owner, version.
+
+## 2026-06-27 — Step 21 — Stories Center kanban
+
+- **Drag-drop kanban** with `@dnd-kit` (`PointerSensor` + `KeyboardSensor`).
+- **Optimistic update** on drag — PATCH first, rollback on error.
+- **URL state** — view mode persists in `?view=kanban|list|timeline`.
+
+## 2026-06-27 — Step 20 — Project Intelligence bento layout
+
+- **Sticky project context bar** with selector + breadcrumbs + actions.
+- **Animated-gradient hero band** + view toggle (`?view=all|mine|at-risk|recent`).
+- **KPI strip + 12-col bento grid** — typed artifacts left, metrics right.
+
+## 2026-06-27 — Step 19 — Persona picker + dashboards
+
+- **3 personas**: PM, eng-lead, CTO. Each gets a tailored dashboard.
+- **Persona memory** — Per-persona LLM memory stored via `usePersonaMemory` hook.
+- **RBAC by persona** — Read-only audit view for CTO, full chrome for PM.
+
+## 2026-06-27 — Step 18 — Story detail drawer + lifecycle tabs
+
+- **7-tab drawer** for Story detail (Overview / Acceptance Criteria / Subtasks / Linked Jira / Comments / Audit / Activity).
+- **Lifecycle transitions**: `BACKLOG → IN_PROGRESS → IN_REVIEW → DONE → ACCEPTED`.
+- **Bulk update** via `/stories/stories/bulk` with optimistic UI.
+
+## 2026-06-26 — Step 17 — Audit Center redesign
+
+- **Client-side filtering** except date range (per goal).
+- **Mono hash column** with copy-on-hover.
+- **Drawer with hash chain + diff** — verify the audit trail is intact.
+- **CSV/JSON export** — full audit dump with one click.
+
+## 2026-06-26 — Step 16 — Terminal Center (xterm.js + native PTY)
+
+- **Real PTY** via FastAPI subprocess manager (not a mock).
+- **Multi-tab terminals** with persistent session IDs.
+- **Cost tracker in sidebar** — Live USD/hour, lifetime spend, current model.
+- **Stream JSON events** from any `forge-*` command via WebSocket.
+
+## 2026-06-26 — Step 15 — Command Center modernization
+
+- **`forge-*` command palette** — 60+ commands white-labeled from GSD Core (per DL-024).
+- **Slash-mode shortcuts**: `/ideation`, `/connectors`, `/workflow`, `/runs`, `/knowledge`.
+- **Search across**: pages, agents, connectors, workflows, runs, ideas.
+
+## 2026-06-26 — Step 14 — Run Center modernization (Phase 0.5)
+
+- **Virtualized table** for 10k+ runs (`@tanstack/react-virtual`).
+- **KPI strip**: Active / Succeeded today / Failed today / Total cost — with signed deltas.
+- **720px drawer** for run detail with 7 tabs.
+- **Wire to FastAPI backend** via `useRunsIndex()` + `useRunDetail(runId)`.
+
+## 2026-06-26 — Step 13 — ErrorState primitive
+
+- **Canonical error UI** — `apps/forge/components/error-state.tsx` with pattern-recognition header, suggested actions, and retry CTA.
+- **Wire to all data-bearing pages**: Connector Center, Architecture Center, Agent Center, Audit Center.
+- **No more generic "Something went wrong"** — each error gets a typed message derived from the response shape (network / 4xx / 5xx / missing-data).
+
 ## 2026-06-25 — Step 12 — Organization Knowledge modernization
 
 - **Single-page rewrite** of `apps/forge/app/organization-knowledge/page.tsx`

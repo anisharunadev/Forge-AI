@@ -1,7 +1,5 @@
 """F-013 — Agent Assignment REST endpoints."""
 
-from __future__ import annotations
-
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Query

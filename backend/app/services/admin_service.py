@@ -127,13 +127,6 @@ class AdminService:
 
     async def purge_cache(self, scope: str = "all") -> CachePurgeResult:
         """Drop in-memory caches. Redis is purged via the configured client."""
-        from app.services.policy_engine import policy_engine
-
-        try:
-            policy_engine._cache.clear()  # type: ignore[attr-defined]
-        except Exception:  # noqa: BLE001 — cache purges must never fail the call
-            logger.exception("admin.cache.purge_failed")
-
         purged_keys = 0
         try:
             from app.core.config import settings  # noqa: F401  (ensures settings import works)

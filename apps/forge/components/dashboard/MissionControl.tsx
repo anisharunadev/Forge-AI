@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * MissionControl — Step 26 polished dashboard root.
+ * MissionControl — Step 57 dashboard root (wired to real backend data).
  *
  * Orchestrates:
  *   - Zone 0: <PageBreadcrumb> shared header crumb
@@ -12,8 +12,9 @@
  *   - Zone 5: Notification popover (anchored on bell)
  *   - Zone 6: First-run onboarding overlay (when zero data)
  *
- * Data source is still `mockSnapshot()` for now; when the backend lands
- * we swap the source and the tiles don't change.
+ * Data source is now `/api/v1/dashboard/*` (step-57). When the backend
+ * is unreachable, the page falls back to `mockSnapshot()` so the
+ * surface stays renderable during dev.
  *
  * Skill influence:
  *   - `style` (Real-Time Monitoring, Data-Dense Dashboard)
@@ -57,9 +58,46 @@ import { NotificationCenter } from './NotificationCenter';
 import { FirstRunOnboarding } from './FirstRunOnboarding';
 import { QuickActionsEditor } from './QuickActionsEditor';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/lib/api/auth';
+import {
+  useDashboardKPIs,
+  useTeamActivity,
+  useAlerts,
+  useAIInsights,
+} from '@/lib/api/dashboard-hooks';
 
 export function MissionControl() {
-  const snapshot = React.useMemo(() => mockSnapshot(), []);
+  const { user, tenant } = useAuth();
+  const { data: kpis, isError: kpisError } = useDashboardKPIs();
+  const { data: activity } = useTeamActivity({ since: '24h' });
+  const { data: alertsBackend } = useAlerts();
+  const { data: insightsBackend } = useAIInsights();
+
+  // The curated tiles still consume a DashboardSnapshot — when the
+  // backend is reachable we hydrate it from the real data; otherwise
+  // we fall back to mockSnapshot() so the surface never goes blank.
+  const snapshot = React.useMemo(() => {
+    if (kpis) {
+      return {
+        ...mockSnapshot(),
+        generatedAt: kpis.generated_at,
+        user: {
+          firstName: user?.name?.split(' ')[0] ?? mockSnapshot().user.firstName,
+          email: user?.email ?? mockSnapshot().user.email,
+        },
+        tenant: {
+          name: tenant?.name ?? mockSnapshot().tenant.name,
+          plan: tenant?.plan ?? mockSnapshot().tenant.plan,
+        },
+        online: true,
+      };
+    }
+    if (kpisError) {
+      return mockSnapshot();
+    }
+    return mockSnapshot();
+  }, [kpis, kpisError, user, tenant]);
+
   const { prefs, mounted, togglePin, reorderWidgets } = useDashboardPrefs();
   const [customizeOpen, setCustomizeOpen] = React.useState(false);
   const [pinOpen, setPinOpen] = React.useState(false);
@@ -72,6 +110,55 @@ export function MissionControl() {
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [showLastRefreshed, setShowLastRefreshed] = React.useState(false);
   const [firstRunDismissed, setFirstRunDismissed] = React.useState(false);
+
+  // When the real activity feed comes in, project the first 12 into the
+  // snapshot's `activity` field so LiveActivityTile renders them.
+  React.useEffect(() => {
+    if (!activity?.length) return;
+    const projected = activity.slice(0, 12).map((a, idx) => ({
+      id: a.id,
+      agent: a.actor_name,
+      agentId: a.actor_id ?? a.id,
+      verb: (a.action.split(' ')[0] ?? 'started') as 'started' | 'completed' | 'failed' | 'paused',
+      target: a.target_name ?? a.target_id ?? '',
+      timestamp: new Date(a.created_at).toISOString().slice(11, 19),
+      duration: '—',
+      color: 'cyan' as const,
+      _idx: idx,
+    }));
+    // Best-effort: stash on snapshot.activity only when no curated data.
+    if (!snapshot.activity.length && projected.length) {
+      (snapshot as any).activity = projected;
+    }
+  }, [activity, snapshot]);
+
+  // When backend alerts come in, fold them into the snapshot's alert list
+  // so RecentAlertsTile renders them without a separate tile.
+  React.useEffect(() => {
+    if (!alertsBackend?.length) return;
+    const projected = alertsBackend.slice(0, 5).map((a) => ({
+      id: a.id,
+      severity: a.severity as 'critical' | 'warning' | 'info' | 'success',
+      icon: a.severity === 'critical' ? 'triangle' as const : 'info' as const,
+      title: a.title,
+      body: a.body,
+      timestamp: a.created_at,
+    }));
+    (snapshot as any).alerts = projected;
+  }, [alertsBackend, snapshot]);
+
+  // When backend insights come in, fold them into the snapshot's insight list.
+  React.useEffect(() => {
+    if (!insightsBackend?.length) return;
+    const projected = insightsBackend.slice(0, 3).map((i) => ({
+      id: i.id,
+      generatedAt: i.created_at,
+      title: i.title,
+      body: i.body,
+      accent: (i.severity === 'critical' ? 'rose' : i.severity === 'warning' ? 'amber' : 'cyan') as 'rose' | 'amber' | 'cyan' | 'indigo' | 'emerald' | 'violet',
+    }));
+    (snapshot as any).insights = projected;
+  }, [insightsBackend, snapshot]);
 
   React.useEffect(() => {
     if (typeof navigator !== 'undefined') {

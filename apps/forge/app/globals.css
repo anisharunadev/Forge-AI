@@ -309,6 +309,183 @@
   }
 }
 
+/* ============================================================================
+ * Step 50 — Premium themed scrollbars (WebKit + Firefox).
+ *
+ * Strategy: "always visible but very subtle". The thumb is a low-alpha white
+ * resting at rgba 0.08, brightens to 0.16 on hover, and switches to the
+ * accent-primary (indigo) when actively dragging. This matches Linear, Vercel,
+ * and Stripe and avoids the "where did the scrollbar go?" disappearing-act
+ * that auto-hide scrollbars cause in dense data UIs.
+ *
+ * The thumb is sized 10px wide on the default bar so it doesn't crowd content
+ * yet stays grabbable. The 2px transparent border + background-clip:padding-box
+ * gives the visible 6px thumb a 1px optical gap from the page edge.
+ *
+ * Firefox uses the standardized scrollbar-width / scrollbar-color properties —
+ * the same color tokens apply so dark and light themes stay consistent.
+ *
+ * Container-specific variants live below as utility classes that consumers
+ * opt into (.scrollbar-thin, .scrollbar-accent, .scrollbar-chat, .scrollbar-hidden)
+ * when the global default isn't right.
+ * ============================================================================ */
+
+/* Main scrollbar — vertical + horizontal */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+/* Track (the rail) */
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 5px;
+}
+
+/* Thumb (the draggable part) */
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background 150ms ease;
+}
+
+/* Thumb hover — brighten */
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.16);
+  background-clip: padding-box;
+}
+
+/* Thumb active (dragging) — switch to accent */
+::-webkit-scrollbar-thumb:active {
+  background: rgba(99, 102, 241, 0.5);  /* accent-primary with alpha */
+  background-clip: padding-box;
+}
+
+/* Corner where vertical and horizontal scrollbars meet */
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox — thin scrollbar with the same color tokens */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}
+
+*:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+/* Light theme: re-tint the thumb so it stays visible against white surfaces */
+:root ::-webkit-scrollbar-thumb {
+  background: rgba(24, 24, 27, 0.10);
+}
+:root ::-webkit-scrollbar-thumb:hover {
+  background: rgba(24, 24, 27, 0.20);
+}
+:root ::-webkit-scrollbar-thumb:active {
+  background: rgba(99, 102, 241, 0.5);
+}
+:root * {
+  scrollbar-color: rgba(24, 24, 27, 0.10) transparent;
+}
+:root *:hover {
+  scrollbar-color: rgba(24, 24, 27, 0.20) transparent;
+}
+
+/* ----- Utility: extra-thin scrollbar (modals, tabs, tables, chat) ----- */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  border: 0;
+  background-clip: padding-box;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:active {
+  background: rgba(99, 102, 241, 0.5);
+}
+
+:root .scrollbar-thin {
+  scrollbar-color: rgba(24, 24, 27, 0.10) transparent;
+}
+:root .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(24, 24, 27, 0.10);
+}
+:root .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(24, 24, 27, 0.20);
+}
+
+/* ----- Utility: hidden scrollbar (still scrollable via wheel/touch) ----- */
+.scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/* ----- Utility: accent-colored scrollbar (chat-like UIs, hero panels) ----- */
+.scrollbar-accent {
+  scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
+}
+
+.scrollbar-accent::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.3);
+}
+
+.scrollbar-accent::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.5);
+}
+
+.scrollbar-accent::-webkit-scrollbar-thumb:active {
+  background: rgba(99, 102, 241, 0.7);
+}
+
+/* ----- Utility: chat-style cyan scrollbar (Co-pilot, run logs) ----- */
+.scrollbar-chat {
+  scrollbar-color: rgba(34, 211, 238, 0.2) transparent;
+}
+
+.scrollbar-chat::-webkit-scrollbar-thumb {
+  background: rgba(34, 211, 238, 0.2);
+}
+
+.scrollbar-chat::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 211, 238, 0.4);
+}
+
+.scrollbar-chat::-webkit-scrollbar-thumb:active {
+  background: rgba(34, 211, 238, 0.6);
+}
+
+/* Respect reduced-motion: kill the thumb transition. The thumb itself stays
+ * visible (functional) but never animates between idle/hover/active states. */
+@media (prefers-reduced-motion: reduce) {
+  ::-webkit-scrollbar-thumb,
+  .scrollbar-thin::-webkit-scrollbar-thumb,
+  .scrollbar-accent::-webkit-scrollbar-thumb,
+  .scrollbar-chat::-webkit-scrollbar-thumb {
+    transition: none !important;
+  }
+}
+
 /* Step 19 — disable FAB decorative animations for reduced-motion users.
  * The FAB itself stays visible (functional), but the gentle pulse,
  * orbital dot, unread ping, and thinking dots all freeze.

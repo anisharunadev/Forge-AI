@@ -1,9 +1,26 @@
 'use client';
 
+/**
+ * Model Provider card (step-54 — Phase 2).
+ *
+ * Renders one provider with a "Test connection" button that calls
+ * `POST /model-providers/{id}/test`. The result is surfaced as a
+ * toast (success or error) per the project toast conventions.
+ *
+ * Skill rules adopted:
+ *   - **Error surfacing** — every test result becomes a toast; never
+ *     silently swallow errors.
+ *   - **Visual feedback** — while the test is in-flight, the button
+ *     shows a spinner and is disabled.
+ */
+
 import * as React from 'react';
-import { Cloud, AlertTriangle, CheckCircle2, Clock, PlugZap } from 'lucide-react';
+import { Cloud, AlertTriangle, CheckCircle2, Clock, PlugZap, Play } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { useTestProvider } from '@/lib/query/hooks';
 import type { ModelProvider, ProviderStatus } from '@/lib/agent-center/data';
 
 const STATUS_TONE: Record<ProviderStatus, string> = {
@@ -26,6 +43,34 @@ export interface ModelProviderCardProps {
 
 export function ModelProviderCard({ provider }: ModelProviderCardProps) {
   const Icon = STATUS_ICON[provider.status];
+  const testProvider = useTestProvider();
+  const { toast } = useToast();
+
+  const handleTest = async () => {
+    try {
+      const res = await testProvider.mutateAsync(provider.id);
+      if (res.status === 'ok') {
+        toast({
+          title: 'Connection OK',
+          description: res.message,
+        });
+      } else {
+        toast({
+          title: 'Connection failed',
+          description: res.message,
+          variant: 'destructive',
+        });
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast({
+        title: 'Connection failed',
+        description: message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <article
       className="card space-y-3"
@@ -76,6 +121,20 @@ export function ModelProviderCard({ provider }: ModelProviderCardProps) {
         <PlugZap className="h-3 w-3" aria-hidden="true" />
         {provider.models.join(' · ')}
       </div>
+
+      <footer className="flex items-center justify-between border-t border-forge-800 pt-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleTest}
+          disabled={testProvider.isPending}
+          data-testid="provider-test-connection"
+          className="text-[var(--fg-secondary)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--fg-primary)]"
+        >
+          <Play className="h-3 w-3" aria-hidden="true" />
+          {testProvider.isPending ? 'Testing…' : 'Test connection'}
+        </Button>
+      </footer>
     </article>
   );
 }

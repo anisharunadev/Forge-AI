@@ -212,6 +212,8 @@ class WorkflowService:
             wf.name = body.name
         if body.description is not None:
             wf.description = body.description
+        if body.status is not None:
+            wf.status = body.status
         await db.commit()
         await db.refresh(wf)
 
@@ -289,6 +291,8 @@ class WorkflowService:
         *,
         tenant_id: UUID,
         workflow_id: UUID,
+        limit: int = 50,
+        offset: int = 0,
     ) -> list[WorkflowRun]:
         stmt = (
             select(WorkflowRun)
@@ -297,6 +301,26 @@ class WorkflowService:
                 WorkflowRun.workflow_id == workflow_id,
             )
             .order_by(WorkflowRun.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        return list((await db.execute(stmt)).scalars().all())
+
+    async def list_all_runs(
+        self,
+        db: AsyncSession,
+        *,
+        tenant_id: UUID,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[WorkflowRun]:
+        """Tenant-wide run index for the Runs Center (separate from per-workflow)."""
+        stmt = (
+            select(WorkflowRun)
+            .where(WorkflowRun.tenant_id == tenant_id)
+            .order_by(WorkflowRun.created_at.desc())
+            .limit(limit)
+            .offset(offset)
         )
         return list((await db.execute(stmt)).scalars().all())
 

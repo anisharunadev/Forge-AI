@@ -47,6 +47,7 @@ import { CredentialsTab } from '@/components/connector-center/tabs/CredentialsTa
 import { WebhooksTab } from '@/components/connector-center/tabs/WebhooksTab';
 import { ConnectionsTab } from '@/components/connector-center/tabs/ConnectionsTab';
 import { TABS, type TabValue } from '@/components/connector-center/constants';
+import { LiveConnectorDataProvider } from '@/components/connector-center/LiveConnectorDataProvider';
 
 const TAB_LABEL: Record<TabValue, string> = {
   overview: 'Overview',
@@ -121,7 +122,7 @@ export default function ConnectorCenterPage() {
   };
 
   return (
-    <ConnectorProvider>
+    <LiveConnectorDataProvider>
       <PageContainer>
         <div className="flex flex-col gap-6" data-testid="connector-center-page">
           <HeroBand
@@ -173,7 +174,7 @@ export default function ConnectorCenterPage() {
           </div>
         </div>
       ) : null}
-    </ConnectorProvider>
+    </LiveConnectorDataProvider>
   );
 }
 

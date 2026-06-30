@@ -5,6 +5,12 @@
  *
  * Featured carousel · New this month · Trending · grid · submit CTA.
  * Reuses the MarketplaceCard design (kept from Step 10) for the grid.
+ *
+ * Step 55 wires the "Install" button to the real backend:
+ *   - OAuth connectors redirect through `useStartOAuth` → provider
+ *     consent screen → callback page → `useCompleteOAuth`.
+ *   - API-key / PAT connectors collect the secret in a dialog, then
+ *     call `useInstallConnector` with the slug + config.
  */
 
 import * as React from 'react';
@@ -12,6 +18,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
+  KeyRound,
+  Loader2,
   Plus,
   Search,
   Sparkles,
@@ -25,6 +33,7 @@ import { MarketplaceCard } from '@/components/connector-center/MarketplaceCard';
 import { listMarketplace, resolveIcon, type Connector } from '@/lib/connectors';
 import { fmtCompact } from '../constants';
 import { cn } from '@/lib/utils';
+import { useMarketplace, useInstallConnector, useStartOAuth } from '@/lib/hooks/useConnectors';
 
 const TABS = ['All', 'Featured', 'New this month', 'Trending'] as const;
 type Tab = (typeof TABS)[number];
@@ -33,8 +42,56 @@ export function MarketplaceTab() {
   const [query, setQuery] = React.useState('');
   const [tab, setTab] = React.useState<Tab>('All');
   const [carouselIdx, setCarouselIdx] = React.useState(0);
+  const [pendingInstall, setPendingInstall] = React.useState<Connector | null>(null);
 
-  const all = listMarketplace();
+  // Step 55: prefer live marketplace data; fall back to mock.
+  const liveMarketplace = useMarketplace();
+  const mockMarketplace = listMarketplace();
+  const all = (liveMarketplace.data && liveMarketplace.data.length > 0)
+    ? liveMarketplace.data.map((m) => ({
+        id: m.slug,
+        name: m.slug,
+        displayName: m.display_name,
+        publisher: 'Forge',
+        tagline: m.description.split('\n')[0]?.slice(0, 88) ?? '',
+        description: m.description,
+        category: m.category,
+        scope: 'project' as const,
+        tier: 1 as const,
+        status: 'healthy' as const,
+        connectedAs: '',
+        lastSyncAt: new Date().toISOString(),
+        capabilities: m.capabilities as Connector['capabilities'],
+        health: { p50Ms: 0, p95Ms: 0, errorRate: 0 },
+        credential: {
+          id: `cred-${m.slug}`,
+          name: `${m.display_name} credential`,
+          type: (m.auth_type === 'oauth' ? 'oauth' : 'api_key') as Connector['credential']['type'],
+          status: 'active' as const,
+          fingerprint: '',
+          lastRotatedAt: new Date().toISOString(),
+          rotatedBy: '',
+          owner: { name: '', initials: '' },
+          scopes: m.required_scopes,
+          lengthChars: 0,
+        },
+        usage: {
+          workflows: 0,
+          destinations: 0,
+          ideationSources: 0,
+          agentContexts: 0,
+          apiCallsToday: 0,
+          rateLimitUsed: 0,
+          monthlyCostUsd: 0,
+        },
+        recentEvents: [],
+        usedIn: { workflows: [], destinations: [], agents: [], ideationSources: [] },
+        installed: false,
+        available: true,
+        featured: m.is_featured,
+        newThisMonth: false,
+      }))
+    : mockMarketplace;
   const featured = all.filter((c) => c.featured);
   const newThisMonth = all.filter((c) => c.newThisMonth);
   const trending = all.slice(0, 6);
@@ -95,7 +152,11 @@ export function MarketplaceTab() {
           </header>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
             {featured.slice(carouselIdx, carouselIdx + 4).map((c) => (
-              <FeaturedCard key={c.id} connector={c} />
+              <FeaturedCard
+                key={c.id}
+                connector={c}
+                onInstall={() => setPendingInstall(c)}
+              />
             ))}
           </div>
         </section>
@@ -156,6 +217,7 @@ export function MarketplaceTab() {
               rating: 4.0 + ((c.id.length * 7) % 10) / 10,
               installs: c.usage.apiCallsToday * 3,
             }}
+            onInstall={c.installed ? undefined : () => setPendingInstall(c)}
           />
         ))}
         {visible.length === 0 ? (
@@ -164,11 +226,19 @@ export function MarketplaceTab() {
           </div>
         ) : null}
       </div>
+
+      {pendingInstall ? (
+        <InstallDialog connector={pendingInstall} onClose={() => setPendingInstall(null)} />
+      ) : null}
     </div>
   );
 }
 
-function FeaturedCard({ connector }: { connector: Connector }) {
+/**
+ * FeaturedCard — featured carousel tile. Step 55 wires the Install
+ * button to the parent's pendingInstall state.
+ */
+function FeaturedCard({ connector, onInstall }: { connector: Connector; onInstall: () => void }) {
   const Icon = resolveIcon(connector.id);
   return (
     <div className="flex flex-col rounded-md border border-[var(--border-default)] bg-[var(--bg-base)] p-3">
@@ -193,11 +263,121 @@ function FeaturedCard({ connector }: { connector: Connector }) {
             {fmtCompact(connector.usage.apiCallsToday * 8)}
           </span>
         </span>
-        <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]">
+        <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={onInstall}>
           <Plus className="h-3 w-3" aria-hidden="true" />
           Install
         </Button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * InstallDialog — Step 55.
+ *
+ * Branches on connector credential type:
+ *   - OAuth → startOAuth() → redirect to provider.
+ *   - API key / PAT → collect the secret in a dialog and call
+ *     `installConnector({ slug, config })`.
+ */
+function InstallDialog({ connector, onClose }: { connector: Connector; onClose: () => void }) {
+  const install = useInstallConnector();
+  const startOAuth = useStartOAuth();
+  const [secret, setSecret] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+
+  const isOAuth = connector.credential.type === 'oauth';
+  const slug = connector.slug ?? connector.name;
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      if (isOAuth) {
+        const result = await startOAuth.mutateAsync({
+          slug,
+          redirectUri: `${window.location.origin}/connector-center/oauth/callback`,
+        });
+        // CSRF: stash state for the callback page.
+        sessionStorage.setItem('forge.oauth.state', result.state);
+        sessionStorage.setItem('forge.oauth.slug', slug);
+        window.location.href = result.authorize_url;
+      } else {
+        await install.mutateAsync({
+          slug,
+          config: { api_key: secret },
+        });
+        onClose();
+      }
+    } catch {
+      // toast handled by the hook
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-black/60" aria-hidden="true" />
+      <form
+        onSubmit={handleSubmit}
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-[480px] max-w-[92vw] rounded-md border border-[var(--border-default)] bg-[var(--bg-elevated)] p-6 shadow-[var(--shadow-md)]"
+      >
+        <h3 className="text-base font-semibold text-fg-primary">
+          Install {connector.displayName}
+        </h3>
+        <p className="mt-1 text-xs text-fg-tertiary">{connector.tagline}</p>
+
+        {isOAuth ? (
+          <div className="mt-4 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-base)] p-3 text-xs text-fg-secondary">
+            This connector uses OAuth. Clicking <strong>Connect</strong> redirects you to the provider
+            consent screen. Forge never sees your password.
+          </div>
+        ) : (
+          <div className="mt-4 space-y-2">
+            <label className="block text-[11px] uppercase tracking-wider text-fg-tertiary">
+              API key / token
+            </label>
+            <div className="relative">
+              <KeyRound className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-fg-tertiary" aria-hidden="true" />
+              <Input
+                value={secret}
+                onChange={(e) => setSecret(e.target.value)}
+                placeholder="sk_live_…"
+                className="h-9 pl-7 font-mono text-xs"
+                autoFocus
+                required
+              />
+            </div>
+            <p className="text-[10px] text-fg-tertiary">
+              Stored encrypted. Reveal/rotate actions are audited.
+            </p>
+          </div>
+        )}
+
+        <div className="mt-5 flex items-center justify-end gap-2">
+          <Button variant="ghost" size="sm" type="button" onClick={onClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button size="sm" type="submit" disabled={busy || (!isOAuth && !secret)}>
+            {busy ? (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+                Working…
+              </>
+            ) : isOAuth ? (
+              'Connect'
+            ) : (
+              'Install'
+            )}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

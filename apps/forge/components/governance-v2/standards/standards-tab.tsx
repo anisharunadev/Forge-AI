@@ -170,7 +170,7 @@ function StandardDetail({ standard, onClose }: { standard: ComplianceStandard; o
           ))}
         </TabsList>
 
-        <TabsContent value="controls" className="m-0 max-h-[500px] overflow-y-auto p-4">
+        <TabsContent value="controls" className="scrollbar-thin m-0 max-h-[500px] overflow-y-auto p-4">
           <div className="space-y-2">
             {standard.controls.map((control) => (
               <ControlRow key={control.id} control={control} />
@@ -181,7 +181,7 @@ function StandardDetail({ standard, onClose }: { standard: ComplianceStandard; o
           </div>
         </TabsContent>
 
-        <TabsContent value="evidence" className="m-0 max-h-[500px] overflow-y-auto p-4">
+        <TabsContent value="evidence" className="scrollbar-thin m-0 max-h-[500px] overflow-y-auto p-4">
           <div className="space-y-2">
             {standard.evidence.map((ev) => (
               <div key={ev.id} className="flex items-center justify-between rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--bg-inset)] p-3" data-testid={`evidence-${ev.id}`}>

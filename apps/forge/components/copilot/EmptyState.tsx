@@ -466,7 +466,7 @@ export function EmptyState() {
     <div
       role="status"
       aria-live="polite"
-      className="flex flex-1 flex-col items-center gap-3 overflow-y-auto px-5 py-5"
+      className="scrollbar-chat flex flex-1 flex-col items-center gap-3 overflow-y-auto px-5 py-5"
       data-testid="copilot-empty-state"
       data-mode={mode}
     >

@@ -1,3 +1,9 @@
+> ⚠️ **This document is historical and superseded by [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md).**
+>
+> New theme / CSS-layer decisions go in `DESIGN_SYSTEM.md` (§4 Color system, §8 Motion, §9 Elevation, §21 File map). This file is preserved for context and traceability of the Phase 0.5 UI Foundation work.
+>
+> The canonical visual + interaction reference is **`DESIGN_SYSTEM.md`** at the repo root (~640 lines, 23 sections). The CSS-layer content of this file (HSL conversions, `:root` / `.dark` blocks, Tailwind binding rationale) has been folded into that document.
+
 # Forge AI Theme System
 
 > **Phase 0.5 — UI Foundation**

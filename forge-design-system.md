@@ -1,3 +1,9 @@
+> ⚠️ **This document is historical and superseded by [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md).**
+>
+> New design decisions go in `DESIGN_SYSTEM.md`. This file is preserved for context and traceability of the Phase 0.5 UI Foundation work.
+>
+> The canonical visual + interaction reference is **`DESIGN_SYSTEM.md`** at the repo root (~640 lines, 23 sections). It absorbs everything in this file plus `forge-theme-system.md` and `docs/design-system-curate.md`, and adds the patterns from Steps 54–59 (live data, real-time updates, approval gates, LiteLLM reorientation).
+
 # Forge AI Design System
 
 > **Phase 0.5 — UI Foundation**

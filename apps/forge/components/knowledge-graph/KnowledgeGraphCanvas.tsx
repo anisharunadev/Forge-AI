@@ -115,9 +115,21 @@ export function KnowledgeGraphCanvas({
   const sizeRef = React.useRef(size);
   const zoomRef = React.useRef(zoom);
   const panRef = React.useRef(pan);
+  // Tracks the in-flight fit animation so a new fit() can cancel it
+  // instead of compounding two interpolations.
+  const fitRafRef = React.useRef<number | null>(null);
   React.useEffect(() => { sizeRef.current = size; }, [size]);
   React.useEffect(() => { zoomRef.current = zoom; }, [zoom]);
   React.useEffect(() => { panRef.current = pan; }, [pan]);
+  // Clean up any pending fit animation on unmount.
+  React.useEffect(() => {
+    return () => {
+      if (fitRafRef.current != null) {
+        cancelAnimationFrame(fitRafRef.current);
+        fitRafRef.current = null;
+      }
+    };
+  }, []);
 
   // ---- Filtering ---------------------------------------------------------
 
@@ -172,7 +184,7 @@ export function KnowledgeGraphCanvas({
       simulationRef.current = null;
       return;
     }
-    simulationRef.current = createSimulation(
+    const sim = createSimulation(
       filteredNodes.map((n) => ({ id: n.id, seedX: n.seedX, seedY: n.seedY })),
       displayEdges.map<SimEdge>((e) => ({
         id: e.id,
@@ -183,6 +195,13 @@ export function KnowledgeGraphCanvas({
       })),
       { width: size.w, height: size.h, maxNodes: 500 },
     );
+    // Pre-tick the simulation so node positions settle into the force layout
+    // BEFORE the first paint. Without this the bbox-fit fires while every
+    // node is still near its jittered seed (close to origin), producing the
+    // "top-left cluster" bug. 400 ticks is enough for the sample graph
+    // (≤200 nodes / ≤600 edges) to spread to a stable configuration.
+    sim.warmup(400);
+    simulationRef.current = sim;
     lastInteractionAt.current = Date.now();
     needsFit.current = true;
   }, [filteredNodes, displayEdges, size.w, size.h]);
@@ -253,10 +272,12 @@ export function KnowledgeGraphCanvas({
       const idleMs = Date.now() - lastInteractionAt.current;
       const shouldStep = !reducedMotion && (sim.alpha() > 0.005 || idleMs < 4000);
       if (shouldStep) sim.tick();
-      // Auto-fit once the simulation has settled below 0.1 alpha.
-      // Doing it inside the loop (vs setTimeout) means we always run
-      // against the actual settled positions, not a transient layout.
-      if (needsFit.current && sim.alpha() < 0.1) {
+      // Fire auto-fit on the FIRST rAF after build / filter change. The
+      // simulation was warmed up synchronously in the build effect, so
+      // node positions are already at a stable layout — we no longer gate
+      // on alpha < 0.1 (which the live loop never reaches within 4s of
+      // idle ticking, see force-simulation.ts).
+      if (needsFit.current) {
         needsFit.current = false;
         fit();
       }
@@ -338,17 +359,63 @@ export function KnowledgeGraphCanvas({
     // (no point zooming in past readable label size at this node count).
     const zx = (W - padding * 2) / w;
     const zy = (H - padding * 2) / h;
-    const z = Math.min(1.5, Math.max(0.2, Math.min(zx, zy)));
+    const targetZ = Math.min(1.5, Math.max(0.2, Math.min(zx, zy)));
     const cx = (minX + maxX) / 2;
     const cy = (minY + maxY) / 2;
-    setZoom(z);
-    setPan({
-      x: W / 2 - cx * z,
-      y: H / 2 - cy * z,
-    });
+    const targetPan = {
+      x: W / 2 - cx * targetZ,
+      y: H / 2 - cy * targetZ,
+    };
+
+    // Skip animation when reduced motion is preferred or when we're already
+    // at the target (e.g. re-fit on the same view) — instant snap is cleaner
+    // and avoids a no-op rAF chain.
+    const startZ = zoomRef.current;
+    const startPan = { ...panRef.current };
+    const dz = Math.abs(startZ - targetZ);
+    const dpx = Math.abs(startPan.x - targetPan.x);
+    const dpy = Math.abs(startPan.y - targetPan.y);
+    if (reducedMotion || (dz < 0.005 && dpx < 1 && dpy < 1)) {
+      setZoom(targetZ);
+      setPan(targetPan);
+      lastInteractionAt.current = Date.now();
+      userNavigated.current = false;
+      return;
+    }
+
+    // Animate from current viewport to the target. Each frame updates
+    // React state (zoom/pan), which triggers a re-render and a re-run of
+    // the animation-loop effect — but since the loop reads zoom/pan from
+    // refs in draw(), the canvas paints the in-flight values correctly
+    // every frame, giving us a smooth camera fly even mid-interpolation.
+    // Cancel any in-flight animation first so back-to-back fits don't
+    // compound (e.g. user clicks fit twice, or a resize fires mid-anim).
+    if (fitRafRef.current != null) {
+      cancelAnimationFrame(fitRafRef.current);
+      fitRafRef.current = null;
+    }
+    const duration = 400;
+    const startTime = performance.now();
+    const step = () => {
+      const elapsed = performance.now() - startTime;
+      const t = Math.min(1, elapsed / duration);
+      // easeInOutCubic — smooth in/out, no jarring snap at the end.
+      const e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      setZoom(startZ + (targetZ - startZ) * e);
+      setPan({
+        x: startPan.x + (targetPan.x - startPan.x) * e,
+        y: startPan.y + (targetPan.y - startPan.y) * e,
+      });
+      if (t < 1) {
+        fitRafRef.current = requestAnimationFrame(step);
+      } else {
+        fitRafRef.current = null;
+      }
+    };
+    fitRafRef.current = requestAnimationFrame(step);
     lastInteractionAt.current = Date.now();
     userNavigated.current = false;
-  }, []);
+  }, [reducedMotion]);
 
   // ---- Drawing ----------------------------------------------------------
 
@@ -359,17 +426,24 @@ export function KnowledgeGraphCanvas({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Read the latest viewport state from refs so the animation loop
+    // always paints against current values — even mid-animation when
+    // zoom/pan are being interpolated frame-by-frame.
+    const { w: W, h: H } = sizeRef.current;
+    const z = zoomRef.current;
+    const p = panRef.current;
+
     const dpr = window.devicePixelRatio || 1;
-    if (canvas.width !== size.w * dpr || canvas.height !== size.h * dpr) {
-      canvas.width = size.w * dpr;
-      canvas.height = size.h * dpr;
+    if (canvas.width !== W * dpr || canvas.height !== H * dpr) {
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, size.w, size.h);
+    ctx.clearRect(0, 0, W, H);
 
     ctx.save();
-    ctx.translate(pan.x, pan.y);
-    ctx.scale(zoom, zoom);
+    ctx.translate(p.x, p.y);
+    ctx.scale(z, z);
 
     // Node positions lookup.
     const posById = new Map<string, { x: number; y: number; r: number; degree: number; community: number }>();
@@ -414,8 +488,8 @@ export function KnowledgeGraphCanvas({
       ctx.fill();
 
       // Cluster label (faded, only when zoomed in past 1.2)
-      if (zoom > 1.2) {
-        ctx.font = `600 ${Math.max(11, 14 / Math.max(0.7, zoom))}px ui-sans-serif, system-ui, sans-serif`;
+      if (z > 1.2) {
+        ctx.font = `600 ${Math.max(11, 14 / Math.max(0.7, z))}px ui-sans-serif, system-ui, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = hexToRgba(c.color, 0.65);
@@ -547,10 +621,10 @@ export function KnowledgeGraphCanvas({
         isHovered ||
         isSelected ||
         isInNeighborhood ||
-        zoom > 1.5 ||
+        z > 1.5 ||
         showAllLabels;
       if (showLabel) {
-        const fontSize = 11 / Math.max(0.7, zoom);
+        const fontSize = 11 / Math.max(0.7, z);
         ctx.font = `${fontSize}px ui-sans-serif, system-ui, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
@@ -572,7 +646,7 @@ export function KnowledgeGraphCanvas({
     }
     ctx.globalAlpha = 1;
     ctx.restore();
-  }, [nodes, hover.id, selectedId, zoom, pan.x, pan.y, size.w, size.h, localNodeIds, showAllLabels]);
+  }, [nodes, hover.id, selectedId, size.w, size.h, localNodeIds, showAllLabels]);
 
   // ---- Hit testing + pointer events ------------------------------------
 
@@ -580,8 +654,12 @@ export function KnowledgeGraphCanvas({
     (sx: number, sy: number): SampleNode | null => {
       const sim = simulationRef.current;
       if (!sim) return null;
-      const cx = (sx - pan.x) / zoom;
-      const cy = (sy - pan.y) / zoom;
+      // Read zoom/pan from refs so hit-testing tracks the animated viewport
+      // — important when the user drags during a fit animation.
+      const z = zoomRef.current;
+      const p = panRef.current;
+      const cx = (sx - p.x) / z;
+      const cy = (sy - p.y) / z;
       for (let i = sim.nodes.length - 1; i >= 0; i -= 1) {
         const n = sim.nodes[i];
         if (!n) continue;
@@ -594,7 +672,7 @@ export function KnowledgeGraphCanvas({
       }
       return null;
     },
-    [pan.x, pan.y, zoom, nodes],
+    [nodes],
   );
 
   const onMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -669,8 +747,11 @@ export function KnowledgeGraphCanvas({
       const canvas = canvasRef.current;
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
-      const cx = (e.clientX - rect.left - pan.x) / zoom;
-      const cy = (e.clientY - rect.top - pan.y) / zoom;
+      // Use refs so dragging tracks the live viewport (works mid-animation).
+      const z = zoomRef.current;
+      const p = panRef.current;
+      const cx = (e.clientX - rect.left - p.x) / z;
+      const cy = (e.clientY - rect.top - p.y) / z;
       simulationRef.current?.dragNode(d.id, cx, cy, d.permanent);
       d.moved = true;
     };
@@ -688,7 +769,7 @@ export function KnowledgeGraphCanvas({
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
     };
-  }, [pan.x, pan.y, zoom]);
+  }, []);
 
   // ---- Wheel zoom -------------------------------------------------------
 
@@ -865,6 +946,19 @@ export function KnowledgeGraphCanvas({
           size={size}
           nodes={filteredNodes}
           onToggle={() => setShowMinimap(false)}
+          onPan={(graphX, graphY) => {
+            // Center the main canvas on the graph-space point the user
+            // clicked/dragged to. Solving `screen = pan + graph * zoom`
+            // for `screen = size/2` gives the pan needed.
+            const z = zoom;
+            const newPan = {
+              x: size.w / 2 - graphX * z,
+              y: size.h / 2 - graphY * z,
+            };
+            setPan(newPan);
+            userNavigated.current = true;
+            lastInteractionAt.current = Date.now();
+          }}
         />
       )}
       {!showMinimap && (
@@ -989,6 +1083,7 @@ function Minimap({
   size,
   nodes,
   onToggle,
+  onPan,
 }: {
   simRef: React.MutableRefObject<Simulation | null>;
   zoom: number;
@@ -996,10 +1091,14 @@ function Minimap({
   size: { w: number; h: number };
   nodes: ReadonlyArray<SampleNode>;
   onToggle: () => void;
+  /** Click/drag handler — receives graph-space coords of the pointer. */
+  onPan: (graphX: number, graphY: number) => void;
 }) {
   const W = 200;
   const H = 150;
   const sim = simRef.current;
+  const svgRef = React.useRef<SVGSVGElement | null>(null);
+  const [hoverGraph, setHoverGraph] = React.useState<{ x: number; y: number } | null>(null);
   if (!sim || sim.nodes.length === 0) return null;
 
   const xs = sim.nodes.map((n) => n.x);
@@ -1011,14 +1110,61 @@ function Minimap({
   const w = Math.max(1, maxX - minX);
   const h = Math.max(1, maxY - minY);
   const pad = 8;
+  // Graph-space → minimap-pixel projection (used by node dots, viewport
+  // rectangle, and the inverse for click handling).
   const sx = (x: number) => pad + ((x - minX) / w) * (W - pad * 2);
   const sy = (y: number) => pad + ((y - minY) / h) * (H - pad * 2);
+  const gx = (px: number) => minX + ((px - pad) / (W - pad * 2)) * w;
+  const gy = (py: number) => minY + ((py - pad) / (H - pad * 2)) * h;
 
-  // Current viewport rectangle in graph space (inverse of pan/zoom).
+  // Current viewport rectangle in graph space (inverse of the main canvas's
+  // `ctx.translate(pan); ctx.scale(zoom)` transform). The math here matches
+  // the canvas draw call exactly, so the indicator stays aligned with the
+  // visible area as the user pans / zooms / animates a fit.
   const viewLeft = (0 - pan.x) / zoom;
   const viewTop = (0 - pan.y) / zoom;
   const viewRight = (size.w - pan.x) / zoom;
   const viewBottom = (size.h - pan.y) / zoom;
+
+  // Convert a pointer event to graph-space coords so clicking the minimap
+  // tells the main canvas "center here".
+  const eventToGraph = (e: React.MouseEvent<SVGSVGElement>): { x: number; y: number } | null => {
+    const svg = svgRef.current;
+    if (!svg) return null;
+    const rect = svg.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return null;
+    // Map CSS pixels to the SVG's internal coordinate system (W x H).
+    const px = ((e.clientX - rect.left) / rect.width) * W;
+    const py = ((e.clientY - rect.top) / rect.height) * H;
+    return { x: gx(px), y: gy(py) };
+  };
+
+  const handlePointerDown = (e: React.MouseEvent<SVGSVGElement>) => {
+    // Only react to primary button clicks.
+    if (e.button !== 0) return;
+    const g = eventToGraph(e);
+    if (g) onPan(g.x, g.y);
+  };
+
+  const handlePointerMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    // While the mouse is held down, treat it as a continuous pan — drag
+    // the minimap to scrub the main canvas in real time.
+    if (e.buttons === 0) {
+      setHoverGraph(null);
+      return;
+    }
+    const g = eventToGraph(e);
+    if (g) {
+      setHoverGraph(g);
+      onPan(g.x, g.y);
+    }
+  };
+
+  const handlePointerUp = () => setHoverGraph(null);
+
+  // Hover marker in graph space (only shown while the user is interacting).
+  const hoverX = hoverGraph ? sx(hoverGraph.x) : null;
+  const hoverY = hoverGraph ? sy(hoverGraph.y) : null;
 
   return (
     <div
@@ -1026,7 +1172,20 @@ function Minimap({
       style={{ width: W + 8 }}
       data-testid="minimap"
     >
-      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="block rounded-sm">
+      <svg
+        ref={svgRef}
+        width={W}
+        height={H}
+        viewBox={`0 0 ${W} ${H}`}
+        className="block cursor-crosshair rounded-sm"
+        role="img"
+        aria-label="Graph minimap — click or drag to pan the main canvas"
+        onMouseDown={handlePointerDown}
+        onMouseMove={handlePointerMove}
+        onMouseUp={handlePointerUp}
+        onMouseLeave={handlePointerUp}
+        data-testid="minimap-svg"
+      >
         <rect x={0} y={0} width={W} height={H} fill="rgba(15, 23, 42, 0.6)" />
         {sim.nodes.map((n) => {
           const meta = nodes.find((m) => m.id === n.id);
@@ -1042,6 +1201,17 @@ function Minimap({
             />
           );
         })}
+        {/* Hover crosshair — gives immediate feedback that the minimap is
+            interactive, and confirms the graph-space target before the pan
+            commits in the main canvas. */}
+        {hoverX != null && hoverY != null && (
+          <g pointerEvents="none">
+            <line x1={hoverX} y1={pad} x2={hoverX} y2={H - pad} stroke="#FAFAFA" strokeOpacity={0.4} strokeWidth={0.5} strokeDasharray="2 2" />
+            <line x1={pad} y1={hoverY} x2={W - pad} y2={hoverY} stroke="#FAFAFA" strokeOpacity={0.4} strokeWidth={0.5} strokeDasharray="2 2" />
+            <circle cx={hoverX} cy={hoverY} r={2.5} fill="#FAFAFA" fillOpacity={0.9} />
+          </g>
+        )}
+        {/* Viewport indicator — drawn last so it sits above node dots. */}
         <rect
           x={sx(viewLeft)}
           y={sy(viewTop)}
@@ -1050,15 +1220,22 @@ function Minimap({
           fill="rgba(99, 102, 241, 0.15)"
           stroke="rgba(99, 102, 241, 0.85)"
           strokeWidth={1.5}
+          pointerEvents="none"
+          data-testid="minimap-viewport"
         />
       </svg>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="text-[10px] text-[var(--fg-tertiary)] hover:text-[var(--fg-primary)]"
-      >
-        Hide minimap
-      </button>
+      <div className="flex items-center justify-between gap-2 px-0.5">
+        <span className="text-[9px] uppercase tracking-wider text-[var(--fg-tertiary)]">
+          Click or drag to pan
+        </span>
+        <button
+          type="button"
+          onClick={onToggle}
+          className="text-[10px] text-[var(--fg-tertiary)] hover:text-[var(--fg-primary)]"
+        >
+          Hide
+        </button>
+      </div>
     </div>
   );
 }

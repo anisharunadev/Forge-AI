@@ -4,11 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Iterable
-from uuid import UUID
 
 from app.core.logging import get_logger
 from app.core.security import AuthenticatedPrincipal
-from app.services.policy_engine import PolicyEngine, PolicyResult, policy_engine
 
 logger = get_logger(__name__)
 
@@ -82,8 +80,8 @@ class RBACService:
     DB-backed role lookup lands in the next phase.
     """
 
-    def __init__(self, policy_engine: PolicyEngine | None = None) -> None:
-        self._policy_engine = policy_engine or policy_engine
+    def __init__(self) -> None:
+        pass
 
     def expand_permissions(self, role_permissions: Iterable[Iterable[str]]) -> set[Permission]:
         out: set[Permission] = set()
@@ -112,34 +110,18 @@ class RBACService:
             return False
         return any(p.matches(needed) for p in owned)
 
-    async def check(
+    def check(
         self,
         principal: AuthenticatedPrincipal,
         required: str,
-        *,
-        policy_id: UUID | str | None = None,
-        context: dict | None = None,
-    ) -> PolicyResult:
-        """Combine RBAC and policy engine for a single decision.
+    ) -> bool:
+        """Return True if the principal holds the required permission.
 
-        policy_id is optional — when present, the policy engine gets
-        the final say (e.g. cost gates regardless of role).
+        Step-59 removed the policy table; this is now a thin wrapper
+        over :meth:`has_permission` for callers that want a simple
+        yes/no answer.
         """
-        if not self.has_permission(principal, required):
-            return PolicyResult(
-                allowed=False,
-                reason=f"rbac_denied:{required}",
-                obligations=["request_access"],
-            )
-        if policy_id is None:
-            return PolicyResult(allowed=True, reason="rbac_ok")
-        return await self._policy_engine.evaluate(
-            policy_id,
-            context or {"user": {"id": principal.user_id, "roles": principal.roles}},
-            tenant_id=principal.tenant_id,
-            project_id=principal.project_id,
-            actor_id=principal.user_id,
-        )
+        return self.has_permission(principal, required)
 
 
 rbac = RBACService()

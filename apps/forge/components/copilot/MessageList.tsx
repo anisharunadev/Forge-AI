@@ -129,7 +129,7 @@ export function MessageList({ messages, className, streaming }: MessageListProps
       ref={containerRef}
       onScroll={onScroll}
       className={cn(
-        'flex flex-1 flex-col gap-3 overflow-y-auto p-3',
+        'scrollbar-chat flex flex-1 flex-col gap-3 overflow-y-auto p-3',
         className,
       )}
       data-testid="copilot-message-list"

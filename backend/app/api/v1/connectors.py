@@ -157,30 +157,9 @@ async def get_history(
     history = await connector_manager.get_sync_history(connector_id, limit=limit)
     return [ConnectorSyncHistoryRead.model_validate(h) for h in history]
 
-
-@router.post("/{connector_id}/test", response_model=ConnectorTestResult)
-@audit(action="connectors.test", target_type="connector")
-async def test_connection(
-    connector_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("connectors:test"),
-) -> ConnectorTestResult:
-    try:
-        existing = await connector_manager.get_connector(
-            connector_id, tenant_id=principal.tenant_id
-        )
-    except LookupError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
-    result = await connector_manager.test_connection(
-        connector_id, tenant_id=principal.tenant_id
-    )
-    return ConnectorTestResult(
-        connector_id=result.connector_id,
-        ok=result.ok,
-        latency_ms=result.latency_ms,
-        detail=result.detail,
-        checked_at=result.checked_at,
-    )
+# NOTE: POST /connectors/{connector_id}/test is owned by
+# `connector_lifecycle.router` (it persists a ConnectorHealthHistory row).
+# Registering it here too would raise a duplicate-route error at startup.
 
 
-__all__ = ["router"]
+

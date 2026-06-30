@@ -90,6 +90,13 @@ export interface Simulation {
   /** Stop the auto-loop. Useful when the panel opens and the canvas isn't visible. */
   pause: () => void;
   resume: () => void;
+  /**
+   * Run N synchronous ticks to pre-settle the layout before first paint.
+   * The rAF loop only fires `tick()` for ~4s of idle time (240 ticks at 60fps),
+   * and alpha decays at 0.00018/tick — so without warmup the live loop never
+   * reaches the alpha < 0.1 threshold needed for a centered initial fit.
+   */
+  warmup: (ticks: number) => void;
   /** Run Louvain again (e.g. when edges change). Mutates node.community. */
   recomputeCommunities: () => void;
   /** Community info list — recomputed on demand. */
@@ -457,6 +464,22 @@ export function createSimulation(
     return Array.from(visited);
   };
 
+  const warmup = (ticks: number) => {
+    // Run N ticks synchronously so node positions are spread across the
+    // force-equilibrium layout before the first paint. Without this the
+    // auto-fit fires while nodes are still at their jittered seed positions,
+    // so the centered viewport appears off-target as soon as physics moves.
+    const savedRunning = running;
+    running = true;
+    for (let i = 0; i < ticks; i += 1) {
+      tick();
+    }
+    running = savedRunning;
+    // Snap alpha down so the live rAF loop treats the layout as settled —
+    // this prevents another re-fit from firing as the loop continues ticking.
+    alpha = MIN_ALPHA;
+  };
+
   return {
     nodes,
     edges,
@@ -484,6 +507,7 @@ export function createSimulation(
       n.fy = null;
     },
     neighborhood,
+    warmup,
     pause: () => {
       running = false;
     },

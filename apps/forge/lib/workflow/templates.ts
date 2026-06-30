@@ -308,76 +308,28 @@ export const WORKFLOW_KPIS = [
   },
 ] as const;
 
-/** Sample user workflows powering the "My workflows" tab. */
-export const SAMPLE_USER_WORKFLOWS = [
-  {
-    id: 'uw-1',
-    name: 'Onboarding handoff',
-    description: 'Greets new hires, requests Slack + GitHub access, schedules kickoff.',
-    status: 'published' as const,
-    updatedAt: '2 hours ago',
-    runCount: 38,
-    lastRunStatus: 'succeeded' as const,
-    ownerId: 'u-arun',
-    ownerName: 'Arun V.',
-    nodes: 7,
-  },
-  {
-    id: 'uw-2',
-    name: 'Daily standup digest',
-    description: 'Pulls updates from Jira + Slack, summarises, posts to #standup.',
-    status: 'published' as const,
-    updatedAt: 'yesterday',
-    runCount: 142,
-    lastRunStatus: 'succeeded' as const,
-    ownerId: 'u-priya',
-    ownerName: 'Priya S.',
-    nodes: 5,
-  },
-  {
-    id: 'uw-3',
-    name: 'Customer churn sweep',
-    description: 'Weekly: detect churn risk accounts, draft save outreach.',
-    status: 'draft' as const,
-    updatedAt: '3 days ago',
-    runCount: 4,
-    lastRunStatus: 'failed' as const,
-    ownerId: 'u-meera',
-    ownerName: 'Meera R.',
-    nodes: 9,
-  },
-  {
-    id: 'uw-4',
-    name: 'Quarterly OKR rollup',
-    description: 'Pulls metrics from dashboards, drafts exec summary.',
-    status: 'archived' as const,
-    updatedAt: 'last month',
-    runCount: 4,
-    lastRunStatus: 'succeeded' as const,
-    ownerId: 'u-arun',
-    ownerName: 'Arun V.',
-    nodes: 11,
-  },
-] as const;
+/**
+ * Removed in step-56 (Phase 4) — the Workflows center now lists real
+ * workflows from the FastAPI backend via `useWorkflows()`.
+ * Kept the export name so legacy imports still resolve to `[]` and
+ * pages that haven't migrated yet render the empty state.
+ */
+export const SAMPLE_USER_WORKFLOWS: ReadonlyArray<never> = [] as const;
 
-/** Sample run history shown in the "Runs" tab of the left sidebar. */
-export const SAMPLE_RUNS = [
-  { id: 'r-001', workflowId: 'tpl-deploy', status: 'succeeded' as const, startedAt: '12:04 PM', durationMs: 132_000, stepCount: 6, triggeredBy: 'schedule' },
-  { id: 'r-002', workflowId: 'tpl-bug-fix', status: 'running' as const, startedAt: '12:11 PM', stepCount: 4, triggeredBy: 'webhook' },
-  { id: 'r-003', workflowId: 'tpl-feature', status: 'failed' as const, startedAt: '11:48 AM', durationMs: 41_000, stepCount: 7, triggeredBy: 'manual' },
-  { id: 'r-004', workflowId: 'tpl-code-review', status: 'succeeded' as const, startedAt: '10:22 AM', durationMs: 18_000, stepCount: 5, triggeredBy: 'event' },
-  { id: 'r-005', workflowId: 'tpl-ideation-prd', status: 'waiting' as const, startedAt: '9:58 AM', stepCount: 5, triggeredBy: 'event' },
-  { id: 'r-006', workflowId: 'tpl-refactor', status: 'succeeded' as const, startedAt: '8:14 AM', durationMs: 196_000, stepCount: 7, triggeredBy: 'manual' },
-] as const;
+/**
+ * Removed in step-56 (Phase 4) — the Run Center now lists real
+ * workflow runs from the FastAPI backend via `useWorkflowRuns()`.
+ */
+export const SAMPLE_RUNS: ReadonlyArray<never> = [] as const;
 
-/** Sample drafts that the "Drafts" tab renders. */
-export const SAMPLE_DRAFTS = [
-  { id: 'd-1', label: 'Untitled workflow · 3 nodes', updatedAt: 'just now', nodes: 3 },
-  { id: 'd-2', label: 'Untitled workflow · 1 node', updatedAt: '5 minutes ago', nodes: 1 },
-] as const;
+/**
+ * Removed in step-56 (Phase 4) — drafts now come from the backend
+ * (`useWorkflows({ status: 'draft' })`).
+ */
+export const SAMPLE_DRAFTS: ReadonlyArray<never> = [] as const;
 
-/** Sample "Shared with me" entries. */
-export const SAMPLE_SHARED = [
-  { id: 's-1', name: 'Incident response', ownerName: 'Priya S.', ownerAvatar: 'PS', updatedAt: '3 hours ago', nodes: 12 },
-  { id: 's-2', name: 'Release checklist', ownerName: 'Karthik M.', ownerAvatar: 'KM', updatedAt: 'yesterday', nodes: 8 },
-] as const;
+/**
+ * Removed in step-56 (Phase 4) — shared workflows now come from the
+ * backend (the closest analog is `status: 'published'`).
+ */
+export const SAMPLE_SHARED: ReadonlyArray<never> = [] as const;

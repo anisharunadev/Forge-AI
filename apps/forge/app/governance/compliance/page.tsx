@@ -1,11 +1,21 @@
 /**
- * F-829 Phase C — Steward compliance feed.
+ * Steward compliance feed.
  *
- * Lists LiteLLM guardrail violations ingested by the 30s polling job.
+ * Lists guardrail violations derived from the LiteLLM spend-log feed
+ * (`useSpendLogs`) filtered for non-200 status or guardrail actions.
+ * The canonical backend route `/api/v1/governance/violations`
+ * (Zone 6 — `backend/app/api/v1/governance_violations.py`) applies
+ * the same derivation server-side; we prefer that endpoint when it
+ * is reachable and fall back to client-side filtering on the spend
+ * logs when the backend is unavailable.
+ *
+ * `resolveViolation` has no LiteLLM equivalent — there is no
+ * first-class "resolve" mutation in the Zone 6 contract. We hide the
+ * resolve / reopen buttons (the action has no canonical endpoint to
+ * call) and surface the violations as read-only audit cards.
+ *
  * Polls every 30s so newly-detected violations appear without manual
- * refresh; resolve / reopen buttons call the backend mutators.
- *
- * Mirrors the timeline pattern from `app/audit/page.tsx`.
+ * refresh; mirrors the timeline pattern from `app/audit/page.tsx`.
  */
 'use client';
 
@@ -18,13 +28,9 @@ import {
   ViolationCard,
   type ViolationCardProps,
 } from '@/components/governance/ViolationCard';
-import { useTenantId } from '@/hooks/use-tenant-id';
-import {
-  listViolations,
-  resolveViolation,
-  reopenViolation,
-  triggerViolationPoll,
-} from '@/lib/litellm/usage';
+import { useSpendLogs } from '@/lib/hooks/useAnalytics';
+import { forgeFetch } from '@/lib/forge-api';
+import type { SpendLogEntry } from '@/lib/litellm/data';
 
 const SEVERITIES: ReadonlyArray<string> = [
   'all',
@@ -34,70 +40,161 @@ const SEVERITIES: ReadonlyArray<string> = [
   'critical',
 ];
 
+/** Backend canonical shape from `/api/v1/governance/violations`. */
+interface BackendViolation {
+  id: string;
+  timestamp?: string | null;
+  model?: string | null;
+  severity?: string | null;
+  kind?: string | null;
+  description?: string | null;
+  actor?: string | null;
+  key_alias?: string | null;
+}
+
+/**
+ * Derive a guardrail-violation feed from raw LiteLLM spend logs. We
+ * only surface entries whose HTTP status is not 200 (e.g. 403 guardrail
+ * blocks, 429 budget exceeded) or whose metadata carries a guardrail
+ * action marker. This mirrors the Zone 6 derivation.
+ */
+function deriveViolationsFromLogs(
+  logs: ReadonlyArray<SpendLogEntry>,
+): ReadonlyArray<ViolationCardProps> {
+  const out: ViolationCardProps[] = [];
+  for (const log of logs) {
+    const meta = (log.metadata ?? {}) as Record<string, unknown>;
+    const status = log.status;
+    const guardrailAction =
+      typeof meta.guardrail_action === 'string' ? meta.guardrail_action : null;
+
+    const statusIsFailure =
+      status !== null &&
+      status !== undefined &&
+      status !== 200 &&
+      status !== '200';
+
+    if (!statusIsFailure && !guardrailAction) continue;
+
+    const id = log.request_id ?? `${log.startTime ?? 'unknown'}-${out.length}`;
+    const severity =
+      status === 403 ||
+      status === '403' ||
+      status === 429 ||
+      status === '429'
+        ? 'high'
+        : 'medium';
+
+    const description =
+      typeof meta.guardrail_reason === 'string'
+        ? meta.guardrail_reason
+        : guardrailAction ?? 'Guardrail blocked or budget exceeded';
+
+    out.push({
+      id,
+      guardrail_id: typeof meta.guardrail_id === 'string' ? meta.guardrail_id : 'litellm',
+      severity,
+      action_taken: guardrailAction ?? (statusIsFailure ? 'blocked' : 'warned'),
+      sanitized_content: description,
+      resolved: false,
+      occurred_at: log.startTime ?? new Date().toISOString(),
+    });
+  }
+  return out;
+}
+
+function severityRank(s: string | undefined | null): number {
+  switch ((s ?? '').toLowerCase()) {
+    case 'critical':
+      return 4;
+    case 'high':
+      return 3;
+    case 'medium':
+      return 2;
+    case 'low':
+      return 1;
+    default:
+      return 0;
+  }
+}
+
 export const dynamic = 'force-dynamic';
 
 export default function ComplianceFeedPage() {
-  const tenantId = useTenantId();
   const [severity, setSeverity] = React.useState<string>('all');
   const [resolved, setResolved] = React.useState<'all' | 'open' | 'resolved'>(
     'open',
   );
-  const [items, setItems] = React.useState<ReadonlyArray<ViolationCardProps>>([]);
-  const [loading, setLoading] = React.useState(true);
 
-  const refresh = React.useCallback(async () => {
-    if (!tenantId) return;
-    setLoading(true);
+  // Prefer the canonical backend derivation; fall back to spend logs.
+  const [backendItems, setBackendItems] = React.useState<
+    ReadonlyArray<BackendViolation> | null
+  >(null);
+  const [backendError, setBackendError] = React.useState<boolean>(false);
+
+  const fetchBackend = React.useCallback(async () => {
     try {
-      const data = await listViolations(tenantId, {
-        severity: severity === 'all' ? undefined : severity,
-        resolved:
-          resolved === 'all' ? undefined : resolved === 'resolved',
-      });
-      setItems(
-        (data?.items ?? []).map((v) => ({
-          id: v.id,
-          guardrail_id: v.guardrail_id,
-          severity: v.severity,
-          action_taken: v.action_taken,
-          sanitized_content: v.sanitized_content,
-          resolved: v.resolved,
-          occurred_at: v.occurred_at,
-        })),
+      const params = new URLSearchParams();
+      if (severity !== 'all') params.set('severity', severity);
+      params.set('days', '7');
+      const qs = params.toString();
+      const data = await forgeFetch<ReadonlyArray<BackendViolation>>(
+        `/governance/violations${qs ? `?${qs}` : ''}`,
       );
-    } finally {
-      setLoading(false);
+      setBackendItems(data);
+      setBackendError(false);
+    } catch {
+      setBackendError(true);
     }
-  }, [tenantId, severity, resolved]);
+  }, [severity]);
 
   React.useEffect(() => {
-    refresh();
-    const id = window.setInterval(refresh, 30_000);
+    void fetchBackend();
+    const id = window.setInterval(() => void fetchBackend(), 30_000);
     return () => window.clearInterval(id);
-  }, [refresh]);
+  }, [fetchBackend]);
 
-  const handleResolve = React.useCallback(
-    async (id: string) => {
-      if (!tenantId) return;
-      await resolveViolation(tenantId, id);
-      refresh();
-    },
-    [tenantId, refresh],
-  );
+  const spendLogsRes = useSpendLogs(7, 500);
+  const logs: ReadonlyArray<SpendLogEntry> = spendLogsRes.data ?? [];
 
-  const handleReopen = React.useCallback(
-    async (id: string) => {
-      if (!tenantId) return;
-      await reopenViolation(tenantId, id);
-      refresh();
-    },
-    [tenantId, refresh],
-  );
+  // Resolve / reopen has no LiteLLM equivalent — see file header.
+  // We surface the violation list read-only; no actions are wired.
 
-  const handleManualPoll = React.useCallback(async () => {
-    await triggerViolationPoll();
-    refresh();
-  }, [refresh]);
+  const items: ReadonlyArray<ViolationCardProps> = React.useMemo(() => {
+    if (backendItems !== null && !backendError) {
+      return backendItems.map((v) => ({
+        id: v.id,
+        guardrail_id: v.kind ?? 'litellm',
+        severity: v.severity ?? 'medium',
+        action_taken: v.description ?? 'blocked',
+        sanitized_content: v.description ?? 'Guardrail violation',
+        resolved: false,
+        occurred_at: v.timestamp ?? new Date().toISOString(),
+      }));
+    }
+    return deriveViolationsFromLogs(logs);
+  }, [backendItems, backendError, logs]);
+
+  // Apply severity + resolved filters client-side as the canonical
+  // backend only supports the severity dimension.
+  const filtered = React.useMemo(() => {
+    let rows = items;
+    if (severity !== 'all') {
+      rows = rows.filter((r) => (r.severity ?? '').toLowerCase() === severity);
+    }
+    if (resolved === 'open') {
+      rows = rows.filter((r) => !r.resolved);
+    } else if (resolved === 'resolved') {
+      rows = rows.filter((r) => r.resolved);
+    }
+    return rows.slice().sort((a, b) => {
+      const sevDiff = severityRank(b.severity) - severityRank(a.severity);
+      if (sevDiff !== 0) return sevDiff;
+      return (b.occurred_at ?? '').localeCompare(a.occurred_at ?? '');
+    });
+  }, [items, severity, resolved]);
+
+  const loading = backendItems === null && spendLogsRes.isLoading;
 
   return (
     <AdminShell>
@@ -106,17 +203,7 @@ export default function ComplianceFeedPage() {
           eyebrow="Governance"
           title="Compliance Feed"
           icon={<Shield className="h-4 w-4" aria-hidden="true" />}
-          description="LiteLLM guardrail violations. Auto-refreshes every 30s; click 'Poll now' for a one-shot ingest."
-          action={
-            <button
-              type="button"
-              onClick={handleManualPoll}
-              className="rounded-md border border-border bg-background px-3 py-1 text-xs text-foreground hover:bg-accent"
-              data-testid="compliance-poll-now"
-            >
-              Poll now
-            </button>
-          }
+          description="LiteLLM guardrail violations. Auto-refreshes every 30s. Resolve / reopen actions are read-only — there is no LiteLLM mutation for them."
         />
 
         <div className="flex flex-wrap items-center gap-3" data-testid="compliance-filters">
@@ -151,15 +238,15 @@ export default function ComplianceFeedPage() {
             </select>
           </label>
           <span className="font-mono text-[10px] text-forge-300" data-testid="compliance-count">
-            {items.length} item{items.length === 1 ? '' : 's'}
+            {filtered.length} item{filtered.length === 1 ? '' : 's'}
           </span>
         </div>
 
-        {loading && items.length === 0 ? (
+        {loading && filtered.length === 0 ? (
           <p className="text-xs text-muted-foreground" role="status">
             Loading…
           </p>
-        ) : items.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <EmptyState
             icon={<Shield className="h-5 w-5" aria-hidden="true" />}
             title="No violations in window"
@@ -170,13 +257,9 @@ export default function ComplianceFeedPage() {
             className="grid grid-cols-1 gap-3"
             aria-label="Guardrail violations"
           >
-            {items.map((v) => (
+            {filtered.map((v) => (
               <li key={v.id}>
-                <ViolationCard
-                  {...v}
-                  onResolve={handleResolve}
-                  onReopen={handleReopen}
-                />
+                <ViolationCard {...v} />
               </li>
             ))}
           </ul>

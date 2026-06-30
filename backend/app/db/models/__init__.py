@@ -1,11 +1,26 @@
 """SQLAlchemy 2.0 ORM models."""
 
 from app.db.models.agent import Agent
+from app.db.models.agent_config import AgentConfig
 from app.db.models.approval import ApprovalRequest
 from app.db.models.artifact import Artifact
 from app.db.models.audit import AuditEvent
+from app.db.models.env_var import EnvVar
+from app.db.models.project_invitation import ProjectInvitation
+from app.db.models.project_member import ProjectMember
 from app.db.models.connector import Connector, ConnectorSyncHistory
+from app.db.models.connector_credential import (
+    ConnectorCredential,
+    CredentialScope,
+    CredentialType,
+)
 from app.db.models.cost import CostEntry
+from app.db.models.dashboard import (
+    AIInsight,
+    AIInsightRead,
+    DashboardLayoutRow,
+    PinnedItem,
+)
 from app.db.models.hook import Hook
 from app.db.models.ideation import (
     ApprovalDecision,
@@ -37,6 +52,7 @@ from app.db.models.marketplace import MarketplaceConnector
 from app.db.models.model_provider import ModelProvider
 from app.db.models.onboarding import OnboardingSession, OnboardingStep
 from app.db.models.policy import Policy
+from app.db.models.project import Project
 from app.db.models.repo_ingestion import (
     IngestionArtifact,
     IngestionArtifactType,
@@ -51,6 +67,14 @@ from app.db.models.template import Template
 from app.db.models.tenant import Tenant
 from app.db.models.terminal_cost import TerminalSessionCost
 from app.db.models.user import User
+from app.db.models.webhook import (
+    Webhook,
+    WebhookAuthType,
+    WebhookDelivery,
+    WebhookDeliveryStatus,
+    WebhookDirection,
+    WebhookStatus,
+)
 from app.db.models.workflow_budget import (
     WorkflowBudget,
     WorkflowBudgetDecision,
@@ -59,6 +83,9 @@ from app.db.models.workflow_budget import (
 
 __all__ = [
     "Agent",
+    "AgentConfig",
+    "AIInsight",
+    "AIInsightRead",
     "ApprovalDecision",
     "ApprovalItem",
     "ApprovalItemStatus",
@@ -68,8 +95,14 @@ __all__ = [
     "Artifact",
     "AuditEvent",
     "Connector",
+    "ConnectorCredential",
     "ConnectorSyncHistory",
     "CostEntry",
+    "CredentialScope",
+    "CredentialType",
+    "DashboardLayoutRow",
+    "PinnedItem",
+    "EnvVar",
     "Hook",
     "Idea",
     "IdeaAnalysis",
@@ -88,6 +121,9 @@ __all__ = [
     "PRD",
     "PRDStatus",
     "Policy",
+    "Project",
+    "ProjectInvitation",
+    "ProjectMember",
     "PushRecord",
     "PushStatus",
     "PushTarget",
@@ -103,6 +139,12 @@ __all__ = [
     "Tenant",
     "TerminalSessionCost",
     "User",
+    "Webhook",
+    "WebhookAuthType",
+    "WebhookDelivery",
+    "WebhookDeliveryStatus",
+    "WebhookDirection",
+    "WebhookStatus",
     "WorkflowSession",
     "WorkflowSessionStatus",
     "WorkflowStep",

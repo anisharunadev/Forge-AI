@@ -122,7 +122,7 @@ export function PoliciesTab() {
           </div>
         </div>
 
-        <div className="max-h-[700px] overflow-y-auto">
+        <div className="scrollbar-thin max-h-[700px] overflow-y-auto">
           {filtered.length === 0 ? (
             <div className="p-6 text-center text-[11px] text-[var(--fg-tertiary)]">No policies match.</div>
           ) : (

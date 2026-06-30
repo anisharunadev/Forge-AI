@@ -332,7 +332,7 @@ export function TestTab() {
 
               <div className="space-y-1">
                 <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--fg-tertiary)]">Logs</h4>
-                <div className="max-h-32 overflow-y-auto rounded bg-[var(--bg-base)] p-2 font-mono text-[10px]">
+                <div className="scrollbar-thin max-h-32 overflow-y-auto rounded bg-[var(--bg-base)] p-2 font-mono text-[10px]">
                   {result.logs.map((log, i) => (
                     <div key={i} className="flex gap-2">
                       <span className="text-[var(--fg-muted)]">{log.timestamp}</span>

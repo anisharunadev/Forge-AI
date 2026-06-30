@@ -60,6 +60,19 @@ export interface Tenant {
   logo_url?: string;
 }
 
+export interface Project {
+  id: string;
+  tenant_id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  default_branch: string;
+  visibility: 'private' | 'internal' | 'public';
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface LoginResponse {
   access_token: string;
   refresh_token: string;
@@ -87,6 +100,7 @@ const TOKEN_KEY = 'forge_token';
 const REFRESH_KEY = 'forge_refresh';
 const USER_KEY = 'forge_user';
 const TENANT_KEY = 'forge_tenant';
+const PROJECT_KEY = 'forge_project';
 
 // Safe localStorage access for SSR (Next.js renders on the server first;
 // reading localStorage there throws).
@@ -134,6 +148,7 @@ function safeRemove(key: string): void {
 interface AuthState {
   user: User | null;
   tenant: Tenant | null;
+  project: Project | null;
   token: string | null;
   refreshToken: string | null;
   isLoading: boolean;
@@ -146,6 +161,7 @@ interface AuthState {
   logout: () => void;
   refreshSession: () => Promise<void>;
   switchTenant: (tenantId: string) => Promise<void>;
+  switchProject: (projectId: string) => Promise<void>;
   fetchCurrentUser: () => Promise<void>;
   /** Called by the `persist` middleware once storage has rehydrated. */
   _setHasHydrated: (hasHydrated: boolean) => void;
@@ -158,8 +174,10 @@ interface AuthState {
 export const auth = {
   getToken: (): string | null => useAuth.getState().token,
   getTenantId: (): string | null => useAuth.getState().tenant?.id ?? null,
+  getProjectId: (): string | null => useAuth.getState().project?.id ?? null,
   getUser: (): User | null => useAuth.getState().user,
   getTenant: (): Tenant | null => useAuth.getState().tenant,
+  getProject: (): Project | null => useAuth.getState().project,
   logout: (): void => useAuth.getState().logout(),
 };
 
@@ -172,6 +190,7 @@ export const useAuth = create<AuthState>()(
     (set, get) => ({
       user: safeRead<User>(USER_KEY),
       tenant: safeRead<Tenant>(TENANT_KEY),
+      project: safeRead<Project>(PROJECT_KEY),
       token: safeReadString(TOKEN_KEY),
       refreshToken: safeReadString(REFRESH_KEY),
       isLoading: false,
@@ -220,9 +239,11 @@ export const useAuth = create<AuthState>()(
         safeRemove(REFRESH_KEY);
         safeRemove(USER_KEY);
         safeRemove(TENANT_KEY);
+        safeRemove(PROJECT_KEY);
         set({
           user: null,
           tenant: null,
+          project: null,
           token: null,
           refreshToken: null,
         });
@@ -258,6 +279,17 @@ export const useAuth = create<AuthState>()(
         }
       },
 
+      switchProject: async (projectId) => {
+        const res = await api.get<Project>(
+          `/projects/${encodeURIComponent(projectId)}`,
+        );
+        safeWrite(PROJECT_KEY, JSON.stringify(res));
+        set({ project: res });
+        if (typeof window !== 'undefined') {
+          window.location.reload();
+        }
+      },
+
       fetchCurrentUser: async () => {
         const user = await api.get<User>('/auth/me');
         let tenant: Tenant | null = get().tenant;
@@ -275,7 +307,23 @@ export const useAuth = create<AuthState>()(
         if (tenant) {
           safeWrite(TENANT_KEY, JSON.stringify(tenant));
         }
-        set({ user, tenant });
+
+        // step-62 — load the persisted project, or pick the first
+        // project in the tenant if none is pinned yet.
+        let project: Project | null = get().project;
+        try {
+          const projects = await api.get<Project[]>('/projects');
+          const persistedId = get().project?.id;
+          const matched = projects.find((p) => p.id === persistedId);
+          project = matched ?? projects[0] ?? null;
+        } catch {
+          /* projects endpoint may be unavailable in dev */
+        }
+        if (project) {
+          safeWrite(PROJECT_KEY, JSON.stringify(project));
+        }
+
+        set({ user, tenant, project });
       },
 
       _setHasHydrated: (hasHydrated) => set({ _hasHydrated: hasHydrated }),
@@ -300,6 +348,7 @@ export const useAuth = create<AuthState>()(
       partialize: (state) => ({
         user: state.user,
         tenant: state.tenant,
+        project: state.project,
         token: state.token,
         refreshToken: state.refreshToken,
       }),

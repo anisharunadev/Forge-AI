@@ -57,6 +57,13 @@ class AgentRegistry:
                 stmt = stmt.where(
                     or_(Agent.project_id.is_(None), Agent.project_id == str(project_id))
                 )
+            # step-54 Zone 3 — exclude ad-hoc smoke-test rows that the
+            # dev `scripts/test_agents_api.py` script creates. They
+            # pollute the "Recent agents" UI in the Agent Center. This
+            # filter is name-based (the `agents` table has no `is_demo`
+            # column) and complements tenant scoping (Rule 2).
+            stmt = stmt.where(~Agent.name.ilike("Test agent%"))
+            stmt = stmt.where(~Agent.name.ilike("%patched%"))
             stmt = stmt.order_by(Agent.created_at.desc())
             return list((await session.execute(stmt)).scalars().all())
 

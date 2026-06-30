@@ -1,7 +1,5 @@
 """F-016 — Runtime Management admin REST endpoints."""
 
-from __future__ import annotations
-
 from dataclasses import asdict
 from uuid import UUID
 

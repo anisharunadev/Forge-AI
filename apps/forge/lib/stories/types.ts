@@ -19,6 +19,7 @@ export type StoryStatus =
   | 'todo'
   | 'in_progress'
   | 'in_review'
+  | 'qa'
   | 'done'
   | 'blocked';
 
@@ -27,6 +28,7 @@ export const STORY_STATUSES: ReadonlyArray<StoryStatus> = [
   'todo',
   'in_progress',
   'in_review',
+  'qa',
   'done',
 ];
 
@@ -40,6 +42,7 @@ export const STATUS_LABEL: Record<StoryStatus, string> = {
   todo: 'To Do',
   in_progress: 'In Progress',
   in_review: 'In Review',
+  qa: 'QA',
   done: 'Done',
   blocked: 'Blocked',
 };
@@ -50,6 +53,7 @@ export const STATUS_DOT_VAR: Record<StoryStatus, string> = {
   todo: 'var(--accent-cyan)',
   in_progress: 'var(--accent-primary)',
   in_review: 'var(--accent-amber)',
+  qa: 'var(--accent-amber)',
   done: 'var(--accent-emerald)',
   blocked: 'var(--accent-rose)',
 };
@@ -66,6 +70,7 @@ export const DEFAULT_KANBAN_COLUMNS: ReadonlyArray<StoryStatus> = [
   'todo',
   'in_progress',
   'in_review',
+  'qa',
   'done',
 ];
 

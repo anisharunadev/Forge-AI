@@ -73,6 +73,11 @@ export default defineConfig({
           collapsed: true,
           items: [{ autogenerate: { directory: 'operations' } }],
         },
+        {
+          label: 'Integration',
+          collapsed: true,
+          items: [{ autogenerate: { directory: 'integration' } }],
+        },
       ],
       components: {
         Header: './src/components/Header.astro',

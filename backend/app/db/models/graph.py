@@ -42,6 +42,7 @@ class GraphNodeKind(str, Enum):
     STANDARD = "standard"
     POLICY = "policy"
     CONFLICT = "conflict"
+    DOC = "doc"
 
 
 class GraphEdgeKind(str, Enum):

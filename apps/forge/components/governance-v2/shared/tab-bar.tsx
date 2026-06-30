@@ -33,7 +33,7 @@ export function GovernanceTabs({ value, onChange, tabs }: GovernanceTabsProps) {
   return (
     <Tabs value={value} onValueChange={onChange}>
       <TabsList
-        className="inline-flex h-10 w-full items-center justify-start gap-1 overflow-x-auto rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-1"
+        className="scrollbar-thin inline-flex h-10 w-full items-center justify-start gap-1 overflow-x-auto rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-1"
         data-testid="governance-tab-list"
       >
         {tabs.map((tab) => {

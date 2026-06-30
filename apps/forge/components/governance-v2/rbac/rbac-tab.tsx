@@ -90,7 +90,7 @@ export function RbacTab() {
       </div>
 
       <Panel title="Permissions matrix" subtitle="Role × permission grid (read-only)" dataTestId="rbac-matrix">
-        <div className="overflow-x-auto">
+        <div className="scrollbar-thin overflow-x-auto">
           <table className="w-full text-[10px]">
             <thead>
               <tr>

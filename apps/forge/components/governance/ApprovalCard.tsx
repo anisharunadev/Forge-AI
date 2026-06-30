@@ -4,6 +4,14 @@
  * ApprovalCard — single Pending Approval card with Approve (gated by
  * confirmation modal), Decline, and Open actions.
  *
+ * Step-59 migration: was reading the `ApprovalRequest` type from
+ * `@/lib/governance/data`. The approvals endpoint isn't on the
+ * LiteLLM-backed governance surface yet, so the type now lives in
+ * `useForgeFixtures.ts` alongside the inline fixture array. Once
+ * `/v1/governance/approvals` ships on the backend, this component
+ * should consume a TanStack Query hook (mirroring `useAuditEvents`)
+ * and route accept/decline through `useMutation`.
+ *
  * Phase 0.5-08:
  *   - Loading + disabled state on every action (Constraint).
  *   - Approve opens a confirmation modal (Dialog with role=alertdialog)
@@ -35,10 +43,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import type { ApprovalRequest } from '@/lib/governance/data';
+import {
+  FIXTURE_PENDING_APPROVALS,
+  type ApprovalRequest,
+} from '@/lib/hooks/useForgeFixtures';
 
 export interface ApprovalCardProps {
-  approval: ApprovalRequest;
+  /** Optional override — defaults to the first pending approval in
+   *  the fixture array. */
+  approval?: ApprovalRequest;
   boardTokenPresent: boolean;
 }
 
@@ -52,11 +65,20 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-export function ApprovalCard({ approval, boardTokenPresent }: ApprovalCardProps) {
+export function ApprovalCard({
+  approval: approvalProp,
+  boardTokenPresent,
+}: ApprovalCardProps) {
+  const approval = approvalProp ?? FIXTURE_PENDING_APPROVALS[0];
   const { toast } = useToast();
   const [approving, setApproving] = React.useState(false);
   const [declining, setDeclining] = React.useState(false);
   const [dialogOpen, setDialogOpen] = React.useState(false);
+
+  // Without a fixture row to fall back on, render nothing rather
+  // than crashing. The original component assumed the caller
+  // always supplied an approval.
+  if (!approval) return null;
 
   const submitter =
     approval.decider?.displayName ?? approval.kind.replace(/_/g, ' ');

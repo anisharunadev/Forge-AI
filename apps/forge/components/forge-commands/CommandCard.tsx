@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import dynamic from 'next/dynamic';
+import { cn } from '@/lib/utils';
 import {
   Bug,
   Rocket,
@@ -71,6 +72,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { packageAccent } from './PackageNav';
 
 const CommandRunDialog = dynamic(
   () =>
@@ -144,16 +146,28 @@ export interface CommandCardProps {
 export function CommandCard({ command }: CommandCardProps) {
   const [open, setOpen] = React.useState(false);
   const Icon = ICONS[command.icon] ?? Wand2;
+  const accent = packageAccent(command.package ?? 'forge-core');
 
   return (
     <>
-      <Card className="flex h-full flex-col">
+      <Card className="flex h-full flex-col" data-package={command.package}>
         <CardHeader className="flex flex-row items-start gap-3 space-y-0">
-          <div className="rounded-md bg-primary/10 p-2 text-primary">
-            <Icon className="h-5 w-5" aria-hidden="true" />
+          <div className={cn('rounded-md p-2', accent.chip)}>
+            <Icon className={cn('h-5 w-5', accent.icon)} aria-hidden="true" />
           </div>
           <div className="flex-1 space-y-1">
-            <CardTitle className="text-base">{command.label}</CardTitle>
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-base">{command.label}</CardTitle>
+              <span
+                className={cn(
+                  'shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider',
+                  accent.chip,
+                )}
+                aria-label={`Source package ${command.package}`}
+              >
+                {command.package}
+              </span>
+            </div>
             <code className="block break-all text-xs text-muted-foreground">
               {command.name}
             </code>

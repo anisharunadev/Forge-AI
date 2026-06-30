@@ -1,10 +1,9 @@
 """F-014 — Agent Runtime REST endpoints."""
 
-from __future__ import annotations
-
+from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 
 from app.api.deps import Principal, require_permission
 from app.core.audit import audit
@@ -61,11 +60,13 @@ async def stop_runtime(
 
     rh = RH(
         id=handle_id,
-        tenant_id=UUID(principal.tenant_id),
+        tenant_id=UUID(str(principal.tenant_id)),
         project_id=None,
         agent_id=handle_id,  # placeholder; we don't reload from storage in M2.
         workspace_path="",
         kind=body_kind_default(),
+        started_at=datetime.now(timezone.utc),
+        stopped_at=datetime.now(timezone.utc),
     )
     rh.state = _state_after_stop()
     return _handle_to_schema(rh)
@@ -88,18 +89,21 @@ async def runtime_metrics(
 def _handle_to_schema(handle) -> RuntimeHandle:
     from app.schemas.runtime import RuntimeKind, RuntimeState
 
+    now = datetime.now(timezone.utc)
+    started = getattr(handle, "started_at", None)
+    stopped = getattr(handle, "stopped_at", None)
     return RuntimeHandle(
         id=handle.id,
         tenant_id=handle.tenant_id,
         project_id=handle.project_id,
-        created_at=getattr(handle, "started_at", None) or handle.id.__class__.utcnow(),
-        updated_at=handle.stopped_at or handle.started_at or handle.id.__class__.utcnow(),
+        created_at=started or now,
+        updated_at=stopped or started or now,
         agent_id=handle.agent_id,
         workspace_path=handle.workspace_path,
         kind=handle.kind if isinstance(handle.kind, RuntimeKind) else RuntimeKind(handle.kind),
         state=handle.state if isinstance(handle.state, RuntimeState) else RuntimeState(handle.state),
-        started_at=handle.started_at,
-        stopped_at=handle.stopped_at,
+        started_at=started,
+        stopped_at=stopped,
     )
 
 

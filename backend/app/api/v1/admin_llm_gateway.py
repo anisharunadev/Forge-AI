@@ -38,6 +38,13 @@ from app.integrations.litellm import (
     tenant_sync,
     virtual_key_manager,
 )
+from app.services.litellm_admin import (
+    _request,
+    list_guardrails,
+    list_models,
+    list_teams,
+    update_guardrail,
+)
 
 logger = get_logger(__name__)
 
@@ -420,6 +427,134 @@ async def get_litellm_health(
         consecutive_failures=int(snap.get("consecutive_failures", 0)),
         last_error=None,
     )
+
+
+# ---------------------------------------------------------------------------
+# Zone 10 — Spend / Guardrails / Models (LiteLLM passthrough)
+# ---------------------------------------------------------------------------
+
+
+class SpendByTeam(BaseModel):
+    """Per-team spend aggregation."""
+
+    team_id: str | None = None
+    team_alias: str | None = None
+    spend: float = 0.0
+    max_budget: float = 0.0
+
+
+class ModelInfo(BaseModel):
+    """LiteLLM model catalog entry.
+
+    Costs are converted from per-token to per-million-token display.
+    """
+
+    name: str
+    provider: str
+    max_tokens: int | None = None
+    max_input_tokens: int | None = None
+    input_cost: float = 0.0
+    output_cost: float = 0.0
+
+
+@router.get("/spend/teams", response_model=list[SpendByTeam])
+@audit(action="admin.llm_gateway.spend.teams", target_type="platform")
+async def spend_by_teams(
+    principal: Principal,
+    _perm: Principal = require_permission("admin:read"),
+) -> list[SpendByTeam]:
+    """Per-team spend aggregation (LiteLLM /team/list)."""
+    teams = await list_teams()
+    return [
+        SpendByTeam(
+            team_id=t.get("team_id"),
+            team_alias=t.get("team_alias"),
+            spend=float(t.get("spend", 0) or 0),
+            max_budget=float(t.get("max_budget", 0) or 0),
+        )
+        for t in teams
+    ]
+
+
+@router.get("/spend/models", response_model=list[dict])
+@audit(action="admin.llm_gateway.spend.models", target_type="platform")
+async def spend_by_models(
+    principal: Principal,
+    _perm: Principal = require_permission("admin:read"),
+) -> list[dict]:
+    """Per-model spend breakdown — direct passthrough to /spend/models."""
+    result = await _request("GET", "/spend/models")
+    if isinstance(result, list):
+        return result
+    if isinstance(result, dict):
+        return [result]
+    return []
+
+
+@router.get("/guardrails", response_model=list[dict])
+@audit(action="admin.llm_gateway.guardrails.list", target_type="platform")
+async def list_guardrails_endpoint(
+    principal: Principal,
+    _perm: Principal = require_permission("admin:read"),
+) -> list[dict]:
+    """List configured LiteLLM guardrails."""
+    result = await list_guardrails()
+    return list(result) if isinstance(result, list) else []
+
+
+@router.post("/guardrails/{name}/enable", response_model=dict)
+@audit(action="admin.llm_gateway.guardrails.toggle", target_type="guardrail")
+async def enable_guardrail(
+    name: str,
+    principal: Principal,
+    _perm: Principal = require_permission("admin:write"),
+) -> dict:
+    """Enable a LiteLLM guardrail by name."""
+    result = await update_guardrail(name, {"enabled": True})
+    return result if isinstance(result, dict) else {"enabled": True, "guardrail_name": name}
+
+
+@router.post("/guardrails/{name}/disable", response_model=dict)
+@audit(action="admin.llm_gateway.guardrails.toggle", target_type="guardrail")
+async def disable_guardrail(
+    name: str,
+    principal: Principal,
+    _perm: Principal = require_permission("admin:write"),
+) -> dict:
+    """Disable a LiteLLM guardrail by name."""
+    result = await update_guardrail(name, {"enabled": False})
+    return result if isinstance(result, dict) else {"enabled": False, "guardrail_name": name}
+
+
+@router.get("/models", response_model=list[ModelInfo])
+@audit(action="admin.llm_gateway.models.list", target_type="platform")
+async def list_models_endpoint(
+    principal: Principal,
+    _perm: Principal = require_permission("admin:read"),
+) -> list[ModelInfo]:
+    """LiteLLM model catalog with per-million-token pricing."""
+    payload = await list_models()
+    rows: list[dict[str, Any]] = []
+    if isinstance(payload, dict):
+        rows = payload.get("data", []) or []
+    elif isinstance(payload, list):
+        rows = payload
+
+    out: list[ModelInfo] = []
+    for m in rows:
+        model_id = m.get("id") or m.get("model_name") or ""
+        provider = model_id.split("/", 1)[0] if "/" in model_id else "unknown"
+        out.append(
+            ModelInfo(
+                name=model_id,
+                provider=provider,
+                max_tokens=m.get("max_tokens"),
+                max_input_tokens=m.get("max_input_tokens"),
+                input_cost=float(m.get("input_cost_per_token", 0) or 0) * 1_000_000,
+                output_cost=float(m.get("output_cost_per_token", 0) or 0) * 1_000_000,
+            )
+        )
+    return out
 
 
 __all__ = ["router"]

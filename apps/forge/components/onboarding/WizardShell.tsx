@@ -1,20 +1,19 @@
 'use client';
 
 import * as React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Bot, Compass, Lightbulb, Sparkles, TriangleAlert, X } from 'lucide-react';
+import {
+  Bot,
+  Compass,
+  Lightbulb,
+  Sparkles,
+  TriangleAlert,
+  X,
+} from 'lucide-react';
 
 import { AdminShell } from '@/components/admin/AdminShell';
 import { cn } from '@/lib/utils';
 import { useOnboardingStore } from '@/lib/store';
 import { AI_REASONING, WIZARD_STEPS } from '@/lib/onboarding/data';
-
-/** AnimatePresence alias with relaxed typing — TS module resolution for
- *  framer-motion 11 is flaky under pnpm-hoisted installs, so we cast
- *  to `any` here rather than fighting the inference at every call site.
- *  Runtime behavior is unchanged. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const AnimatePresenceAny = AnimatePresence as unknown as React.ComponentType<any>;
 
 /**
  * Read the user's `prefers-reduced-motion` setting. Lives in the
@@ -36,44 +35,71 @@ function usePrefersReducedMotion(): boolean {
 }
 
 export interface WizardShellProps {
+  /** Form content for the active step (rendered inside the right panel). */
   children: React.ReactNode;
   /**
-   * Optional banner rendered between the header and the step grid.
+   * Optional banner rendered between the top bar and the split grid.
    * Pass `null` to suppress the orchestrator-stub warning entirely.
    */
   banner?: React.ReactNode | null;
   /** Optional slot for top-right ghost links (skip / sample data). */
   headerActions?: React.ReactNode;
+  /** Optional footer slot — usually the Back / Skip / Next nav. */
+  footer?: React.ReactNode;
 }
 
 /**
- * Project Onboarding shell — animated gradient hero, vertical
- * stepper on the left, centered main content, and a live AI
- * reasoning panel on the right.
+ * Project Onboarding shell — fixed-height split layout:
+ *
+ *   ┌─────────────────────────────────────────────────────────────┐
+ *   │ top bar (h-14, fixed)                                       │
+ *   ├──────────────┬──────────────────────────────────────────────┤
+ *   │ stepper      │ right panel (scrollable, independent)        │
+ *   │ (320px,      │  - step header (number + title + desc)       │
+ *   │  scrollable) │  - form content (children)                   │
+ *   │              │  - AI reasoning + tip sub-section            │
+ *   ├──────────────┴──────────────────────────────────────────────┤
+ *   │ bottom bar (h-16, fixed) — Back / Skip / Next              │
+ *   └─────────────────────────────────────────────────────────────┘
+ *
+ * The page itself never scrolls — both panels own their own scroll
+ * containers, so clicking a step only swaps the form content and
+ * resets the right panel's scroll position. No `window.scrollTo` or
+ * `scrollIntoView` calls anywhere in the flow.
  *
  * Wraps `<AdminShell>` so the wizard lives inside the standard
  * persona chrome (sidebar + topbar + breadcrumbs).
  */
-export function WizardShell({ children, banner, headerActions }: WizardShellProps) {
+export function WizardShell({
+  children,
+  banner,
+  headerActions,
+  footer,
+}: WizardShellProps) {
   const currentStep = useOnboardingStore((s) => s.currentStep);
   const setStep = useOnboardingStore((s) => s.setStep);
   const total = WIZARD_STEPS.length;
   const step = WIZARD_STEPS.find((s) => s.id === currentStep) ?? WIZARD_STEPS[0]!;
 
-  // Track navigation direction for slide animations.
-  const previousStep = React.useRef(currentStep);
-  const [direction, setDirection] = React.useState<1 | -1>(1);
+  // Right-panel scroll container — used to reset to top on step change.
+  const mainRef = React.useRef<HTMLDivElement | null>(null);
   React.useEffect(() => {
-    setDirection(currentStep > previousStep.current ? 1 : -1);
-    previousStep.current = currentStep;
+    // Reset only the right panel's scroll, never the window.
+    mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentStep]);
 
+  // Lock window scroll while the wizard is mounted — defensive belt
+  // and suspenders alongside the `overflow-hidden` container, so that
+  // focus rings / overscroll-glow can't push the page around.
+  React.useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
   const reduced = usePrefersReducedMotion();
-  const slideVariants = {
-    enter: (dir: 1 | -1) => ({ opacity: 0, x: dir === 1 ? 24 : -24 }),
-    center: { opacity: 1, x: 0 },
-    exit: (dir: 1 | -1) => ({ opacity: 0, x: dir === 1 ? -24 : 24 }),
-  };
 
   const pct = Math.max(
     0,
@@ -83,174 +109,230 @@ export function WizardShell({ children, banner, headerActions }: WizardShellProp
   return (
     <AdminShell>
       <div
-        className="flex flex-col gap-6"
+        className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden"
         data-testid="project-onboarding"
       >
-        {/* Header — eyebrow + h1 + body + top-right ghost actions */}
+        {/* ─── Top bar (fixed) ─────────────────────────────────────── */}
         <header
-          className="relative overflow-hidden rounded-[var(--radius-xl)] p-6"
+          className="flex h-14 shrink-0 items-center justify-between gap-3 border-b px-4 lg:px-6"
           style={{
             background: 'var(--bg-elevated)',
-            border: '1px solid var(--border-subtle)',
-            boxShadow: 'var(--shadow-glow-primary)',
+            borderColor: 'var(--border-subtle)',
           }}
+          data-testid="wizard-topbar"
         >
-          {/* Animated gradient halo */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -inset-px"
-            style={{
-              background:
-                'linear-gradient(120deg, rgba(99,102,241,0.18), rgba(139,92,246,0.10) 30%, transparent 60%, rgba(34,211,238,0.18))',
-              filter: 'blur(20px)',
-              opacity: 0.6,
-            }}
-          />
-          <div className="relative flex flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0 space-y-2">
-              <p
+          <div className="flex min-w-0 items-center gap-3">
+            <Compass
+              className="h-4 w-4 shrink-0"
+              style={{ color: 'var(--accent-primary)' }}
+              aria-hidden="true"
+            />
+            <div className="flex min-w-0 items-baseline gap-3">
+              <span
+                className="truncate"
                 style={{
-                  fontSize: 'var(--text-xs)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.18em',
-                  color: 'var(--fg-tertiary)',
-                }}
-              >
-                Project Onboarding
-              </p>
-              <h1
-                className="flex items-center gap-2"
-                style={{
-                  fontSize: 'var(--text-3xl)',
-                  lineHeight: 'var(--leading-3xl)',
-                  fontWeight: 'var(--font-weight-bold)',
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 'var(--font-weight-semibold)',
                   color: 'var(--fg-primary)',
                 }}
               >
-                <Compass
-                  className="h-6 w-6"
-                  style={{ color: 'var(--accent-primary)' }}
-                  aria-hidden="true"
-                />
-                Welcome to Forge
-              </h1>
-              <p
-                className="max-w-2xl"
+                Project Onboarding
+              </span>
+              <span
+                className="hidden truncate uppercase tracking-[0.18em] sm:inline"
                 style={{
-                  fontSize: 'var(--text-sm)',
-                  color: 'var(--fg-secondary)',
-                  lineHeight: 'var(--leading-base)',
+                  fontSize: 'var(--text-xs)',
+                  color: 'var(--fg-tertiary)',
                 }}
               >
-                Let&apos;s set up your AI workforce. We&apos;ll guide you through
-                connecting your stack, registering agents, and launching
-                your first project. Takes ~5 minutes.
-              </p>
+                Step {currentStep} of {total} · {Math.round(pct)}%
+              </span>
             </div>
-            {headerActions ? (
-              <div
-                className="flex items-center gap-3"
-                data-testid="wizard-header-actions"
-              >
-                {headerActions}
-              </div>
-            ) : null}
           </div>
 
-          {/* Progress meta */}
-          <div className="relative mt-5 flex items-center justify-between">
-            <span
-              className="uppercase tracking-[0.18em]"
-              style={{
-                fontSize: 'var(--text-xs)',
-                color: 'var(--fg-tertiary)',
-              }}
-            >
-              Step {currentStep} of {total}
-            </span>
-            <span
-              style={{
-                fontSize: 'var(--text-xs)',
-                color: 'var(--fg-tertiary)',
-                fontFamily: 'var(--font-mono)',
-              }}
-              data-testid="wizard-progress-pct"
-            >
-              {Math.round(pct)}%
-            </span>
-          </div>
-          <div
-            className="relative mt-2 h-1.5 w-full overflow-hidden rounded-full"
-            style={{ background: 'var(--bg-inset)' }}
-          >
+          {/* Progress bar (desktop only — mobile uses the inline label above) */}
+          <div className="hidden flex-1 px-6 lg:block">
             <div
-              className="h-full rounded-full"
-              style={{
-                width: `${pct}%`,
-                background:
-                  'linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-violet) 50%, var(--accent-cyan) 100%)',
-                transition: 'width var(--motion-slow) cubic-bezier(0.16, 1, 0.3, 1)',
-              }}
-              data-testid="wizard-progress-bar"
-              data-pct={Math.round(pct)}
+              className="h-1 w-full overflow-hidden rounded-full"
+              style={{ background: 'var(--bg-inset)' }}
               aria-hidden="true"
-            />
+            >
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${pct}%`,
+                  background:
+                    'linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-violet) 50%, var(--accent-cyan) 100%)',
+                  transition: 'width var(--motion-slow) cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+                data-testid="wizard-progress-bar"
+                data-pct={Math.round(pct)}
+              />
+            </div>
           </div>
+
+          {headerActions ? (
+            <div
+              className="flex shrink-0 items-center gap-2"
+              data-testid="wizard-header-actions"
+            >
+              {headerActions}
+            </div>
+          ) : null}
         </header>
 
-        {/* Conditional warning banner */}
+        {/* ─── Conditional warning banner ─────────────────────────── */}
         {banner != null ? <div data-testid="wizard-banner">{banner}</div> : null}
 
-        {/* Three-column grid — vertical stepper (left) | main (center) | live AI panel (right) */}
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,260px)_minmax(0,1fr)_minmax(0,300px)] lg:grid-cols-1">
-          <aside
-            className="self-start xl:sticky xl:top-6"
-            data-testid="wizard-stepper"
+        {/* ─── Split layout: stepper (left) | content (right) ─────── */}
+        <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[auto_1fr] overflow-hidden lg:grid-cols-[240px_1fr] lg:grid-rows-1 xl:grid-cols-[320px_1fr]">
+          {/* Mobile / tablet stepper — horizontal pill list at top */}
+          <div
+            className="border-b lg:hidden"
+            style={{ borderColor: 'var(--border-subtle)' }}
+            data-testid="wizard-stepper-mobile"
           >
-            <VerticalStepper
+            <HorizontalStepper
               currentStep={currentStep}
               steps={WIZARD_STEPS}
               onJump={(s) => setStep(s)}
             />
-          </aside>
-
-          <div className="relative min-w-0">
-            <div className="mx-auto max-w-[720px]">
-              <AnimatePresenceAny initial={false} custom={direction}>
-                <motion.div
-                  key={currentStep}
-                  custom={direction}
-                  variants={reduced ? undefined : slideVariants}
-                  initial={reduced ? { opacity: 0 } : 'enter'}
-                  animate={reduced ? { opacity: 1 } : 'center'}
-                  exit={reduced ? { opacity: 0 } : 'exit'}
-                  transition={{
-                    duration: reduced ? 0.15 : 0.28,
-                    ease: [0.16, 1, 0.3, 1],
-                  }}
-                >
-                  {children}
-                </motion.div>
-              </AnimatePresenceAny>
-            </div>
           </div>
 
+          {/* Desktop vertical stepper (left panel, independently scrollable) */}
           <aside
-            className="self-start xl:sticky xl:top-6"
-            data-testid="wizard-side-panel"
+            className="hidden min-h-0 overflow-y-auto border-r lg:block"
+            style={{ borderColor: 'var(--border-subtle)' }}
+            data-testid="wizard-stepper"
           >
-            <LiveAIPanel currentStep={currentStep} step={step} />
+            <div className="p-4 xl:p-6">
+              <VerticalStepper
+                currentStep={currentStep}
+                steps={WIZARD_STEPS}
+                onJump={(s) => setStep(s)}
+              />
+            </div>
           </aside>
+
+          {/* Right panel: form content + AI sub-section, scrollable */}
+          <main
+            ref={mainRef}
+            id="wizard-step-content"
+            className="min-h-0 overflow-y-auto"
+            data-testid="wizard-main"
+          >
+            <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
+              {/* Step header — number + title + description */}
+              <StepHeader currentStep={currentStep} step={step} />
+
+              {/* Form content — the `key` forces React to remount
+                  on step change so all per-step local state resets. We
+                  intentionally avoid AnimatePresence / framer-motion
+                  here because the slide+fade animation had been
+                  sticking the form at opacity:0 inside the nested
+                  scroll layout. A plain div keeps the form reliably
+                  visible at all times. */}
+              <div
+                key={currentStep}
+                data-testid="wizard-step-form"
+                className="min-w-0"
+              >
+                {children}
+              </div>
+
+              {/* AI reasoning sub-section (kept inside the right panel
+                  per the layout fix — no third column). */}
+              <LiveAIPanel currentStep={currentStep} step={step} />
+            </div>
+          </main>
         </div>
+
+        {/* ─── Bottom bar (fixed, no scroll) ──────────────────────── */}
+        {footer ? (
+          <footer
+            className="flex h-16 shrink-0 items-center justify-between border-t px-4 sm:px-6"
+            style={{
+              background: 'var(--bg-elevated)',
+              borderColor: 'var(--border-subtle)',
+            }}
+            data-testid="wizard-footer"
+          >
+            <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3">
+              {footer}
+            </div>
+          </footer>
+        ) : null}
       </div>
     </AdminShell>
   );
 }
 
 /* ============================================================================
- * Vertical stepper — replaces the horizontal chip rail. Done steps
- * are clickable, the active step glows with the accent-primary color,
- * skippable steps show a small "Skip" badge.
+ * Step header — sits at the top of the right panel. Renders the step
+ * number badge, the title (also the visible h1 for screen readers),
+ * and the short description below it.
+ * ========================================================================== */
+
+function StepHeader({
+  currentStep,
+  step,
+}: {
+  currentStep: number;
+  step: { id: number; title: string; description: string };
+}) {
+  return (
+    <div className="space-y-2" data-testid="wizard-step-header">
+      <p
+        className="flex items-center gap-2"
+        style={{
+          fontSize: 'var(--text-xs)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.18em',
+          color: 'var(--fg-tertiary)',
+        }}
+      >
+        <span
+          aria-hidden="true"
+          className="inline-flex h-6 w-6 items-center justify-center rounded-full font-mono"
+          style={{
+            fontSize: 10,
+            fontWeight: 'var(--font-weight-semibold)',
+            background: 'var(--accent-primary)',
+            color: 'white',
+          }}
+        >
+          {currentStep}
+        </span>
+        <span>Step {currentStep}</span>
+      </p>
+      <h1
+        style={{
+          fontSize: 'var(--text-2xl)',
+          lineHeight: 'var(--leading-tight, 1.2)',
+          fontWeight: 'var(--font-weight-bold)',
+          color: 'var(--fg-primary)',
+        }}
+      >
+        {step.title}
+      </h1>
+      <p
+        style={{
+          fontSize: 'var(--text-sm)',
+          color: 'var(--fg-secondary)',
+          lineHeight: 'var(--leading-base)',
+        }}
+      >
+        {step.description}
+      </p>
+    </div>
+  );
+}
+
+/* ============================================================================
+ * Vertical stepper — the left-panel navigation. Done, active, and
+ * pending steps all show the step number (with an emerald check for
+ * done and a primary glow for active). Skippable steps render a small
+ * "Skip" badge. Clicking any step jumps to it (no page scroll).
  * ========================================================================== */
 
 function VerticalStepper({
@@ -276,22 +358,19 @@ function VerticalStepper({
       {steps.map((s, idx) => {
         const active = s.id === currentStep;
         const done = s.id < currentStep;
-        const upcoming = s.id > currentStep;
         const isLast = idx === steps.length - 1;
         return (
           <li key={s.id} className="relative">
             <button
               type="button"
-              disabled={!done}
-              onClick={() => done && onJump(s.id)}
+              onClick={() => onJump(s.id)}
               aria-current={active ? 'step' : undefined}
               aria-label={`Step ${s.id}: ${s.title}${done ? ' (completed)' : active ? ' (current)' : ' (upcoming)'}`}
               className={cn(
                 'group flex w-full items-start gap-3 rounded-md p-2 text-left transition-colors',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]',
-                done && 'cursor-pointer hover:bg-[var(--hover)]',
+                'hover:bg-[var(--hover)] cursor-pointer',
                 active && 'bg-[var(--bg-inset)]',
-                upcoming && 'cursor-default',
               )}
               style={{
                 background: active ? 'var(--bg-inset)' : undefined,
@@ -312,8 +391,7 @@ function VerticalStepper({
                     : active
                       ? 'var(--accent-primary)'
                       : 'var(--bg-inset)',
-                  color:
-                    done || active ? 'white' : 'var(--fg-tertiary)',
+                  color: done || active ? 'white' : 'var(--fg-tertiary)',
                   boxShadow: active
                     ? '0 0 0 4px rgba(99, 102, 241, 0.18)'
                     : undefined,
@@ -400,9 +478,92 @@ function VerticalStepper({
 }
 
 /* ============================================================================
+ * Horizontal stepper — mobile / narrow viewport. Same data, rendered
+ * as a horizontally scrollable pill list so it never wraps the page.
+ * ========================================================================== */
+
+function HorizontalStepper({
+  currentStep,
+  steps,
+  onJump,
+}: {
+  currentStep: number;
+  steps: ReadonlyArray<{
+    id: number;
+    title: string;
+    description: string;
+  }>;
+  onJump: (step: number) => void;
+}) {
+  return (
+    <ol
+      className="flex items-center gap-2 overflow-x-auto px-3 py-3"
+      data-testid="wizard-step-indicator-horizontal"
+      aria-label="Wizard progress"
+    >
+      {steps.map((s) => {
+        const active = s.id === currentStep;
+        const done = s.id < currentStep;
+        return (
+          <li key={s.id} className="shrink-0">
+            <button
+              type="button"
+              onClick={() => onJump(s.id)}
+              aria-current={active ? 'step' : undefined}
+              aria-label={`Step ${s.id}: ${s.title}`}
+              className={cn(
+                'inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]',
+              )}
+              style={{
+                fontSize: 'var(--text-xs)',
+                fontWeight: active
+                  ? 'var(--font-weight-semibold)'
+                  : 'var(--font-weight-medium)',
+                background: active ? 'var(--bg-inset)' : undefined,
+                borderColor: active
+                  ? 'rgba(99, 102, 241, 0.50)'
+                  : done
+                    ? 'rgba(16, 185, 129, 0.40)'
+                    : 'var(--border-subtle)',
+                color: active
+                  ? 'var(--fg-primary)'
+                  : done
+                    ? 'var(--accent-emerald)'
+                    : 'var(--fg-tertiary)',
+              }}
+              data-testid={`wizard-step-${s.id}`}
+              data-state={active ? 'active' : done ? 'done' : 'pending'}
+            >
+              <span
+                className="inline-flex h-4 w-4 items-center justify-center rounded-full font-mono"
+                style={{
+                  fontSize: 9,
+                  background: done
+                    ? 'var(--accent-emerald)'
+                    : active
+                      ? 'var(--accent-primary)'
+                      : 'var(--bg-inset)',
+                  color: done || active ? 'white' : 'var(--fg-tertiary)',
+                }}
+                aria-hidden="true"
+              >
+                {done ? '✓' : s.id}
+              </span>
+              <span className="whitespace-nowrap">{s.title}</span>
+            </button>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+/* ============================================================================
  * Live AI reasoning panel — word-by-word animation against the lines
  * stored in `AI_REASONING[currentStep]`. Falls back to the static
- * description when no reasoning is configured for a step.
+ * description when no reasoning is configured for a step. Lives as a
+ * sub-section inside the right panel rather than as a third column.
  * ========================================================================== */
 
 function LiveAIPanel({
@@ -433,10 +594,7 @@ function LiveAIPanel({
   const hint = step.hint ?? step.description;
 
   return (
-    <div
-      className="space-y-4"
-      data-testid="wizard-ai-panel"
-    >
+    <div className="space-y-4" data-testid="wizard-ai-panel">
       <div
         className="rounded-[var(--radius-lg)] border p-5 space-y-3"
         style={{

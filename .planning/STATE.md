@@ -5,10 +5,10 @@ milestone_name: milestone
 current_phase: 0
 current_phase_name: Pre-Roadmap Hygiene
 status: complete
-stopped_at: context exhaustion at 75% (2026-06-26)
-last_updated: "2026-06-26T17:16:27.227Z"
-last_activity: 2026-06-25
-last_activity_desc: "Phase 0 close-out: HYG-01 (Tailwind 3.4.x drift) metadata promoted to closed; ROADMAP.md checkboxes flipped; STATE.md advanced. All four HYG-NN success criteria from ROADMAP.md lines 33-38 verified TRUE."
+stopped_at: context exhaustion at 75% (2026-06-28)
+last_updated: "2026-06-28T21:38:42.928Z"
+last_activity: 2026-06-29
+last_activity_desc: "Step 55 underway: seed_connectors.py, LiveConnectorDataProvider merge-logic fix, missing wire fields, backend route alignment (see `docs/goals/step-55-v2.md` for the 9-zone plan)."
 progress:
   total_phases: 6
   completed_phases: 1
@@ -25,16 +25,48 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 **Core value:** Every shipped capability is visible, governed, and traceable end-to-end — from requirement → ADR → task → code → test → deployment — through a unified React Flow UI, with multi-tenant isolation, auditability, and human approval gates as constitutional invariants.
 
-**Current focus:** Phase 0.5 — UI Foundation (design tokens, shell primitives, error/loading boundaries, visualization screens)
+**Current focus:** Phase 0.5 — UI Foundation (design tokens, shell primitives, error/loading boundaries, visualization screens) + **Step 55 — Wire Connector Center to real backend (Phase 3 of Integration Phases)**
 
 ## Current Position
 
 Phase: 0 of 5 (Pre-Roadmap Hygiene) — **closed 4/4 plans (HYG-01..04 all done)**; Phase 1 planning next
 Phase 0.5 (UI Foundation): 5 of 5 plans complete (100%)
-Status: Phase 0 closed; Phase 1 (Substrate Lock) planning next
-Last activity: 2026-06-25 — Phase 0 close-out: HYG-01 (Tailwind 3.4.x drift) metadata promoted to closed; ROADMAP.md checkboxes flipped; STATE.md advanced. All four HYG-NN success criteria from ROADMAP.md lines 33-38 verified TRUE.
+Integration Step: **55 of 13 (Phase 3 — Connectors) — wiring in progress**
+Status: Phase 0 closed; Phase 1 (Substrate Lock) planning next; Step 55 (Connector Center wiring) in flight
+Last activity: 2026-06-29 — Step 55 underway: seed_connectors.py, LiveConnectorDataProvider merge-logic fix, missing wire fields, backend route alignment (see `docs/goals/step-55-v2.md` for the 9-zone plan).
 
-Progress: [██████████] 33% overall; Phase 0 closed 4/4 (HYG-01..04); Phase 1 (Substrate Lock) planning next
+Progress: [██████████] 33% overall; Phase 0 closed 4/4 (HYG-01..04); Step 55 (Connector Center → real backend) 4/9 zones done
+
+### Step 55 — Wire Connector Center to real backend (Phase 3)
+
+**Goal**: The Connector Center's 7 tabs (Overview, Connected, Marketplace, Credentials, Activity, Health, Webhooks) currently fall back to the `CONNECTORS` mock dataset in `apps/forge/lib/connectors/data.ts` whenever the API call is empty, errors, or hasn't loaded yet. After step-55:
+
+1. Backend returns real rows for the `acme-corp` tenant (6 seeded connectors + `ConnectorSyncHistory` events).
+2. Frontend distinguishes "API loaded but empty" (real empty state) from "API failed" (mock fallback).
+3. `Marketplace` tab shows live items from `GET /api/v1/marketplace/connectors`.
+4. `Activity` tab polls `GET /api/v1/connectors/activity` every 10s with filters.
+5. `Credentials` tab reads `GET /api/v1/connectors/credentials` (vault list).
+6. `Webhooks` tab reads `GET /api/v1/webhooks`.
+7. Install / disconnect / test / rotate / reveal / sync all hit real backend endpoints.
+8. Killing the dev server falls back to mocks gracefully; restarting shows real data.
+9. Mock `CONNECTORS` array stays as **offline-only** fallback (kept per spec constraint).
+
+**Why now**: Phase 1 (OIDC Auth) wired tenants end-to-end (step-52). With JWT + tenant context flowing into every backend call, the next largest UX risk is connectors — 7 tabs that look connected but ship mocks. Wire-flip the path before Phase 2 pilots begin.
+
+**How to apply**: Run `docker compose exec backend python -m scripts.seed_connectors` once after `alembic upgrade head`, then `docker compose exec backend python -m scripts.test_connectors_api` for the 12-test smoke. Re-run after any backend route change.
+
+**Skills honored**:
+
+- Rule 1 (Provider Agnosticism) — `lib/connectors/api.ts` is a typed fetcher, no SDK imports.
+- Rule 2 (Multi-tenancy by default) — every `Connector` row carries `tenant_id` + `project_id`; seed uses stable `ACME_TENANT_ID` from `seed_agents.py`.
+- Rule 6 (Auditability) — every mutation calls `@audit(...)` server-side; lifecycle endpoints audit `connector.{install,rotate,test}`.
+- Rule 12 (Cross-cutting concerns) — `<ConnectorPicker>` continues to read from `useConnectorsOptional()`; `LiveConnectorDataProvider` is enhanced, not rewritten.
+
+**What we did NOT change**:
+
+- Did not delete the `CONNECTORS` mock array from `data.ts` (kept for offline fallback per spec).
+- Did not rewrite the legacy `ConnectorProvider` (kept its overrides-prop seam).
+- Did not break `<ConnectorPicker>` (Rule 12 cross-cutting).
 
 ## Performance Metrics
 
@@ -99,6 +131,7 @@ Recent decisions affecting current work:
 ### Pending Todos
 
 - **TS-5 Approval Timeline page existence** — verified resolved: `apps/forge/app/governance-center/page.tsx` exists with PageHeader + Alert + StatusPill chrome. PILOT-05 / BLOCKING per research SUMMARY closed.
+- **Step 55 (Connector Center wiring)** — zones 4-9 in flight: missing backend routes, frontend wire-type fixups, install-invalidation, test-connection UX, activity feed poll, endpoint test script, full verification. Per-zone plan in `docs/goals/step-55-v2.md`.
 - Pre-existing typecheck errors in `lib/hooks/use{ApprovalDecide,ConnectorLifecycle,IdeaEnhance,JiraSync,PushIdeaToJira,IdeationIngestStatus,PersonaMemory}.ts`, `lib/design-system/forge-light-theme.ts`, and `tests/intelligence/ideation-approval-decide.test.tsx` — out of scope for 0.5-05/06; will need a dedicated cleanup pass before Phase 2.
 
 ### Blockers/Concerns
@@ -123,6 +156,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-26T17:16:27.220Z
-Stopped at: context exhaustion at 75% (2026-06-26)
+Last session: 2026-06-28T21:38:42.890Z
+Stopped at: context exhaustion at 75% (2026-06-28)
 Resume file: None

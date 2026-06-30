@@ -161,7 +161,7 @@ export function OverviewTab() {
           </div>
         </Panel>
 
-        <Panel title="Compliance Scorecard" subtitle="Composite score" height="fixed-320" dataTestId="panel-compliance-scorecard">
+        <Panel title="Compliance Scorecard" subtitle="Composite score" height="fixed-320" scrollbar="thin" dataTestId="panel-compliance-scorecard">
           <div className="flex flex-col items-center gap-3">
             <div className="relative h-32 w-32">
               <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
@@ -195,7 +195,7 @@ export function OverviewTab() {
 
       {/* ── ROW 2: LLM Usage + Policy Coverage ─────────────────────── */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <Panel title="LLM Usage Breakdown" subtitle="Spend by model (this month)" height="fixed-280" dataTestId="panel-llm-usage">
+        <Panel title="LLM Usage Breakdown" subtitle="Spend by model (this month)" height="fixed-280" scrollbar="thin" dataTestId="panel-llm-usage">
           <div className="flex h-full items-center gap-4">
             <div className="h-full w-1/2">
               <ResponsiveContainer width="100%" height="100%">
@@ -239,7 +239,7 @@ export function OverviewTab() {
           </div>
         </Panel>
 
-        <Panel title="Policy Coverage" subtitle="Workflows / agents / commands" height="fixed-280" dataTestId="panel-policy-coverage">
+        <Panel title="Policy Coverage" subtitle="Workflows / agents / commands" height="fixed-280" scrollbar="thin" dataTestId="panel-policy-coverage">
           <div className="flex h-full flex-col justify-around">
             {[
               { label: 'Workflows', covered: KPIS.policyCoverage.workflows.covered, total: KPIS.policyCoverage.workflows.total, icon: GitBranch },
@@ -284,7 +284,7 @@ export function OverviewTab() {
 
       {/* ── ROW 3: Recent Policy Changes ───────────────────────────── */}
       <Panel title="Recent Policy Changes" subtitle="Last 10 events" height="fixed-200" dataTestId="panel-recent-changes">
-        <div className="flex h-full items-center gap-3 overflow-x-auto">
+        <div className="scrollbar-thin flex h-full items-center gap-3 overflow-x-auto">
           {KPIS.recentChanges.map((change) => {
             const typeTone =
               change.type === 'created' ? 'emerald'

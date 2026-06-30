@@ -58,6 +58,7 @@ import {
   STATUS_DOT_VAR,
   STATUS_LABEL,
 } from '@/lib/stories/types';
+import { useAddComment, useStoryComments } from '@/lib/query/hooks';
 import { cn } from '@/lib/utils';
 
 import { LifecycleBreadcrumb } from './LifecycleBreadcrumb';
@@ -70,7 +71,12 @@ export interface StoryDrawerProps {
   readonly onChangeStatus: (next: StoryStatus) => void;
   readonly onChangeAssignee: (next: string | null) => void;
   readonly onStartImplementation: () => void;
-  readonly sampleComments: ReadonlyArray<Comment>;
+  /**
+   * @deprecated Use the live `useStoryComments` hook inside the drawer.
+   * Kept for backwards-compat with Storybook fixtures; the discussion
+   * tab will show this fallback only if the live fetch returns empty.
+   */
+  readonly sampleComments?: ReadonlyArray<Comment>;
   /** True if a live terminal session is currently bound to this story. */
   readonly hasLiveSession?: boolean;
   readonly liveSessionId?: string | null;
@@ -810,35 +816,77 @@ function DiscussionTab({
   sampleComments,
 }: {
   story: Story;
-  sampleComments: ReadonlyArray<Comment>;
+  sampleComments?: ReadonlyArray<Comment>;
 }) {
+  // Live comments from the backend (step-58 — Phase 7 wiring).
+  const { data: liveComments } = useStoryComments(story.id);
+  const addComment = useAddComment();
+  const [draft, setDraft] = React.useState('');
+
+  const comments = React.useMemo<ReadonlyArray<Comment>>(() => {
+    if (liveComments && liveComments.length) {
+      // Project API comments into the UI Comment shape (the
+      // existing UI expects an `author` Assignee, not a flat
+      // author_name/author_avatar_url pair).
+      return liveComments.map((c) => ({
+        id: c.id,
+        author: {
+          id: c.author_id,
+          name: c.author_name,
+          initials: c.author_name
+            .split(' ')
+            .map((n) => n[0])
+            .filter(Boolean)
+            .slice(0, 2)
+            .join('')
+            .toUpperCase() || '?',
+          online: false,
+          color: 'var(--accent-primary)',
+        },
+        body: c.body,
+        at: c.created_at,
+      }));
+    }
+    return sampleComments ?? [];
+  }, [liveComments, sampleComments]);
+
   return (
     <div className="flex flex-col gap-5">
       <ul className="flex flex-col gap-3">
-        {sampleComments.map((c) => (
-          <li
-            key={c.id}
-            className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-base)] p-3"
-          >
-            <div className="mb-1 flex items-center gap-2 text-[10px]">
-              <span
-                aria-hidden="true"
-                className="inline-flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-semibold text-white"
-                style={{ backgroundColor: c.author.color }}
-              >
-                {c.author.initials}
-              </span>
-              <span className="font-medium text-[var(--fg-primary)]">{c.author.name}</span>
-              <span className="text-[var(--fg-tertiary)]">· {formatRelative(c.at)} ago</span>
-            </div>
-            <p className="text-sm text-[var(--fg-primary)]">{c.body}</p>
+        {comments.length === 0 ? (
+          <li className="rounded-[var(--radius-md)] border border-dashed border-[var(--border-subtle)] bg-[var(--bg-base)] p-3 text-center text-xs text-[var(--fg-tertiary)]">
+            No comments yet. Start the discussion.
           </li>
-        ))}
+        ) : (
+          comments.map((c) => (
+            <li
+              key={c.id}
+              className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-base)] p-3"
+            >
+              <div className="mb-1 flex items-center gap-2 text-[10px]">
+                <span
+                  aria-hidden="true"
+                  className="inline-flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-semibold text-white"
+                  style={{ backgroundColor: c.author.color }}
+                >
+                  {c.author.initials}
+                </span>
+                <span className="font-medium text-[var(--fg-primary)]">{c.author.name}</span>
+                <span className="text-[var(--fg-tertiary)]">· {formatRelative(c.at)} ago</span>
+              </div>
+              <p className="text-sm text-[var(--fg-primary)]">{c.body}</p>
+            </li>
+          ))
+        )}
       </ul>
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          console.log('[stories] comment posted', story.id);
+          if (!draft.trim()) return;
+          addComment.mutate(
+            { storyId: story.id, body: draft.trim() },
+            { onSuccess: () => setDraft('') },
+          );
         }}
         className="flex flex-col gap-2"
       >
@@ -848,6 +896,8 @@ function DiscussionTab({
         <textarea
           id="drawer-new-comment"
           rows={3}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
           placeholder="Write a comment... use @ to mention"
           className={cn(
             'resize-none rounded-[var(--radius-md)] border border-[var(--border-default)]',
@@ -858,13 +908,15 @@ function DiscussionTab({
         />
         <button
           type="submit"
+          disabled={addComment.isPending || !draft.trim()}
           className={cn(
             'self-end rounded-[var(--radius-md)] bg-[var(--accent-primary)] px-3 py-1.5',
             'text-xs font-semibold text-white hover:opacity-90 focus:outline-none',
             'focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] focus-visible:ring-offset-2',
+            'disabled:cursor-not-allowed disabled:opacity-50',
           )}
         >
-          Post comment
+          {addComment.isPending ? 'Posting…' : 'Post comment'}
         </button>
       </form>
     </div>

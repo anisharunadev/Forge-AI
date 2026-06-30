@@ -102,7 +102,7 @@ export function HistoryPanel({ onClose }: HistoryPanelProps) {
       {/* Conversation list — same component used previously, just
           nested inside this sub-panel so it doesn't compete for
           vertical space with the active conversation. */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="scrollbar-chat flex-1 overflow-y-auto">
         <ConversationList />
       </div>
     </div>

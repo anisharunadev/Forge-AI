@@ -13,9 +13,11 @@
 
 import type { LifecycleVerb, RunId, RunRecord, StageRecord } from './types';
 import { DEV_TENANT_UUID, SEED_RUN_UUID, SEED_RUN_ALIAS } from '../config/dev-seeds';
+import { listAllWorkflowRuns } from './workflows/data';
 
 export { FORGE_WS_BASE_URL } from './forge-api';
 export type { RunRecord, StageRecord };
+export type { WorkflowRun as WorkflowRunRecord } from './workflows/types';
 
 const ENV_BASE = process.env.FORA_FORGE_API_URL;
 
@@ -197,6 +199,66 @@ export async function getRunsView(): Promise<RunsView> {
   try {
     const runs = await listRuns();
     return runs.length === 0 ? { state: 'empty' } : { state: 'ok', runs };
+  } catch (err) {
+    if (err instanceof OrchestratorError) {
+      return {
+        state: 'unreachable',
+        error: err.message,
+        status: err.status,
+      };
+    }
+    throw err;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Workflow runs (Step-56 Zone 6)
+//
+// The Runs Center page renders rows from `GET /api/v1/workflows/runs`
+// (FastAPI surface, `WorkflowRun` shape from `lib/workflows/types.ts`),
+// not from the SDLC `/v1/runs` orchestrator endpoint. These functions
+// live alongside the SDLC `listRuns()` / `getRunsView()` so both
+// surfaces remain first-class — other code may still call the SDLC
+// view for the timeline / detail / persona dashboards.
+// ---------------------------------------------------------------------------
+
+/**
+ * Step-56: Tenant-scoped index of every workflow run across every
+ * workflow. Backs the Runs Center page (formerly the SDLC RunRecord
+ * index). Returns the raw `WorkflowRun[]` from `lib/workflows/types.ts`.
+ *
+ * The SDLC `listRuns()` above is intentionally untouched — other
+ * surfaces (Persona dashboards, the Run Detail page, the Stage
+ * timeline) still depend on the orchestrator `/v1/runs` shape.
+ */
+export async function listWorkflowRuns(): Promise<
+  ReadonlyArray<import('./workflows/types').WorkflowRun>
+> {
+  return listAllWorkflowRuns();
+}
+
+/**
+ * Discriminated "workflow runs index" view that the Runs Center page
+ * renders against. Mirrors the SDLC `RunsView` shape (FORA-379):
+ *
+ *   - `unreachable` — backend call failed (5xx, ECONNREFUSED, DNS,
+ *     missing tenant, etc). The page renders an explicit
+ *     "Orchestrator unreachable" notice with `error.message`.
+ *   - `ok`         — backend responded with at least one workflow run.
+ *   - `empty`      — backend responded with `[]`. The page renders the
+ *     honest "No runs yet" empty state.
+ */
+export type WorkflowRunsView =
+  | { state: 'unreachable'; error: string; status: number }
+  | { state: 'ok'; runs: ReadonlyArray<import('./workflows/types').WorkflowRun> }
+  | { state: 'empty' };
+
+export async function getWorkflowRunsView(): Promise<WorkflowRunsView> {
+  try {
+    const runs = await listAllWorkflowRuns();
+    return runs.length === 0
+      ? { state: 'empty' }
+      : { state: 'ok', runs: runs as ReadonlyArray<import('./workflows/types').WorkflowRun> };
   } catch (err) {
     if (err instanceof OrchestratorError) {
       return {

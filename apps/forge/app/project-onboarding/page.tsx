@@ -37,7 +37,6 @@ import {
   PROVIDER_CATALOG,
   TENANT_DEFAULTS,
   WIZARD_STEPS,
-  createProject,
   type AssignableAgent,
   type DetectedStack,
   type OnboardingCatalog,
@@ -46,6 +45,7 @@ import {
   type SampleRepo,
   type TenantForm,
 } from '@/lib/onboarding/data';
+import { api, ApiError } from '@/lib/api/client';
 
 const INITIAL_PROVIDERS: Record<ProviderId, ProviderConnection> =
   PROVIDER_CATALOG.reduce(
@@ -250,19 +250,31 @@ export default function ProjectOnboardingPage() {
     setProvisionError(null);
     setProvisionState('running');
     try {
-      const record = await createProject(tenant);
-      if (record) {
-        const slug = record.name ?? tenant.tenantName;
-        setTenantUrl(`forge.example.com/${slug}`);
-        setProvisionState('done');
-      } else {
-        // Synthesize a believable success when the stub is offline.
-        setTenantUrl(`forge.example.com/${tenant.tenantName}`);
-        setProvisionState('done');
-      }
+      // Kick off the real backend provision job. The StepProvision
+      // component polls /onboarding/provision/status and calls
+      // onStateChange when it observes 'done' or 'failed' — that's
+      // the only path that transitions `provisionState` to those
+      // terminal values. (step-61 Zone 5)
+      const data = await api.post<{ job_id: string; status: string }>(
+        '/onboarding/provision',
+        {},
+      );
+      // Keep a stub URL so the success CTA has something to render.
+      setTenantUrl(`forge.example.com/${tenant.tenantName}`);
+      // The polling useEffect in StepProvision drives the rest.
+      // Mark `confirming` false so the user can interact; the
+      // `provisionState === 'running'` blocks back-navigation in
+      // the WizardNav.
+      void data;
     } catch (err) {
       setProvisionState('failed');
-      setProvisionError(err instanceof Error ? err.message : 'Unknown error');
+      const message =
+        err instanceof ApiError
+          ? `HTTP ${err.status}`
+          : err instanceof Error
+            ? err.message
+            : 'Unknown error';
+      setProvisionError(message);
     } finally {
       setConfirming(false);
     }
@@ -308,6 +320,26 @@ export default function ProjectOnboardingPage() {
             />
       }
       headerActions={headerActions}
+      footer={
+        currentStep !== 1 ? (
+          <WizardNav
+            currentStep={currentStep}
+            totalSteps={total}
+            isLastStep={currentStep === total}
+            canNext={canNext}
+            confirming={confirming}
+            onBack={handleBack}
+            onNext={handleNext}
+            onSkip={
+              isStepSkippable &&
+              (currentStep === 7 ? intelState !== 'done' : true)
+                ? handleSkip
+                : undefined
+            }
+            onFinish={handleNext}
+          />
+        ) : null
+      }
     >
       {currentStep === 1 ? (
         <StepWelcome
@@ -369,6 +401,7 @@ export default function ProjectOnboardingPage() {
           onProvision={handleStartProvision}
           onReset={handleReset}
           tenantUrl={tenantUrl}
+          onStateChange={setProvisionState}
         />
       )}
 
@@ -383,27 +416,6 @@ export default function ProjectOnboardingPage() {
         >
           {provisionError}
         </p>
-      ) : null}
-
-      {currentStep !== 1 && currentStep !== total ? (
-        <WizardNav
-          currentStep={currentStep}
-          totalSteps={total}
-          isLastStep={false}
-          canNext={canNext}
-          confirming={confirming}
-          onBack={handleBack}
-          onNext={handleNext}
-          onSkip={
-            isStepSkippable &&
-            (currentStep === 7
-              ? intelState !== 'done'
-              : true)
-              ? handleSkip
-              : undefined
-          }
-          onFinish={handleNext}
-        />
       ) : null}
     </WizardShell>
   );

@@ -40,5 +40,7 @@ to manual review.
 
 ## See also
 
-- [3-Package Spec-Driven Stack](/forge/architecture/three-package-stack/)
-- [`packages/forge-browser`](/forge/packages/forge-browser/) — source package
+- [3-Package Spec-Driven Stack](/architecture/three-package-stack/)
+- [`@forge-ai/forge-core`](/forge-core/) — workflow methodology
+- [`@forge-ai/forge-pi`](/forge-pi/) — product intelligence
+- [`packages/forge-browser`](https://github.com/forge-ai/forge-ai/tree/main/packages/forge-browser) — source package

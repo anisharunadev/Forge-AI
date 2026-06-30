@@ -98,7 +98,7 @@ export function AuditTab() {
 
       {/* Table */}
       <div className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
-        <div className="max-h-[600px] overflow-y-auto">
+        <div className="scrollbar-thin max-h-[600px] overflow-y-auto">
           <table className="w-full text-[11px]">
             <thead className="sticky top-0 z-10">
               <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-inset)]">
@@ -149,7 +149,7 @@ export function AuditTab() {
       {selectedEntry ? (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm" onClick={() => setSelectedEntry(null)} data-testid="audit-detail-overlay">
           <div
-            className="flex h-full w-full max-w-2xl flex-col gap-3 overflow-y-auto border-l border-[var(--border-subtle)] bg-[var(--bg-base)] p-6"
+            className="scrollbar-thin flex h-full w-full max-w-2xl flex-col gap-3 overflow-y-auto border-l border-[var(--border-subtle)] bg-[var(--bg-base)] p-6"
             onClick={(e) => e.stopPropagation()}
             data-testid="audit-detail"
           >
@@ -190,7 +190,7 @@ export function AuditTab() {
 
             <div className="space-y-2 rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3">
               <h4 className="text-[12px] font-semibold text-[var(--fg-primary)]">Request payload</h4>
-              <pre className="overflow-x-auto rounded bg-[var(--bg-base)] p-3 font-mono text-[10px] text-[var(--fg-secondary)]">
+              <pre className="scrollbar-thin overflow-x-auto rounded bg-[var(--bg-base)] p-3 font-mono text-[10px] text-[var(--fg-secondary)]">
 {JSON.stringify({
   prompt: 'Generate a customer profile…',
   tool_call: { tool: 'github_api_call', parameters: { token: '[REDACTED]' } },

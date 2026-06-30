@@ -427,7 +427,7 @@ export function ConversationList({ onSelect, className }: ConversationListProps)
       <div
         role="tablist"
         aria-label="Conversation filters"
-        className="flex items-center gap-1 overflow-x-auto px-3 pt-2"
+        className="scrollbar-thin flex items-center gap-1 overflow-x-auto px-3 pt-2"
       >
         {FILTER_PILLS.map((pill) => {
           const isActive = filter === pill.id;

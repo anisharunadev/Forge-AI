@@ -1,0 +1,137 @@
+{
+  "realm": "forge",
+  "enabled": true,
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 3600,
+  "ssoSessionIdleTimeout": 1800,
+  "sslRequired": "none",
+  "loginTheme": "keycloak.v2",
+  "accountTheme": "keycloak.v2",
+  "adminTheme": "keycloak.v2",
+  "emailTheme": "keycloak.v2",
+  "internationalizationEnabled": true,
+  "defaultLocale": "en",
+  "supportedLocales": ["en"],
+  "verifyEmail": false,
+  "rememberMe": true,
+  "clients": [
+    {
+      "clientId": "forge-ui",
+      "enabled": true,
+      "publicClient": true,
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://localhost:3000/auth/callback"
+      ],
+      "webOrigins": ["+"],
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "refresh.token.max.age": "604800"
+      },
+      "protocolMappers": [
+        {
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "tenant_id",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "tenant_slug",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "tenant_slug",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "tenant_slug",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "tenant_name",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "tenant_name",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "tenant_name",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "forge_role",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "role",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "role",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "forge-backend",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "${KEYCLOAK_BACKEND_SECRET}",
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false
+    }
+  ],
+  "users": [
+    {
+      "username": "arun@acme-corp.com",
+      "email": "arun@acme-corp.com",
+      "firstName": "Arun",
+      "lastName": "Achalam",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-password-change-in-prod",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["forge-admin"],
+      "attributes": {
+        "tenant_id": ["acme-corp"],
+        "tenant_slug": ["acme-corp"],
+        "tenant_name": ["Acme Corp (Dev Demo)"],
+        "role": ["owner"]
+      }
+    }
+  ],
+  "roles": {
+    "realm": [
+      { "name": "forge-admin" },
+      { "name": "forge-user" },
+      { "name": "forge-viewer" }
+    ]
+  }
+}

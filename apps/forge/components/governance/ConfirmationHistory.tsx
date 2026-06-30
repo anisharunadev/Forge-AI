@@ -4,6 +4,14 @@
  * ConfirmationHistory — Board confirmation history timeline rows
  * with collapsible diff expansion.
  *
+ * Step-59 migration: was reading the `BoardConfirmation` type from
+ * `@/lib/governance/data`. The Board confirmation endpoint isn't on
+ * the LiteLLM-backed governance surface yet, so the type now lives in
+ * `useForgeFixtures.ts` alongside the inline fixture array. Once
+ * `/v1/governance/board-confirmations` ships on the backend, this
+ * component should consume a TanStack Query hook (mirroring
+ * `useAuditEvents`).
+ *
  * Uses the existing shadcn <Accordion> primitive (Radix-based) for
  * expand/collapse — same a11y and keyboard semantics as shadcn
  * Collapsible. Each row shows: timestamp · outcome · actor · diff
@@ -20,10 +28,10 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { StatusPill } from '@/components/shell';
-import type { BoardConfirmation } from '@/lib/governance/data';
+import { FIXTURE_BOARD_CONFIRMATIONS, type BoardConfirmation } from '@/lib/hooks/useForgeFixtures';
 
 export interface ConfirmationHistoryProps {
-  confirmations: ReadonlyArray<BoardConfirmation>;
+  confirmations?: ReadonlyArray<BoardConfirmation>;
 }
 
 function diffSummary(c: BoardConfirmation): string {
@@ -57,7 +65,8 @@ function glyphFor(outcome: BoardConfirmation['outcome']) {
 }
 
 export function ConfirmationHistory({ confirmations }: ConfirmationHistoryProps) {
-  if (confirmations.length === 0) return null;
+  const rows = confirmations ?? FIXTURE_BOARD_CONFIRMATIONS;
+  if (rows.length === 0) return null;
 
   return (
     <Accordion
@@ -66,7 +75,7 @@ export function ConfirmationHistory({ confirmations }: ConfirmationHistoryProps)
       className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-surface)]"
       data-testid="board-history-accordion"
     >
-      {confirmations.map((c) => (
+      {rows.map((c) => (
         <AccordionItem
           key={c.id}
           value={c.id}

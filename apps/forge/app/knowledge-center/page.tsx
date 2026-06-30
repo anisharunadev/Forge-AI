@@ -16,11 +16,17 @@ import { GraphListView } from '@/components/knowledge-graph/GraphListView';
 import { GraphOutlineView } from '@/components/knowledge-graph/GraphOutlineView';
 import { ALL_KINDS, ALL_EDGE_KINDS } from '@/components/knowledge-graph/graph-palette';
 import {
-  SAMPLE_GRAPH,
   type NodeKind,
   type SampleEdge,
   type SampleNode,
 } from '@/src/data/sample-graph';
+import {
+  useKGNodes,
+  useKGEdges,
+  useKGStats,
+} from '@/lib/hooks/useKnowledgeGraph';
+import { adapter, getOfflineGraph } from '@/lib/knowledge-graph/adapter';
+import { Loader2 } from 'lucide-react';
 
 // ---- Static layout cycle used by the 'L' shortcut ----------------------------
 
@@ -28,11 +34,36 @@ const LAYOUT_CYCLE: ReadonlyArray<GraphLayout> = ['force', 'tb', 'lr', 'radial',
 
 export default function KnowledgeCenterPage() {
   // ---- Data ---------------------------------------------------------------
-  // Use the sample graph as the source of truth — the orchestrator stub
-  // (/v1/knowledge-center/nodes) is still in flight. The page-level
-  // shape stays identical so swapping in a real fetch is one useEffect away.
-  const [nodes] = React.useState<ReadonlyArray<SampleNode>>(SAMPLE_GRAPH.nodes);
-  const [edges] = React.useState<ReadonlyArray<SampleEdge>>(SAMPLE_GRAPH.edges);
+  // Step 57 zone 3: the page now talks to the real backend via TanStack
+  // Query hooks. SAMPLE_GRAPH is kept as an offline fallback — only used
+  // when both queries are in an error state (auth not ready, network
+  // down, dev mode without the orchestrator). The adapter bridges the
+  // backend's KGNode/KGEdge shape onto the canvas's SampleNode shape.
+  const offline = React.useMemo(() => getOfflineGraph(), []);
+
+  const nodesQuery = useKGNodes();
+  const edgesQuery = useKGEdges();
+  // Stats are read by the header KPIs in a follow-up; pulled here so the
+  // first render warms the cache and exposes error/loading state.
+  const _statsQuery = useKGStats();
+
+  const nodesLoading = nodesQuery.isLoading || edgesQuery.isLoading;
+  const nodesErrored = nodesQuery.isError && edgesQuery.isError;
+
+  // Backend data, mapped through the adapter. While loading/erroring we
+  // keep the previous (or offline) set so the canvas still has something
+  // to render and the layout doesn't pop.
+  const nodes: ReadonlyArray<SampleNode> = React.useMemo(() => {
+    if (nodesQuery.data) return nodesQuery.data.map(adapter.toSampleNode);
+    if (nodesErrored) return offline.nodes;
+    return offline.nodes;
+  }, [nodesQuery.data, nodesErrored, offline.nodes]);
+
+  const edges: ReadonlyArray<SampleEdge> = React.useMemo(() => {
+    if (edgesQuery.data) return edgesQuery.data.map(adapter.toSampleEdge);
+    if (nodesErrored) return offline.edges;
+    return offline.edges;
+  }, [edgesQuery.data, nodesErrored, offline.edges]);
 
   // ---- State --------------------------------------------------------------
   const [search, setSearch] = React.useState('');
@@ -288,7 +319,20 @@ export default function KnowledgeCenterPage() {
           style={{ minHeight: 560 }}
         >
           <div className="relative">
-            {displayNodes.length === 0 ? (
+            {/* Step 57 zone 3: skeleton while the orchestrator fetches nodes
+                + edges. Only shown on the FIRST load — subsequent loads
+                keep the previous render in place to avoid layout pop. */}
+            {nodesLoading && !nodesQuery.data && !edgesQuery.data ? (
+              <GraphSkeleton />
+            ) : displayNodes.length === 0 && nodes.length === 0 ? (
+              <GraphEmptyState
+                onIngest={openIngest}
+                onImport={openIngest}
+                onAuto={openIngest}
+              />
+            ) : displayNodes.length === 0 ? (
+              /* Filtered-to-zero state — still show GraphEmptyState as the
+                 base layer so the canvas background isn't bare. */
               <GraphEmptyState
                 onIngest={openIngest}
                 onImport={openIngest}
@@ -324,7 +368,7 @@ export default function KnowledgeCenterPage() {
             )}
 
             {/* Inline empty-result message when filters return zero. */}
-            {displayNodes.length === 0 && nodes.length > 0 && (
+            {displayNodes.length === 0 && nodes.length > 0 && !nodesLoading && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-[var(--radius-lg)] bg-[var(--bg-base)]/85 backdrop-blur-sm">
                 <p className="text-sm text-[var(--fg-secondary)]">No nodes match these filters.</p>
                 <div className="flex gap-2">
@@ -394,5 +438,70 @@ export default function KnowledgeCenterPage() {
         />
       </div>
     </AdminShell>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Inline loading skeleton (Step 57 zone 3)
+//
+// Shown while the first /kg/nodes + /kg/edges fetch is in flight. Mirrors
+// the canvas frame's rounded card + min-height so the layout doesn't
+// shift when the real canvas swaps in.
+// ---------------------------------------------------------------------------
+
+function GraphSkeleton() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-label="Loading knowledge graph"
+      data-testid="knowledge-graph-skeleton"
+      className="relative flex h-full min-h-[480px] w-full flex-col items-center justify-center gap-4 overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-base)]"
+    >
+      {/* Faux galaxy backdrop — keeps the visual continuity with the real
+          canvas so the transition to the live view is seamless. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage: [
+            'radial-gradient(circle at 18% 22%, rgba(34, 211, 238, 0.06) 0%, transparent 45%)',
+            'radial-gradient(circle at 82% 78%, rgba(168, 85, 247, 0.05) 0%, transparent 50%)',
+            'radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.03) 0%, transparent 60%)',
+          ].join(', '),
+        }}
+      />
+
+      {/* Three pulsing dots — the established loading affordance in the
+          canvas's "Graph is rendering…" message, kept consistent here. */}
+      <div className="relative flex items-center gap-2">
+        <span
+          aria-hidden="true"
+          className="h-2 w-2 animate-pulse rounded-full bg-[var(--accent-primary)]"
+          style={{ animationDelay: '0ms' }}
+        />
+        <span
+          aria-hidden="true"
+          className="h-2 w-2 animate-pulse rounded-full bg-[var(--accent-cyan)]"
+          style={{ animationDelay: '150ms' }}
+        />
+        <span
+          aria-hidden="true"
+          className="h-2 w-2 animate-pulse rounded-full bg-[var(--accent-violet)]"
+          style={{ animationDelay: '300ms' }}
+        />
+      </div>
+
+      <div className="relative flex flex-col items-center gap-1.5 text-[var(--fg-tertiary)]">
+        <Loader2
+          className="h-5 w-5 animate-spin text-[var(--accent-primary)]"
+          aria-hidden="true"
+        />
+        <p className="text-xs font-medium">Loading knowledge graph…</p>
+        <p className="text-[11px] text-[var(--fg-muted)]">
+          Fetching nodes, edges, and project intelligence
+        </p>
+      </div>
+    </div>
   );
 }

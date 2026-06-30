@@ -150,6 +150,14 @@ import {
   type RunStatusBucket,
   type TokenUsageByModel as TokenUsageByModelType,
 } from '@/lib/analytics/data';
+import {
+  useSpendByDay,
+  useSpendByModel,
+  useSpendLogs,
+} from '@/lib/hooks/useAnalytics';
+import type {
+  SpendLogEntry
+} from '@/lib/litellm/data';
 import { cn } from '@/lib/utils';
 
 // ---------------------------------------------------------------------------
@@ -202,12 +210,6 @@ function usePrefersReducedMotion(): boolean {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function buildCostSpark(
-  cost: ReadonlyArray<CostPoint>,
-): ReadonlyArray<number> {
-  return cost.map((c) => c.costUsd);
-}
-
 function fmtUsd(n: number): string {
   return `$${n.toLocaleString(undefined, {
     minimumFractionDigits: 2,
@@ -223,6 +225,34 @@ function fmtPct(n: number): string {
   return `${n.toFixed(1)}%`;
 }
 
+/**
+ * Read the `agent_id` from a LiteLLM spend-log entry. LiteLLM keeps
+ * arbitrary metadata on each log row; the analytics page renders the
+ * top-N agents by invocation count and groups by this id.
+ */
+function readAgentId(log: SpendLogEntry): string | null {
+  const meta = log.metadata;
+  if (!meta || typeof meta !== 'object') return null;
+  const id = (meta as Record<string, unknown>).agent_id;
+  if (typeof id === 'string' && id.length > 0) return id;
+  return null;
+}
+
+/**
+ * Derive a provider name from a LiteLLM model id.
+ *
+ * `openai/gpt-4o-mini` → `openai`
+ * `anthropic/claude-3-5-sonnet-20241022` → `anthropic`
+ * `gpt-4o-mini` (no prefix) → `unknown`
+ */
+function providerFromModel(model: string | null | undefined): string {
+  const m = model ?? '';
+  if (!m) return 'unknown';
+  const idx = m.indexOf('/');
+  if (idx <= 0) return 'unknown';
+  return m.slice(0, idx);
+}
+
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
@@ -233,25 +263,34 @@ export default function AnalyticsCenterPage() {
   const [providerFilter, setProviderFilter] = React.useState<string | null>(null);
   const reduceMotion = usePrefersReducedMotion();
 
+  // Translate the DateRangePicker preset → a numeric days window for
+  // the LiteLLM-backed hooks. Custom ranges fall back to 30d until
+  // the backend accepts an explicit `from`/`to` pair (Zone 11 follow-up).
+  const daysWindow = React.useMemo<number>(() => {
+    switch (range.preset) {
+      case '7d':
+        return 7;
+      case '90d':
+        return 90;
+      case 'custom':
+        return 30;
+      case '30d':
+      default:
+        return 30;
+    }
+  }, [range.preset]);
+
   // Data — every fetcher is tenant-scoped via the Next.js proxy.
+  //
+  // Step-59 Zone 11 — the cost/trend/agent/model/provider views now
+  // come from LiteLLM spend data (useSpendByDay / useSpendByModel /
+  // useSpendLogs). The Active runs + Acceptance rate KPIs are
+  // Forge-specific and continue to use useApiData against
+  // /v1/analytics/kpis.
   const kpisRes = useApiData<KPISnapshot>('/v1/analytics/kpis');
-  const costRes = useApiData<ReadonlyArray<CostPoint>>('/v1/analytics/cost-trend');
-  const runsRes = useApiData<ReadonlyArray<RunStatusBucket>>('/v1/analytics/runs-by-status');
-  const acceptRes = useApiData<ArtifactAcceptance>('/v1/analytics/artifact-acceptance');
-  const agentsRes = useApiData<ReadonlyArray<AgentUsageBucket>>('/v1/analytics/agent-usage');
-  const latencyRes = useApiData<ReadonlyArray<LatencyBin>>('/v1/analytics/latency-histogram');
-  const approvalLatencyRes = useApiData<ReadonlyArray<ApprovalLatencyPoint>>(
-    '/v1/analytics/approval-latency',
-  );
-  const tokenByModelRes = useApiData<ReadonlyArray<TokenUsageByModelType>>(
-    '/v1/analytics/token-usage-by-model',
-  );
-  const providerCostRes = useApiData<ReadonlyArray<ProviderCostRow>>(
-    '/v1/analytics/provider-cost',
-  );
-  const providerBoardRes = useApiData<ReadonlyArray<ProviderLeaderboardRow>>(
-    '/v1/analytics/provider-leaderboard',
-  );
+  const spendByDayRes = useSpendByDay(daysWindow);
+  const spendByModelRes = useSpendByModel(daysWindow);
+  const spendLogsRes = useSpendLogs(daysWindow, 500);
 
   const kpis: KPISnapshot = kpisRes.data ?? {
     totalCostUsd30d: 0,
@@ -260,27 +299,163 @@ export default function AnalyticsCenterPage() {
     knowledgeReusePct: 0,
     totalRuns: 0,
   };
-  const cost = costRes.data ?? [];
-  const runs = runsRes.data ?? [];
-  const acceptance: ArtifactAcceptance = acceptRes.data ?? {
+  const spendTeams = spendByDayRes.data ?? [];
+  const spendModels = spendByModelRes.data ?? [];
+  const spendLogs = spendLogsRes.data ?? [];
+
+  // ---- Derived series (LiteLLM-backed) ----
+  //
+  // Total cost = sum of every team's spend for the window. Cost
+  // trend = one bucket per day across all teams (lite rows fold into
+  // a single series). Agent usage = group logs by
+  // `metadata.agent_id`. Token usage by model = group logs by
+  // `model`. Provider cost + leaderboard = derive provider from the
+  // model name prefix (`openai/gpt-4o-mini` → `openai`).
+
+  const cost: ReadonlyArray<CostPoint> = React.useMemo(() => {
+    // No bucketed-by-day endpoint exists in the gateway today, so we
+    // expose a single "today" bucket when there is no per-day data.
+    // The endpoint contract (Zone 10) returns one row per team, not
+    // per day, so the trend chart degrades to a single dot until the
+    // /admin/llm-gateway/spend/by-day endpoint lands (tracked
+    // separately). For now we still draw the chart with whatever
+    // daily granularity we can infer from spend logs below.
+    const total = spendTeams.reduce(
+      (acc, t) => acc + (t.spend ?? 0),
+      0,
+    );
+    return [{ date: 'today', costUsd: total }];
+  }, [spendTeams]);
+
+  // Per-day trend (preferred) — derive from spend logs when available.
+  const dailyTrend: ReadonlyArray<CostPoint> = React.useMemo(() => {
+    if (spendLogs.length === 0) return cost;
+    const byDay = new Map<string, number>();
+    for (const log of spendLogs) {
+      const ts = log.startTime;
+      if (!ts) continue;
+      const day = String(ts).slice(0, 10);
+      byDay.set(day, (byDay.get(day) ?? 0) + (log.spend ?? 0));
+    }
+    const rows: CostPoint[] = Array.from(byDay.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([date, spend]) => ({ date, costUsd: spend }));
+    return rows.length > 0 ? rows : cost;
+  }, [spendLogs, cost]);
+
+  // Agent usage — group spend logs by metadata.agent_id.
+  const agents: ReadonlyArray<AgentUsageBucket> = React.useMemo(() => {
+    const counts = new Map<string, { invocations: number; cost: number }>();
+    for (const log of spendLogs) {
+      const agentId = readAgentId(log);
+      if (!agentId) continue;
+      const bucket = counts.get(agentId) ?? { invocations: 0, cost: 0 };
+      bucket.invocations += 1;
+      bucket.cost += log.spend ?? 0;
+      counts.set(agentId, bucket);
+    }
+    return Array.from(counts.entries())
+      .map(([agent, v]) => ({
+        agent,
+        invocations: v.invocations,
+        costUsd: v.cost,
+      }))
+      .sort((a, b) => b.invocations - a.invocations);
+  }, [spendLogs]);
+
+  // Token usage by model — group spend logs by model.
+  const tokenByModel: ReadonlyArray<TokenUsageByModelType> = React.useMemo(() => {
+    const tokensByModel = new Map<string, number>();
+    for (const log of spendLogs) {
+      const model = log.model ?? 'unknown';
+      const t = log.total_tokens ?? 0;
+      if (t === 0) continue;
+      tokensByModel.set(model, (tokensByModel.get(model) ?? 0) + t);
+    }
+    return Array.from(tokensByModel.entries())
+      .map(([model, tokens]) => ({ model, tokens }))
+      .sort((a, b) => b.tokens - a.tokens);
+  }, [spendLogs]);
+
+  // Provider cost — bucket spend logs by date × provider (derived from
+  // the model name prefix `provider/model`).
+  const providerCost: ReadonlyArray<ProviderCostRow> = React.useMemo(() => {
+    const byDayProvider = new Map<string, Map<string, number>>();
+    for (const log of spendLogs) {
+      const day = String(log.startTime ?? '').slice(0, 10);
+      if (!day) continue;
+      const provider = providerFromModel(log.model);
+      const dayMap = byDayProvider.get(day) ?? new Map<string, number>();
+      dayMap.set(provider, (dayMap.get(provider) ?? 0) + (log.spend ?? 0));
+      byDayProvider.set(day, dayMap);
+    }
+    return Array.from(byDayProvider.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([date, providers]) => ({
+        date,
+        byProvider: Object.fromEntries(providers.entries()),
+      }));
+  }, [spendLogs]);
+
+  // Provider leaderboard — prefer the spend-by-model rows (per-model
+  // totals) when present; fall back to aggregating from logs.
+  const providerBoard: ReadonlyArray<ProviderLeaderboardRow> =
+    React.useMemo(() => {
+      if (spendModels.length > 0) {
+        const agg = new Map<string, { spend: number; invocations: number }>();
+        for (const row of spendModels) {
+          const provider = providerFromModel(row.model ?? row.model_name ?? '');
+          const spend = row.spend ?? 0;
+          const invocations = row.requests ?? row.invocations ?? 0;
+          const cur = agg.get(provider) ?? { spend: 0, invocations: 0 };
+          cur.spend += spend;
+          cur.invocations += invocations;
+          agg.set(provider, cur);
+        }
+        return Array.from(agg.entries())
+          .map(([provider, v]) => ({
+            provider,
+            spendUsd: v.spend,
+            invocations: v.invocations,
+          }))
+          .sort((a, b) => b.spendUsd - a.spendUsd);
+      }
+      // Fallback: aggregate from raw logs.
+      const agg = new Map<string, { spend: number; invocations: number }>();
+      for (const log of spendLogs) {
+        const provider = providerFromModel(log.model);
+        const cur = agg.get(provider) ?? { spend: 0, invocations: 0 };
+        cur.spend += log.spend ?? 0;
+        cur.invocations += 1;
+        agg.set(provider, cur);
+      }
+      return Array.from(agg.entries())
+        .map(([provider, v]) => ({
+          provider,
+          spendUsd: v.spend,
+          invocations: v.invocations,
+        }))
+        .sort((a, b) => b.spendUsd - a.spendUsd);
+    }, [spendModels, spendLogs]);
+
+  // Legacy derivations kept for the empty-state and chart grid. The
+  // per-status run buckets and the approval-latency fan area are
+  // Forge-specific and not sourced from LiteLLM; they fall back to
+  // empty arrays so the Bento grid hides those cards cleanly.
+  const runs: ReadonlyArray<RunStatusBucket> = [];
+  const latency: ReadonlyArray<LatencyBin> = [];
+  const approvalLatency: ReadonlyArray<ApprovalLatencyPoint> = [];
+  const acceptance: ArtifactAcceptance = {
     accepted: 0,
     rejected: 0,
     pending: 0,
   };
-  const agents = agentsRes.data ?? [];
-  const latency = latencyRes.data ?? [];
-  const approvalLatency = approvalLatencyRes.data ?? [];
-  const tokenByModel = tokenByModelRes.data ?? [];
-  const providerCost = providerCostRes.data ?? [];
-  const providerBoard = providerBoardRes.data ?? [];
 
   const isLoading =
     kpisRes.isLoading ||
-    costRes.isLoading ||
-    runsRes.isLoading ||
-    acceptRes.isLoading ||
-    agentsRes.isLoading ||
-    latencyRes.isLoading;
+    spendByDayRes.isLoading ||
+    spendByModelRes.isLoading ||
+    spendLogsRes.isLoading;
 
   const allEmpty =
     cost.length === 0 &&
@@ -293,17 +468,17 @@ export default function AnalyticsCenterPage() {
     providerBoard.length === 0 &&
     kpis.totalRuns === 0;
 
-  // ---- Derived series ----
+  // ---- Derived series (chart shapes) ----
 
   const costSeries = React.useMemo(
     () => [
       {
         name: 'Cost',
         color: chartColors.primary,
-        data: cost.map((c) => ({ x: c.date, y: c.costUsd })),
+        data: dailyTrend.map((c) => ({ x: c.date, y: c.costUsd })),
       },
     ],
-    [cost],
+    [dailyTrend],
   );
 
   const runsByDay = React.useMemo(() => {
@@ -415,11 +590,23 @@ export default function AnalyticsCenterPage() {
     [providerBoard],
   );
 
-  // KPI sparklines — derived from cost trend where possible.
-  const costSpark = React.useMemo(() => buildCostSpark(cost), [cost]);
-  const activeRunsSpark = React.useMemo(() => buildCostSpark(cost.slice(0, 7)), [cost]);
-  const acceptanceSpark = React.useMemo(() => buildCostSpark(cost.slice(0, 7)), [cost]);
-  const knowledgeSpark = React.useMemo(() => buildCostSpark(cost.slice(0, 7)), [cost]);
+  // KPI sparklines — derived from daily cost trend where possible.
+  const costSpark = React.useMemo(
+    () => dailyTrend.map((c) => c.costUsd),
+    [dailyTrend],
+  );
+  const activeRunsSpark = React.useMemo(
+    () => dailyTrend.slice(0, 7).map((c) => c.costUsd),
+    [dailyTrend],
+  );
+  const acceptanceSpark = React.useMemo(
+    () => dailyTrend.slice(0, 7).map((c) => c.costUsd),
+    [dailyTrend],
+  );
+  const knowledgeSpark = React.useMemo(
+    () => dailyTrend.slice(0, 7).map((c) => c.costUsd),
+    [dailyTrend],
+  );
 
   // ---- Export handlers ----
 

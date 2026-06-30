@@ -19,7 +19,7 @@ Phase A ships the **foundation** modules only. The functional split:
 * F-829f Skill sync (Phase D) — *added by skill_sync agent*
 * F-829g Model assignment — *added by model_assignment agent*
 * F-829h Usage analytics (Phase C) — *added by usage_query agent*
-* F-829i Compliance feed (Phase C) — *added by compliance_feed agent*
+* F-829i Compliance feed (Phase C) — *removed; replaced by LiteLLM proxy*
 * F-829j :class:`ForgeLLMClient` — *added by llm_client agent*
 * F-829k Trace correlator — *added by trace_correlator agent*
 * F-829l :class:`LiteLLMHealthMonitor` — *added by health_monitor agent*
@@ -33,12 +33,6 @@ listed here is internal and may change without notice.
 from __future__ import annotations
 
 from app.integrations.litellm.budget_sync import BudgetSync, budget_sync
-from app.integrations.litellm.compliance_feed import (
-    ComplianceFeed,
-    ComplianceViolationView,
-    ViolationIngestResult,
-    compliance_feed,
-)
 from app.integrations.litellm.guardrail_sync import GuardrailSync, guardrail_sync
 from app.integrations.litellm.key_manager import VirtualKeyManager, virtual_key_manager
 from app.integrations.litellm.litellm_base_client import LiteLLMBaseClient
@@ -78,7 +72,7 @@ from app.integrations.litellm.usage_query import (
 # F-829f SkillSync           — added by skill_sync agent
 # F-829g ModelAssignment     — added by model_assignment agent
 # F-829h UsageQuery          — added by usage_query agent
-# F-829i ComplianceFeed      — added by compliance_feed agent
+# F-829i ComplianceFeed      — removed; replaced by LiteLLM proxy
 # F-829j ForgeLLMClient      — added by llm_client agent
 from app.integrations.litellm.llm_client import (
     ForgeLLMClient,
@@ -132,11 +126,7 @@ __all__ = [
     "ModelUsageBucket",
     "UserUsageBucket",
     "WorkflowUsageBucket",
-    # F-829i ComplianceFeed — added by compliance_feed agent
-    "ComplianceFeed",
-    "compliance_feed",
-    "ViolationIngestResult",
-    "ComplianceViolationView",
+    # F-829i ComplianceFeed — removed; replaced by LiteLLM proxy
     # F-829j ForgeLLMClient — added by llm_client agent
     "ForgeLLMClient",
     "LLMUnavailableError",

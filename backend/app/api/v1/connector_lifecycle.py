@@ -37,9 +37,44 @@ async def install_connector(
     principal: Principal,
     _perm: Principal = require_permission("connector:install"),
 ) -> ConnectorRead:
-    """Install a new connector and immediately probe it."""
+    """Install a new connector and immediately probe it.
+
+    Step-55-v2 Zone 2: accept either ``{slug, name, config, ...}``
+    (resolved via the marketplace catalog) or the legacy ``{type,
+    name, config, project_id}`` shape so existing callers don't break.
+    """
     from app.db.models.connector import ConnectorType
 
+    # Slug-based path: resolve type via the marketplace catalog.
+    if "slug" in body:
+        slug = str(body.get("slug") or "").strip()
+        if not slug:
+            raise HTTPException(status_code=400, detail="slug is required")
+        from app.services.marketplace import marketplace as marketplace_service
+
+        try:
+            entry = await marketplace_service.get_details(slug)
+            connector_type = ConnectorType(entry.type)
+        except LookupError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        name = str(body.get("name") or slug).strip()
+        config = dict(body.get("config") or {})
+        project_id = body.get("project_id") or principal.project_id
+        if not project_id:
+            raise HTTPException(status_code=400, detail="project_id is required")
+        connector = await connector_lifecycle.install(
+            tenant_id=principal.tenant_id,
+            project_id=project_id,
+            connector_type=connector_type,
+            name=name,
+            config=config,
+            actor_id=principal.user_id,
+        )
+        return ConnectorRead.model_validate(connector)
+
+    # Legacy type-based path.
     try:
         connector_type = ConnectorType(body["type"])
     except (KeyError, ValueError) as exc:

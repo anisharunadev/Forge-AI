@@ -451,3 +451,35 @@ export async function createProject(
   });
   return safeJson<ProjectRecord>(res);
 }
+
+/**
+ * Create a new workspace (tenant). Step-61 Zone 8 — used by the
+ * wizard's tenant-setup step when the user wants to provision into
+ * a brand-new workspace. Returns the new tenant descriptor or
+ * `null` if the backend rejected (e.g. duplicate slug → 409).
+ */
+export interface WorkspaceRecord {
+  id: string;
+  name: string;
+  slug: string;
+  plan: 'free' | 'pro' | 'enterprise';
+  region: string;
+  logo_url?: string | null;
+  role: string;
+  is_current: boolean;
+}
+
+export async function createWorkspace(
+  name: string,
+  slug: string,
+  region: string = 'us-east-1',
+  plan: 'free' | 'pro' | 'enterprise' = 'pro',
+): Promise<WorkspaceRecord | null> {
+  const res = await fetch(`${SERVER_BASE}/v1/tenants`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ name, slug, region, plan }),
+    cache: 'no-store',
+  });
+  return safeJson<WorkspaceRecord>(res);
+}

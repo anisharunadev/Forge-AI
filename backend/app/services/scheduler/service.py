@@ -29,9 +29,6 @@ from app.services.scheduler.jobs.litellm_anomaly_check import (
 from app.services.scheduler.jobs.litellm_reconcile import (
     reconcile_job,
 )
-from app.services.scheduler.jobs.litellm_violation_poll import (
-    poll_litellm_violations,
-)
 from app.services.scheduler.jobs.memory_consolidate import (
     nightly_memory_consolidate,
 )
@@ -82,20 +79,6 @@ class Scheduler:
             max_instances=1,
             coalesce=True,
         )
-        # F-829i — 30s LiteLLM guardrail violation poll (Phase C).
-        # Lives inside the scheduler (not the asyncio background-task
-        # pattern used by LiteLLMHealthMonitor) because APScheduler
-        # re-arms it on every backend restart, satisfying the "survives
-        # restart" exit criterion in Phase C.
-        self._scheduler.add_job(
-            poll_litellm_violations,
-            "interval",
-            seconds=30,
-            id="litellm_violation_poll",
-            replace_existing=True,
-            max_instances=1,
-            coalesce=True,
-        )
         # F-829 — Phase D Polish
         # - ``litellm_reconcile``: nightly at 02:30 UTC; compares Forge
         #   cost_ledger to LiteLLM /spend/logs and bumps last_synced_at.
@@ -125,7 +108,6 @@ class Scheduler:
             jobs=[
                 "daily_ideation_ingest",
                 "memory_consolidate",
-                "litellm_violation_poll",
                 "litellm_reconcile",
                 "litellm_anomaly_check",
             ],

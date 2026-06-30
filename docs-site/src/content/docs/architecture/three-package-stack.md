@@ -90,9 +90,9 @@ so the Agent Center can group them under the right 3-package tab.
 
 ## Cross-references
 
-- [`packages/forge-core`](/forge/packages/forge-core/) — workflow methodology
-- [`packages/forge-pi`](/forge/packages/forge-pi/) — product intelligence
-- [`packages/forge-browser`](/forge/packages/forge-browser/) — browser automation
-- [Layer isolation](/forge/architecture/layer-isolation/) — Organization vs Project Intelligence
-- [Components](/forge/architecture/components/) — every Forge subsystem
-- [Data flow](/forge/architecture/data-flow/) — how a request moves through the stack
+- [`@forge-ai/forge-core`](/forge-core/) — workflow methodology
+- [`@forge-ai/forge-pi`](/forge-pi/) — product intelligence
+- [`@forge-ai/forge-browser`](/forge-browser/) — browser automation
+- [Layer isolation](/architecture/layer-isolation/) — Organization vs Project Intelligence
+- [Components](/architecture/components/) — every Forge subsystem
+- [Data flow](/architecture/data-flow/) — how a request moves through the stack

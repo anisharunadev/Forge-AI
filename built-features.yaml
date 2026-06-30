@@ -1,0 +1,165 @@
+# Built Features manifest
+# Single source of truth for the Built Features table in `.claude/CLAUDE.md`
+# AND the docs coverage check.
+#
+# Run `./scripts/generate-built-features.sh` to regenerate the table.
+# Run `./scripts/check-feature-docs.sh`         to verify docs coverage.
+#
+# Schema:
+#   area:    Workspace | Centers | Lifecycle | Infra | Integration
+#   order:   int, sort key within area
+#   feature: short name (1–6 words)
+#   steps:   list of step numbers / refs (e.g. ["18 v2", "26", "42"])
+#   status:  Production | Beta | Alpha | Planned | Wired <date>
+#   docs:    OPTIONAL — path relative to docs-site/src/content/docs/
+#            (without `.md`). Required for any non-Planned status.
+#            Set to `null` only for self-referential entries (e.g. the
+#            Documentation site row in Infra).
+#
+# Keep entries sorted by `order` within each area for stable diffs.
+
+version: 1
+
+features:
+  - area: Workspace
+    order: 1
+    feature: Dashboard
+    steps: ["18 v2", "26", "42"]
+    status: Production
+    docs: workspace/dashboard
+  - area: Workspace
+    order: 2
+    feature: Co-pilot
+    steps: ["19", "24", "37"]
+    status: Production
+    docs: workspace/co-pilot
+
+  - area: Centers
+    order: 10
+    feature: Agent Center
+    steps: ["4", "43"]
+    status: Production
+    docs: centers/agents
+  - area: Centers
+    order: 11
+    feature: Projects
+    steps: ["38"]
+    status: Production
+    docs: centers/projects
+  - area: Centers
+    order: 12
+    feature: Stories
+    steps: ["21", "38", "44"]
+    status: Production
+    docs: centers/stories
+  - area: Centers
+    order: 13
+    feature: Workflows
+    steps: ["22", "23", "33"]
+    status: Production
+    docs: centers/workflows
+  - area: Centers
+    order: 14
+    feature: Knowledge Center
+    steps: ["27", "39", "41", "51"]
+    status: Production
+    docs: centers/knowledge
+  - area: Centers
+    order: 15
+    feature: Artifacts (Org Knowledge)
+    steps: ["29"]
+    status: Production
+    docs: centers/artifacts
+  - area: Centers
+    order: 16
+    feature: Ideation
+    steps: ["28"]
+    status: Production
+    docs: centers/ideation
+  - area: Centers
+    order: 17
+    feature: Architecture Center
+    steps: ["30"]
+    status: Production
+    docs: centers/architecture
+  - area: Centers
+    order: 18
+    feature: Connectors
+    steps: ["31"]
+    status: Production
+    docs: centers/connectors
+
+  - area: Lifecycle
+    order: 20
+    feature: Onboarding
+    steps: ["46", "49"]
+    status: Production
+    docs: lifecycle/onboarding
+  - area: Lifecycle
+    order: 21
+    feature: Governance
+    steps: ["35"]
+    status: Production
+    docs: lifecycle/governance
+  - area: Lifecycle
+    order: 22
+    feature: Audit
+    steps: ["17"]
+    status: Production
+    docs: lifecycle/audit
+  - area: Lifecycle
+    order: 23
+    feature: Analytics
+    steps: ["16"]
+    status: Production
+    docs: lifecycle/analytics
+  - area: Lifecycle
+    order: 24
+    feature: Terminal
+    steps: ["32", "36"]
+    status: Production
+    docs: lifecycle/terminal
+  - area: Lifecycle
+    order: 25
+    feature: Runs
+    steps: ["14"]
+    status: Production
+    docs: lifecycle/runs
+  - area: Lifecycle
+    order: 26
+    feature: Command Center
+    steps: ["7", "33", "34", "45"]
+    status: Production
+    docs: lifecycle/command-center
+  - area: Lifecycle
+    order: 27
+    feature: Settings
+    steps: ["13", "47"]
+    status: Production
+    docs: lifecycle/settings
+
+  - area: Infra
+    order: 30
+    feature: Documentation site (Astro+Starlight)
+    steps: ["40"]
+    status: Production
+    docs: null
+  - area: Infra
+    order: 31
+    feature: "3-Package architecture (forge-core, forge-pi, forge-browser)"
+    steps: ["45", "48"]
+    status: Production
+    docs: architecture/three-package-stack
+
+  - area: Integration
+    order: 40
+    feature: "Phase 1 OIDC Auth (Keycloak + JWT + tenant foundation)"
+    steps: ["52"]
+    status: "Wired 2026-06-27"
+    docs: integration/oidc-auth
+  - area: Integration
+    order: 50
+    feature: "Phases 2-13"
+    steps: []
+    status: "Planned"
+    docs: integration/phases-2-13

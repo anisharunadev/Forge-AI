@@ -27,13 +27,14 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import AsyncIterator
+from typing import Annotated, AsyncIterator
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import StreamingResponse
 
-from app.api.deps import DbSession, Principal
+from app.api.deps import DbSession, Principal, get_current_principal
+from app.core.security import AuthenticatedPrincipal
 from app.core.audit import audit
 from app.core.logging import get_logger
 from app.db.models.workflow import Workflow, WorkflowRunStatus
@@ -137,6 +138,7 @@ def _workflow_to_read(wf: Workflow) -> WorkflowRead:
         project_id=wf.project_id,
         name=wf.name,
         description=wf.description,
+        status=getattr(wf, "status", "draft") or "draft",
         definition=wf.definition,
         created_by=wf.created_by,
         created_at=wf.created_at,
@@ -182,6 +184,58 @@ async def create_workflow(
     except WorkflowConflictError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return _workflow_to_read(wf)
+
+
+@router.post("/{workflow_id}/publish", response_model=WorkflowRead)
+@audit(action="workflows.publish", target_type="workflow")
+async def publish_workflow(
+    workflow_id: UUID,
+    principal: Principal,
+    db: DbSession = None,  # type: ignore[assignment]
+) -> WorkflowRead:
+    """Flip a draft workflow to ``published`` (Rule 3: gate implicit)."""
+    try:
+        wf = await _workflow_service.update_workflow(
+            db,
+            tenant_id=principal.tenant_id,
+            actor_id=principal.user_id,
+            workflow_id=workflow_id,
+            body=WorkflowUpdate(status="published"),
+        )
+    except WorkflowNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except WorkflowConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return _workflow_to_read(wf)
+
+
+@router.post("/{workflow_id}/duplicate", response_model=WorkflowRead, status_code=status.HTTP_201_CREATED)
+@audit(action="workflows.duplicate", target_type="workflow")
+async def duplicate_workflow(
+    workflow_id: UUID,
+    principal: Principal,
+    db: DbSession = None,  # type: ignore[assignment]
+) -> WorkflowRead:
+    """Clone the workflow with a " (copy)" suffix (Rule 4 typed artifact)."""
+    try:
+        wf = await _workflow_service.get_workflow(
+            db, tenant_id=principal.tenant_id, workflow_id=workflow_id
+        )
+    except WorkflowNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    clone = WorkflowCreate(
+        name=f"{wf.name} (copy)",
+        description=wf.description,
+        definition=wf.definition,
+    )
+    new_wf = await _workflow_service.create_workflow(
+        db,
+        tenant_id=principal.tenant_id,
+        project_id=wf.project_id,
+        created_by=principal.user_id,
+        body=clone,
+    )
+    return _workflow_to_read(new_wf)
 
 
 # Run-scoped routes declared BEFORE /{workflow_id} so FastAPI doesn't
@@ -285,6 +339,21 @@ async def delete_workflow(
         )
     except WorkflowNotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/runs", response_model=list[WorkflowRunRead])
+@audit(action="workflows.runs.list_all", target_type="workflow_run")
+async def list_all_workflow_runs(
+    principal: Principal,
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    db: DbSession = None,  # type: ignore[assignment]
+) -> list[WorkflowRunRead]:
+    """Tenant-wide workflow-runs index (used by the Runs Center)."""
+    rows = await _workflow_service.list_all_runs(
+        db, tenant_id=principal.tenant_id, limit=limit, offset=offset
+    )
+    return [WorkflowRunRead.model_validate(r) for r in rows]
 
 
 @router.get("/{workflow_id}/runs", response_model=list[WorkflowRunRead])
@@ -396,7 +465,9 @@ _RUN_SCOPED_EVENTS: tuple[EventType, ...] = (
 @router.get("/runs/{run_id}/events")
 async def stream_run_events(
     run_id: UUID,
-    principal: Principal,
+    request: Request,
+    principal: Principal | None = None,
+    token: str | None = Query(default=None, description="SSE auth fallback (EventSource can't set headers)"),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> StreamingResponse:
     """SSE stream: emit one ``data:`` line per workflow event for this run.
@@ -406,6 +477,17 @@ async def stream_run_events(
     when the run reaches a terminal status.
     """
     # Authorization — the run must belong to the caller's tenant.
+    # When the caller authenticates via ?token= (EventSource can't set
+    # headers), resolve the principal from the query token. Otherwise
+    # fall through to the header-derived principal injected by FastAPI.
+    if principal is None and token:
+        from app.core.security import principal_from_token
+        principal = principal_from_token(token)  # type: ignore[assignment]
+        if principal is None:
+            raise HTTPException(status_code=401, detail="invalid_query_token")
+    if principal is None:
+        raise HTTPException(status_code=401, detail="missing_principal")
+
     try:
         run = await _workflow_service.get_run(
             db, tenant_id=principal.tenant_id, run_id=run_id

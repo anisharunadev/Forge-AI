@@ -1,11 +1,9 @@
 'use client';
 
-import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Check,
-  ChevronDown, ChevronsLeft,
+  ChevronsLeft,
   ChevronsRight,
   Settings as SettingsIcon,
   type LucideIcon
@@ -14,20 +12,15 @@ import {
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
+import { TenantSwitcher } from '@/components/tenant-switcher';
+import { useAdminLLMHealth } from '@/lib/hooks/useLiteLLM';
+import { useAuth } from '@/lib/api/auth';
 import { useShell } from './ShellProvider';
 import {
   GROUP_LABELS,
@@ -152,116 +145,11 @@ export function NavList({ pathname, collapsed }: NavListProps) {
   );
 }
 
-/**
- * Workspace switcher (tenant picker) shown at the top of the sidebar.
- *
- * In collapsed mode, only the avatar tile is rendered (40x40 hit area).
- * In expanded mode, the avatar + tenant name + chevron + `⌘\` hint
- * are visible, opening a dropdown of available tenants.
- */
-interface WorkspaceSwitcherProps {
-  readonly collapsed: boolean;
-}
-
-function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
-  const [isMac, setIsMac] = React.useState(false);
-
-  React.useEffect(() => {
-    if (typeof navigator !== 'undefined') {
-      setIsMac(/Mac|iPod|iPhone|iPad/.test(navigator.platform));
-    }
-  }, []);
-
-  const tenant = {
-    name: 'Acme Corp',
-    id: 'acme-corp',
-  };
-
-  const avatar = (
-    <div
-      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-violet)] text-xs font-bold text-white shadow-[var(--shadow-glow-primary)]"
-      aria-hidden="true"
-    >
-      AC
-    </div>
-  );
-
-  if (collapsed) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-md hover:bg-[rgba(255,255,255,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-base)]"
-            aria-label={`Workspace: ${tenant.name}. Press ${isMac ? '⌘' : 'Ctrl'}\\ to switch.`}
-          >
-            {avatar}
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="right" sideOffset={8}>
-          <span className="font-medium">{tenant.name}</span>
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className="group flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors duration-150 ease-out-soft hover:bg-[rgba(255,255,255,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-base)]"
-          aria-label={`Workspace: ${tenant.name}. Click to switch.`}
-        >
-          {avatar}
-          <div className="min-w-0 flex-1 leading-tight">
-            <p className="truncate text-sm font-semibold text-[var(--fg-primary)]">{tenant.name}</p>
-            <p className="truncate text-[11px] text-[var(--fg-tertiary)]">{tenant.id}</p>
-          </div>
-          <ChevronDown className="h-4 w-4 shrink-0 text-[var(--fg-tertiary)] transition-transform group-data-[state=open]:rotate-180" aria-hidden="true" />
-          <kbd className="ml-1 hidden rounded border border-[var(--border-subtle)] bg-[var(--bg-inset)] px-1.5 py-0.5 text-[10px] font-mono text-[var(--fg-tertiary)] md:inline-block">
-            {isMac ? '⌘' : 'Ctrl'}\
-          </kbd>
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="start"
-        sideOffset={6}
-        className="w-64 border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--fg-primary)]"
-      >
-        <DropdownMenuLabel className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--fg-tertiary)]">
-          Switch workspace
-        </DropdownMenuLabel>
-        {[
-          { name: 'Acme Corp', id: 'acme-corp', active: true },
-          { name: 'Beta Industries', id: 'beta-ind', active: false },
-          { name: 'Cosmic Labs', id: 'cosmic', active: false },
-        ].map((t) => (
-          <DropdownMenuItem
-            key={t.id}
-            className="flex items-center gap-2 text-sm focus:bg-[rgba(255,255,255,0.06)] focus:text-[var(--fg-primary)]"
-          >
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-[var(--bg-inset)] text-[10px] font-bold text-[var(--fg-primary)]" aria-hidden="true">
-              {t.name.split(' ').map((w) => w[0]).join('')}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-medium">{t.name}</p>
-              <p className="truncate text-[11px] text-[var(--fg-tertiary)]">{t.id}</p>
-            </div>
-            {t.active && (
-              <Check className="h-4 w-4 text-[var(--accent-emerald)]" aria-label="Active" />
-            )}
-          </DropdownMenuItem>
-        ))}
-        <DropdownMenuSeparator className="bg-[var(--border-subtle)]" />
-        <DropdownMenuItem className="text-[var(--fg-secondary)] focus:bg-[rgba(255,255,255,0.06)] focus:text-[var(--fg-primary)]">
-          + New workspace
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
+// ponytail: Sidebar previously had its own hardcoded workspace switcher
+// (mock Acme/Beta/Cosmic list + `⌘\` shortcut). Canonical TenantSwitcher
+// now lives in Topbar; Sidebar renders the same component so workspace
+// state stays in one place. The collapsed rail wraps it in a Tooltip
+// so the 64px width stays usable.
 /**
  * Tenant health status pill pinned to the bottom of the sidebar.
  *
@@ -270,15 +158,32 @@ function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
  * to just the pulsing dot + gear (40x40 hits).
  */
 function TenantStatusFooter({ collapsed }: { collapsed: boolean }) {
+  const { tenant } = useAuth();
+  const { data: health } = useAdminLLMHealth();
+  // ponytail: status pill drives off the real /admin/llm-gateway/health
+  // query; falls back to the previous "Healthy" copy if the hook has
+  // not resolved yet (no network flapping in the footer).
+  const isHealthy = health?.healthy ?? true;
+  const statusTone = isHealthy ? 'var(--accent-emerald)' : 'var(--accent-rose)';
+  const statusLabel = isHealthy ? 'Healthy' : 'Degraded';
+
   const pulseDot = (
     <span
       aria-hidden="true"
       className="relative inline-flex h-2 w-2 shrink-0 items-center justify-center"
     >
-      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--accent-emerald)] opacity-60" />
-      <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--accent-emerald)]" />
+      <span
+        className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60"
+        style={{ background: statusTone }}
+      />
+      <span
+        className="relative inline-flex h-2 w-2 rounded-full"
+        style={{ background: statusTone }}
+      />
     </span>
   );
+
+  const tenantLabel = tenant?.name ?? tenant?.id ?? 'workspace';
 
   if (collapsed) {
     return (
@@ -288,13 +193,13 @@ function TenantStatusFooter({ collapsed }: { collapsed: boolean }) {
             <button
               type="button"
               className="flex h-10 w-10 items-center justify-center rounded-md hover:bg-[rgba(255,255,255,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-base)]"
-              aria-label="Tenant healthy"
+              aria-label={`Tenant ${statusLabel.toLowerCase()}`}
             >
               {pulseDot}
             </button>
           </TooltipTrigger>
           <TooltipContent side="right" sideOffset={8}>
-            <span className="font-medium">Healthy · acme-corp</span>
+            <span className="font-medium">{`${statusLabel} · ${tenantLabel}`}</span>
           </TooltipContent>
         </Tooltip>
         <Tooltip>
@@ -319,10 +224,13 @@ function TenantStatusFooter({ collapsed }: { collapsed: boolean }) {
     <div className="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-inset)] px-2.5 py-2">
       <div className="flex items-center gap-2">
         {pulseDot}
-        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--accent-emerald)]">
-          Healthy
+        <span
+          className="text-[11px] font-medium uppercase tracking-[0.08em]"
+          style={{ color: statusTone }}
+        >
+          {statusLabel}
         </span>
-        <span className="truncate text-xs text-[var(--fg-tertiary)]">· acme-corp</span>
+        <span className="truncate text-xs text-[var(--fg-tertiary)]">· {tenantLabel}</span>
         <Link
           href="/admin"
           className="ml-auto flex h-6 w-6 items-center justify-center rounded text-[var(--fg-tertiary)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--fg-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]"
@@ -359,9 +267,25 @@ export function Sidebar() {
         data-testid="app-sidebar"
         data-collapsed={sidebarCollapsed ? 'true' : 'false'}
       >
-        {/* Workspace switcher (top) */}
+        {/* Workspace switcher (top) — canonical TenantSwitcher; same
+            component as the topbar so workspace state stays in one
+            place. Wrapped in a tooltip when collapsed to keep the 64px
+            rail usable. */}
         <div className={cn('flex shrink-0 items-center', sidebarCollapsed ? 'justify-center px-2 pt-4' : 'px-3 pt-4')}>
-          <WorkspaceSwitcher collapsed={sidebarCollapsed} />
+          {sidebarCollapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <TenantSwitcher />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                <span className="font-medium">{`Workspace · click to switch`}</span>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <TenantSwitcher />
+          )}
         </div>
 
         {/* Body — scrollable nav */}

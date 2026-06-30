@@ -42,7 +42,7 @@ export function HeroBand({
   rightExtra,
 }: HeroBandProps) {
   const [sprintOpen, setSprintOpen] = React.useState(false);
-  const current = sprints.find((s) => s.id === currentSprintId) ?? sprints[0]!;
+  const current = sprints.find((s) => s.id === currentSprintId) ?? sprints[0] ?? null;
 
   return (
     <section
@@ -99,9 +99,11 @@ export function HeroBand({
                 data-testid="stories-sprint-picker"
               >
                 <Calendar size={14} aria-hidden="true" className="text-[var(--fg-tertiary)]" />
-                <span className="font-medium">{current.name}</span>
+                <span className="font-medium">
+                  {current ? current.name : 'No sprint'}
+                </span>
                 <span className="font-mono text-xs text-[var(--fg-tertiary)]">
-                  {current.start} → {current.end}
+                  {current ? `${current.start} → ${current.end}` : '—'}
                 </span>
               </button>
               {sprintOpen ? (

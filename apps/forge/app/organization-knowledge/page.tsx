@@ -101,9 +101,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/src/components/empty-state';
-import { useApiData } from '@/hooks/use-api-data';
+
+import { useKGNodes } from '@/lib/hooks/useKnowledgeGraph';
+import type { KGNode } from '@/lib/knowledge-graph/types';
 
 import {
   type Policy,
@@ -173,6 +176,223 @@ const SCOPE_FILTERS: ReadonlyArray<{ id: Scope; label: string }> = [
 function idFor(kind: 'standard' | 'template' | 'policy', index: number): string {
   const prefix = kind === 'standard' ? 'F-001' : kind === 'template' ? 'F-002' : 'F-003';
   return `${prefix}-${String(index + 1).padStart(3, '0')}`;
+}
+
+// ---------------------------------------------------------------------------
+// KG doc adapter (Step 57 zone 8 — Org Knowledge wired to real backend)
+// ---------------------------------------------------------------------------
+//
+// The Organization Knowledge page reads docs from the knowledge graph
+// (`/kg/nodes?type=doc`). Each KG doc node carries a `category` inside
+// `properties` that maps it to one of the six org-knowledge zones:
+//
+//   standards       → F-001 master-detail (zone 4)
+//   templates       → F-002 master-detail (zone 5)
+//   policies        → F-003 master-detail (zone 6)
+//   runbooks        → F-004 timeline       (zone 7)
+//   best-practices  → F-005 best practices (zone 8)
+//   docs            → general docs / activity (zones 9 / 10 / 13)
+//
+// Unknown / missing categories fall through into `docs` so the page
+// never silently drops rows — surfaces the "uncategorised" bucket
+// rather than hiding data (Rule 15 spirit).
+
+type DocCategory =
+  | 'standards'
+  | 'templates'
+  | 'policies'
+  | 'runbooks'
+  | 'best-practices'
+  | 'docs';
+
+const DOC_CATEGORIES: ReadonlyArray<DocCategory> = [
+  'standards',
+  'templates',
+  'policies',
+  'runbooks',
+  'best-practices',
+  'docs',
+];
+
+interface GroupedDocs {
+  standards: ReadonlyArray<Standard>;
+  templates: ReadonlyArray<Template>;
+  policies: ReadonlyArray<Policy>;
+  runbooks: ReadonlyArray<KGNode>;
+  practices: ReadonlyArray<KGNode>;
+  docs: ReadonlyArray<KGNode>;
+}
+
+function asString(value: unknown, fallback = ''): string {
+  return typeof value === 'string' ? value : fallback;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function nodeToStandard(node: KGNode, idx: number): Standard {
+  const props = asRecord(node.properties);
+  const rawStatus = asString(props.status, 'draft').toLowerCase();
+  const status: Standard['status'] =
+    rawStatus === 'approved' || rawStatus === 'deprecated'
+      ? (rawStatus as Standard['status'])
+      : rawStatus === 'in-review'
+        ? 'in-review'
+        : 'draft';
+  return {
+    id: node.id,
+    title: node.name || 'Untitled standard',
+    category: (asString(props.category, 'documentation') as Standard['category']),
+    status,
+    owner: asString(props.owner, 'Unassigned'),
+    body: asString(props.body),
+    updatedAt: asString(props.updated_at, node.updated_at) || node.updated_at,
+    version: asString(props.version, '1.0.0'),
+  };
+}
+
+function nodeToTemplate(node: KGNode): Template {
+  const props = asRecord(node.properties);
+  const rawKind = asString(props.kind, 'prd');
+  const allowedKinds: ReadonlyArray<Template['kind']> = ['prd', 'adr', 'contract', 'task', 'risk', 'security'];
+  const kind: Template['kind'] = (allowedKinds as ReadonlyArray<string>).includes(rawKind)
+    ? (rawKind as Template['kind'])
+    : 'prd';
+  return {
+    id: node.id,
+    title: node.name || 'Untitled template',
+    kind,
+    description: asString(props.description),
+    updatedAt: asString(props.updated_at, node.updated_at) || node.updated_at,
+    preview: asString(props.preview) || asString(props.body),
+    owner: asString(props.owner, 'Unassigned'),
+    uses: typeof props.uses === 'number' ? (props.uses as number) : 0,
+  };
+}
+
+function nodeToPolicy(node: KGNode): Policy {
+  const props = asRecord(node.properties);
+  const rawEffect = asString(props.effect, 'allow');
+  const allowedEffects: ReadonlyArray<Policy['effect']> = ['allow', 'deny', 'require-approval', 'notify'];
+  const effect: Policy['effect'] = (allowedEffects as ReadonlyArray<string>).includes(rawEffect)
+    ? (rawEffect as Policy['effect'])
+    : 'allow';
+  const logic = props.logic && typeof props.logic === 'object' && !Array.isArray(props.logic)
+    ? (props.logic as Record<string, unknown>)
+    : {};
+  return {
+    id: node.id,
+    title: node.name || 'Untitled policy',
+    effect,
+    scope: asString(props.scope, 'org'),
+    logic,
+    enabled: props.enabled !== false,
+    updatedAt: asString(props.updated_at, node.updated_at) || node.updated_at,
+    owner: asString(props.owner, 'Unassigned'),
+  };
+}
+
+function groupDocsByCategory(nodes: ReadonlyArray<KGNode>): GroupedDocs {
+  const buckets: Record<DocCategory, KGNode[]> = {
+    standards: [],
+    templates: [],
+    policies: [],
+    runbooks: [],
+    'best-practices': [],
+    docs: [],
+  };
+  for (const node of nodes) {
+    if (node.node_type !== 'doc') continue;
+    const raw = asString(asRecord(node.properties).category).toLowerCase();
+    const category: DocCategory = (DOC_CATEGORIES as ReadonlyArray<string>).includes(raw)
+      ? (raw as DocCategory)
+      : 'docs';
+    buckets[category].push(node);
+  }
+  return {
+    standards: buckets.standards.map(nodeToStandard),
+    templates: buckets.templates.map(nodeToTemplate),
+    policies: buckets.policies.map(nodeToPolicy),
+    runbooks: buckets.runbooks,
+    practices: buckets['best-practices'],
+    docs: buckets.docs,
+  };
+}
+
+const EMPTY_GROUPED_DOCS: GroupedDocs = {
+  standards: [],
+  templates: [],
+  policies: [],
+  runbooks: [],
+  practices: [],
+  docs: [],
+};
+
+// ---------------------------------------------------------------------------
+// Per-zone states (Step 57 zone 8)
+// ---------------------------------------------------------------------------
+//
+// Every content zone renders the same three substates:
+//   loading  → shimmering skeleton in the master pane + a quiet spinner hint
+//   error    → single `EmptyState` with retry; the page-level toast already
+//              alerted via `useEffect` above, so the zone itself stays calm
+//   empty    → the existing `EmptyState` per kind (Rules 15)
+//   ready    → the existing master-detail / timeline / best-practices UI
+//
+// The wrapper keeps the 14-zone layout untouched: each tab still owns one
+// primary panel + one right-hand panel exactly as before.
+
+function ZoneSkeleton({ rows = 4 }: { rows?: number }) {
+  return (
+    <div
+      className="flex max-h-[calc(100vh-220px)] flex-col gap-3 rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5"
+      data-testid="ok-zone-skeleton"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-3 w-32" />
+        <Skeleton className="ml-auto h-3 w-16" />
+      </div>
+      <div className="flex flex-col gap-2">
+        {Array.from({ length: rows }).map((_, i) => (
+          <div key={i} className="flex items-center gap-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-inset)] p-3">
+            <Skeleton className="h-4 w-24" />
+            <div className="flex flex-1 flex-col gap-1.5">
+              <Skeleton className="h-3 w-2/3" />
+              <Skeleton className="h-3 w-1/3" />
+            </div>
+            <Skeleton className="h-3 w-12" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ZoneErrorPanel({
+  message,
+  onRetry,
+  testId,
+}: {
+  message: string;
+  onRetry: () => void;
+  testId: string;
+}) {
+  return (
+    <div data-testid={testId}>
+      <EmptyState
+        illustration={<BookOpen size={40} strokeWidth={1.5} />}
+        title="Couldn't load this knowledge zone"
+        description={message}
+        primaryAction={{ label: 'Retry', onClick: onRetry }}
+        secondaryAction={{ label: 'Dismiss', onClick: () => toast.info('Retrying on next tab visit') }}
+      />
+    </div>
+  );
 }
 
 const STATUS_DOT: Record<ArtifactStatus, string> = {
@@ -1655,13 +1875,26 @@ export default function OrganizationKnowledgePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const standardsRes = useApiData<ReadonlyArray<Standard>>('/v1/org-knowledge/standards');
-  const templatesRes = useApiData<ReadonlyArray<Template>>('/v1/org-knowledge/templates');
-  const policiesRes = useApiData<ReadonlyArray<Policy>>('/v1/org-knowledge/policies');
+  // Step 57 zone 8 — single KG fetch for all `doc` nodes, grouped by
+  // properties.category into the six org-knowledge zones. One query
+  // keeps the loading / error state coherent across the page.
+  const docsRes = useKGNodes({ kind: 'doc', limit: 1000 });
+  const grouped = React.useMemo<GroupedDocs>(
+    () => groupDocsByCategory(docsRes.data ?? []),
+    [docsRes.data],
+  );
 
-  const standards = standardsRes.data ?? [];
-  const templates = templatesRes.data ?? [];
-  const policies = policiesRes.data ?? [];
+  // Surface backend failures as a toast the first time the error arrives.
+  // Each zone also renders its own skeleton + empty state below.
+  React.useEffect(() => {
+    if (docsRes.error) {
+      toast.error(`Knowledge graph unreachable: ${docsRes.error.message}`, { duration: 4000 });
+    }
+  }, [docsRes.error]);
+
+  const standards = grouped.standards;
+  const templates = grouped.templates;
+  const policies = grouped.policies;
 
   const tabParam = (searchParams?.get('tab') as TabId | null) ?? 'overview';
   const tab: TabId = TABS.some((t) => t.id === tabParam) ? tabParam : 'overview';
@@ -1673,13 +1906,13 @@ export default function OrganizationKnowledgePage() {
   const [localPolicies, setLocalPolicies] = React.useState<ReadonlyArray<Policy>>(policies);
 
   React.useEffect(() => {
-    if (standards.length > 0) setLocalStandards(standards);
+    setLocalStandards(standards);
   }, [standards]);
   React.useEffect(() => {
-    if (templates.length > 0) setLocalTemplates(templates);
+    setLocalTemplates(templates);
   }, [templates]);
   React.useEffect(() => {
-    if (policies.length > 0) setLocalPolicies(policies);
+    setLocalPolicies(policies);
   }, [policies]);
 
   const [scopeSwitcher, setScopeSwitcher] = React.useState<ScopeT>(
@@ -1705,12 +1938,12 @@ export default function OrganizationKnowledgePage() {
   );
 
   const counts: Record<TabId, number> = {
-    overview: 124,
+    overview: grouped.docs.length + localStandards.length + localTemplates.length + localPolicies.length + grouped.runbooks.length + grouped.practices.length,
     standards: localStandards.length,
     templates: localTemplates.length,
     policies: localPolicies.length,
-    runbooks: 3,
-    practices: 5,
+    runbooks: grouped.runbooks.length,
+    practices: grouped.practices.length,
     activity: ACTIVITY.length,
     graph: 0,
   };
@@ -1973,63 +2206,138 @@ export default function OrganizationKnowledgePage() {
             {tab === 'overview' ? <OverviewTab /> : null}
 
             {tab === 'standards' ? (
-              <StandardMasterDetail
-                standards={localStandards}
-                selectedId={selectedStandardId}
-                onSelect={(s) => updateUrl({ id: s.id })}
-                draftTitle={draftTitle}
-                draftBody={draftBody}
-                onTitleChange={setDraftTitle}
-                onBodyChange={setDraftBody}
-                onPublish={handlePublish}
-                onSaveDraft={handleSaveDraft}
-                onDiscard={handleDiscard}
-                onSelectBacklink={handleBacklinkSelect}
-              />
+              docsRes.isLoading ? (
+                <ZoneSkeleton rows={5} />
+              ) : docsRes.error ? (
+                <ZoneErrorPanel
+                  message={`Could not load standards: ${docsRes.error.message}`}
+                  onRetry={() => void docsRes.refetch()}
+                  testId="ok-standards-error"
+                />
+              ) : (
+                <StandardMasterDetail
+                  standards={localStandards}
+                  selectedId={selectedStandardId}
+                  onSelect={(s) => updateUrl({ id: s.id })}
+                  draftTitle={draftTitle}
+                  draftBody={draftBody}
+                  onTitleChange={setDraftTitle}
+                  onBodyChange={setDraftBody}
+                  onPublish={handlePublish}
+                  onSaveDraft={handleSaveDraft}
+                  onDiscard={handleDiscard}
+                  onSelectBacklink={handleBacklinkSelect}
+                />
+              )
             ) : null}
 
             {tab === 'templates' ? (
-              <TemplateMasterDetail
-                templates={localTemplates}
-                selectedId={selectedTemplateId}
-                onSelect={(t) => updateUrl({ id: t.id })}
-                draftTitle={draftTitle}
-                draftBody={draftBody}
-                onTitleChange={setDraftTitle}
-                onBodyChange={setDraftBody}
-                onPublish={handlePublish}
-                onSaveDraft={handleSaveDraft}
-                onDiscard={handleDiscard}
-                onSelectBacklink={handleBacklinkSelect}
-              />
+              docsRes.isLoading ? (
+                <ZoneSkeleton rows={4} />
+              ) : docsRes.error ? (
+                <ZoneErrorPanel
+                  message={`Could not load templates: ${docsRes.error.message}`}
+                  onRetry={() => void docsRes.refetch()}
+                  testId="ok-templates-error"
+                />
+              ) : (
+                <TemplateMasterDetail
+                  templates={localTemplates}
+                  selectedId={selectedTemplateId}
+                  onSelect={(t) => updateUrl({ id: t.id })}
+                  draftTitle={draftTitle}
+                  draftBody={draftBody}
+                  onTitleChange={setDraftTitle}
+                  onBodyChange={setDraftBody}
+                  onPublish={handlePublish}
+                  onSaveDraft={handleSaveDraft}
+                  onDiscard={handleDiscard}
+                  onSelectBacklink={handleBacklinkSelect}
+                />
+              )
             ) : null}
 
             {tab === 'policies' ? (
-              <PolicyMasterDetail
-                policies={localPolicies}
-                selectedId={selectedPolicyId}
-                onSelect={(p) => updateUrl({ id: p.id })}
-                draftTitle={draftTitle}
-                draftBody={draftBody}
-                onTitleChange={setDraftTitle}
-                onBodyChange={setDraftBody}
-                onPublish={handlePublish}
-                onSaveDraft={handleSaveDraft}
-                onDiscard={handleDiscard}
-                scope={policyScope}
-                strictness={policyStrictness}
-                ackRequired={policyAck}
-                onEnforcementChange={(next) => {
-                  if (next.scope !== undefined) setPolicyScope(next.scope);
-                  if (next.strictness !== undefined) setPolicyStrictness(next.strictness);
-                  if (next.ackRequired !== undefined) setPolicyAck(next.ackRequired);
-                }}
-                onSelectBacklink={handleBacklinkSelect}
-              />
+              docsRes.isLoading ? (
+                <ZoneSkeleton rows={3} />
+              ) : docsRes.error ? (
+                <ZoneErrorPanel
+                  message={`Could not load policies: ${docsRes.error.message}`}
+                  onRetry={() => void docsRes.refetch()}
+                  testId="ok-policies-error"
+                />
+              ) : (
+                <PolicyMasterDetail
+                  policies={localPolicies}
+                  selectedId={selectedPolicyId}
+                  onSelect={(p) => updateUrl({ id: p.id })}
+                  draftTitle={draftTitle}
+                  draftBody={draftBody}
+                  onTitleChange={setDraftTitle}
+                  onBodyChange={setDraftBody}
+                  onPublish={handlePublish}
+                  onSaveDraft={handleSaveDraft}
+                  onDiscard={handleDiscard}
+                  scope={policyScope}
+                  strictness={policyStrictness}
+                  ackRequired={policyAck}
+                  onEnforcementChange={(next) => {
+                    if (next.scope !== undefined) setPolicyScope(next.scope);
+                    if (next.strictness !== undefined) setPolicyStrictness(next.strictness);
+                    if (next.ackRequired !== undefined) setPolicyAck(next.ackRequired);
+                  }}
+                  onSelectBacklink={handleBacklinkSelect}
+                />
+              )
             ) : null}
 
-            {tab === 'runbooks' ? <RunbookTimeline /> : null}
-            {tab === 'practices' ? <BestPracticesTab /> : null}
+            {tab === 'runbooks' ? (
+              docsRes.isLoading ? (
+                <ZoneSkeleton rows={3} />
+              ) : docsRes.error ? (
+                <ZoneErrorPanel
+                  message={`Could not load runbooks: ${docsRes.error.message}`}
+                  onRetry={() => void docsRes.refetch()}
+                  testId="ok-runbooks-error"
+                />
+              ) : grouped.runbooks.length === 0 ? (
+                <div data-testid="ok-runbooks-empty">
+                  <EmptyState
+                    illustration={<PlayCircle size={40} strokeWidth={1.5} />}
+                    title="No runbooks yet"
+                    description={`Runbooks (F-004) capture the steps teams take to recover or operate services. ${grouped.runbooks.length === 0 ? 'Tag an existing doc with category: runbooks during ingestion, or connect the Runbooks connector to populate this zone.' : ''}`}
+                    primaryAction={{ label: 'Create Runbook', onClick: () => toast.info('Open Create Runbook dialog') }}
+                    secondaryAction={{ label: 'Browse marketplace', onClick: () => toast.info('Open Runbooks connector') }}
+                  />
+                </div>
+              ) : (
+                <RunbookTimeline />
+              )
+            ) : null}
+
+            {tab === 'practices' ? (
+              docsRes.isLoading ? (
+                <ZoneSkeleton rows={4} />
+              ) : docsRes.error ? (
+                <ZoneErrorPanel
+                  message={`Could not load best practices: ${docsRes.error.message}`}
+                  onRetry={() => void docsRes.refetch()}
+                  testId="ok-practices-error"
+                />
+              ) : grouped.practices.length === 0 ? (
+                <div data-testid="ok-practices-empty">
+                  <EmptyState
+                    illustration={<BookOpenCheck size={40} strokeWidth={1.5} />}
+                    title="No best practices yet"
+                    description="Best practices (F-005) capture lessons learned from teams across the tenant. Tag a doc with `category: best-practices` during ingestion to surface it here."
+                    primaryAction={{ label: 'Tag existing doc', onClick: () => toast.info('Open doc tagger') }}
+                  />
+                </div>
+              ) : (
+                <BestPracticesTab />
+              )
+            ) : null}
+
             {tab === 'activity' ? <ActivityTab /> : null}
 
             {tab === 'graph' ? (

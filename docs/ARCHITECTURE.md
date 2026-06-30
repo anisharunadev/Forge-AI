@@ -234,3 +234,5 @@ Every auditable action carries: `audit_id`, `tenant_id`, `project_id`, `actor_id
 - MCP servers: [`mcp-servers/README.md`](../mcp-servers/README.md)
 - Forge command reference: [`docs/FORGE_COMMANDS.md`](FORGE_COMMANDS.md)
 - Backend API spec: [`docs/openapi.json`](openapi.json)
+- Visual + interaction reference: [`DESIGN_SYSTEM.md`](../DESIGN_SYSTEM.md) — canonical design tokens, components, and cross-cutting patterns
+- What shipped: [`CHANGELOG.md`](../CHANGELOG.md) — Steps 1–60 (reverse-chronological)

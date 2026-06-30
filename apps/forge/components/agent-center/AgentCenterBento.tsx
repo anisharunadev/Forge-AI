@@ -26,6 +26,7 @@ import { Bot, Plus, Download, ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { Agent, ModelProvider } from '@/lib/agent-center/data';
+import { useTopProviders } from '@/lib/query/hooks';
 
 const SEMANTIC = {
   indigo: 'var(--accent-primary)',
@@ -145,19 +146,72 @@ function ActivityHeatmap() {
   );
 }
 
-function TopProvidersChart({ providers }: { providers: ReadonlyArray<ModelProvider> }) {
-  const top = providers.slice(0, 5);
-  if (top.length === 0) {
-    return <p className="text-sm text-[var(--fg-tertiary)]">No provider data yet.</p>;
+function TopProvidersChart({ days = 7 }: { days?: number } = {}) {
+  // Zone 2 (step-54) — wire to real backend data. Source of truth
+  // is `GET /dashboard/top-providers` which aggregates
+  // `litellm_call_records` joined to `model_providers` on
+  // `litellm_model_alias`. Each row carries `run_count`, `total_cost`,
+  // `avg_duration_seconds`, `success_rate`, and the resolved
+  // `provider_name` so the chart can render a human label.
+  const { data, isLoading, isError, error } = useTopProviders(days);
+
+  if (isLoading) {
+    return (
+      <p
+        className="text-sm text-[var(--fg-tertiary)]"
+        data-testid="top-providers-loading"
+      >
+        Loading top providers…
+      </p>
+    );
   }
-  const max = Math.max(...top.map((p) => p.calls24h)) || 1;
+
+  if (isError) {
+    return (
+      <p
+        className="text-sm text-[var(--accent-rose)]"
+        data-testid="top-providers-error"
+        role="alert"
+      >
+        {(error as { message?: string })?.message ??
+          'Could not load provider stats. Retry in a moment.'}
+      </p>
+    );
+  }
+
+  const rows = (data ?? []).slice(0, 5);
+  if (rows.length === 0) {
+    return (
+      <p
+        className="text-sm text-[var(--fg-tertiary)]"
+        data-testid="top-providers-empty"
+      >
+        No LLM traffic recorded yet for this tenant. Once agents start
+        calling providers, the top performers will appear here.
+      </p>
+    );
+  }
+
+  const max = Math.max(...rows.map((r) => r.run_count)) || 1;
   return (
-    <div className="flex flex-col gap-3" role="img" aria-label="Top 5 providers by 24h call volume">
-      {top.map((p) => {
-        const pct = (p.calls24h / max) * 100;
+    <div
+      className="flex flex-col gap-3"
+      role="img"
+      aria-label={`Top ${rows.length} providers by call volume over last ${days} days`}
+    >
+      {rows.map((row) => {
+        const pct = (row.run_count / max) * 100;
+        const label = row.provider_name || row.model;
+        const testKey = row.provider_id ?? row.model;
         return (
-          <div key={p.id} className="grid grid-cols-[140px_1fr_80px] items-center gap-3" data-testid={`provider-bar-${p.id}`}>
-            <span className="truncate text-sm text-[var(--fg-primary)]">{p.displayName}</span>
+          <div
+            key={testKey}
+            className="grid grid-cols-[140px_1fr_80px] items-center gap-3"
+            data-testid={`provider-bar-${testKey}`}
+          >
+            <span className="truncate text-sm text-[var(--fg-primary)]" title={label}>
+              {label}
+            </span>
             <div className="h-2 overflow-hidden rounded-[var(--radius-md)] bg-[var(--bg-inset)]">
               <div
                 className="h-full rounded-[var(--radius-md)] bg-[var(--accent-primary)] transition-[width] duration-200 ease-out-soft"
@@ -165,8 +219,11 @@ function TopProvidersChart({ providers }: { providers: ReadonlyArray<ModelProvid
                 aria-hidden="true"
               />
             </div>
-            <span className="text-right font-mono text-xs text-[var(--fg-secondary)]">
-              {p.calls24h.toLocaleString()}
+            <span
+              className="text-right font-mono text-xs text-[var(--fg-secondary)]"
+              title={`${row.run_count.toLocaleString()} calls · $${row.total_cost.toFixed(2)} · ${row.success_rate.toFixed(1)}% success`}
+            >
+              {row.run_count.toLocaleString()}
             </span>
           </div>
         );
@@ -377,7 +434,7 @@ export function AgentCenterBento({
           </a>
         </div>
         <div className="mt-4">
-          <TopProvidersChart providers={providers} />
+          <TopProvidersChart days={7} />
         </div>
       </div>
     </div>

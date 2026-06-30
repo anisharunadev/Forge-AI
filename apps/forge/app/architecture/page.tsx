@@ -114,7 +114,15 @@ import { ApprovalStatusBadge } from '@/components/architecture/ApprovalStatusBad
 import { APIContractViewer } from '@/components/architecture/APIContractViewer';
 import { TaskBreakdownTree } from '@/components/architecture/TaskBreakdownTree';
 
-import { useApiData } from '@/hooks/use-api-data';
+import {
+  useADRs,
+  useContracts,
+  useTaskBreakdowns,
+  useRiskRegisters,
+  useArchitectureVersions,
+  useTraceability,
+} from '@/lib/hooks/useArchitecture';
+import { VersionDiff } from '@/components/architecture/VersionDiff';
 
 import type {
   ADR,
@@ -2011,26 +2019,73 @@ export default function ArchitectureCenterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Fetch live data; fall back to the rich mock fixtures so the page is
-  // never empty on first paint. This is the source of the bug fix —
-  // counts and bodies both come from the same data, so they can never
-  // disagree.
-  const adrsRes = useApiData<ReadonlyArray<ADR>>('/v1/architecture/adrs');
-  const contractsRes = useApiData<ReadonlyArray<APIContract>>('/v1/architecture/contracts');
-  const breakdownsRes = useApiData<ReadonlyArray<TaskBreakdown>>('/v1/architecture/task-breakdowns');
-  const registersRes = useApiData<ReadonlyArray<RiskRegister>>('/v1/architecture/risk-registers');
-  const versionsRes = useApiData<ReadonlyArray<ArchitectureVersion>>('/v1/architecture/versions');
-  const traceabilityRes = useApiData<TraceabilityGraphType>('/v1/architecture/traceability');
+  // Fetch live data via the new TanStack Query hooks (Step 58 v2).
+  // The page still falls back to the rich mock fixtures when the API
+  // returns empty / errors, matching the connector-center pattern
+  // (online/offline merge — Rule 15: empty states explain, never bare).
+  // Step 58 v2: the data shapes returned by the live API differ from
+  // the page's `ADRWithMeta` / `ApiService` projections (component,
+  // impact, author initials, endpoint count…). When live data exists
+  // we synthesize those fields; when it doesn't we use the mock
+  // fixtures verbatim.
+  const adrsQuery = useADRs();
+  const contractsQuery = useContracts();
+  const breakdownsQuery = useTaskBreakdowns();
+  const registersQuery = useRiskRegisters();
+  const versionsQuery = useArchitectureVersions();
+  const traceabilityQuery = useTraceability();
 
-  const adrs: ReadonlyArray<ADRWithMeta> = (adrsRes.data && adrsRes.data.length > 0 ? adrsRes.data.map((a) => {
-    const meta = MOCK_ADRS_WITH_META.find((m) => m.id === a.id);
-    return meta ?? { ...a, component: 'backend' as const, impact: 5, authorInitials: a.owner[0]?.toUpperCase() ?? 'X', linkedTaskCount: 0, linkedRiskCount: 0, linkedApiCount: 0 };
-  }) : MOCK_ADRS_WITH_META);
-  const contracts = contractsRes.data && contractsRes.data.length > 0 ? contractsRes.data : MOCK_CONTRACTS;
-  const breakdowns = breakdownsRes.data && breakdownsRes.data.length > 0 ? breakdownsRes.data : MOCK_TASK_BREAKDOWNS;
-  const registers = registersRes.data && registersRes.data.length > 0 ? registersRes.data : MOCK_RISK_REGISTERS;
-  const versions = versionsRes.data && versionsRes.data.length > 0 ? versionsRes.data : MOCK_VERSIONS;
-  const traceability = (traceabilityRes.data && traceabilityRes.data.nodes.length > 0) ? traceabilityRes.data : MOCK_TRACEABILITY;
+  const liveAdrs: ReadonlyArray<ADR> = adrsQuery.data?.items ?? [];
+  const adrs: ReadonlyArray<ADRWithMeta> = liveAdrs.length > 0
+    ? liveAdrs.map((a) => {
+        const meta = MOCK_ADRS_WITH_META.find((m) => m.id === a.id);
+        return meta ?? {
+          ...a,
+          component: 'backend' as const,
+          impact: 5,
+          authorInitials: a.approved_by?.slice(0, 2).toUpperCase() ?? 'XX',
+          linkedTaskCount: 0,
+          linkedRiskCount: 0,
+          linkedApiCount: 0,
+          owner: 'arun@acme-corp.com',
+          markdown: '',
+          updatedAt: a.updated_at ?? new Date().toISOString(),
+        };
+      })
+    : MOCK_ADRS_WITH_META;
+  const contracts: ReadonlyArray<APIContract> = contractsQuery.data?.items && contractsQuery.data.items.length > 0
+    ? contractsQuery.data.items
+    : MOCK_CONTRACTS;
+  const breakdowns: ReadonlyArray<TaskBreakdown> = breakdownsQuery.data?.items && breakdownsQuery.data.items.length > 0
+    ? breakdownsQuery.data.items
+    : MOCK_TASK_BREAKDOWNS;
+  const registers: ReadonlyArray<RiskRegister> = registersQuery.data?.items && registersQuery.data.items.length > 0
+    ? registersQuery.data.items
+    : MOCK_RISK_REGISTERS;
+  const versions: ReadonlyArray<ArchitectureVersion> = versionsQuery.data && versionsQuery.data.length > 0
+    ? versionsQuery.data
+    : MOCK_VERSIONS;
+  const traceability: TraceabilityGraphType = traceabilityQuery.data?.matrix?.length
+    ? {
+        id: 'tg-live',
+        title: 'Traceability',
+        nodes: traceabilityQuery.data.matrix.flatMap((row) =>
+          row.targets.map((t) => ({ id: t.id, label: t.label, kind: 'adr' as const })),
+        ),
+        edges: traceabilityQuery.data.matrix.flatMap((row) =>
+          row.targets.map((t) => ({ id: `${row.source_id}->${t.id}`, source: row.source_id, target: t.id })),
+        ),
+      }
+    : MOCK_TRACEABILITY;
+
+  // Live data is loading — surface that to the UI so we can render skeletons.
+  const isLiveLoading =
+    adrsQuery.isLoading ||
+    contractsQuery.isLoading ||
+    breakdownsQuery.isLoading ||
+    registersQuery.isLoading ||
+    versionsQuery.isLoading ||
+    traceabilityQuery.isLoading;
 
   const tabParam = (searchParams?.get('tab') as TabId | null) ?? 'overview';
   const idParam = searchParams?.get('id') ?? undefined;

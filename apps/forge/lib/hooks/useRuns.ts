@@ -27,16 +27,19 @@ import {
   getRun,
   getRunStages,
   getRunsView,
+  getWorkflowRunsView,
   type CreateRunInput,
   type RunRecord,
   type RunsView,
   type StageRecord,
+  type WorkflowRunsView,
 } from '@/lib/api';
 
 /** Stable query keys so the cache survives HMR / route changes. */
 export const runsQueryKeys = {
   all: ['runs'] as const,
   index: () => [...runsQueryKeys.all, 'index'] as const,
+  workflowIndex: () => [...runsQueryKeys.all, 'workflow-index'] as const,
   detail: (id: string) => [...runsQueryKeys.all, 'detail', id] as const,
   stages: (id: string) => [...runsQueryKeys.all, 'stages', id] as const,
 };
@@ -59,6 +62,25 @@ export function useRunsIndex() {
   return useQuery<RunsView>({
     queryKey: runsQueryKeys.index(),
     queryFn: () => getRunsView(),
+    staleTime: 15_000,
+  });
+}
+
+/**
+ * Step-56 Zone 6: List-page hook for the Runs Center page. Returns the
+ * discriminated `WorkflowRunsView` (unreachable | ok | empty) sourced
+ * from `GET /api/v1/workflows/runs` (the FastAPI WorkflowRun surface),
+ * not the SDLC `/v1/runs` orchestrator endpoint.
+ *
+ * The `useRunsIndex()` hook above is intentionally untouched — it still
+ * backs the persona dashboards / run detail / stage timeline that
+ * consume the SDLC `RunRecord` shape. New UI surfaces should call
+ * `useWorkflowRunsIndex()` instead so they render `WorkflowRun` rows.
+ */
+export function useWorkflowRunsIndex() {
+  return useQuery<WorkflowRunsView>({
+    queryKey: runsQueryKeys.workflowIndex(),
+    queryFn: () => getWorkflowRunsView(),
     staleTime: 15_000,
   });
 }

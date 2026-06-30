@@ -16,11 +16,11 @@ import pytest
 import pytest_asyncio
 
 # Stub ``app.db.session`` BEFORE importing the integration package so
-# the eager ``ComplianceFeed()`` construction at module-load time does
-# not try to open an async engine against the in-memory SQLite URL
-# (which lacks the ``pool_size``/``max_overflow`` kwargs the factory
-# passes). The mocked httpx transport intercepts every LiteLLM call,
-# so a stub session factory is enough.
+# any eager module-load-time DB usage does not try to open an async
+# engine against the in-memory SQLite URL (which lacks the
+# ``pool_size``/``max_overflow`` kwargs the factory passes). The mocked
+# httpx transport intercepts every LiteLLM call, so a stub session
+# factory is enough.
 import app.db.session as _session_mod
 
 

@@ -1,19 +1,20 @@
 /**
  * Async data loaders for the Project Intelligence center (FORA-501).
  *
- * Replaces the previous sync `lib/intelligence/mock-data.ts` seam with
- * async fetchers that hit the orchestrator stub's typed-artifact
- * endpoints. Page-level consumers (`app/project-intelligence/*`) import
- * from here; the mock-data module remains in place until the next pass
- * deletes it.
+ * Step 58 v2 migration: the legacy orchestrator stub on port 4000 is
+ * deprecated. This module now talks to the FastAPI backend on
+ * `FORGE_API_BASE_URL` (default `http://localhost:8000/api/v1`) using
+ * the canonical `/epics`, `/stories`, `/sprints` endpoints. Endpoints
+ * that don't exist on the FastAPI backend yet (handoffs, briefs,
+ * drafts) return an empty list so the page renders its empty state
+ * (Rule 15) rather than throwing 500s.
  *
- * Endpoints (project-scoped, see `bin/orchestrator-stub.py`):
- *   GET /v1/projects/project-forge-demo/epics
- *   GET /v1/projects/project-forge-demo/stories
- *   GET /v1/projects/project-forge-demo/handoffs
- *   GET /v1/projects/project-forge-demo/briefs
- *   GET /v1/projects/project-forge-demo/drafts
- *   GET /v1/projects/project-forge-demo/{prefix}/{id}
+ * Endpoints (project-scoped via JWT tenant — see
+ * `backend/app/api/v1/stories.py`, `sprints.py`, `epics.py`):
+ *   GET /epics
+ *   GET /stories?project_id=…&status=…
+ *   GET /sprints?project_id=…
+ *   GET /sprints/current
  *
  * On any non-2xx the loader returns an empty / null value so pages can
  * render the standard `<div className="card text-sm text-forge-300">No
@@ -28,11 +29,24 @@ import type {
   Story,
 } from "./types";
 
+import { FORGE_API_BASE_URL } from "@/lib/forge-api";
+
 export const SEED_TENANT_ID = "acme-corp";
 
-const API_BASE =
-  process.env.FORA_FORGE_API_URL ?? "http://localhost:4000";
-const PROJECT = "project-forge-demo";
+const API_BASE = FORGE_API_BASE_URL;
+
+// Warn once per load that endpoints don't yet exist on the FastAPI
+// backend. The page-level consumers render the empty state when these
+// return [] (Rule 15).
+const MISSING_ENDPOINT_WARNED = new Set<string>();
+function warnMissing(endpoint: string): void {
+  if (MISSING_ENDPOINT_WARNED.has(endpoint)) return;
+  MISSING_ENDPOINT_WARNED.add(endpoint);
+  // eslint-disable-next-line no-console
+  console.warn(
+    `[intelligence] ${endpoint} is not yet exposed by the FastAPI backend; returning empty list`,
+  );
+}
 
 async function getJson<T>(path: string): Promise<T | null> {
   try {
@@ -49,20 +63,43 @@ async function getList<T>(path: string): Promise<ReadonlyArray<T>> {
   return data ?? [];
 }
 
-export async function listEpics(): Promise<ReadonlyArray<Epic>> {
-  return getList<Epic>(`/v1/projects/${PROJECT}/epics`);
+/**
+ * Build a query string from a filter object. Skips undefined/null/empty.
+ * Backend endpoints use snake_case query params (project_id, sprint_id,
+ * status, priority, assignee_id, label, search).
+ */
+function buildQuery(filter?: Record<string, unknown>): string {
+  if (!filter) return "";
+  const entries = Object.entries(filter).filter(
+    ([, v]) => v !== undefined && v !== null && v !== "",
+  );
+  if (entries.length === 0) return "";
+  const usp = new URLSearchParams();
+  for (const [k, v] of entries) usp.set(k, String(v));
+  return `?${usp.toString()}`;
+}
+
+export async function listEpics(filter?: {
+  project_id?: string;
+  status?: string;
+}): Promise<ReadonlyArray<Epic>> {
+  return getList<Epic>(`/epics${buildQuery(filter)}`);
 }
 
 export async function getEpic(id: string): Promise<Epic | null> {
-  return getJson<Epic>(`/v1/projects/${PROJECT}/epics/${encodeURIComponent(id)}`);
+  return getJson<Epic>(`/epics/${encodeURIComponent(id)}`);
 }
 
-export async function listStories(): Promise<ReadonlyArray<Story>> {
-  return getList<Story>(`/v1/projects/${PROJECT}/stories`);
+export async function listStories(filter?: {
+  project_id?: string;
+  sprint_id?: string;
+  status?: string;
+}): Promise<ReadonlyArray<Story>> {
+  return getList<Story>(`/stories${buildQuery(filter)}`);
 }
 
 export async function getStory(id: string): Promise<Story | null> {
-  return getJson<Story>(`/v1/projects/${PROJECT}/stories/${encodeURIComponent(id)}`);
+  return getJson<Story>(`/stories/${encodeURIComponent(id)}`);
 }
 
 export async function listStoriesForEpic(
@@ -83,42 +120,57 @@ export async function listStoriesByStage(
   return all.filter((s) => s.status === stage);
 }
 
+/**
+ * Handoff contracts — not yet exposed on the FastAPI backend. The
+ * closest equivalent is the ideation output bundles (`/ideation/...`).
+ * Until that surface lands we return an empty list so the page renders
+ * its empty state.
+ */
 export async function listHandoffContracts(): Promise<
   ReadonlyArray<HandoffContract>
 > {
-  return getList<HandoffContract>(`/v1/projects/${PROJECT}/handoffs`);
+  warnMissing("/handoffs");
+  return [];
 }
 
 export async function getHandoffContract(
   id: string,
 ): Promise<HandoffContract | null> {
-  return getJson<HandoffContract>(
-    `/v1/projects/${PROJECT}/handoffs/${encodeURIComponent(id)}`,
-  );
+  warnMissing(`/handoffs/${id}`);
+  return null;
 }
 
+/**
+ * Requirement briefs — not yet exposed on the FastAPI backend. Return
+ * empty until a `/requirement-briefs` route is added.
+ */
 export async function listRequirementBriefs(): Promise<
   ReadonlyArray<RequirementBrief>
 > {
-  return getList<RequirementBrief>(`/v1/projects/${PROJECT}/briefs`);
+  warnMissing("/requirement-briefs");
+  return [];
 }
 
 export async function getRequirementBrief(
   id: string,
 ): Promise<RequirementBrief | null> {
-  return getJson<RequirementBrief>(
-    `/v1/projects/${PROJECT}/briefs/${encodeURIComponent(id)}`,
-  );
+  warnMissing(`/requirement-briefs/${id}`);
+  return null;
 }
 
+/**
+ * Draft PRDs — the closest FastAPI surface is `/ideation/ideas/{id}/prd`
+ * (single PRDs by idea id). The flat list endpoint `/drafts` doesn't
+ * exist yet, so we return an empty list to drive the empty state.
+ */
 export async function listDraftPrds(): Promise<ReadonlyArray<DraftPrd>> {
-  return getList<DraftPrd>(`/v1/projects/${PROJECT}/drafts`);
+  warnMissing("/drafts");
+  return [];
 }
 
 export async function getDraftPrd(id: string): Promise<DraftPrd | null> {
-  return getJson<DraftPrd>(
-    `/v1/projects/${PROJECT}/drafts/${encodeURIComponent(id)}`,
-  );
+  warnMissing(`/drafts/${id}`);
+  return null;
 }
 
 /**

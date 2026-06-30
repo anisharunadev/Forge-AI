@@ -39,5 +39,7 @@ its intelligence layer.
 
 ## See also
 
-- [3-Package Spec-Driven Stack](/forge/architecture/three-package-stack/)
-- [`packages/forge-pi`](/forge/packages/forge-pi/) — source package
+- [3-Package Spec-Driven Stack](/architecture/three-package-stack/)
+- [`@forge-ai/forge-core`](/forge-core/) — workflow methodology
+- [`@forge-ai/forge-browser`](/forge-browser/) — visual automation
+- [`packages/forge-pi`](https://github.com/forge-ai/forge-ai/tree/main/packages/forge-pi) — source package

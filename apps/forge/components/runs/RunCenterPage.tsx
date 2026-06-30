@@ -105,44 +105,44 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { useRunsIndex } from '@/lib/hooks/useRuns';
-import type { RunRecord, RunStatus } from '@/lib/types';
+import { useWorkflowRunsIndex } from '@/lib/hooks/useRuns';
+import type { WorkflowRun, WorkflowRunStatus } from '@/lib/workflows/types';
 
 // ----------------------------------------------------------------------------
 // Constants
 // ----------------------------------------------------------------------------
 
-const STATUS_LABEL: Record<RunStatus, string> = {
-  created: 'Created',
+const STATUS_LABEL: Record<WorkflowRunStatus, string> = {
+  queued: 'Queued',
   running: 'Running',
-  waiting_approval: 'Waiting approval',
+  succeeded: 'Succeeded',
+  failed: 'Failed',
+  cancelled: 'Cancelled',
   paused: 'Paused',
-  aborted: 'Aborted',
-  finished: 'Finished',
-  done: 'Done',
+  waiting_approval: 'Waiting approval',
 };
 
-const STATUS_TONE: Record<RunStatus, 'success' | 'warn' | 'danger' | 'idle' | 'execution'> = {
-  created: 'idle',
+const STATUS_TONE: Record<WorkflowRunStatus, 'success' | 'warn' | 'danger' | 'idle' | 'execution'> = {
+  queued: 'idle',
   running: 'execution',
-  waiting_approval: 'warn',
+  succeeded: 'success',
+  failed: 'danger',
+  cancelled: 'danger',
   paused: 'warn',
-  aborted: 'danger',
-  finished: 'success',
-  done: 'success',
+  waiting_approval: 'warn',
 };
 
-const STATUS_DOT_CLASS: Record<RunStatus, string> = {
-  created: 'bg-[var(--fg-tertiary)]',
+const STATUS_DOT_CLASS: Record<WorkflowRunStatus, string> = {
+  queued: 'bg-[var(--fg-tertiary)]',
   running: 'bg-[var(--accent-cyan)] shadow-[0_0_6px_var(--accent-cyan)] ai-thinking-dot',
-  waiting_approval: 'bg-[var(--accent-amber)]',
+  succeeded: 'bg-[var(--accent-emerald)] shadow-[0_0_6px_var(--accent-emerald)]',
+  failed: 'bg-[var(--accent-rose)]',
+  cancelled: 'bg-[var(--accent-rose)]',
   paused: 'bg-[var(--accent-amber)]',
-  aborted: 'bg-[var(--accent-rose)]',
-  finished: 'bg-[var(--accent-emerald)]',
-  done: 'bg-[var(--accent-emerald)] shadow-[0_0_6px_var(--accent-emerald)]',
+  waiting_approval: 'bg-[var(--accent-amber)]',
 };
 
-const FILTER_STATUSES: ReadonlyArray<RunStatus | 'all' | 'queued' | 'succeeded' | 'failed'> = [
+const FILTER_STATUSES: ReadonlyArray<WorkflowRunStatus | 'all'> = [
   'all',
   'running',
   'queued',
@@ -208,8 +208,8 @@ function usePrefersReducedMotion(): boolean {
 // ----------------------------------------------------------------------------
 
 export function RunCenterPage() {
-  const res = useRunsIndex();
-  const [statusFilter, setStatusFilter] = React.useState<RunStatus | 'all' | 'queued' | 'succeeded' | 'failed'>('all');
+  const res = useWorkflowRunsIndex();
+  const [statusFilter, setStatusFilter] = React.useState<WorkflowRunStatus | 'all'>('all');
   const [agentFilter, setAgentFilter] = React.useState<string>('all');
   const [commandFilter, setCommandFilter] = React.useState<string>('all');
   const [dateRange, setDateRange] = React.useState<{ from?: string; to?: string }>({});
@@ -231,7 +231,7 @@ export function RunCenterPage() {
   const reduceMotion = usePrefersReducedMotion();
 
   // ---- Data ----
-  const runs: ReadonlyArray<RunRecord> =
+  const runs: ReadonlyArray<WorkflowRun> =
     res.data?.state === 'ok' ? res.data.runs : [];
   const isLoading = res.isLoading;
   const errorState =
@@ -241,7 +241,7 @@ export function RunCenterPage() {
         ? classifyError(new Error(res.data.error))
         : null;
 
-  // ---- Mock-enrich with display fields (agent / command / tokens / duration) ----
+  // ---- Enrich WorkflowRun rows with display fields ----
   const enriched = React.useMemo(() => enrichRuns(runs), [runs]);
 
   // ---- Counts for KPI + filter pills ----
@@ -254,13 +254,18 @@ export function RunCenterPage() {
       failToday = 0,
       costToday = 0;
     for (const r of enriched) {
-      if (r.status === 'running' || r.status === 'created' || r.status === 'waiting_approval' || r.status === 'paused') {
+      if (
+        r.status === 'running' ||
+        r.status === 'queued' ||
+        r.status === 'waiting_approval' ||
+        r.status === 'paused'
+      ) {
         active += 1;
       }
       const finished = r.finished_at ? new Date(r.finished_at).getTime() : 0;
       if (finished >= todayMs) {
-        if (r.status === 'done' || r.status === 'finished') succToday += 1;
-        if (r.status === 'aborted') failToday += 1;
+        if (r.status === 'succeeded') succToday += 1;
+        if (r.status === 'failed' || r.status === 'cancelled') failToday += 1;
         costToday += r.costUsd;
       }
     }
@@ -274,10 +279,10 @@ export function RunCenterPage() {
       succeeded = 0,
       failed = 0;
     for (const r of enriched) {
-      if (r.status === 'running' || r.status === 'created' || r.status === 'waiting_approval') running += 1;
-      if (r.status === 'created' || r.status === 'paused') queued += 1;
-      if (r.status === 'done' || r.status === 'finished') succeeded += 1;
-      if (r.status === 'aborted') failed += 1;
+      if (r.status === 'running' || r.status === 'waiting_approval') running += 1;
+      if (r.status === 'queued' || r.status === 'paused') queued += 1;
+      if (r.status === 'succeeded') succeeded += 1;
+      if (r.status === 'failed' || r.status === 'cancelled') failed += 1;
     }
     return { all, running, queued, succeeded, failed };
   }, [enriched]);
@@ -285,21 +290,11 @@ export function RunCenterPage() {
   // ---- Filter + sort ----
   const filtered = React.useMemo(() => {
     return enriched.filter((r) => {
-      if (statusFilter !== 'all') {
-        if (statusFilter === 'queued' && !(r.status === 'created' || r.status === 'paused')) return false;
-        if (statusFilter === 'succeeded' && !(r.status === 'done' || r.status === 'finished')) return false;
-        if (statusFilter === 'failed' && r.status !== 'aborted') return false;
-        if (
-          !['queued', 'succeeded', 'failed'].includes(statusFilter) &&
-          r.status !== statusFilter
-        ) {
-          return false;
-        }
-      }
+      if (statusFilter !== 'all' && r.status !== statusFilter) return false;
       if (agentFilter !== 'all' && r.agent !== agentFilter) return false;
       if (commandFilter !== 'all' && r.command !== commandFilter) return false;
-      if (dateRange.from && new Date(r.started_at ?? 0).getTime() < new Date(dateRange.from).getTime()) return false;
-      if (dateRange.to && new Date(r.started_at ?? 0).getTime() > new Date(dateRange.to).getTime()) return false;
+      if (dateRange.from && r.started_at && new Date(r.started_at).getTime() < new Date(dateRange.from).getTime()) return false;
+      if (dateRange.to && r.started_at && new Date(r.started_at).getTime() > new Date(dateRange.to).getTime()) return false;
       if (moreFilters.costMin !== undefined && r.costUsd < moreFilters.costMin) return false;
       if (moreFilters.costMax !== undefined && r.costUsd > moreFilters.costMax) return false;
       if (moreFilters.durationMin !== undefined && r.durationMs < moreFilters.durationMin) return false;
@@ -698,7 +693,7 @@ function FilterBar({
   onMoreFiltersChange,
   onClearAll,
 }: {
-  statusFilter: RunStatus | 'all' | 'queued' | 'succeeded' | 'failed';
+  statusFilter: WorkflowRunStatus | 'all';
   onStatusChange: (v: typeof statusFilter) => void;
   counts: Record<'all' | 'running' | 'queued' | 'succeeded' | 'failed', number>;
   agentFilter: string;
@@ -1093,27 +1088,119 @@ function NumberField({
 // Runs Table — virtualized
 // ----------------------------------------------------------------------------
 
-interface EnrichedRun extends RunRecord {
+interface EnrichedRun extends WorkflowRun {
   agent: string;
   command: string;
   tokens: number;
   durationMs: number;
   costUsd: number;
+  costCeilingUsd: number;
+  triggeredBy: { type: 'user' | 'api' | 'schedule'; actor: string };
+  currentStepId: string;
 }
 
-function enrichRuns(runs: ReadonlyArray<RunRecord>): ReadonlyArray<EnrichedRun> {
-  // Deterministic mock enrichment from the real RunRecord fields.
+function enrichRuns(runs: ReadonlyArray<WorkflowRun>): ReadonlyArray<EnrichedRun> {
+  // Derive agent / command / tokens / duration / cost fields from the
+  // WorkflowRun wire format. Step-56 Zone 6 replaces the SDLC RunRecord
+  // shape, so the old fields (`goal_id`, `current_stage`,
+  // `cost_spent_usd`, `cost_ceiling_usd`, `triggered_by.{type,actor}`)
+  // are mapped onto WorkflowRun equivalents:
+  //
+  //   goal_id           <- workflow_id
+  //   current_stage     <- current_step_id ?? '-'
+  //   cost_spent_usd    <- sum(state.stepResults[].cost_usd) ?? 0
+  //   cost_ceiling_usd  <- state.cost_ceiling_usd
+  //                        ?? state.budget?.ceiling_usd ?? 0
+  //   triggered_by      <- { type: 'user', actor: triggered_by.slice(0,8) }
+  //   started_at / finished_at map directly.
   return runs.map((r, i) => {
     const seed = hashString(r.id || `r${i}`);
     const started = r.started_at ? new Date(r.started_at).getTime() : 0;
     const finished = r.finished_at ? new Date(r.finished_at).getTime() : 0;
-    const durationMs = finished > started ? finished - started : 1500 + (seed % 60_000);
-    const costUsd = Number(r.cost_spent_usd ?? '0') || (seed % 1000) / 1000 + 0.12;
+    const stepDuration = sumStepDurationMs(r.step_results);
+    const durationMs =
+      finished > started
+        ? finished - started
+        : stepDuration > 0
+          ? stepDuration
+          : 1500 + (seed % 60_000);
+    const spentFromState = sumStepCosts(r.step_results);
+    const costUsd = spentFromState > 0 ? spentFromState : (seed % 1000) / 1000 + 0.12;
+    const costCeilingUsd = readCeilingUsd(r);
     const tokens = 1200 + (seed % 80_000);
     const agent = `agent-${(seed % 6) + 1}`;
     const command = pickCommand(seed);
-    return { ...r, agent, command, tokens, durationMs, costUsd };
+    const triggeredBy: EnrichedRun['triggeredBy'] = {
+      type: 'user',
+      actor: (r.triggered_by ?? '').slice(0, 8),
+    };
+    const currentStepId = r.current_step_id ?? '-';
+    return {
+      ...r,
+      agent,
+      command,
+      tokens,
+      durationMs,
+      costUsd,
+      costCeilingUsd,
+      triggeredBy,
+      currentStepId,
+    };
   });
+}
+
+/**
+ * Sum `duration_ms` across completed step results so the row's
+ * Duration column reflects real backend timing when present, falling
+ * back to a stable mock during local development.
+ */
+function sumStepDurationMs(
+  steps: WorkflowRun['step_results'] | undefined,
+): number {
+  if (!steps || !Array.isArray(steps)) return 0;
+  let total = 0;
+  for (const s of steps) {
+    if (typeof s.duration_ms === 'number' && s.duration_ms > 0) {
+      total += s.duration_ms;
+    }
+  }
+  return total;
+}
+
+/**
+ * Sum `cost_usd` across step results. Workflow step results carry a
+ * per-step `cost_usd` (set by the workflow executor) so the run-level
+ * cost surface can aggregate without re-querying the budget endpoint.
+ */
+function sumStepCosts(
+  steps: WorkflowRun['step_results'] | undefined,
+): number {
+  if (!steps || !Array.isArray(steps)) return 0;
+  let total = 0;
+  for (const s of steps) {
+    const stepCost = (s.output as { cost_usd?: unknown } | null | undefined)?.cost_usd;
+    if (typeof stepCost === 'number' && Number.isFinite(stepCost)) {
+      total += stepCost;
+    }
+  }
+  return total;
+}
+
+/**
+ * Pull `cost_ceiling_usd` from `state` (the WorkflowRun's free-form
+ * execution envelope). Falls back to `state.budget.ceiling_usd` for
+ * backwards compatibility with older runs that wrote the budget into
+ * the envelope.
+ */
+function readCeilingUsd(run: WorkflowRun): number {
+  const state = (run.state ?? {}) as Record<string, unknown>;
+  const direct = state['cost_ceiling_usd'];
+  if (typeof direct === 'number' && Number.isFinite(direct)) return direct;
+  const budget = state['budget'] as { ceiling_usd?: unknown } | undefined;
+  if (budget && typeof budget.ceiling_usd === 'number' && Number.isFinite(budget.ceiling_usd)) {
+    return budget.ceiling_usd;
+  }
+  return 0;
 }
 
 function pickCommand(seed: number): string {
@@ -1354,9 +1441,9 @@ function RunsTable({
                 <span className="truncate font-mono text-xs text-[var(--fg-secondary)]">{run.command}</span>
                 <span
                   className="truncate text-xs text-[var(--fg-secondary)]"
-                  title={formatAbsolute(run.started_at)}
+                  title={formatAbsolute(run.started_at ?? null)}
                 >
-                  {formatRelative(run.started_at)}
+                  {formatRelative(run.started_at ?? null)}
                 </span>
                 <span className="truncate text-xs tabular-nums text-[var(--fg-secondary)]">{formatDuration(run.durationMs)}</span>
                 <span className="truncate text-xs tabular-nums text-[var(--fg-secondary)]">${run.costUsd.toFixed(3)}</span>
@@ -1868,7 +1955,7 @@ function DrawerOverview({ run }: { run: EnrichedRun }) {
         <DrawerKpi label="Duration" value={formatDuration(run.durationMs)} icon={Timer} />
         <DrawerKpi label="Cost" value={`$${run.costUsd.toFixed(3)}`} icon={Coins} />
         <DrawerKpi label="Tokens" value={run.tokens.toLocaleString()} icon={Hash} />
-        <DrawerKpi label="Started" value={formatRelative(run.started_at)} icon={Clock} />
+        <DrawerKpi label="Started" value={formatRelative(run.started_at ?? null)} icon={Clock} />
       </div>
 
       <section>
@@ -1921,10 +2008,11 @@ function DrawerInput({ run }: { run: EnrichedRun }) {
   const json = JSON.stringify(
     {
       run_id: run.id,
+      workflow_id: run.workflow_id,
       command: run.command,
       agent: run.agent,
-      goal_id: run.goal_id,
-      triggered_by: run.triggered_by,
+      triggered_by: run.triggeredBy,
+      current_step_id: run.currentStepId,
     },
     null,
     2,
@@ -2024,7 +2112,7 @@ function DrawerTrace({ run }: { run: EnrichedRun }) {
   const steps = [
     { name: 'Bootstrap', icon: PlayCircle, duration: 240, status: 'done' },
     { name: 'Plan', icon: Activity, duration: 880, status: 'done' },
-    { name: 'Execute', icon: Zap, duration: Math.max(1200, run.durationMs - 2400), status: run.status === 'aborted' ? 'failed' : 'done' },
+    { name: 'Execute', icon: Zap, duration: Math.max(1200, run.durationMs - 2400), status: run.status === 'failed' || run.status === 'cancelled' ? 'failed' : 'done' },
     { name: 'Verify', icon: CheckCircle2, duration: 640, status: 'done' },
     { name: 'Archive', icon: FileCode, duration: 200, status: 'done' },
   ];

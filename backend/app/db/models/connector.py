@@ -105,8 +105,29 @@ class ConnectorSyncHistory(Base, UUIDPrimaryKeyMixin):
     )
 
 
+class ConnectorHealthHistory(Base, UUIDPrimaryKeyMixin):
+    """Append-only log of connector health probe outcomes (step-55)."""
+
+    __tablename__ = "connector_health_history"
+
+    tenant_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, index=True)
+    project_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, index=True)
+    connector_id: Mapped[UUID] = mapped_column(
+        GUID(), ForeignKey("connectors.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    probed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (
+        Index("ix_health_history_connector_probed", "connector_id", "probed_at"),
+    )
+
+
 __all__ = [
     "Connector",
+    "ConnectorHealthHistory",
     "ConnectorStatus",
     "ConnectorSyncHistory",
     "ConnectorType",

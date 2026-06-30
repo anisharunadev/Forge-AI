@@ -28,8 +28,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 # Stub the session module before importing the copilot service — this
-# prevents the eager ``ComplianceFeed()`` import chain from blowing up
-# on the test env (same trick used in test_litellm_tools.py).
+# prevents any eager DB usage in the import chain from blowing up on
+# the test env (same trick used in test_litellm_tools.py).
 import app.db.session as _session_mod
 
 

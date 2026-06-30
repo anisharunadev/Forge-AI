@@ -1,10 +1,29 @@
 'use client';
 
-import { Bot, Cpu, Zap } from 'lucide-react';
+/**
+ * Agent card (step-54 — Phase 2).
+ *
+ * Adds two real actions to the existing visual card:
+ *   - **Test connection** — calls `POST /agents/{id}/test`.
+ *   - **Delete** — calls `DELETE /agents/{id}` via the optimistic
+ *     `useDeleteAgent` mutation (row disappears immediately, rolls
+ *     back on error).
+ *
+ * Skill rules adopted:
+ *   - **Confirmation before destructive action** — the delete button
+ *     asks the browser to confirm before firing.
+ *   - **Toast on every action** — test and delete results surface as
+ *     toasts so the user always knows what happened.
+ */
+
+import * as React from 'react';
+import { Bot, Cpu, Zap, Trash2, Play } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { useDeleteAgent, useTestAgent } from '@/lib/query/hooks';
 import type { Agent, AgentStatus } from '@/lib/agent-center/data';
 
 const STATUS_TONE: Record<AgentStatus, string> = {
@@ -27,6 +46,49 @@ export interface AgentCardProps {
 }
 
 export function AgentCard({ agent, onSelect }: AgentCardProps) {
+  const testAgent = useTestAgent();
+  const deleteAgent = useDeleteAgent();
+  const { toast } = useToast();
+
+  const handleTest = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const res = await testAgent.mutateAsync(agent.id);
+      toast({
+        title: res.status === 'ok' ? 'Agent reachable' : 'Agent unreachable',
+        description: res.message,
+        variant: res.status === 'ok' ? 'default' : 'destructive',
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast({
+        title: 'Test failed',
+        description: message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (typeof window !== 'undefined' && !window.confirm(`Delete ${agent.name}?`)) {
+      return;
+    }
+    try {
+      await deleteAgent.mutateAsync(agent.id);
+      toast({
+        title: `Agent "${agent.name}" deleted`,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast({
+        title: 'Delete failed — restored',
+        description: message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <article
       data-testid="agent-card"
@@ -57,19 +119,27 @@ export function AgentCard({ agent, onSelect }: AgentCardProps) {
         </span>
       </header>
 
-      <p className="text-xs text-forge-200">{agent.description}</p>
+      {agent.description ? (
+        <p className="text-xs text-forge-200">{agent.description}</p>
+      ) : null}
 
       <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
         <dt className="text-forge-300">Type</dt>
         <dd className="text-forge-100">{TYPE_LABEL[agent.type]}</dd>
         <dt className="text-forge-300">Default provider</dt>
-        <dd className="font-mono text-forge-100">{agent.defaultProvider}</dd>
+        <dd className="font-mono text-forge-100">
+          {agent.defaultProvider || '—'}
+        </dd>
         <dt className="text-forge-300">Invocations (24h)</dt>
         <dd className="font-mono text-forge-100">{agent.invocations24h}</dd>
         <dt className="text-forge-300">Cost (24h)</dt>
         <dd className="font-mono text-forge-100">${agent.costUsd24h.toFixed(2)}</dd>
         <dt className="text-forge-300">Last invoked</dt>
-        <dd className="font-mono text-forge-100">{agent.lastInvokedAt}</dd>
+        <dd className="font-mono text-forge-100">
+          {agent.lastInvokedAt
+            ? new Date(agent.lastInvokedAt).toLocaleString()
+            : '—'}
+        </dd>
       </dl>
 
       <div className="flex flex-wrap items-center gap-1.5">
@@ -80,20 +150,44 @@ export function AgentCard({ agent, onSelect }: AgentCardProps) {
         ))}
       </div>
 
-      <footer className="flex items-center justify-between border-t border-forge-800 pt-3">
+      <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-forge-800 pt-3">
         <div className="flex items-center gap-2 text-[10px] text-forge-300">
           <Cpu className="h-3 w-3" aria-hidden="true" />
           {agent.invocations24h} calls · ${agent.costUsd24h.toFixed(2)}
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => onSelect?.(agent)}
-          data-testid="agent-card-open"
-        >
-          <Zap className="h-3 w-3" aria-hidden="true" />
-          Open
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleTest}
+            disabled={testAgent.isPending}
+            data-testid="agent-card-test"
+            className="text-[var(--fg-secondary)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--fg-primary)]"
+          >
+            <Play className="h-3 w-3" aria-hidden="true" />
+            {testAgent.isPending ? 'Testing…' : 'Test'}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleDelete}
+            disabled={deleteAgent.isPending}
+            data-testid="agent-card-delete"
+            className="text-[var(--fg-tertiary)] hover:bg-rose-500/10 hover:text-rose-300"
+          >
+            <Trash2 className="h-3 w-3" aria-hidden="true" />
+            Delete
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onSelect?.(agent)}
+            data-testid="agent-card-open"
+          >
+            <Zap className="h-3 w-3" aria-hidden="true" />
+            Open
+          </Button>
+        </div>
       </footer>
     </article>
   );

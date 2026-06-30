@@ -177,6 +177,16 @@ Day-to-day operations are covered by:
 - `rollback-procedures.md` — environment rollback playbook
 - `success-metrics.md` — pilot KPIs
 
+## Documentation
+
+- [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) — Canonical visual + interaction reference (Phase 0.5 closure)
+- [CHANGELOG.md](./CHANGELOG.md) — What shipped in each step (Steps 1–60)
+- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) — System architecture
+- [CLAUDE.md](./CLAUDE.md) — Constitutional rules (Rules 1–18)
+- [implementation_plan.md](./implementation_plan.md) — Project plan
+
+> Historical design docs (`forge-design-system.md`, `forge-theme-system.md`) are preserved with deprecation banners pointing to `DESIGN_SYSTEM.md`. The `docs/design-system-curate.md` file is the design vision prompt — different purpose, kept as-is.
+
 ## Contributing
 
 1. Read [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) to bring up the stack locally.

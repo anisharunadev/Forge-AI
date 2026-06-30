@@ -3,6 +3,13 @@
 /**
  * RbacRolesList — Compact RBAC roles panel.
  *
+ * Step-59 migration: was reading the `RbacRole` type from
+ * `@/lib/governance/data`. The RBAC roles endpoint isn't on the
+ * LiteLLM-backed governance surface yet, so the type now lives in
+ * `useForgeFixtures.ts` alongside the inline fixture array. Once
+ * `/v1/governance/rbac-roles` ships on the backend, this component
+ * should consume a TanStack Query hook (mirroring `useGuardrails`).
+ *
  * Per spec: list of role chips (Owner, Admin, Editor, Viewer, Custom)
  * — clicking a chip expands to show member list with avatars.
  *
@@ -19,10 +26,10 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import type { RbacRole } from '@/lib/governance/data';
+import { FIXTURE_RBAC_ROLES, type RbacRole } from '@/lib/hooks/useForgeFixtures';
 
 export interface RbacRolesListProps {
-  roles: ReadonlyArray<RbacRole>;
+  roles?: ReadonlyArray<RbacRole>;
 }
 
 function initials(name: string): string {
@@ -54,7 +61,8 @@ function roleToneClasses(role: RbacRole): string {
 }
 
 export function RbacRolesList({ roles }: RbacRolesListProps) {
-  if (roles.length === 0) return null;
+  const rows = roles ?? FIXTURE_RBAC_ROLES;
+  if (rows.length === 0) return null;
 
   return (
     <Accordion
@@ -62,7 +70,7 @@ export function RbacRolesList({ roles }: RbacRolesListProps) {
       className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-surface)]"
       data-testid="rbac-section-page"
     >
-      {roles.map((r) => {
+      {rows.map((r) => {
         // Deterministic avatar pool so SSR matches CSR. Names come
         // from a curated list — not real users.
         const sampleNames = [

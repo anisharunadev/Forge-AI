@@ -1,7 +1,5 @@
 """F-011 — Agent Registry REST endpoints."""
 
-from __future__ import annotations
-
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, Response, status
@@ -39,7 +37,7 @@ async def get_agent(
         agent = await agent_registry.get_agent(agent_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    if agent.tenant_id != principal.tenant_id:
+    if str(agent.tenant_id) != str(principal.tenant_id):
         raise HTTPException(status_code=404, detail="agent_not_found")
     return AgentRead.model_validate(agent)
 
@@ -74,7 +72,7 @@ async def update_agent(
         existing = await agent_registry.get_agent(agent_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    if existing.tenant_id != principal.tenant_id:
+    if str(existing.tenant_id) != str(principal.tenant_id):
         raise HTTPException(status_code=404, detail="agent_not_found")
     updated = await agent_registry.update_agent(
         agent_id,
@@ -93,7 +91,6 @@ async def update_agent(
     response_class=Response,
 )
 @audit(action="agents.delete", target_type="agent")
-@audit(action="agents.delete", target_type="agent")
 async def delete_agent(
     agent_id: UUID,
     principal: Principal,
@@ -103,9 +100,37 @@ async def delete_agent(
         existing = await agent_registry.get_agent(agent_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    if existing.tenant_id != principal.tenant_id:
+    if str(existing.tenant_id) != str(principal.tenant_id):
         raise HTTPException(status_code=404, detail="agent_not_found")
     await agent_registry.delete_agent(agent_id)
+
+
+# step-54 — Phase 2 test endpoint. The backend currently does not
+# actually invoke the agent runtime (that lives in `agent_runtime.py`
+# and requires a container/sandbox); this returns a typed TestResult
+# so the UI can wire a "Test connection" button and surface status.
+# A real invocation can be layered on later via `agent_runtime`.
+@router.post("/{agent_id}/test")
+@audit(action="agents.test", target_type="agent")
+async def test_agent(
+    agent_id: UUID,
+    principal: Principal,
+    _perm: Principal = require_permission("agents:read"),
+) -> dict[str, str]:
+    try:
+        existing = await agent_registry.get_agent(agent_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    if str(existing.tenant_id) != str(principal.tenant_id):
+        raise HTTPException(status_code=404, detail="agent_not_found")
+    if existing.status.value == "deprecated":
+        return {"status": "error", "message": "agent is deprecated"}
+    if existing.status.value == "disabled":
+        return {"status": "error", "message": "agent is disabled"}
+    return {
+        "status": "ok",
+        "message": f"Agent '{existing.name}' reachable (v{existing.version})",
+    }
 
 
 __all__ = ["router"]

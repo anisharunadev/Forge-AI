@@ -17,6 +17,9 @@ import {
   KeyboardSensor,
   PointerSensor,
   closestCorners,
+  defaultAnnouncements,
+  defaultScreenReaderInstructions,
+  useDroppable,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -217,13 +220,21 @@ function KanbanColumn({
   onMenu?: (idea: Idea) => void;
   isOver: boolean;
 }) {
+  // ponytail: useDroppable gives every column (including empties) a
+  // valid drop target. Without this, keyboard users navigating to an
+  // empty column have nowhere to drop — closestCorners only matches
+  // card ids, so the empty-state placeholder swallows the drop.
+  const { setNodeRef, isOver: isDroppableOver } = useDroppable({
+    id: column.key,
+  });
+  const showHighlight = isOver || isDroppableOver;
   return (
     <section
       aria-label={column.label}
       data-testid={`kanban-column-${column.key}`}
       className={cn(
         'flex h-full min-w-[260px] flex-col gap-3 rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-base)] p-3 transition-colors duration-200 ease-out-soft',
-        isOver && 'bg-[rgba(99,102,241,0.06)]',
+        showHighlight && 'bg-[rgba(99,102,241,0.06)]',
       )}
     >
       <header className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-[var(--bg-base)] pb-1">
@@ -250,6 +261,7 @@ function KanbanColumn({
 
       <SortableContext items={ideas.map((i) => i.id)} strategy={verticalListSortingStrategy}>
         <div
+          ref={setNodeRef}
           className="flex min-h-[120px] flex-1 flex-col gap-3 overflow-y-auto pb-2 thin-scrollbar"
           data-testid={`kanban-column-body-${column.key}`}
         >
@@ -380,6 +392,16 @@ export function IdeaKanban({ ideas, onSelect, onAddNew, onMenu, onMove }: IdeaKa
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
+      // ponytail: default announcements + screen-reader instructions
+      // cover pickup / move / drop / cancel. `restoreFocus` returns
+      // focus to the moved card after drop so keyboard users land
+      // where they expect. Without this prop dnd-kit runs silently
+      // for assistive tech.
+      accessibility={{
+        announcements: defaultAnnouncements,
+        screenReaderInstructions: defaultScreenReaderInstructions,
+        restoreFocus: true,
+      }}
       onDragOver={(e: { over: { id: string | number } | null }) => {
         const overId = e.over ? String(e.over.id) : null;
         if (!overId) {

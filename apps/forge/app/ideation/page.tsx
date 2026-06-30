@@ -37,13 +37,13 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 
-import { IdeationBoard, type IdeationView } from '@/components/ideation/IdeationBoard';
+import type { IdeationView } from '@/components/ideation/IdeationBoard';
 import { IdeaDetailPanel } from '@/components/ideation/IdeaDetailPanel';
-import { RoadmapTimeline } from '@/components/ideation/RoadmapTimeline';
-import { PRDList } from '@/components/ideation/PRDList';
-import { PRDViewer } from '@/components/ideation/PRDViewer';
-import { ArchPreviewGrid } from '@/components/ideation/ArchPreviewGrid';
-import { ApprovalsInbox } from '@/components/ideation/ApprovalsInbox';
+import { IdeationIdeasPanel } from '@/components/ideation/IdeationIdeasPanel';
+import { IdeationRoadmapPanel } from '@/components/ideation/IdeationRoadmapPanel';
+import { IdeationPRDPanel } from '@/components/ideation/IdeationPRDPanel';
+import { IdeationArchPreviewPanel } from '@/components/ideation/IdeationArchPreviewPanel';
+import { IdeationApprovalsPanel } from '@/components/ideation/IdeationApprovalsPanel';
 import { IngestIndicator } from '@/components/ideation/IngestIndicator';
 import { PipelineView } from '@/components/ideation/PipelineView';
 import { SourcesTab } from '@/components/ideation/SourcesTab';
@@ -54,18 +54,12 @@ import { CustomerVoiceTab } from '@/components/ideation/CustomerVoiceTab';
 import { CaptureModal } from '@/components/ideation/CaptureModal';
 import { OneClickPipelineDrawer } from '@/components/ideation/OneClickPipelineDrawer';
 
-import { useApiData } from '@/hooks/use-api-data';
 import { useIdeationIngestStatus } from '@/lib/hooks/useIdeationIngestStatus';
 import { useIdeationHotkeys, type HotkeyId } from '@/lib/hooks/useIdeationHotkeys';
+import { useIdeasAdapter, useApprovalsAdapter } from '@/lib/hooks/useIdeationAdapters';
 import { PageHeader } from '@/components/shell';
 import { toast } from 'sonner';
-import type {
-  Approval,
-  ArchPreview,
-  Idea,
-  PRD,
-  RoadmapItem,
-} from '@/lib/ideation/data';
+import type { Idea } from '@/lib/ideation/data';
 
 // ---------------------------------------------------------------------------
 // Tab enumeration — keeps the badge counts next to the labels.
@@ -100,7 +94,6 @@ export default function IdeationCenterPage() {
   const [view, setView] = React.useState<IdeationView>('kanban');
   const [selected, setSelected] = React.useState<Idea | null>(null);
   const [detailOpen, setDetailOpen] = React.useState(false);
-  const [selectedPRD, setSelectedPRD] = React.useState<PRD | null>(null);
   const [captureOpen, setCaptureOpen] = React.useState(false);
   const [captureDefaultTitle, setCaptureDefaultTitle] = React.useState('');
   const [captureDefaultDescription, setCaptureDefaultDescription] = React.useState('');
@@ -109,23 +102,18 @@ export default function IdeationCenterPage() {
   const [pipelineDrawerOpen, setPipelineDrawerOpen] = React.useState(false);
   const [menuOpen, setMenuOpen] = React.useState(false);
 
-  const ideasRes = useApiData<ReadonlyArray<Idea>>('/v1/ideation/ideas');
-  const roadmapRes = useApiData<ReadonlyArray<RoadmapItem>>('/v1/ideation/roadmap');
-  const prdsRes = useApiData<ReadonlyArray<PRD>>('/v1/ideation/prds');
-  const previewsRes = useApiData<ReadonlyArray<ArchPreview>>('/v1/ideation/arch-previews');
-  const approvalsRes = useApiData<ReadonlyArray<Approval>>('/v1/ideation/approvals');
-
-  const ideas: ReadonlyArray<Idea> = ideasRes.data ?? [];
-  const roadmap: ReadonlyArray<RoadmapItem> = roadmapRes.data ?? [];
-  const prds: ReadonlyArray<PRD> = prdsRes.data ?? [];
-  const previews: ReadonlyArray<ArchPreview> = previewsRes.data ?? [];
-
-  const [approvals, setApprovals] = React.useState<ReadonlyArray<Approval>>([]);
-  React.useEffect(() => {
-    if (approvals.length === 0 && approvalsRes.data && approvalsRes.data.length > 0) {
-      setApprovals(approvalsRes.data);
-    }
-  }, [approvalsRes.data, approvals.length]);
+  // Step-57 Zone 6 — wire the page to the canonical TanStack Query
+  // hooks in `lib/hooks/useIdeation.ts` via the legacy-shape adapters
+  // (`lib/hooks/useIdeationAdapters.ts`). The adapter hooks own the
+  // query state (loading / error / refetch) — the page-level state
+  // here only tracks counts for the tab badges.
+  const ideasAdapter = useIdeasAdapter();
+  const ideas: ReadonlyArray<Idea> = ideasAdapter.data;
+  // Pull a lightweight approvals count for the tab badge. The full
+  // approval data lives in `IdeationApprovalsPanel`; the page only
+  // needs the length.
+  const approvalsAdapter = useApprovalsAdapter();
+  const approvalsCount = approvalsAdapter.data.length;
 
   const ingestStatusRes = useIdeationIngestStatus();
   const ingestStatus = ingestStatusRes.data?.status ?? 'never';
@@ -137,22 +125,9 @@ export default function IdeationCenterPage() {
     setDetailOpen(true);
   };
 
-  const handleDecide = (a: Approval, decision: 'approve' | 'reject') => {
-    setApprovals((curr) =>
-      curr.map((x) =>
-        x.id === a.id ? { ...x, status: decision === 'approve' ? 'approved' : 'rejected' } : x,
-      ),
-    );
-  };
-
   const handleGeneratePreview = () => {
     // eslint-disable-next-line no-console
     console.info('[ideation] generate preview — wired to architecture pipeline in a follow-up');
-  };
-
-  const handleMove = (ideaId: string, toColumn: string) => {
-    // eslint-disable-next-line no-console
-    console.info('[ideation] move', { ideaId, toColumn });
   };
 
   const handleAddNew = (column: string) => {
@@ -220,12 +195,14 @@ export default function IdeationCenterPage() {
 
   useIdeationHotkeys({ onHotkey: handleHotkey });
 
-  const activePRD = selectedPRD ?? prds[0] ?? null;
-
-  // Counts for badge chips on Ideas / PRDs / Approvals.
+  // Step-57 Zone 6 — counts for badge chips on Ideas / Approvals.
+  // PRD count is 0 for now because the canonical PRD list endpoint
+  // isn't wired in the adapter yet (PRD is per-idea in the wire
+  // shape). Flip this to the new list endpoint when it lands.
   const ideaCount = ideas.length;
-  const prdCount = prds.length;
-  const approvalsCount = approvals.length;
+  const prdCount = 0;
+  // `approvalsCount` is computed above from `approvalsAdapter.data.length`
+  // — keep the variable name for the badge lookup below.
 
   return (
     <AdminShell>
@@ -363,31 +340,44 @@ export default function IdeationCenterPage() {
           </TabsContent>
 
           <TabsContent value="ideas" className="mt-4">
-            <IdeationBoard
-              ideas={ideas}
+            <IdeationIdeasPanel
               view={view}
               onViewChange={setView}
               onSelect={handleSelect}
               onAddNew={handleAddNew}
-              onMove={handleMove}
+              onMenu={() => {
+                // eslint-disable-next-line no-console
+                console.info('[ideation] idea menu — wired in a follow-up.');
+              }}
             />
           </TabsContent>
 
           <TabsContent value="roadmap" className="mt-4">
-            <RoadmapTimeline items={roadmap} onMoveQuarter={handleMoveQuarter} />
+            <IdeationRoadmapPanel onMoveQuarter={handleMoveQuarter} />
           </TabsContent>
 
           <TabsContent value="prds" className="mt-4 space-y-4">
-            <PRDList prds={prds} ideas={ideas} onSelect={setSelectedPRD} />
-            {activePRD ? <PRDViewer prd={activePRD} /> : null}
+            <IdeationPRDPanel
+              ideas={ideas}
+              onSelect={(prd) => {
+                // eslint-disable-next-line no-console
+                console.info('[ideation] open prd', { id: prd.id });
+              }}
+              onGenerate={handleGeneratePreview}
+            />
           </TabsContent>
 
           <TabsContent value="arch" className="mt-4">
-            <ArchPreviewGrid previews={previews} onGenerate={handleGeneratePreview} />
+            <IdeationArchPreviewPanel onGenerate={handleGeneratePreview} />
           </TabsContent>
 
           <TabsContent value="approvals" className="mt-4">
-            <ApprovalsInbox approvals={approvals} onDecide={handleDecide} />
+            <IdeationApprovalsPanel
+              onOpen={(a) => {
+                // eslint-disable-next-line no-console
+                console.info('[ideation] open approval', { id: a.id });
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="sources" className="mt-4">

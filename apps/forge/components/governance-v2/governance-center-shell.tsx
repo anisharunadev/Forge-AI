@@ -14,7 +14,15 @@ import { BoardTab } from './board/board-tab';
 import { RbacTab } from './rbac/rbac-tab';
 import { TestTab } from './test/test-tab';
 import { AuditTab } from './audit/audit-tab';
-import { KPIS } from '@/lib/governance-v2';
+import {
+  useSpendByDay,
+  useSpendByTeam,
+  useGuardrails,
+  useModels,
+  useStandards,
+  useAuditEvents,
+  useLLMTraffic,
+} from '@/lib/hooks/useLiteLLM';
 
 export interface GovernanceCenterShellProps {
   readonly persona: string;
@@ -29,10 +37,66 @@ const KEYBOARD_SHORTCUTS: ReadonlyArray<{ keys: string[]; description: string }>
   { keys: ['⌘', 'K'], description: 'Global search' },
 ];
 
+/**
+ * Derive HeroBand KPI props from the live LiteLLM data. Falls back
+ * to safe defaults while hooks are loading so the UI never renders
+ * "NaN" or undefined values.
+ */
+function useHeroBandKpis() {
+  const { data: spendByDay } = useSpendByDay(30);
+  const { data: spendByTeam } = useSpendByTeam();
+  const { data: guardrails } = useGuardrails();
+  const { data: standards } = useStandards();
+
+  return React.useMemo(() => {
+    const todaySpend = spendByDay?.at(-1)?.spend ?? 0;
+    const enabledGuardrails = (guardrails ?? []).filter((g) => g.enabled).length;
+    const totalGuardrails = guardrails?.length ?? 0;
+    const status: 'all-active' | 'warning' | 'critical' =
+      enabledGuardrails === totalGuardrails && totalGuardrails > 0
+        ? 'all-active'
+        : enabledGuardrails === 0
+          ? 'critical'
+          : 'warning';
+
+    const activeStandards = (standards ?? []).filter(
+      (s) => s.status === 'active',
+    ).length;
+    const totalStandards = standards?.length ?? 0;
+
+    const guardrailScore =
+      totalGuardrails > 0 ? (enabledGuardrails / totalGuardrails) * 100 : 0;
+    const standardScore =
+      totalStandards > 0 ? (activeStandards / totalStandards) * 100 : 0;
+    const compositeScore = Math.round(
+      (guardrailScore + standardScore) / 2 || guardrailScore,
+    );
+
+    return {
+      guardrailStatus: status,
+      guardrailCount: totalGuardrails - enabledGuardrails,
+      complianceScore: compositeScore,
+      standardsMet: activeStandards,
+      standardsTotal: totalStandards,
+      todaySpend,
+      teamCount: spendByTeam?.length ?? 0,
+    };
+  }, [spendByDay, spendByTeam, guardrails, standards]);
+}
+
+/**
+ * The shell is the only client component in the page. Each tab pulls
+ * its own data via TanStack Query hooks (mirrors the pattern in
+ * `app/analytics/page.tsx`). The shell's job is layout, tab routing,
+ * keyboard shortcuts, and the HeroBand aggregation.
+ */
 export function GovernanceCenterShell({ persona, boardTokenPresent }: GovernanceCenterShellProps) {
   const [activeTab, setActiveTab] = React.useState<string>('overview');
   const [showSearch, setShowSearch] = React.useState(false);
   const [showShortcuts, setShowShortcuts] = React.useState(false);
+
+  // HeroBand aggregation only. Each tab pulls its own slice.
+  const heroBand = useHeroBandKpis();
 
   // Keyboard shortcuts
   React.useEffect(() => {
@@ -51,15 +115,24 @@ export function GovernanceCenterShell({ persona, boardTokenPresent }: Governance
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'overview': return <OverviewTab />;
-      case 'policies': return <PoliciesTab />;
-      case 'guardrails': return <GuardrailsTab />;
-      case 'standards': return <StandardsTab />;
-      case 'llm': return <LlmTab />;
-      case 'board': return <BoardTab />;
-      case 'rbac': return <RbacTab />;
-      case 'audit': return <AuditTab />;
-      default: return <OverviewTab />;
+      case 'overview':
+        return <OverviewTab />;
+      case 'policies':
+        return <PoliciesTab />;
+      case 'guardrails':
+        return <GuardrailsTab />;
+      case 'standards':
+        return <StandardsTab />;
+      case 'llm':
+        return <LlmTab />;
+      case 'board':
+        return <BoardTab />;
+      case 'rbac':
+        return <RbacTab />;
+      case 'audit':
+        return <AuditTab />;
+      default:
+        return <OverviewTab />;
     }
   };
 
@@ -67,11 +140,11 @@ export function GovernanceCenterShell({ persona, boardTokenPresent }: Governance
     <div className="mx-auto w-full max-w-[1440px] space-y-6 p-8" data-testid="governance-center-page">
       <HeroBand
         persona={persona}
-        guardrailStatus={KPIS.guardrailStatus}
-        guardrailCount={KPIS.guardrailStatusCount}
-        complianceScore={KPIS.totalComplianceScore}
-        standardsMet={KPIS.standards.met}
-        standardsTotal={KPIS.standards.total}
+        guardrailStatus={heroBand.guardrailStatus}
+        guardrailCount={heroBand.guardrailCount}
+        complianceScore={heroBand.complianceScore}
+        standardsMet={heroBand.standardsMet}
+        standardsTotal={heroBand.standardsTotal}
         boardTokenPresent={boardTokenPresent}
       />
 

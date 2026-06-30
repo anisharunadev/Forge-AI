@@ -86,13 +86,27 @@ services:
     # start-dev + --import-realm boots with the forge realm preloaded.
     # In production, Keycloak runs in `start` mode behind a managed
     # Postgres and is fronted by the identity-broker (see ADR-001).
-    command: ["start-dev"]
+    # step-53 Zone 1: scripts/keycloak-init/forge-realm.json defines
+    # the `forge` realm (clients: forge-ui public+PKCE, forge-backend
+    # confidential) and the dev seed user arun@acme-corp.com with the
+    # acme-corp tenant attributes attached.
+    command: ["start-dev", "--import-realm"]
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      # Confidential client secret read by forge-realm.json via the
+      # ${KEYCLOAK_BACKEND_SECRET} placeholder. Keycloak resolves the
+      # env var when the realm is imported on first boot.
+      KEYCLOAK_BACKEND_SECRET: "${KEYCLOAK_BACKEND_SECRET:-forge-backend-dev-secret-change-in-prod}"
       KC_HEALTH_ENABLED: "true"
     ports:
       - "${KEYCLOAK_PORT:-8080}:8080"
+    volumes:
+      # Auto-import directory — every *.json under this path is loaded
+      # as a realm definition on first boot of a fresh Keycloak data
+      # volume. Idempotent on subsequent boots (Keycloak skips realms
+      # that already exist by name).
+      - ./scripts/keycloak-init:/opt/keycloak/data/import:ro
     healthcheck:
       # Keycloak container has no curl/wget, but the bundled `/bin/sh`
       # supports the bash /dev/tcp pseudo-device. The OIDC discovery
@@ -120,9 +134,12 @@ services:
       # LiteLLM uses its own database for spend tracking and rate
       # limits. We point it at the same Postgres instance for
       # simplicity; the database is created by postgres-init/03.
-      DATABASE_URL: "postgresql://${POSTGRES_USER:-forge}:${POSTGRES_PASSWORD:-forge}@postgres:5432/litellm"
+      # MUST use the docker-compose service name "postgres" — inside a
+      # container, "localhost" refers to the container itself, not the
+      # peer service on the bridge network.
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-forge}:${POSTGRES_PASSWORD:-forge}@postgres:${POSTGRES_PORT:-5432}/litellm"
       REDIS_HOST: "redis"
-      REDIS_PORT: "6379"
+      REDIS_PORT: "${REDIS_PORT:-6379}"
       # DL-025 + infra/litellm/config.yaml:63 — the proxy refuses to
       # boot without this. Read from .env; falls back to the dev
       # placeholder so first-time `docker compose up` still works.
@@ -135,7 +152,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "python3 -c \"import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:4000/health/liveliness', timeout=3).status == 200 else 1)\" || exit 1"]
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:${LITELLM_PORT:-4000}/health/liveliness', timeout=3).status == 200 else 1)\" || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -155,7 +172,7 @@ services:
     container_name: forge-floci
     restart: unless-stopped
     environment:
-      FLOCI_PORT: "4566"
+      FLOCI_PORT: "${FLOCI_PORT:-4566}"
       FLOCI_DEFAULT_REGION: "us-east-1"
       FLOCI_DEFAULT_ACCOUNT_ID: "000000000000"
       FLOCI_STORAGE_MODE: "persistent"
@@ -189,16 +206,18 @@ services:
       # The backend is async-native (sqlalchemy[asyncio] + asyncpg) — must
       # use the explicit asyncpg URL prefix or SQLAlchemy falls back to
       # psycopg2 (sync, not installed) at engine creation time.
-      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-forge}:${POSTGRES_PASSWORD:-forge}@postgres:5432/${POSTGRES_DB:-forge}"
-      REDIS_URL: "redis://redis:6379/0"
+      # MUST use the docker-compose service name "postgres" — inside the
+      # backend container, "localhost" refers to the container itself.
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-forge}:${POSTGRES_PASSWORD:-forge}@postgres:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-forge}"
+      REDIS_URL: "redis://redis:${REDIS_PORT:-6379}/0"
       # OIDC: backend validates tokens issued by the local Keycloak
       # realm. Issuer URL must match what Keycloak prints on
       # startup (no trailing slash).
-      KEYCLOAK_URL: "http://keycloak:8080"
+      KEYCLOAK_URL: "http://keycloak:${KEYCLOAK_PORT:-8080}"
       KEYCLOAK_REALM: "forge"
       JWT_SECRET: "${JWT_SECRET:-dev-jwt-secret-change-in-production-min-32-chars-long}"
       # DL-025: backend never talks to provider SDKs directly.
-      LITELLM_PROXY_URL: "http://litellm:4000"
+      LITELLM_PROXY_URL: "http://litellm:${LITELLM_PORT:-4000}"
       LITELLM_API_KEY: "${LITELLM_MASTER_KEY:-sk-1234}"
       # F-829 admin key — defaults to the same value as the chat key
       # so a fresh `docker compose up` boots without manual env wiring.
@@ -236,9 +255,9 @@ services:
     container_name: forge-ui
     restart: unless-stopped
     environment:
-      FORGE_API_BASE_URL: "http://backend:8000/api/v1"
-      FORGE_WS_BASE_URL: "ws://backend:8000/ws"
-      KEYCLOAK_URL: "http://keycloak:8080"
+      FORGE_API_BASE_URL: "http://localhost:${BACKEND_PORT:-8000}/api/v1"
+      FORGE_WS_BASE_URL: "ws://localhost:${BACKEND_PORT:-8000}/ws"
+      KEYCLOAK_URL: "http://localhost:${KEYCLOAK_PORT:-8080}"
       NODE_ENV: "development"
     ports:
       - "${FORGE_UI_PORT:-3000}:3000"

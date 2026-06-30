@@ -124,7 +124,7 @@ class _OverrideRow:
 class ToolBundleRegistry:
     """Loads + caches per-stage bundles, applies Steward overrides.
 
-    The registry is process-local (mirrors the PolicyEngine cache).
+    The registry is process-local (mirrors a tool/policy cache).
     Override rows survive across requests for the lifetime of the
     process; in a future milestone the same rows can be persisted
     alongside Policies and re-loaded on startup.

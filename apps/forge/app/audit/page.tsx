@@ -47,6 +47,10 @@ import {
   SlidersHorizontal,
   FileJson,
   Globe2,
+  Cpu,
+  Coins,
+  KeyRound,
+  CircleSlash,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -262,6 +266,69 @@ function formatTimestamp(iso: string): string {
     minute: '2-digit',
     second: '2-digit',
   });
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// LLM Traffic — proxied from LiteLLM /spend/logs
+// ───────────────────────────────────────────────────────────────────────────
+
+/** LiteLLM spend log row (subset we render). */
+interface LlmTrafficRow {
+  request_id?: string;
+  call_type?: string;
+  key_alias?: string;
+  team_id?: string;
+  user?: string;
+  model?: string;
+  prompt_tokens?: number;
+  completion_tokens?: number;
+  total_tokens?: number;
+  spend?: number;
+  startTime?: string;
+  endTime?: string;
+  status?: string;
+  [k: string]: unknown;
+}
+
+function readNumber(v: unknown): number | null {
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  if (typeof v === 'string' && v.trim() !== '') {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+function readString(v: unknown): string {
+  if (v == null) return '';
+  return String(v);
+}
+
+function formatCost(n: number | null): string {
+  if (n == null) return '—';
+  if (n === 0) return '$0.00';
+  if (n < 0.01) return `$${n.toFixed(4)}`;
+  return `$${n.toFixed(2)}`;
+}
+
+function formatTokens(n: number | null): string {
+  if (n == null) return '—';
+  return n.toLocaleString();
+}
+
+function formatLlmTimestamp(row: LlmTrafficRow): string {
+  // LiteLLM emits ISO strings; fall back to startTime if endTime is missing.
+  const iso = readString(row.startTime) || readString(row.endTime);
+  if (!iso) return '—';
+  return formatTimestamp(iso);
+}
+
+function isLlmError(row: LlmTrafficRow): boolean {
+  const status = readString(row.status).toLowerCase();
+  if (status === 'failure' || status === 'error' || status === 'failed') return true;
+  // Some LiteLLM payloads carry `exception` or `error` strings instead.
+  if (readString(row['exception']) || readString(row['error'])) return true;
+  return false;
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -1300,6 +1367,228 @@ function HeaderCell({
 }
 
 // ───────────────────────────────────────────────────────────────────────────
+// LLM Traffic — virtualized table (Zone 7 frontend)
+// ───────────────────────────────────────────────────────────────────────────
+
+interface LlmTrafficTableProps {
+  rows: ReadonlyArray<LlmTrafficRow>;
+  density: Density;
+  loading: boolean;
+  errorMessage?: string | null;
+}
+
+const LLM_COL_TEMPLATE = '180px minmax(200px,2fr) 120px 110px 110px 140px 110px';
+
+function VirtualizedLlmTrafficTable({
+  rows,
+  density,
+  loading,
+  errorMessage,
+}: LlmTrafficTableProps) {
+  const parentRef = React.useRef<HTMLDivElement | null>(null);
+  const rowHeight = density === 'compact' ? 48 : 60;
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => rowHeight,
+    overscan: 20,
+  });
+
+  if (errorMessage) {
+    return (
+      <div
+        data-testid="llm-traffic-error"
+        className="rounded-[var(--radius-lg)] border border-[var(--accent-rose)]/30 bg-[var(--accent-rose)]/5 px-4 py-3 text-xs text-[var(--accent-rose)]"
+        role="alert"
+      >
+        Failed to load LLM traffic: {errorMessage}
+      </div>
+    );
+  }
+
+  if (loading && rows.length === 0) {
+    return (
+      <div
+        data-testid="llm-traffic-skeleton"
+        className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-elevated)]"
+        role="status"
+        aria-busy="true"
+        aria-label="Loading LLM traffic"
+      >
+        <div
+          className="grid gap-3 border-b border-[var(--border-default)] bg-[var(--bg-surface)]/95 px-4 py-2.5"
+          style={{ gridTemplateColumns: LLM_COL_TEMPLATE }}
+        >
+          <Skeleton className="shimmer h-3 w-16" />
+          <Skeleton className="shimmer h-3 w-20" />
+          <Skeleton className="shimmer h-3 w-12" />
+          <Skeleton className="shimmer h-3 w-12" />
+          <Skeleton className="shimmer h-3 w-12" />
+          <Skeleton className="shimmer h-3 w-16" />
+          <Skeleton className="shimmer h-3 w-12" />
+        </div>
+        <div className="divide-y divide-[var(--border-subtle)]">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="grid items-center gap-3 px-4"
+              style={{
+                height: rowHeight,
+                gridTemplateColumns: LLM_COL_TEMPLATE,
+              }}
+            >
+              <Skeleton className="shimmer h-3 w-28" />
+              <Skeleton className="shimmer h-3 w-32" />
+              <Skeleton className="shimmer h-3 w-12" />
+              <Skeleton className="shimmer h-3 w-12" />
+              <Skeleton className="shimmer h-3 w-12" />
+              <Skeleton className="shimmer h-3 w-20" />
+              <Skeleton className="shimmer h-3 w-14" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <div
+        data-testid="llm-traffic-empty"
+        className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-elevated)]"
+      >
+        <EmptyState
+          compact
+          illustration={<Cpu size={28} strokeWidth={1.5} aria-hidden="true" />}
+          title="No LLM traffic in the last 7 days"
+          description="Calls through the Forge Provider Abstraction Layer will appear here as agents, Co-pilot, and the Terminal invoke models. Showing the most recent 100 entries from LiteLLM."
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-elevated)]"
+      data-testid="llm-traffic-table"
+    >
+      <div
+        className="sticky top-0 z-10 grid items-center gap-3 border-b border-[var(--border-default)] bg-[var(--bg-surface)]/95 px-4 py-2.5 backdrop-blur-sm"
+        style={{ gridTemplateColumns: LLM_COL_TEMPLATE }}
+        role="row"
+        aria-label="Column headers"
+      >
+        <HeaderCell>Timestamp</HeaderCell>
+        <HeaderCell>Model</HeaderCell>
+        <HeaderCell className="text-right">Tokens</HeaderCell>
+        <HeaderCell className="text-right">Prompt</HeaderCell>
+        <HeaderCell className="text-right">Completion</HeaderCell>
+        <HeaderCell className="text-right">Cost</HeaderCell>
+        <HeaderCell>Status</HeaderCell>
+      </div>
+      <div
+        ref={parentRef}
+        className="relative overflow-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent-primary)]"
+        style={{ height: 560 }}
+        tabIndex={0}
+        role="grid"
+        aria-rowcount={rows.length}
+        aria-label={`LLM traffic, ${rows.length} rows`}
+        data-testid="llm-traffic-viewport"
+      >
+        <div
+          style={{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            width: '100%',
+            position: 'relative',
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            const row = rows[virtualRow.index];
+            if (!row) return null;
+            const total = readNumber(row.total_tokens);
+            const prompt = readNumber(row.prompt_tokens);
+            const completion = readNumber(row.completion_tokens);
+            const cost = readNumber(row.spend);
+            const failed = isLlmError(row);
+            const status = failed ? 'error' : readString(row.status) || 'success';
+            return (
+              <div
+                key={virtualRow.key}
+                data-testid="llm-traffic-row"
+                data-request-id={readString(row.request_id)}
+                role="row"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${virtualRow.start}px)`,
+                  height: rowHeight,
+                }}
+                className="grid items-center gap-3 border-b border-[var(--border-subtle)] px-4 text-left hover:bg-[var(--bg-inset)]"
+                title={readString(row.request_id) || undefined}
+              >
+                <span
+                  className="truncate font-mono text-2xs text-[var(--fg-secondary)]"
+                  title={readString(row.startTime) || readString(row.endTime)}
+                >
+                  {formatLlmTimestamp(row)}
+                </span>
+                <span className="flex min-w-0 items-center gap-2">
+                  <Cpu
+                    className="h-3.5 w-3.5 shrink-0 text-[var(--accent-primary)]"
+                    aria-hidden="true"
+                  />
+                  <span
+                    className="truncate font-mono text-xs text-[var(--fg-primary)]"
+                    title={readString(row.model)}
+                  >
+                    {readString(row.model) || '—'}
+                  </span>
+                  {readString(row.key_alias) ? (
+                    <span className="ml-1 inline-flex items-center gap-1 truncate text-2xs text-[var(--fg-tertiary)]">
+                      <KeyRound className="h-3 w-3" aria-hidden="true" />
+                      <span className="truncate">{readString(row.key_alias)}</span>
+                    </span>
+                  ) : null}
+                </span>
+                <span className="truncate text-right font-mono text-2xs text-[var(--fg-secondary)]">
+                  {formatTokens(total)}
+                </span>
+                <span className="truncate text-right font-mono text-2xs text-[var(--fg-tertiary)]">
+                  {formatTokens(prompt)}
+                </span>
+                <span className="truncate text-right font-mono text-2xs text-[var(--fg-tertiary)]">
+                  {formatTokens(completion)}
+                </span>
+                <span className="inline-flex items-center justify-end gap-1 truncate text-right font-mono text-2xs text-[var(--fg-primary)]">
+                  <Coins className="h-3 w-3 text-[var(--accent-amber)]" aria-hidden="true" />
+                  {formatCost(cost)}
+                </span>
+                <span className="flex items-center">
+                  {failed ? (
+                    <span className="inline-flex items-center gap-1 rounded-sm border border-[var(--accent-rose)]/40 bg-[var(--accent-rose)]/10 px-1.5 py-0.5 text-2xs font-medium uppercase tracking-wider text-[var(--accent-rose)]">
+                      <CircleSlash className="h-3 w-3" aria-hidden="true" />
+                      error
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-sm border border-[var(--accent-emerald)]/40 bg-[var(--accent-emerald)]/10 px-1.5 py-0.5 text-2xs font-medium uppercase tracking-wider text-[var(--accent-emerald)]">
+                      <span aria-hidden="true">✓</span>
+                      {status}
+                    </span>
+                  )}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ───────────────────────────────────────────────────────────────────────────
 // Loading skeleton — 8 rows with shimmer
 // ───────────────────────────────────────────────────────────────────────────
 
@@ -1822,6 +2111,13 @@ export default function AuditCenterPage() {
   const recordsQ = useApiData<AuditRecord[]>('/v1/audit/records');
   const actorsQ = useApiData<AuditActor[]>('/v1/audit/actors');
 
+  type Tab = 'audit' | 'llm_traffic';
+  const [activeTab, setActiveTab] = React.useState<Tab>('audit');
+  const llmTrafficPath = activeTab === 'llm_traffic'
+    ? '/v1/audit/llm-traffic?days=7&limit=100'
+    : null;
+  const llmTrafficQ = useApiData<LlmTrafficRow[]>(llmTrafficPath);
+
   const all: ReadonlyArray<AuditRecord> = recordsQ.data ?? [];
   const actors: ReadonlyArray<AuditActor> = actorsQ.data ?? [];
   const actions = React.useMemo(() => listAuditActions(), []);
@@ -1970,6 +2266,14 @@ export default function AuditCenterPage() {
   const loading = recordsQ.isLoading && all.length === 0;
   const noRecords = !loading && all.length === 0;
 
+  const llmTrafficRows: ReadonlyArray<LlmTrafficRow> = React.useMemo(() => {
+    const rows = llmTrafficQ.data ?? [];
+    // Sort newest-first defensively; LiteLLM already returns DESC by startTime.
+    return [...rows].sort((a, b) =>
+      readString(b.startTime).localeCompare(readString(a.startTime)),
+    );
+  }, [llmTrafficQ.data]);
+
   return (
     <div
       className="mx-auto flex w-full max-w-[1600px] flex-col gap-6 p-6 md:p-8"
@@ -2006,40 +2310,143 @@ export default function AuditCenterPage() {
         <h2 id="audit-timeline-h" className="sr-only">
           Audit timeline
         </h2>
-        <TableHeaderBar
-          count={filtered.length}
-          total={all.length}
-          density={density}
-          onDensityChange={setDensity}
-          visibility={visibility}
-          onVisibilityChange={setVisibility}
-        />
 
-        {loading ? (
-          <AuditTableSkeleton />
+        {/* Segment toggle: Audit Log vs LLM Traffic */}
+        <div
+          role="tablist"
+          aria-label="Audit segments"
+          className="inline-flex w-fit items-center rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-0.5"
+          data-testid="audit-segment"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'audit'}
+            onClick={() => setActiveTab('audit')}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] px-3 py-1 text-xs font-medium transition-colors',
+              activeTab === 'audit'
+                ? 'bg-[var(--bg-inset)] text-[var(--fg-primary)]'
+                : 'text-[var(--fg-tertiary)] hover:text-[var(--fg-primary)]',
+            )}
+            data-testid="audit-segment-tab"
+          >
+            <ScrollText className="h-3.5 w-3.5" aria-hidden="true" />
+            Audit Log
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'llm_traffic'}
+            onClick={() => setActiveTab('llm_traffic')}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] px-3 py-1 text-xs font-medium transition-colors',
+              activeTab === 'llm_traffic'
+                ? 'bg-[var(--bg-inset)] text-[var(--fg-primary)]'
+                : 'text-[var(--fg-tertiary)] hover:text-[var(--fg-primary)]',
+            )}
+            data-testid="audit-segment-llm-traffic"
+          >
+            <Cpu className="h-3.5 w-3.5" aria-hidden="true" />
+            LLM Traffic
+          </button>
+        </div>
+
+        {activeTab === 'audit' ? (
+          <>
+            <TableHeaderBar
+              count={filtered.length}
+              total={all.length}
+              density={density}
+              onDensityChange={setDensity}
+              visibility={visibility}
+              onVisibilityChange={setVisibility}
+            />
+
+            {loading ? (
+              <AuditTableSkeleton />
+            ) : (
+              <VirtualizedAuditTable
+                records={filtered}
+                density={density}
+                visibility={visibility}
+                selectedId={selected?.id}
+                onSelect={handleSelect}
+                onJumpToHash={jumpToHash}
+                activeCount={activeFilterCount}
+                totalCount={all.length}
+                onReset={resetFilters}
+                onOpenIntegrity={focusIntegrity}
+              />
+            )}
+
+            {/* hide-on-filter: noRecords message is inside the table; this
+                note explains the empty state when records==0 explicitly */}
+            {noRecords ? (
+              <p className="text-center text-xs text-[var(--fg-tertiary)]">
+                <ScrollText className="mr-1 inline h-3 w-3" aria-hidden="true" />
+                No records yet — agent activity will appear here as it happens.
+              </p>
+            ) : null}
+          </>
         ) : (
-          <VirtualizedAuditTable
-            records={filtered}
-            density={density}
-            visibility={visibility}
-            selectedId={selected?.id}
-            onSelect={handleSelect}
-            onJumpToHash={jumpToHash}
-            activeCount={activeFilterCount}
-            totalCount={all.length}
-            onReset={resetFilters}
-            onOpenIntegrity={focusIntegrity}
-          />
+          <>
+            <div
+              className="flex items-center justify-between gap-3 px-1"
+              data-testid="llm-traffic-header"
+            >
+              <h2 className="text-2xs font-semibold uppercase tracking-widest text-[var(--fg-tertiary)]">
+                LLM Traffic ({llmTrafficRows.length.toLocaleString()} of{' '}
+                {llmTrafficRows.length.toLocaleString()})
+              </h2>
+              <div
+                role="radiogroup"
+                aria-label="Row density"
+                className="inline-flex items-center rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-0.5"
+                data-testid="llm-traffic-density-toggle"
+              >
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={density === 'comfortable'}
+                  onClick={() => setDensity('comfortable')}
+                  className={cn(
+                    'inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-[var(--fg-tertiary)] transition-colors',
+                    density === 'comfortable'
+                      ? 'bg-[var(--bg-inset)] text-[var(--fg-primary)]'
+                      : 'hover:text-[var(--fg-primary)]',
+                  )}
+                  title="Comfortable"
+                  data-testid="llm-traffic-density-comfortable"
+                >
+                  <Rows4 className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={density === 'compact'}
+                  onClick={() => setDensity('compact')}
+                  className={cn(
+                    'inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-[var(--fg-tertiary)] transition-colors',
+                    density === 'compact'
+                      ? 'bg-[var(--bg-inset)] text-[var(--fg-primary)]'
+                      : 'hover:text-[var(--fg-primary)]',
+                  )}
+                  title="Compact"
+                  data-testid="llm-traffic-density-compact"
+                >
+                  <Rows3 className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+            <VirtualizedLlmTrafficTable
+              rows={llmTrafficRows}
+              density={density}
+              loading={llmTrafficQ.isLoading && llmTrafficRows.length === 0}
+              errorMessage={llmTrafficQ.error?.message ?? null}
+            />
+          </>
         )}
-
-        {/* hide-on-filter: noRecords message is inside the table; this
-            note explains the empty state when records==0 explicitly */}
-        {noRecords ? (
-          <p className="text-center text-xs text-[var(--fg-tertiary)]">
-            <ScrollText className="mr-1 inline h-3 w-3" aria-hidden="true" />
-            No records yet — agent activity will appear here as it happens.
-          </p>
-        ) : null}
       </section>
 
       <DetailDrawer
