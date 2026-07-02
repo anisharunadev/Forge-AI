@@ -38,10 +38,11 @@ even when the sibling files haven't landed yet.
 
 from __future__ import annotations
 
+import contextvars
 import time
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, AsyncIterator
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from app.core.config import settings
 from app.core.logging import get_logger
@@ -57,6 +58,7 @@ from app.services.workflow_budget import (
 )
 
 if TYPE_CHECKING:
+    from app.core.security import AuthenticatedPrincipal
     from app.integrations.litellm.budget_sync import BudgetSync
     from app.integrations.litellm.health_monitor import LiteLLMHealthMonitor
     from app.integrations.litellm.key_manager import VirtualKeyManager
@@ -66,6 +68,33 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 _tracer = get_tracer(__name__)
+
+
+# step-80 — Phase 4 metadata envelope.
+# A FastAPI dependency (``app.api.deps.set_current_principal``) populates
+# this ContextVar at request scope; ``_enrich_metadata`` reads it to
+# attach forge_* fields to every LiteLLM call so spend logs can
+# reconcile against Forge without each call site repeating itself.
+_current_principal: contextvars.ContextVar["AuthenticatedPrincipal | None"] = contextvars.ContextVar(
+    "forge_current_principal", default=None
+)
+
+
+def set_current_principal(principal: "AuthenticatedPrincipal | None") -> contextvars.Token:
+    """Populate the request-scoped principal for metadata envelope injection.
+
+    Called from a FastAPI dependency; the token is unused by callers but
+    is part of the public API for symmetry with ``reset_current_principal``.
+    """
+    return _current_principal.set(principal)
+
+
+def reset_current_principal(token: contextvars.Token) -> None:
+    _current_principal.reset(token)
+
+
+def get_current_principal() -> "AuthenticatedPrincipal | None":
+    return _current_principal.get()
 
 
 # Conservative defaults used when the caller does not pre-compute a
@@ -204,6 +233,8 @@ class ForgeLLMClient:
         up in the audit timeline.
         """
         forge_trace_id = self._resolve_trace_correlator().mint_trace_id_from_active_span()
+        # step-80 — Phase 4 metadata envelope (auto-attach forge_* keys).
+        kwargs = self._enrich_metadata(kwargs, forge_trace_id=forge_trace_id)
 
         # 1. Per-tenant Virtual Key (cache-first).
         virtual_key = await self._resolve_virtual_key(tenant_id)
@@ -455,6 +486,37 @@ class ForgeLLMClient:
     # ------------------------------------------------------------------
     # Internals — key + model + budget + recording
     # ------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # step-80 — Phase 4 metadata envelope (Rule 6 spend reconciliation)
+    # ------------------------------------------------------------------
+
+    def _enrich_metadata(
+        self,
+        kwargs: dict[str, Any],
+        *,
+        forge_trace_id: str,
+    ) -> dict[str, Any]:
+        """Attach ``metadata.forge_*`` keys to the request kwargs.
+
+        Reads the request-scoped ``_current_principal`` ContextVar; if no
+        principal is set (background task, batch job), the call proceeds
+        unchanged. Never overwrites caller-supplied keys.
+        """
+        principal = _current_principal.get()
+        if principal is None:
+            return kwargs
+        meta = kwargs.setdefault("metadata", {})
+        if not isinstance(meta, dict):
+            return kwargs
+        meta.setdefault("forge_tenant_id", str(principal.tenant_id))
+        meta.setdefault("forge_user_id", str(getattr(principal, "user_id", "") or ""))
+        meta.setdefault("forge_run_id", str(getattr(principal, "run_id", "") or uuid4()))
+        agent_id = getattr(principal, "agent_id", None)
+        if agent_id is not None:
+            meta.setdefault("forge_agent_id", str(agent_id))
+        meta.setdefault("forge_trace_id", forge_trace_id)
+        return kwargs
 
     async def _resolve_virtual_key(self, tenant_id: UUID | str) -> str | None:
         """Cache-first per-tenant Virtual Key lookup."""
@@ -799,8 +861,43 @@ class ForgeLLMClient:
 forge_llm_client = ForgeLLMClient()
 
 
+async def _chat_stream_iter(
+    *,
+    messages: list[dict[str, Any]],
+    model: str,
+    tenant_id: UUID | str,
+    project_id: UUID | str | None,
+    workflow_id: UUID | str | None = None,
+    actor_id: UUID | str | None = None,
+    **kwargs: Any,
+) -> AsyncIterator[dict[str, Any]]:
+    """Adapter: yield chunks from the singleton's stream chat path.
+
+    forge_chat.stream_chat can call this directly without instantiating
+    ForgeLLMClient. Wraps :meth:`ForgeLLMClient.chat` with ``stream=True``
+    and delegates to :meth:`ForgeLLMClient._chat_stream` underneath.
+    """
+    iterator = await forge_llm_client.chat(
+        messages=messages,
+        model=model,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        workflow_id=workflow_id,
+        actor_id=actor_id,
+        stream=True,
+        **kwargs,
+    )
+    # chat() returns the AsyncIterator directly when stream=True.
+    async for chunk in iterator:  # type: ignore[union-attr]
+        yield chunk
+
+
 __all__ = [
     "ForgeLLMClient",
     "forge_llm_client",
+    "_chat_stream_iter",
     "LLMUnavailableError",
+    "set_current_principal",
+    "reset_current_principal",
+    "get_current_principal",
 ]
