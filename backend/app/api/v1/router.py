@@ -11,11 +11,14 @@ from app.api.v1 import (
     agent_config,
     agent_runtimes,
     agents,
+    analytics_usage,
     approvals,
     architecture,
     artifacts,
     audit,
     auth,
+    auth_sessions,
+    auth_tokens,
     commands,
     connector_credentials,
     connector_lifecycle,
@@ -23,10 +26,19 @@ from app.api.v1 import (
     copilot,
     dashboard,
     env_vars,
+    feature_flags,
+    forge_chat,
+    forge_health,
+    forge_models,
+    forge_spend,
+    forge_keys,
+    governance_core,
+    governance_violations,
     health,
     hooks,
     ideation,
     knowledge_graph,
+    lessons,
     marketplace,
     mcp,
     members,
@@ -52,19 +64,36 @@ from app.api.v1 import (
     terminal_context,
     terminal_costs,
     terminal_export,
+    terminal_sessions,
     tool_bundles,
+    users,
     validation_reports,
     webhooks,
     webhooks_full,
     workflows,
 )
 
+# step-80 — Phase 4 (cache, pass-through, identity, ops, realtime).
+from app.api.v1 import forge_phase4
+
 api_router = APIRouter()
 # step-53 Zone 2 — OIDC login + refresh + me. Public surface (no auth
 # dependency on /oidc/callback and /refresh). Mounted first so the
 # OpenAPI doc groups auth at the top of the v1 endpoint list.
 api_router.include_router(auth.router)
+# step-73 — Settings: self-service tokens, sessions, profile PATCH, SSO.
+api_router.include_router(auth_tokens.router)
+api_router.include_router(auth_sessions.router)
+api_router.include_router(users.router)
+api_router.include_router(feature_flags.router)
 api_router.include_router(health.router)
+# step-75 Phase 1 — `/api/v1/forge/health` (spec line 88). Mounted next
+# to the legacy `/api/v1/health` so OpenAPI groups stay alphabetical.
+api_router.include_router(forge_health.router)
+api_router.include_router(forge_models.router)
+api_router.include_router(forge_spend.router)
+api_router.include_router(forge_keys.router)
+api_router.include_router(forge_chat.router)
 api_router.include_router(standards.router)
 # F-821 — Seeds API (Plan C — Phase 0.7)
 api_router.include_router(seeds.router)
@@ -74,6 +103,9 @@ api_router.include_router(policies.router)
 api_router.include_router(rbac.router)
 api_router.include_router(audit.router)
 api_router.include_router(approvals.router)
+# step-72 — Phase 11 Governance + Audit (governance_core.router supersedes the dev stub surface)
+api_router.include_router(governance_core.router)
+api_router.include_router(governance_violations.router)
 api_router.include_router(artifacts.router)
 api_router.include_router(connectors.router)
 api_router.include_router(connector_lifecycle.router)
@@ -97,8 +129,11 @@ api_router.include_router(agent_config.router)
 api_router.include_router(admin.router)
 # F-829 — LLM Gateway admin surface (Phase B)
 api_router.include_router(admin_llm_gateway.router)
+# step-73 — Billing quota (Settings → Billing tab)
+api_router.include_router(analytics_usage.router)
 api_router.include_router(runs.router)
 api_router.include_router(terminal_commands.router)
+api_router.include_router(terminal_sessions.router)
 api_router.include_router(terminal_costs.router)
 api_router.include_router(terminal_broadcast.router)
 api_router.include_router(terminal_context.router)
@@ -126,6 +161,7 @@ api_router.include_router(ideation.approvals.router)
 api_router.include_router(ideation.push.router)
 api_router.include_router(ideation.kg_graph.router)
 api_router.include_router(ideation.workflows.router)
+api_router.include_router(ideation.enhance.router)
 # Architecture Center (F-301..F-310)
 api_router.include_router(architecture.standards.router)
 api_router.include_router(architecture.adrs.router)
@@ -151,5 +187,9 @@ api_router.include_router(stories.epics_router)
 api_router.include_router(system.router)
 # F-014 — Dashboard aggregation endpoints (step-57)
 api_router.include_router(dashboard.router)
+# F-002-LESSON — Steward review queue for Lessons Learned (step-64 Sub-step B)
+api_router.include_router(lessons.router)
+# step-80 — Phase 4 stub router (each feature ships in a follow-up commit).
+api_router.include_router(forge_phase4.router)
 
 __all__ = ["api_router"]
