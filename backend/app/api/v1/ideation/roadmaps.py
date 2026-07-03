@@ -1,13 +1,15 @@
 """Roadmap REST endpoints (F-205)."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import (
     RoadmapAddItem,
     RoadmapCreate,
@@ -42,8 +44,8 @@ def _to_read(roadmap) -> RoadmapRead:
 @audit(action="ideation.roadmap.generate", target_type="roadmap")
 async def generate_roadmap(
     body: RoadmapCreate,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:roadmap"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:roadmap"))
 ) -> RoadmapRead:
     try:
         roadmap = await roadmap_generator.generate_roadmap(
@@ -63,10 +65,10 @@ async def generate_roadmap(
 @router.get("", response_model=RoadmapListResponse)
 @audit(action="ideation.roadmap.list", target_type="roadmap")
 async def list_roadmaps(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: UUID | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=500),
-    _perm: Principal = require_permission("ideation:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> RoadmapListResponse:
     rows = await roadmap_generator.list_roadmaps(
         tenant_id=principal.tenant_id,
@@ -81,8 +83,8 @@ async def list_roadmaps(
 @audit(action="ideation.roadmap.get", target_type="roadmap")
 async def get_roadmap(
     roadmap_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> RoadmapRead:
     try:
         roadmap = await roadmap_generator.get_roadmap(
@@ -100,8 +102,8 @@ async def get_roadmap(
 async def update_roadmap(
     roadmap_id: UUID,
     body: RoadmapUpdate,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:roadmap"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:roadmap"))
 ) -> RoadmapRead:
     try:
         roadmap = await roadmap_generator.update_roadmap(
@@ -123,8 +125,8 @@ async def update_roadmap(
 @audit(action="ideation.roadmap.approve", target_type="roadmap")
 async def approve_roadmap(
     roadmap_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:roadmap:approve"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:roadmap:approve"))
 ) -> RoadmapRead:
     try:
         roadmap = await roadmap_generator.approve_roadmap(
@@ -141,9 +143,9 @@ async def approve_roadmap(
 @audit(action="ideation.roadmap.regenerate", target_type="roadmap")
 async def regenerate_roadmap(
     roadmap_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     top_n: int | None = Query(default=None, ge=1, le=100),
-    _perm: Principal = require_permission("ideation:roadmap"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:roadmap"))
 ) -> RoadmapRead:
     try:
         roadmap = await roadmap_generator.regenerate_roadmap(
@@ -162,8 +164,8 @@ async def regenerate_roadmap(
 async def add_to_roadmap(
     roadmap_id: UUID,
     body: RoadmapAddItem,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:roadmap"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:roadmap"))
 ) -> RoadmapRead:
     try:
         roadmap = await roadmap_generator.add_to_roadmap(
@@ -183,7 +185,6 @@ async def add_to_roadmap(
 
 @router.delete(
     "/{roadmap_id}/items/{idea_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     response_class=Response,
 )
@@ -192,8 +193,8 @@ async def add_to_roadmap(
 async def remove_from_roadmap(
     roadmap_id: UUID,
     idea_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:roadmap"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:roadmap"))
 ):
     try:
         roadmap = await roadmap_generator.remove_from_roadmap(

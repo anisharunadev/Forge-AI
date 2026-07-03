@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { useKGNode, useKGFreshness } from '@/lib/hooks/useKnowledgeGraph';
 import { EDGE_COLOR, EDGE_LABEL, KIND_COLOR, KIND_ICON } from './graph-palette';
 import type {
   EdgeKind,
@@ -67,6 +68,22 @@ export function NodeInspectorPanel({
     allNodes.forEach((n) => m.set(n.id, n));
     return m;
   }, [allNodes]);
+
+  // ---- Raw backend data (Step 67 zone 4) ----------------------------------
+  // The adapter preserves the wire UUID on SampleNode.id, so we can fetch
+  // the raw KGNode + freshness without threading a separate prop through.
+  // Both hooks are no-ops when `node` is null (enabled: false).
+  const wireNodeId = node?.id ?? null;
+  const { data: wireNode } = useKGNode(wireNodeId);
+  const { data: freshness } = useKGFreshness(wireNodeId);
+
+  const freshnessStatus = freshness?.status ?? null;
+  const freshnessDotColor =
+    freshnessStatus === 'fresh'
+      ? 'var(--accent-emerald)'
+      : freshnessStatus === 'stale'
+        ? 'var(--accent-amber)'
+        : 'var(--accent-rose)';
 
   // ---- Connections grouped by edge kind, outgoing + incoming --------------
 
@@ -142,9 +159,25 @@ export function NodeInspectorPanel({
               {node.kind}
             </span>
           </div>
-          <h2 className="mt-1 text-base font-semibold text-[var(--fg-primary)]">
-            {node.label}
-          </h2>
+          <div className="mt-1 flex items-center gap-2">
+            <h2 className="flex-1 text-base font-semibold text-[var(--fg-primary)]">
+              {node.label}
+            </h2>
+            {freshnessStatus ? (
+              <span
+                aria-label={`Freshness: ${freshnessStatus}`}
+                title={
+                  freshness?.freshness_at
+                    ? `${freshnessStatus} · last updated ${new Date(freshness.freshness_at).toLocaleString()}`
+                    : freshnessStatus
+                }
+                data-testid="node-freshness-dot"
+                data-status={freshnessStatus}
+                className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ background: freshnessDotColor, boxShadow: `0 0 0 1px ${freshnessDotColor}` }}
+              />
+            ) : null}
+          </div>
         </div>
         <details className="relative">
           <summary
@@ -237,6 +270,28 @@ export function NodeInspectorPanel({
             <ExternalLink className="h-3 w-3" aria-hidden="true" />
           </button>
         </section>
+
+        {/* PROPERTIES CARD — raw KGNode.properties bag (Step 67 zone 4).
+            Hidden when properties is missing/empty so the panel stays
+            compact for nodes without structured metadata. */}
+        {wireNode && Object.keys(wireNode.properties).length > 0 ? (
+          <section
+            className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3"
+            data-testid="node-properties"
+          >
+            <h3 className="mb-2 text-sm font-semibold text-[var(--fg-primary)]">Properties</h3>
+            <dl className="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1 text-[11px]">
+              {Object.entries(wireNode.properties).map(([k, v]) => (
+                <React.Fragment key={k}>
+                  <dt className="font-mono text-[var(--fg-tertiary)]">{k}</dt>
+                  <dd className="break-all text-[var(--fg-secondary)]">
+                    {formatPropertyValue(v)}
+                  </dd>
+                </React.Fragment>
+              ))}
+            </dl>
+          </section>
+        ) : null}
 
         {/* CONNECTIONS CARD — Obsidian backlinks */}
         <section
@@ -406,4 +461,22 @@ function ConnectionList({
       )}
     </ul>
   );
+}
+
+/**
+ * Render a single value from the KGNode properties bag. Strings get the
+ * raw text; objects/arrays get a compact JSON dump so the table stays
+ * readable. Anything else falls back to String().
+ */
+function formatPropertyValue(value: unknown): string {
+  if (value === null || value === undefined) return '—';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  try {
+    const json = JSON.stringify(value);
+    // ponytail: cap at 240 chars so a giant array doesn't blow up the cell.
+    return json.length > 240 ? json.slice(0, 237) + '…' : json;
+  } catch {
+    return '[unserialisable]';
+  }
 }

@@ -1,13 +1,15 @@
 """Opportunity Scoring REST endpoints (F-204)."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import (
     HumanScoreOverride,
     OpportunityScoreRead,
@@ -43,9 +45,9 @@ def _to_read(row) -> OpportunityScoreRead:
 @audit(action="ideation.score.generate", target_type="opportunity_score")
 async def score_idea(
     idea_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     strategy: str = Query(default="ai"),
-    _perm: Principal = require_permission("ideation:score"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:score"))
 ) -> OpportunityScoreRead:
     try:
         score = await opportunity_scoring_service.score_idea(
@@ -68,9 +70,9 @@ async def score_idea(
 @audit(action="ideation.score.batch", target_type="opportunity_score")
 async def score_batch(
     idea_ids: list[UUID],
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     strategy: str = Query(default="ai"),
-    _perm: Principal = require_permission("ideation:score"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:score"))
 ) -> list[OpportunityScoreRead]:
     if not idea_ids:
         raise HTTPException(status_code=400, detail="idea_ids_required")
@@ -90,8 +92,8 @@ async def score_batch(
 @audit(action="ideation.score.get", target_type="opportunity_score")
 async def get_score(
     idea_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> OpportunityScoreRead | None:
     score = await opportunity_scoring_service.get_score(
         idea_id, tenant_id=principal.tenant_id
@@ -106,8 +108,8 @@ async def get_score(
 async def human_override(
     idea_id: UUID,
     body: HumanScoreOverride,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:score:override"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:score:override"))
 ) -> OpportunityScoreRead:
     components = ScoreComponents(
         value=body.value_score,

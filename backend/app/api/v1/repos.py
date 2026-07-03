@@ -1,13 +1,15 @@
 """Repos REST endpoints (F-101, F-102)."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.repo_ingestion import Repo
 from app.db.session import get_session_factory
 from app.schemas.project_intelligence import (
@@ -29,8 +31,8 @@ router = APIRouter(prefix="/repos", tags=["repos"])
 @audit(action="repos.create", target_type="repo")
 async def create_repo(
     body: RepoCreate,
-    principal: Principal,
-    _perm: Principal = require_permission("repos:create"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:create"))
 ) -> RepoRead:
     repo = await repo_ingestion_service.create_repo(
         tenant_id=principal.tenant_id,
@@ -47,9 +49,9 @@ async def create_repo(
 @router.get("", response_model=list[RepoRead])
 @audit(action="repos.list", target_type="repo")
 async def list_repos(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: str | None = Query(default=None),
-    _perm: Principal = require_permission("repos:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:read"))
 ) -> list[RepoRead]:
     rows = await repo_ingestion_service.list_repos(
         tenant_id=principal.tenant_id,
@@ -62,8 +64,8 @@ async def list_repos(
 @audit(action="repos.get", target_type="repo")
 async def get_repo(
     repo_id: str,
-    principal: Principal,
-    _perm: Principal = require_permission("repos:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:read"))
 ) -> RepoRead:
     try:
         repo = await repo_ingestion_service.get_repo(repo_id, tenant_id=principal.tenant_id)
@@ -79,8 +81,8 @@ async def get_repo(
 async def update_repo(
     repo_id: str,
     body: RepoUpdate,
-    principal: Principal,
-    _perm: Principal = require_permission("repos:update"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:update"))
 ) -> RepoRead:
     factory = get_session_factory()
     async with factory() as session:
@@ -102,8 +104,8 @@ async def update_repo(
 @audit(action="repos.ingest", target_type="repo")
 async def trigger_ingestion(
     repo_id: str,
-    principal: Principal,
-    _perm: Principal = require_permission("repos:ingest"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:ingest"))
 ) -> IngestionRunRead:
     try:
         repo = await repo_ingestion_service.get_repo(repo_id, tenant_id=principal.tenant_id)
@@ -131,8 +133,8 @@ async def trigger_ingestion(
 @audit(action="repos.ingestions", target_type="repo")
 async def list_ingestions(
     repo_id: str,
-    principal: Principal,
-    _perm: Principal = require_permission("repos:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:read"))
 ) -> list[IngestionRunRead]:
     runs = await repo_ingestion_service.list_ingestion_runs(
         repo_id=repo_id, tenant_id=principal.tenant_id
@@ -158,8 +160,8 @@ async def list_ingestions(
 @audit(action="repos.discover", target_type="repo")
 async def discover_repos(
     body: RepoDiscoverRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("repos:discover"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:discover"))
 ) -> RepoDiscoverResponse:
     candidates = await repo_ingestion_service.discover_repos(
         tenant_id=principal.tenant_id,
@@ -189,8 +191,8 @@ async def discover_repos(
 @audit(action="repos.status", target_type="repo")
 async def get_status(
     repo_id: str,
-    principal: Principal,
-    _perm: Principal = require_permission("repos:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:read"))
 ) -> IngestionStatusRead:
     try:
         repo = await repo_ingestion_service.get_repo(repo_id, tenant_id=principal.tenant_id)
@@ -222,7 +224,6 @@ async def get_status(
 
 @router.delete(
     "/ingestions/{run_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     response_class=Response,
 )
@@ -230,8 +231,8 @@ async def get_status(
 @audit(action="repos.cancel_ingestion", target_type="ingestion_run")
 async def cancel_ingestion(
     run_id: str,
-    principal: Principal,
-    _perm: Principal = require_permission("repos:ingest"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:ingest"))
 ):
     try:
         run = await repo_ingestion_service.cancel_ingestion(

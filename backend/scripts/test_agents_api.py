@@ -12,43 +12,15 @@ Run:
 from __future__ import annotations
 
 import asyncio
-import os
 import sys
 import time
-import uuid
-from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
-from jose import jwt
+
+from scripts._smoke_helpers import mint_dev_token as mint_token
 
 BASE_URL = "http://localhost:8000/api/v1"
-TENANT_ID = "a6500631-1930-5afa-9d38-24de9bedcb37"
-USER_ID = "00000000-0000-0000-0000-000000000999"
-USER_EMAIL = "arun@acme-corp.com"
-
-
-def mint_token() -> str:
-    """Build an HS256 JWT the backend will accept.
-
-    The backend reads ``JWT_SECRET`` from the env (same one we use to
-    sign here) and decodes with ``algorithms=[HS256]``. No audience /
-    issuer check is performed, so we only need ``sub``, ``forge.tenant``
-    (or ``tenant_id``), and an expiry.
-    """
-    secret = os.environ["JWT_SECRET"]
-    now = datetime.now(timezone.utc)
-    claims = {
-        "sub": USER_ID,
-        "email": USER_EMAIL,
-        "forge.tenant": TENANT_ID,
-        "tenant_id": TENANT_ID,
-        "forge.project": None,
-        "realm_access": {"roles": ["forge-admin"]},
-        "iat": int(now.timestamp()),
-        "exp": int((now + timedelta(hours=1)).timestamp()),
-    }
-    return jwt.encode(claims, secret, algorithm="HS256")
 
 
 async def expect(

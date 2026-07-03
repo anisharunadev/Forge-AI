@@ -1,13 +1,15 @@
 """Ideas REST endpoints (F-201, F-202)."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import (
     EntityExtraction,
     IdeaAnalysisRead,
@@ -28,8 +30,8 @@ router = APIRouter(prefix="/ideation/ideas", tags=["ideation"])
 @audit(action="ideation.idea.submit", target_type="idea")
 async def submit_idea(
     body: IdeaCreate,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:write"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:write"))
 ) -> IdeaRead:
     try:
         idea = await idea_intake_service.submit_idea(
@@ -46,12 +48,12 @@ async def submit_idea(
 @router.get("", response_model=IdeaListResponse)
 @audit(action="ideation.idea.list", target_type="idea")
 async def list_ideas(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: UUID | None = Query(default=None),
     status_filter: str | None = Query(default=None, alias="status"),
     tag: str | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=500),
-    _perm: Principal = require_permission("ideation:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> IdeaListResponse:
     rows = await idea_intake_service.list_ideas(
         tenant_id=principal.tenant_id,
@@ -68,8 +70,8 @@ async def list_ideas(
 @audit(action="ideation.idea.get", target_type="idea")
 async def get_idea(
     idea_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> IdeaRead:
     try:
         idea = await idea_intake_service.get_idea(
@@ -87,8 +89,8 @@ async def get_idea(
 async def update_idea(
     idea_id: UUID,
     body: IdeaUpdate,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:write"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:write"))
 ) -> IdeaRead:
     try:
         idea = await idea_intake_service.update_idea(
@@ -108,8 +110,8 @@ async def update_idea(
 @audit(action="ideation.idea.analyze", target_type="idea")
 async def analyze_idea(
     idea_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:analyze"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:analyze"))
 ) -> IdeaAnalysisRead:
     try:
         analysis = await idea_analysis_service.analyze_idea(
@@ -128,8 +130,8 @@ async def analyze_idea(
 @audit(action="ideation.idea.get_analysis", target_type="idea")
 async def get_analysis(
     idea_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> IdeaAnalysisRead | None:
     try:
         analysis = await idea_analysis_service.get_analysis(
@@ -146,8 +148,8 @@ async def get_analysis(
 @audit(action="ideation.idea.reanalyze", target_type="idea")
 async def reanalyze_idea(
     idea_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:analyze"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:analyze"))
 ) -> IdeaAnalysisRead:
     try:
         analysis = await idea_analysis_service.reanalyze(
@@ -166,8 +168,8 @@ async def reanalyze_idea(
 @audit(action="ideation.idea.archive", target_type="idea")
 async def archive_idea(
     idea_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:write"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:write"))
 ) -> IdeaRead:
     try:
         idea = await idea_intake_service.archive_idea(
@@ -187,8 +189,8 @@ async def archive_idea(
 async def attach_artifact(
     idea_id: UUID,
     body: IdeaArtifactAttach,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:write"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:write"))
 ) -> IdeaRead:
     try:
         idea = await idea_intake_service.attach_artifact(
@@ -208,8 +210,8 @@ async def attach_artifact(
 @audit(action="ideation.idea.validate", target_type="idea")
 async def validate_idea_payload(
     body: IdeaCreate,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> IdeaValidationResult:
     """Standalone validation pass — useful for the UI before submit."""
     result = validate_idea(body)
@@ -220,8 +222,8 @@ async def validate_idea_payload(
 @audit(action="ideation.idea.extract_entities", target_type="idea")
 async def extract_entities_endpoint(
     text: str,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> EntityExtraction:
     """Lightweight NER endpoint for the intake UI."""
     if not text or len(text.strip()) < 4:

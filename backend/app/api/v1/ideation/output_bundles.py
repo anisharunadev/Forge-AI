@@ -1,14 +1,16 @@
 """Output Bundle REST endpoints (F-211)."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import Response
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import OutputBundleRead
 from app.services.ideation.output_bundle import output_bundle_service
 
@@ -36,8 +38,8 @@ def _to_read(bundle) -> OutputBundleRead:
 @audit(action="ideation.bundle.create", target_type="output_bundle")
 async def create_bundle(
     idea_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:bundle"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:bundle"))
 ) -> OutputBundleRead:
     try:
         bundle = await output_bundle_service.create_bundle(
@@ -57,8 +59,8 @@ async def create_bundle(
 @audit(action="ideation.bundle.get", target_type="output_bundle")
 async def get_bundle(
     bundle_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> OutputBundleRead:
     bundle = await output_bundle_service.get_bundle(
         bundle_id, tenant_id=principal.tenant_id
@@ -72,9 +74,9 @@ async def get_bundle(
 @audit(action="ideation.bundle.export", target_type="output_bundle")
 async def export_bundle(
     bundle_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     fmt: str = Query(default="json"),
-    _perm: Principal = require_permission("ideation:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> Response:
     try:
         body = await output_bundle_service.export_bundle(

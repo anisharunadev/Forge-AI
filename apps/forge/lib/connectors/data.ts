@@ -26,22 +26,18 @@ import {
   Database,
   GitBranch,
   GitMerge,
-  Headphones,
-  Key,
-  LayoutGrid,
+  Headphones, LayoutGrid,
   MessageSquare,
   Network,
   Palette,
   PenTool,
   Plug,
   Send,
-  Shield,
-  Sparkles,
-  TestTube2,
+  Shield, TestTube2,
   Users,
   Webhook,
   Zap,
-  type LucideIcon,
+  type LucideIcon
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -216,6 +212,8 @@ export interface ConnectorCredential {
   readonly status: CredentialStatus;
   readonly fingerprint: string;    // sha256[:12]
   readonly lastRotatedAt: string; // ISO
+  readonly lastUsedAt?: string | null; // ISO — backend /v1/connectors/credentials
+  readonly connectorId?: string;  // FK to connectors.id; null for orphan creds
   readonly rotatedBy: string;
   readonly expiresAt?: string;     // ISO
   readonly owner: { name: string; initials: string };

@@ -33,6 +33,9 @@ import type { LucideIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/lib/api/auth';
+import { useBillingQuota } from '@/lib/hooks/useSettings';
+import { AlertTriangle } from 'lucide-react';
 
 interface Kpi {
   id: string;
@@ -44,6 +47,7 @@ interface Kpi {
   accent: string;
 }
 
+// step 73: KPIs/invoices/payment are still seeded — backend integration lands later
 const KPIS: ReadonlyArray<Kpi> = [
   { id: 'agents',  label: 'Active agents', value: '8 / 10',  meta: '2 seats remaining', progress: 0.8,  Icon: Users,      accent: 'var(--accent-emerald)' },
   { id: 'runs',    label: 'Runs this month', value: '2,847', meta: '+18% vs last month',                                   Icon: PlayCircle, accent: 'var(--accent-cyan)' },
@@ -83,6 +87,8 @@ const USAGE_HISTORY = [
 
 export function BillingTab() {
   const [cancelOpen, setCancelOpen] = React.useState(false);
+  const tenantId = useAuth((s) => s.tenant?.id ?? null);
+  const quotaQ = useBillingQuota(tenantId);
   return (
     <div className="flex flex-col gap-6" data-testid="billing-tab">
       <header className="flex items-start justify-between gap-4">
@@ -115,6 +121,12 @@ export function BillingTab() {
           <p className="text-[var(--text-xs)] text-[var(--fg-tertiary)]">
             Next invoice: 2026-07-01
           </p>
+          {quotaQ.data ? (
+            <QuotaProgress
+              used={quotaQ.data.usedUsd}
+              limit={quotaQ.data.monthlyUsdLimit}
+            />
+          ) : null}
         </div>
         <div className="flex gap-2">
           <Button
@@ -328,6 +340,42 @@ function KpiTile({ kpi }: { kpi: Kpi }) {
 }
 
 /* ---------------- Cancel Dialog ---------------- */
+
+/* ---------------- Quota Progress ---------------- */
+
+function QuotaProgress({ used, limit }: { used: number; limit: number }) {
+  const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+  const over = pct >= 90;
+  return (
+    <div
+      className="mt-3 flex w-full max-w-md flex-col gap-1"
+      data-testid="billing-quota-progress"
+    >
+      <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-[var(--fg-tertiary)]">
+        <span>
+          ${used.toFixed(2)} of ${limit.toFixed(2)} used ({pct}%)
+        </span>
+        {over ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--accent-amber)]/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--accent-amber)]">
+            <AlertTriangle className="h-3 w-3" aria-hidden="true" />
+            Approaching limit
+          </span>
+        ) : null}
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-[var(--bg-inset)]">
+        <div
+          className="h-full rounded-full"
+          style={{
+            width: `${pct}%`,
+            backgroundColor: over
+              ? 'var(--accent-amber)'
+              : 'var(--accent-primary)',
+          }}
+        />
+      </div>
+    </div>
+  );
+}
 
 function CancelConfirmDialog({ onClose }: { onClose: () => void }) {
   const [confirm, setConfirm] = React.useState('');

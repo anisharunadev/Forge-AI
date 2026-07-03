@@ -14,6 +14,8 @@ from typing import Any
 
 import structlog
 
+from app.core.secret_filter import secret_filter
+
 # Context that propagates through async boundaries via contextvars.
 tenant_id_ctx: ContextVar[str | None] = ContextVar("tenant_id", default=None)
 project_id_ctx: ContextVar[str | None] = ContextVar("project_id", default=None)
@@ -45,7 +47,13 @@ def configure_logging(level: str = "INFO", json_output: bool | None = None) -> N
 
     timestamper = structlog.processors.TimeStamper(fmt="iso", utc=True)
 
+    # step-75 Phase 1 — SecretFilter is the FIRST processor so it
+    # redacts sensitive values before any other transformation
+    # (timestamps, log levels, etc.) sees them. ponytail: this means
+    # DEBUG-level log lines that include a raw Authorization header
+    # never leak the key.
     shared_processors: list[structlog.types.Processor] = [
+        secret_filter,
         structlog.contextvars.merge_contextvars,
         structlog.stdlib.add_log_level,
         structlog.stdlib.add_logger_name,

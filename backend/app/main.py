@@ -39,6 +39,7 @@ from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
 from app.core.phase4_errors import register_phase4_exception_handlers
 from app.core.telemetry import init_telemetry
+from app.integrations.litellm.health_monitor import health_monitor
 from app.integrations.litellm.litellm_base_client import LiteLLMBaseClient
 from app.services import lesson_service
 from app.services.event_bus import bus
@@ -61,6 +62,11 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     init_telemetry()
     await bus.start()
     lesson_service.register(bus)
+    # step-77 P0 — start the LiteLLM availability monitor (it was
+    # defined in F-829l but never wired in). Cheap idempotent noop if
+    # already running. ``is_healthy`` flips on the first probe and the
+    # audit event is emitted by the monitor itself.
+    await health_monitor.start()
     # step-75 Phase 1 — readiness probe + routes discovery.
     route_count = 0
     if settings.forge_route_discovery_enabled:
@@ -106,6 +112,11 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     try:
         yield
     finally:
+        # Stop the health monitor BEFORE the event bus so any
+        # in-flight audit row it tries to publish during shutdown has
+        # a live bus to dispatch on. The monitor's ``stop()`` is
+        # idempotent and a noop when never started.
+        await health_monitor.stop()
         await bus.stop()
         logger.info("forge.shutdown")
 

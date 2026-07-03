@@ -20,7 +20,7 @@
  * the page.
  */
 
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import {
   createRun,
@@ -34,6 +34,8 @@ import {
   type StageRecord,
   type WorkflowRunsView,
 } from '@/lib/api';
+import type { RunExplainability } from '@/lib/api/runs-types';
+import { getRunExplainability } from '@/lib/runs/data';
 
 /** Stable query keys so the cache survives HMR / route changes. */
 export const runsQueryKeys = {
@@ -42,6 +44,7 @@ export const runsQueryKeys = {
   workflowIndex: () => [...runsQueryKeys.all, 'workflow-index'] as const,
   detail: (id: string) => [...runsQueryKeys.all, 'detail', id] as const,
   stages: (id: string) => [...runsQueryKeys.all, 'stages', id] as const,
+  explainability: (id: string) => [...runsQueryKeys.all, 'explainability', id] as const,
 };
 
 const NON_TERMINAL = new Set<RunRecord['status']>([
@@ -135,5 +138,19 @@ export function useRunStages(runId: string) {
 export function useCreateRun() {
   return useMutation<RunRecord, Error, CreateRunInput>({
     mutationFn: (input) => createRun(input),
+  });
+}
+
+/**
+ * Step-64 Sub-step A: fetch the 5-question explainability bundle.
+ * Bundle is derived; 30s staleTime is plenty for active runs and
+ * cheap enough for the polling cadence the detail page already uses.
+ */
+export function useRunExplainability(runId: string): UseQueryResult<RunExplainability> {
+  return useQuery<RunExplainability>({
+    queryKey: runsQueryKeys.explainability(runId),
+    queryFn: () => getRunExplainability(runId),
+    enabled: Boolean(runId),
+    staleTime: 30_000,
   });
 }

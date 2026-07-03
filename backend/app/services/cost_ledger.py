@@ -141,4 +141,35 @@ class CostLedger:
 cost_ledger = CostLedger()
 
 
-__all__ = ["CostLedger", "cost_ledger"]
+async def record_spend(
+    *,
+    tenant_id: UUID,
+    project_id: UUID,
+    agent_id: UUID,
+    user_id: UUID,
+    team_id: UUID | None,
+    model: str,
+    prompt_tokens: int,
+    completion_tokens: int,
+    litellm_request_id: str,
+    cost_usd: float,
+):
+    """Thin shim — forwards to SpendService.record_from_usage (step-75 F5)."""
+    # ponytail: lazy import avoids circular spend ↔ ledger at module load
+    from app.services.forge_spend import SpendService
+
+    return await SpendService().record_from_usage(
+        tenant_id=tenant_id,
+        project_id=project_id,
+        agent_id=agent_id,
+        user_id=user_id,
+        team_id=team_id,
+        model=model,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        litellm_request_id=litellm_request_id,
+        cost_usd=cost_usd,
+    )
+
+
+__all__ = ["CostLedger", "cost_ledger", "record_spend"]

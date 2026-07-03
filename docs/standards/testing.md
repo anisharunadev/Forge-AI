@@ -726,7 +726,9 @@ if __name__ == "__main__":
 
 ```typescript
 // ❌ No real fetch in tests
-fetch('/api/v1/seeds');  // Use MSW (Mock Service Worker)
+fetch('/api/v1/seeds');  // Mock the api module instead — see `tests/copilot/hooks.test.tsx`
+//   and `tests/copilot/knowledge-hooks.test.tsx` for the `vi.mock('../../lib/api/client', …)`
+//   pattern. MSW is NOT installed in this repo.
 
 // ❌ No real timers in component tests
 setTimeout(() => ..., 1000);  // Use vi.useFakeTimers()

@@ -43,13 +43,14 @@ from app.db.models.architecture import (
 from app.db.models.artifact import Artifact, ArtifactStatus
 from app.db.session import get_session_factory
 
+from scripts._seed_helpers import ACME_TENANT_ID
+
 logger = logging.getLogger("seed_architecture")
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 # acme-corp is the dev tenant seeded by `day_one_bootstrap`. Its UUID
 # is stable across re-seeds because the bootstrap uses an idempotent
 # insert.
-ACME_TENANT_ID = uuid.UUID("a6500631-1930-5afa-9d38-24de9bedcb37")
 # Default to the Acme Platform project from seed_projects.py.
 ACME_PLATFORM_PROJECT_ID = uuid.UUID("22222222-2222-4222-8222-222222222222")
 DEFAULT_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000999")

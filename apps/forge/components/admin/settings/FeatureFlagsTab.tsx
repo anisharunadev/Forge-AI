@@ -27,7 +27,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { useFeatureFlags, useUpdateFeatureFlag } from '@/lib/hooks/useSettings';
 
 type Label = 'beta' | 'experimental' | 'deprecated';
 
@@ -41,36 +43,16 @@ interface Flag {
   Icon: LucideIcon;
 }
 
-const SEED_FLAGS: ReadonlyArray<Flag> = [
-  { id: 'flag-voice',   name: 'Beta: New Co-pilot voice mode',          description: 'Talk to Co-pilot instead of typing. Uses your default microphone and sends audio to the speech model.', label: 'beta', enabled: false, Icon: Mic2 },
-  { id: 'flag-flow',    name: 'Beta: Workflow visual editor v2',        description: 'Drag-and-drop node editor for assembling multi-agent workflows. Includes undo/redo and live validation.', label: 'beta', enabled: false, Icon: Workflow },
-  { id: 'flag-pi',      name: 'Experimental: forge-pi code-aware suggestions', description: 'Inline completions that reference your repository structure and recent diffs.', label: 'experimental', enabled: true, Icon: Sparkles },
-  { id: 'flag-tel',     name: 'Telemetry: Anonymous usage stats',      description: 'Help us improve Forge by sharing anonymous usage events. Never includes code or secrets.', label: null, enabled: true, Icon: BarChart3 },
-  { id: 'flag-mm',      name: 'AI: Multi-modal Co-pilot (image upload)',description: 'Attach screenshots and diagrams to Co-pilot messages for richer context.', label: null, enabled: true, Icon: ImageIcon },
-  { id: 'flag-rollout', name: 'New dashboard rollout',                  description: 'Phased rollout of the redesigned dashboard. Gradually enabled per workspace.', label: 'experimental', enabled: true, rollout: 25, Icon: FlaskConical },
-];
-
-const STORAGE_KEY = 'forge.flags.v1';
-
-function loadFlags(): Flag[] {
-  if (typeof window === 'undefined') return [...SEED_FLAGS];
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [...SEED_FLAGS];
-    return JSON.parse(raw) as Flag[];
-  } catch {
-    return [...SEED_FLAGS];
-  }
-}
-
-function persistFlags(f: Flag[]): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(f));
-  } catch {
-    /* noop */
-  }
-}
+// Per-key icon lookup. Backend returns only `key` — UI keeps the icon
+// mapping local. New keys without an entry fall back to Sparkles.
+const ICON_BY_KEY: Record<string, LucideIcon> = {
+  'flag-voice': Mic2,
+  'flag-flow': Workflow,
+  'flag-pi': Sparkles,
+  'flag-tel': BarChart3,
+  'flag-mm': ImageIcon,
+  'flag-rollout': FlaskConical,
+};
 
 const labelClasses: Record<Label, string> = {
   beta:         'bg-[var(--accent-cyan)]/15 text-[var(--accent-cyan)]',
@@ -84,24 +66,35 @@ const labelLabel: Record<Label, string> = {
   deprecated: 'Deprecated',
 };
 
+function deriveLabel(key: string): Label | null {
+  const k = key.toLowerCase();
+  if (k.includes('experimental')) return 'experimental';
+  if (k.includes('beta')) return 'beta';
+  if (k.includes('deprecated')) return 'deprecated';
+  return null;
+}
+
+function wireToFlag(wire: {
+  key: string;
+  value: boolean | number | string;
+  description: string;
+}): Flag {
+  const isBool = typeof wire.value === 'boolean';
+  return {
+    id: wire.key,
+    name: wire.key,
+    description: wire.description,
+    label: deriveLabel(wire.key),
+    enabled: isBool ? (wire.value as boolean) : true,
+    rollout: !isBool && typeof wire.value === 'number' ? wire.value : undefined,
+    Icon: ICON_BY_KEY[wire.key] ?? Sparkles,
+  };
+}
+
 export function FeatureFlagsTab() {
-  const [flags, setFlags] = React.useState<ReadonlyArray<Flag>>(SEED_FLAGS);
-
-  React.useEffect(() => {
-    setFlags(loadFlags());
-  }, []);
-
-  const toggle = (id: string) => {
-    const next = flags.map((f) => (f.id === id ? { ...f, enabled: !f.enabled } : f));
-    setFlags(next);
-    persistFlags(next);
-  };
-
-  const setRollout = (id: string, value: number) => {
-    const next = flags.map((f) => (f.id === id ? { ...f, rollout: value } : f));
-    setFlags(next);
-    persistFlags(next);
-  };
+  const flagsQ = useFeatureFlags();
+  const updateM = useUpdateFeatureFlag();
+  const flags: ReadonlyArray<Flag> = (flagsQ.data ?? []).map(wireToFlag);
 
   return (
     <div className="flex flex-col gap-6" data-testid="feature-flags-tab">
@@ -124,16 +117,27 @@ export function FeatureFlagsTab() {
         className="rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-elevated)]"
         data-testid="flags-list"
       >
-        <ul className="divide-y divide-[var(--border-subtle)]">
-          {flags.map((f) => (
-            <FlagRow
-              key={f.id}
-              flag={f}
-              onToggle={() => toggle(f.id)}
-              onRollout={(v) => setRollout(f.id, v)}
-            />
-          ))}
-        </ul>
+        {flagsQ.isLoading ? (
+          <div className="space-y-3 p-5">
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+          </div>
+        ) : (
+          <ul className="divide-y divide-[var(--border-subtle)]">
+            {flags.map((f) => (
+              <FlagRow
+                key={f.id}
+                flag={f}
+                pending={updateM.isPending && updateM.variables?.key === f.id}
+                onToggle={() =>
+                  updateM.mutate({ key: f.id, value: !f.enabled })
+                }
+                onRollout={(v) => updateM.mutate({ key: f.id, value: v })}
+              />
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );
@@ -143,11 +147,12 @@ export function FeatureFlagsTab() {
 
 interface FlagRowProps {
   flag: Flag;
+  pending: boolean;
   onToggle: () => void;
   onRollout: (v: number) => void;
 }
 
-function FlagRow({ flag, onToggle, onRollout }: FlagRowProps) {
+function FlagRow({ flag, pending, onToggle, onRollout }: FlagRowProps) {
   const Icon = flag.Icon;
   return (
     <li
@@ -197,6 +202,7 @@ function FlagRow({ flag, onToggle, onRollout }: FlagRowProps) {
                 min={0}
                 max={100}
                 step={5}
+                disabled={pending}
                 onValueChange={(v) => onRollout(v[0] ?? 0)}
               />
             </div>
@@ -206,6 +212,7 @@ function FlagRow({ flag, onToggle, onRollout }: FlagRowProps) {
       <Switch
         checked={flag.enabled}
         onCheckedChange={onToggle}
+        disabled={pending}
         data-testid={`flag-toggle-${flag.id}`}
       />
     </li>

@@ -13,7 +13,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import DateTime, Index, String
+from sqlalchemy import DateTime, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
@@ -47,6 +47,14 @@ class LiteLLMTeamMapping(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     tenant_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, index=True)
     project_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, index=True)
+    # F12 RBAC — track the team under the tenant's org hierarchy (nullable
+    # for legacy mappings created before the org hierarchy shipped).
+    org_id: Mapped[UUID | None] = mapped_column(
+        GUID(), ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True
+    )
+    team_id: Mapped[UUID | None] = mapped_column(
+        GUID(), ForeignKey("teams.id", ondelete="SET NULL"), nullable=True
+    )
     litellm_team_id: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
     status: Mapped[LiteLLMTeamStatus] = mapped_column(
         String(32),

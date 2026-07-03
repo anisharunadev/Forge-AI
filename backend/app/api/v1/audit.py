@@ -6,15 +6,17 @@ Layered audit center:
 """
 
 from __future__ import annotations
+from typing import Annotated
 
 from datetime import datetime, timedelta
-from typing import Annotated
+
 from uuid import UUID
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
 
-from app.api.deps import DbSession, Principal, require_permission
+from app.api.deps import DbSession, Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.audit import AuditEvent
 from app.schemas.audit import AuditEventRead, AuditPage
 from app.services.litellm_admin import list_spend_logs
@@ -26,8 +28,8 @@ router = APIRouter(prefix="/audit", tags=["audit"])
 @router.get("", response_model=AuditPage)
 @audit(action="audit.list", target_type="audit_event")
 async def list_audit_events(
-    principal: Principal,
-    _perm: Principal = require_permission("audit:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("audit:read")),
     db: DbSession = None,  # type: ignore[assignment]
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=500)] = 50,
@@ -70,7 +72,7 @@ async def list_audit_events(
 @router.get("/llm-traffic")
 @audit(action="audit.llm_traffic", target_type="tenant")
 async def llm_traffic(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     days: int = Query(default=7),
     limit: int = Query(default=100),
 ):
@@ -95,7 +97,7 @@ async def llm_traffic(
 @audit(action="audit.settings", target_type="project")
 async def list_settings_audit(
     project_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
     days: int = Query(default=30, le=90),
     page: int = Query(default=1, ge=1),

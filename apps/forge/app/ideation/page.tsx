@@ -3,7 +3,7 @@
 /**
  * Ideation Center — Step 28 ("Continuous Context Orchestration" hub).
  *
- * Replaces the Step 5 page with a 9-tab hub:
+ * Replaces the Step 5 page with a 10-tab hub:
  *   Pipeline (default) / Ideas / Roadmap / PRDs / Architecture Previews /
  *   My Approvals / Sources / Destinations / Market Signals / Customer Voice.
  *
@@ -57,6 +57,7 @@ import { OneClickPipelineDrawer } from '@/components/ideation/OneClickPipelineDr
 import { useIdeationIngestStatus } from '@/lib/hooks/useIdeationIngestStatus';
 import { useIdeationHotkeys, type HotkeyId } from '@/lib/hooks/useIdeationHotkeys';
 import { useIdeasAdapter, useApprovalsAdapter } from '@/lib/hooks/useIdeationAdapters';
+import { useRoadmaps, useArchPreviews } from '@/lib/hooks/useIdeation';
 import { PageHeader } from '@/components/shell';
 import { toast } from 'sonner';
 import type { Idea } from '@/lib/ideation/data';
@@ -119,6 +120,16 @@ export default function IdeationCenterPage() {
   const ingestStatus = ingestStatusRes.data?.status ?? 'never';
   const ingestIdeasCreatedToday = ingestStatusRes.data?.ideas_created_today ?? 0;
   const ingestLastRunAt = ingestStatusRes.data?.last_run_at ?? null;
+
+  // Step-69 — wire the badge counts for the Roadmap + Architecture
+  // tabs. `useRoadmaps` is enabled (list endpoint exists); `useArchPreviews`
+  // is currently disabled (no project-wide arch list endpoint — see
+  // `lib/api/ideation-hooks.ts` `usePRDsList` for the analogous case),
+  // so the arch badge stays at 0 until the backend lands a list endpoint.
+  const roadmapsQuery = useRoadmaps();
+  const roadmapsCount = roadmapsQuery.data?.items?.length ?? 0;
+  const archPreviewsQuery = useArchPreviews();
+  const archPreviewsCount = archPreviewsQuery.data?.length ?? 0;
 
   const handleSelect = (idea: Idea) => {
     setSelected(idea);
@@ -195,14 +206,16 @@ export default function IdeationCenterPage() {
 
   useIdeationHotkeys({ onHotkey: handleHotkey });
 
-  // Step-57 Zone 6 — counts for badge chips on Ideas / Approvals.
-  // PRD count is 0 for now because the canonical PRD list endpoint
-  // isn't wired in the adapter yet (PRD is per-idea in the wire
-  // shape). Flip this to the new list endpoint when it lands.
+  // Step-57 Zone 6 + Step-69 — counts for badge chips on Ideas /
+  // Roadmap / PRDs / Architecture / Approvals. PRD count stays at 0
+  // because the canonical PRD list endpoint isn't wired in the
+  // adapter yet (PRD is per-idea in the wire shape). Flip this to
+  // the new list endpoint when it lands.
   const ideaCount = ideas.length;
   const prdCount = 0;
-  // `approvalsCount` is computed above from `approvalsAdapter.data.length`
-  // — keep the variable name for the badge lookup below.
+  // `roadmapsCount` and `archPreviewsCount` are computed above from
+  // the canonical hooks in `lib/hooks/useIdeation.ts`.
+  // `approvalsCount` is computed above from `approvalsAdapter.data.length`.
 
   return (
     <AdminShell>
@@ -304,9 +317,11 @@ export default function IdeationCenterPage() {
               {TABS.map((t) => {
                 const badge =
                   t.id === 'ideas' ? ideaCount
-                    : t.id === 'prds' ? prdCount
-                      : t.id === 'approvals' ? approvalsCount
-                        : null;
+                    : t.id === 'roadmap' ? roadmapsCount
+                      : t.id === 'prds' ? prdCount
+                        : t.id === 'arch' ? archPreviewsCount
+                          : t.id === 'approvals' ? approvalsCount
+                            : null;
                 return (
                   <TabsTrigger
                     key={t.id}

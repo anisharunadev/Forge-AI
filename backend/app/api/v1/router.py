@@ -32,8 +32,11 @@ from app.api.v1 import (
     forge_models,
     forge_spend,
     forge_keys,
+    forge_prompts,
+    forge_rbac,
     governance_core,
     governance_violations,
+    guardrails,
     health,
     hooks,
     ideation,
@@ -53,6 +56,7 @@ from app.api.v1 import (
     runs,
     runtime_management,
     seeds,
+    skills,
     standards,
     steering_rules,
     stories,
@@ -65,6 +69,7 @@ from app.api.v1 import (
     terminal_costs,
     terminal_export,
     terminal_sessions,
+    tools,
     tool_bundles,
     users,
     validation_reports,
@@ -94,18 +99,26 @@ api_router.include_router(forge_models.router)
 api_router.include_router(forge_spend.router)
 api_router.include_router(forge_keys.router)
 api_router.include_router(forge_chat.router)
+# step-78 — Phase 3 F11 Prompts (`/api/forge/prompts/*`).
+api_router.include_router(forge_prompts.router)
+# step-78 — Phase 3 F12 RBAC (`/api/forge/rbac/*`).
+api_router.include_router(forge_rbac.router)
 api_router.include_router(standards.router)
 # F-821 — Seeds API (Plan C — Phase 0.7)
 api_router.include_router(seeds.router)
 api_router.include_router(steering_rules.router)
 api_router.include_router(templates.router)
 api_router.include_router(policies.router)
+# step-78 Phase 2 — Skills (F-9).
+api_router.include_router(skills.router)
 api_router.include_router(rbac.router)
 api_router.include_router(audit.router)
 api_router.include_router(approvals.router)
 # step-72 — Phase 11 Governance + Audit (governance_core.router supersedes the dev stub surface)
 api_router.include_router(governance_core.router)
 api_router.include_router(governance_violations.router)
+# step-77 Phase 2 — Guardrails (F-6).
+api_router.include_router(guardrails.router)
 api_router.include_router(artifacts.router)
 api_router.include_router(connectors.router)
 api_router.include_router(connector_lifecycle.router)
@@ -116,6 +129,8 @@ api_router.include_router(model_providers.router)
 api_router.include_router(agent_runtimes.router)
 api_router.include_router(marketplace.router)
 api_router.include_router(mcp.router)
+# step-77 Phase 2 — Tools registry (F-10).
+api_router.include_router(tools.router)
 api_router.include_router(runtime_management.router)
 api_router.include_router(hooks.router)
 api_router.include_router(onboarding.router)

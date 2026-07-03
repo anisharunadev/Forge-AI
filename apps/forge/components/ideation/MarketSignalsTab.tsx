@@ -7,6 +7,11 @@
  * trends, tech updates). Each signal carries an AI annotation
  * ("Why this matters for us"). Filter by kind (All / Competitor /
  * Trend / Tech).
+ *
+ * TODO(step-7x): register `GET /api/v1/ideation/market-signals` and
+ * replace the `MARKET_SIGNALS` fixture import below with a TanStack
+ * hook. A `synthesizer.py` service module exists but is unexposed
+ * (verified Step-69).
  */
 
 import * as React from 'react';

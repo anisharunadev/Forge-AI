@@ -1,13 +1,15 @@
 """F-303 — Task Breakdown HTTP endpoints."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.architecture import (
     TaskBreakdownCreateRequest,
     TaskBreakdownListResponse,
@@ -37,8 +39,8 @@ def _generator() -> TaskBreakdownGenerator:
 @audit(action="architecture.task_breakdown.create", target_type="task_breakdown")
 async def create_task_breakdown(
     body: TaskBreakdownCreateRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:task_breakdown:create"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:task_breakdown:create"))
 ) -> TaskBreakdownResponse:
     """Generate a task breakdown from a source artifact (ADR, contract, etc.)."""
     if body.source_type != "adr":
@@ -61,8 +63,8 @@ async def create_task_breakdown(
 @router.get("", response_model=TaskBreakdownListResponse)
 @audit(action="architecture.task_breakdown.list", target_type="task_breakdown")
 async def list_task_breakdowns(
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:task_breakdown:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:task_breakdown:read")),
     project_id: UUID = Query(...),
 ) -> TaskBreakdownListResponse:
     rows = await _generator().list_for_project(
@@ -79,8 +81,8 @@ async def list_task_breakdowns(
 @audit(action="architecture.task_breakdown.get", target_type="task_breakdown")
 async def get_task_breakdown(
     breakdown_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:task_breakdown:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:task_breakdown:read"))
 ) -> TaskBreakdownResponse:
     breakdown = await _generator().get_task_breakdown(breakdown_id)
     if breakdown is None or breakdown.tenant_id != principal.tenant_id:
@@ -96,8 +98,8 @@ async def update_task(
     breakdown_id: UUID,
     task_id: str,
     body: TaskUpdateRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:task_breakdown:update"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:task_breakdown:update"))
 ) -> TaskBreakdownResponse:
     updates = body.model_dump(exclude_unset=True)
     try:

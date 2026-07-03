@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
+from uuid import UUID
 
 from app.core.logging import get_logger
 from app.core.security import AuthenticatedPrincipal
@@ -36,6 +37,11 @@ COPILOT_PERMISSION_TOOL_CHECK_BUDGET = "copilot:tool:check_budget"
 COPILOT_PERMISSION_TOOL_AUDIT_EVENT = "copilot:tool:audit_event"
 
 
+# Step-72 — Governance Center permission catalog.
+GOVERNANCE_PERMISSION_READ = "governance:read"
+GOVERNANCE_PERMISSION_MANAGE = "governance:manage"
+
+
 def copilot_tool_permission(tool_name: str) -> str:
     """Return the canonical ``copilot:tool:<name>`` permission string.
 
@@ -61,16 +67,28 @@ class Permission:
     action: str
 
     @classmethod
-    def parse(cls, raw: str) -> "Permission":
+    def parse(cls, raw: str) -> Permission:
         if ":" not in raw:
             raise ValueError(f"invalid permission string: {raw!r}")
         r, a = raw.split(":", 1)
         return cls(resource=r, action=a)
 
-    def matches(self, other: "Permission") -> bool:
+    def matches(self, other: Permission) -> bool:
         return self.resource == other.resource and (
             self.action == other.action or self.action == "*" or other.action == "*"
         )
+
+
+@dataclass(frozen=True)
+class CheckResult:
+    """Outcome of an RBAC check, returned by :meth:`RBACService.check`.
+
+    ``allowed`` is the boolean verdict; ``reason`` is a short machine-friendly
+    string suitable for a 403 response detail when the check fails.
+    """
+
+    allowed: bool
+    reason: str | None = None
 
 
 class RBACService:
@@ -114,14 +132,21 @@ class RBACService:
         self,
         principal: AuthenticatedPrincipal,
         required: str,
-    ) -> bool:
-        """Return True if the principal holds the required permission.
+        *,
+        policy_id: UUID | None = None,
+    ) -> CheckResult:
+        """Return a :class:`CheckResult` for the principal + required permission.
 
-        Step-59 removed the policy table; this is now a thin wrapper
-        over :meth:`has_permission` for callers that want a simple
-        yes/no answer.
+        ``policy_id`` is accepted for compatibility with
+        :func:`app.api.deps.require_permission` but is currently a no-op:
+        Step-59 removed the policy table, so the verdict comes purely from
+        :meth:`has_permission`.
         """
-        return self.has_permission(principal, required)
+        allowed = self.has_permission(principal, required)
+        return CheckResult(
+            allowed=allowed,
+            reason=None if allowed else f"forbidden:{required}",
+        )
 
 
 rbac = RBACService()
@@ -130,6 +155,7 @@ rbac = RBACService()
 __all__ = [
     "RBACService",
     "Permission",
+    "CheckResult",
     "rbac",
     "COPILOT_PERMISSION_USE",
     "COPILOT_PERMISSION_TOOLS_PREFIX",
@@ -144,5 +170,7 @@ __all__ = [
     "COPILOT_PERMISSION_TOOL_RUN_COMMAND",
     "COPILOT_PERMISSION_TOOL_CHECK_BUDGET",
     "COPILOT_PERMISSION_TOOL_AUDIT_EVENT",
+    "GOVERNANCE_PERMISSION_READ",
+    "GOVERNANCE_PERMISSION_MANAGE",
     "copilot_tool_permission",
 ]  # noqa: E501

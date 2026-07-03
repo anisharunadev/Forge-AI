@@ -38,10 +38,14 @@ import {
   kgQueryKeys,
   type CypherQueryInput,
   type CypherQueryResult,
+  type HybridQueryInput,
   type KGEdge,
   type KGFilters,
+  type KGFreshnessInfo,
   type KGNode,
   type KGStats,
+  type SQLQueryInput,
+  type SQLQueryResult,
   type VectorSearchInput,
 } from '@/lib/knowledge-graph/types';
 
@@ -147,6 +151,46 @@ export function useCypherQuery() {
     mutationFn: (input) =>
       api.post<CypherQueryResult>('/kg/query/cypher', {
         query: input.query,
+        params: input.params ?? {},
+      }),
+  });
+}
+
+/**
+ * Drift flag for a single node. No-op when `id` is missing. Backend
+ * caches freshness for ~30s; we hold the result for 5 minutes on the
+ * client to keep the inspector panel cheap.
+ */
+export function useKGFreshness(id: string | null | undefined) {
+  return useQuery<KGFreshnessInfo, ApiError>({
+    queryKey: kgQueryKeys.freshness(id ?? ''),
+    queryFn: () => api.get<KGFreshnessInfo>(`/kg/nodes/${id}/freshness`),
+    enabled: Boolean(id),
+    staleTime: 300_000,
+  });
+}
+
+/**
+ * Arbitrary SQL query. Mutation for the same reason as cypher.
+ * `kg:query` permission gate is enforced server-side.
+ */
+export function useSQLQuery() {
+  return useMutation<SQLQueryResult, ApiError, SQLQueryInput>({
+    mutationFn: (input) =>
+      api.post<SQLQueryResult>('/kg/query/sql', {
+        query: input.query,
+        params: input.params ?? {},
+      }),
+  });
+}
+
+/** Hybrid (cypher + SQL) lookup. Mutation. */
+export function useHybridQuery() {
+  return useMutation<SQLQueryResult, ApiError, HybridQueryInput>({
+    mutationFn: (input) =>
+      api.post<SQLQueryResult>('/kg/query/hybrid', {
+        cypher: input.cypher,
+        sql: input.sql,
         params: input.params ?? {},
       }),
   });

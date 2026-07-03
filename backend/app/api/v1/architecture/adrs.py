@@ -1,13 +1,15 @@
 """F-301 — ADR HTTP endpoints."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.architecture import (
     ADRCreateRequest,
     ADRListResponse,
@@ -35,8 +37,8 @@ def _generator() -> ADRGenerator:
 @audit(action="architecture.adr.create", target_type="adr")
 async def create_adr(
     body: ADRCreateRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:adr:create"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:adr:create"))
 ) -> ADRResponse:
     """Generate a new ADR from the supplied context."""
     adr = await _generator().generate_adr(
@@ -58,8 +60,8 @@ async def create_adr(
 @router.get("", response_model=ADRListResponse)
 @audit(action="architecture.adr.list", target_type="adr")
 async def list_adrs(
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:adr:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:adr:read")),
     project_id: UUID = Query(...),
     adr_status: str | None = Query(default=None, alias="status"),
 ) -> ADRListResponse:
@@ -79,8 +81,8 @@ async def list_adrs(
 @audit(action="architecture.adr.get", target_type="adr")
 async def get_adr(
     adr_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:adr:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:adr:read"))
 ) -> ADRResponse:
     adr = await _generator().get_adr(adr_id)
     if adr is None or adr.tenant_id != principal.tenant_id:
@@ -93,8 +95,8 @@ async def get_adr(
 async def supersede_adr(
     adr_id: UUID,
     body: ADRSupersedeRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:adr:supersede"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:adr:supersede"))
 ) -> ADRResponse:
     """Chain the old ADR's id into the new one's `related_adrs`."""
     try:

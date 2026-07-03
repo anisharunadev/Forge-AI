@@ -5,6 +5,7 @@ from __future__ import annotations
 from app.api.v1.ideation import (
     approvals,
     arch_previews,
+    enhance,
     ideas,
     impact,
     kg_graph,
@@ -19,6 +20,7 @@ from app.api.v1.ideation import (
 __all__ = [
     "approvals",
     "arch_previews",
+    "enhance",
     "ideas",
     "impact",
     "kg_graph",

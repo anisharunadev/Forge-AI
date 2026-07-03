@@ -68,6 +68,17 @@ class Settings(BaseSettings):
         default="",
         description="Bearer token for LiteLLM management endpoints (distinct from chat key)",
     )
+    # step-75 Phase 1 — preferred name for the LiteLLM master key
+    # (spec word). When set, takes precedence over `litellm_admin_key`.
+    # Phase 2 will retire the legacy alias; this PR keeps both so
+    # existing call sites stay green.
+    litellm_master_key: str = Field(
+        default="",
+        description=(
+            "Bearer token for the LiteLLM master key (spec name, takes "
+            "precedence over LITELLM_ADMIN_KEY)."
+        ),
+    )
     # TTL for the in-process cache of per-tenant Virtual Keys (seconds).
     # 5 minutes by default — short enough to keep the auth surface
     # responsive to revocations, long enough to avoid hammering
@@ -134,6 +145,16 @@ class Settings(BaseSettings):
     # F-503 — Deterministic Security Gate
     # Per-commit cost cap for pre-call admission control (USD).
     merge_gate_per_commit_cost_cap_usd: float = 1.0
+
+    # step-75 Phase 1 — Config & Auth foundation (F1)
+    # Cache TTL (seconds) for the /api/forge/health readiness probe.
+    forge_health_cache_ttl_seconds: int = 60
+    # Tenant header injected on outgoing admin/chat calls (Phase 2+).
+    forge_tenant_header: str = "X-Forge-Tenant"
+    # Run header injected on outgoing chat calls (Phase 5).
+    forge_run_header: str = "X-Forge-Run-Id"
+    # One-shot GET /routes capability discovery at boot.
+    forge_route_discovery_enabled: bool = True
     # GitHub webhook shared secret (HMAC SHA-256). Empty disables
     # signature verification — only acceptable in local dev.
     github_webhook_secret: str = Field(default="", description="HMAC secret")

@@ -109,6 +109,7 @@ export default function OAuthCallbackPage() {
           useAuth.setState({
             token: tokens.access_token,
             refreshToken: tokens.refresh_token,
+            proxyToken: tokens.proxy_token ?? null,
           });
 
           await fetchCurrentUser();

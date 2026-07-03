@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.services.terminal.broadcast import session_broadcaster
 from app.terminal.session_manager import session_manager
 
@@ -41,8 +42,8 @@ class GrantResponse(BaseModel):
 @audit(action="terminal.broadcast.list", target_type="terminal_session")
 async def list_broadcasters(
     session_id: str,
-    principal: Principal,
-    _perm: Principal = require_permission("terminal:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:read"))
 ) -> list[BroadcasterResponse]:
     """List current observers / writers for a session."""
     session = await session_manager.get_session(session_id)
@@ -63,8 +64,8 @@ async def list_broadcasters(
 async def grant_write(
     session_id: str,
     body: GrantRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("terminal:admin"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:admin"))
 ) -> GrantResponse:
     """Grant broadcast write capability (RBAC: forge-admin)."""
     session = await session_manager.get_session(session_id)
@@ -94,8 +95,8 @@ async def grant_write(
 async def revoke_write(
     session_id: str,
     body: GrantRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("terminal:admin"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:admin"))
 ) -> GrantResponse:
     """Revoke broadcast write capability (RBAC: forge-admin)."""
     session = await session_manager.get_session(session_id)

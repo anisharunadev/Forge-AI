@@ -144,6 +144,15 @@ services:
       # boot without this. Read from .env; falls back to the dev
       # placeholder so first-time `docker compose up` still works.
       LITELLM_MASTER_KEY: "${LITELLM_MASTER_KEY:-sk-1234}"
+      # step-65: when JWT auth is enabled, the proxy fetches the
+      # signing public keys from this URL.  The backend mints the
+      # proxy_token with its own RS256 keypair (see
+      # app/core/oauth2_rsa.py) and exposes the public key as JWKS at
+      # ``/api/v1/auth/jwks.json``.  We point the proxy at the
+      # backend (the only signer in our network) rather than at
+      # Keycloak — Keycloak doesn't issue tokens with the
+      # ``aud="litellm-proxy"`` we set in our claims.
+      JWT_PUBLIC_KEY_URL: "${JWT_PUBLIC_KEY_URL:-http://backend:8000/api/v1/auth/jwks.json}"
     ports:
       - "${LITELLM_PORT:-4000}:4000"
     depends_on:

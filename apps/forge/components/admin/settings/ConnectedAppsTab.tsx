@@ -14,10 +14,7 @@
 import * as React from 'react';
 import {
   Store,
-  Calendar,
-  Code2 as Github,
-  MessageSquare,
-  Database,
+  Globe,
   ChevronDown,
   X,
 } from 'lucide-react';
@@ -33,6 +30,8 @@ import {
 } from '@/components/ui/dialog';
 import { EmptyState } from '@/components/shell';
 import { cn } from '@/lib/utils';
+import { useApiData } from '@/hooks/use-api-data';
+import type { Connector, ConnectorCredential } from '@/lib/connectors/data';
 
 type Category = 'productivity' | 'dev' | 'communication' | 'data';
 
@@ -44,77 +43,15 @@ interface ConnectedApp {
   scopes: ReadonlyArray<string>;
   authorizedAt: string;
   lastUsedAt: string | null;
-  Icon: React.ComponentType<{ className?: string }>;
-  color: string;
 }
 
-const SEED: ReadonlyArray<ConnectedApp> = [
-  {
-    id: 'a-1',
-    name: 'GitHub',
-    developer: 'GitHub, Inc.',
-    category: 'dev',
-    scopes: ['Read projects', 'Write stories', 'Manage webhooks'],
-    authorizedAt: '2026-01-04T10:11:00Z',
-    lastUsedAt: '2026-06-27T05:48:00Z',
-    Icon: Github,
-    color: '#FFFFFF',
-  },
-  {
-    id: 'a-2',
-    name: 'Google Calendar',
-    developer: 'Google LLC',
-    category: 'productivity',
-    scopes: ['Read events', 'Create events'],
-    authorizedAt: '2026-02-11T14:30:00Z',
-    lastUsedAt: '2026-06-26T20:11:00Z',
-    Icon: Calendar,
-    color: '#4285F4',
-  },
-  {
-    id: 'a-3',
-    name: 'Slack',
-    developer: 'Slack Technologies',
-    category: 'communication',
-    scopes: ['Read channels', 'Post messages'],
-    authorizedAt: '2026-03-22T08:00:00Z',
-    lastUsedAt: '2026-06-27T05:32:00Z',
-    Icon: MessageSquare,
-    color: '#4A154B',
-  },
-  {
-    id: 'a-4',
-    name: 'Snowflake Mirror',
-    developer: 'Acme Analytics',
-    category: 'data',
-    scopes: ['Read datasets', 'Write datasets'],
-    authorizedAt: '2026-05-09T16:45:00Z',
-    lastUsedAt: null,
-    Icon: Database,
-    color: '#29B5E8',
-  },
-];
-
-const STORAGE_KEY = 'forge.connected-apps.v1';
-
-function loadApps(): ConnectedApp[] {
-  if (typeof window === 'undefined') return [...SEED];
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [...SEED];
-    return JSON.parse(raw) as ConnectedApp[];
-  } catch {
-    return [...SEED];
-  }
-}
-
-function persistApps(a: ConnectedApp[]): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(a));
-  } catch {
-    /* noop */
-  }
+// step 73: category derived from connector.type — UI-only heuristic
+function categoryFromConnector(c: Connector): Category {
+  const t = c.category;
+  if (t === 'source-control' || t === 'quality') return 'dev';
+  if (t === 'comms') return 'communication';
+  if (t === 'data' || t === 'cloud') return 'data';
+  return 'productivity';
 }
 
 const CATEGORY_FILTERS: ReadonlyArray<{ id: 'all' | Category; label: string }> = [
@@ -126,21 +63,47 @@ const CATEGORY_FILTERS: ReadonlyArray<{ id: 'all' | Category; label: string }> =
 ];
 
 export function ConnectedAppsTab() {
-  const [apps, setApps] = React.useState<ReadonlyArray<ConnectedApp>>(SEED);
+  const connectorsQ = useApiData<ReadonlyArray<Connector>>('/v1/connectors');
+  const credentialsQ = useApiData<ReadonlyArray<ConnectorCredential>>(
+    '/v1/connectors/credentials',
+  );
+  const connectors = connectorsQ.data ?? [];
+  const credentials = credentialsQ.data ?? [];
+
+  // Each connector with at least one credential is a connected app.
+  const apps: ReadonlyArray<ConnectedApp> = React.useMemo(() => {
+    const credsByConnector = new Map<string, ConnectorCredential[]>();
+    for (const c of credentials) {
+      if (!c.connectorId) continue; // orphan credentials — skip
+      const key = c.connectorId;
+      const arr = credsByConnector.get(key) ?? [];
+      arr.push(c);
+      credsByConnector.set(key, arr);
+    }
+    return connectors
+      .filter((c) => (credsByConnector.get(c.id)?.length ?? 0) > 0)
+      .map((c) => {
+        const creds = credsByConnector.get(c.id) ?? [];
+        return {
+          id: c.id,
+          name: c.displayName || c.name,
+          developer: c.publisher,
+          category: categoryFromConnector(c),
+          scopes: creds.flatMap((cr) => cr.scopes ?? []),
+          authorizedAt: creds[0]?.lastRotatedAt ?? new Date().toISOString(),
+          lastUsedAt: creds[0]?.lastUsedAt ?? null,
+        };
+      });
+  }, [connectors, credentials]);
+
   const [filter, setFilter] = React.useState<'all' | Category>('all');
   const [expanded, setExpanded] = React.useState<string | null>(null);
   const [confirmRevoke, setConfirmRevoke] = React.useState<ConnectedApp | null>(null);
 
-  React.useEffect(() => {
-    setApps(loadApps());
-  }, []);
-
   const visible = apps.filter((a) => filter === 'all' || a.category === filter);
 
-  const revoke = (id: string) => {
-    const next = apps.filter((a) => a.id !== id);
-    setApps(next);
-    persistApps(next);
+  // step 73: revoke UI wired to credential delete via /v1/connectors/credentials/{id} once that endpoint is exposed here
+  const revoke = (_id: string) => {
     setConfirmRevoke(null);
   };
 
@@ -254,7 +217,6 @@ interface AppRowProps {
 }
 
 function AppRow({ app, expanded, onToggle, onRevoke }: AppRowProps) {
-  const Icon = app.Icon;
   return (
     <li
       className="rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-5"
@@ -262,11 +224,8 @@ function AppRow({ app, expanded, onToggle, onRevoke }: AppRowProps) {
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 flex-1 items-start gap-3">
-          <span
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-inset)]"
-            style={{ color: app.color }}
-          >
-            <Icon className="h-5 w-5" aria-hidden="true" />
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-inset)] text-[var(--fg-secondary)]">
+            <Globe className="h-5 w-5" aria-hidden="true" />
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <div className="flex items-center gap-2">
@@ -309,11 +268,13 @@ function AppRow({ app, expanded, onToggle, onRevoke }: AppRowProps) {
           <Button
             variant="ghost"
             size="sm"
+            disabled
             className="text-[var(--accent-rose)] hover:bg-[var(--accent-rose)]/10 hover:text-[var(--accent-rose)]"
             onClick={onRevoke}
             data-testid={`app-revoke-${app.id}`}
           >
             <X className="h-3.5 w-3.5" aria-hidden="true" />
+            {/* revoke pending step 75 */}
             Revoke
           </Button>
         </div>

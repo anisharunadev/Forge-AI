@@ -84,18 +84,6 @@ export default function AdminSettingsPage() {
         <SettingsSidebar
           active={active}
           onChange={setActive}
-          counts={{
-            members: 6,
-            agents: 8,
-            providers: 4,
-            'env-vars': 12,
-            integrations: 5,
-            sessions: 4,
-            'api-tokens': 3,
-            webhooks: 2,
-            'connected-apps': 4,
-            'feature-flags': 6,
-          }}
           lastChange={{ whenLabel: '12m ago', actorName: 'Arun' }}
         />
         <main

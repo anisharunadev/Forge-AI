@@ -199,6 +199,8 @@ class Story(
 For semi-structured payloads (metadata, settings, search index snapshots):
 
 ```python
+from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+
 settings: Mapped[dict[str, Any]] = mapped_column(
     JSONB,
     nullable=False,
@@ -210,6 +212,20 @@ settings: Mapped[dict[str, Any]] = mapped_column(
 **Use JSONB, not JSON.** JSONB is binary + indexable + faster.
 
 **Always default to `{}` (empty dict), never `None`.** This simplifies query logic (`obj.settings.get(...)` always works).
+
+**Import `JSONB` from `app.db.base`, not from `sqlalchemy.dialects.postgresql`.** The project's `JSONB` is a `TypeDecorator` that renders as `PG_JSONB()` on Postgres and degrades to plain `JSON` on SQLite — the test fixture (`backend/tests/conftest.py:sqlite_db`) runs `metadata.create_all` on SQLite, which cannot compile raw PG JSONB. Three model files (historically `webhook.py`, `connector_credential.py`, `agent_config.py`) have hit this. Use the project TypeDecorator everywhere.
+
+**Mutations on a JSONB column require `flag_modified(obj, "<attr>")` before `db.commit()`.** Plain JSONB columns don't auto-detect nested dict mutations — SQLAlchemy's change tracker sees the same serialized form. The established pattern (3 call sites: `workflow_executor.py:274`, `memory/persona_store.py:322`, `architecture/risk_register.py:240,292`):
+
+```python
+from sqlalchemy.orm.attributes import flag_modified
+
+run.state["stepResults"][step_id]["status"] = "succeeded"
+flag_modified(run, "state")
+await db.commit()
+```
+
+The alternative is `MutableDict.as_mutable(JSONB)` on the column, which requires a schema change and is not used anywhere in `app/`.
 
 ---
 

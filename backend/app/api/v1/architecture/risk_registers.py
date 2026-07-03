@@ -1,13 +1,15 @@
 """F-304 — Risk Register HTTP endpoints."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.architecture import (
     RiskCreate,
     RiskRegisterCreateRequest,
@@ -39,8 +41,8 @@ def _service() -> RiskRegisterService:
 @audit(action="architecture.risk_register.create", target_type="risk_register")
 async def create_risk_register(
     body: RiskRegisterCreateRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:risk_register:create"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:risk_register:create"))
 ) -> RiskRegisterResponse:
     """Derive a risk register from an ADR, task breakdown, or idea."""
     svc = _service()
@@ -68,8 +70,8 @@ async def create_risk_register(
 @router.get("", response_model=RiskRegisterListResponse)
 @audit(action="architecture.risk_register.list", target_type="risk_register")
 async def list_risk_registers(
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:risk_register:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:risk_register:read")),
     project_id: UUID = Query(...),
     risk_status: str | None = Query(default=None, alias="status"),
 ) -> RiskRegisterListResponse:
@@ -88,8 +90,8 @@ async def list_risk_registers(
 @audit(action="architecture.risk_register.get", target_type="risk_register")
 async def get_risk_register(
     register_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:risk_register:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:risk_register:read"))
 ) -> RiskRegisterResponse:
     register = await _service().get_register(register_id)
     if register is None or register.tenant_id != principal.tenant_id:
@@ -106,8 +108,8 @@ async def get_risk_register(
 async def add_risk(
     register_id: UUID,
     body: RiskCreate,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:risk_register:update"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:risk_register:update"))
 ) -> RiskRegisterResponse:
     payload = body.model_dump()
     try:
@@ -129,8 +131,8 @@ async def update_risk(
     register_id: UUID,
     risk_id: str,
     body: RiskUpdateRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:risk_register:update"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:risk_register:update"))
 ) -> RiskRegisterResponse:
     updates = body.model_dump(exclude_unset=True)
     try:
@@ -151,8 +153,8 @@ async def update_risk(
 @audit(action="architecture.risk_register.top", target_type="risk_register")
 async def top_risks(
     register_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:risk_register:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:risk_register:read")),
     top_n: int = Query(default=5, ge=1, le=50),
 ) -> list[RiskResponse]:
     register = await _service().get_register(register_id)

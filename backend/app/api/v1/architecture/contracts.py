@@ -1,13 +1,15 @@
 """F-302 — API Contract HTTP endpoints."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.architecture import (
     APIContractCreateRequest,
     APIContractListResponse,
@@ -36,8 +38,8 @@ def _generator() -> APIContractGenerator:
 @audit(action="architecture.contract.create", target_type="api_contract")
 async def create_contract(
     body: APIContractCreateRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:contract:create"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:contract:create"))
 ) -> APIContractResponse:
     contract = await _generator().generate_from_description(
         tenant_id=principal.tenant_id,
@@ -52,8 +54,8 @@ async def create_contract(
 @router.get("", response_model=APIContractListResponse)
 @audit(action="architecture.contract.list", target_type="api_contract")
 async def list_contracts(
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:contract:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:contract:read")),
     project_id: UUID = Query(...),
 ) -> APIContractListResponse:
     rows = await _generator().list_contracts(
@@ -70,8 +72,8 @@ async def list_contracts(
 @audit(action="architecture.contract.get", target_type="api_contract")
 async def get_contract(
     contract_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:contract:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:contract:read"))
 ) -> APIContractResponse:
     factory = __import__(
         "app.db.session", fromlist=["get_session_factory"]
@@ -89,8 +91,8 @@ async def get_contract(
 @audit(action="architecture.contract.validate", target_type="api_contract")
 async def validate_contract(
     contract_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:contract:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:contract:read"))
 ) -> APIContractValidationResponse:
     return APIContractValidationResponse(
         **await _generator().validate_spec(contract_id)
@@ -101,8 +103,8 @@ async def validate_contract(
 @audit(action="architecture.contract.publish", target_type="api_contract")
 async def publish_contract(
     contract_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:contract:publish"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:contract:publish"))
 ) -> APIContractResponse:
     try:
         contract = await _generator().publish_contract(contract_id)

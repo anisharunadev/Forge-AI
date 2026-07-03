@@ -6,14 +6,15 @@
 # Without ``from __future__ import annotations`` the type annotations stay
 # as live objects so FastAPI can read the Depends from them.
 
-from typing import Optional
+from typing import Annotated, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import DbSession, Principal, require_permission
+from app.api.deps import DbSession, Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.stories import (
     CommentCreate,
     CommentRead,
@@ -44,7 +45,7 @@ epics_router = APIRouter(prefix="/epics", tags=["epics"])
 @router.get("/stories", response_model=list[StoryRead])
 @audit(action="stories.list", target_type="story")
 async def list_stories(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
     project_id: UUID | None = Query(default=None),
     sprint_id: UUID | None = Query(default=None),
@@ -67,7 +68,7 @@ async def list_stories(
 @audit(action="stories.create", target_type="story")
 async def create_story(
     body: StoryCreate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
     _perm = Depends(require_permission("stories:write")),
 ) -> StoryRead:
@@ -95,7 +96,7 @@ async def create_story(
 @audit(action="stories.read", target_type="story")
 async def get_story(
     story_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
     _perm = Depends(require_permission("stories:read")),
 ) -> StoryRead:
@@ -110,7 +111,7 @@ async def get_story(
 async def update_story(
     story_id: UUID,
     body: StoryUpdate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
     _perm = Depends(require_permission("stories:write")),
 ) -> StoryRead:
@@ -132,28 +133,27 @@ async def update_story(
 
 @router.delete(
     "/stories/{story_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     response_class=Response,
 )
 @audit(action="stories.delete", target_type="story")
 async def delete_story(
     story_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
     _perm = Depends(require_permission("stories:write")),
 ):
     ok = await stories_svc.delete_story(db, principal, story_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Story not found")
-    return Response(status_code=204)
+    return Response()
 
 
 @router.patch("/stories/bulk", response_model=list[StoryRead])
 @audit(action="stories.bulk_update", target_type="story")
 async def bulk_update_stories(
     body: StoryBulkUpdate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
     _perm = Depends(require_permission("stories:write")),
 ) -> list[StoryRead]:
@@ -165,7 +165,7 @@ async def bulk_update_stories(
 @audit(action="stories.linked", target_type="story")
 async def get_story_linked(
     story_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
     _perm = Depends(require_permission("stories:read")),
 ) -> StoryLinkedRead:
@@ -180,7 +180,7 @@ async def get_story_linked(
 @audit(action="story_comments.list", target_type="story")
 async def list_comments(
     story_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
     _perm = Depends(require_permission("stories:read")),
 ) -> list[CommentRead]:
@@ -212,7 +212,7 @@ async def list_comments(
 async def add_comment(
     story_id: UUID,
     body: CommentCreate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
     _perm = Depends(require_permission("stories:write")),
 ) -> CommentRead:
@@ -244,7 +244,7 @@ async def add_comment(
 @audit(action="stories.sync_jira", target_type="story")
 async def sync_to_jira(
     story_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
     _perm = Depends(require_permission("stories:write")),
 ) -> StoryRead:
@@ -259,7 +259,7 @@ async def sync_to_jira(
 async def link_to_jira(
     story_id: UUID,
     body: LinkToJiraInput,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
     _perm = Depends(require_permission("stories:write")),
 ) -> StoryRead:
@@ -280,7 +280,7 @@ async def link_to_jira(
 @audit(action="stories.start_implementation", target_type="story")
 async def start_implementation(
     story_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
     _perm = Depends(require_permission("stories:write")),
 ) -> StartImplementationResponse:
@@ -297,7 +297,7 @@ async def start_implementation(
 @sprints_router.get("", response_model=list[SprintRead])
 @audit(action="sprints.list", target_type="sprint")
 async def list_sprints(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
     project_id: UUID | None = Query(default=None),
     _perm = Depends(require_permission("stories:read")),
@@ -309,7 +309,7 @@ async def list_sprints(
 @sprints_router.get("/current", response_model=Optional[SprintRead])
 @audit(action="sprints.current", target_type="sprint")
 async def current_sprint(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
     project_id: UUID = Query(...),
     _perm = Depends(require_permission("stories:read")),
@@ -322,7 +322,7 @@ async def current_sprint(
 @audit(action="sprints.create", target_type="sprint")
 async def create_sprint(
     body: SprintCreate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
     _perm = Depends(require_permission("stories:write")),
 ) -> SprintRead:
@@ -345,7 +345,7 @@ async def create_sprint(
 @audit(action="sprints.start", target_type="sprint")
 async def start_sprint(
     sprint_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
     _perm = Depends(require_permission("stories:write")),
 ) -> SprintRead:
@@ -362,7 +362,7 @@ async def start_sprint(
 @epics_router.get("", response_model=list[EpicRead])
 @audit(action="epics.list", target_type="epic")
 async def list_epics(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
     project_id: UUID | None = Query(default=None),
     _perm = Depends(require_permission("stories:read")),

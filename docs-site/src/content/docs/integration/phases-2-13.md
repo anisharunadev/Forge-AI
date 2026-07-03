@@ -14,7 +14,7 @@ mock-data page with live `/api/v1/...` traffic.
 | 1 | [OIDC Auth](./oidc-auth) | `/api/v1/auth/*` | ✅ Wired 2026-06-27 (Step 52) |
 | 2 | Agents + Providers | `/api/v1/agents/*` | Providers, runtimes, assignments |
 | 3 | Connectors | `/api/v1/connectors/*` | Marketplace + credentials |
-| 4 | Workflows + Runs | `/api/v1/workflows/*`, `/api/v1/runs/*` | Visual builder backend |
+| 4 | Workflows + Runs | `/api/v1/workflows/*`, `/api/v1/runs/*` | ✅ Production (Step 66) |
 | 5 | Dashboard | (rolls up KPIs from phases 2, 4, 11) | Real-data mission control |
 | 6 | Knowledge Graph | `/api/v1/knowledge/*` | Backlinks, communities |
 | 7 | Projects + Stories | `/api/v1/projects/*`, `/api/v1/stories/*` | Jira sync, kanban |
@@ -24,6 +24,15 @@ mock-data page with live `/api/v1/...` traffic.
 | 11 | Governance + Audit | `/api/v1/governance/*`, `/api/v1/audit/*` | Policies, tamper-evident ledger |
 | 12 | Settings | `/api/v1/settings/*` | Per-user + per-tenant prefs |
 | 13 | Onboarding | `/api/v1/onboarding/*` | Wizard persistence |
+
+## Phase 4 — Workflows + Runs
+
+Production as of Step 66. Visual builder (`/api/v1/workflows/*`),
+execution engine (`/api/v1/runs/*`), and the pause/resume approval
+roundtrip (executor persists gate state via `flag_modified`; route
+`POST /api/v1/workflows/runs/{id}/resume` advances the DAG) ship
+end-to-end. Templates in the gallery write to a real `Workflow` row on
+install.
 
 ## How phases are tracked
 

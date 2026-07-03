@@ -47,7 +47,6 @@ import { SidecarBanner } from '@/components/forge-terminal/SidecarBanner';
 import { LeftRail } from '@/components/forge-terminal/LeftRail';
 import { AuditRail } from '@/components/forge-terminal/AuditRail';
 import { useSidecarProbe, type SidecarState } from '@/hooks/use-sidecar-probe';
-import { useTerminalStore } from '@/lib/store';
 import { FORGE_TERMINAL_WS_URL } from '@/lib/forge-api';
 import type { TerminalConnectionState } from '@/hooks/use-terminal';
 
@@ -67,8 +66,6 @@ function toConnectionState(s: SidecarState): TerminalConnectionState {
 }
 
 export default function ForgeTerminalPage() {
-  const sessionsCount = useTerminalStore((s) => s.sessions.length);
-  const createSession = useTerminalStore((s) => s.createSession);
   const [bannerHidden, setBannerHidden] = React.useState(false);
   const [heroHidden, setHeroHidden] = React.useState(false);
 
@@ -78,12 +75,11 @@ export default function ForgeTerminalPage() {
   });
   const connectionState = toConnectionState(probe.state);
 
-  // Auto-create a starter session so the layout renders something useful.
-  React.useEffect(() => {
-    if (sessionsCount === 0) {
-      createSession({ title: 'Session 1', color: 'indigo' });
-    }
-  }, [sessionsCount, createSession]);
+  // Step-71: no autostart session. Every pane now needs a
+  // server-issued UUID so its WS handshake authenticates against the
+  // session_manager. The empty state in `TerminalPanel` (no active
+  // session) renders a "+ New session" CTA which opens the dialog
+  // and POSTs to the backend.
 
   const onAuditCommand = React.useCallback(
     (entry: { sessionId: string; command: string }) => {

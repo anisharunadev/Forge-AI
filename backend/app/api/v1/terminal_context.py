@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.services.terminal.knowledge_context import ContextItem, knowledge_context
 from app.terminal.session_manager import session_manager
 
@@ -37,8 +38,8 @@ def _to_response(item: ContextItem) -> ContextItemResponse:
 @audit(action="terminal.context.list", target_type="terminal_session")
 async def list_context(
     session_id: str,
-    principal: Principal,
-    _perm: Principal = require_permission("terminal:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:read"))
 ) -> list[ContextItemResponse]:
     """Top-N inline context items for a session."""
     session = await session_manager.get_session(session_id)
@@ -58,8 +59,8 @@ async def list_context(
 @audit(action="terminal.context.refresh", target_type="terminal_session")
 async def refresh_context(
     session_id: str,
-    principal: Principal,
-    _perm: Principal = require_permission("terminal:write"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:write"))
 ) -> list[ContextItemResponse]:
     """Force-refresh the inline context cache."""
     session = await session_manager.get_session(session_id)
@@ -80,8 +81,8 @@ async def refresh_context(
 async def get_context_item(
     session_id: str,
     item_id: str,
-    principal: Principal,
-    _perm: Principal = require_permission("terminal:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:read"))
 ) -> ContextItemResponse:
     """Get a specific context item by id."""
     session = await session_manager.get_session(session_id)

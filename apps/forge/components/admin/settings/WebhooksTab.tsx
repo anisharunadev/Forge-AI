@@ -10,6 +10,10 @@
  *
  * Each row has a collapsible delivery log (last 50 deliveries with
  * status, response code, latency, re-deliver).
+ *
+ * Step-73 wiring: data comes from `useWebhooks()` / `useWebhookDeliveries(id)`
+ * TanStack hooks in `lib/hooks/useSettings.ts`. Create / update / delete /
+ * test mutate the backend and invalidate the cache.
  */
 
 import * as React from 'react';
@@ -48,82 +52,20 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-
-type WebhookStatus = 'active' | 'paused' | 'failing';
-
-interface WebhookDelivery {
-  id: string;
-  timestamp: string;
-  status: number;
-  latencyMs: number;
-  event: string;
-}
-
-interface Webhook {
-  id: string;
-  name: string;
-  url: string;
-  status: WebhookStatus;
-  events: ReadonlyArray<string>;
-  authType: 'none' | 'basic' | 'bearer' | 'hmac';
-  lastTriggeredAt: string;
-  lastTriggeredStatus: number;
-  deliveries: ReadonlyArray<WebhookDelivery>;
-}
-
-const SEED: ReadonlyArray<Webhook> = [
-  {
-    id: 'w-1',
-    name: 'Acme deploy bot',
-    url: 'https://hooks.acme.com/forge/events',
-    status: 'active',
-    events: ['run.completed', 'deployment.succeeded', 'deployment.failed'],
-    authType: 'hmac',
-    lastTriggeredAt: new Date(Date.now() - 1000 * 60 * 14).toISOString(),
-    lastTriggeredStatus: 200,
-    deliveries: [
-      { id: 'd-1', timestamp: new Date(Date.now() - 1000 * 60 * 14).toISOString(), status: 200, latencyMs: 142, event: 'deployment.succeeded' },
-      { id: 'd-2', timestamp: new Date(Date.now() - 1000 * 60 * 32).toISOString(), status: 200, latencyMs: 121, event: 'run.completed' },
-      { id: 'd-3', timestamp: new Date(Date.now() - 1000 * 60 * 51).toISOString(), status: 502, latencyMs: 10021, event: 'deployment.failed' },
-    ],
-  },
-  {
-    id: 'w-2',
-    name: 'Linear mirror',
-    url: 'https://api.linear.app/graphql',
-    status: 'failing',
-    events: ['approval.requested'],
-    authType: 'bearer',
-    lastTriggeredAt: new Date(Date.now() - 1000 * 60 * 41).toISOString(),
-    lastTriggeredStatus: 401,
-    deliveries: [
-      { id: 'd-4', timestamp: new Date(Date.now() - 1000 * 60 * 41).toISOString(), status: 401, latencyMs: 89, event: 'approval.requested' },
-      { id: 'd-5', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), status: 200, latencyMs: 110, event: 'approval.requested' },
-    ],
-  },
-];
-
-const STORAGE_KEY = 'forge.webhooks.v1';
-
-function loadWebhooks(): Webhook[] {
-  if (typeof window === 'undefined') return [...SEED];
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [...SEED];
-    return JSON.parse(raw) as Webhook[];
-  } catch {
-    return [...SEED];
-  }
-}
-
-function persistWebhooks(w: Webhook[]): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(w));
-  } catch {
-    /* noop */
-  }
-}
+import {
+  useWebhooks,
+  useCreateWebhook,
+  useUpdateWebhook,
+  useDeleteWebhook,
+  useTestWebhook,
+  useWebhookDeliveries,
+} from '@/lib/hooks/useSettings';
+import type {
+  Webhook as WebhookModel,
+  WebhookAuthType,
+  WebhookDelivery,
+  WebhookStatus,
+} from '@/lib/settings/types';
 
 const EVENT_GROUPS: ReadonlyArray<{
   id: string;
@@ -175,28 +117,72 @@ const EVENT_GROUPS: ReadonlyArray<{
   },
 ];
 
+/** Backend -> UI friendly projection for the status tone chip. */
+function statusTone(status: WebhookStatus): {
+  className: string;
+  label: string;
+} {
+  if (status === 'active')
+    return {
+      className: 'bg-[var(--accent-emerald)]/15 text-[var(--accent-emerald)]',
+      label: 'Active',
+    };
+  if (status === 'paused')
+    return {
+      className: 'bg-[var(--fg-tertiary)]/15 text-[var(--fg-tertiary)]',
+      label: 'Paused',
+    };
+  return {
+    className: 'bg-[var(--accent-rose)]/15 text-[var(--accent-rose)]',
+    label: 'Failing',
+  };
+}
+
+/** Lazy display adapter — derived from `Webhook.lastDeliveryStatus` string. */
+function lastResponseCode(s: string | null): number | null {
+  if (!s) return null;
+  const m = /(\d{3})/.exec(s);
+  return m ? Number(m[1]) : null;
+}
+
 export function WebhooksTab() {
   const { toast } = useToast();
-  const [webhooks, setWebhooks] = React.useState<ReadonlyArray<Webhook>>(SEED);
+  const { data: webhooks = [], isLoading } = useWebhooks();
+  const createMut = useCreateWebhook();
+  const updateMut = useUpdateWebhook();
+  const deleteMut = useDeleteWebhook();
+  const testMut = useTestWebhook();
+
   const [createOpen, setCreateOpen] = React.useState(false);
-  const [secretFor, setSecretFor] = React.useState<Webhook | null>(null);
+  const [secretFor, setSecretFor] = React.useState<WebhookModel | null>(null);
   const [openDeliveries, setOpenDeliveries] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    setWebhooks(loadWebhooks());
-  }, []);
-
   const setStatus = (id: string, status: WebhookStatus) => {
-    const next = webhooks.map((w) => (w.id === id ? { ...w, status } : w));
-    setWebhooks(next);
-    persistWebhooks(next);
+    updateMut.mutate(
+      { id, body: { status } },
+      {
+        onSuccess: () => toast({ title: `Webhook ${status === 'paused' ? 'paused' : 'resumed'}` }),
+        onError: (e) => toast({ title: 'Update failed', description: e.message }),
+      },
+    );
   };
 
   const deleteOne = (id: string) => {
-    const next = webhooks.filter((w) => w.id !== id);
-    setWebhooks(next);
-    persistWebhooks(next);
-    toast({ title: 'Webhook deleted' });
+    deleteMut.mutate(id, {
+      onSuccess: () => toast({ title: 'Webhook deleted' }),
+      onError: (e) => toast({ title: 'Delete failed', description: e.message }),
+    });
+  };
+
+  const testOne = (w: WebhookModel) => {
+    testMut.mutate(w.id, {
+      onSuccess: (res) =>
+        toast({
+          title: res.status === 'ok' ? 'Test delivered' : 'Test failed',
+          description: `→ ${w.url ?? w.name} (${res.responseCode})`,
+        }),
+      onError: (e) => toast({ title: 'Test failed', description: e.message }),
+    });
   };
 
   return (
@@ -217,53 +203,67 @@ export function WebhooksTab() {
         </Button>
       </header>
 
-      <ul className="flex flex-col gap-4">
-        {webhooks.map((w) => (
-          <WebhookRow
-            key={w.id}
-            webhook={w}
-            openDeliveries={openDeliveries === w.id}
-            onToggleDeliveries={() =>
-              setOpenDeliveries((prev) => (prev === w.id ? null : w.id))
-            }
-            onPause={() => setStatus(w.id, w.status === 'paused' ? 'active' : 'paused')}
-            onTest={() => {
-              toast({ title: 'Test payload sent', description: `→ ${w.url}` });
-            }}
-            onCopy={() => {
-              try {
-                navigator.clipboard.writeText(w.url);
-                toast({ title: 'URL copied' });
-              } catch {
-                /* noop */
+      {isLoading ? (
+        <p className="text-[var(--text-sm)] text-[var(--fg-tertiary)]" data-testid="webhooks-loading">
+          Loading webhooks…
+        </p>
+      ) : webhooks.length === 0 ? (
+        <p
+          className="rounded-[var(--radius-md)] border border-dashed border-[var(--border-subtle)] p-6 text-center text-[var(--text-sm)] text-[var(--fg-secondary)]"
+          data-testid="webhooks-empty"
+        >
+          No webhooks yet. Add one to start forwarding Forge events to your services.
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-4">
+          {webhooks.map((w) => (
+            <WebhookRow
+              key={w.id}
+              webhook={w}
+              openDeliveries={openDeliveries === w.id}
+              onToggleDeliveries={() =>
+                setOpenDeliveries((prev) => (prev === w.id ? null : w.id))
               }
-            }}
-            onRotateSecret={() => setSecretFor(w)}
-            onDelete={() => deleteOne(w.id)}
-          />
-        ))}
-      </ul>
+              onPause={() => setStatus(w.id, w.status === 'paused' ? 'active' : 'paused')}
+              onTest={() => testOne(w)}
+              onCopy={() => {
+                if (!w.url) return;
+                try {
+                  navigator.clipboard.writeText(w.url);
+                  toast({ title: 'URL copied' });
+                } catch {
+                  /* noop */
+                }
+              }}
+              onRotateSecret={() => setSecretFor(w)}
+              onDelete={() => deleteOne(w.id)}
+            />
+          ))}
+        </ul>
+      )}
 
       <CreateWebhookDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        onCreate={(created) => {
-          const next: Webhook[] = [
+        onCreate={(created) =>
+          createMut.mutate(
             {
-              ...created,
-              id: `w-${Date.now()}`,
-              status: 'active',
-              lastTriggeredAt: new Date().toISOString(),
-              lastTriggeredStatus: 200,
-              deliveries: [],
+              name: created.name,
+              direction: 'outbound',
+              url: created.url,
+              events: created.events,
+              authType: created.authType,
             },
-            ...webhooks,
-          ];
-          setWebhooks(next);
-          persistWebhooks(next);
-          setCreateOpen(false);
-          setSecretFor({ ...next[0]! });
-        }}
+            {
+              onSuccess: (created_hook) => {
+                setCreateOpen(false);
+                setSecretFor(created_hook);
+              },
+              onError: (e) =>
+                toast({ title: 'Create failed', description: e.message }),
+            },
+          )
+        }
       />
 
       <SecretDialog webhook={secretFor} onClose={() => setSecretFor(null)} />
@@ -274,7 +274,7 @@ export function WebhooksTab() {
 /* ---------------- Webhook Row ---------------- */
 
 interface WebhookRowProps {
-  webhook: Webhook;
+  webhook: WebhookModel;
   openDeliveries: boolean;
   onToggleDeliveries: () => void;
   onPause: () => void;
@@ -294,14 +294,12 @@ function WebhookRow({
   onRotateSecret,
   onDelete,
 }: WebhookRowProps) {
-  const statusTone =
-    w.status === 'active'
-      ? 'bg-[var(--accent-emerald)]/15 text-[var(--accent-emerald)]'
-      : w.status === 'paused'
-        ? 'bg-[var(--fg-tertiary)]/15 text-[var(--fg-tertiary)]'
-        : 'bg-[var(--accent-rose)]/15 text-[var(--accent-rose)]';
-
-  const statusLabel = w.status === 'active' ? 'Active' : w.status === 'paused' ? 'Paused' : 'Failing';
+  const tone = statusTone(w.status);
+  const lastStatusCode = lastResponseCode(w.lastDeliveryStatus);
+  const deliveriesQuery = useWebhookDeliveries(openDeliveries ? w.id : null);
+  const deliveries: ReadonlyArray<WebhookDelivery> = openDeliveries
+    ? deliveriesQuery.data ?? []
+    : [];
 
   return (
     <li
@@ -318,26 +316,28 @@ function WebhookRow({
             <span
               className={cn(
                 'inline-flex h-5 items-center gap-1 rounded-full px-2 text-[10px] font-semibold uppercase tracking-wider',
-                statusTone,
+                tone.className,
                 w.status === 'active' && 'animate-pulse-agent',
               )}
               data-testid={`webhook-status-${w.id}`}
             >
               <span className="h-1.5 w-1.5 rounded-full bg-current" />
-              {statusLabel}
+              {tone.label}
             </span>
           </div>
           <div className="flex items-center gap-2 font-mono text-[var(--text-xs)] text-[var(--fg-secondary)]">
-            <span className="truncate">{w.url}</span>
-            <button
-              type="button"
-              onClick={onCopy}
-              className="text-[var(--fg-tertiary)] hover:text-[var(--fg-primary)]"
-              aria-label="Copy webhook URL"
-              data-testid={`webhook-copy-${w.id}`}
-            >
-              <Copy className="h-3 w-3" aria-hidden="true" />
-            </button>
+            <span className="truncate">{w.url ?? '—'}</span>
+            {w.url ? (
+              <button
+                type="button"
+                onClick={onCopy}
+                className="text-[var(--fg-tertiary)] hover:text-[var(--fg-primary)]"
+                aria-label="Copy webhook URL"
+                data-testid={`webhook-copy-${w.id}`}
+              >
+                <Copy className="h-3 w-3" aria-hidden="true" />
+              </button>
+            ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             {w.events.map((ev) => (
@@ -350,7 +350,9 @@ function WebhookRow({
             ))}
           </div>
           <p className="text-[11px] text-[var(--fg-tertiary)]">
-            Last triggered {timeAgo(w.lastTriggeredAt)} · {w.lastTriggeredStatus}
+            {w.lastTriggeredAt
+              ? `Last triggered ${timeAgo(w.lastTriggeredAt)}${lastStatusCode ? ` · ${lastStatusCode}` : ''}`
+              : 'Never triggered'}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -417,42 +419,50 @@ function WebhookRow({
             <span>Recent deliveries</span>
             <ChevronDown className="h-3.5 w-3.5 rotate-180" aria-hidden="true" />
           </button>
-          {w.deliveries.length === 0 ? (
+          {deliveriesQuery.isLoading ? (
+            <p className="mt-2 text-[var(--text-xs)] text-[var(--fg-tertiary)]" data-testid={`webhook-deliveries-loading-${w.id}`}>
+              Loading deliveries…
+            </p>
+          ) : deliveries.length === 0 ? (
             <p className="mt-2 text-[var(--text-xs)] text-[var(--fg-tertiary)]">
               No deliveries yet — trigger a test from the menu.
             </p>
           ) : (
             <ul className="mt-2 flex flex-col">
-              {w.deliveries.map((d) => (
-                <li
-                  key={d.id}
-                  className="flex items-center justify-between gap-3 border-b border-[var(--border-subtle)] py-2 last:border-b-0"
-                  data-testid={`delivery-${d.id}`}
-                >
-                  <div className="flex items-center gap-2 font-mono text-[11px] text-[var(--fg-secondary)]">
-                    {d.status >= 200 && d.status < 300 ? (
-                      <CheckCircle2 className="h-3.5 w-3.5 text-[var(--accent-emerald)]" aria-hidden="true" />
-                    ) : (
-                      <AlertCircle className="h-3.5 w-3.5 text-[var(--accent-rose)]" aria-hidden="true" />
-                    )}
-                    <span>{d.event}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-[11px] text-[var(--fg-tertiary)]">
-                    <span>{d.status}</span>
-                    <span>{d.latencyMs}ms</span>
-                    <span>{timeAgo(d.timestamp)}</span>
-                    {d.status >= 400 ? (
-                      <button
-                        type="button"
-                        className="text-[var(--accent-primary)] underline-offset-2 hover:underline"
-                        data-testid={`delivery-redeliver-${d.id}`}
-                      >
-                        Re-deliver
-                      </button>
-                    ) : null}
-                  </div>
-                </li>
-              ))}
+              {deliveries.map((d) => {
+                const ok = d.responseCode !== null && d.responseCode >= 200 && d.responseCode < 300;
+                return (
+                  <li
+                    key={d.id}
+                    className="flex items-center justify-between gap-3 border-b border-[var(--border-subtle)] py-2 last:border-b-0"
+                    data-testid={`delivery-${d.id}`}
+                  >
+                    <div className="flex items-center gap-2 font-mono text-[11px] text-[var(--fg-secondary)]">
+                      {ok ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-[var(--accent-emerald)]" aria-hidden="true" />
+                      ) : (
+                        <AlertCircle className="h-3.5 w-3.5 text-[var(--accent-rose)]" aria-hidden="true" />
+                      )}
+                      <span>{d.event}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-[11px] text-[var(--fg-tertiary)]">
+                      {d.responseCode !== null ? <span>{d.responseCode}</span> : null}
+                      <span>{d.durationMs}ms</span>
+                      <span>{timeAgo(d.attemptedAt)}</span>
+                      {/* step 73: re-deliver endpoint not yet shipped */}
+                      {d.responseCode !== null && d.responseCode >= 400 ? (
+                        <button
+                          type="button"
+                          className="text-[var(--accent-primary)] underline-offset-2 hover:underline"
+                          data-testid={`delivery-redeliver-${d.id}`}
+                        >
+                          Re-deliver
+                        </button>
+                      ) : null}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -467,7 +477,7 @@ interface CreateWebhookParams {
   name: string;
   url: string;
   events: ReadonlyArray<string>;
-  authType: Webhook['authType'];
+  authType: WebhookAuthType;
   retryPolicy: '3x-exp' | '5x-linear' | 'none';
 }
 
@@ -483,7 +493,7 @@ function CreateWebhookDialog({
   const [name, setName] = React.useState('');
   const [url, setUrl] = React.useState('');
   const [events, setEvents] = React.useState<ReadonlyArray<string>>([]);
-  const [authType, setAuthType] = React.useState<Webhook['authType']>('hmac');
+  const [authType, setAuthType] = React.useState<WebhookAuthType>('hmac');
   const [retryPolicy, setRetryPolicy] = React.useState<CreateWebhookParams['retryPolicy']>('3x-exp');
   const [error, setError] = React.useState<string | null>(null);
 
@@ -630,7 +640,9 @@ function CreateWebhookDialog({
 
 /* ---------------- Secret Dialog (one-time) ---------------- */
 
-function SecretDialog({ webhook, onClose }: { webhook: Webhook | null; onClose: () => void }) {
+function SecretDialog({ webhook, onClose }: { webhook: WebhookModel | null; onClose: () => void }) {
+  // step 73: backend doesn't return a signing secret in the create response yet;
+  // generate a local placeholder so the UX still shows the panel after create.
   const secret = React.useMemo(() => {
     if (!webhook) return '';
     const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';

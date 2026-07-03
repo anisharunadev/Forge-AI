@@ -1,11 +1,13 @@
 """F-002 — Templates CRUD."""
 
 from __future__ import annotations
+from typing import Annotated
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Depends
 
-from app.api.deps import DbSession, Principal, require_permission
+from app.api.deps import DbSession, Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.templates import TemplateCreate, TemplateRead
 
 router = APIRouter(prefix="/templates", tags=["templates"])
@@ -14,8 +16,8 @@ router = APIRouter(prefix="/templates", tags=["templates"])
 @router.get("", response_model=list[TemplateRead])
 @audit(action="templates.list", target_type="template")
 async def list_templates(
-    principal: Principal,
-    _perm: Principal = require_permission("templates:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("templates:read")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> list[TemplateRead]:
     from sqlalchemy import select
@@ -31,8 +33,8 @@ async def list_templates(
 @audit(action="templates.create", target_type="template")
 async def create_template(
     body: TemplateCreate,
-    principal: Principal,
-    _perm: Principal = require_permission("templates:create"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("templates:create")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> TemplateRead:
     from app.db.models.template import Template

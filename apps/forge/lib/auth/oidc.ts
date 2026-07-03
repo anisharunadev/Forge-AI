@@ -201,6 +201,9 @@ export async function exchangeCodeForTokens(input: {
 }): Promise<{
   access_token: string;
   refresh_token: string;
+  /** step-65: RS256 proxy_token for the LiteLLM Proxy.  Optional in
+   * older backends; SPA stays forward-compatible by tolerating ``null``. */
+  proxy_token?: string | null;
   token_type?: string;
   expires_in?: number;
   user: {

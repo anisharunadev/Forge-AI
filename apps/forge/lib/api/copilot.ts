@@ -192,6 +192,89 @@ export async function sendMessage(
   });
 }
 
+export type CopilotStreamEvent =
+  | { event: 'start'; data: { conversation_id: string } }
+  | { event: 'token'; data: string }
+  | { event: 'reasoning'; data: string }
+  | { event: 'tool_call'; data: { tool: string; args: Record<string, unknown> } }
+  | { event: 'finish'; data: CopilotChatResponse }
+  | { event: 'usage'; data: { prompt_tokens: number; completion_tokens: number; cost_usd: number } }
+  | { event: 'error'; data: { code: string; message: string } };
+
+export interface StreamMessageHandle {
+  abort: () => void;
+}
+
+/**
+ * `POST /api/v1/copilot/conversations:stream` — SSE consumer.
+ *
+ * Opens the streaming chat endpoint, parses the SSE wire format, and
+ * invokes ``onEvent`` for each ``data:`` line. Returns a handle whose
+ * ``abort()`` cancels the underlying fetch.
+ */
+export function streamMessage(
+  req: CopilotChatRequest,
+  onEvent: (event: CopilotStreamEvent) => void,
+  tenantId: string = SEED_TENANT_ID,
+): StreamMessageHandle {
+  const controller = new AbortController();
+  void (async () => {
+    let res: Response;
+    try {
+      res = await forgeFetch<Response>('/copilot/conversations:stream', {
+        method: 'POST',
+        body: JSON.stringify(req),
+        tenantId,
+        stream: true,
+        signal: controller.signal,
+      });
+    } catch (err) {
+      onEvent({
+        event: 'error',
+        data: { code: 'network', message: String(err) },
+      });
+      return;
+    }
+    if (!res.body) {
+      onEvent({
+        event: 'error',
+        data: { code: 'no_body', message: 'empty response' },
+      });
+      return;
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let idx: number;
+        while ((idx = buf.indexOf('\n\n')) !== -1) {
+          const raw = buf.slice(0, idx);
+          buf = buf.slice(idx + 2);
+          const line = raw.split('\n').find((l) => l.startsWith('data:'));
+          if (!line) continue;
+          try {
+            onEvent(JSON.parse(line.slice(5).trim()) as CopilotStreamEvent);
+          } catch (err) {
+            console.error('copilot.stream.parse_error', err, line);
+          }
+        }
+      }
+    } catch (err) {
+      if ((err as { name?: string })?.name !== 'AbortError') {
+        onEvent({
+          event: 'error',
+          data: { code: 'network', message: String(err) },
+        });
+      }
+    }
+  })();
+  return { abort: () => controller.abort() };
+}
+
 /**
  * `DELETE /api/v1/copilot/conversations/{id}` — hard delete (the
  * backend may also support soft-archive via `archived_at`; the V1

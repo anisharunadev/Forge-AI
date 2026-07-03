@@ -92,6 +92,14 @@ Each subdir under `app/services/` owns one bounded context:
 | `steering_rules.py` | Per-tenant guardrails |
 | `terminal/` | PTY sidecar |
 
+## Ideation router quirks (Step-69)
+
+- **Query params, not body:** `POST /ideation/ideas/impact/compare` and `POST /ideation/ideas/score/batch` accept `idea_ids` as repeated **query params** (`?idea_ids=a&idea_ids=b`), not a JSON body. Build with `URLSearchParams.append('idea_ids', id)`. Frontend hooks in `lib/api/ideation-hooks.ts` already do this.
+- **Nested paths:** Most ideation endpoints nest under `/ideation/ideas/{id}/...` (arch-preview, prd, score, impact-graph, analyze, archive). Flat endpoints: `/ideation/ideas` (list), `/ideation/roadmaps`, `/ideation/approvals`, `/ideation/workflows`. Verify with `grep -n "@router" backend/app/api/v1/ideation/*.py` before writing client code.
+- **Orphan router footgun:** When adding a file under `backend/app/api/v1/ideation/`, you MUST register it in BOTH `__init__.py` (import + `__all__`) AND `router.py` (`include_router`). Silent failure otherwise — `enhance.py` was orphaned until Step-69. Detect orphans: `grep -L "<module>" backend/app/api/v1/ideation/__init__.py` against the file list.
+- **WebSocket path:** ideation workflow WS is `/ws/ideation/{session_id}` (mounted in `app/main.py` with no prefix). NOT `/api/ws/ideation/workflow`.
+- **Missing endpoints (verified Step-69):** `/ideation/sources`, `/destinations`, `/market-signals`, `/voice-clusters`, `/ingest/status` are NOT registered. Puller services exist under `services/ideation/sources/` but no REST surface. Treat as known gaps until a backend step ships them.
+
 ## Common commands
 
 ```bash
@@ -149,6 +157,35 @@ from langchain_openai import ChatOpenAI   # NO
 
 `app/integrations/litellm/` is the **only** package allowed to import
 provider-shaped SDKs (and even there, it should go through LiteLLM Proxy).
+
+## LiteLLM reference (read before adding new routes)
+
+The integration code above is the **thin client**. The **complete endpoint
+catalog** (25 domains, 703 endpoints) and the **Forge feature → LiteLLM
+endpoint matrix** live in `docs/litellm/`:
+
+- `docs/litellm/forge-litellm-integration.md` — system architecture,
+  per-feature endpoint matrix, master/virtual key model, anti-patterns,
+  guardrail pipeline, cost aggregation, MCP tool wiring.
+- `docs/litellm/litellm-forge-reference.md` — **curated** Forge-priority
+  digest (637 of 703 endpoints, grouped by domain with P0–P3 priority).
+- `docs/litellm/litellm-endpoints.md` — **complete** flat catalog of all
+  703 endpoints from the OpenAPI spec (every method+path+summary+opId+tags).
+  Use this when the curated digest doesn't list a path.
+- `docs/litellm/litellm-critical-schemas.json` — request/response
+  shapes Forge Backend must model (ChatCompletion, Tool, Guardrail,
+  Policy, Skill, Prompt, BudgetNewRequest, KeyRequest, SpendLogs).
+- `docs/litellm/litellm-openapi.json` — full OpenAPI 3.1 spec (1.2 MB).
+
+**Key gotchas** (from the integration doc):
+- Use `POST /key/generate` to mint per-user / per-agent virtual keys;
+  the master key is server-side only — never for user requests.
+- Always send `metadata={forge_run_id, forge_agent_id, forge_tenant_id}`
+  on `chat/completions` — LiteLLM's `/spend/logs` reconciles against it.
+- Pre-call guardrail is mandatory: `POST /apply_guardrail` before
+  every `chat/completions`, even for "internal" requests.
+- Stream `chat/completions` (`stream: true`) — final SSE chunk carries
+  `usage` for live cost meter; synchronous calls break it.
 
 ## Observability
 

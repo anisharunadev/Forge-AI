@@ -21,14 +21,15 @@ import hashlib
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Header, HTTPException, Depends
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.api.deps import DbSession, Principal, require_permission
+from app.api.deps import DbSession, Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.core.logging import get_logger
 from app.services.event_bus import EventType, bus
 from app.services.forge_commands import (
@@ -64,8 +65,8 @@ class CommandRunResponse(BaseModel):
 async def run_command(
     name: str,
     body: CommandRunRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("commands:run"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("commands:run")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> CommandRunResponse:
     """Dispatch a single ``forge-*`` command.
@@ -163,8 +164,8 @@ class CommandArtifactUpdate(BaseModel):
 @router.get("/{name}/artifact", response_model=CommandArtifact)
 async def get_command_artifact(
     name: str,
-    principal: Principal,
-    _perm: Principal = require_permission("commands:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("commands:read"))
 ) -> CommandArtifact:
     """Read the SKILL.md for a forge-* command.
 
@@ -194,9 +195,9 @@ async def get_command_artifact(
 async def put_command_artifact(
     name: str,
     body: CommandArtifactUpdate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     if_match: str | None = Header(default=None, alias="If-Match"),
-    _perm: Principal = require_permission("commands:write"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("commands:write"))
 ) -> CommandArtifact:
     """Write the SKILL.md for a forge-* command.
 
@@ -249,9 +250,9 @@ async def put_command_artifact(
 @router.get("/{name}/runs")
 async def get_command_runs(
     name: str,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     limit: int = 50,
-    _perm: Principal = require_permission("commands:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("commands:read"))
 ) -> list[dict[str, Any]]:
     """Return recent run records for a single command."""
     try:

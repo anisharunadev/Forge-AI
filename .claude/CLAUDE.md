@@ -94,6 +94,10 @@ Before any Next.js work, find and read the relevant doc in `node_modules/next/di
 | Use the GSD workflow | `docs/workflows/gsd.md` |
 | Find an existing route | `docs/reference/api-catalog.md` |
 | Find an existing model | `docs/reference/db-schema.md` |
+| LiteLLM endpoint catalog (which path serves which Forge feature) | `docs/litellm/litellm-forge-reference.md` |
+| LiteLLM **complete** endpoint catalog (all 703 paths/methods from the OpenAPI spec) | `docs/litellm/litellm-endpoints.md` |
+| LiteLLM ↔ Forge integration architecture, anti-patterns, streaming/guardrail/spend/MCP patterns | `docs/litellm/forge-litellm-integration.md` |
+| LiteLLM OpenAPI 3.1 spec (1.2 MB · 703 endpoints · LiteLLM 1.82.6) | `docs/litellm/litellm-openapi.json` |
 | MCP debugging | `docs/standards/mcp-tooling.md` |
 | Add a UI pattern | `docs/standards/ui-patterns.md` |
 | Pick a viz library | `docs/standards/visualization.md` |

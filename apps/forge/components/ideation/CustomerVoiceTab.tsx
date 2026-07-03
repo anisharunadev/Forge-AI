@@ -4,6 +4,11 @@
  * `<CustomerVoiceTab>` — Step 28.
  *
  * Split view of customer feedback themes (Zendesk + Jira + Intercom):
+ *
+ * TODO(step-7x): register `GET /api/v1/ideation/voice-clusters` and
+ * replace the `CUSTOMER_CLUSTERS` fixture import below with a TanStack
+ * hook. No backend endpoint or service module exists today (verified
+ * Step-69).
  *   - LEFT (40%): Theme list (cluster cards) — volume, trend, impact
  *   - RIGHT (60%): Selected cluster detail
  *       - Timeline line chart (last 30 days)

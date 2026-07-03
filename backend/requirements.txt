@@ -26,6 +26,7 @@ python-multipart>=0.0.9
 websockets>=13.0,<14
 structlog>=24.1,<25
 litellm>=1.40,<2   # client SDK ONLY for type stubs; HTTP via httpx in production
+jinja2>=3.1,<4     # step-78 F11 prompt template rendering (used by prompts service)
 
 # LangGraph SDLC agent (Phase 5)
 langgraph>=0.2.0

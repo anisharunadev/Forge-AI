@@ -25,7 +25,7 @@ import * as React from 'react';
 import { Check, Loader2, PartyPopper, RotateCw, AlertTriangle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { api, ApiError } from '@/lib/api/client';
+import { useProvisionStatus } from '@/lib/api/onboarding-hooks';
 import { toast } from 'sonner';
 
 export type ProvisionState = 'idle' | 'running' | 'done' | 'failed';
@@ -49,15 +49,6 @@ const STAGES: ReadonlyArray<{ id: string; label: string }> = [
   { id: 'ready', label: 'Project online' },
 ];
 
-/** Shape returned by ``GET /onboarding/provision/status``. */
-interface ProvisionProgress {
-  job_id?: string;
-  status: 'idle' | 'running' | 'done' | 'failed';
-  current_stage: string | null;
-  completed_stages: string[];
-  error: string | null;
-}
-
 const POLL_INTERVAL_MS = 1_000;
 
 export function StepProvision({
@@ -70,65 +61,40 @@ export function StepProvision({
   // Local mirror of the polling progress. Kept separate from the
   // parent's `state` so an external `setProvisionState('done')`
   // doesn't reset our progress rendering mid-render.
-  const [progress, setProgress] = React.useState<ProvisionProgress>({
-    status: 'idle',
-    current_stage: null,
-    completed_stages: [],
-    error: null,
+  const [progress, setProgress] = React.useState({
+    status: 'idle' as 'idle' | 'running' | 'done' | 'failed',
+    current_stage: null as string | null,
+    completed_stages: [] as string[],
+    error: null as string | null,
   });
 
-  // Poll the backend every POLL_INTERVAL_MS while running. The polling
-  // effect is the single source of truth for transition out of
-  // 'running' — the parent fires the initial POST and flips `state`
-  // to 'running', then this loop drives the rest.
+  // The page fires the initial POST and flips `state` to 'running'.
+  // We poll `useProvisionStatus` every 1s while running; the hook
+  // owns the fetch lifecycle (no manual setInterval / clearInterval).
+  const status = useProvisionStatus({
+    refetchInterval: state === 'running' ? POLL_INTERVAL_MS : false,
+  });
+
+  // Mirror polled backend state into the local view model + fire
+  // terminal-state transitions once. The hook is the single source
+  // of truth for transition out of 'running'.
   React.useEffect(() => {
-    if (state !== 'running') return;
-    let cancelled = false;
-    let intervalId: ReturnType<typeof setInterval> | null = null;
-
-    const poll = async () => {
-      try {
-        const data = await api.get<ProvisionProgress>(
-          '/onboarding/provision/status',
-        );
-        if (cancelled) return;
-        setProgress({
-          status: data.status,
-          current_stage: data.current_stage,
-          completed_stages: data.completed_stages ?? [],
-          error: data.error,
-        });
-
-        if (data.status === 'done') {
-          if (intervalId) clearInterval(intervalId);
-          toast.success('Project provisioned');
-          onStateChange?.('done');
-        } else if (data.status === 'failed') {
-          if (intervalId) clearInterval(intervalId);
-          toast.error(`Provisioning failed: ${data.error ?? 'unknown error'}`);
-          onStateChange?.('failed');
-        }
-      } catch (err) {
-        if (cancelled) return;
-        // Network blip — surface the error but keep polling; the
-        // backend may recover on the next tick.
-        const message =
-          err instanceof ApiError
-            ? `HTTP ${err.status}`
-            : err instanceof Error
-              ? err.message
-              : 'unknown error';
-        setProgress((prev) => ({ ...prev, error: message }));
-      }
-    };
-
-    poll(); // immediate first call
-    intervalId = setInterval(poll, POLL_INTERVAL_MS);
-    return () => {
-      cancelled = true;
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [state, onStateChange]);
+    const data = status.data;
+    if (!data) return;
+    setProgress({
+      status: data.status,
+      current_stage: data.current_stage,
+      completed_stages: data.completed_stages ?? [],
+      error: data.error,
+    });
+    if (data.status === 'done') {
+      toast.success('Project provisioned');
+      onStateChange?.('done');
+    } else if (data.status === 'failed') {
+      toast.error(`Provisioning failed: ${data.error ?? 'unknown error'}`);
+      onStateChange?.('failed');
+    }
+  }, [status.data, onStateChange]);
 
   // When leaving 'running' (success or failure) clear the local
   // progress so the next run starts clean.

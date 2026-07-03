@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Annotated, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from app.api.deps import DbSession, Principal
+from app.api.deps import DbSession, Principal, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.role import Role
 
 router = APIRouter(prefix="/roles", tags=["roles"])
@@ -38,7 +39,7 @@ class RoleUpdate(BaseModel):
 @router.get("", response_model=list[RoleRead])
 @audit(action="roles.list", target_type="tenant")
 async def list_roles(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> list[RoleRead]:
     """List every role in the caller's tenant.
@@ -62,7 +63,7 @@ async def list_roles(
 async def update_role(
     role_id: UUID,
     body: RoleUpdate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> RoleRead:
     """Update a tenant-defined role's name / description / permissions."""

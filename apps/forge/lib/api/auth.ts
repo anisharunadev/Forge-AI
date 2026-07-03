@@ -76,6 +76,8 @@ export interface Project {
 export interface LoginResponse {
   access_token: string;
   refresh_token: string;
+  /** step-65: RS256 proxy_token returned alongside the access/refresh pair. */
+  proxy_token?: string | null;
   token_type?: string;
   expires_in?: number;
 }
@@ -98,6 +100,7 @@ export interface SwitchTenantResponse {
 
 const TOKEN_KEY = 'forge_token';
 const REFRESH_KEY = 'forge_refresh';
+const PROXY_TOKEN_KEY = 'forge_proxy_token';
 const USER_KEY = 'forge_user';
 const TENANT_KEY = 'forge_tenant';
 const PROJECT_KEY = 'forge_project';
@@ -151,6 +154,10 @@ interface AuthState {
   project: Project | null;
   token: string | null;
   refreshToken: string | null;
+  /** step-65: RS256 proxy_token for the LiteLLM Proxy.  Persisted to
+   * localStorage alongside the access token; rotated by
+   * ``refreshSession``. */
+  proxyToken: string | null;
   isLoading: boolean;
   /** Hydration flag — true once Zustand has rehydrated from storage. */
   _hasHydrated: boolean;
@@ -181,6 +188,15 @@ export const auth = {
   logout: (): void => useAuth.getState().logout(),
 };
 
+/**
+ * Lists the tenants the current user belongs to — thin wrapper around
+ * `GET /auth/me/tenants` for non-React callers (e.g. TanStack Query
+ * queryFn in client components). step-61 Zone 10 wired this through
+ * WorkspaceSelector; see also `fetchCurrentUser` for the store-side path.
+ */
+export const listMyTenants = (): Promise<Tenant[]> =>
+  api.get<Tenant[]>('/auth/me/tenants');
+
 // ---------------------------------------------------------------------------
 // Store
 // ---------------------------------------------------------------------------
@@ -193,6 +209,7 @@ export const useAuth = create<AuthState>()(
       project: safeRead<Project>(PROJECT_KEY),
       token: safeReadString(TOKEN_KEY),
       refreshToken: safeReadString(REFRESH_KEY),
+      proxyToken: safeReadString(PROXY_TOKEN_KEY),
       isLoading: false,
       _hasHydrated: false,
 
@@ -209,9 +226,13 @@ export const useAuth = create<AuthState>()(
           );
           safeWrite(TOKEN_KEY, res.access_token);
           safeWrite(REFRESH_KEY, res.refresh_token);
+          if (res.proxy_token) {
+            safeWrite(PROXY_TOKEN_KEY, res.proxy_token);
+          }
           set({
             token: res.access_token,
             refreshToken: res.refresh_token,
+            proxyToken: res.proxy_token ?? null,
           });
           await get().fetchCurrentUser();
         } finally {
@@ -237,6 +258,7 @@ export const useAuth = create<AuthState>()(
       logout: () => {
         safeRemove(TOKEN_KEY);
         safeRemove(REFRESH_KEY);
+        safeRemove(PROXY_TOKEN_KEY);
         safeRemove(USER_KEY);
         safeRemove(TENANT_KEY);
         safeRemove(PROJECT_KEY);
@@ -246,6 +268,7 @@ export const useAuth = create<AuthState>()(
           project: null,
           token: null,
           refreshToken: null,
+          proxyToken: null,
         });
       },
 
@@ -255,13 +278,19 @@ export const useAuth = create<AuthState>()(
           throw new ApiError(401, 'No refresh token', null, 'no_refresh_token');
         }
         // Avoid recursive 401 handling on the refresh endpoint itself.
-        const res = await api.post<{ access_token: string }>(
+        const res = await api.post<{ access_token: string; proxy_token?: string | null }>(
           '/auth/refresh',
           { refresh_token: refresh },
           { suppressAuthRedirect: true },
         );
         safeWrite(TOKEN_KEY, res.access_token);
-        set({ token: res.access_token });
+        if (res.proxy_token) {
+          safeWrite(PROXY_TOKEN_KEY, res.proxy_token);
+        }
+        set({
+          token: res.access_token,
+          proxyToken: res.proxy_token ?? null,
+        });
       },
 
       switchTenant: async (tenantId) => {
@@ -342,15 +371,16 @@ export const useAuth = create<AuthState>()(
               removeItem: () => undefined,
             },
       ),
-      // Persist ONLY the user/tenant/token/refreshToken fields. Action
-      // functions and ephemeral flags (`isLoading`, `_hasHydrated`) are
-      // recomputed on each mount.
+      // Persist ONLY the user/tenant/token/refreshToken/proxyToken
+      // fields. Action functions and ephemeral flags (`isLoading`,
+      // `_hasHydrated`) are recomputed on each mount.
       partialize: (state) => ({
         user: state.user,
         tenant: state.tenant,
         project: state.project,
         token: state.token,
         refreshToken: state.refreshToken,
+        proxyToken: state.proxyToken,
       }),
       onRehydrateStorage: () => (state) => {
         state?._setHasHydrated(true);

@@ -74,7 +74,7 @@
     ]
   },
   "hooks": {
-    "context_warnings": true
+    "context_warnings": false
   },
   "project_code": null,
   "phase_naming": "sequential",
@@ -86,5 +86,8 @@
   },
   "resolve_model_ids": "omit",
   "mode": "yolo",
-  "granularity": "standard"
+  "granularity": "standard",
+  "graphify": {
+    "enabled": false
+  }
 }

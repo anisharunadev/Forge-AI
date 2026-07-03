@@ -21,10 +21,9 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import DateTime, Enum as SAEnum, ForeignKey, Index, Integer, String, Text
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class CredentialType(str, enum.Enum):
@@ -74,6 +73,9 @@ class ConnectorCredential(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     encrypted_secret: Mapped[bytes] = mapped_column(nullable=False, default=b"")
     # Free-form key/values (region, base_url, scopes, ...) the secret unlocks.
     meta: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    # ponytail: project JSONB degrades to JSON on SQLite so test schema
+    # builds; renders as PG_JSONB on Postgres so prod on-disk shape is
+    # unchanged.
     expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

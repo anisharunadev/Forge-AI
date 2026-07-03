@@ -5,14 +5,15 @@ from __future__ import annotations
 import base64
 import os
 from datetime import datetime, timezone
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import Response
 from pydantic import BaseModel
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.services.terminal.exporter import ExportFormat, session_exporter
 from app.terminal.session_manager import session_manager
 
@@ -46,7 +47,7 @@ def _coerce_format(value: str | None) -> ExportFormat:
     return value  # type: ignore[return-value]
 
 
-async def _check_session(session_id: str, principal: Principal) -> None:
+async def _check_session(session_id: str, principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)]) -> None:
     session = await session_manager.get_session(session_id)
     if session is None or session.tenant_id != principal.tenant_id:
         raise HTTPException(
@@ -62,8 +63,8 @@ async def _check_session(session_id: str, principal: Principal) -> None:
 @audit(action="terminal.export", target_type="terminal_session")
 async def export_session(
     session_id: str,
-    principal: Principal,
-    _perm: Principal = require_permission("terminal:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:read")),
     format: ExportFormatLiteral = Query(default="md"),
 ) -> Response:
     """Render the session in the requested format and return it as a file."""
@@ -87,8 +88,8 @@ async def export_session(
 @audit(action="terminal.export.upload", target_type="terminal_session")
 async def upload_export(
     session_id: str,
-    principal: Principal,
-    _perm: Principal = require_permission("terminal:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:read")),
     format: ExportFormatLiteral = Query(default="md"),
 ) -> UploadResponse:
     """Render the export and return a (mock) signed URL.
@@ -123,8 +124,8 @@ async def upload_export(
 @audit(action="terminal.export.history", target_type="terminal_session")
 async def export_history(
     session_id: str,
-    principal: Principal,
-    _perm: Principal = require_permission("terminal:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:read"))
 ) -> list[ExportHistoryItem]:
     """List prior exports for a session."""
     await _check_session(session_id, principal)

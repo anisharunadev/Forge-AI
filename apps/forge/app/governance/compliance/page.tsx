@@ -28,8 +28,12 @@ import {
   ViolationCard,
   type ViolationCardProps,
 } from '@/components/governance/ViolationCard';
+import {
+  useReopenViolation,
+  useResolveViolation,
+  useViolations,
+} from '@/lib/api/governance-hooks';
 import { useSpendLogs } from '@/lib/hooks/useAnalytics';
-import { forgeFetch } from '@/lib/forge-api';
 import type { SpendLogEntry } from '@/lib/litellm/data';
 
 const SEVERITIES: ReadonlyArray<string> = [
@@ -126,54 +130,66 @@ export default function ComplianceFeedPage() {
     'open',
   );
 
-  // Prefer the canonical backend derivation; fall back to spend logs.
-  const [backendItems, setBackendItems] = React.useState<
-    ReadonlyArray<BackendViolation> | null
-  >(null);
-  const [backendError, setBackendError] = React.useState<boolean>(false);
+  // Step-72: use the typed TanStack hook backed by the canonical
+  // `/api/v1/governance/violations` route. The hook owns caching,
+  // staleness, and refetch; resolve/reopen mutations invalidate it.
+  const severityFilter = (severity === 'all' ? 'all' : severity) as
+    | 'all'
+    | 'low'
+    | 'medium'
+    | 'high';
+  const violationsQ = useViolations(severityFilter, 7);
+  const resolveMut = useResolveViolation();
+  const reopenMut = useReopenViolation();
 
-  const fetchBackend = React.useCallback(async () => {
-    try {
-      const params = new URLSearchParams();
-      if (severity !== 'all') params.set('severity', severity);
-      params.set('days', '7');
-      const qs = params.toString();
-      const data = await forgeFetch<ReadonlyArray<BackendViolation>>(
-        `/governance/violations${qs ? `?${qs}` : ''}`,
-      );
-      setBackendItems(data);
-      setBackendError(false);
-    } catch {
-      setBackendError(true);
-    }
-  }, [severity]);
-
-  React.useEffect(() => {
-    void fetchBackend();
-    const id = window.setInterval(() => void fetchBackend(), 30_000);
-    return () => window.clearInterval(id);
-  }, [fetchBackend]);
+  const backendItems: ReadonlyArray<BackendViolation> = React.useMemo(() => {
+    const rows = violationsQ.data ?? [];
+    return rows.map((v) => ({
+      id: v.id,
+      timestamp: v.timestamp,
+      model: v.model,
+      severity: v.severity,
+      kind: v.kind,
+      description: v.description,
+      actor: v.actor,
+      key_alias: v.key_alias,
+      status: v.status,
+    }));
+  }, [violationsQ.data]);
+  const backendError = violationsQ.isError;
 
   const spendLogsRes = useSpendLogs(7, 500);
   const logs: ReadonlyArray<SpendLogEntry> = spendLogsRes.data ?? [];
 
-  // Resolve / reopen has no LiteLLM equivalent — see file header.
-  // We surface the violation list read-only; no actions are wired.
-
+  // Fallback to spend-log derivation only when the backend hook is
+  // unavailable (e.g. dev with the orchestrator stub).
   const items: ReadonlyArray<ViolationCardProps> = React.useMemo(() => {
-    if (backendItems !== null && !backendError) {
+    if (backendItems.length > 0 || violationsQ.isLoading) {
       return backendItems.map((v) => ({
         id: v.id,
         guardrail_id: v.kind ?? 'litellm',
         severity: v.severity ?? 'medium',
         action_taken: v.description ?? 'blocked',
         sanitized_content: v.description ?? 'Guardrail violation',
-        resolved: false,
+        resolved: v.status === 'RESOLVED',
         occurred_at: v.timestamp ?? new Date().toISOString(),
       }));
     }
     return deriveViolationsFromLogs(logs);
-  }, [backendItems, backendError, logs]);
+  }, [backendItems, violationsQ.isLoading, logs]);
+
+  const handleResolve = React.useCallback(
+    (id: string) => {
+      resolveMut.mutate({ violationId: id });
+    },
+    [resolveMut],
+  );
+  const handleReopen = React.useCallback(
+    (id: string) => {
+      reopenMut.mutate({ violationId: id });
+    },
+    [reopenMut],
+  );
 
   // Apply severity + resolved filters client-side as the canonical
   // backend only supports the severity dimension.
@@ -194,7 +210,7 @@ export default function ComplianceFeedPage() {
     });
   }, [items, severity, resolved]);
 
-  const loading = backendItems === null && spendLogsRes.isLoading;
+  const loading = violationsQ.isLoading && backendItems.length === 0 && spendLogsRes.isLoading;
 
   return (
     <AdminShell>
@@ -203,7 +219,7 @@ export default function ComplianceFeedPage() {
           eyebrow="Governance"
           title="Compliance Feed"
           icon={<Shield className="h-4 w-4" aria-hidden="true" />}
-          description="LiteLLM guardrail violations. Auto-refreshes every 30s. Resolve / reopen actions are read-only — there is no LiteLLM mutation for them."
+          description="LiteLLM guardrail violations. Wired to the canonical governance API — resolve/reopen now mutate the violation state."
         />
 
         <div className="flex flex-wrap items-center gap-3" data-testid="compliance-filters">
@@ -259,7 +275,11 @@ export default function ComplianceFeedPage() {
           >
             {filtered.map((v) => (
               <li key={v.id}>
-                <ViolationCard {...v} />
+                <ViolationCard
+                  {...v}
+                  onResolve={handleResolve}
+                  onReopen={handleReopen}
+                />
               </li>
             ))}
           </ul>

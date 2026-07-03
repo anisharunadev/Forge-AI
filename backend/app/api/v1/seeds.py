@@ -18,14 +18,16 @@ Errors raised by the runner are mapped to HTTP responses by
 """
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Path, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from app.api.deps import DbSession, Principal, require_permission
+from app.api.deps import DbSession, Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.seeds import (
     SeedApplyRequest,
     SeedDiffRead,
@@ -90,8 +92,8 @@ def _service(session_factory: async_sessionmaker) -> SeedService:
 @router.get("", response_model=list[SeedManifestSummary])
 @audit(action="seeds.list", target_type="seed")
 async def list_seeds(
-    principal: Principal,
-    _perm: Principal = require_permission("seeds:view"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("seeds:view")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> list[SeedManifestSummary]:
     """List all seed packages visible to the caller (RBAC ``seeds:view``)."""
@@ -104,8 +106,8 @@ async def list_seeds(
 @audit(action="seeds.get", target_type="seed")
 async def get_seed(
     name: str = Path(..., min_length=1, max_length=200),
-    principal: Principal = ...,
-    _perm: Principal = require_permission("seeds:view"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)] = ...,
+    _perm: AuthenticatedPrincipal = Depends(require_permission("seeds:view")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> SeedManifestRead:
     """Return the full manifest for ``name`` (RBAC ``seeds:view``)."""
@@ -121,8 +123,8 @@ async def get_seed(
 @audit(action="seeds.status", target_type="seed")
 async def get_seed_status(
     name: str = Path(..., min_length=1, max_length=200),
-    principal: Principal = ...,
-    _perm: Principal = require_permission("seeds:view"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)] = ...,
+    _perm: AuthenticatedPrincipal = Depends(require_permission("seeds:view")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> SeedStatusRead:
     """Return durable state + drift for a seed (RBAC ``seeds:view``)."""
@@ -138,8 +140,8 @@ async def get_seed_status(
 @audit(action="seeds.diff", target_type="seed")
 async def get_seed_diff(
     name: str = Path(..., min_length=1, max_length=200),
-    principal: Principal = ...,
-    _perm: Principal = require_permission("seeds:view"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)] = ...,
+    _perm: AuthenticatedPrincipal = Depends(require_permission("seeds:view")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> SeedDiffRead:
     """Compare manifest-declared row counts to live DB (RBAC ``seeds:view``)."""
@@ -155,8 +157,8 @@ async def get_seed_diff(
 @audit(action="seeds.runs", target_type="seed")
 async def list_seed_runs(
     name: str = Path(..., min_length=1, max_length=200),
-    principal: Principal = ...,
-    _perm: Principal = require_permission("seeds:view"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)] = ...,
+    _perm: AuthenticatedPrincipal = Depends(require_permission("seeds:view")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> list[SeedRunRead]:
     """Return recent run history for a seed (RBAC ``seeds:view``)."""
@@ -175,8 +177,8 @@ async def list_seed_runs(
 async def apply_seed(
     body: SeedApplyRequest,
     name: str = Path(..., min_length=1, max_length=200),
-    principal: Principal = ...,
-    _perm: Principal = require_permission("seeds:manage"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)] = ...,
+    _perm: AuthenticatedPrincipal = Depends(require_permission("seeds:manage")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> SeedRunRead:
     """Apply a seed idempotently (RBAC ``seeds:manage``).
@@ -204,7 +206,7 @@ async def apply_seed(
 async def reset_seed(
     body: SeedResetRequest,
     name: str = Path(..., min_length=1, max_length=200),
-    principal: Principal = ...,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)] = ...,
     db: DbSession = None,  # type: ignore[assignment]
 ) -> SeedRunRead:
     """Reset (delete) rows owned by a seed.
@@ -241,8 +243,8 @@ async def reset_seed(
 @audit(action="seeds.rollback", target_type="seed")
 async def rollback_seed(
     name: str = Path(..., min_length=1, max_length=200),
-    principal: Principal = ...,
-    _perm: Principal = require_permission("seeds:manage"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)] = ...,
+    _perm: AuthenticatedPrincipal = Depends(require_permission("seeds:manage")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> SeedRunRead:
     """Roll back the most recent apply (RBAC ``seeds:manage``).

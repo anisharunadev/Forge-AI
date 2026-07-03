@@ -193,6 +193,7 @@ class LiteLLMClient:
         actor_id: UUID | str | None = None,
         projected_cost_usd: float | None = None,
         stream: bool = False,
+        proxy_token: str | None = None,
         **kwargs: Any,
     ) -> dict[str, Any] | AsyncIterator[dict[str, Any]]:
         """Call /v1/chat/completions and record cost.
@@ -204,6 +205,12 @@ class LiteLLMClient:
         budget and ``spent + projected_cost_usd > ceiling``, this method
         raises :class:`BudgetExceeded` *before* any provider traffic is
         sent. ``projected_cost_usd`` defaults to a conservative bound.
+
+        step-65: pass ``proxy_token`` (RS256 JWT, signed at login) to
+        switch auth from the per-tenant Virtual Key to the proxy's
+        JWT-auth mode.  When ``None`` the call falls back to the
+        existing Virtual Key path (default for the 14 existing call
+        sites).  Both paths coexist during the rollout.
         """
         projected = (
             projected_cost_usd
@@ -221,6 +228,9 @@ class LiteLLMClient:
         if self._impl is not None and hasattr(self._impl, "chat"):
             # Delegate to ForgeLLMClient.chat — it preserves the same
             # signature and return shape as the legacy client.
+            chat_kwargs = dict(kwargs)
+            if proxy_token is not None:
+                chat_kwargs["proxy_token"] = proxy_token
             return await self._impl.chat(
                 messages,
                 model,
@@ -230,10 +240,13 @@ class LiteLLMClient:
                 actor_id=actor_id,
                 projected_cost_usd=projected,
                 stream=stream,
-                **kwargs,
+                **chat_kwargs,
             )
 
         # Legacy fallback path (integration package missing).
+        chat_kwargs = dict(kwargs)
+        if proxy_token is not None:
+            chat_kwargs["proxy_token"] = proxy_token
         return await self._legacy_chat(
             messages,
             model,
@@ -243,7 +256,7 @@ class LiteLLMClient:
             actor_id=actor_id,
             stream=stream,
             projected_cost_usd=projected,
-            **kwargs,
+            **chat_kwargs,
         )
 
     async def _legacy_chat(  # pragma: no cover — fallback

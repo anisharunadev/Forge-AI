@@ -1,13 +1,15 @@
 """F-308 — Standards Attestation HTTP endpoints."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.architecture import (
     AttestationListResponse,
     AttestationRequest,
@@ -42,9 +44,9 @@ def _service() -> StandardsAttestationService:
 @audit(action="architecture.standards.attest", target_type="standards_attestation")
 async def attest(
     body: AttestationRequest,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: UUID = Query(...),
-    _perm: Principal = require_permission("architecture:standards:attest"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:standards:attest"))
 ) -> AttestationResponse:
     """Run the standard checks for an artifact and record the outcome."""
     payload = await _service().attest(
@@ -60,9 +62,9 @@ async def attest(
 @router.get("/attestations", response_model=AttestationListResponse)
 @audit(action="architecture.standards.list", target_type="standards_attestation")
 async def list_attestations(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: UUID = Query(...),
-    _perm: Principal = require_permission("architecture:standards:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:standards:read"))
 ) -> AttestationListResponse:
     rows = await _service().list_attestations(
         tenant_id=principal.tenant_id,
@@ -82,9 +84,9 @@ async def list_attestations(
 async def check_artifact(
     artifact_type: str,
     artifact_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: UUID | None = Query(default=None),
-    _perm: Principal = require_permission("architecture:standards:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:standards:read"))
 ) -> list[StandardCheckResponse]:
     """List applicable standards and whether they're met (no audit row)."""
     rows = await _service().get_standards_for_artifact(
@@ -104,8 +106,8 @@ async def check_artifact(
 async def revoke_attestation(
     attestation_id: UUID,
     body: AttestationRevokeRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:standards:revoke"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:standards:revoke"))
 ) -> AttestationResponse:
     """Revoke a previously issued attestation (forge-admin only)."""
     try:

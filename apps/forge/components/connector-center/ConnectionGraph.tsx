@@ -13,7 +13,7 @@
  */
 
 import * as React from 'react';
-import { Plug, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 import { listConnected, resolveIcon, STATUS_DOT_CLASS, type ConnectorHealthStatus } from '@/lib/connectors';
 import { cn } from '@/lib/utils';

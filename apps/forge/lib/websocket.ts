@@ -29,13 +29,27 @@ export interface ForgeWebSocketHandle {
   close: (code?: number, reason?: string) => void;
 }
 
+export interface ForgeWebSocketOptions {
+  /**
+   * JWT to forward as `?token=...` query parameter (browsers cannot
+   * set custom headers on WebSocket handshakes). The backend WS at
+   * `/ws/terminal/{session_id}` resolves the principal from this param
+   * when present, then enforces tenant + RBAC.
+   */
+  token?: string;
+}
+
 export function openForgeWebSocket(
   path: string,
   handlers: ForgeWebSocketHandlers = {},
+  opts: ForgeWebSocketOptions = {},
 ): ForgeWebSocketHandle {
-  const url = path.startsWith('ws')
+  const base = path.startsWith('ws')
     ? path
     : `${FORGE_WS_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  const url = opts.token
+    ? `${base}${base.includes('?') ? '&' : '?'}token=${encodeURIComponent(opts.token)}`
+    : base;
 
   const socket = new WebSocket(url);
   let state: ForgeWebSocketState = 'connecting';

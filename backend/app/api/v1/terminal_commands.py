@@ -5,11 +5,12 @@ from __future__ import annotations
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.services.terminal.command_integration import (
     OutputChunk,
     command_integration,
@@ -53,8 +54,8 @@ class OutputResponse(BaseModel):
 @audit(action="terminal.commands.launch", target_type="terminal_session")
 async def launch_command(
     body: LaunchCommandRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("terminal:connect"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:connect"))
 ) -> LaunchCommandResponse:
     """Launch a terminal session bound to a forge-* command."""
     if principal.project_id is None:
@@ -91,8 +92,8 @@ async def launch_command(
 async def inject_command(
     session_id: str,
     body: InjectCommandRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("terminal:write"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:write"))
 ) -> InjectCommandResponse:
     """Pipe a command into a running session."""
     session = await session_manager.get_session(session_id)
@@ -128,8 +129,8 @@ async def inject_command(
 @audit(action="terminal.output.poll", target_type="terminal_session")
 async def get_output(
     session_id: str,
-    principal: Principal,
-    _perm: Principal = require_permission("terminal:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:read")),
     since: Annotated[int, Query(ge=0)] = 0,
 ) -> OutputResponse:
     """Poll buffered session output since the given cursor."""

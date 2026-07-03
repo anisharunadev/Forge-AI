@@ -9,13 +9,14 @@ from __future__ import annotations
 
 import secrets
 from datetime import datetime, timezone
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.webhook import (
     Webhook,
     WebhookDelivery,
@@ -37,9 +38,9 @@ router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 @router.get("", response_model=list[WebhookRead])
 @audit(action="webhooks.list", target_type="webhook")
 async def list_webhooks(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     direction: str | None = Query(default=None),
-    _perm: Principal = require_permission("webhooks:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("webhooks:read"))
 ) -> list[WebhookRead]:
     factory = get_session_factory()
     async with factory() as session:
@@ -55,8 +56,8 @@ async def list_webhooks(
 @audit(action="webhooks.create", target_type="webhook")
 async def create_webhook(
     body: WebhookCreate,
-    principal: Principal,
-    _perm: Principal = require_permission("webhooks:create"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("webhooks:create"))
 ) -> WebhookRead:
     factory = get_session_factory()
     async with factory() as session:
@@ -82,8 +83,8 @@ async def create_webhook(
 @audit(action="webhooks.test", target_type="webhook")
 async def test_webhook(
     webhook_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("webhooks:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("webhooks:read"))
 ) -> WebhookTestResult:
     """Record a synthetic test delivery. The actual outbound HTTP call
     is out of scope for Step 55 — we record what would have happened so
@@ -127,9 +128,9 @@ async def test_webhook(
 @audit(action="webhooks.deliveries.list", target_type="webhook")
 async def list_webhook_deliveries(
     webhook_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     limit: int = Query(default=50, ge=1, le=500),
-    _perm: Principal = require_permission("webhooks:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("webhooks:read"))
 ) -> list[WebhookDeliveryRead]:
     factory = get_session_factory()
     async with factory() as session:

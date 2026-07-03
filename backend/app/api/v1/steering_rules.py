@@ -1,11 +1,13 @@
 """F-504 — Steering Rules API."""
 
 from __future__ import annotations
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
-from app.api.deps import Principal
+from app.api.deps import Principal, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.steering_rules import (
     InjectionResult,
     SteeringCatalog,
@@ -20,7 +22,7 @@ router = APIRouter(prefix="/steering-rules", tags=["steering-rules"])
 @router.get("", response_model=list[SteeringRuleRead])
 @audit(action="steering_rules.list", target_type="steering_rule")
 async def list_steering_rules(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
 ) -> list[SteeringRuleRead]:
     """List steering rules for the current project (RLS-scoped)."""
     project_id = principal.project_id
@@ -35,7 +37,7 @@ async def list_steering_rules(
 @router.get("/catalog", response_model=SteeringCatalog | None)
 @audit(action="steering_rules.catalog", target_type="steering_rule")
 async def get_catalog(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
 ) -> SteeringCatalog | None:
     """Return the in-memory catalog for the current project (if built)."""
     project_id = principal.project_id
@@ -51,7 +53,7 @@ async def get_catalog(
 @audit(action="steering_rules.create", target_type="steering_rule")
 async def create_steering_rule(
     body: SteeringRuleCreate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
 ) -> SteeringRuleRead:
     """Add (or upsert) a steering rule file for the current project."""
     project_id = body.project_id or principal.project_id
@@ -69,14 +71,13 @@ async def create_steering_rule(
 
 @router.delete(
     "/{rule_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     response_class=Response,
 )
 @audit(action="steering_rules.delete", target_type="steering_rule")
 async def delete_steering_rule(
     rule_id: str,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
 ) -> None:
     """Remove a steering rule by DB id or rule_id slug."""
     project_id = principal.project_id
@@ -101,7 +102,7 @@ async def delete_steering_rule(
 @audit(action="steering_rules.inject", target_type="steering_rule")
 async def inject_for_stage(
     stage: str,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
 ) -> InjectionResult:
     """Return the rule markdown content to inject before ``stage``.
 

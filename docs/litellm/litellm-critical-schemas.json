@@ -1,0 +1,149 @@
+
+================================================================================
+SCHEMA: EmbeddingRequest
+  Type: object
+  Required: ['model']
+  Properties (13):
+    - model: string — Model
+    - input: array — Input
+    - timeout: integer — Timeout
+    - api_base:  — Api Base
+    - api_version:  — Api Version
+    - api_key:  — Api Key
+    - api_type:  — Api Type
+    - caching: boolean — Caching
+    - user:  — User
+    - custom_llm_provider:  — Custom Llm Provider
+    - litellm_call_id:  — Litellm Call Id
+    - litellm_logging_obj:  — Litellm Logging Obj
+    - logger_fn:  — Logger Fn
+
+================================================================================
+SCHEMA: Message
+  Type: object
+  Required: ['content', 'role', 'tool_calls', 'function_call']
+  Properties (11):
+    - content:  — Content
+    - role: string — Role
+    - tool_calls:  — Tool Calls
+    - function_call: FunctionCall — 
+    - audio: ChatCompletionAudioResponse — 
+    - images:  — Images
+    - reasoning_content:  — Reasoning Content
+    - thinking_blocks:  — Thinking Blocks
+    - reasoning_items:  — Reasoning Items
+    - provider_specific_fields:  — Provider Specific Fields
+    - annotations:  — Annotations
+
+================================================================================
+SCHEMA: ModelInfo
+  Type: object
+  Required: ['id']
+  Properties (10):
+    - id:  — Id
+    - db_model: boolean — Db Model
+    - updated_at:  — Updated At
+    - updated_by:  — Updated By
+    - created_at:  — Created At
+    - created_by:  — Created By
+    - base_model:  — Base Model
+    - tier:  — Tier
+    - team_id:  — Team Id
+    - team_public_model_name:  — Team Public Model Name
+
+================================================================================
+SCHEMA: ModelResponse
+  Type: object
+  Required: ['id', 'created', 'object', 'choices']
+  Properties (6):
+    - id: string — Id
+    - created: integer — Created
+    - model:  — Model
+    - object: string — Object
+    - system_fingerprint:  — System Fingerprint
+    - choices: array — Choices
+
+================================================================================
+SCHEMA: Guardrail
+  Type: object
+  Required: ['guardrail_name', 'litellm_params']
+  Properties (7):
+    - guardrail_id:  — Guardrail Id
+    - guardrail_name: string — Guardrail Name
+    - litellm_params: LitellmParams — 
+    - guardrail_info:  — Guardrail Info
+    - policy_template:  — Policy Template
+    - created_at:  — Created At
+    - updated_at:  — Updated At
+
+================================================================================
+SCHEMA: Skill
+  Type: object
+  Desc: Represents a skill from the Anthropic Skills API
+  Required: ['id', 'created_at', 'source', 'updated_at']
+  Properties (7):
+    - id: string — Id
+    - created_at: string — Created At
+    - display_title:  — Display Title
+    - latest_version:  — Latest Version
+    - source: string — Source
+    - type: string — Type
+    - updated_at: string — Updated At
+
+================================================================================
+SCHEMA: Prompt
+  Type: object
+  Required: ['prompt_id', 'litellm_params']
+  Properties (3):
+    - prompt_id: string — Prompt Id
+    - litellm_params: PromptLiteLLMParams — 
+    - prompt_info: PromptInfo — 
+
+================================================================================
+SCHEMA: BudgetNewRequest
+  Type: object
+  Required: []
+  Properties (9):
+    - budget_id:  — The unique budget id.
+    - max_budget:  — Requests will fail if this budget (in USD) is exceeded.
+    - soft_budget:  — Requests will NOT fail if this is exceeded. Will fire alerting though.
+    - max_parallel_requests:  — Max concurrent requests allowed for this budget id.
+    - tpm_limit:  — Max tokens per minute, allowed for this budget id.
+    - rpm_limit:  — Max requests per minute, allowed for this budget id.
+    - budget_duration:  — Max duration budget should be set for (e.g. '1hr', '1d', '28d')
+    - model_max_budget:  — Max budget for each model (e.g. {'gpt-4o': {'max_budget': '0.0000001', 'budget_d
+    - budget_reset_at:  — Datetime when the budget is reset
+
+================================================================================
+SCHEMA: KeyRequest
+  Type: object
+  Required: []
+  Properties (2):
+    - keys:  — Keys
+    - key_aliases:  — Key Aliases
+
+================================================================================
+SCHEMA: LiteLLM_ProjectTable
+  Type: object
+  Desc: Database model representation for project
+  Required: ['project_id', 'created_by', 'updated_by']
+  Properties (19):
+    - project_id: string — Project Id
+    - project_alias:  — Project Alias
+    - description:  — Description
+    - team_id:  — Team Id
+    - budget_id:  — Budget Id
+    - metadata:  — Metadata
+    - models: array — Models
+    - spend: number — Spend
+    - model_spend:  — Model Spend
+    - model_rpm_limit:  — Model Rpm Limit
+    - model_tpm_limit:  — Model Tpm Limit
+    - blocked: boolean — Blocked
+    - object_permission_id:  — Object Permission Id
+    - created_by: string — Created By
+    - updated_by: string — Updated By
+    - created_at:  — Created At
+    - updated_at:  — Updated At
+    - litellm_budget_table: LiteLLM_BudgetTable — 
+    - object_permission: LiteLLM_ObjectPermissionTable — 

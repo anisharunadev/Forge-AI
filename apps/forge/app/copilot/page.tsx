@@ -22,7 +22,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ChevronRight, Home, Plus, Settings as SettingsIcon, SidebarClose, Sparkles, X } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Home, Plus, Settings as SettingsIcon, SidebarClose, Sparkles } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { ConversationList } from '@/components/copilot/ConversationList';

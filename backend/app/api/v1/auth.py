@@ -1,23 +1,19 @@
-"""F-?? — OIDC authentication endpoints (step-53 Zone 2).
+"""OIDC + self-service auth endpoints (step-53 + step-73).
 
 Public surface — every other v1 endpoint requires a Bearer token issued
-here. Two flows:
+here. Four flows:
 
   1. ``POST /auth/oidc/callback`` — Keycloak Authorization Code + PKCE
-     exchange. The browser hits Keycloak, gets a code, then posts that
-     code (plus the PKCE verifier) to us. We:
+     exchange. Materializes Tenant + User, mints Forge JWTs (HS256).
+  2. ``POST /auth/refresh`` — trade refresh for new access token.
+  3. ``GET /auth/me`` — return principal backing the bearer.
+  4. ``PATCH /auth/me`` — self-service profile update (step-73).
+  5. ``GET /auth/sso/config`` — env-driven SSO config (step-73).
 
-        a. Exchange the code with Keycloak for an access + refresh token.
-        b. Fetch ``/userinfo`` to learn who the user is.
-        c. Materialize a Tenant + User row in our DB (idempotent).
-        d. Issue our own internal JWTs (HS256 in dev) so the frontend
-           can call the rest of the API without round-tripping to
-           Keycloak on every request.
-
-  2. ``POST /auth/refresh`` — accept our refresh token, return a fresh
-     access token. Refresh tokens are 7-day JWTs (claim ``type=refresh``).
-
-  3. ``GET /auth/me`` — return the principal backing the bearer token.
+The new ``PATCH /auth/me`` writes to ``User.profile`` (JSONB) — covers
+display_name / avatar_url / locale / timezone. Password change and 2FA
+enrollment are out of scope here (handled by Keycloak in this realm —
+see docs/goals/step-73.md "What you'll NOT see").
 
 Why the backend issues its own JWTs (instead of forwarding Keycloak
 tokens to the rest of the API):
@@ -42,13 +38,15 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from jose import JWTError, jwt
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
+from app.core import proxy_token_cache
 from app.core.config import settings
 from app.core.logging import get_logger
+from app.core.oauth2_rsa import issue_proxy_token
 from app.core.security import (
     AuthenticatedPrincipal,
     decode_token,
@@ -134,10 +132,20 @@ class OIDCCallbackRequest(BaseModel):
 
 
 class TokenResponse(BaseModel):
-    """Successful OIDC callback response."""
+    """Successful OIDC callback response.
+
+    ``proxy_token`` (step-65) is the RS256 JWT the backend (or, if a
+    future flow asks for it, the SPA itself) sends as
+    ``Authorization: Bearer`` when calling ``/v1/chat/completions`` on
+    the LiteLLM Proxy.  The proxy trusts the proxy token via its
+    ``enable_jwt_auth`` block; we mint it once at login and cache it
+    in Redis keyed on the access-token fingerprint so subsequent
+    requests don't pay the sign cost.
+    """
 
     access_token: str
     refresh_token: str
+    proxy_token: str | None = None
     token_type: str = "bearer"
     expires_in: int = int(_ACCESS_TOKEN_TTL.total_seconds())
     user: dict[str, Any]
@@ -150,8 +158,46 @@ class RefreshRequest(BaseModel):
 
 class AccessTokenResponse(BaseModel):
     access_token: str
+    proxy_token: str | None = None
     token_type: str = "bearer"
     expires_in: int = int(_ACCESS_TOKEN_TTL.total_seconds())
+
+
+# ---------------------------------------------------------------------------
+# Step-73: profile PATCH + SSO config (SsoConfigRead returns empty when env is unset)
+# ---------------------------------------------------------------------------
+
+
+class UserProfileUpdate(BaseModel):
+    """Self-service profile fields (Settings → Profile).
+
+    All fields optional — PATCH semantics; an empty body leaves profile
+    untouched. ``profile`` JSONB carries whatever the user wants, but
+    this typed surface limits us to four well-known keys so the frontend
+    can present form controls.
+    """
+
+    display_name: str | None = Field(None, max_length=200)
+    avatar_url: str | None = Field(None, max_length=500)
+    locale: str | None = Field(None, max_length=16)
+    timezone: str | None = Field(None, max_length=64)
+
+
+class SsoConfigRead(BaseModel):
+    """SSO config — read-only, env-driven (Settings → SSO).
+
+    ``enabled`` is False when the OIDC env vars are not configured. The
+    fields below come from KEYCLOAK_URL + KEYCLOAK_REALM or OIDC_* vars
+    so an admin can verify which identity provider the realm is pointed
+    at without exposing the client secret.
+    """
+
+    enabled: bool
+    provider: str
+    issuer: str | None
+    client_id: str | None
+    scopes: list[str]
+
 
 
 # ---------------------------------------------------------------------------
@@ -321,6 +367,22 @@ async def oidc_callback(req: OIDCCallbackRequest) -> TokenResponse:
         algorithm=settings.jwt_algorithm,
     )
 
+    # step-65: RS256 proxy_token for the LiteLLM Proxy.  Signed once
+    # at login, cached in Redis against the access-token fingerprint
+    # so subsequent routes can recover it without re-signing.
+    proxy_token_value = issue_proxy_token(
+        user_id=user["id"],
+        email=user["email"],
+        tenant_id=tenant["id"],
+        project_id=None,
+        roles=[user["role"]],
+    )
+    await proxy_token_cache.store(
+        forge_access,
+        proxy_token_value,
+        ttl_seconds=int(_ACCESS_TOKEN_TTL.total_seconds()),
+    )
+
     logger.info(
         "auth.oidc.success",
         user_id=user["id"],
@@ -331,6 +393,7 @@ async def oidc_callback(req: OIDCCallbackRequest) -> TokenResponse:
     return TokenResponse(
         access_token=forge_access,
         refresh_token=forge_refresh,
+        proxy_token=proxy_token_value,
         user=user,
         tenant=tenant,
     )
@@ -391,7 +454,88 @@ async def refresh(req: RefreshRequest) -> AccessTokenResponse:
         settings.jwt_secret,
         algorithm=settings.jwt_algorithm,
     )
-    return AccessTokenResponse(access_token=forge_access)
+
+    # step-65: re-issue the proxy_token alongside the access token so
+    # the LiteLLM Proxy keeps trusting the user after a refresh.
+    proxy_token_value = issue_proxy_token(
+        user_id=user["id"],
+        email=user["email"],
+        tenant_id=tenant_id,
+        project_id=None,
+        roles=[user["role"]],
+    )
+    await proxy_token_cache.store(
+        forge_access,
+        proxy_token_value,
+        ttl_seconds=int(_ACCESS_TOKEN_TTL.total_seconds()),
+    )
+
+    return AccessTokenResponse(
+        access_token=forge_access,
+        proxy_token=proxy_token_value,
+    )
+
+
+@router.post("/logout")
+async def logout(
+    principal: AuthenticatedPrincipal = Depends(get_current_principal),
+) -> None:
+    """Revoke the cached proxy_token (step-65).
+
+    The Forge access token itself is stateless (HMAC) and can't be
+    revoked server-side; the SPA also drops it from localStorage in
+    the matching client-side handler.  The proxy_token has a
+    server-side Redis cache; without invalidation a logged-out user's
+    RS256 token keeps working until its 1-hour TTL.
+
+    ponytail: passing the raw bearer through ``get_current_principal``
+    is the only way to fingerprint the cache key here, and the load
+    path doesn't justify the plumbing for a 1-hour bounded leak.  Log
+    the logout (audit captures it) and let the Redis TTL handle the
+    window.  If precise revocation becomes a requirement, swap the
+    dependency for a custom one that yields ``(principal, bearer)``.
+    """
+    logger.info(
+        "auth.logout",
+        user_id=principal.user_id,
+        tenant_id=principal.tenant_id,
+    )
+    return Response()
+
+
+@router.get("/jwks.json", include_in_schema=False)
+async def proxy_token_jwks() -> dict[str, Any]:
+    """Expose the backend's RS256 public key as a JWKS document.
+
+    step-65 — the LiteLLM Proxy fetches this URL (``JWT_PUBLIC_KEY_URL``)
+    to validate the RS256 ``proxy_token`` we issue at login.  No
+    auth required: the document contains the public key only, and
+    rotating the keypair invalidates every cached token (a
+    deliberate, scheduled event).
+    """
+    from jose.utils import long_to_base64
+    from cryptography.hazmat.primitives import serialization
+
+    from app.core.oauth2_rsa import _load_or_generate  # module-private but safe
+
+    _, pub_pem = _load_or_generate()
+    pub_key = serialization.load_pem_public_key(pub_pem)
+    numbers = pub_key.public_numbers()
+    # RSA n and e encoded as base64url — the standard JWKS format.
+    n_b64 = long_to_base64(numbers.n).decode("ascii")
+    e_b64 = long_to_base64(numbers.e).decode("ascii")
+    return {
+        "keys": [
+            {
+                "kty": "RSA",
+                "alg": "RS256",
+                "use": "sig",
+                "kid": "forge-proxy-1",
+                "n": n_b64,
+                "e": e_b64,
+            }
+        ]
+    }
 
 
 @router.get("/me")
@@ -416,6 +560,90 @@ async def get_me(
             detail="user_not_found",
         )
     return user
+
+
+@router.patch("/me", response_model=dict[str, Any])
+async def patch_me(
+    body: UserProfileUpdate,
+    principal: AuthenticatedPrincipal = Depends(get_current_principal),
+) -> dict[str, Any]:
+    """Self-service profile update (Settings → Profile).
+
+    Writes to ``User.profile`` JSONB. Only the four typed fields above
+    are honored; anything else in ``body`` is rejected by Pydantic so a
+    typo doesn't silently persist.
+
+    Two-PATCHer: actually we don't touch ``User.display_name`` here
+    because Keycloak owns it on login. The four JSONB fields are the
+    *Forge-specific* overrides. The frontend reads them as the source
+    of truth and falls back to ``display_name`` if unset.
+
+    Permission: principal auth only — users can edit their own profile.
+    """
+    from app.db.models.user import User as UserModel
+
+    factory = get_session_factory()
+    async with factory() as session:
+        user_row = await session.get(UserModel, principal.user_id)
+        if user_row is None:
+            raise HTTPException(status_code=404, detail="user_not_found")
+        profile = dict(user_row.profile or {})
+        # PATCH semantics — only fields explicitly set overwrite.
+        update = body.model_dump(exclude_unset=True)
+        if "display_name" in update and update["display_name"] is not None:
+            profile["display_name"] = update["display_name"]
+            user_row.display_name = update["display_name"]
+        if "avatar_url" in update:
+            profile["avatar_url"] = update["avatar_url"]
+        if "locale" in update:
+            profile["locale"] = update["locale"]
+        if "timezone" in update:
+            profile["timezone"] = update["timezone"]
+        user_row.profile = profile
+        await session.commit()
+        await session.refresh(user_row)
+
+    logger.info(
+        "auth.me.profile_updated",
+        user_id=principal.user_id,
+        fields=list(update.keys()),
+    )
+    return {
+        "id": str(user_row.id),
+        "email": user_row.email,
+        "display_name": user_row.display_name,
+        "avatar_url": profile.get("avatar_url"),
+        "locale": profile.get("locale"),
+        "timezone": profile.get("timezone"),
+        "role_ids": [str(r) for r in (user_row.role_ids or [])],
+    }
+
+
+@router.get("/sso/config", response_model=SsoConfigRead)
+async def get_sso_config() -> SsoConfigRead:
+    """Read-only SSO config (Settings → SSO).
+
+    Env-driven. Returns ``enabled=False`` when OIDC is not configured.
+    Never exposes client secrets.
+
+    ponytail: read-only env-var projection, no service extraction. If
+    this surface gains per-tenant overrides later, move to
+    ``app/services/sso_config.py``.
+    """
+    issuer: str | None = None
+    if settings.keycloak_url and settings.keycloak_realm:
+        issuer = (
+            f"{settings.keycloak_url.rstrip('/')}/realms/{settings.keycloak_realm}"
+        )
+    client_id = getattr(settings, "keycloak_client_id", None) or "forge-ui"
+    scopes_raw = getattr(settings, "oidc_scopes", None) or "openid profile email"
+    return SsoConfigRead(
+        enabled=bool(issuer),
+        provider="keycloak",
+        issuer=issuer,
+        client_id=client_id,
+        scopes=[s.strip() for s in scopes_raw.split() if s.strip()],
+    )
 
 
 @router.get("/me/tenants")

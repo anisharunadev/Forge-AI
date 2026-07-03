@@ -1,13 +1,15 @@
 """Approval Queue REST endpoints (F-212)."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import (
     ApprovalAssignRequest,
     ApprovalDecisionRequest,
@@ -45,8 +47,8 @@ def _to_read(row) -> ApprovalItemRead:
 @audit(action="ideation.approval.enqueue", target_type="approval_item")
 async def enqueue_approval(
     body: ApprovalItemCreate,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:approval:enqueue"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:approval:enqueue"))
 ) -> ApprovalItemRead:
     try:
         row = await approval_queue_service.enqueue(
@@ -70,11 +72,11 @@ async def enqueue_approval(
 @router.get("", response_model=ApprovalQueueResponse)
 @audit(action="ideation.approval.list", target_type="approval_item")
 async def list_approvals(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     status_filter: str | None = Query(default=None, alias="status"),
     request_type: str | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=500),
-    _perm: Principal = require_permission("ideation:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> ApprovalQueueResponse:
     rows = await approval_queue_service.get_queue(
         tenant_id=principal.tenant_id,
@@ -92,8 +94,8 @@ async def list_approvals(
 async def decide_approval(
     approval_id: UUID,
     body: ApprovalDecisionRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:approval:decide"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:approval:decide"))
 ) -> ApprovalItemRead:
     try:
         row = await approval_queue_service.decide(
@@ -117,8 +119,8 @@ async def decide_approval(
 async def assign_approval(
     approval_id: UUID,
     body: ApprovalAssignRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:approval:assign"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:approval:assign"))
 ) -> ApprovalItemRead:
     try:
         row = await approval_queue_service.assign(
@@ -141,8 +143,8 @@ async def assign_approval(
 async def delegate_approval(
     approval_id: UUID,
     body: ApprovalDelegateRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:approval:assign"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:approval:assign"))
 ) -> ApprovalItemRead:
     try:
         row = await approval_queue_service.delegate(

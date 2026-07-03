@@ -41,7 +41,7 @@ import {
   LEFT_RAIL_SECTIONS,
   RIGHT_RAIL_SECTIONS,
 } from '@/lib/terminal-ui-store';
-import { FORGE_TERMINAL_WS_URL } from '@/lib/forge-api';
+import { FORGE_API_BASE_URL } from '@/lib/forge-api';
 import type { TerminalConnectionState } from '@/hooks/use-terminal';
 
 import { SessionTabs } from './SessionTabs';
@@ -54,6 +54,19 @@ import {
   NewSessionDialog,
   type SessionColorId as ColorTag,
 } from './NewSessionDialog';
+
+// Derive the WS base URL from the orchestrator HTTP base so dev /
+// staging / prod share the same env-var contract. The backend WS
+// router is mounted bare (no `/api/v1` prefix) in `app/main.py`.
+const TERMINAL_WS_BASE: string = (() => {
+  const api = FORGE_API_BASE_URL;
+  if (!api.startsWith('http')) return 'ws://localhost:8000';
+  return api.replace(/^http/, 'ws').replace(/\/api\/v\d+.*$/, '');
+})();
+
+function terminalWsPath(sessionId: string): string {
+  return `${TERMINAL_WS_BASE}/ws/terminal/${sessionId}`;
+}
 
 export interface TerminalPanelProps {
   /** Connection state reported by the page-level sidecar probe. */
@@ -70,7 +83,7 @@ export function TerminalPanel({
 }: TerminalPanelProps) {
   const sessions = useTerminalStore((s) => s.sessions);
   const activeId = useTerminalStore((s) => s.activeSessionId);
-  const createSession = useTerminalStore((s) => s.createSession);
+  const addSession = useTerminalStore((s) => s.addSession);
   const setActive = useTerminalStore((s) => s.setActiveSession);
 
   // Local UI state
@@ -358,13 +371,8 @@ export function TerminalPanel({
         <NewSessionDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
-          onCreate={(input) => {
-            createSession({
-              title: input.title,
-              agent: input.agent,
-              workspace: input.workspace,
-              color: input.color as SessionColorId,
-            });
+          onCreated={(session) => {
+            addSession(session);
           }}
         />
         <HelpOverlay open={helpOpen} onOpenChange={(v) => (v ? openHelp() : closeHelp())} endpoint={endpoint} />
@@ -381,14 +389,13 @@ export function TerminalPanel({
       sessionId={s.id}
       agent={s.agent}
       workspace={s.workspace}
-      // Point each pane at the dev PTY sidecar directly. The previous
-      // `/ws/terminal/${s.id}` was a relative path that `openForgeWebSocket`
-      // joined onto FORGE_WS_BASE_URL (the orchestrator, :8000), which
-      // returns 403 for that route. The sidecar on :4001 accepts every
-      // connection and spawns a fresh PTY per WebSocket, so the absolute
-      // URL is the right one in dev. When the real orchestrator exposes
-      // its own terminal endpoint, repoint this back at it.
-      wsPath={FORGE_TERMINAL_WS_URL}
+      // Point each pane at the backend's `/ws/terminal/{session_id}`
+      // route — the session id is server-issued by
+      // `POST /api/v1/terminal/sessions`, which is also what the JWT
+      // (forwarded by `openForgeWebSocket` via `?token=`) authenticates
+      // against. This replaces the dev-sidecar short-circuit used
+      // before step-71.
+      wsPath={terminalWsPath(s.id)}
       status={s.status}
       focusOnMount={opts?.focusOnMount ?? false}
     />
@@ -584,13 +591,8 @@ export function TerminalPanel({
       <NewSessionDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        onCreate={(input: { title: string; agent: AgentId; workspace: string; color: ColorTag }) => {
-          createSession({
-            title: input.title,
-            agent: input.agent,
-            workspace: input.workspace,
-            color: input.color as SessionColorId,
-          });
+        onCreated={(session) => {
+          addSession(session);
         }}
       />
       <HelpOverlay

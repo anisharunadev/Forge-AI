@@ -34,10 +34,11 @@ from __future__ import annotations
 
 import json
 import time
+from collections.abc import AsyncIterator
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -316,9 +317,346 @@ class CopilotService:
                 latency_ms=latency_ms,
             )
 
+    async def stream_chat(
+        self, request: CopilotChatRequest,
+    ) -> AsyncIterator[dict[str, Any]]:
+        """Same pipeline as :meth:`chat` but yields SSE-shaped dicts.
+
+        Event shapes yielded:
+
+        * ``{"event": "token", "data": "<delta string>"}`` — once per
+          content chunk from the FINAL assistant turn.
+        * ``{"event": "done", "data": <CopilotChatResponse>}`` — one
+          final envelope containing the full response shape.
+
+        Tool-calling turns are streamed internally (chunks are aggregated
+        into a full response) but only the FINAL summarization turn's
+        chunks are yielded to the caller — tool execution itself stays
+        synchronous, matching the spec.
+
+        ponytail: in-flight tokens live in memory only; a page refresh
+        during streaming loses them. The backend persists only on the
+        terminal ``done`` yield (one DB commit per turn, same atomicity
+        as :meth:`chat`).
+        """
+        start = time.perf_counter()
+        with _tracer.start_as_current_span("copilot.turn.stream") as turn_span:
+            # 1. Conversation + budget.
+            conversation, _is_new = await self.get_or_create_conversation(
+                conversation_id=request.conversation_id,
+                project_id=request.project_id,
+            )
+            turn_span.set_attribute("conversation_id", str(conversation.id))
+            turn_span.set_attribute("user_id", self._principal.user_id)
+            turn_span.set_attribute("tenant_id", str(self._principal.tenant_id))
+            turn_span.set_attribute(
+                "project_id",
+                str(conversation.project_id) if conversation.project_id else "",
+            )
+
+            workflow_id = copilot_synthetic_workflow_id(conversation.id)
+
+            # 2. History.
+            history = await self._load_history(conversation.id, limit=_HISTORY_LIMIT)
+
+            # 3. Persist user turn (same atomicity as chat()).
+            user_message = CopilotMessage(
+                conversation_id=conversation.id,
+                tenant_id=conversation.tenant_id,
+                role="user",
+                content=request.message,
+            )
+            self._db.add(user_message)
+            await self._db.flush()
+            await self._audit_and_emit(
+                action="copilot.message.recorded",
+                target_type="copilot_message",
+                target_id=str(user_message.id),
+                payload={"role": "user", "conversation_id": str(conversation.id)},
+                project_id=conversation.project_id,
+                event_type=EventType.COPILOT_MESSAGE_RECORDED,
+            )
+
+            # 4 + 5. Tool specs + streaming tool loop.
+            tool_specs: list[dict[str, Any]] = tool_registry.list_specs()
+            working_messages: list[dict[str, Any]] = self._assemble_messages(
+                history, request
+            )
+
+            # Lazy import — same rationale as chat() (test fragility).
+            from app.services._litellm_tools import ToolLoopExhausted
+            from app.services.litellm_client import (
+                LiteLLMClient,
+                _assistant_tool_message,
+                _extract_tool_calls,
+                _tool_result_message,
+            )
+
+            accumulated_calls: list[Any] = []
+            accumulated_results: list[Any] = []
+            final_response: dict[str, Any] = {}
+
+            async with LiteLLMClient() as client:
+                try:
+                    for _turn in range(self._settings.copilot_tool_call_max):
+                        aggregated, deltas = await self._stream_one_turn(
+                            client=client,
+                            working_messages=working_messages,
+                            tool_specs=tool_specs,
+                            tenant_id=self._principal.tenant_id,
+                            project_id=conversation.project_id,
+                            workflow_id=workflow_id,
+                            actor_id=self._principal.user_id,
+                        )
+
+                        calls = _extract_tool_calls(aggregated)
+
+                        if not calls:
+                            # Final turn — yield each content delta to the caller.
+                            final_response = aggregated
+                            for delta in deltas:
+                                yield {"event": "token", "data": delta}
+                            break
+
+                        # Tool turn — append the assistant message + execute tools.
+                        assistant_msg = _assistant_tool_message(aggregated)
+                        if assistant_msg is not None:
+                            working_messages.append(assistant_msg)
+                        accumulated_calls.extend(calls)
+                        for call in calls:
+                            result = await self._execute_tool(call, conversation)
+                            accumulated_results.append(result)
+                            working_messages.append(_tool_result_message(result))
+                    else:
+                        raise ToolLoopExhausted(self._settings.copilot_tool_call_max)
+
+                except BudgetExceeded as exc:
+                    await self._audit_and_emit(
+                        action="copilot.budget.blocked",
+                        target_type="copilot_conversation",
+                        target_id=str(conversation.id),
+                        payload={
+                            "workflow_id": str(workflow_id),
+                            "spent_usd": exc.spent,
+                            "ceiling_usd": exc.ceiling,
+                        },
+                        project_id=conversation.project_id,
+                        event_type=EventType.COPILOT_BUDGET_BLOCKED,
+                    )
+                    raise CopilotBudgetBlocked(
+                        workflow_id=exc.workflow_id,
+                        spent=exc.spent,
+                        ceiling=exc.ceiling,
+                    ) from exc
+
+            # 6. Persist assistant message (identical to chat()).
+            assistant_text = self._extract_assistant_text(final_response)
+            tool_call_records = self._build_tool_call_records(
+                accumulated_calls, accumulated_results
+            )
+            tokens_in, tokens_out, cost_usd = self._extract_usage(final_response)
+
+            assistant_message = CopilotMessage(
+                conversation_id=conversation.id,
+                tenant_id=conversation.tenant_id,
+                role="assistant",
+                content=assistant_text,
+                tool_calls=[r.model_dump() for r in tool_call_records] or None,
+                citations=self._extract_citations(accumulated_results),
+                suggested_actions=self._extract_suggested_actions(accumulated_results),
+                confidence=self._infer_confidence(accumulated_results, assistant_text),
+                model=self._settings.litellm_default_model,
+                cost_usd=cost_usd,
+                tokens_in=tokens_in,
+                tokens_out=tokens_out,
+                latency_ms=int((time.perf_counter() - start) * 1000),
+            )
+            self._db.add(assistant_message)
+            conversation.message_count = (conversation.message_count or 0) + 2
+            conversation.total_cost_usd = float(
+                Decimal(str(conversation.total_cost_usd or 0))
+                + Decimal(str(cost_usd))
+            )
+            conversation.total_tokens_in = (
+                conversation.total_tokens_in or 0
+            ) + tokens_in
+            conversation.total_tokens_out = (
+                conversation.total_tokens_out or 0
+            ) + tokens_out
+            await self._db.flush()
+
+            await self._audit_and_emit(
+                action="copilot.message.recorded",
+                target_type="copilot_message",
+                target_id=str(assistant_message.id),
+                payload={
+                    "role": "assistant",
+                    "conversation_id": str(conversation.id),
+                    "tool_call_count": len(tool_call_records),
+                },
+                project_id=conversation.project_id,
+                event_type=EventType.COPILOT_MESSAGE_RECORDED,
+            )
+            if cost_usd > 0:
+                await self._audit_and_emit(
+                    action="copilot.cost.incurred",
+                    target_type="copilot_conversation",
+                    target_id=str(conversation.id),
+                    payload={
+                        "message_id": str(assistant_message.id),
+                        "cost_usd": float(cost_usd),
+                        "tokens_in": tokens_in,
+                        "tokens_out": tokens_out,
+                    },
+                    project_id=conversation.project_id,
+                    event_type=EventType.COPILOT_COST_INCURRED,
+                )
+
+            latency_ms = int((time.perf_counter() - start) * 1000)
+            turn_span.set_attribute("tool_count", len(tool_call_records))
+            turn_span.set_attribute("total_cost_usd", float(cost_usd))
+            turn_span.set_attribute("latency_ms", latency_ms)
+            turn_span.set_attribute(
+                "model", self._settings.litellm_default_model
+            )
+
+            await self._db.commit()
+
+            yield {
+                "event": "done",
+                "data": CopilotChatResponse(
+                    conversation_id=conversation.id,
+                    message_id=assistant_message.id,
+                    content=assistant_text,
+                    citations=self._extract_citations(accumulated_results),
+                    confidence=assistant_message.confidence or "medium",
+                    tool_calls=tool_call_records,
+                    suggested_actions=self._extract_suggested_actions(
+                        accumulated_results
+                    ),
+                    cost_usd=Decimal(str(cost_usd)),
+                    tokens_in=tokens_in,
+                    tokens_out=tokens_out,
+                    model=self._settings.litellm_default_model,
+                    latency_ms=latency_ms,
+                ).model_dump(mode="json"),
+            }
+
+    async def _stream_one_turn(
+        self,
+        *,
+        client: Any,
+        working_messages: list[dict[str, Any]],
+        tool_specs: list[dict[str, Any]],
+        tenant_id: Any,
+        project_id: Any,
+        workflow_id: Any,
+        actor_id: Any,
+    ) -> tuple[dict[str, Any], list[str]]:
+        """Run one streaming LLM turn.
+
+        Returns ``(aggregated_response, content_deltas)`` where:
+
+        * ``aggregated_response`` mirrors a non-streaming OpenAI
+          response shape (``choices[0].message.content``, optional
+          ``tool_calls``, ``usage``) so the existing
+          ``_extract_tool_calls`` / ``_extract_usage`` helpers work on
+          it unchanged.
+        * ``content_deltas`` is the ordered list of content chunks the
+          model emitted — yielded to the caller only when this is the
+          FINAL turn.
+
+        ponytail: tool_calls accumulate by OpenAI's streaming index
+        (``choices[0].delta.tool_calls[i]``); we never yield those
+        intermediate chunks, so the user only sees the final summary.
+        """
+        full_content = ""
+        deltas: list[str] = []
+        tool_calls_raw: list[dict[str, Any]] = []
+        usage_acc: dict[str, Any] = {}
+
+        stream_iter = await client.chat(
+            working_messages,
+            tenant_id=tenant_id,
+            project_id=project_id,
+            workflow_id=workflow_id,
+            actor_id=actor_id,
+            stream=True,
+            tools=tool_specs,
+            tool_choice="auto",
+        )
+
+        async for chunk in stream_iter:
+            try:
+                delta = (chunk.get("choices") or [{}])[0].get("delta") or {}
+            except (IndexError, TypeError):  # pragma: no cover — defensive
+                delta = {}
+
+            content = delta.get("content") or ""
+            if content:
+                deltas.append(content)
+                full_content += content
+
+            for tc in (delta.get("tool_calls") or []):
+                idx = tc.get("index", 0)
+                while len(tool_calls_raw) <= idx:
+                    tool_calls_raw.append(
+                        {
+                            "id": "",
+                            "type": "function",
+                            "function": {"name": "", "arguments": ""},
+                        }
+                    )
+                if tc.get("id"):
+                    tool_calls_raw[idx]["id"] = tc["id"]
+                fn = tc.get("function") or {}
+                if fn.get("name"):
+                    tool_calls_raw[idx]["function"]["name"] += fn["name"]
+                if fn.get("arguments"):
+                    tool_calls_raw[idx]["function"]["arguments"] += fn["arguments"]
+
+            if chunk.get("usage"):
+                usage_acc = chunk["usage"]
+
+        aggregated: dict[str, Any] = {
+            "choices": [
+                {"message": {"role": "assistant", "content": full_content}}
+            ],
+            "usage": usage_acc,
+        }
+        if tool_calls_raw:
+            aggregated["choices"][0]["message"]["tool_calls"] = tool_calls_raw
+
+        return aggregated, deltas
+
     # ------------------------------------------------------------------
     # Public surface — conversation lifecycle
     # ------------------------------------------------------------------
+
+    async def peek_conversation_id(
+        self,
+        *,
+        conversation_id: UUID | None,
+        project_id: UUID | None,
+    ) -> UUID:
+        """Return the conversation id without persisting.
+
+        For existing conversations, validates ownership via the same
+        tenant/user filter ``get_or_create_conversation`` uses. For
+        new conversations, mints a fresh UUID4 so the SSE route can
+        emit the ``start`` event before any DB write happens.
+
+        ponytail: the new path returns a uuid4 without inserting; the
+        caller (SSE route) is responsible for ensuring the conversation
+        row materializes via the regular ``chat`` / ``stream_chat`` flow.
+        """
+        if conversation_id is not None:
+            conv, _ = await self.get_or_create_conversation(
+                conversation_id=conversation_id,
+                project_id=project_id,
+            )
+            return conv.id
+        return uuid4()
 
     async def get_or_create_conversation(
         self,

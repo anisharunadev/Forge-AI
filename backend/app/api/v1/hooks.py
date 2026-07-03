@@ -1,13 +1,15 @@
 """F-017 — Hook Orchestration REST endpoints."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.hook import HookPhase
 from app.schemas.hooks import (
     HookCreate,
@@ -24,9 +26,9 @@ router = APIRouter(prefix="/hooks", tags=["hooks"])
 @router.get("", response_model=list[HookRead])
 @audit(action="hooks.list", target_type="hook")
 async def list_hooks(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     event_type: str | None = Query(default=None),
-    _perm: Principal = require_permission("hooks:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("hooks:read"))
 ) -> list[HookRead]:
     rows = await hook_orchestrator.list_hooks(principal.tenant_id, event_type=event_type)
     return [HookRead.model_validate(r) for r in rows]
@@ -36,8 +38,8 @@ async def list_hooks(
 @audit(action="hooks.get", target_type="hook")
 async def get_hook(
     hook_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("hooks:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("hooks:read"))
 ) -> HookRead:
     try:
         hook = await hook_orchestrator.get_hook(hook_id)
@@ -52,8 +54,8 @@ async def get_hook(
 @audit(action="hooks.create", target_type="hook")
 async def create_hook(
     body: HookCreate,
-    principal: Principal,
-    _perm: Principal = require_permission("hooks:create"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("hooks:create"))
 ) -> HookRead:
     hook = await hook_orchestrator.register_hook(
         tenant_id=principal.tenant_id,
@@ -75,8 +77,8 @@ async def create_hook(
 async def update_hook(
     hook_id: UUID,
     body: HookUpdate,
-    principal: Principal,
-    _perm: Principal = require_permission("hooks:update"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("hooks:update"))
 ) -> HookRead:
     try:
         existing = await hook_orchestrator.get_hook(hook_id)
@@ -99,7 +101,6 @@ async def update_hook(
 
 @router.delete(
     "/{hook_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     response_class=Response,
 )
@@ -107,8 +108,8 @@ async def update_hook(
 @audit(action="hooks.delete", target_type="hook")
 async def delete_hook(
     hook_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("hooks:delete"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("hooks:delete"))
 ):
     try:
         existing = await hook_orchestrator.get_hook(hook_id)
@@ -124,8 +125,8 @@ async def delete_hook(
 async def test_hook(
     hook_id: UUID,
     body: HookTestRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("hooks:execute"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("hooks:execute"))
 ) -> list[HookResult]:
     try:
         hook = await hook_orchestrator.get_hook(hook_id)

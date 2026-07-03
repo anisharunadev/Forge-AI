@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import (
     PRDGenerateRequest,
     PRDRead,
@@ -45,8 +46,8 @@ def _to_read(prd) -> PRDRead:
 async def generate_prd(
     idea_id: UUID,
     body: PRDGenerateRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:prd"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:prd"))
 ) -> PRDRead:
     try:
         prd = await prd_generator.generate_prd(
@@ -66,8 +67,8 @@ async def generate_prd(
 @audit(action="ideation.prd.get", target_type="prd")
 async def get_prd(
     idea_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> PRDRead | None:
     try:
         prd = await prd_generator.get_prd(idea_id, tenant_id=principal.tenant_id)
@@ -86,8 +87,8 @@ async def update_prd_section(
     prd_id: UUID,
     section: str,
     body: PRDSectionUpdate,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:prd"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:prd"))
 ) -> PRDRead:
     if section not in BMAD_SECTIONS:
         raise HTTPException(status_code=400, detail=f"unknown_prd_section:{section}")
@@ -113,8 +114,8 @@ async def update_prd_section(
 @audit(action="ideation.prd.submit", target_type="prd")
 async def submit_prd(
     prd_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:prd"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:prd"))
 ) -> PRDRead:
     try:
         prd = await prd_generator.submit_for_review(
@@ -131,8 +132,8 @@ async def submit_prd(
 @audit(action="ideation.prd.approve", target_type="prd")
 async def approve_prd(
     prd_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:prd:approve"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:prd:approve"))
 ) -> PRDRead:
     try:
         prd = await prd_generator.approve_prd(

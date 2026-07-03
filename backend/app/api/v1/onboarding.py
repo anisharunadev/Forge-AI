@@ -15,13 +15,14 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.core.logging import get_logger
 from app.schemas.onboarding import (
     OnboardingAdvanceRequest,
@@ -51,8 +52,8 @@ router = APIRouter(prefix="/onboarding", tags=["onboarding"])
 @audit(action="onboarding.start", target_type="onboarding_session")
 async def start_session(
     body: OnboardingStartRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("onboarding:write"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("onboarding:write"))
 ) -> OnboardingSessionRead:
     return await onboarding_wizard.start(
         tenant_id=principal.tenant_id,
@@ -65,8 +66,8 @@ async def start_session(
 @audit(action="onboarding.get", target_type="onboarding_session")
 async def get_session(
     session_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("onboarding:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("onboarding:read"))
 ) -> OnboardingSessionRead:
     state = await onboarding_wizard.get_state(session_id)
     if str(state.tenant_id) != principal.tenant_id:
@@ -79,8 +80,8 @@ async def get_session(
 async def advance_session(
     session_id: UUID,
     body: OnboardingAdvanceRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("onboarding:write"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("onboarding:write"))
 ) -> OnboardingSessionRead:
     state = await onboarding_wizard.get_state(session_id)
     if str(state.tenant_id) != principal.tenant_id:
@@ -95,8 +96,8 @@ async def advance_session(
 @audit(action="onboarding.cancel", target_type="onboarding_session")
 async def cancel_session(
     session_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("onboarding:write"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("onboarding:write"))
 ) -> OnboardingSessionRead:
     state = await onboarding_wizard.get_state(session_id)
     if str(state.tenant_id) != principal.tenant_id:
@@ -145,7 +146,7 @@ def _latest_job_for_tenant(tenant_id: str) -> dict[str, Any] | None:
     return candidates[-1]
 
 
-async def _stage_manifest(progress: dict[str, Any], principal: Principal) -> None:
+async def _stage_manifest(progress: dict[str, Any], principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)]) -> None:
     """Stage 1 — confirm the tenant manifest is in place.
 
     By the time the wizard reaches provision, the tenant has already
@@ -162,7 +163,7 @@ async def _stage_manifest(progress: dict[str, Any], principal: Principal) -> Non
     await asyncio.sleep(0.2)
 
 
-async def _stage_graph(progress: dict[str, Any], principal: Principal) -> None:
+async def _stage_graph(progress: dict[str, Any], principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)]) -> None:
     """Stage 2 — bootstrap the project graph shard for the tenant."""
     try:
         from app.services.project_intelligence.bootstrap import (  # noqa: PLC0415
@@ -189,7 +190,7 @@ async def _stage_graph(progress: dict[str, Any], principal: Principal) -> None:
     await asyncio.sleep(0.2)
 
 
-async def _stage_connectors(progress: dict[str, Any], principal: Principal) -> None:
+async def _stage_connectors(progress: dict[str, Any], principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)]) -> None:
     """Stage 3 — provision the default connector set."""
     try:
         from app.services.connector_manager import (  # noqa: PLC0415
@@ -211,7 +212,7 @@ async def _stage_connectors(progress: dict[str, Any], principal: Principal) -> N
     await asyncio.sleep(0.2)
 
 
-async def _stage_audit(progress: dict[str, Any], principal: Principal) -> None:
+async def _stage_audit(progress: dict[str, Any], principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)]) -> None:
     """Stage 4 — seed the audit channel for the new tenant."""
     try:
         from app.services.audit_writer import seed_audit_channel  # noqa: PLC0415
@@ -234,7 +235,7 @@ async def _stage_audit(progress: dict[str, Any], principal: Principal) -> None:
     await asyncio.sleep(0.2)
 
 
-async def _stage_ready(progress: dict[str, Any], principal: Principal) -> None:
+async def _stage_ready(progress: dict[str, Any], principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)]) -> None:
     """Stage 5 — final readiness check + close out the provision job."""
     logger.info(
         "onboarding.provision.stage.ready",
@@ -255,7 +256,7 @@ _STAGE_PLAN: list[tuple[str, Any]] = [
 
 async def _run_provision_job(
     job_id: str,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
 ) -> None:
     """Background task — walks the 5 stages sequentially."""
     progress = _PROVISION_JOBS[job_id]
@@ -288,8 +289,8 @@ async def _run_provision_job(
 @router.post("/provision", status_code=202)
 @audit(action="onboarding.provision.start", target_type="onboarding_session")
 async def start_provision(
-    principal: Principal,
-    _perm: Principal = require_permission("onboarding:write"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("onboarding:write"))
 ) -> dict[str, Any]:
     """Kick off the 5-stage provisioning job.
 
@@ -320,8 +321,8 @@ async def start_provision(
 @router.get("/provision/status")
 @audit(action="onboarding.provision.status", target_type="onboarding_session")
 async def provision_status(
-    principal: Principal,
-    _perm: Principal = require_permission("onboarding:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("onboarding:read"))
 ) -> dict[str, Any]:
     """Return the latest provisioning job for the calling tenant.
 

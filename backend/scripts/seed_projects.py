@@ -24,13 +24,14 @@ from app.db.models.project import Project
 from app.db.models.story import Epic, EpicStatus, Sprint, SprintStatus
 from app.db.session import get_session_factory
 
+from scripts._seed_helpers import ACME_TENANT_ID
+
 logger = logging.getLogger("seed_projects")
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 # acme-corp is the dev tenant seeded by `day_one_bootstrap`. Its UUID
 # is stable across re-seeds because the bootstrap uses an idempotent
 # insert.
-ACME_TENANT_ID = uuid.UUID("a6500631-1930-5afa-9d38-24de9bedcb37")
 
 
 # ---------------------------------------------------------------------------

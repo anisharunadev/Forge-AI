@@ -20,6 +20,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { StatusPill, SectionCard, EmptyState } from '@/components/shell';
 import { DataTable } from '@/components/data';
 import { ErrorState } from '@/components/error-state';
+import {
+  useAIGatewayHealth,
+  useAIGatewayMcpServers,
+  useAIGatewayModels,
+  useAIGatewaySpend,
+} from '@/lib/hooks/useSettings';
 
 interface RouteRow {
   id: string;
@@ -29,13 +35,6 @@ interface RouteRow {
   status: 'active' | 'paused' | 'error';
   costPerToken: number;
 }
-
-const SAMPLE_ROUTES: ReadonlyArray<RouteRow> = [
-  { id: 'r1', provider: 'OpenAI',    model: 'gpt-4o-mini',     weight: 40, status: 'active', costPerToken: 0.00015 },
-  { id: 'r2', provider: 'Anthropic', model: 'claude-haiku-4.5',weight: 30, status: 'active', costPerToken: 0.00080 },
-  { id: 'r3', provider: 'Google',    model: 'gemini-2.0-flash',weight: 20, status: 'paused', costPerToken: 0.00010 },
-  { id: 'r4', provider: 'Mistral',   model: 'mistral-large',   weight: 10, status: 'error',  costPerToken: 0.00200 },
-];
 
 function statusTone(s: RouteRow['status']) {
   if (s === 'active') return 'success' as const;
@@ -77,6 +76,7 @@ const columns: ReadonlyArray<ColumnDef<RouteRow>> = [
 ];
 
 function SankeyPreview({ routes }: { routes: ReadonlyArray<RouteRow> }) {
+  if (routes.length === 0) return null;
   const total = routes.reduce((s, r) => s + r.weight, 0) || 1;
   return (
     <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-inset)] p-4">
@@ -113,8 +113,26 @@ function SankeyPreview({ routes }: { routes: ReadonlyArray<RouteRow> }) {
 }
 
 export function AIGatewayTab() {
-  const [loading] = React.useState(false);
-  const routes = SAMPLE_ROUTES;
+  const modelsQ = useAIGatewayModels();
+  const mcpQ = useAIGatewayMcpServers();
+  const healthQ = useAIGatewayHealth();
+  const spendQ = useAIGatewaySpend();
+
+  const models = modelsQ.data ?? [];
+  const mcpServers = mcpQ.data ?? [];
+  const spend = spendQ.data ?? [];
+
+  const routes: ReadonlyArray<RouteRow> = models.map((m) => ({
+    id: m.name,
+    provider: m.provider,
+    model: m.name,
+    weight: 0,
+    status: 'active' as const,
+    costPerToken: m.inputCost / 1_000_000,
+  }));
+
+  const loading = modelsQ.isLoading;
+  const errored = modelsQ.error || mcpQ.error || healthQ.error || spendQ.error;
 
   return (
     <SectionCard
@@ -128,6 +146,13 @@ export function AIGatewayTab() {
             <Skeleton className="h-9 w-full" />
             <Skeleton className="h-9 w-full" />
           </div>
+        ) : errored ? (
+          <EmptyState
+            icon={<Cpu className="h-5 w-5" aria-hidden="true" />}
+            title="AI gateway unavailable"
+            description="The LLM gateway endpoint returned an error. Try again or check the orchestrator."
+            testId="ai-gateway-error-empty"
+          />
         ) : routes.length === 0 ? (
           <EmptyState
             icon={<Cpu className="h-5 w-5" aria-hidden="true" />}
@@ -144,7 +169,58 @@ export function AIGatewayTab() {
           />
         )}
       </div>
+
+      <div className="mt-6 grid gap-3 sm:grid-cols-3">
+        <GatewayStat
+          label="Health"
+          value={
+            healthQ.data
+              ? healthQ.data.healthy
+                ? 'Healthy'
+                : 'Degraded'
+              : healthQ.isLoading
+                ? '…'
+                : '—'
+          }
+          tone={healthQ.data?.healthy ? 'success' : 'idle'}
+        />
+        <GatewayStat
+          label="MCP servers"
+          value={String(mcpServers.length)}
+        />
+        <GatewayStat
+          label="Teams tracked"
+          value={String(spend.length)}
+        />
+      </div>
     </SectionCard>
+  );
+}
+
+function GatewayStat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: 'success' | 'idle';
+}) {
+  return (
+    <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-inset)] p-4">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--fg-tertiary)]">
+        {label}
+      </p>
+      <p
+        className={
+          tone === 'success'
+            ? 'mt-1 text-[var(--text-base)] font-semibold text-[var(--accent-emerald)]'
+            : 'mt-1 text-[var(--text-base)] font-semibold text-[var(--fg-primary)]'
+        }
+      >
+        {value}
+      </p>
+    </div>
   );
 }
 

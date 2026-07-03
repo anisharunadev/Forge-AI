@@ -11,6 +11,19 @@ Rules respected:
   The single public surface that returns the value is
   :meth:`VirtualKeyManager.get_key`, and it is intended only for the
   internal :class:`ForgeLLMClient` hot path.
+
+step-65 (Keycloak ↔ LiteLLM JWT auth bridge) — admin-vs-user note
+---------------------------------------------------------------
+Admin operations in this module (``/key/generate``, ``/key/info``,
+``/key/delete``, ``/budget/info``) continue to authenticate with the
+``LITELLM_ADMIN_KEY`` (master key).  End-user LLM calls
+(``/v1/chat/completions``, ``/v1/embeddings``) are migrating to a
+per-user RS256 ``proxy_token`` issued at ``/auth/oidc/callback`` and
+cached in Redis; see :mod:`app.core.oauth2_rsa` and
+:mod:`app.core.proxy_token_cache`.  Call sites that already have a
+Virtual Key keep using it via :meth:`VirtualKeyManager.get_key`;
+new flows pass the proxy_token through ``LiteLLMClient.chat(
+proxy_token=...)``.  Both paths coexist during the rollout window.
 """
 
 from __future__ import annotations

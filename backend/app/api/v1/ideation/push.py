@@ -1,14 +1,16 @@
 """Push to Delivery REST endpoints (F-213)."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import Response
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import (
     PushAllRequest,
     PushHistoryResponse,
@@ -44,8 +46,8 @@ def _push_to_read(record) -> PushRecordRead:
 async def push_to_jira(
     idea_id: UUID,
     body: PushToJiraRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:push"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:push"))
 ) -> PushResult:
     try:
         result = await push_to_delivery_service.push_to_jira(
@@ -73,8 +75,8 @@ async def push_to_jira(
 async def push_to_confluence(
     idea_id: UUID,
     body: PushToConfluenceRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:push"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:push"))
 ) -> PushResult:
     try:
         result = await push_to_delivery_service.push_to_confluence(
@@ -101,8 +103,8 @@ async def push_to_confluence(
 @audit(action="ideation.push.architecture", target_type="idea")
 async def push_to_architecture(
     idea_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:push"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:push"))
 ) -> PushResult:
     try:
         result = await push_to_delivery_service.push_to_architecture(
@@ -129,8 +131,8 @@ async def push_to_architecture(
 async def push_all(
     idea_id: UUID,
     body: PushAllRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:push"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:push"))
 ) -> list[PushResult]:
     try:
         results = await push_to_delivery_service.push_all(
@@ -162,9 +164,9 @@ async def push_all(
 @audit(action="ideation.push.history", target_type="idea")
 async def push_history(
     idea_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     limit: int = Query(default=50, ge=1, le=500),
-    _perm: Principal = require_permission("ideation:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> PushHistoryResponse:
     try:
         rows = await push_to_delivery_service.push_history(

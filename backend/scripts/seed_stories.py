@@ -36,13 +36,14 @@ from app.db.models.story import (
 from app.db.models.user import User
 from app.db.session import get_session_factory
 
+from scripts._seed_helpers import ACME_TENANT_ID
+
 logger = logging.getLogger("seed_stories")
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 # acme-corp is the dev tenant seeded by `day_one_bootstrap`. Its UUID
 # is stable across re-seeds because the bootstrap uses an idempotent
 # insert.
-ACME_TENANT_ID = uuid.UUID("a6500631-1930-5afa-9d38-24de9bedcb37")
 
 # Must match the project IDs in seed_projects.py — the dependency is
 # unidirectional (stories require projects) so re-running projects then

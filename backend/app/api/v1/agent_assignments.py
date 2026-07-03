@@ -1,11 +1,13 @@
+from typing import Annotated
 """F-013 — Agent Assignment REST endpoints."""
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.agents import (
     AgentAssignmentCreate,
     AgentAssignmentRead,
@@ -20,8 +22,8 @@ router = APIRouter(prefix="/agent-assignments", tags=["agent-assignments"])
 @audit(action="agent_assignments.create", target_type="agent")
 async def create_assignment(
     body: AgentAssignmentCreate,
-    principal: Principal,
-    _perm: Principal = require_permission("agents:assign"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("agents:assign"))
 ) -> AgentAssignmentRead:
     try:
         agent = await agent_assignment.assign_agent(
@@ -47,10 +49,10 @@ async def create_assignment(
 @audit(action="agent_assignments.peek", target_type="agent")
 async def peek_assignment(
     task_type: str = Query(..., min_length=1),
-    principal: Principal = ...,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)] = ...,
     project_id: str | None = Query(default=None),
     strategy: str = Query(default="capability_match"),
-    _perm: Principal = require_permission("agents:assign"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("agents:assign"))
 ) -> AgentAssignmentRead:
     try:
         agent = await agent_assignment.assign_agent(

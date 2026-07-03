@@ -193,6 +193,14 @@ WORKFLOW_RUN_CANCELLED
 
 **Rule 2 enforcement:** Every audit row + event carries `tenant_id` + `project_id`.
 
+> **Step 66 bug fix:** `WorkflowExecutor.resume()` calls
+> `flag_modified(run, "state")` after mutating the JSONB `state` column
+> so the UPDATE fires reliably on Postgres even when only nested dict
+> values change. The `WorkflowRun.state` column is plain JSONB (no
+> `MutableDict.as_mutable()`), so without `flag_modified` the change
+> event can be missed when nested values are mutated before the outer
+> reassignment.
+
 ---
 
 ## SSE Live Event Stream (`GET /workflows/runs/{run_id}/events`)

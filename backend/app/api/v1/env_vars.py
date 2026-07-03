@@ -8,15 +8,16 @@ demand and writes an audit row (Rule 6).
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Literal, Optional
+from typing import Annotated, Literal, Optional
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from app.api.deps import DbSession, Principal
+from app.api.deps import DbSession, Principal, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.core.crypto import decrypt, encrypt
 from app.db.models.env_var import EnvVar
 
@@ -75,7 +76,7 @@ def _to_read(ev: EnvVar) -> EnvVarRead:
 @audit(action="env_vars.list", target_type="project")
 async def list_env_vars(
     project_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> list[EnvVarRead]:
     """List env-var metadata. Values are NEVER returned."""
@@ -95,7 +96,7 @@ async def list_env_vars(
 async def create_env_var(
     project_id: UUID,
     body: EnvVarCreate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> EnvVarRead:
     """Create a new encrypted env var."""
@@ -136,7 +137,7 @@ async def update_env_var(
     project_id: UUID,
     env_var_id: UUID,
     body: EnvVarUpdate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> EnvVarRead:
     """Update an env var's value / description / scope / visibility."""
@@ -167,12 +168,12 @@ async def update_env_var(
     return _to_read(ev)
 
 
-@router.delete("/{env_var_id}", status_code=204)
+@router.delete("/{env_var_id}")
 @audit(action="env_vars.delete", target_type="project")
 async def delete_env_var(
     project_id: UUID,
     env_var_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> None:
     """Delete an env var (irreversible)."""
@@ -198,7 +199,7 @@ async def delete_env_var(
 async def reveal_env_var(
     project_id: UUID,
     env_var_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> EnvVarReveal:
     """Decrypt and return an env var's value. Audit row written by decorator."""

@@ -1,13 +1,15 @@
 """Impact Graph REST endpoints (F-203)."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import ImpactComparison, ImpactGraph
 from app.services.ideation.impact_graph import impact_graph_service
 
@@ -18,8 +20,8 @@ router = APIRouter(prefix="/ideation/ideas", tags=["ideation"])
 @audit(action="ideation.impact.build", target_type="idea")
 async def build_impact_graph(
     idea_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> ImpactGraph:
     try:
         graph = await impact_graph_service.build_impact_graph(
@@ -44,8 +46,8 @@ async def build_impact_graph(
 @audit(action="ideation.impact.compare", target_type="idea")
 async def compare_impact(
     idea_ids: list[UUID],
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> ImpactComparison:
     if not idea_ids:
         raise HTTPException(status_code=400, detail="idea_ids_required")

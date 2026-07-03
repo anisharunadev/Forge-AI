@@ -57,6 +57,7 @@ from app.db.models.model_provider import ModelProvider
 from app.db.models.onboarding import OnboardingSession, OnboardingStep
 from app.db.models.policy import Policy
 from app.db.models.project import Project
+from app.db.models.prompt import Prompt, PromptVersion
 from app.db.models.project_invitation import ProjectInvitation
 from app.db.models.project_member import ProjectMember
 from app.db.models.repo_ingestion import (

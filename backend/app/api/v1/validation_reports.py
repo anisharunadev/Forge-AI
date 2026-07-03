@@ -20,16 +20,18 @@ while the registry supplies queryability.
 """
 
 from __future__ import annotations
+from typing import Annotated
 
 from datetime import datetime, timezone
-from typing import Annotated
+
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 
-from app.api.deps import DbSession, Principal, require_permission
+from app.api.deps import DbSession, Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.artifact import Artifact, ArtifactStatus
 from app.schemas.artifact_types import is_known_artifact_type
 from app.schemas.common import Page
@@ -76,8 +78,8 @@ def _dict_to_report(payload: dict) -> ValidationReport:
 @audit(action="validation_reports.create", target_type="validation_report")
 async def submit_validation_report(
     body: ValidationReport,
-    principal: Principal,
-    _perm: Principal = require_permission("validation_reports:create"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("validation_reports:create")),
     commit_sha: Annotated[str | None, Query(min_length=7, max_length=64)] = None,
 ) -> ValidationReport:
     """Submit a ValidationReport.
@@ -146,9 +148,9 @@ async def submit_validation_report(
 @audit(action="validation_reports.get", target_type="validation_report")
 async def get_validation_report(
     report_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession = None,  # type: ignore[assignment]
-    _perm: Principal = require_permission("validation_reports:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("validation_reports:read"))
 ) -> ValidationReport:
     """Retrieve a single ValidationReport by its internal artifact id."""
     stmt = select(Artifact).where(
@@ -171,9 +173,9 @@ async def get_validation_report(
 )
 @audit(action="validation_reports.list", target_type="validation_report")
 async def list_validation_reports(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession = None,  # type: ignore[assignment]
-    _perm: Principal = require_permission("validation_reports:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("validation_reports:read")),
     commit_sha: Annotated[str | None, Query(min_length=7, max_length=64)] = None,
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=200)] = 50,

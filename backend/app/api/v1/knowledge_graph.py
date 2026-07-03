@@ -1,13 +1,15 @@
 """Knowledge graph REST endpoints (F-115)."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Query, status, Depends
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.project_intelligence import (
     CypherQueryRequest,
     HybridQueryRequest,
@@ -29,11 +31,11 @@ router = APIRouter(prefix="/kg", tags=["knowledge-graph"])
 @router.get("/nodes", response_model=list[KGNodeRead])
 @audit(action="kg.list_nodes", target_type="kg_node")
 async def list_nodes(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: str | None = Query(default=None),
     type: str | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=1000),
-    _perm: Principal = require_permission("kg:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("kg:read"))
 ) -> list[KGNodeRead]:
     nodes = await knowledge_graph_service.list_nodes(
         tenant_id=principal.tenant_id,
@@ -63,8 +65,8 @@ async def list_nodes(
 @audit(action="kg.get_node", target_type="kg_node")
 async def get_node(
     node_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("kg:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("kg:read"))
 ) -> KGNodeRead:
     node = await knowledge_graph_service.get_node(node_id, tenant_id=principal.tenant_id)
     if node is None:
@@ -89,13 +91,13 @@ async def get_node(
 @router.get("/edges", response_model=list[KGEdgeRead])
 @audit(action="kg.list_edges", target_type="kg_edge")
 async def list_edges(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: str | None = Query(default=None),
     from_: str | None = Query(default=None, alias="from"),
     to: str | None = Query(default=None),
     type: str | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=1000),
-    _perm: Principal = require_permission("kg:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("kg:read"))
 ) -> list[KGEdgeRead]:
     edges = await knowledge_graph_service.list_edges(
         tenant_id=principal.tenant_id,
@@ -123,8 +125,8 @@ async def list_edges(
 @audit(action="kg.query_cypher", target_type="kg")
 async def query_cypher(
     body: CypherQueryRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("kg:query"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("kg:query"))
 ) -> dict[str, object]:
     rows = await knowledge_graph_service.query_cypher(body.query, body.params)
     return {"rows": rows}
@@ -134,8 +136,8 @@ async def query_cypher(
 @audit(action="kg.query_sql", target_type="kg")
 async def query_sql(
     body: SQLQueryRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("kg:query"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("kg:query"))
 ) -> dict[str, object]:
     rows = await knowledge_graph_service.query_sql(body.query, body.params)
     return {"rows": rows}
@@ -145,8 +147,8 @@ async def query_sql(
 @audit(action="kg.query_hybrid", target_type="kg")
 async def query_hybrid(
     body: HybridQueryRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("kg:query"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("kg:query"))
 ) -> dict[str, object]:
     rows = await knowledge_graph_service.hybrid_query(
         cypher_part=body.cypher,
@@ -160,8 +162,8 @@ async def query_hybrid(
 @audit(action="kg.vector_search", target_type="kg")
 async def vector_search(
     body: VectorSearchRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("kg:query"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("kg:query"))
 ) -> list[KGNodeRead]:
     nodes = await knowledge_graph_service.vector_search(
         embedding=body.embedding,
@@ -191,9 +193,9 @@ async def vector_search(
 @router.get("/stats", response_model=KGStats)
 @audit(action="kg.stats", target_type="kg")
 async def stats(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: str | None = Query(default=None),
-    _perm: Principal = require_permission("kg:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("kg:read"))
 ) -> KGStats:
     s = await knowledge_graph_service.stats(
         tenant_id=principal.tenant_id,
@@ -214,8 +216,8 @@ async def stats(
 @audit(action="kg.freshness", target_type="kg_node")
 async def freshness(
     node_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("kg:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("kg:read"))
 ) -> KGFreshnessInfo:
     info = await knowledge_graph_service.get_node_freshness(
         node_id, tenant_id=principal.tenant_id

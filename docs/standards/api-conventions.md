@@ -396,6 +396,15 @@ export async function postMutation<T>(path: string, body: unknown): Promise<T> {
 
 **Each user-action gets a fresh UUID.** Network retry with new key = new attempt (caller's intent). Network retry with same key = same response.
 
+### Knowledge Graph — route prefix is `/kg/*`
+
+The Knowledge Graph REST surface is mounted at `/api/v1/kg/*` (NOT
+`/api/v1/knowledge/*`). See `backend/app/api/v1/knowledge_graph.py`
+(`router = APIRouter(prefix="/kg", …)`).
+
+When writing specs or docs, use `/kg/*`. The nine routes are listed
+in `docs-site/src/content/docs/integration/phase-6-kg-wiring.md`.
+
 ---
 
 ## 7. Audit logging (R6)

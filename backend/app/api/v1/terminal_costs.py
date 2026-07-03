@@ -26,6 +26,7 @@ from pydantic import BaseModel, Field
 
 from app.api.deps import Principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.services.litellm_admin import (
     get_global_spend,
     get_spend_by_team,

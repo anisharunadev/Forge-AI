@@ -22,8 +22,6 @@ import {
   Copy,
   Check,
   MoreHorizontal,
-  Pencil,
-  RefreshCw,
   Trash2,
   AlertTriangle,
   KeyRound,
@@ -50,20 +48,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import {
+  useApiTokens,
+  useCreateApiToken,
+  useRevokeApiToken,
+} from '@/lib/hooks/useSettings';
+import type { ApiToken } from '@/lib/settings/types';
 
 type TokenScope = 'read' | 'read-write' | 'admin';
-
-interface ApiToken {
-  id: string;
-  name: string;
-  scope: TokenScope;
-  prefix: string; // forge_pat_abc…
-  createdAt: string;
-  lastUsedAt: string | null;
-  expiresAt: string | null;
-  requestsToday: number;
-  apiScopes: ReadonlyArray<string>;
-}
 
 const ALL_API_SCOPES = [
   'forge-core',
@@ -74,78 +66,11 @@ const ALL_API_SCOPES = [
   'forge-billing',
 ] as const;
 
-const SEED_TOKENS: ReadonlyArray<ApiToken> = [
-  {
-    id: 't-1',
-    name: 'CI deploy',
-    scope: 'read-write',
-    prefix: 'forge_pat_a8f2c1…',
-    createdAt: '2026-04-12T08:14:00Z',
-    lastUsedAt: '2026-06-27T03:11:00Z',
-    expiresAt: '2026-07-12T08:14:00Z',
-    requestsToday: 412,
-    apiScopes: ['forge-core', 'forge-pi'],
-  },
-  {
-    id: 't-2',
-    name: 'Local dev',
-    scope: 'admin',
-    prefix: 'forge_pat_b9d3e7…',
-    createdAt: '2026-01-04T14:02:00Z',
-    lastUsedAt: '2026-06-27T05:48:00Z',
-    expiresAt: null,
-    requestsToday: 87,
-    apiScopes: [...ALL_API_SCOPES],
-  },
-  {
-    id: 't-3',
-    name: 'GitHub Actions',
-    scope: 'read',
-    prefix: 'forge_pat_c0e4f8…',
-    createdAt: '2026-03-21T11:30:00Z',
-    lastUsedAt: '2026-06-26T22:09:00Z',
-    expiresAt: '2026-09-21T11:30:00Z',
-    requestsToday: 14,
-    apiScopes: ['forge-core'],
-  },
-];
-
-const STORAGE_KEY = 'forge.api-tokens.v1';
-
-function loadTokens(): ApiToken[] {
-  if (typeof window === 'undefined') return [...SEED_TOKENS];
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [...SEED_TOKENS];
-    return JSON.parse(raw) as ApiToken[];
-  } catch {
-    return [...SEED_TOKENS];
-  }
-}
-
-function persistTokens(t: ApiToken[]): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(t));
-  } catch {
-    /* noop */
-  }
-}
-
-function randomToken(): string {
-  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  let out = 'forge_pat_';
-  for (let i = 0; i < 24; i++) {
-    out += alphabet[Math.floor(Math.random() * alphabet.length)];
-  }
-  return out;
-}
-
-function scopeLabel(s: TokenScope): string {
+function scopeLabel(s: string): string {
   return s === 'read' ? 'Read' : s === 'read-write' ? 'Read-Write' : 'Admin';
 }
 
-function scopeTone(s: TokenScope): string {
+function scopeTone(s: string): string {
   return s === 'read'
     ? 'bg-[var(--accent-cyan)]/15 text-[var(--accent-cyan)]'
     : s === 'read-write'
@@ -155,39 +80,24 @@ function scopeTone(s: TokenScope): string {
 
 export function APITokensTab() {
   const { toast } = useToast();
-  const [tokens, setTokens] = React.useState<ReadonlyArray<ApiToken>>(SEED_TOKENS);
+  const tokensQ = useApiTokens();
+  const createMut = useCreateApiToken();
+  const revokeMut = useRevokeApiToken();
+  const tokens: ReadonlyArray<ApiToken> = tokensQ.data ?? [];
   const [createOpen, setCreateOpen] = React.useState(false);
   const [revealed, setRevealed] = React.useState<{ id: string; token: string } | null>(null);
   const [revokeConfirm, setRevokeConfirm] = React.useState<ApiToken | null>(null);
-  const [renameTarget, setRenameTarget] = React.useState<ApiToken | null>(null);
 
-  React.useEffect(() => {
-    setTokens(loadTokens());
-  }, []);
+  // Regenerate removed in step 73; revoke + create flow ships later.
+  // Rename removed in step 73; backend has no PATCH /tokens/{id} endpoint.
 
   const onRevoke = (id: string) => {
-    const next = tokens.filter((t) => t.id !== id);
-    setTokens(next);
-    persistTokens(next);
-    setRevokeConfirm(null);
-    toast({ title: 'Token revoked', description: 'The token can no longer access the API.' });
-  };
-
-  const onRegenerate = (id: string) => {
-    const next = tokens.map((t) =>
-      t.id === id ? { ...t, prefix: `${randomToken().slice(0, 14)}…` } : t,
-    );
-    setTokens(next);
-    persistTokens(next);
-    toast({ title: 'Token regenerated', description: 'Save the new token now — it will not be shown again.' });
-  };
-
-  const onRename = (id: string, name: string) => {
-    const next = tokens.map((t) => (t.id === id ? { ...t, name } : t));
-    setTokens(next);
-    persistTokens(next);
-    setRenameTarget(null);
-    toast({ title: 'Token renamed' });
+    revokeMut.mutate(id, {
+      onSuccess: () => {
+        setRevokeConfirm(null);
+        toast({ title: 'Token revoked', description: 'The token can no longer access the API.' });
+      },
+    });
   };
 
   return (
@@ -230,14 +140,12 @@ export function APITokensTab() {
               token={t}
               onCopy={() => {
                 try {
-                  navigator.clipboard.writeText(t.prefix);
+                  navigator.clipboard.writeText(`forge_pat_${t.fingerprintSha256}`);
                   toast({ title: 'Copied token prefix' });
                 } catch {
                   /* noop */
                 }
               }}
-              onRename={() => setRenameTarget(t)}
-              onRegenerate={() => onRegenerate(t.id)}
               onRevoke={() => setRevokeConfirm(t)}
             />
           ))}
@@ -247,25 +155,32 @@ export function APITokensTab() {
       <CreateTokenDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
+        createMut={createMut}
         onCreate={(params) => {
-          const id = `t-${Date.now()}`;
-          const token = randomToken();
-          const newToken: ApiToken = {
-            id,
-            name: params.name,
-            scope: params.scope,
-            prefix: `${token.slice(0, 14)}…`,
-            createdAt: new Date().toISOString(),
-            lastUsedAt: null,
-            expiresAt: params.expiresAt,
-            requestsToday: 0,
-            apiScopes: params.apiScopes,
-          };
-          const next = [newToken, ...tokens];
-          setTokens(next);
-          persistTokens(next);
-          setCreateOpen(false);
-          setRevealed({ id, token });
+          createMut.mutate(
+            {
+              name: params.name,
+              scope: params.scope,
+              expiresInDays:
+                params.expiresAt == null
+                  ? null
+                  : Math.max(
+                      1,
+                      Math.round(
+                        (new Date(params.expiresAt).getTime() - Date.now()) / 86400000,
+                      ),
+                    ),
+            },
+            {
+              onSuccess: (created) => {
+                setRevealed({ id: created.id, token: created.secret });
+                setCreateOpen(false);
+              },
+              onError: (err) => {
+                toast({ title: 'Token create failed', description: err.message });
+              },
+            },
+          );
         }}
       />
 
@@ -281,12 +196,6 @@ export function APITokensTab() {
             /* noop */
           }
         }}
-      />
-
-      <RenameTokenDialog
-        target={renameTarget}
-        onClose={() => setRenameTarget(null)}
-        onSubmit={(name) => renameTarget && onRename(renameTarget.id, name)}
       />
 
       <Dialog
@@ -327,12 +236,10 @@ export function APITokensTab() {
 interface TokenRowProps {
   token: ApiToken;
   onCopy: () => void;
-  onRename: () => void;
-  onRegenerate: () => void;
   onRevoke: () => void;
 }
 
-function TokenRow({ token, onCopy, onRename, onRegenerate, onRevoke }: TokenRowProps) {
+function TokenRow({ token, onCopy, onRevoke }: TokenRowProps) {
   const created = new Date(token.createdAt).toLocaleDateString();
   const lastUsed = token.lastUsedAt ? new Date(token.lastUsedAt).toLocaleDateString() : '—';
   return (
@@ -356,7 +263,7 @@ function TokenRow({ token, onCopy, onRename, onRegenerate, onRevoke }: TokenRowP
       </span>
       <div className="flex items-center gap-2">
         <code className="rounded bg-[var(--bg-inset)] px-2 py-1 font-mono text-[var(--text-xs)] text-[var(--fg-secondary)]">
-          {token.prefix}
+          forge_pat_{token.fingerprintSha256.slice(0, 12)}…
         </code>
         <button
           type="button"
@@ -370,9 +277,7 @@ function TokenRow({ token, onCopy, onRename, onRegenerate, onRevoke }: TokenRowP
       </div>
       <span className="text-[var(--text-xs)] text-[var(--fg-tertiary)]">{created}</span>
       <span className="text-[var(--text-xs)] text-[var(--fg-tertiary)]">{lastUsed}</span>
-      <span className="text-[var(--text-xs)] text-[var(--fg-tertiary)]">
-        {token.requestsToday} today
-      </span>
+      <span className="text-[var(--text-xs)] text-[var(--fg-tertiary)]">—</span>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" data-testid={`token-menu-${token.id}`}>
@@ -380,14 +285,6 @@ function TokenRow({ token, onCopy, onRename, onRegenerate, onRevoke }: TokenRowP
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={onRename} data-testid={`token-rename-${token.id}`}>
-            <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-            Rename
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onRegenerate} data-testid={`token-regenerate-${token.id}`}>
-            <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-            Regenerate
-          </DropdownMenuItem>
           <DropdownMenuItem
             onClick={onRevoke}
             className="text-[var(--accent-rose)] focus:text-[var(--accent-rose)]"
@@ -449,10 +346,12 @@ function CreateTokenDialog({
   open,
   onOpenChange,
   onCreate,
+  createMut,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onCreate: (params: CreateParams) => void;
+  createMut: { isPending: boolean };
 }) {
   const [name, setName] = React.useState('');
   const [scope, setScope] = React.useState<TokenScope>('read-write');
@@ -611,8 +510,8 @@ function CreateTokenDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} data-testid="token-create-cancel">
             Cancel
           </Button>
-          <Button onClick={submit} data-testid="token-create-generate">
-            Generate token
+          <Button onClick={submit} disabled={createMut.isPending} data-testid="token-create-generate">
+            {createMut.isPending ? 'Generating…' : 'Generate token'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -668,56 +567,6 @@ function RevealTokenDialog({
         <DialogFooter>
           <Button onClick={onClose} data-testid="revealed-done">
             Done
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-/* ---------------- Rename Token Dialog ---------------- */
-
-function RenameTokenDialog({
-  target,
-  onClose,
-  onSubmit,
-}: {
-  target: ApiToken | null;
-  onClose: () => void;
-  onSubmit: (name: string) => void;
-}) {
-  const [name, setName] = React.useState('');
-  React.useEffect(() => {
-    setName(target?.name ?? '');
-  }, [target]);
-
-  return (
-    <Dialog open={target !== null} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent data-testid="api-tokens-rename-dialog">
-        <DialogHeader>
-          <DialogTitle>Rename token</DialogTitle>
-          <DialogDescription>
-            Updating the label does not rotate the secret.
-          </DialogDescription>
-        </DialogHeader>
-        <Field label="Name" htmlFor="token-rename-input">
-          <Input
-            id="token-rename-input"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            data-testid="token-rename-input"
-          />
-        </Field>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            disabled={!name.trim()}
-            onClick={() => onSubmit(name.trim())}
-            data-testid="token-rename-submit"
-          >
-            Save
           </Button>
         </DialogFooter>
       </DialogContent>

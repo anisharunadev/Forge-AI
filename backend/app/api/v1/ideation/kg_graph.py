@@ -7,13 +7,15 @@ Exposes:
 """
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.project_intelligence import KGNodeRead
 from app.schemas.ideation import IdeaGraphRead
 from app.services.ideation.kg_integration import ideation_kg_service
@@ -29,8 +31,8 @@ router = APIRouter(prefix="/ideation", tags=["ideation"])
 @audit(action="ideation.kg.add_idea", target_type="kg_node")
 async def add_idea_to_kg(
     idea_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:kg"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:kg"))
 ) -> KGNodeRead:
     try:
         node = await ideation_kg_service.add_idea_to_kg(
@@ -61,8 +63,8 @@ async def add_idea_to_kg(
 @audit(action="ideation.kg.get_graph", target_type="idea_graph")
 async def get_idea_graph(
     project_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> IdeaGraphRead:
     graph = await ideation_kg_service.get_idea_graph(
         project_id, tenant_id=principal.tenant_id
@@ -79,9 +81,9 @@ async def get_idea_graph(
 @audit(action="ideation.kg.find_related", target_type="kg_node")
 async def find_related_ideas(
     idea_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     top_k: int = Query(default=5, ge=1, le=50),
-    _perm: Principal = require_permission("ideation:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> list[KGNodeRead]:
     try:
         nodes = await ideation_kg_service.find_related_ideas(

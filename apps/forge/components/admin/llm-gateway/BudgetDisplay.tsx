@@ -14,7 +14,6 @@
  * going to blow past the limit" signal.
  */
 
-import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 import { BudgetGauge } from './BudgetGauge';

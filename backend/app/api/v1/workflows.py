@@ -36,6 +36,7 @@ from fastapi.responses import StreamingResponse
 from app.api.deps import DbSession, Principal, get_current_principal
 from app.core.security import AuthenticatedPrincipal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.core.logging import get_logger
 from app.db.models.workflow import Workflow, WorkflowRunStatus
 from app.schemas.workflow import (
@@ -83,7 +84,7 @@ def _snapshot_to_read(snapshot) -> BudgetRead:
 async def declare_budget(
     workflow_id: UUID,
     body: BudgetDeclareRequest,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession = None,  # type: ignore[assignment]
 ) -> BudgetRead:
     if body.workflow_id != workflow_id:
@@ -105,7 +106,7 @@ async def declare_budget(
 @audit(action="workflow.budget.read", target_type="workflow_budget")
 async def get_budget(
     workflow_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession = None,  # type: ignore[assignment]
 ) -> BudgetRead:
     snapshot = await workflow_budget_service.get_budget(workflow_id)
@@ -118,7 +119,7 @@ async def get_budget(
 @audit(action="workflow.budget.history", target_type="workflow_budget")
 async def budget_history(
     workflow_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession = None,  # type: ignore[assignment]
 ) -> list[dict]:
     return await workflow_budget_service.history(workflow_id)
@@ -150,7 +151,7 @@ def _workflow_to_read(wf: Workflow) -> WorkflowRead:
 @router.get("", response_model=list[WorkflowRead])
 @audit(action="workflows.list", target_type="workflow")
 async def list_workflows(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: UUID | None = Query(default=None),
     include_deleted: bool = Query(default=False),
     db: DbSession = None,  # type: ignore[assignment]
@@ -168,7 +169,7 @@ async def list_workflows(
 @audit(action="workflows.create", target_type="workflow")
 async def create_workflow(
     body: WorkflowCreate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession = None,  # type: ignore[assignment]
 ) -> WorkflowRead:
     try:
@@ -190,7 +191,7 @@ async def create_workflow(
 @audit(action="workflows.publish", target_type="workflow")
 async def publish_workflow(
     workflow_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession = None,  # type: ignore[assignment]
 ) -> WorkflowRead:
     """Flip a draft workflow to ``published`` (Rule 3: gate implicit)."""
@@ -213,7 +214,7 @@ async def publish_workflow(
 @audit(action="workflows.duplicate", target_type="workflow")
 async def duplicate_workflow(
     workflow_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession = None,  # type: ignore[assignment]
 ) -> WorkflowRead:
     """Clone the workflow with a " (copy)" suffix (Rule 4 typed artifact)."""
@@ -244,7 +245,7 @@ async def duplicate_workflow(
 @audit(action="workflows.runs.read", target_type="workflow_run")
 async def get_workflow_run(
     run_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession = None,  # type: ignore[assignment]
 ) -> WorkflowRunRead:
     try:
@@ -260,7 +261,7 @@ async def get_workflow_run(
 @audit(action="workflows.runs.cancel", target_type="workflow_run")
 async def cancel_workflow_run(
     run_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession = None,  # type: ignore[assignment]
 ) -> WorkflowRunRead:
     try:
@@ -281,7 +282,7 @@ async def cancel_workflow_run(
 @audit(action="workflows.read", target_type="workflow")
 async def get_workflow(
     workflow_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession = None,  # type: ignore[assignment]
 ) -> WorkflowRead:
     try:
@@ -298,7 +299,7 @@ async def get_workflow(
 async def update_workflow(
     workflow_id: UUID,
     body: WorkflowUpdate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession = None,  # type: ignore[assignment]
 ) -> WorkflowRead:
     try:
@@ -320,14 +321,13 @@ async def update_workflow(
 
 @router.delete(
     "/{workflow_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     response_class=Response,
 )
 @audit(action="workflows.delete", target_type="workflow")
 async def delete_workflow(
     workflow_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession = None,  # type: ignore[assignment]
 ) -> None:
     try:
@@ -344,7 +344,7 @@ async def delete_workflow(
 @router.get("/runs", response_model=list[WorkflowRunRead])
 @audit(action="workflows.runs.list_all", target_type="workflow_run")
 async def list_all_workflow_runs(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     db: DbSession = None,  # type: ignore[assignment]
@@ -360,7 +360,7 @@ async def list_all_workflow_runs(
 @audit(action="workflows.runs.list", target_type="workflow_run")
 async def list_workflow_runs(
     workflow_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession = None,  # type: ignore[assignment]
 ) -> list[WorkflowRunRead]:
     rows = await _workflow_service.list_runs(
@@ -378,7 +378,7 @@ async def list_workflow_runs(
 async def start_workflow_run(
     workflow_id: UUID,
     body: WorkflowRunCreate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession = None,  # type: ignore[assignment]
 ) -> WorkflowRunRead:
     try:
@@ -466,7 +466,7 @@ _RUN_SCOPED_EVENTS: tuple[EventType, ...] = (
 async def stream_run_events(
     run_id: UUID,
     request: Request,
-    principal: Principal | None = None,
+    principal: Annotated[AuthenticatedPrincipal | None, Depends(get_current_principal)] = None,
     token: str | None = Query(default=None, description="SSE auth fallback (EventSource can't set headers)"),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> StreamingResponse:
@@ -568,7 +568,7 @@ async def stream_run_events(
 @audit(action="workflows.runs.resume", target_type="workflow_run")
 async def resume_workflow_run(
     run_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession = None,  # type: ignore[assignment]
 ) -> WorkflowRunRead:
     """Manually resume a ``WAITING_APPROVAL`` run.

@@ -1,12 +1,14 @@
+from typing import Annotated
 """F-014 — Agent Runtime REST endpoints."""
 
 from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.runtime import (
     RuntimeHandle,
     RuntimeMetrics,
@@ -20,8 +22,8 @@ router = APIRouter(prefix="/runtimes", tags=["agent-runtimes"])
 @router.get("", response_model=list[RuntimeHandle])
 @audit(action="runtimes.list", target_type="runtime")
 async def list_runtimes(
-    principal: Principal,
-    _perm: Principal = require_permission("runtimes:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:read"))
 ) -> list[RuntimeHandle]:
     handles = await agent_runtime.list_runtimes(principal.tenant_id)
     return [_handle_to_schema(h) for h in handles]
@@ -31,8 +33,8 @@ async def list_runtimes(
 @audit(action="runtimes.start", target_type="runtime")
 async def start_runtime(
     body: RuntimeStartRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("runtimes:start"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:start"))
 ) -> RuntimeHandle:
     handle = await agent_runtime.start(
         agent_id=body.agent_id,
@@ -48,8 +50,8 @@ async def start_runtime(
 @audit(action="runtimes.stop", target_type="runtime")
 async def stop_runtime(
     handle_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("runtimes:stop"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:stop"))
 ) -> RuntimeHandle:
     try:
         await agent_runtime.stop(handle_id)
@@ -76,8 +78,8 @@ async def stop_runtime(
 @audit(action="runtimes.metrics", target_type="runtime")
 async def runtime_metrics(
     handle_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("runtimes:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:read"))
 ) -> RuntimeMetrics:
     try:
         metrics = await agent_runtime.get_runtime_metrics(handle_id)

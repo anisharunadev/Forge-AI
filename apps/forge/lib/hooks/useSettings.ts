@@ -117,7 +117,7 @@ export const settingsQueryKeys = {
 // ---------------------------------------------------------------------------
 
 export function useProject(): UseQueryResult<Project, Error> {
-  const projectId = useProjectId();
+  const projectId = useProjectIdOrFallback();
   return useQuery<Project, Error>({
     queryKey: settingsQueryKeys.project(projectId),
     queryFn: () => getProject(projectId),
@@ -129,7 +129,7 @@ export function useUpdateProject(): UseMutationResult<
   Error,
   ProjectUpdate
 > {
-  const projectId = useProjectId();
+  const projectId = useProjectIdOrFallback();
   const qc = useQueryClient();
   return useMutation<Project, Error, ProjectUpdate>({
     mutationFn: (body) => updateProject(projectId, body),
@@ -150,7 +150,7 @@ export interface MemberListData {
 }
 
 export function useMembers(): UseQueryResult<MemberListData, Error> {
-  const projectId = useProjectId();
+  const projectId = useProjectIdOrFallback();
   return useQuery<MemberListData, Error>({
     queryKey: settingsQueryKeys.members(projectId),
     queryFn: () => listMembers(projectId),
@@ -162,7 +162,7 @@ export function useInviteMember(): UseMutationResult<
   Error,
   InviteCreate
 > {
-  const projectId = useProjectId();
+  const projectId = useProjectIdOrFallback();
   const qc = useQueryClient();
   return useMutation<Invitation, Error, InviteCreate>({
     mutationFn: (body) => inviteMember(projectId, body),
@@ -176,7 +176,7 @@ export function useInviteMember(): UseMutationResult<
 }
 
 export function useAcceptInvite(): UseMutationResult<Member, Error, string> {
-  const projectId = useProjectId();
+  const projectId = useProjectIdOrFallback();
   const qc = useQueryClient();
   return useMutation<Member, Error, string>({
     mutationFn: (token) => acceptInvite(token),
@@ -194,7 +194,7 @@ export function useUpdateMemberRole(): UseMutationResult<
   Error,
   { memberId: string; body: RoleUpdate }
 > {
-  const projectId = useProjectId();
+  const projectId = useProjectIdOrFallback();
   const qc = useQueryClient();
   return useMutation<Member, Error, { memberId: string; body: RoleUpdate }>({
     mutationFn: ({ memberId, body }) =>
@@ -213,7 +213,7 @@ export function useRemoveMember(): UseMutationResult<
   Error,
   string
 > {
-  const projectId = useProjectId();
+  const projectId = useProjectIdOrFallback();
   const qc = useQueryClient();
   return useMutation<void, Error, string>({
     mutationFn: (memberId) => removeMember(projectId, memberId),
@@ -231,7 +231,7 @@ export function useRemoveMember(): UseMutationResult<
 // ---------------------------------------------------------------------------
 
 export function useEnvVars(): UseQueryResult<ReadonlyArray<EnvVar>, Error> {
-  const projectId = useProjectId();
+  const projectId = useProjectIdOrFallback();
   return useQuery<ReadonlyArray<EnvVar>, Error>({
     queryKey: settingsQueryKeys.envVars(projectId),
     queryFn: () => listEnvVars(projectId),
@@ -243,7 +243,7 @@ export function useCreateEnvVar(): UseMutationResult<
   Error,
   EnvVarCreate
 > {
-  const projectId = useProjectId();
+  const projectId = useProjectIdOrFallback();
   const qc = useQueryClient();
   return useMutation<EnvVar, Error, EnvVarCreate>({
     mutationFn: (body) => createEnvVar(projectId, body),
@@ -261,7 +261,7 @@ export function useUpdateEnvVar(): UseMutationResult<
   Error,
   { key: string; body: EnvVarUpdate }
 > {
-  const projectId = useProjectId();
+  const projectId = useProjectIdOrFallback();
   const qc = useQueryClient();
   return useMutation<EnvVar, Error, { key: string; body: EnvVarUpdate }>({
     mutationFn: ({ key, body }) => updateEnvVar(projectId, key, body),
@@ -275,7 +275,7 @@ export function useUpdateEnvVar(): UseMutationResult<
 }
 
 export function useDeleteEnvVar(): UseMutationResult<void, Error, string> {
-  const projectId = useProjectId();
+  const projectId = useProjectIdOrFallback();
   const qc = useQueryClient();
   return useMutation<void, Error, string>({
     mutationFn: (key) => deleteEnvVar(projectId, key),
@@ -293,7 +293,7 @@ export function useRevealEnvVar(): UseMutationResult<
   Error,
   string
 > {
-  const projectId = useProjectId();
+  const projectId = useProjectIdOrFallback();
   return useMutation<{ key: string; value: string }, Error, string>({
     mutationFn: (key) => revealEnvVar(projectId, key),
   });
@@ -415,5 +415,343 @@ export function useAuditSettings(
     queryFn: () =>
       listAuditSettings({ targetTypes: args.targetTypes, limit: args.limit ?? 50 }),
     staleTime: 15_000,
+  });
+}
+
+
+// ---------------------------------------------------------------------------
+// Step-73 — additional settings hooks (Profile, Tokens, Sessions, etc.)
+// All new hooks follow the existing queryKey + useQuery + useMutation shape.
+// ---------------------------------------------------------------------------
+
+import {
+  applySeed,
+  createApiToken,
+  createWebhook,
+  deleteWebhook,
+  getAIGatewayHealth,
+  getBillingQuota,
+  getBranding,
+  getMe,
+  getNotifications,
+  getSsoConfig,
+  listAIGatewayMcpServers,
+  listAIGatewayModels,
+  listAIGatewaySpend,
+  listApiTokens,
+  listFeatureFlags,
+  listSeeds,
+  listSessions,
+  listWebhookDeliveries,
+  listWebhooks,
+  patchBranding,
+  patchFeatureFlag,
+  patchMe,
+  patchNotifications,
+  revokeApiToken,
+  revokeSession,
+  testWebhook,
+  updateWebhook,
+} from '@/lib/settings/data';
+import type { MeUser } from '@/lib/settings/data';
+import type {
+  AIGatewayHealth,
+  AIGatewayMcpServer,
+  AIGatewayModel,
+  AIGatewaySpend,
+  ApiToken,
+  ApiTokenCreated,
+  BillingQuota,
+  Branding,
+  FeatureFlag,
+  FeatureFlagValue,
+  NotificationPrefs,
+  Session,
+  SsoConfig,
+  SeedManifestSummary,
+  Webhook,
+  WebhookCreate,
+  WebhookDelivery,
+  WebhookTestResult,
+  WebhookUpdate,
+} from '@/lib/settings/types';
+
+// --- Me / Profile ---------------------------------------------------------
+
+export function useMe(): UseQueryResult<MeUser, Error> {
+  return useQuery({ queryKey: ['settings', 'me'] as const, queryFn: () => getMe(), staleTime: 60_000 });
+}
+
+export function useUpdateMe(): UseMutationResult<MeUser, Error, Partial<MeUser>> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => patchMe(body),
+    onSuccess: (user) => {
+      qc.setQueryData(['settings', 'me'], user);
+      void qc.invalidateQueries({ queryKey: ['settings', 'me'] });
+    },
+  });
+}
+
+// --- API Tokens -----------------------------------------------------------
+
+export function useApiTokens(): UseQueryResult<ReadonlyArray<ApiToken>, Error> {
+  return useQuery({
+    queryKey: ['settings', 'api-tokens'] as const,
+    queryFn: () => listApiTokens(),
+    staleTime: 30_000,
+  });
+}
+
+export function useCreateApiToken(): UseMutationResult<
+  ApiTokenCreated,
+  Error,
+  { name: string; scope?: string; expiresInDays?: number | null }
+> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => createApiToken(body),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['settings', 'api-tokens'] });
+    },
+  });
+}
+
+export function useRevokeApiToken(): UseMutationResult<void, Error, string> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => revokeApiToken(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['settings', 'api-tokens'] });
+    },
+  });
+}
+
+// --- Sessions -------------------------------------------------------------
+
+export function useSessions(): UseQueryResult<ReadonlyArray<Session>, Error> {
+  return useQuery({
+    queryKey: ['settings', 'sessions'] as const,
+    queryFn: () => listSessions(),
+    staleTime: 15_000,
+  });
+}
+
+export function useRevokeSession(): UseMutationResult<void, Error, string> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => revokeSession(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['settings', 'sessions'] });
+    },
+  });
+}
+
+// --- Notifications --------------------------------------------------------
+
+export function useNotifications(): UseQueryResult<NotificationPrefs, Error> {
+  return useQuery({
+    queryKey: ['settings', 'notifications'] as const,
+    queryFn: () => getNotifications(),
+    staleTime: 60_000,
+  });
+}
+
+export function useUpdateNotifications(): UseMutationResult<
+  NotificationPrefs,
+  Error,
+  Partial<NotificationPrefs>
+> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => patchNotifications(body),
+    onSuccess: (prefs) => {
+      qc.setQueryData(['settings', 'notifications'], prefs);
+    },
+  });
+}
+
+// --- Branding -------------------------------------------------------------
+
+export function useBranding(tenantId: string | null): UseQueryResult<Branding, Error> {
+  return useQuery({
+    queryKey: ['settings', 'branding', tenantId] as const,
+    queryFn: () => getBranding(tenantId ?? ''),
+    enabled: Boolean(tenantId),
+    staleTime: 60_000,
+  });
+}
+
+export function useUpdateBranding(
+  tenantId: string,
+): UseMutationResult<Branding, Error, Partial<Branding>> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => patchBranding(tenantId, body),
+    onSuccess: (branding) => {
+      qc.setQueryData(['settings', 'branding', tenantId], branding);
+    },
+  });
+}
+
+// --- SSO ------------------------------------------------------------------
+
+export function useSsoConfig(): UseQueryResult<SsoConfig, Error> {
+  return useQuery({
+    queryKey: ['settings', 'sso'] as const,
+    queryFn: () => getSsoConfig(),
+    staleTime: 5 * 60_000,
+  });
+}
+
+// --- Billing --------------------------------------------------------------
+
+export function useBillingQuota(tenantId: string | null): UseQueryResult<BillingQuota, Error> {
+  return useQuery({
+    queryKey: ['settings', 'billing-quota', tenantId] as const,
+    queryFn: () => getBillingQuota(tenantId ?? ''),
+    enabled: Boolean(tenantId),
+    staleTime: 60_000,
+  });
+}
+
+// --- Feature flags --------------------------------------------------------
+
+export function useFeatureFlags(): UseQueryResult<ReadonlyArray<FeatureFlag>, Error> {
+  return useQuery({
+    queryKey: ['settings', 'feature-flags'] as const,
+    queryFn: () => listFeatureFlags(),
+    staleTime: 30_000,
+  });
+}
+
+export function useUpdateFeatureFlag(): UseMutationResult<
+  FeatureFlag,
+  Error,
+  { key: string; value: FeatureFlagValue }
+> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ key, value }) => patchFeatureFlag(key, value),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['settings', 'feature-flags'] });
+    },
+  });
+}
+
+// --- Seeds ----------------------------------------------------------------
+
+export function useSeeds(): UseQueryResult<ReadonlyArray<SeedManifestSummary>, Error> {
+  return useQuery({
+    queryKey: ['settings', 'seeds'] as const,
+    queryFn: () => listSeeds(),
+    staleTime: 30_000,
+  });
+}
+
+export function useApplySeed(): UseMutationResult<unknown, Error, { name: string }> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ name }) => applySeed(name),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['settings', 'seeds'] });
+    },
+  });
+}
+
+// --- Webhooks -------------------------------------------------------------
+
+export function useWebhooks(
+  direction?: 'inbound' | 'outbound',
+): UseQueryResult<ReadonlyArray<Webhook>, Error> {
+  return useQuery({
+    queryKey: ['settings', 'webhooks', direction ?? 'all'] as const,
+    queryFn: () => listWebhooks(direction),
+    staleTime: 30_000,
+  });
+}
+
+export function useCreateWebhook(): UseMutationResult<Webhook, Error, WebhookCreate> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => createWebhook(body),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['settings', 'webhooks'] });
+    },
+  });
+}
+
+export function useUpdateWebhook(): UseMutationResult<
+  Webhook,
+  Error,
+  { id: string; body: WebhookUpdate }
+> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }) => updateWebhook(id, body),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['settings', 'webhooks'] });
+    },
+  });
+}
+
+export function useDeleteWebhook(): UseMutationResult<void, Error, string> {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => deleteWebhook(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['settings', 'webhooks'] });
+    },
+  });
+}
+
+export function useTestWebhook(): UseMutationResult<WebhookTestResult, Error, string> {
+  return useMutation({
+    mutationFn: (id) => testWebhook(id),
+  });
+}
+
+export function useWebhookDeliveries(
+  id: string | null,
+): UseQueryResult<ReadonlyArray<WebhookDelivery>, Error> {
+  return useQuery({
+    queryKey: ['settings', 'webhook-deliveries', id] as const,
+    queryFn: () => listWebhookDeliveries(id ?? ''),
+    enabled: Boolean(id),
+    staleTime: 15_000,
+  });
+}
+
+// --- AI Gateway -----------------------------------------------------------
+
+export function useAIGatewayModels(): UseQueryResult<ReadonlyArray<AIGatewayModel>, Error> {
+  return useQuery({
+    queryKey: ['settings', 'ai-gateway', 'models'] as const,
+    queryFn: () => listAIGatewayModels(),
+    staleTime: 60_000,
+  });
+}
+
+export function useAIGatewayMcpServers(): UseQueryResult<ReadonlyArray<AIGatewayMcpServer>, Error> {
+  return useQuery({
+    queryKey: ['settings', 'ai-gateway', 'mcp-servers'] as const,
+    queryFn: () => listAIGatewayMcpServers(),
+    staleTime: 60_000,
+  });
+}
+
+export function useAIGatewayHealth(): UseQueryResult<AIGatewayHealth, Error> {
+  return useQuery({
+    queryKey: ['settings', 'ai-gateway', 'health'] as const,
+    queryFn: () => getAIGatewayHealth(),
+    staleTime: 30_000,
+  });
+}
+
+export function useAIGatewaySpend(): UseQueryResult<ReadonlyArray<AIGatewaySpend>, Error> {
+  return useQuery({
+    queryKey: ['settings', 'ai-gateway', 'spend'] as const,
+    queryFn: () => listAIGatewaySpend(),
+    staleTime: 60_000,
   });
 }

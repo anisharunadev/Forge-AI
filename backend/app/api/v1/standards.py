@@ -27,15 +27,16 @@ compatible.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 
-from app.api.deps import DbSession, Principal
+from app.api.deps import DbSession, Principal, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.standard import Standard
 from app.services.litellm_admin import list_guardrails
 
@@ -137,7 +138,7 @@ def _standard_row_to_attestation(row: Standard) -> StandardAttestationRead:
 @router.get("", response_model=list[StandardRead])
 @audit(action="standards.list", target_type="standard")
 async def list_standards(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> list[StandardRead]:
     """Combine LiteLLM guardrails + manual attestations for the tenant.
@@ -161,7 +162,7 @@ async def list_standards(
 @audit(action="standards.create", target_type="standard")
 async def create_standard(
     body: StandardCreate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> StandardRead:
     """Add a new manual attestation (regulatory standard)."""

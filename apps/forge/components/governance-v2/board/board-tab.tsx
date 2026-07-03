@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { ToneBadge } from '../shared/severity-badge';
 import { Panel } from '../shared/panel';
 import { cn } from '@/lib/utils';
+import { useBoardConfirmations } from '@/lib/api/governance-hooks';
 
 const BOARD_MEMBERS = [
   { id: 'm-1', name: 'Jane CTO', role: 'Chair', votes: 247, present: true },
@@ -36,7 +37,24 @@ const RECENT_DECISIONS = [
   { id: 'rd-5', subject: 'Policy archive — legacy PII', outcome: 'accepted', decider: 'Eng Lead', at: '3 days ago', rev: 'rev-2837' },
 ];
 
+// ponytail: inline fixtures above remain as the no-network fallback.
+// When the canonical board-confirmations endpoint is reachable the
+// live rows supersede RECENT_DECISIONS (Step-72 hook module).
+function formatRelative(iso: string | null): string {
+  if (!iso) return '—';
+  const ts = Date.parse(iso);
+  if (Number.isNaN(ts)) return iso;
+  const deltaMin = Math.max(1, Math.round((Date.now() - ts) / 60_000));
+  if (deltaMin < 60) return `${deltaMin}m ago`;
+  const hr = Math.round(deltaMin / 60);
+  if (hr < 24) return `${hr}h ago`;
+  return `${Math.round(hr / 24)}d ago`;
+}
+
 export function BoardTab() {
+  const confirmationsQ = useBoardConfirmations();
+  const liveConfirmations = confirmationsQ.data ?? [];
+
   return (
     <div className="space-y-4" data-testid="board-tab">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -115,7 +133,17 @@ export function BoardTab() {
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--border-subtle)]">
-            {RECENT_DECISIONS.map((d) => (
+            {(liveConfirmations.length > 0
+              ? liveConfirmations.map((c) => ({
+                  id: c.id,
+                  subject: c.subject.identifier,
+                  outcome: c.outcome,
+                  decider: c.decider?.displayName ?? '—',
+                  at: formatRelative(c.decidedAt),
+                  rev: c.planRev,
+                }))
+              : RECENT_DECISIONS
+            ).map((d) => (
               <tr key={d.id} className="hover:bg-[var(--bg-inset)]" data-testid={`history-${d.id}`}>
                 <td className="px-3 py-2 font-medium text-[var(--fg-primary)]">{d.subject}</td>
                 <td className="px-3 py-2 font-mono text-[var(--fg-tertiary)]">{d.rev}</td>

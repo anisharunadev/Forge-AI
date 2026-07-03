@@ -1,13 +1,15 @@
 """Architecture Preview REST endpoints (F-207)."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import ArchPreviewRead
 from app.services.ideation.arch_preview import arch_preview_service
 
@@ -40,8 +42,8 @@ def _to_read(preview) -> ArchPreviewRead:
 @audit(action="ideation.arch_preview.generate", target_type="arch_preview")
 async def generate_arch_preview(
     idea_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:arch_preview"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:arch_preview"))
 ) -> ArchPreviewRead:
     try:
         preview = await arch_preview_service.generate_preview(
@@ -60,8 +62,8 @@ async def generate_arch_preview(
 @audit(action="ideation.arch_preview.get", target_type="arch_preview")
 async def get_arch_preview(
     idea_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> ArchPreviewRead | None:
     try:
         preview = await arch_preview_service.get_preview(
@@ -80,8 +82,8 @@ async def get_arch_preview(
 @audit(action="ideation.arch_preview.regenerate", target_type="arch_preview")
 async def regenerate_arch_preview(
     idea_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:arch_preview"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:arch_preview"))
 ) -> ArchPreviewRead:
     try:
         preview = await arch_preview_service.regenerate_preview(

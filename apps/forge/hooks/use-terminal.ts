@@ -13,6 +13,7 @@ import {
   FORGE_TERMINAL_FONT_SIZE,
 } from '@/lib/terminal-theme';
 import { useTerminalStore } from '@/lib/store';
+import { useAuth } from '@/lib/api/auth';
 
 /**
  * Exposes the high-level connection state so banners and status bars
@@ -103,37 +104,46 @@ export function useTerminal(opts: {
     // pass `wsPath` to repoint.
     const url = opts.wsPath ?? FORGE_TERMINAL_WS_URL;
     let openedAt = 0;
-    socketRef.current = openForgeWebSocket(url, {
-      onOpen: () => {
-        openedAt = performance.now();
-        setConnectionState('connected');
-        setSessionStatus(opts.sessionId ?? '', 'active');
-        term.writeln('\x1b[1;32m✓ connected\x1b[0m');
+    // Step-71: forward the JWT as `?token=...` so the FastAPI WS at
+    // `/ws/terminal/{session_id}` can resolve the principal on the
+    // browser-incompatible handshake. Browsers can't set custom
+    // headers on WebSocket upgrades; query param is the only path.
+    const token = useAuth.getState().token ?? undefined;
+    socketRef.current = openForgeWebSocket(
+      url,
+      {
+        onOpen: () => {
+          openedAt = performance.now();
+          setConnectionState('connected');
+          setSessionStatus(opts.sessionId ?? '', 'active');
+          term.writeln('\x1b[1;32m✓ connected\x1b[0m');
+        },
+        onClose: () => {
+          setConnectionState('reconnecting');
+          setSessionStatus(opts.sessionId ?? '', 'error');
+          setLatencyMs(undefined);
+          term.writeln(
+            '\x1b[1;33m⚠ disconnected\x1b[0m — start the sidecar with `pnpm dev:terminal`',
+          );
+        },
+        onError: () => {
+          setConnectionState('reconnecting');
+          setSessionStatus(opts.sessionId ?? '', 'error');
+          term.writeln(
+            '\x1b[1;31m✗ sidecar unreachable\x1b[0m — run `pnpm dev:terminal` then retry',
+          );
+        },
+        onMessage: (event) => {
+          if (openedAt > 0 && latencyMs === undefined) {
+            // Heuristic: ping latency from open → first inbound byte.
+            const ms = Math.round(performance.now() - openedAt);
+            if (Number.isFinite(ms) && ms >= 0) setLatencyMs(ms);
+          }
+          term.write(typeof event.data === 'string' ? event.data : '');
+        },
       },
-      onClose: () => {
-        setConnectionState('reconnecting');
-        setSessionStatus(opts.sessionId ?? '', 'error');
-        setLatencyMs(undefined);
-        term.writeln(
-          '\x1b[1;33m⚠ disconnected\x1b[0m — start the sidecar with `pnpm dev:terminal`',
-        );
-      },
-      onError: () => {
-        setConnectionState('reconnecting');
-        setSessionStatus(opts.sessionId ?? '', 'error');
-        term.writeln(
-          '\x1b[1;31m✗ sidecar unreachable\x1b[0m — run `pnpm dev:terminal` then retry',
-        );
-      },
-      onMessage: (event) => {
-        if (openedAt > 0 && latencyMs === undefined) {
-          // Heuristic: ping latency from open → first inbound byte.
-          const ms = Math.round(performance.now() - openedAt);
-          if (Number.isFinite(ms) && ms >= 0) setLatencyMs(ms);
-        }
-        term.write(typeof event.data === 'string' ? event.data : '');
-      },
-    });
+      { token },
+    );
 
     const handleResize = (): void => {
       try {

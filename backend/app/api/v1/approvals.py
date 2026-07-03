@@ -1,14 +1,16 @@
 """F-006 — Approvals (Rule 3 — human gates)."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.deps import DbSession, Principal, require_permission
+from app.api.deps import DbSession, Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.approval import ApprovalRequest, ApprovalStatus
 from app.schemas.approvals import ApprovalCreate, ApprovalDecision, ApprovalRead
 from app.services.event_bus import EventType, bus
@@ -20,8 +22,8 @@ router = APIRouter(prefix="/approvals", tags=["approvals"])
 @router.get("", response_model=list[ApprovalRead])
 @audit(action="approvals.list", target_type="approval")
 async def list_approvals(
-    principal: Principal,
-    _perm: Principal = require_permission("approvals:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("approvals:read")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> list[ApprovalRead]:
     stmt = select(ApprovalRequest).where(ApprovalRequest.tenant_id == principal.tenant_id)
@@ -33,8 +35,8 @@ async def list_approvals(
 @audit(action="approvals.request", target_type="approval")
 async def request_approval(
     body: ApprovalCreate,
-    principal: Principal,
-    _perm: Principal = require_permission("approvals:request"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("approvals:request")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> ApprovalRead:
     approval = ApprovalRequest(
@@ -64,8 +66,8 @@ async def request_approval(
 async def decide_approval(
     approval_id: UUID,
     body: ApprovalDecision,
-    principal: Principal,
-    _perm: Principal = require_permission("approvals:decide"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("approvals:decide")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> ApprovalRead:
     approval = await db.get(ApprovalRequest, approval_id)

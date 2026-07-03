@@ -17,13 +17,15 @@ distinct path so the Phase 1 surface is preserved.
 """
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.connectors import ConnectorRead, ConnectorTestResult
 from app.services.connectors.lifecycle import connector_lifecycle
 
@@ -34,8 +36,8 @@ router = APIRouter(prefix="/connectors", tags=["connectors"])
 @audit(action="connector.install", target_type="connector")
 async def install_connector(
     body: dict,
-    principal: Principal,
-    _perm: Principal = require_permission("connector:install"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connector:install"))
 ) -> ConnectorRead:
     """Install a new connector and immediately probe it.
 
@@ -104,8 +106,8 @@ async def install_connector(
 async def rotate_connector(
     connector_id: UUID,
     body: dict,
-    principal: Principal,
-    _perm: Principal = require_permission("connector:rotate"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connector:rotate"))
 ) -> ConnectorRead:
     """Rotate credentials on an existing connector."""
     new_credentials = dict(body.get("new_credentials") or {})
@@ -129,8 +131,8 @@ async def rotate_connector(
 @audit(action="connector.test", target_type="connector")
 async def test_connector(
     connector_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("connector:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connector:read"))
 ) -> ConnectorTestResult:
     """Probe a connector's reachability + record a health-history row."""
     try:

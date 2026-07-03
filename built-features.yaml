@@ -73,7 +73,7 @@ features:
   - area: Centers
     order: 16
     feature: Ideation
-    steps: ["28"]
+    steps: ["28", "69"]
     status: Production
     docs: centers/ideation
   - area: Centers
@@ -92,19 +92,19 @@ features:
   - area: Lifecycle
     order: 20
     feature: Onboarding
-    steps: ["46", "49"]
+    steps: ["46", "49", "61", "74"]
     status: Production
     docs: lifecycle/onboarding
   - area: Lifecycle
     order: 21
     feature: Governance
-    steps: ["35"]
+    steps: ["35", "72"]
     status: Production
     docs: lifecycle/governance
   - area: Lifecycle
     order: 22
     feature: Audit
-    steps: ["17"]
+    steps: ["17", "72"]
     status: Production
     docs: lifecycle/audit
   - area: Lifecycle
@@ -116,7 +116,7 @@ features:
   - area: Lifecycle
     order: 24
     feature: Terminal
-    steps: ["32", "36"]
+    steps: ["32", "36", "71"]
     status: Production
     docs: lifecycle/terminal
   - area: Lifecycle
@@ -134,7 +134,7 @@ features:
   - area: Lifecycle
     order: 27
     feature: Settings
-    steps: ["13", "47"]
+    steps: ["13", "47", "73"]
     status: Production
     docs: lifecycle/settings
 
@@ -158,8 +158,20 @@ features:
     status: "Wired 2026-06-27"
     docs: integration/oidc-auth
   - area: Integration
-    order: 50
-    feature: "Phases 2-13"
-    steps: []
-    status: "Planned"
+    order: 45
+    feature: "Phase 6 — Knowledge Graph Wiring"
+    steps: ["57", "67"]
+    status: "Wired 2026-07-01"
+    docs: integration/phase-6-kg-wiring
+  - area: Integration
+    order: 41
+    feature: "Phase 4 Workflows + Runs"
+    steps: ["56", "66"]
+    status: Production
     docs: integration/phases-2-13
+  - area: Integration
+    order: 50
+    feature: "Phase 11 — Governance + Audit"
+    steps: ["72"]
+    status: Production
+    docs: lifecycle/governance

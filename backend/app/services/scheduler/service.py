@@ -23,11 +23,20 @@ from app.core.logging import get_logger
 from app.services.scheduler.jobs.ideation_ingest import (
     daily_ideation_ingest,
 )
+from app.services.scheduler.jobs.lessons_digest import (
+    monthly_lessons_digest,
+)
 from app.services.scheduler.jobs.litellm_anomaly_check import (
     anomaly_check_job,
 )
 from app.services.scheduler.jobs.litellm_reconcile import (
     reconcile_job,
+)
+from app.services.scheduler.jobs.forge_spend_reconcile import (
+    run as forge_spend_reconcile,
+)
+from app.services.scheduler.jobs.forge_key_rotate import (
+    run as forge_key_rotate,
 )
 from app.services.scheduler.jobs.memory_consolidate import (
     nightly_memory_consolidate,
@@ -101,6 +110,33 @@ class Scheduler:
             max_instances=1,
             coalesce=True,
         )
+        # F-002-LESSON — Steward monthly review digests (step-64 Sub-step B)
+        self._scheduler.add_job(
+            monthly_lessons_digest,
+            CronTrigger.from_crontab("0 8 1 * *"),
+            id="lessons_digest_monthly",
+            replace_existing=True,
+            max_instances=1,
+            coalesce=True,
+        )
+        # step-75 F5 — 5-min spend reconciliation against /spend/logs
+        self._scheduler.add_job(
+            forge_spend_reconcile,
+            CronTrigger.from_crontab("*/5 * * * *"),
+            id="forge_spend_reconcile",
+            replace_existing=True,
+            max_instances=1,
+            coalesce=True,
+        )
+        # step-75 P4 — daily 03:00 UTC virtual key rotation sweep.
+        self._scheduler.add_job(
+            forge_key_rotate,
+            CronTrigger.from_crontab("0 3 * * *"),
+            id="forge_key_rotate",
+            replace_existing=True,
+            max_instances=1,
+            coalesce=True,
+        )
         self._scheduler.start()
         self._started = True
         logger.info(
@@ -110,6 +146,9 @@ class Scheduler:
                 "memory_consolidate",
                 "litellm_reconcile",
                 "litellm_anomaly_check",
+                "lessons_digest_monthly",
+                "forge_spend_reconcile",
+                "forge_key_rotate",
             ],
             ingest_hour_utc=ingest_hour,
         )

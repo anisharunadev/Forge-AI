@@ -35,17 +35,18 @@ Skill rules applied
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from jose import jwt
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import DbSession, Principal, require_permission
+from app.api.deps import DbSession, Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.db.models.tenant import Tenant
@@ -190,9 +191,9 @@ async def _mirror_user_into_tenant(
 @audit(action="tenants.create", target_type="tenant")
 async def create_tenant(
     body: TenantCreate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
-    _perm: Principal = require_permission("tenants:write"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("tenants:write"))
 ) -> TenantRead:
     """Create a new workspace and mirror the caller into it as owner.
 
@@ -288,7 +289,7 @@ async def create_tenant(
 @audit(action="tenants.switch", target_type="tenant")
 async def switch_tenant(
     tenant_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> SwitchTenantResponse:
     """Mint a fresh access token scoped to ``tenant_id``.
@@ -370,7 +371,7 @@ async def switch_tenant(
 @router.get("/{tenant_id}", response_model=TenantRead)
 async def get_tenant(
     tenant_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> TenantRead:
     """Minimal read for confirmation UIs (no permission gate — the
@@ -388,6 +389,71 @@ async def get_tenant(
     is_current = str(tenant.id) == principal.tenant_id
     role = "owner" if is_current else "member"
     return _tenant_to_read(tenant, role=role, is_current=is_current)
+
+
+# ---------------------------------------------------------------------------
+# Step-73 — Branding (Settings → Branding tab)
+# ---------------------------------------------------------------------------
+
+
+class BrandingRead(BaseModel):
+    """Per-tenant branding persisted in ``Tenant.settings['branding']`` JSONB.
+
+    Empty fields render as ``None`` so the UI can distinguish
+    "unset" from empty-string.
+    """
+
+    logo_url: str | None
+    primary_color: str | None
+    accent_color: str | None
+    favicon_url: str | None
+    support_email: str | None
+
+
+_BRANDING_DEFAULTS = {
+    "logo_url": None,
+    "primary_color": None,
+    "accent_color": None,
+    "favicon_url": None,
+    "support_email": None,
+}
+
+
+@router.get("/{tenant_id}/branding", response_model=BrandingRead)
+async def get_branding(
+    tenant_id: UUID,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    db: DbSession,
+) -> BrandingRead:
+    tenant = await db.get(Tenant, tenant_id)
+    if tenant is None:
+        raise HTTPException(status_code=404, detail="tenant_not_found")
+    settings = dict(tenant.settings or {})
+    branding = dict(_BRANDING_DEFAULTS, **(settings.get("branding") or {}))
+    return BrandingRead(**branding)
+
+
+@router.patch("/{tenant_id}/branding", response_model=BrandingRead)
+@audit(action="tenants.branding.update", target_type="tenant")
+async def patch_branding(
+    tenant_id: UUID,
+    body: BrandingRead,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    db: DbSession,
+) -> BrandingRead:
+    """Replace the branding block atomically. Audit captures before/after
+    in the standard diff format.
+    """
+    tenant = await db.get(Tenant, tenant_id)
+    if tenant is None:
+        raise HTTPException(status_code=404, detail="tenant_not_found")
+    settings = dict(tenant.settings or {})
+    settings["branding"] = body.model_dump(exclude_unset=True)
+    tenant.settings = settings
+    await db.commit()
+    await db.refresh(tenant)
+    branding = {**_BRANDING_DEFAULTS, **(tenant.settings.get("branding") or {})}
+    return BrandingRead(**branding)
 
 
 __all__ = ["router", "TenantCreate", "TenantRead", "SwitchTenantResponse"]

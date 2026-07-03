@@ -1,12 +1,14 @@
+from typing import Annotated
 """F-016 — Runtime Management admin REST endpoints."""
 
 from dataclasses import asdict
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.runtime import RuntimeHandle, RuntimeMetrics
 from app.services.runtime_management import runtime_management
 
@@ -16,8 +18,8 @@ router = APIRouter(prefix="/runtime", tags=["runtime-management"])
 @router.get("/agents", response_model=list[RuntimeHandle])
 @audit(action="runtime_management.list", target_type="runtime")
 async def list_all_runtimes(
-    principal: Principal,
-    _perm: Principal = require_permission("runtimes:admin"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:admin"))
 ) -> list[RuntimeHandle]:
     from app.schemas.runtime import RuntimeKind, RuntimeState
 
@@ -46,8 +48,8 @@ async def list_all_runtimes(
 @audit(action="runtime_management.restart", target_type="runtime")
 async def restart_runtime(
     handle_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("runtimes:admin"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:admin"))
 ) -> RuntimeHandle:
     new_handle = await runtime_management.restart_runtime(handle_id)
     return _handle_to_schema(new_handle)
@@ -57,8 +59,8 @@ async def restart_runtime(
 @audit(action="runtime_management.stop", target_type="runtime")
 async def stop_runtime_admin(
     handle_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("runtimes:admin"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:admin"))
 ) -> RuntimeHandle:
     handle = await runtime_management.stop_runtime(handle_id)
     return _handle_to_schema(handle)
@@ -67,8 +69,8 @@ async def stop_runtime_admin(
 @router.get("/metrics", response_model=dict)
 @audit(action="runtime_management.metrics", target_type="runtime")
 async def platform_metrics(
-    principal: Principal,
-    _perm: Principal = require_permission("runtimes:admin"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:admin"))
 ) -> dict:
     metrics = await runtime_management.platform_metrics()
     d = asdict(metrics)

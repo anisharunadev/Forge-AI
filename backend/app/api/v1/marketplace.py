@@ -1,14 +1,16 @@
 """F-015 — Connector Marketplace REST endpoints."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.marketplace import (
     MarketplaceConnectorRead,
     MarketplaceInstallRequest,
@@ -24,8 +26,8 @@ router = APIRouter(prefix="/marketplace/connectors", tags=["marketplace"])
 @router.get("", response_model=list[MarketplaceConnectorRead])
 @audit(action="marketplace.list", target_type="marketplace_connector")
 async def list_marketplace(
-    principal: Principal,
-    _perm: Principal = require_permission("marketplace:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("marketplace:read"))
 ) -> list[MarketplaceConnectorRead]:
     rows = await marketplace.list_available()
     return [
@@ -49,8 +51,8 @@ async def list_marketplace(
 @audit(action="marketplace.get", target_type="marketplace_connector")
 async def get_marketplace_entry(
     slug: str,
-    principal: Principal,
-    _perm: Principal = require_permission("marketplace:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("marketplace:read"))
 ) -> MarketplaceConnectorRead:
     try:
         entry = await marketplace.get_details(slug)
@@ -75,8 +77,8 @@ async def get_marketplace_entry(
 async def install_marketplace(
     slug: str,
     body: MarketplaceInstallRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("connectors:create"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:create"))
 ) -> MarketplaceInstallResult:
     try:
         entry, connector = await marketplace.install(

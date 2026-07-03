@@ -10,13 +10,15 @@ Returns: ``IdeaAnalysisRead``
 """
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import IdeaAnalysisRead, IdeaEnhanceRequest
 from app.services.ideation.idea_enhance import idea_enhance_service
 
@@ -28,8 +30,8 @@ router = APIRouter(prefix="/ideation/ideas", tags=["ideation"])
 async def enhance_idea(
     idea_id: UUID,
     body: IdeaEnhanceRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:enhance"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:enhance"))
 ) -> IdeaAnalysisRead:
     try:
         analysis = await idea_enhance_service.enhance(

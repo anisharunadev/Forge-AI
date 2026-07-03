@@ -35,6 +35,17 @@ class AuthenticatedPrincipal:
     roles: list[str]
     raw_claims: dict[str, Any]
 
+    @property
+    def session_id(self) -> str | None:
+        """Session id claim (set by Keycloak/refresh-token chain).
+
+        Routers that talk to ``user_sessions`` resolve the *current*
+        row through this claim; falls back to ``None`` if upstream
+        identity didn't issue one.
+        """
+        value = self.raw_claims.get("forge.session_id")
+        return str(value) if value is not None else None
+
 
 def decode_token(token: str) -> dict[str, Any]:
     """Decode + verify a JWT, raising HTTPException on failure."""

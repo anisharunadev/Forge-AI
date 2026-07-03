@@ -1,13 +1,15 @@
 """F-310 — Acceptance Criteria HTTP endpoints."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.architecture import (
     AcceptanceCriteriaGenerateRequest,
     AcceptanceCriteriaResponse,
@@ -56,8 +58,8 @@ def _context_generator() -> ContextAwareGenerator:
 @audit(action="architecture.acceptance.generate", target_type="acceptance_criteria")
 async def generate_criteria(
     body: AcceptanceCriteriaGenerateRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:acceptance:create"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:acceptance:create"))
 ) -> AcceptanceCriteriaResponse:
     """Produce Given/When/Then criteria from an ADR, contract, or breakdown."""
     try:
@@ -77,8 +79,8 @@ async def generate_criteria(
 @audit(action="architecture.acceptance.get", target_type="acceptance_criteria")
 async def get_criteria(
     criteria_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:acceptance:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:acceptance:read"))
 ) -> AcceptanceCriteriaResponse:
     record = await _acceptance_service()._load_record(criteria_id)
     if record is None or record["tenant_id"] != str(principal.tenant_id):
@@ -94,8 +96,8 @@ async def get_criteria(
 async def link_test(
     criteria_id: UUID,
     body: AcceptanceLinkTestRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:acceptance:update"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:acceptance:update"))
 ) -> AcceptanceCriteriaResponse:
     try:
         record = await _acceptance_service().link_to_test(
@@ -111,9 +113,9 @@ async def link_test(
 @router.get("/coverage", response_model=CoverageReportResponse)
 @audit(action="architecture.coverage.report", target_type="acceptance_criteria")
 async def coverage(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: UUID = Query(...),
-    _perm: Principal = require_permission("architecture:acceptance:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:acceptance:read"))
 ) -> CoverageReportResponse:
     report = await _acceptance_service().get_coverage(
         tenant_id=principal.tenant_id,
@@ -130,8 +132,8 @@ async def coverage(
 async def validate_against_code(
     criteria_id: UUID,
     code_artifact_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:acceptance:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:acceptance:read"))
 ) -> ValidationResultResponse:
     try:
         result = await _acceptance_service().validate_against_code(
@@ -153,7 +155,7 @@ async def validate_against_code(
 async def get_context_usage(
     artifact_id: UUID,
     artifact_type: str = Query(...),
-    principal: Principal = require_permission("architecture:context:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)] = require_permission("architecture:context:read"),
 ) -> ContextUsageResponse:
     refs = await _context_generator().get_context_usage(artifact_id)
     return ContextUsageResponse(

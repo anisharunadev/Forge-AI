@@ -25,7 +25,7 @@ import asyncio
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Any, AsyncIterator
+from typing import Annotated, Any, AsyncIterator
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -36,8 +36,9 @@ from app.agents.sdlc_state import (
     SDLCPhase,
     SDLCState,
 )
-from app.api.deps import Principal, require_permission
+from app.api.deps import DbSession, Principal, require_permission, get_current_principal
 from app.core.security import AuthenticatedPrincipal
+from app.services.audit_service import audit_service
 from app.schemas.sdlc import (
     ApprovalResponseRequest,
     ApprovalResponseResponse,
@@ -157,7 +158,7 @@ def _cost_to_response(summary: CostSummary) -> CostSummaryResponse:
 )
 async def create_run(
     body: SDLCRunCreateRequest,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     manager: SDLCRunManager = RunManagerDep,
 ) -> SDLCRunStateResponse:
     """Start a new SDLC run for a project."""
@@ -178,7 +179,7 @@ async def create_run(
 
 @router.get("", response_model=SDLCRunListResponse)
 async def list_runs(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: UUID | None = Query(default=None),
     status_filter: SDLCPhase | None = Query(default=None, alias="status"),
     manager: SDLCRunManager = RunManagerDep,
@@ -197,7 +198,7 @@ async def list_runs(
 @router.get("/{run_id}", response_model=SDLCRunStateResponse)
 async def get_run(
     run_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     manager: SDLCRunManager = RunManagerDep,
 ) -> SDLCRunStateResponse:
     state = await manager.get_run(run_id)
@@ -209,7 +210,7 @@ async def get_run(
 @router.get("/{run_id}/stream")
 async def stream_run(
     run_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     manager: SDLCRunManager = RunManagerDep,
 ) -> StreamingResponse:
     """SSE endpoint: emit one ``data:`` line per state snapshot.
@@ -248,7 +249,7 @@ async def stream_run(
 async def resume_run(
     run_id: UUID,
     body: ApprovalResponseRequest,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     manager: SDLCRunManager = RunManagerDep,
 ) -> ApprovalResponseResponse:
     state = await manager.get_run(run_id)
@@ -279,7 +280,7 @@ async def resume_run(
 async def cancel_run(
     run_id: UUID,
     body: SDLCancelRequest,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     manager: SDLCRunManager = RunManagerDep,
 ) -> SDLCRunStateResponse:
     state = await manager.get_run(run_id)
@@ -292,7 +293,7 @@ async def cancel_run(
 @router.get("/{run_id}/artifacts")
 async def list_artifacts(
     run_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     manager: SDLCRunManager = RunManagerDep,
 ) -> dict[str, Any]:
     state = await manager.get_run(run_id)
@@ -305,13 +306,56 @@ async def list_artifacts(
 @router.get("/{run_id}/cost", response_model=CostSummaryResponse)
 async def get_cost(
     run_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     manager: SDLCRunManager = RunManagerDep,
 ) -> CostSummaryResponse:
     state = await manager.get_run(run_id)
     if state is None or state.tenant_id != principal.tenant_id:
         raise HTTPException(status_code=404, detail="run_not_found")
     return _cost_to_response(await manager.get_run_cost(run_id))
+
+
+@router.get("/{run_id}/explainability")
+async def get_run_explainability(
+    run_id: UUID,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    db: DbSession,
+    manager: SDLCRunManager = RunManagerDep,
+) -> dict[str, Any]:
+    """GET /api/v1/runs/{id}/explainability — CodeRabbit 5-question bundle.
+
+    Recomputed on every request from existing tables (Rule 4 — no
+    schema migration). Emits an ``audit_event`` for the access itself
+    so the read is auditable (Rule 6).
+    """
+    # Soft import — the explainability service is only used here, so
+    # we keep it out of the module top-level import set until other
+    # endpoints need it.
+    from app.services.explainability import RunExplainabilityService
+
+    state = await manager.get_run(run_id)
+    if state is None or state.tenant_id != principal.tenant_id:
+        raise HTTPException(status_code=404, detail="run_not_found")
+
+    service = RunExplainabilityService(manager)
+    bundle = await service.compute(
+        db,
+        run_id=run_id,
+        tenant_id=principal.tenant_id,
+        project_id=state.project_id,
+    )
+
+    await audit_service.record(
+        tenant_id=principal.tenant_id,
+        project_id=state.project_id,
+        actor_id=principal.user_id,
+        action="runs.explainability.get",
+        target_type="sdlc_run",
+        target_id=str(run_id),
+        payload={"grade": bundle.grade, "schema_version": bundle.schema_version},
+    )
+
+    return bundle.model_dump(mode="json")
 
 
 def _sse_format(payload: dict[str, Any]) -> bytes:

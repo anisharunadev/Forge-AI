@@ -24,6 +24,8 @@ HTTP request contexts (e.g. sync jobs, seed scripts).
 from __future__ import annotations
 
 import os
+import time
+from functools import lru_cache
 from typing import Any
 
 import httpx
@@ -259,6 +261,24 @@ async def get_model_info(model_name: str) -> dict[str, Any]:
     return result if isinstance(result, dict) else {}
 
 
+# ponytail: lru_cache on int day-bucket = 24h TTL with zero infra; add Redis
+# when we need cross-process invalidation or per-tenant eviction.
+@lru_cache(maxsize=4)
+async def _get_cost_map_cached(_day_bucket: int) -> dict[str, Any]:
+    """Raw call to `/public/litellm_model_cost_map` (no auth)."""
+    async with httpx.AsyncClient(timeout=30) as client:
+        res = await client.get(
+            f"{LITELLM_BASE_URL}/public/litellm_model_cost_map"
+        )
+        res.raise_for_status()
+        return res.json() if res.content else {}
+
+
+async def get_cost_map() -> dict[str, Any]:
+    """Public LiteLLM cost map, cached for 24h keyed on UTC day bucket."""
+    return await _get_cost_map_cached(int(time.time() // 86400))
+
+
 # ---------------------------------------------------------------------------
 # MCP servers (already used by admin_llm_gateway.py)
 # ---------------------------------------------------------------------------
@@ -286,5 +306,6 @@ __all__ = [
     "update_guardrail",
     "list_models",
     "get_model_info",
+    "get_cost_map",
     "list_mcp_tools",
 ]

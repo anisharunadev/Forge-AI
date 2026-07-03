@@ -1,11 +1,13 @@
 """F-010 — Artifacts (typed, append-only)."""
 
 from __future__ import annotations
+from typing import Annotated
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Depends
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.artifact import ArtifactStatus
 from app.schemas.artifacts import ArtifactCreate, ArtifactRead
 from app.services.artifact_registry import artifact_registry
@@ -16,8 +18,8 @@ router = APIRouter(prefix="/artifacts", tags=["artifacts"])
 @router.get("", response_model=list[ArtifactRead])
 @audit(action="artifacts.list", target_type="artifact")
 async def list_artifacts(
-    principal: Principal,
-    _perm: Principal = require_permission("artifacts:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("artifacts:read")),
     artifact_type: str | None = None,
 ) -> list[ArtifactRead]:
     """List active artifacts (optionally filtered by type).
@@ -60,8 +62,8 @@ async def _list_active_all(principal) -> list:
 @audit(action="artifacts.create", target_type="artifact")
 async def create_artifact(
     body: ArtifactCreate,
-    principal: Principal,
-    _perm: Principal = require_permission("artifacts:create"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("artifacts:create"))
 ) -> ArtifactRead:
     artifact = await artifact_registry.create(
         tenant_id=principal.tenant_id,

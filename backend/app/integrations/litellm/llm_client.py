@@ -258,6 +258,21 @@ class ForgeLLMClient:
             actor_id=actor_id,
         )
 
+        # step-77 P2 — Guardrail pre-call envelope (AC #1, #2, #5).
+        # Resolves the effective guardrail set (Slice 2 will swap this
+        # for a policies-driven resolver) and applies pre_call_input +
+        # pre_call_llm in order. On block: short-circuits with
+        # LLMUnavailableError wrapping GuardrailViolation; on mask:
+        # mutates ``messages`` so the model sees the sanitized text.
+        messages = await self._enforce_pre_call_guardrails(
+            messages=messages,
+            tenant_id=tenant_id,
+            project_id=project_id,
+            actor_id=actor_id,
+            forge_trace_id=forge_trace_id,
+            stream=stream,
+        )
+
         # 4. Downstream call.
         base_client = self._resolve_base_client()
         if base_client is None:
@@ -321,6 +336,19 @@ class ForgeLLMClient:
             raise LLMUnavailableError(str(exc)) from exc
 
         latency_ms = int((time.monotonic() - started) * 1000)
+
+        # step-77 P2 — Guardrail post-call envelope (AC #3, secret-leak block).
+        # Inspects the final assistant message; on block raises a typed
+        # error (and emits the audit row) BEFORE the spend record so the
+        # blocked call still shows up in the timeline.
+        await self._enforce_post_call_guardrails(
+            response_body=response_body,
+            tenant_id=tenant_id,
+            project_id=project_id,
+            actor_id=actor_id,
+            forge_trace_id=forge_trace_id,
+        )
+
         await self._record_successful_call(
             tenant_id=tenant_id,
             project_id=project_id,
@@ -645,6 +673,221 @@ class ForgeLLMClient:
                 )
 
         return _gen()
+
+    # ------------------------------------------------------------------
+    # step-77 P2 — Guardrail envelope helpers
+    # ------------------------------------------------------------------
+
+    async def _enforce_pre_call_guardrails(
+        self,
+        *,
+        messages: list[dict[str, Any]],
+        tenant_id: UUID | str,
+        project_id: UUID | str | None,
+        actor_id: UUID | str | None,
+        forge_trace_id: str,
+        stream: bool,
+    ) -> list[dict[str, Any]]:
+        """Apply pre_call_input + pre_call_llm guardrails to the request.
+
+        Returns a possibly-mutated copy of ``messages`` when masking
+        occurred (e.g. PII redaction). On block: raises
+        :class:`LLMUnavailableError` wrapping a :class:`GuardrailViolation`
+        so the chat short-circuits before the model call (AC #2).
+
+        Ponytail: stream chats skip the ``pre_call_llm`` kind because
+        it requires running a small model; we don't want to incur
+        a second model call before the user's first response. The
+        spec doesn't require pre_call_llm for streams; Slice 4 can
+        add it back if the per-chunk during_call hook needs it.
+        """
+        try:
+            from app.services.guardrails_service import (
+                GuardrailViolation,
+                guardrails_service,
+            )
+        except Exception:  # noqa: BLE001 — sibling service not loaded yet
+            return messages
+
+        # Resolve effective guardrail set once per request. Slice 1
+        # uses the per-tenant mirror via guardrail_sync; Slice 2 swaps
+        # in the policies resolver.
+        try:
+            effective = await guardrails_service.resolve_effective(
+                tenant_id=tenant_id, project_id=project_id
+            )
+        except Exception:  # noqa: BLE001 — never let resolve mask the call
+            logger.exception(
+                "litellm.guardrail_resolve_failed", tenant_id=str(tenant_id)
+            )
+            return messages
+        if not effective:
+            return messages
+
+        kinds_to_run = ["pre_call_input", "pre_call_llm"] if not stream else ["pre_call_input"]
+        masked_messages = list(messages)
+        for kind in kinds_to_run:
+            # Pre_call_llm acts on the full history (text-only side);
+            # pre_call_input acts on the last user message.
+            if kind == "pre_call_input":
+                target_text = self._last_user_text(masked_messages)
+                if not target_text:
+                    continue
+                try:
+                    result = await guardrails_service.apply(
+                        text=target_text,
+                        guardrail_names=list(effective),
+                        kind="pre_call_input",  # type: ignore[arg-type]
+                        request_id=forge_trace_id,
+                        tenant_id=tenant_id,
+                        project_id=project_id,
+                        actor_id=actor_id,
+                    )
+                except GuardrailViolation as v:
+                    # The service already wrote the audit row + bus
+                    # event; we just propagate as a typed error.
+                    raise LLMUnavailableError(
+                        f"guardrail {v.guardrail_name} blocked pre_call_input: {v.reason}"
+                    ) from v
+                if result.is_masked and result.text != target_text:
+                    masked_messages = self._replace_last_user_text(
+                        masked_messages, result.text
+                    )
+            else:
+                # pre_call_llm: best-effort single apply over the joined history.
+                joined = "\n".join(
+                    str(m.get("content") or "") for m in masked_messages
+                )
+                if not joined:
+                    continue
+                try:
+                    await guardrails_service.apply(
+                        text=joined,
+                        guardrail_names=list(effective),
+                        kind="pre_call_llm",  # type: ignore[arg-type]
+                        request_id=forge_trace_id,
+                        tenant_id=tenant_id,
+                        project_id=project_id,
+                        actor_id=actor_id,
+                    )
+                except GuardrailViolation as v:
+                    raise LLMUnavailableError(
+                        f"guardrail {v.guardrail_name} blocked pre_call_llm: {v.reason}"
+                    ) from v
+        return masked_messages
+
+    async def _enforce_post_call_guardrails(
+        self,
+        *,
+        response_body: dict[str, Any],
+        tenant_id: UUID | str,
+        project_id: UUID | str | None,
+        actor_id: UUID | str | None,
+        forge_trace_id: str,
+    ) -> None:
+        """Apply post_call_output guardrails to the model response.
+
+        On block: writes the audit row + bus event, then raises
+        :class:`LLMUnavailableError` so the caller sees the typed
+        error (AC #3). The LiteLLMCallRecord is NOT written when
+        blocked — only the guardrail audit row — so spend stays
+        accurate.
+        """
+        try:
+            from app.services.guardrails_service import (
+                GuardrailViolation,
+                guardrails_service,
+            )
+        except Exception:  # noqa: BLE001
+            return
+
+        try:
+            effective = await guardrails_service.resolve_effective(
+                tenant_id=tenant_id, project_id=project_id
+            )
+        except Exception:  # noqa: BLE001
+            return
+        if not effective:
+            return
+
+        output_text = self._first_assistant_text(response_body)
+        if not output_text:
+            return
+        try:
+            await guardrails_service.apply(
+                text=output_text,
+                guardrail_names=list(effective),
+                kind="post_call_output",  # type: ignore[arg-type]
+                request_id=forge_trace_id,
+                tenant_id=tenant_id,
+                project_id=project_id,
+                actor_id=actor_id,
+            )
+        except GuardrailViolation as v:
+            raise LLMUnavailableError(
+                f"guardrail {v.guardrail_name} blocked post_call_output: {v.reason}"
+            ) from v
+
+    @staticmethod
+    def _last_user_text(messages: list[dict[str, Any]]) -> str:
+        for m in reversed(messages):
+            if m.get("role") == "user":
+                content = m.get("content")
+                if isinstance(content, str):
+                    return content
+                if isinstance(content, list):
+                    parts = [
+                        part.get("text", "")
+                        for part in content
+                        if isinstance(part, dict) and part.get("type") == "text"
+                    ]
+                    return "\n".join(parts)
+        return ""
+
+    @staticmethod
+    def _replace_last_user_text(
+        messages: list[dict[str, Any]], new_text: str
+    ) -> list[dict[str, Any]]:
+        out = list(messages)
+        for i in range(len(out) - 1, -1, -1):
+            if out[i].get("role") == "user":
+                content = out[i].get("content")
+                if isinstance(content, str):
+                    out[i] = {**out[i], "content": new_text}
+                elif isinstance(content, list):
+                    replaced = False
+                    new_parts = []
+                    for part in content:
+                        if (
+                            not replaced
+                            and isinstance(part, dict)
+                            and part.get("type") == "text"
+                        ):
+                            new_parts.append({**part, "text": new_text})
+                            replaced = True
+                        else:
+                            new_parts.append(part)
+                    out[i] = {**out[i], "content": new_parts}
+                return out
+        return out
+
+    @staticmethod
+    def _first_assistant_text(response_body: dict[str, Any]) -> str:
+        choices = response_body.get("choices") or []
+        if not choices:
+            return ""
+        message = (choices[0] or {}).get("message") or {}
+        content = message.get("content")
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            parts = [
+                part.get("text", "")
+                for part in content
+                if isinstance(part, dict) and part.get("type") == "text"
+            ]
+            return "\n".join(parts)
+        return ""
 
     # ------------------------------------------------------------------
     # Recording helpers

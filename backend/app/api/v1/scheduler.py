@@ -18,12 +18,13 @@ identity, target job id, and outcome are all captured.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -82,8 +83,8 @@ def _list_jobs() -> list[dict[str, Any]]:
 @router.get("/jobs")
 @audit(action="scheduler.list", target_type="scheduler_job")
 async def list_jobs(
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
 ) -> dict[str, Any]:
     """Return registered jobs (id, name, next_run_time, trigger)."""
     return {"jobs": _list_jobs()}
@@ -93,8 +94,8 @@ async def list_jobs(
 @audit(action="scheduler.run", target_type="scheduler_job")
 async def run_job(
     job_id: str,
-    principal: Principal,
-    _perm: Principal = require_permission("ideation:enhance"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:enhance"))
 ) -> dict[str, Any]:
     """Run ``job_id`` immediately and return a status payload.
 

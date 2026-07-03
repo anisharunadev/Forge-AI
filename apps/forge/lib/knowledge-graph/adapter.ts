@@ -44,7 +44,6 @@
 
 import type { KGNode, KGEdge } from '@/lib/knowledge-graph/types';
 import {
-  SAMPLE_GRAPH,
   type SampleNode,
   type SampleEdge,
   type NodeKind,
@@ -270,22 +269,3 @@ export const adapter = {
     };
   },
 } as const;
-
-// ---------------------------------------------------------------------------
-// Offline fallback helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Return the offline SAMPLE_GRAPH nodes/edges verbatim — used when the
- * backend query errors (auth not ready, network down, dev-mode without
- * the orchestrator). The shape already matches `SampleNode[]` /
- * `SampleEdge[]` so it slots in with no transformation.
- *
- * Re-exported here so the page only needs to import one path.
- */
-export function getOfflineGraph(): {
-  nodes: ReadonlyArray<SampleNode>;
-  edges: ReadonlyArray<SampleEdge>;
-} {
-  return SAMPLE_GRAPH;
-}

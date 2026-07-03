@@ -6,6 +6,10 @@
  * Grid of sync destinations (Jira, Confluence, AI agent via MCP, Slack,
  * Teams, email digest, GitHub mirror). Mirrors the layout of
  * `<SourcesTab>` for visual consistency.
+ *
+ * TODO(step-7x): register `GET /api/v1/ideation/destinations` and
+ * replace the `DESTINATIONS` fixture import below with a TanStack
+ * hook. No backend endpoint exists today (verified Step-69).
  */
 
 import * as React from 'react';

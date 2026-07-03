@@ -6,14 +6,16 @@ already calls (`GET /connectors/credentials`, `POST`, `/{id}/reveal`,
 ``connectors.py`` so the URL space stays consistent.
 """
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import Response
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.connector_credentials import (
     ConnectorCredentialCreate,
     ConnectorCredentialRead,
@@ -27,9 +29,9 @@ router = APIRouter(prefix="/connectors/credentials", tags=["connectors"])
 @router.get("", response_model=list[ConnectorCredentialRead])
 @audit(action="connector.credentials.list", target_type="connector_credential")
 async def list_credentials(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     connector_id: UUID | None = Query(default=None),
-    _perm: Principal = require_permission("connectors:read"),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:read"))
 ) -> list[ConnectorCredentialRead]:
     rows = await credential_vault.list_for_tenant(
         tenant_id=principal.tenant_id,
@@ -42,8 +44,8 @@ async def list_credentials(
 @audit(action="connector.credentials.create", target_type="connector_credential")
 async def create_credential(
     body: ConnectorCredentialCreate,
-    principal: Principal,
-    _perm: Principal = require_permission("connectors:create"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:create"))
 ) -> ConnectorCredentialRead:
     cred = await credential_vault.create(
         tenant_id=principal.tenant_id,
@@ -65,8 +67,8 @@ async def create_credential(
 @audit(action="connector.credentials.reveal", target_type="connector_credential")
 async def reveal_credential(
     credential_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("connectors:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:read"))
 ) -> ConnectorCredentialReveal:
     try:
         result = await credential_vault.reveal(
@@ -89,8 +91,8 @@ async def reveal_credential(
 async def rotate_credential(
     credential_id: UUID,
     body: dict,
-    principal: Principal,
-    _perm: Principal = require_permission("connectors:update"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:update"))
 ) -> ConnectorCredentialRead:
     new_secret = str(body.get("secret") or "")
     if not new_secret:
@@ -111,15 +113,14 @@ async def rotate_credential(
 
 @router.delete(
     "/{credential_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
     response_class=Response,
     response_model=None,
 )
 @audit(action="connector.credentials.revoke", target_type="connector_credential")
 async def revoke_credential(
     credential_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("connectors:delete"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:delete"))
 ) -> None:
     try:
         await credential_vault.revoke(

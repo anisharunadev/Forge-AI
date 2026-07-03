@@ -36,6 +36,8 @@ import type {
   WorkflowStepResult,
 } from '@/lib/workflows/types';
 import { cn } from '@/lib/utils';
+import { ExplainabilityPanel } from '@/components/runs/ExplainabilityPanel';
+import { useRunExplainability } from '@/lib/hooks/useRuns';
 
 const STATUS_TONE: Record<string, 'emerald' | 'amber' | 'rose' | 'cyan' | 'idle'> = {
   queued: 'idle',
@@ -72,6 +74,13 @@ export function WorkflowRunDetail() {
   const resume = useResumeWorkflowRun();
   const { events, status: streamStatus } = useRunLiveEvents(id);
   const { data: budget } = useWorkflowBudget(run?.workflow_id ?? null);
+
+  // Step-64 Sub-step A: explainability tab lives at the rightmost end of the
+  // strip. The tab strip is introduced here (the prior version rendered the
+  // detail body as a single grid). `grade` is fetched via the explainability
+  // hook so the tab badge can colour the dot against A..F.
+  const [activeTab, setActiveTab] = React.useState<'overview' | 'explainability'>('overview');
+  const { data: explainability } = useRunExplainability(id);
 
   if (isLoading) {
     return (
@@ -170,44 +179,136 @@ export function WorkflowRunDetail() {
 
       <BudgetMeter budget={budget} />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_400px]">
-        {/* Left: node timeline */}
-        <section
-          className="rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5"
-          data-testid="run-timeline"
-        >
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--fg-tertiary)]">
-            Node execution
-          </h2>
-          <NodeTimeline run={run} />
-        </section>
+      <DetailTabs
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        grade={explainability?.grade ?? null}
+      />
 
-        {/* Right: metrics + live log */}
-        <div className="flex flex-col gap-4">
+      {activeTab === 'overview' ? (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_400px]">
+          {/* Left: node timeline */}
           <section
             className="rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5"
-            data-testid="run-metrics"
+            data-testid="run-timeline"
           >
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--fg-tertiary)]">
-              Metrics
+              Node execution
             </h2>
-            <RunMetrics run={run} />
+            <NodeTimeline run={run} />
           </section>
-          <section
-            className="flex min-h-0 flex-1 flex-col rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5"
-            data-testid="run-log"
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--fg-tertiary)]">
-                Live log
+
+          {/* Right: metrics + live log */}
+          <div className="flex flex-col gap-4">
+            <section
+              className="rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5"
+              data-testid="run-metrics"
+            >
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--fg-tertiary)]">
+                Metrics
               </h2>
-              <span className="text-[11px] text-[var(--fg-tertiary)]">{events.length} events</span>
-            </div>
-            <LiveLog events={events} />
-          </section>
+              <RunMetrics run={run} />
+            </section>
+            <section
+              className="flex min-h-0 flex-1 flex-col rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5"
+              data-testid="run-log"
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--fg-tertiary)]">
+                  Live log
+                </h2>
+                <span className="text-[11px] text-[var(--fg-tertiary)]">{events.length} events</span>
+              </div>
+              <LiveLog events={events} />
+            </section>
+          </div>
         </div>
-      </div>
+      ) : (
+        <ExplainabilityPanel runId={id} />
+      )}
     </div>
+  );
+}
+
+type GradeBadge = 'A' | 'B' | 'C' | 'D' | 'F' | null;
+
+function DetailTabs({
+  activeTab,
+  onTabChange,
+  grade,
+}: {
+  activeTab: 'overview' | 'explainability';
+  onTabChange: (tab: 'overview' | 'explainability') => void;
+  grade: GradeBadge;
+}) {
+  // Step-64 Sub-step A: badge dots make low-quality runs visible at a glance.
+  // The dot tone tracks the same rubric as ExplainabilityPanel's grade badge.
+  const badgeTone =
+    grade === 'D' || grade === 'F'
+      ? 'bg-[var(--accent-rose)]'
+      : grade === 'C'
+        ? 'bg-[var(--accent-amber)]'
+        : null;
+  return (
+    <div
+      className="flex gap-1 border-b border-[var(--border-subtle)]"
+      role="tablist"
+      data-testid="run-detail-tabs"
+    >
+      <TabButton
+        label="Overview"
+        active={activeTab === 'overview'}
+        onClick={() => onTabChange('overview')}
+        testId="run-tab-overview"
+      />
+      <TabButton
+        label="Explainability"
+        active={activeTab === 'explainability'}
+        onClick={() => onTabChange('explainability')}
+        testId="run-tab-explainability"
+        badge={badgeTone}
+      />
+    </div>
+  );
+}
+
+function TabButton({
+  label,
+  active,
+  onClick,
+  testId,
+  badge,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  testId: string;
+  badge: string | null;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      data-testid={testId}
+      data-active={active}
+      className={cn(
+        'relative -mb-px inline-flex items-center gap-2 border-b-2 px-4 py-2 text-xs font-medium uppercase tracking-widest transition-colors',
+        active
+          ? 'border-[var(--accent-cyan)] text-[var(--fg-primary)]'
+          : 'border-transparent text-[var(--fg-tertiary)] hover:text-[var(--fg-secondary)]',
+      )}
+    >
+      {label}
+      {badge ? (
+        <span
+          aria-hidden="true"
+          className={cn('h-1.5 w-1.5 rounded-full', badge)}
+          data-testid={`${testId}-dot`}
+        />
+      ) : null}
+    </button>
   );
 }
 

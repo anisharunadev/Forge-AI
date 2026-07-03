@@ -223,3 +223,180 @@ export interface AuditEvent {
   readonly payload: Record<string, unknown>;
   readonly occurredAt: string;
 }
+
+
+// ---------------------------------------------------------------------------
+// Step-73 — typed shapes mirroring backend Pydantic schemas
+// ---------------------------------------------------------------------------
+
+export interface ApiToken {
+  readonly id: string;
+  readonly name: string;
+  readonly scope: string;
+  readonly fingerprintSha256: string;
+  readonly createdAt: string;
+  readonly lastUsedAt: string | null;
+  readonly expiresAt: string | null;
+  readonly revokedAt: string | null;
+}
+
+export interface ApiTokenCreated extends ApiToken {
+  readonly secret: string;
+}
+
+export interface Session {
+  readonly id: string;
+  readonly label: string;
+  readonly userAgent: string;
+  readonly ip: string;
+  readonly lastSeenAt: string;
+  readonly createdAt: string;
+  readonly isCurrent: boolean;
+  readonly revokedAt: string | null;
+}
+
+export interface NotificationPrefs {
+  readonly emailDigest: boolean;
+  readonly inapp: boolean;
+  readonly slackDm: boolean;
+  readonly webhookUrl: string | null;
+}
+
+export interface Branding {
+  readonly logoUrl: string | null;
+  readonly primaryColor: string | null;
+  readonly accentColor: string | null;
+  readonly faviconUrl: string | null;
+  readonly supportEmail: string | null;
+}
+
+export interface SsoConfig {
+  readonly enabled: boolean;
+  readonly provider: string;
+  readonly issuer: string | null;
+  readonly clientId: string | null;
+  readonly scopes: ReadonlyArray<string>;
+}
+
+export interface BillingQuota {
+  readonly plan: string;
+  readonly monthlyUsdLimit: number;
+  readonly usedUsd: number;
+  readonly periodStart: string;
+  readonly periodEnd: string;
+}
+
+export type FeatureFlagValue = boolean | number | string;
+export type FeatureFlagType = 'bool' | 'int' | 'str';
+
+export interface FeatureFlag {
+  readonly key: string;
+  readonly value: FeatureFlagValue;
+  readonly type: FeatureFlagType;
+  readonly description: string;
+  readonly updatedAt: string | null;
+}
+
+export interface SeedManifestSummary {
+  readonly name: string;
+  readonly description: string;
+  readonly status: string;
+}
+
+// ---------------------------------------------------------------------------
+// Step-73 — Webhooks (backend: /api/v1/webhooks/* via /webhooks proxy)
+// ---------------------------------------------------------------------------
+
+export type WebhookDirection = 'inbound' | 'outbound';
+export type WebhookAuthType = 'none' | 'basic' | 'bearer' | 'hmac' | 'signature';
+export type WebhookStatus = 'active' | 'paused' | 'failing';
+
+export interface Webhook {
+  readonly id: string;
+  readonly name: string;
+  readonly direction: WebhookDirection;
+  readonly url: string | null;
+  readonly events: ReadonlyArray<string>;
+  readonly authType: WebhookAuthType;
+  readonly status: WebhookStatus;
+  readonly lastTriggeredAt: string | null;
+  readonly lastDeliveryStatus: string | null;
+  readonly successCount24h: number;
+  readonly errorCount24h: number;
+  readonly createdAt: string;
+}
+
+export interface WebhookCreate {
+  readonly name: string;
+  readonly direction: WebhookDirection;
+  readonly url?: string | null;
+  readonly events: ReadonlyArray<string>;
+  readonly authType: WebhookAuthType;
+  readonly authSecret?: string | null;
+}
+
+export interface WebhookUpdate {
+  readonly name?: string;
+  readonly url?: string | null;
+  readonly events?: ReadonlyArray<string>;
+  readonly authType?: WebhookAuthType;
+  readonly authSecret?: string | null;
+  readonly status?: WebhookStatus;
+}
+
+export interface WebhookTestResult {
+  readonly status: string;
+  readonly responseCode: number;
+  readonly message: string;
+}
+
+export interface WebhookDelivery {
+  readonly id: string;
+  readonly webhookId: string;
+  readonly event: string;
+  readonly status: string;
+  readonly responseCode: number | null;
+  readonly durationMs: number;
+  readonly attemptedAt: string;
+  readonly payloadPreview: string;
+  readonly errorMessage: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Step-73 — AI Gateway (backend: /admin/llm-gateway/*)
+// ---------------------------------------------------------------------------
+
+export interface AIGatewayModel {
+  readonly name: string;
+  readonly provider: string;
+  readonly maxTokens: number | null;
+  readonly maxInputTokens: number | null;
+  readonly inputCost: number;
+  readonly outputCost: number;
+}
+
+export interface AIGatewayMcpServer {
+  readonly id: string;
+  readonly name: string;
+  readonly transport: string;
+  readonly command: string;
+  readonly url: string;
+  readonly scopes: ReadonlyArray<string>;
+  readonly status: string;
+}
+
+export interface AIGatewayHealth {
+  readonly healthy: boolean;
+  readonly lastCheckAt: string | null;
+  readonly lastOkAt: string | null;
+  readonly lastFailAt: string | null;
+  readonly consecutiveFailures: number;
+  readonly lastError: string | null;
+}
+
+export interface AIGatewaySpend {
+  readonly teamId: string | null;
+  readonly teamAlias: string | null;
+  readonly spend: number;
+  readonly maxBudget: number;
+}

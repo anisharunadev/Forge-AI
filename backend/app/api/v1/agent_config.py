@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Annotated, Optional
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from app.api.deps import DbSession, Principal
+from app.api.deps import DbSession, Principal, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.agent import Agent
 from app.db.models.agent_config import AgentConfig
 
@@ -63,7 +64,7 @@ def _to_read(cfg: AgentConfig, agent: Agent) -> AgentConfigRead:
 @audit(action="agent_config.list", target_type="project")
 async def list_agent_config(
     project_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> list[AgentConfigRead]:
     """List every project-level agent configuration."""
@@ -84,7 +85,7 @@ async def list_agent_config(
 async def get_agent_config(
     project_id: UUID,
     agent_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> AgentConfigRead:
     """Read the project config for one agent."""
@@ -111,7 +112,7 @@ async def update_agent_config(
     project_id: UUID,
     agent_id: UUID,
     body: AgentConfigUpdate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> AgentConfigRead:
     """Upsert the project config for one agent."""

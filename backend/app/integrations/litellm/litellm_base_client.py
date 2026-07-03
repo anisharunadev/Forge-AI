@@ -25,6 +25,7 @@ caller-supplied Virtual Key).
 
 from __future__ import annotations
 
+import json
 from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator
 from uuid import UUID
@@ -33,6 +34,7 @@ import httpx
 
 from app.core.config import settings
 from app.core.logging import get_logger
+from app.integrations.litellm.rbac_client import RBACClientGroup
 
 try:  # pragma: no cover — telemetry is optional at import time
     from app.core.telemetry import get_tracer
@@ -53,6 +55,17 @@ _DEFAULT_TIMEOUT_SECONDS: float = 60.0
 
 #: Path of the LiteLLM Proxy liveness endpoint (no auth required).
 _HEALTH_LIVELINESS_PATH: str = "/health/liveliness"
+
+#: step-75 Phase 1 — readiness probe (auth required). Returns the typed
+#: status payload used by /api/forge/health and by main.py lifespan
+#: boot-validation. Spec line 64: 200 + status=healthy → ok; 401 →
+#: fail-fast.
+_HEALTH_READINESS_PATH: str = "/health/readiness"
+
+#: step-75 Phase 1 — capability discovery endpoint. Called once at
+#: boot per spec line 95; the route count is logged and emitted on
+#: the `forge.auth.config_loaded` audit event.
+_ROUTES_PATH: str = "/routes"
 
 #: User-Agent string attached to every outgoing request. Makes the
 #: proxy access log and any backend tracing immediately recognizable.
@@ -117,6 +130,9 @@ class LiteLLMBaseClient:
     ) -> None:
         self._base_url = (base_url or settings.litellm_proxy_url).rstrip("/")
         self._timeout = timeout
+        # Lazy: opened on first use via _require_client(). ``async with``
+        # remains the canonical lifecycle but a bare instance is now
+        # usable (closes on GC or explicit ``await client.aclose()``).
         self._client: httpx.AsyncClient | None = None
 
     # ------------------------------------------------------------------
@@ -124,26 +140,31 @@ class LiteLLMBaseClient:
     # ------------------------------------------------------------------
 
     async def __aenter__(self) -> "LiteLLMBaseClient":
-        self._client = httpx.AsyncClient(
-            base_url=self._base_url,
-            timeout=self._timeout,
-            headers=_admin_headers(),
-        )
+        self._require_client()  # open lazily
         logger.debug("litellm_base.client_opened", base_url=self._base_url)
         return self
 
     async def __aexit__(self, *_exc: Any) -> None:
+        # No-op: the pool is owned by the instance. ``aclose()`` is
+        # explicit for callers that want to release the pool early.
+        return None
+
+    async def aclose(self) -> None:
+        """Explicitly close the underlying httpx pool."""
         if self._client is not None:
             await self._client.aclose()
             self._client = None
             logger.debug("litellm_base.client_closed")
 
     def _require_client(self) -> httpx.AsyncClient:
+        """Return the pooled httpx client, opening it lazily if needed."""
         if self._client is None:
-            raise RuntimeError(
-                "LiteLLMBaseClient must be used as an async context manager "
-                "before admin_client / chat_client can be accessed."
+            self._client = httpx.AsyncClient(
+                base_url=self._base_url,
+                timeout=self._timeout,
+                headers=_admin_headers(),
             )
+            logger.debug("litellm_base.client_opened", base_url=self._base_url)
         return self._client
 
     # ------------------------------------------------------------------
@@ -160,6 +181,19 @@ class LiteLLMBaseClient:
         auth.
         """
         return self._require_client()
+
+    # ------------------------------------------------------------------
+    # step-78 F12 — typed method groups per Phase 3 feature
+    # ------------------------------------------------------------------
+
+    @property
+    def rbac(self) -> RBACClientGroup:
+        """F12 RBAC method group — org/team/user/project/customer proxy.
+
+        Returns a fresh wrapper on each access; the wrapper is
+        stateless so the cost is just a constructor call.
+        """
+        return RBACClientGroup(self._require_client())
 
     def chat_client(
         self,
@@ -201,6 +235,152 @@ class LiteLLMBaseClient:
             await client.aclose()
 
     # ------------------------------------------------------------------
+    # Transport — chat / embed / list_models / virtual key (F-829j)
+    #
+    # These methods are the contract :class:`ForgeLLMClient` relies on.
+    # They were missing from Phase A and would AttributeError on the
+    # first chat/embed call. Filled in here, using the existing
+    # ``chat_session`` / ``admin_client`` overlays so per-tenant auth
+    # and the shared connection pool are preserved.
+    # ------------------------------------------------------------------
+
+    async def chat(
+        self,
+        *,
+        messages: list[dict[str, Any]],
+        model: str,
+        virtual_key: str,
+        forge_trace_id: str | None,
+        stream: bool = False,
+        extra_kwargs: dict[str, Any] | None = None,
+    ) -> tuple[dict[str, Any], Any]:
+        """POST /v1/chat/completions. Returns ``(body, headers)``.
+
+        Non-streaming only — for SSE use :meth:`chat_stream`.
+        """
+        body: dict[str, Any] = {
+            "model": model,
+            "messages": messages,
+            "stream": stream,
+            **(extra_kwargs or {}),
+        }
+        async with self.chat_session(virtual_key, trace_id=forge_trace_id) as client:
+            response = await client.post("/v1/chat/completions", json=body)
+            response.raise_for_status()
+            return response.json(), response.headers
+
+    async def chat_stream(
+        self,
+        *,
+        messages: list[dict[str, Any]],
+        model: str,
+        virtual_key: str,
+        forge_trace_id: str | None,
+        extra_kwargs: dict[str, Any] | None = None,
+    ) -> AsyncIterator[tuple[dict[str, Any], Any]]:
+        """Stream chat completions, yielding ``(chunk, headers)`` tuples.
+
+        Mirrors the legacy SSE decoder in
+        ``app/services/litellm_client.py:_chat_stream`` — strips the
+        ``data:`` prefix, parses each line as JSON, and stops on
+        ``[DONE]``. Bad lines are skipped (logged at debug) so a
+        transient decode error doesn't kill the stream.
+        """
+        body: dict[str, Any] = {
+            "model": model,
+            "messages": messages,
+            "stream": True,
+            **(extra_kwargs or {}),
+        }
+        async with self.chat_session(virtual_key, trace_id=forge_trace_id) as client:
+            async with client.stream(
+                "POST", "/v1/chat/completions", json=body
+            ) as response:
+                response.raise_for_status()
+                async for line in response.aiter_lines():
+                    if not line or not line.startswith("data:"):
+                        continue
+                    chunk_str = line[len("data:"):].strip()
+                    if chunk_str == "[DONE]":
+                        break
+                    try:
+                        yield json.loads(chunk_str), response.headers
+                    except Exception:  # noqa: BLE001 — skip malformed
+                        logger.debug(
+                            "litellm_base.stream_decode_skip", line=chunk_str[:120]
+                        )
+
+    async def embed(
+        self,
+        *,
+        texts: list[str],
+        model: str,
+        virtual_key: str,
+        forge_trace_id: str | None,
+    ) -> tuple[dict[str, Any], Any]:
+        """POST /v1/embeddings. Returns ``(body, headers)``.
+
+        Caller extracts ``body["data"][i]["embedding"]`` for the
+        vectors — kept in the body form so cost + token usage on
+        ``body["usage"]`` is preserved for the caller to record.
+        """
+        body = {"model": model, "input": texts}
+        async with self.chat_session(virtual_key, trace_id=forge_trace_id) as client:
+            response = await client.post("/v1/embeddings", json=body)
+            response.raise_for_status()
+            return response.json(), response.headers
+
+    async def list_models(self, *, virtual_key: str | None = None) -> list[dict[str, Any]]:
+        """GET /models — admin-level catalog (no tenant Virtual Key).
+
+        When ``virtual_key`` is supplied the call is authenticated as
+        a tenant request (returns the subset the tenant is allowed to
+        see); when ``None`` the admin key is used (full catalog).
+        """
+        client = (
+            self.chat_client(virtual_key) if virtual_key else self._require_client()
+        )
+        try:
+            response = await client.get("/models")
+            response.raise_for_status()
+            data = response.json()
+        finally:
+            if virtual_key:
+                await client.aclose()
+        rows = data.get("data") if isinstance(data, dict) else data
+        return list(rows or [])
+
+    async def create_virtual_key(
+        self,
+        *,
+        key_alias: str,
+        duration: str | None = None,
+        models: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+        team_id: str | None = None,
+    ) -> dict[str, Any]:
+        """POST /key/generate — mint a scoped Virtual Key.
+
+        Admin-level call (uses the master key, not a tenant Virtual
+        Key). The returned dict carries ``key`` on success; the
+        caller is responsible for persisting it via Secrets Manager
+        and writing a :class:`LiteLLMKeyAudit` row.
+        """
+        body: dict[str, Any] = {"key_alias": key_alias}
+        if duration is not None:
+            body["duration"] = duration
+        if models is not None:
+            body["models"] = list(models)
+        if metadata is not None:
+            body["metadata"] = dict(metadata)
+        if team_id is not None:
+            body["team_id"] = team_id
+        client = self._require_client()
+        response = await client.post("/key/generate", json=body)
+        response.raise_for_status()
+        return response.json()
+
+    # ------------------------------------------------------------------
     # Health probe
     # ------------------------------------------------------------------
 
@@ -238,6 +418,71 @@ class LiteLLMBaseClient:
                 )
                 return False
 
+    # ------------------------------------------------------------------
+    # step-75 Phase 1 — readiness + routes discovery
+    # ------------------------------------------------------------------
+
+    async def readiness(self) -> dict[str, Any]:
+        """Hit ``/health/readiness`` and parse the typed payload (spec line 64).
+
+        Returns a dict with the keys ``reachable``, ``version``, ``db``,
+        ``cache``, ``callbacks``, ``status_code``. Errors are captured
+        in the dict (never raised) so the caller decides whether to
+        fail boot (main.py) or soft-warn (api/v1/forge_health.py).
+        """
+        try:
+            client = self._require_client()
+        except RuntimeError:
+            return {"reachable": False, "version": None, "db": None, "cache": None, "callbacks": None, "status_code": None, "error": "client_not_open"}
+        try:
+            response = await client.get(_HEALTH_READINESS_PATH)
+            status_code = response.status_code
+            if status_code == 401:
+                return {"reachable": False, "version": None, "db": None, "cache": None, "callbacks": None, "status_code": status_code, "error": "master_key_rejected"}
+            if status_code != 200:
+                return {"reachable": False, "version": None, "db": None, "cache": None, "callbacks": None, "status_code": status_code, "error": f"http_{status_code}"}
+            try:
+                body = response.json()
+            except Exception:  # noqa: BLE001
+                return {"reachable": False, "version": None, "db": None, "cache": None, "callbacks": None, "status_code": status_code, "error": "non_json_body"}
+            return {
+                "reachable": True,
+                "version": body.get("version") or body.get("litellm_version"),
+                "db": body.get("db"),
+                "cache": body.get("cache") if isinstance(body.get("cache"), str) else None,
+                "callbacks": body.get("callbacks") if isinstance(body.get("callbacks"), list) else None,
+                "status_code": status_code,
+                "error": None,
+            }
+        except (httpx.HTTPError, RuntimeError) as exc:
+            logger.warning("litellm_base.readiness.connection_error", error=f"{type(exc).__name__}: {exc}")
+            return {"reachable": False, "version": None, "db": None, "cache": None, "callbacks": None, "status_code": None, "error": f"{type(exc).__name__}: {exc}"}
+
+    async def list_routes(self) -> dict[str, Any]:
+        """One-shot ``GET /routes`` capability discovery at boot (spec line 95).
+
+        Returns a dict with ``routes`` (list[str]) and ``count``. The
+        caller is expected to log the count and emit it on the
+        ``forge.auth.config_loaded`` audit event. Errors are captured
+        in the dict.
+        """
+        try:
+            client = self._require_client()
+            response = await client.get(_ROUTES_PATH)
+            if response.status_code != 200:
+                return {"routes": [], "count": 0, "status_code": response.status_code, "error": f"http_{response.status_code}"}
+            try:
+                body = response.json()
+            except Exception:  # noqa: BLE001
+                return {"routes": [], "count": 0, "status_code": response.status_code, "error": "non_json_body"}
+            routes = body.get("data") if isinstance(body.get("data"), list) else body.get("routes") if isinstance(body.get("routes"), list) else []
+            if not isinstance(routes, list):
+                routes = []
+            return {"routes": [str(r) for r in routes], "count": len(routes), "status_code": response.status_code, "error": None}
+        except (httpx.HTTPError, RuntimeError) as exc:
+            logger.warning("litellm_base.routes.connection_error", error=f"{type(exc).__name__}: {exc}")
+            return {"routes": [], "count": 0, "status_code": None, "error": f"{type(exc).__name__}: {exc}"}
+
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -273,6 +518,21 @@ class _HeaderOverlayClient:
     async def delete(self, url: str, **kwargs: Any) -> httpx.Response:
         return await self._base.delete(url, headers=self._headers, **kwargs)
 
+    @asynccontextmanager
+    async def stream(
+        self, method: str, url: str, **kwargs: Any
+    ) -> AsyncIterator[httpx.Response]:
+        """Streaming request — mirrors ``httpx.AsyncClient.stream``.
+
+        Used by the SSE chat path (``chat_stream``). Yields the
+        :class:`httpx.Response` so the caller can iterate
+        ``response.aiter_lines()`` and friends.
+        """
+        async with self._base.stream(
+            method, url, headers=self._headers, **kwargs
+        ) as response:
+            yield response
+
     async def aclose(self) -> None:
         # No-op: the connection pool is owned by the base client.
         return None
@@ -292,4 +552,4 @@ def _null_cm() -> "_NullCM":
     return _NullCM()
 
 
-__all__ = ["LiteLLMBaseClient"]
+__all__ = ["LiteLLMBaseClient", "RBACClientGroup"]

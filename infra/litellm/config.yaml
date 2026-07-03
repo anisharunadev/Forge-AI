@@ -48,13 +48,47 @@ litellm_settings:
   telemetry: false
   database_url: os.environ/DATABASE_URL
 
-  # Apply guardrails globally to all requests
+  # Apply guardrails globally to all requests.
+  # LiteLLM requires each entry to be a single-key dict with `callbacks`
+  # (a list of real callback names), not a bare string. With `callbacks: []`
+  # and `default_on: false` the proxy boots and the guardrail is a no-op
+  # — flip `default_on` to true and add real callbacks (e.g. "presidio",
+  # "lakera_prompt_injection", "hide_secrets") to activate it.
   guardrails:
-    - pii_masking
-    - prompt_injection_detection
-    - content_moderation
-    - secret_detection
+    - pii_masking:
+        callbacks: []
+        default_on: false
+    - prompt_injection_detection:
+        callbacks: []
+        default_on: false
+    - content_moderation:
+        callbacks: []
+        default_on: false
+    - secret_detection:
+        callbacks: []
+        default_on: false
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
   database_type: "postgres"
+
+  # step-65: enable JWT-auth so the proxy trusts our RS256 proxy_token
+  # instead of (or in addition to) the per-tenant Virtual Keys issued
+  # by VirtualKeyManager.  The proxy JWKS URL points at the local
+  # Keycloak realm; users who don't have a pre-provisioned Virtual
+  # Key still authenticate, get a team_id from `tenant_id`, and have
+  # their model access governed by `role_mappings` below.
+  enable_jwt_auth: True
+  jwt_public_key_url: os.environ/JWT_PUBLIC_KEY_URL
+  litellm_jwtauth:
+    user_id_jwt_field: "sub"           # -> LiteLLM user_id (principal)
+    team_id_jwt_field: "tenant_id"     # -> LiteLLM team (per-tenant budget)
+    user_email_jwt_field: "email"
+    user_id_upsert: True               # auto-create LiteLLM user on first auth
+    enforce_rbac: True
+    role_mappings:
+      - role: internal_user
+        internal_role: internal_user
+      - role: proxy_admin
+        internal_role: proxy_admin
+    admin_jwt_scope: "forge:admin"

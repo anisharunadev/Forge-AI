@@ -59,6 +59,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { useMe, useUpdateMe } from '@/lib/hooks/useSettings';
+import type { MeUser } from '@/lib/settings/data';
 
 import { SectionShell } from './SectionShell';
 
@@ -97,35 +99,25 @@ const ACCENT_PRESETS = [
 interface ProfileForm {
   displayName: string;
   email: string;
+  // step 73: local-only — no backend field
   bio: string;
   timezone: string;
   locale: string;
+  // step 73: local-only — no backend field
   theme: 'dark' | 'system';
+  // step 73: local-only — no backend field
   accent: string;
 }
 
 const DEFAULT_PROFILE: ProfileForm = {
-  displayName: 'Arun Achalam',
-  email: 'arun@acme.com',
+  displayName: '',
+  email: '',
   bio: 'Founding engineer at Acme Corp — building the agentic SDLC platform.',
   timezone: 'Asia/Kolkata',
   locale: 'en-US',
   theme: 'dark',
   accent: '#6366F1',
 };
-
-const STORAGE_KEY = 'forge.profile.v1';
-
-function loadProfile(): ProfileForm {
-  if (typeof window === 'undefined') return DEFAULT_PROFILE;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_PROFILE;
-    return { ...DEFAULT_PROFILE, ...(JSON.parse(raw) as Partial<ProfileForm>) };
-  } catch {
-    return DEFAULT_PROFILE;
-  }
-}
 
 function initials(name: string): string {
   return name
@@ -138,6 +130,7 @@ function initials(name: string): string {
 }
 
 function generateRecoveryCodes(count = 10): string[] {
+  // step 73: 2FA UI deferred — backend supports it; full UI ships step 75
   const words = ['sun', 'maple', 'forge', 'echo', 'tide', 'river', 'comet', 'orbit', 'pine', 'flint',
                  'coral', 'spark', 'glade', 'crest', 'amber', 'north', 'lunar', 'storm', 'beacon', 'cipher'];
   return Array.from({ length: count }, () => {
@@ -167,26 +160,33 @@ const DEFAULT_CONNECTIONS: OAuthConnection[] = [
   { provider: 'github', email: 'arun@acme.com', connectedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString() },
 ];
 
+function meToForm(m: MeUser | undefined): ProfileForm {
+  return {
+    ...DEFAULT_PROFILE,
+    displayName: m?.displayName ?? '',
+    email: m?.email ?? '',
+    timezone: m?.timezone ?? DEFAULT_PROFILE.timezone,
+    locale: m?.locale ?? DEFAULT_PROFILE.locale,
+  };
+}
+
 export function ProfileTab() {
-  const [profile, setProfile] = React.useState<ProfileForm>(DEFAULT_PROFILE);
-  const [original, setOriginal] = React.useState<ProfileForm>(DEFAULT_PROFILE);
-  const [avatar, setAvatar] = React.useState<string | null>(null);
+  const meQ = useMe();
+  const updateMut = useUpdateMe();
+  const me = meQ.data;
+  const [profile, setProfile] = React.useState<ProfileForm>(() => meToForm(me));
+  const [original, setOriginal] = React.useState<ProfileForm>(() => meToForm(me));
+  const [avatar, setAvatar] = React.useState<string | null>(me?.avatarUrl ?? null);
   const [connections, setConnections] = React.useState<OAuthConnection[]>(DEFAULT_CONNECTIONS);
   const [twoFactorEnabled, setTwoFactorEnabled] = React.useState(false);
 
-  // Mount: hydrate from localStorage
+  // Re-seed the form when /auth/me lands or changes.
   React.useEffect(() => {
-    setProfile(loadProfile());
-    setOriginal(loadProfile());
-    try {
-      const savedAvatar = window.localStorage.getItem('forge.profile.avatar');
-      if (savedAvatar) setAvatar(savedAvatar);
-      const saved2fa = window.localStorage.getItem('forge.profile.2fa');
-      if (saved2fa === '1') setTwoFactorEnabled(true);
-    } catch {
-      /* noop */
-    }
-  }, []);
+    const seeded = meToForm(me);
+    setProfile(seeded);
+    setOriginal(seeded);
+    if (me?.avatarUrl) setAvatar(me.avatarUrl);
+  }, [me]);
 
   const dirty = React.useMemo(
     () => JSON.stringify(profile) !== JSON.stringify(original),
@@ -194,12 +194,16 @@ export function ProfileTab() {
   );
 
   const onSave = () => {
-    setOriginal(profile);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-    } catch {
-      /* noop */
-    }
+    updateMut.mutate(
+      {
+        displayName: profile.displayName,
+        timezone: profile.timezone,
+        locale: profile.locale,
+      },
+      {
+        onSuccess: () => setOriginal(profile),
+      },
+    );
   };
 
   const onReset = () => setProfile(original);
@@ -211,11 +215,7 @@ export function ProfileTab() {
     reader.onload = () => {
       const dataUrl = reader.result as string;
       setAvatar(dataUrl);
-      try {
-        window.localStorage.setItem('forge.profile.avatar', dataUrl);
-      } catch {
-        /* noop */
-      }
+      updateMut.mutate({ avatarUrl: dataUrl });
     };
     reader.readAsDataURL(file);
   };

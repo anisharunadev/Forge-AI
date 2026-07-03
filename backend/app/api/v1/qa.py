@@ -1,13 +1,15 @@
 """Q&A REST endpoints (F-108)."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Response, status, Depends
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.project_intelligence import (
     QAAnswer,
     QAAskRequest,
@@ -24,8 +26,8 @@ router = APIRouter(prefix="/qa", tags=["qa"])
 @audit(action="qa.ask", target_type="qa")
 async def ask(
     body: QAAskRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("qa:ask"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("qa:ask"))
 ) -> QAAnswer:
     answer = await qa_service.answer_question(
         tenant_id=principal.tenant_id,
@@ -58,8 +60,8 @@ async def ask(
 @audit(action="qa.history", target_type="qa_session")
 async def history(
     session_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("qa:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("qa:read"))
 ) -> QAHistory:
     messages = qa_service.get_conversation_history(session_id)
     return QAHistory(
@@ -89,7 +91,6 @@ async def history(
 
 @router.delete(
     "/sessions/{session_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     response_class=Response,
 )
@@ -97,8 +98,8 @@ async def history(
 @audit(action="qa.clear", target_type="qa_session")
 async def clear(
     session_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("qa:write"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("qa:write"))
 ):
     qa_service.clear_conversation(session_id)
 

@@ -46,6 +46,14 @@ import {
   type TenantForm,
 } from '@/lib/onboarding/data';
 import { api, ApiError } from '@/lib/api/client';
+import { toast } from 'sonner';
+import {
+  useAdvanceWizard,
+  useStartProvision,
+  useStartWizard,
+  useWizardSession,
+} from '@/lib/api/onboarding-hooks';
+import type { WizardStepId } from '@/lib/api/onboarding';
 
 const INITIAL_PROVIDERS: Record<ProviderId, ProviderConnection> =
   PROVIDER_CATALOG.reduce(
@@ -56,6 +64,25 @@ const INITIAL_PROVIDERS: Record<ProviderId, ProviderConnection> =
     {} as Record<ProviderId, ProviderConnection>,
   );
 
+// UI step (1..10) → backend wizard step id (snake_case, matches
+// `STEP_ORDER` in backend/app/services/project_onboarding/wizard.py).
+// Steps with `null` are pure-UI (no backend advance): the local
+// state is collected and surfaced to the user, but the wizard service
+// doesn't own it. Step 10 (Provision) is a separate `/onboarding/provision`
+// job, not an advance call.
+const UI_TO_BACKEND_STEP: Record<number, WizardStepId | null> = {
+  1: null, // Welcome
+  2: 'tenant_setup', // TenantSetup
+  3: null, // ConnectProviders
+  4: 'connect_repos', // ConnectRepos
+  5: 'detect_stack', // DetectStack
+  6: 'configure_agents', // ConfigureAgents
+  7: 'run_first_intel', // RunFirstIntel
+  8: null, // Governance
+  9: 'review', // Review (final)
+  // 10 = Provision — handled by handleStartProvision, not an advance
+};
+
 export default function ProjectOnboardingPage() {
   const currentStep = useOnboardingStore((s) => s.currentStep);
   const setStep = useOnboardingStore((s) => s.setStep);
@@ -63,6 +90,43 @@ export default function ProjectOnboardingPage() {
   const markTouched = useOnboardingStore((s) => s.markTouched);
   const reset = useOnboardingStore((s) => s.reset);
   const stepData = useOnboardingStore((s) => s.stepData);
+  const sessionId = useOnboardingStore((s) => s.sessionId);
+  const setSessionId = useOnboardingStore((s) => s.setSessionId);
+
+  // Backend session lifecycle (step-74). The page owns the wizard
+  // session id (persisted via Zustand) and polls the backend every
+  // 5s so a refresh mid-wizard restores the correct step.
+  const startWizard = useStartWizard();
+  const session = useWizardSession(sessionId, { refetchInterval: 5_000 });
+  const advance = useAdvanceWizard(sessionId);
+  const startProvision = useStartProvision();
+
+  // On first mount (or after reset): if we don't have a session id,
+  // create one. Persists across refresh via Zustand → localStorage.
+  React.useEffect(() => {
+    if (!sessionId && !startWizard.isPending && !startWizard.isSuccess) {
+      startWizard.mutate(undefined, {
+        onSuccess: (s) => setSessionId(s.id),
+      });
+    }
+  }, [sessionId, startWizard, setSessionId]);
+
+  // Resume: if the backend says we're past `currentStep` (e.g. the
+  // user refreshed after advancing), jump forward. Don't jump
+  // backward — that would surprise a user mid-flow.
+  React.useEffect(() => {
+    const backendStep = session.data?.current_step;
+    if (!backendStep) return;
+    const targetIdx = Number(
+      Object.entries(UI_TO_BACKEND_STEP).find(
+        ([, id]) => id === backendStep,
+      )?.[0],
+    );
+    if (Number.isFinite(targetIdx) && targetIdx > currentStep) {
+      setStep(targetIdx);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.data?.current_step]);
 
   // On first mount, pull `?step=` from the URL so deep links land on
   // the correct step. Done after hydration to avoid SSR mismatch.
@@ -202,8 +266,29 @@ export default function ProjectOnboardingPage() {
   })();
 
   const handleBack = () => setStep(Math.max(1, currentStep - 1));
-  const handleNext = () => {
+  const handleNext = async () => {
     markTouched(currentStep);
+    // Advance the backend wizard when leaving a mapped step. Pure-UI
+    // steps (Welcome / ConnectProviders / Governance) just navigate.
+    const stepId = UI_TO_BACKEND_STEP[currentStep];
+    if (stepId && sessionId) {
+      try {
+        await advance.mutateAsync({
+          step: stepId,
+          step_input:
+            (stepData[currentStep] as Record<string, unknown> | undefined) ??
+            {},
+          mark_complete: true,
+        });
+      } catch (err) {
+        // Advance failed (WizardError → 409, network → 0). Keep the
+        // user on this step so they can retry; surface the message.
+        const message =
+          err instanceof Error ? err.message : 'advance failed';
+        toast.error(message);
+        return;
+      }
+    }
     setStep(Math.min(total, currentStep + 1));
   };
   const handleSkip = () => {
@@ -240,9 +325,26 @@ export default function ProjectOnboardingPage() {
   };
 
   const handleRunIntel = async () => {
+    if (!sessionId) return;
     setIntelState('running');
-    await new Promise((r) => setTimeout(r, 4_500));
-    setIntelState('done');
+    try {
+      // Real side-effect: persist the collected intel inputs to the
+      // backend `run_first_intel` step. The radial-bar animation in
+      // StepRunFirstIntel stays as visual feedback; this call is the
+      // source of truth.
+      await advance.mutateAsync({
+        step: 'run_first_intel',
+        step_input:
+          (stepData[7] as Record<string, unknown> | undefined) ?? {},
+        // mark_complete=false — the user can re-run; the wizard
+        // service treats !mark_complete as completion (see wizard.py
+        // `will_complete` branch) so we don't want to finalise here.
+        mark_complete: false,
+      });
+      setIntelState('done');
+    } catch {
+      setIntelState('failed');
+    }
   };
 
   const handleStartProvision = async () => {
@@ -250,22 +352,22 @@ export default function ProjectOnboardingPage() {
     setProvisionError(null);
     setProvisionState('running');
     try {
-      // Kick off the real backend provision job. The StepProvision
-      // component polls /onboarding/provision/status and calls
-      // onStateChange when it observes 'done' or 'failed' — that's
-      // the only path that transitions `provisionState` to those
-      // terminal values. (step-61 Zone 5)
-      const data = await api.post<{ job_id: string; status: string }>(
-        '/onboarding/provision',
-        {},
-      );
-      // Keep a stub URL so the success CTA has something to render.
+      // First, advance the backend `review` step with everything we
+      // collected across the wizard. mark_complete=true ends the
+      // session lifecycle in the backend (`wizard.py` `will_complete`
+      // branch).
+      if (sessionId) {
+        await advance.mutateAsync({
+          step: 'review',
+          step_input: collectAllStepData(),
+          mark_complete: true,
+        });
+      }
+      // Then kick off the provision job. StepProvision polls the
+      // status endpoint and drives terminal-state transitions.
+      await startProvision.mutateAsync();
       setTenantUrl(`forge.example.com/${tenant.tenantName}`);
-      // The polling useEffect in StepProvision drives the rest.
-      // Mark `confirming` false so the user can interact; the
-      // `provisionState === 'running'` blocks back-navigation in
-      // the WizardNav.
-      void data;
+      setStep(10);
     } catch (err) {
       setProvisionState('failed');
       const message =
@@ -278,6 +380,19 @@ export default function ProjectOnboardingPage() {
     } finally {
       setConfirming(false);
     }
+  };
+
+  // Helper: flatten the Zustand `stepData` map into a single payload
+  // for the final `review` advance. Each UI step's typed data is
+  // nested under its numeric key so the backend can read it back via
+  // `wizard.state`.
+  const collectAllStepData = (): Record<string, unknown> => {
+    const all: Record<string, unknown> = {};
+    for (let i = 1; i <= total; i += 1) {
+      const v = stepData[i];
+      if (v !== undefined && v !== null) all[i] = v;
+    }
+    return all;
   };
 
   const headerActions = (

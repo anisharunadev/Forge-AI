@@ -6,15 +6,17 @@ The settings/counts endpoint drives the SettingsSidebar badges.
 """
 
 from __future__ import annotations
+from typing import Annotated
 
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 
-from app.api.deps import DbSession, Principal, require_permission
+from app.api.deps import DbSession, Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.agent_config import AgentConfig
 from app.db.models.audit import AuditEvent
 from app.db.models.connector import Connector
@@ -53,7 +55,7 @@ def _project_to_read(project: Project) -> ProjectRead:
 @router.get("", response_model=list[ProjectRead])
 @audit(action="projects.list", target_type="tenant")
 async def list_projects(
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> list[ProjectRead]:
     """List every project in the caller's tenant, newest first."""
@@ -69,7 +71,7 @@ async def list_projects(
 @audit(action="projects.create", target_type="project")
 async def create_project(
     body: ProjectCreate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> ProjectRead:
     """Create a new project in the caller's tenant."""
@@ -108,7 +110,7 @@ async def create_project(
 @audit(action="projects.read", target_type="project")
 async def get_project(
     project_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> ProjectRead:
     """Read a single project by id (tenant-scoped)."""
@@ -129,7 +131,7 @@ async def get_project(
 async def update_project(
     project_id: UUID,
     body: ProjectUpdate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> ProjectRead:
     """Update a project's editable fields (tenant-scoped)."""
@@ -181,7 +183,7 @@ async def update_project(
 @audit(action="settings.counts", target_type="project")
 async def settings_counts(
     project_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> dict:
     """Aggregate counts that drive SettingsSidebar badges."""
@@ -259,8 +261,8 @@ async def settings_counts(
 @audit(action="day_one_bootstrap.trigger", target_type="project")
 async def trigger_bootstrap(
     project_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("projects:bootstrap"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("projects:bootstrap"))
 ) -> BootstrapResult:
     project_metadata = (principal.context or {}).get("project_metadata") if hasattr(principal, "context") else None
     return await day_one_bootstrap.load_baseline(
@@ -278,8 +280,8 @@ async def trigger_bootstrap(
 @audit(action="day_one_bootstrap.status", target_type="project")
 async def bootstrap_status(
     project_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("projects:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("projects:read"))
 ) -> BootstrapStatusRead:
     return await day_one_bootstrap.status_read(
         project_id=project_id, tenant_id=principal.tenant_id
@@ -294,8 +296,8 @@ async def bootstrap_status(
 @audit(action="day_one_bootstrap.rerun", target_type="project")
 async def rerun_bootstrap(
     project_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("projects:bootstrap"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("projects:bootstrap"))
 ) -> BootstrapResult:
     project_metadata = (principal.context or {}).get("project_metadata") if hasattr(principal, "context") else None
     return await day_one_bootstrap.rerun(
@@ -313,8 +315,8 @@ async def rerun_bootstrap(
 @audit(action="day_one_bootstrap.read", target_type="project")
 async def get_bootstrap(
     project_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("projects:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("projects:read"))
 ) -> BootstrapResult:
     try:
         return await day_one_bootstrap.get_status(

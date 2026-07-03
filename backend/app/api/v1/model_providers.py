@@ -2,14 +2,15 @@
 
 import time
 from datetime import UTC, datetime
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID
 
 import httpx
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.core.logging import get_logger
 from app.schemas.model_providers import (
     ModelProviderCreate,
@@ -27,8 +28,8 @@ router = APIRouter(prefix="/model-providers", tags=["model-providers"])
 @router.get("", response_model=list[ModelProviderRead])
 @audit(action="model_providers.list", target_type="model_provider")
 async def list_providers(
-    principal: Principal,
-    _perm: Principal = require_permission("model_providers:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:read"))
 ) -> list[ModelProviderRead]:
     rows = await model_provider_registry.list_providers(principal.tenant_id)
     return [ModelProviderRead.model_validate(r) for r in rows]
@@ -38,8 +39,8 @@ async def list_providers(
 @audit(action="model_providers.get", target_type="model_provider")
 async def get_provider(
     provider_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("model_providers:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:read"))
 ) -> ModelProviderRead:
     try:
         provider = await model_provider_registry.get_provider(provider_id)
@@ -54,8 +55,8 @@ async def get_provider(
 @audit(action="model_providers.create", target_type="model_provider")
 async def create_provider(
     body: ModelProviderCreate,
-    principal: Principal,
-    _perm: Principal = require_permission("model_providers:create"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:create"))
 ) -> ModelProviderRead:
     provider = await model_provider_registry.create_provider(
         tenant_id=principal.tenant_id,
@@ -75,8 +76,8 @@ async def create_provider(
 async def update_provider(
     provider_id: UUID,
     body: ModelProviderUpdate,
-    principal: Principal,
-    _perm: Principal = require_permission("model_providers:update"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:update"))
 ) -> ModelProviderRead:
     try:
         existing = await model_provider_registry.get_provider(provider_id)
@@ -97,15 +98,14 @@ async def update_provider(
 
 @router.delete(
     "/{provider_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     response_class=Response,
 )
 @audit(action="model_providers.delete", target_type="model_provider")
 async def delete_provider(
     provider_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("model_providers:delete"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:delete"))
 ):
     try:
         existing = await model_provider_registry.get_provider(provider_id)
@@ -120,8 +120,8 @@ async def delete_provider(
 @audit(action="model_providers.resolve", target_type="model_provider")
 async def resolve_provider(
     model_alias: str,
-    principal: Principal,
-    _perm: Principal = require_permission("model_providers:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:read"))
 ) -> ModelProviderResolveResult:
     try:
         provider = await model_provider_registry.resolve_provider(
@@ -145,8 +145,8 @@ async def resolve_provider(
 @audit(action="model_providers.test", target_type="model_provider")
 async def test_provider(  # noqa: PLR0911, PLR0912 — spec-driven branching
     provider_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("model_providers:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:read"))
 ) -> dict[str, Any]:
     try:
         existing = await model_provider_registry.get_provider(provider_id)

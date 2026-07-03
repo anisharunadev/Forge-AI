@@ -67,6 +67,20 @@ interface TerminalState {
     color?: SessionColorId;
   }) => string;
   /**
+   * Add a session whose id was minted by the backend
+   * (`POST /api/v1/terminal/sessions`). Used by the new-session dialog
+   * after the server has registered the session in its session manager —
+   * the returned UUID is what `useTerminal` uses as both the React key
+   * and the WebSocket path component.
+   */
+  addSession: (input: {
+    id: string;
+    title: string;
+    agent: AgentId;
+    workspace: string;
+    color: SessionColorId;
+  }) => string;
+  /**
    * Mark a session as closed (its tab fades to muted; the row stays in
    * the list with a Reopen action). Use `removeSession` to hard-delete.
    */
@@ -116,6 +130,29 @@ export const useTerminalStore = create<TerminalState>((set) => ({
           color: color ?? 'indigo',
           // New sessions enter the 'creating' state and flip to 'active'
           // once the WebSocket attaches in `useTerminal`.
+          status: 'creating' as const,
+        },
+      ],
+      activeSessionId: id,
+    }));
+    return id;
+  },
+
+  addSession: ({ id, title, agent, workspace, color }) => {
+    const createdAt = new Date().toISOString();
+    set((state) => ({
+      sessions: [
+        ...state.sessions,
+        {
+          id,
+          title,
+          agent,
+          workspace,
+          createdAt,
+          commandCount: 0,
+          color,
+          // Backend-issued sessions enter 'creating' and flip to 'active'
+          // when the WS opens in `useTerminal`.
           status: 'creating' as const,
         },
       ],
@@ -247,9 +284,16 @@ interface OnboardingState {
   stepData: Record<number, unknown>;
   /** Per-step validation flag — true once the user has blurred a field. */
   stepTouched: Record<number, boolean>;
+  /**
+   * Backend wizard session id (`POST /onboarding/sessions` response).
+   * `null` until `useStartWizard()` resolves. Persisted so refresh
+   * resumes from the right `current_step` instead of starting over.
+   */
+  sessionId: string | null;
   setStep: (step: number) => void;
   setStepData: (step: number, data: unknown) => void;
   markTouched: (step: number) => void;
+  setSessionId: (id: string | null) => void;
   reset: () => void;
 }
 
@@ -269,13 +313,20 @@ export const useOnboardingStore = create<OnboardingState>()(
       currentStep: 1,
       stepData: {},
       stepTouched: {},
+      sessionId: null,
       setStep: (step) => set({ currentStep: step }),
       setStepData: (step, data) =>
         set((state) => ({ stepData: { ...state.stepData, [step]: data } })),
       markTouched: (step) =>
         set((state) => ({ stepTouched: { ...state.stepTouched, [step]: true } })),
+      setSessionId: (id) => set({ sessionId: id }),
       reset: () =>
-        set({ currentStep: 1, stepData: {}, stepTouched: {} }),
+        set({
+          currentStep: 1,
+          stepData: {},
+          stepTouched: {},
+          sessionId: null,
+        }),
     }),
     {
       name: STORAGE_KEY,
@@ -285,17 +336,21 @@ export const useOnboardingStore = create<OnboardingState>()(
         currentStep: state.currentStep,
         stepData: state.stepData,
         stepTouched: state.stepTouched,
+        sessionId: state.sessionId,
       }),
       // Bump the schema version if the shape changes incompatibly.
-      version: 2,
-      // v1 -> v2 added provider + governance + provisioning steps;
-      // reset progress so users land on the new welcome screen.
+      version: 3,
+      // v2 -> v3 added `sessionId` for the backend wizard session
+      // (step-74). Existing users keep their wizard progress; the
+      // page creates a fresh backend session on next mount because
+      // `sessionId` is null on migration.
       migrate: (persistedState, _version) => {
         const state = (persistedState ?? {}) as Partial<OnboardingState>;
         return {
           currentStep: 1,
           stepData: {},
           stepTouched: {},
+          sessionId: null,
           ...state,
         };
       },

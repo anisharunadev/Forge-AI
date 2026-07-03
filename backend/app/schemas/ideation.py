@@ -93,6 +93,10 @@ class IdeaAnalysisRead(TenantScopedModel):
     analyzed_at: datetime
 
 
+class IdeaEnhanceRequest(ForgeBaseModel):
+    editor_note: str = Field(..., min_length=1, max_length=2000)
+
+
 class EntityExtraction(ForgeBaseModel):
     people: list[str] = Field(default_factory=list)
     products: list[str] = Field(default_factory=list)

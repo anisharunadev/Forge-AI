@@ -1,33 +1,57 @@
 """step-80 — Phase 4 API package.
 
-Each sub-router is mounted under ``/api/v1/forge_phase4/<domain>`` via
-``app/api/v1/router.py``. Top-level pass-through / SCIM / A2A paths
-(``/openai/*``, ``/anthropic/*``, ``/.well-known/*``, ``/scim/v2/*``,
-``/a2a/*``) are mounted directly on ``app`` in ``main.py``.
+Each sub-router is mounted under ``/api/v1/forge/<domain>`` via
+``app/api/v1/router.py``. Top-level pass-through / discovery / A2A
+paths (``/openai/*``, ``/.well-known/*``, ``/a2a/*``) are mounted
+directly on ``app`` in ``main.py`` via the ``mount_*`` helpers below.
 
-ponytail: one package, 10 router stubs. Each returns 501 with a TODO
-pointer until the service is implemented. Replace stubs with real
-handlers as each feature lands (build order: cache → pass_through →
-identity → ops → realtime).
+Build order: cache → pass_through → identity → ops → realtime.
 """
 
-from fastapi import APIRouter, status
-from fastapi.responses import JSONResponse
+from typing import Any
 
+from fastapi import APIRouter
 
-def _stub(name: str) -> JSONResponse:
-    """Single helper for all not-implemented-yet endpoints."""
-    return JSONResponse(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        content={
-            "error": "NOT_IMPLEMENTED",
-            "feature": name,
-            "message": f"Phase 4 {name} ships in a follow-up commit (see plan).",
-        },
-    )
+# F19 — Cache
+from app.api.v1.forge_phase4.cache import router as cache_router
 
+# F18 — Identity
+from app.api.v1.forge_phase4.identity import (
+    mount_identity_discovery,
+)
+from app.api.v1.forge_phase4.identity import (
+    router as identity_router,
+)
+from app.api.v1.forge_phase4.media import router as media_router
+
+# F20 — Ops / Credentials / Vault / FinOps / Settings
+from app.api.v1.forge_phase4.ops import router as ops_router
+from app.api.v1.forge_phase4.passthrough import (
+    mount_passthrough,
+)
+from app.api.v1.forge_phase4.passthrough import (
+    router as passthrough_router,
+)
+
+# F16 — Providers (admin) + Pass-through proxy + Media
+from app.api.v1.forge_phase4.providers import router as providers_router
+
+# F17 — Realtime / A2A / Sessions
+from app.api.v1.forge_phase4.sessions import (
+    mount_a2a,
+)
+from app.api.v1.forge_phase4.sessions import (
+    router as sessions_router,
+)
 
 router = APIRouter(prefix="/forge", tags=["phase4"])
+router.include_router(cache_router)
+router.include_router(providers_router)
+router.include_router(passthrough_router)
+router.include_router(media_router)
+router.include_router(identity_router)
+router.include_router(ops_router)
+router.include_router(sessions_router)
 
 
 @router.get("/_phase4/health", include_in_schema=False)
@@ -36,4 +60,14 @@ async def phase4_health() -> dict[str, str]:
     return {"status": "ok", "package": "forge_phase4"}
 
 
-__all__ = ["router", "_stub"]
+def mount_phase4_top_level(app: Any) -> None:
+    """Mount Phase 4 routes that live at app root, not under /api/v1/forge.
+
+    Called from ``app/main.py`` after the v1 routers are included.
+    """
+    mount_passthrough(app)
+    mount_identity_discovery(app)
+    mount_a2a(app)
+
+
+__all__ = ["router", "mount_phase4_top_level"]

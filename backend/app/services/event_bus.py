@@ -73,6 +73,47 @@ class EventType(str, enum.Enum):
     # F-829i — Guardrail violation ingest (Phase C compliance feed)
     COMPLIANCE_VIOLATION = "compliance.violation"
 
+    # step-77 Phase 2 — Safety & Tooling (per docs/goals/step-77.md).
+    # Each of the 5 features gets a slice of the ``LITELLM_<DOMAIN>_<VERB>``
+    # namespace so subscribers can filter on the prefix. Verbs follow the
+    # closed set: created, updated, archived, applied, blocked, masked,
+    # redacted, invoked, registered, unregistered, refreshed, expired,
+    # resolved, compared, status_changed, injected, dispatched, called,
+    # max_iterations, auth_*. Naming stays lowercase.dot to match the
+    # existing LITELLM_* convention (see lines 70-72).
+    LITELLM_GUARDRAIL_REGISTERED = "litellm.guardrail.registered"
+    LITELLM_GUARDRAIL_UPDATED = "litellm.guardrail.updated"
+    LITELLM_GUARDRAIL_DELETED = "litellm.guardrail.deleted"
+    LITELLM_GUARDRAIL_APPLIED = "litellm.guardrail.applied"
+    LITELLM_GUARDRAIL_BLOCKED = "litellm.guardrail.blocked"
+    LITELLM_GUARDRAIL_MASKED = "litellm.guardrail.masked"
+    LITELLM_GUARDRAIL_REDACTED = "litellm.guardrail.redacted"
+
+    LITELLM_POLICY_CREATED = "litellm.policy.created"
+    LITELLM_POLICY_UPDATED = "litellm.policy.updated"
+    LITELLM_POLICY_ARCHIVED = "litellm.policy.archived"
+    LITELLM_POLICY_STATUS_CHANGED = "litellm.policy.status_changed"
+    LITELLM_POLICY_RESOLVED = "litellm.policy.resolved"
+    LITELLM_POLICY_COMPARED = "litellm.policy.compared"
+
+    LITELLM_SKILL_CREATED = "litellm.skill.created"
+    LITELLM_SKILL_UPDATED = "litellm.skill.updated"
+    LITELLM_SKILL_ARCHIVED = "litellm.skill.archived"
+    LITELLM_SKILL_INJECTED = "litellm.skill.injected"
+
+    LITELLM_MCP_SERVER_REGISTERED = "litellm.mcp.server_registered"
+    LITELLM_MCP_SERVER_UNREGISTERED = "litellm.mcp.server_unregistered"
+    LITELLM_MCP_AUTH_REFRESHED = "litellm.mcp.auth_refreshed"
+    LITELLM_MCP_AUTH_EXPIRED = "litellm.mcp.auth_expired"
+    LITELLM_MCP_TOOL_CALLED = "litellm.mcp.tool_called"
+    LITELLM_MCP_TOOL_DISPATCHED = "litellm.mcp.tool_dispatched"
+
+    LITELLM_TOOL_INVOKED = "litellm.tool.invoked"
+    LITELLM_TOOL_OVERRIDDEN = "litellm.tool.overridden"
+    LITELLM_TOOL_ARCHIVED = "litellm.tool.archived"
+
+    LITELLM_CHAT_MAX_ITERATIONS = "litellm.chat.max_iterations"
+
     # F-800 — Co-pilot domain events (Plan 1). Only the events that
     # require in-process or cross-process fanout live here; the rest of
     # the audit trail is captured as ``audit_events`` rows by
@@ -98,6 +139,14 @@ class EventType(str, enum.Enum):
     WORKFLOW_RUN_COMPLETED = "workflow.run.completed"
     WORKFLOW_RUN_FAILED = "workflow.run.failed"
     WORKFLOW_RUN_CANCELLED = "workflow.run.cancelled"
+
+    # F-002-LESSON — Signals that surface a LessonCandidate (Step-64
+    # Sub-step B). These flow into ``LessonService`` which decides
+    # whether to mint a candidate row (or merely log it to audit).
+    RUN_ROLLOBACK = "run.rollback"
+    DEPLOYMENT_REVERTED = "deployment.reverted"
+    METRIC_DEGRADED = "metric.degraded"
+    RUN_BAD_OUTCOME = "run.bad_outcome"
 
 
 @dataclass

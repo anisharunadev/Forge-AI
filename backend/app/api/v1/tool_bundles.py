@@ -5,13 +5,15 @@
 """
 
 from __future__ import annotations
+from typing import Annotated
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.tool_bundles import (
     STAGES,
     Stage,
@@ -43,8 +45,8 @@ def _row_to_read(stage: Stage, bundle, row) -> ToolBundleRead:
 @router.get("", response_model=list[ToolBundleRead])
 @audit(action="tool_bundles.list", target_type="tool_bundle")
 async def list_tool_bundles(
-    principal: Principal,
-    _perm: Principal = require_permission("tool_bundles:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("tool_bundles:read"))
 ) -> list[ToolBundleRead]:
     """List every stage's effective bundle (default or override)."""
     out: list[ToolBundleRead] = []
@@ -60,8 +62,8 @@ async def list_tool_bundles(
 async def override_tool_bundle(
     stage: Stage,
     body: ToolBundleUpdate,
-    principal: Principal,
-    _perm: Principal = require_permission("tool_bundles:override"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("tool_bundles:override"))
 ) -> ToolBundleRead:
     """Apply a Steward override for a single stage. Audited in F-005."""
     if stage not in STAGES:

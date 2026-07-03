@@ -137,4 +137,14 @@ __all__ = [
     # F-829l LiteLLMHealthMonitor — added by health_monitor agent
     "LiteLLMHealthMonitor",
     "health_monitor",
+    # step-77 Phase 2 — Guardrails (F-6) apply/register/catalog wrappers.
+    "guardrail_apply_apply_guardrail",
+    "guardrail_apply_get_info",
+    "guardrail_apply_get_ui_rule",
+    "guardrail_apply_list",
+    "guardrail_apply_list_submissions",
+    "guardrail_apply_list_ui_rules",
+    "guardrail_apply_register",
+    "guardrail_apply_save_ui_rule",
+    "guardrail_apply_test_custom_code",
 ]

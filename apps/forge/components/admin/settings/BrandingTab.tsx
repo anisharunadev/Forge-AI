@@ -32,63 +32,81 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useBranding, useUpdateBranding } from '@/lib/hooks/useSettings';
+import { useAuth } from '@/lib/api/auth';
+
+const FALLBACK_TENANT_ID = 'tenant-acme-demo';
 
 interface BrandingState {
-  companyName: string;
+  // step 73: 5 backend-mapped fields (logoUrl, primaryColor, accentColor, faviconUrl, supportEmail)
   logoDataUrl: string | null;
   faviconDataUrl: string | null;
-  loginBgDataUrl: string | null;
   primary: string;
   accent: string;
+  supportEmail: string;
+  // step 73: local-only — no backend field
+  companyName: string;
+  loginBgDataUrl: string | null;
   customDomain: string;
   emailFromName: string;
   emailReplyTo: string;
   termsUrl: string;
   privacyUrl: string;
-  supportEmail: string;
   customCss: string;
 }
 
 const DEFAULTS: BrandingState = {
-  companyName: 'Acme Corp',
   logoDataUrl: null,
   faviconDataUrl: null,
-  loginBgDataUrl: null,
   primary: '#6366F1',
   accent: '#22D3EE',
+  supportEmail: 'support@acme.com',
+  companyName: 'Acme Corp',
+  loginBgDataUrl: null,
   customDomain: '',
   emailFromName: 'Acme Forge',
   emailReplyTo: 'no-reply@acme.com',
   termsUrl: '',
   privacyUrl: '',
-  supportEmail: 'support@acme.com',
   customCss: '',
 };
 
-const STORAGE_KEY = 'forge.branding.v1';
+// step 73: local-only fields persist here (they have no backend mapping).
+const LOCAL_KEY = 'forge.branding.local.v1';
 
-function loadBranding(): BrandingState {
-  if (typeof window === 'undefined') return DEFAULTS;
+function loadLocal(state: BrandingState): BrandingState {
+  if (typeof window === 'undefined') return state;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULTS;
-    return { ...DEFAULTS, ...(JSON.parse(raw) as Partial<BrandingState>) };
+    const raw = window.localStorage.getItem(LOCAL_KEY);
+    if (!raw) return state;
+    return { ...state, ...(JSON.parse(raw) as Partial<BrandingState>) };
   } catch {
-    return DEFAULTS;
+    return state;
   }
 }
 
 export function BrandingTab() {
   const { toast } = useToast();
-  const [b, setB] = React.useState<BrandingState>(DEFAULTS);
-  const [original, setOriginal] = React.useState<BrandingState>(DEFAULTS);
+  const tenantId = useAuth((s) => s.tenant?.id ?? null) ?? FALLBACK_TENANT_ID;
+  const brandingQ = useBranding(tenantId);
+  const patchMut = useUpdateBranding(tenantId);
+  const [b, setB] = React.useState<BrandingState>(() => loadLocal(DEFAULTS));
+  const [original, setOriginal] = React.useState<BrandingState>(() => loadLocal(DEFAULTS));
   const [copied, setCopied] = React.useState<string | null>(null);
 
+  // Hydrate the 5 backend-mapped fields once data lands; preserve local-only state.
   React.useEffect(() => {
-    const loaded = loadBranding();
-    setB(loaded);
-    setOriginal(loaded);
-  }, []);
+    if (!brandingQ.data) return;
+    const mapped: Partial<BrandingState> = {
+      logoDataUrl: brandingQ.data.logoUrl,
+      faviconDataUrl: brandingQ.data.faviconUrl,
+      primary: brandingQ.data.primaryColor ?? DEFAULTS.primary,
+      accent: brandingQ.data.accentColor ?? DEFAULTS.accent,
+      supportEmail: brandingQ.data.supportEmail ?? DEFAULTS.supportEmail,
+    };
+    setB((prev) => ({ ...prev, ...mapped }));
+    setOriginal((prev) => ({ ...prev, ...mapped }));
+  }, [brandingQ.data]);
 
   const dirty = JSON.stringify(b) !== JSON.stringify(original);
 
@@ -97,13 +115,43 @@ export function BrandingTab() {
   };
 
   const onSave = () => {
-    setOriginal(b);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(b));
-    } catch {
-      /* noop */
-    }
-    toast({ title: 'Branding saved' });
+    // step 73: persist the 5 mappable fields via the backend mutation.
+    patchMut.mutate(
+      {
+        logoUrl: b.logoDataUrl,
+        primaryColor: b.primary,
+        accentColor: b.accent,
+        faviconUrl: b.faviconDataUrl,
+        supportEmail: b.supportEmail,
+      },
+      {
+        onSuccess: () => {
+          // step 73: local-only fields still write to localStorage.
+          try {
+            window.localStorage.setItem(
+              LOCAL_KEY,
+              JSON.stringify({
+                companyName: b.companyName,
+                loginBgDataUrl: b.loginBgDataUrl,
+                customDomain: b.customDomain,
+                emailFromName: b.emailFromName,
+                emailReplyTo: b.emailReplyTo,
+                termsUrl: b.termsUrl,
+                privacyUrl: b.privacyUrl,
+                customCss: b.customCss,
+              }),
+            );
+          } catch {
+            /* noop */
+          }
+          setOriginal(b);
+          toast({ title: 'Branding saved' });
+        },
+        onError: (err) => {
+          toast({ title: 'Branding save failed', description: err.message });
+        },
+      },
+    );
   };
 
   const onReset = () => setB(original);

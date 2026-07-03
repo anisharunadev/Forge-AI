@@ -37,6 +37,7 @@ Inherits all 18 rules from `.claude/CLAUDE.md`. Pay particular attention to:
 
 - **Package manager**: `pnpm` (monorepo). Use `pnpm --filter forge-dashboard …`.
 - **No direct provider SDKs** (Rule 1) — never `import openai/anthropic/…`.
+- **WebSocket auth** — use `api.ws(path)` from `lib/api/client.ts:267`; it auto-injects `?token=<jwt>` from the auth accessor. Don't hand-build `new WebSocket("wss://host/path?token=…")` from `localStorage`.
 - **No hardcoded skill/agent/command lists** (Rule 9) — read from
   `packages/forge-core/`.
 - **Tenant isolation**: every API call must include the JWT-derived tenant
@@ -45,6 +46,25 @@ Inherits all 18 rules from `.claude/CLAUDE.md`. Pay particular attention to:
 - **Theme**: dark only (Rule 18); tokens in `.claude/CLAUDE.md` Design System
   section. Mirror in `globals.css`.
 - **Tailwind**: pinned 3.4.14 — Tailwind 4 migration is deferred post-pilot.
+
+## LiteLLM wiring (UI → Backend → LiteLLM)
+
+Forge UI **never** calls LiteLLM directly (Rule 1). Every UI feature
+goes through Forge Backend, which proxies to a specific LiteLLM
+endpoint. The authoritative **Forge UI surface → Backend route →
+LiteLLM endpoint** matrix is `docs/litellm/forge-litellm-integration.md`
+§2 (Onboarding, Command Center, Agent Workspace, Agent Chat, SDLC
+Pipeline, Story Workspace, Knowledge/RAG, Guardrails, MCP, Skills,
+Prompts, Tools, Virtual Keys, Spend, Audit, Provider Pass-through,
+Audio/Video, Embeddings/RAG, Realtime/A2A, etc.).
+
+If you're adding a new UI surface that talks to LLMs, MCP tools, or
+spend/audit, **read §2 first** — the matrix already names the LiteLLM
+endpoint to back it. For the raw endpoint catalog grouped by domain
+(LLM Chat · Skills · MCP · Guardrails · Policies · Spend · Audit · …),
+see `docs/litellm/litellm-forge-reference.md` (curated 637). For the
+**complete** flat list of all 703 endpoints (every method+path+summary),
+see `docs/litellm/litellm-endpoints.md`.
 
 ## Cross-cutting UI components (must be available everywhere)
 
@@ -71,6 +91,8 @@ pnpm build            # production build
 pnpm typecheck        # tsc --noEmit
 pnpm test             # vitest run
 pnpm test:e2e         # playwright test
+
+`pnpm test` only picks up files matching `tests/**/*.test.{ts,tsx}` (see `vitest.config.ts`). Tests in `__tests__/` (e.g. `live-stream-pill.test.tsx`, `runs-explainability.test.tsx`) are not in the glob — invoke them by file path (`pnpm test <path>`) or move them under `tests/`. New component tests should go under `tests/` to be auto-discovered.
 pnpm dev:stack        # docker compose up backend + redis + postgres, then run terminal + UI
 pnpm dev:terminal     # forge-terminal-server (xterm.js sidecar)
 ```
@@ -86,4 +108,25 @@ point at the local backend.
 - Domain logic / hooks: `hooks/`, `lib/`
 - API client: `lib/api/` (talks to `backend/`)
 - Tests: `__tests__/`, `tests/`
+
+## Onboarding wizard gotchas (Step-74)
+
+- **Routes are NOT `/onboarding`.** The 10-step wizard lives at `/project-onboarding` (`app/project-onboarding/page.tsx`). `/onboarding/workspace` is a separate single-page tenant-creation form opened from `TenantSwitcher` — do not confuse them.
+- **10 UI components map to 6 backend steps.** The `OnboardingWizard` `STEP_ORDER` in `backend/app/services/project_onboarding/wizard.py` is the source of truth (`tenant_setup`, `connect_repos`, `detect_stack`, `configure_agents`, `run_first_intel`, `review`). The 4 UI components without a backend counterpart (Welcome, ConnectProviders, Governance, plus the radial-bar inside RunFirstIntel) are pure-UI — see `UI_TO_BACKEND_STEP` in `app/project-onboarding/page.tsx` for the mapping.
+- **Backend session lifecycle:** the page owns the `sessionId` (persisted via `useOnboardingStore`). `useStartWizard()` on mount, `useAdvanceWizard()` on Next for mapped steps, `useProvisionStatus()` polls `GET /onboarding/provision/status` for step 10. Don't re-implement local-only fake progress — the backend `STEP_ORDER` and `/onboarding/provision` job are real.
+- **`ApiError` shape:** the constructor takes `detail` but the instance only exposes `status | code | body | message` (the `detail` is folded into `message` via `super()`). Use `err.message` in catch blocks, not `err.detail`.
+
+## API transports (3 coexist — pick the right one)
+
+| Transport | Where | Use for |
+|---|---|---|
+| `api` from `lib/api/client.ts` | default | New code — injects `Authorization` + `x-forge-tenant-id`, handles 401 refresh |
+| `forgeFetch` from `lib/forge-api.ts` | legacy modules | Manual tenant; no auth; used by `lib/lessons/data.ts`, `lib/runs/data.ts` |
+| `lib/api.ts` (default export) | runs/legacy | Pre-Pattern-B run endpoints; do not add new callers |
+
+## Ideation wiring gotchas (Step-69)
+
+- **Step-57 already shipped** 14 TanStack hooks in `lib/hooks/useIdeation.ts` (ideas, roadmaps, approvals, arch, etc.) and the wire→UX status adapter in `lib/hooks/useIdeationAdapters.ts`. The new `lib/ideation/adapter.ts` is the canonical **UPPER_SNAKE_CASE** bidirectional helper (`apiStatusToUi` / `uiStatusToApi`). Don't reimplement — extend.
+- **Hook test location:** `apps/forge/tests/intelligence/`, **not** `apps/forge/__tests__/`. Use `renderWithClient(QueryClient + QueryClientProvider)` from `ideation-push-jira.test.tsx` and `vi.spyOn(globalThis, 'fetch')` for fetch mocking — no MSW.
+- **WebSocket:** use `api.ws(path)` from `lib/api/client.ts` — it auto-injects the JWT as `?token=`. Don't build WebSocket URLs manually.
 - Env template: `.env.example` (commit), `.env.local` (gitignored)

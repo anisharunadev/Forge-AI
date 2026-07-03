@@ -22,62 +22,57 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState, SectionCard } from '@/components/shell';
 import { useToast } from '@/hooks/use-toast';
+import { useApplySeed, useSeeds } from '@/lib/hooks/useSettings';
+import type { SeedManifestSummary } from '@/lib/settings/types';
 
 interface Seed {
   id: string;
   name: string;
   description: string;
-  usageCount: number;
-  updatedAt: string;
+  // step 73: usageCount/updatedAt not in backend SeedManifestSummary — placeholder until seed telemetry lands
+  usageCount: number | null;
+  updatedAt: string | null;
 }
 
-const SAMPLE_SEEDS: ReadonlyArray<Seed> = [
-  {
-    id: 's1',
-    name: 'Weekly status digest',
-    description: 'Pulls last 7 days of runs, summarizes blockers, drafts an executive email.',
-    usageCount: 28,
-    updatedAt: '2026-06-24',
-  },
-  {
-    id: 's2',
-    name: 'PR review kickoff',
-    description: 'Opens a new PR review thread with the architecture, security, and QA agents.',
-    usageCount: 14,
-    updatedAt: '2026-06-23',
-  },
-  {
-    id: 's3',
-    name: 'Incident triage',
-    description: 'Routes a PagerDuty alert through the on-call agent and opens a Slack channel.',
-    usageCount: 6,
-    updatedAt: '2026-06-19',
-  },
-];
+function wireToSeed(wire: SeedManifestSummary): Seed {
+  return {
+    id: wire.name,
+    name: wire.name,
+    description: wire.description,
+    usageCount: null,
+    updatedAt: null,
+  };
+}
 
 export function SeedsTab() {
   const { toast } = useToast();
   const [createOpen, setCreateOpen] = React.useState(false);
-  const [runningId, setRunningId] = React.useState<string | null>(null);
+  const seedsQ = useSeeds();
+  const applyM = useApplySeed();
 
-  const handleRun = React.useCallback(
-    async (seed: Seed) => {
-      if (runningId) return;
-      setRunningId(seed.id);
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        toast({
-          title: `Ran ${seed.name}`,
-          description: 'The seed has been dispatched to the agent runtime.',
-        });
-      } finally {
-        setRunningId(null);
-      }
-    },
-    [runningId, toast],
-  );
+  const handleRun = (seed: Seed) => {
+    applyM.mutate(
+      { name: seed.id },
+      {
+        onSuccess: () =>
+          toast({
+            title: `Ran ${seed.name}`,
+            description: 'The seed has been dispatched to the agent runtime.',
+          }),
+        onError: (e) =>
+          toast({
+            title: `Failed to run ${seed.name}`,
+            description: e.message,
+          }),
+      },
+    );
+  };
+
+  const seeds: ReadonlyArray<Seed> = (seedsQ.data ?? []).map(wireToSeed);
+  const runningName = applyM.isPending ? applyM.variables?.name ?? null : null;
 
   return (
     <SectionCard
@@ -94,7 +89,13 @@ export function SeedsTab() {
         </Button>
       }
     >
-      {SAMPLE_SEEDS.length === 0 ? (
+      {seedsQ.isLoading ? (
+        <div className="space-y-3" aria-label="Seeds">
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </div>
+      ) : seeds.length === 0 ? (
         <EmptyState
           icon={<Sprout className="h-5 w-5" aria-hidden="true" />}
           title="No seeds yet"
@@ -103,7 +104,7 @@ export function SeedsTab() {
         />
       ) : (
         <ul className="space-y-3" aria-label="Seeds">
-          {SAMPLE_SEEDS.map((s) => (
+          {seeds.map((s) => (
             <li
               key={s.id}
               className="flex items-center justify-between gap-4 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4"
@@ -117,25 +118,26 @@ export function SeedsTab() {
                   {s.description}
                 </p>
                 <p className="font-mono text-[11px] text-[var(--fg-tertiary)]">
-                  {s.usageCount} runs · updated {s.updatedAt}
+                  {/* step 73: usageCount/updatedAt not in backend SeedManifestSummary — placeholder until seed telemetry lands */}
+                  {s.usageCount ?? '—'} runs · updated {s.updatedAt ?? '—'}
                 </p>
               </div>
               <Button
                 type="button"
                 size="sm"
-                onClick={() => void handleRun(s)}
-                disabled={runningId === s.id}
+                onClick={() => handleRun(s)}
+                disabled={runningName === s.id}
                 data-testid={`seed-run-${s.id}`}
               >
                 <Play
                   className={
-                    runningId === s.id
+                    runningName === s.id
                       ? 'h-3.5 w-3.5 animate-spin'
                       : 'h-3.5 w-3.5'
                   }
                   aria-hidden="true"
                 />
-                {runningId === s.id ? 'Running…' : 'Run'}
+                {runningName === s.id ? 'Running…' : 'Run'}
               </Button>
             </li>
           ))}

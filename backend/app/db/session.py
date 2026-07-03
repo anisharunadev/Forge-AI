@@ -29,13 +29,15 @@ def get_engine() -> AsyncEngine:
     global _engine
     if _engine is None:
         logger.info("db.engine.create", url=_safe_url())
-        _engine = create_async_engine(
-            settings.database_url,
-            pool_size=settings.database_pool_size,
-            max_overflow=settings.database_max_overflow,
-            pool_pre_ping=True,
-            future=True,
-        )
+        # SQLite (used in tests) is single-connection; pool_size/max_overflow
+        # are rejected by SQLAlchemy. Postgres is multi-connection so the
+        # pool args matter there.
+        is_sqlite = settings.database_url.startswith("sqlite")
+        kwargs: dict = {"pool_pre_ping": True, "future": True}
+        if not is_sqlite:
+            kwargs["pool_size"] = settings.database_pool_size
+            kwargs["max_overflow"] = settings.database_max_overflow
+        _engine = create_async_engine(settings.database_url, **kwargs)
     return _engine
 
 

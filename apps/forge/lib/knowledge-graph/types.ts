@@ -147,6 +147,38 @@ export interface CypherQueryResult {
   rows: Array<Record<string, unknown>>;
 }
 
+/**
+ * Drift status for a single KG node. Mirrors
+ * `backend.app.schemas.project_intelligence.KGFreshnessInfo`.
+ * `status` is open on the wire (the backend uses `str`) — the closed-set
+ * here covers the values the freshness service emits today; anything else
+ * types as the wider `string` and renders as the "unknown" dot.
+ */
+export interface KGFreshnessInfo {
+  node_id: string;
+  status: 'fresh' | 'stale' | 'unknown' | string;
+  freshness_at: string | null;
+  freshness_source: string | null;
+  age_seconds: number | null;
+}
+
+/** Mirrors `SQLQueryRequest`. */
+export interface SQLQueryInput {
+  query: string;
+  params?: Record<string, unknown>;
+}
+/** `{ rows: unknown[] }` — same envelope as Cypher. */
+export interface SQLQueryResult {
+  rows: Array<Record<string, unknown>>;
+}
+
+/** Mirrors `HybridQueryRequest` (cypher + sql composed). */
+export interface HybridQueryInput {
+  cypher: string;
+  sql: string;
+  params?: Record<string, unknown>;
+}
+
 // ---------------------------------------------------------------------------
 // Stable query keys
 // ---------------------------------------------------------------------------
@@ -176,4 +208,7 @@ export const kgQueryKeys = {
   vectorSearch: (input: VectorSearchInput) =>
     [...kgQueryKeys.vector(), input] as const,
   cypher: () => [...kgQueryKeys.all, 'cypher'] as const,
+  freshness: (id: string) => [...kgQueryKeys.all, 'freshness', id] as const,
+  sql: () => [...kgQueryKeys.all, 'sql'] as const,
+  hybrid: () => [...kgQueryKeys.all, 'hybrid'] as const,
 };

@@ -26,6 +26,8 @@ from app.db.models.model_provider import ModelProvider, ModelProviderType
 from app.db.models.tenant import Tenant
 from app.db.session import get_session_factory
 
+from scripts._seed_helpers import ACME_TENANT_ID
+
 logger = logging.getLogger("seed_agents")
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
@@ -209,9 +211,6 @@ SEED_AGENTS: list[dict[str, Any]] = [
 # acme-corp is the dev tenant seeded by `day_one_bootstrap` (see
 # app/services/day_one_bootstrap.py). Its UUID is stable across
 # re-seeds because the bootstrap uses an idempotent insert.
-ACME_TENANT_ID = uuid.UUID("a6500631-1930-5afa-9d38-24de9bedcb37")
-
-
 async def seed() -> None:
     """Insert seed rows for the acme-corp tenant. Idempotent."""
     sf = get_session_factory()

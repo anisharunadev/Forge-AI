@@ -1,17 +1,19 @@
 """Project members + invitations (Settings → Members tab)."""
 
 from __future__ import annotations
+from typing import Annotated
 
 import secrets
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from app.api.deps import DbSession, Principal
+from app.api.deps import DbSession, Principal, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.project_invitation import ProjectInvitation
 from app.db.models.project_member import ProjectMember
 from app.db.models.role import Role
@@ -72,7 +74,7 @@ class MemberListResponse(BaseModel):
 @audit(action="members.list", target_type="project")
 async def list_members(
     project_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> MemberListResponse:
     """List active members and pending invitations for a project."""
@@ -131,7 +133,7 @@ async def list_members(
 async def invite_member(
     project_id: UUID,
     body: InviteCreate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> InvitationRead:
     """Invite an email to join the project with a given role."""
@@ -191,7 +193,7 @@ async def update_member_role(
     project_id: UUID,
     member_id: UUID,
     body: RoleUpdate,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> MemberRead:
     """Change a member's role on this project."""
@@ -233,12 +235,12 @@ async def update_member_role(
     )
 
 
-@router.delete("/{member_id}", status_code=204)
+@router.delete("/{member_id}")
 @audit(action="members.remove", target_type="project")
 async def remove_member(
     project_id: UUID,
     member_id: UUID,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
 ) -> None:
     """Remove a member from this project."""

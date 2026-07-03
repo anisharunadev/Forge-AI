@@ -20,7 +20,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.core.config import settings
-from app.core.security import require_principal
+from app.core.security import get_current_principal
 from app.integrations.litellm.usage_query import usage_query
 
 router = APIRouter(prefix="/analytics", tags=["analytics-usage"])
@@ -50,7 +50,7 @@ async def get_tenant_usage(
         None,
         description="ISO-8601 upper bound. Defaults to now.",
     ),
-    _principal: Any = Depends(require_principal),
+    _principal: Any = Depends(get_current_principal),
 ) -> dict[str, Any]:
     """Per-tenant LLM usage aggregate (cost, tokens, calls, by-model, by-user)."""
     until_dt = _parse_iso(until) or datetime.now(timezone.utc)
@@ -69,7 +69,7 @@ async def get_tenant_usage(
 async def get_workflow_usage(
     run_id: UUID | str,
     tenant_id: UUID | str = Query(..., description="Forge tenant id"),
-    _principal: Any = Depends(require_principal),
+    _principal: Any = Depends(get_current_principal),
 ) -> dict[str, Any]:
     """Per-workflow usage drill-down for ``/analytics/usage/workflow/[id]``."""
     bucket = await usage_query.get_workflow_usage(tenant_id, run_id)
@@ -80,4 +80,37 @@ async def get_workflow_usage(
     }
 
 
-__all__ = ["router"]
+# ---------------------------------------------------------------------------
+# Step-73 — Billing quota (Settings → Billing tab progress bar)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/quota", response_model=None)
+async def get_billing_quota(
+    tenant_id: UUID | str = Query(..., description="Forge tenant id"),
+    _principal: Any = Depends(get_current_principal),
+) -> dict[str, Any]:
+    """Per-tenant quota state for the Billing tab progress bar.
+
+    30-day usage slice from the same cache the dashboard polls (60s
+    TTL); ``monthly_usd_limit`` from settings with a $100 fallback.
+    """
+    from datetime import timedelta
+
+    from app.core.config import settings as app_settings
+
+    until_dt = datetime.now(tz=timezone.utc)
+    since_dt = until_dt - timedelta(days=30)
+    snap = await usage_query.get_tenant_usage(tenant_id, since_dt, until_dt)
+    cost = float(snap.to_dict().get("cost_usd", 0.0))
+    monthly_limit = getattr(app_settings, "billing_monthly_usd_limit", 100.0)
+    return {
+        "plan": getattr(app_settings, "billing_plan", "free"),
+        "monthly_usd_limit": float(monthly_limit),
+        "used_usd": round(cost, 4),
+        "period_start": since_dt.isoformat(),
+        "period_end": until_dt.isoformat(),
+    }
+
+
+__all__ = ["router"]  # noqa: F401

@@ -6,6 +6,11 @@
  * Grid of ingest source cards. Connected sources render their preview
  * (last 3 ingested items), disconnected sources show a "Connect"
  * affordance. Layout: 3-column grid on `md+`, single column on mobile.
+ *
+ * TODO(step-7x): register `GET /api/v1/ideation/sources` and replace
+ * the `INGEST_SOURCES` fixture import below with a TanStack hook.
+ * Puller services exist under `backend/app/services/ideation/sources/`
+ * but no REST surface is mounted (verified Step-69).
  */
 
 import * as React from 'react';

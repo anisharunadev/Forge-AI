@@ -32,6 +32,10 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import {
+  useNotifications,
+  useUpdateNotifications,
+} from '@/lib/hooks/useSettings';
 
 type ChannelId = 'email' | 'slack' | 'teams' | 'discord' | 'webhook' | 'in-app' | 'copilot';
 
@@ -77,7 +81,8 @@ const EVENTS: ReadonlyArray<EventDef> = [
   { id: 'digest.weekly',       label: 'Weekly digest',      description: 'Every Sunday at 9am',                 defaultChannels: ['email'] },
 ];
 
-const STORAGE_KEY = 'forge.notifications.v1';
+// step 73: per-event channel matrix is localStorage; flat booleans persist to backend.
+const MATRIX_KEY = 'forge.notifications.matrix.v1';
 
 interface Persisted {
   matrix: Record<EventId, ChannelId[]>;
@@ -88,13 +93,16 @@ interface Persisted {
   discordConnected: boolean;
 }
 
-function loadPersisted(): Persisted {
-  const matrix = EVENTS.reduce((acc, ev) => {
+function defaultMatrix(): Record<EventId, ChannelId[]> {
+  return EVENTS.reduce((acc, ev) => {
     acc[ev.id] = [...ev.defaultChannels];
     return acc;
   }, {} as Record<EventId, ChannelId[]>);
+}
+
+function loadPersisted(): Persisted {
   const defaults: Persisted = {
-    matrix,
+    matrix: defaultMatrix(),
     quietHours: { enabled: false, start: '22:00', end: '08:00' },
     webhookUrl: '',
     slackConnected: true,
@@ -103,7 +111,7 @@ function loadPersisted(): Persisted {
   };
   if (typeof window === 'undefined') return defaults;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(MATRIX_KEY);
     if (!raw) return defaults;
     return { ...defaults, ...(JSON.parse(raw) as Partial<Persisted>) };
   } catch {
@@ -115,14 +123,11 @@ const OPTIONAL_CHANNELS: ReadonlyArray<ChannelId> = ['email', 'slack', 'in-app',
 
 export function NotificationsTab() {
   const { toast } = useToast();
+  // step 73: useNotifications seeds the per-channel booleans; matrix UI stays local.
+  useNotifications();
+  const patchMut = useUpdateNotifications();
   const [state, setState] = React.useState<Persisted>(() => loadPersisted());
   const [dirty, setDirty] = React.useState(false);
-
-  React.useEffect(() => {
-    const p = loadPersisted();
-    setState(p);
-    setDirty(false);
-  }, []);
 
   const update = (patch: Partial<Persisted>) => {
     setState((prev) => ({ ...prev, ...patch }));
@@ -141,15 +146,30 @@ export function NotificationsTab() {
   };
 
   const onSave = () => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      /* noop */
-    }
-    setDirty(false);
-    toast({
-      title: 'Notification preferences saved',
-      description: 'Quiet hours and channel matrix applied.',
+    // Flatten the per-event matrix into the backend's flat NotificationPrefs shape.
+    const allChannels = Object.values(state.matrix).flat();
+    const flatPrefs = {
+      emailDigest: allChannels.includes('email'),
+      inapp: allChannels.includes('in-app'),
+      slackDm: allChannels.includes('slack'),
+      webhookUrl: state.webhookUrl || null,
+    };
+    patchMut.mutate(flatPrefs, {
+      onSuccess: () => {
+        try {
+          window.localStorage.setItem(MATRIX_KEY, JSON.stringify(state));
+        } catch {
+          /* noop */
+        }
+        setDirty(false);
+        toast({
+          title: 'Notification preferences saved',
+          description: 'Quiet hours and channel matrix applied.',
+        });
+      },
+      onError: (err) => {
+        toast({ title: 'Notification save failed', description: err.message });
+      },
     });
   };
 

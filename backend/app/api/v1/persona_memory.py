@@ -10,13 +10,14 @@ principal; the persona comes from the ``X-Forge-Persona`` header
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, Cookie, Header, HTTPException, Query, status
+from fastapi import APIRouter, Cookie, Header, HTTPException, Query, status, Depends
 from pydantic import BaseModel, Field
 
-from app.api.deps import Principal
+from app.api.deps import Principal, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.persona_memory import PERSONA_KEYS, PERSONA_NAMES
 from app.services.memory.persona_store import PersonaMemoryStore
 
@@ -34,7 +35,7 @@ class PersonaMemoryAppend(BaseModel):
 
 def _resolve_persona(
     *,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     x_forge_persona: str | None,
     forge_persona_cookie: str | None,
 ) -> str:
@@ -51,7 +52,7 @@ def _resolve_persona(
 @audit(action="persona.memory.read", target_type="persona_file")
 async def read_memory(
     key: str,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     x_forge_persona: str | None = Header(default=None, alias="X-Forge-Persona"),
     forge_persona: str | None = Cookie(default=None, alias="forge.persona"),
 ) -> PersonaMemoryRead:
@@ -73,7 +74,7 @@ async def read_memory(
 async def append_memory(
     key: str,
     body: PersonaMemoryAppend,
-    principal: Principal,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     x_forge_persona: str | None = Header(default=None, alias="X-Forge-Persona"),
     forge_persona: str | None = Cookie(default=None, alias="forge.persona"),
 ) -> dict[str, Any]:

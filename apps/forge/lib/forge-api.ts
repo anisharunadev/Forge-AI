@@ -32,6 +32,14 @@ export const FORGE_TERMINAL_WS_URL: string =
 export interface ForgeFetchOptions extends RequestInit {
   /** Optional tenant id to forward as `x-forge-tenant-id`. */
   tenantId?: string;
+  /**
+   * When true, return the raw `Response` instead of parsing JSON.
+   * Used for SSE endpoints; the caller owns the ReadableStream.
+   *
+   * ponytail: stream mode skips both error-as-JSON and response.text() —
+   * the caller handles non-2xx on the Response directly.
+   */
+  stream?: boolean;
 }
 
 export class ForgeApiError extends Error {
@@ -81,6 +89,8 @@ export async function forgeFetch<T>(
       body,
     );
   }
+
+  if (options.stream) return response as unknown as T;
 
   const text = await response.text();
   if (!text) return undefined as T;

@@ -40,6 +40,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.logging import get_logger
 from app.db.models.workflow import (
@@ -266,6 +267,11 @@ class WorkflowExecutor:
         if decision == "denied":
             step_results[approval_step_id]["error"] = "approval_denied"
         run.state = {**run.state, "stepResults": step_results}
+        # ponytail: JSONB column has no MutableDict.as_mutable(); force the
+        # change event so the UPDATE fires even on Postgres where nested
+        # mutations alone wouldn't be detected by SQLAlchemy's attribute
+        # tracker.
+        flag_modified(run, "state")
         run.status = WorkflowRunStatus.RUNNING
         await db.commit()
         await bus.publish(

@@ -14,6 +14,7 @@ import { IngestSourceModal, type IngestSourceKind } from '@/components/knowledge
 import { GraphEmptyState } from '@/components/knowledge-graph/GraphEmptyState';
 import { GraphListView } from '@/components/knowledge-graph/GraphListView';
 import { GraphOutlineView } from '@/components/knowledge-graph/GraphOutlineView';
+import { GraphStatsStrip } from '@/components/knowledge-graph/GraphStatsStrip';
 import { ALL_KINDS, ALL_EDGE_KINDS } from '@/components/knowledge-graph/graph-palette';
 import {
   type NodeKind,
@@ -25,7 +26,7 @@ import {
   useKGEdges,
   useKGStats,
 } from '@/lib/hooks/useKnowledgeGraph';
-import { adapter, getOfflineGraph } from '@/lib/knowledge-graph/adapter';
+import { adapter } from '@/lib/knowledge-graph/adapter';
 import { Loader2 } from 'lucide-react';
 
 // ---- Static layout cycle used by the 'L' shortcut ----------------------------
@@ -34,36 +35,27 @@ const LAYOUT_CYCLE: ReadonlyArray<GraphLayout> = ['force', 'tb', 'lr', 'radial',
 
 export default function KnowledgeCenterPage() {
   // ---- Data ---------------------------------------------------------------
-  // Step 57 zone 3: the page now talks to the real backend via TanStack
-  // Query hooks. SAMPLE_GRAPH is kept as an offline fallback — only used
-  // when both queries are in an error state (auth not ready, network
-  // down, dev mode without the orchestrator). The adapter bridges the
-  // backend's KGNode/KGEdge shape onto the canvas's SampleNode shape.
-  const offline = React.useMemo(() => getOfflineGraph(), []);
-
+  // Step 67: the page reads exclusively from the real backend via TanStack
+  // Query hooks (`useKGNodes`, `useKGEdges`, `useKGStats`). The adapter
+  // bridges the wire's KGNode/KGEdge shape onto the canvas's SampleNode
+  // shape. No offline fixture — empty backend → <GraphEmptyState/>.
   const nodesQuery = useKGNodes();
   const edgesQuery = useKGEdges();
-  // Stats are read by the header KPIs in a follow-up; pulled here so the
-  // first render warms the cache and exposes error/loading state.
-  const _statsQuery = useKGStats();
+  useKGStats(); // warms the cache; rendered by <GraphStatsStrip/> below
 
   const nodesLoading = nodesQuery.isLoading || edgesQuery.isLoading;
-  const nodesErrored = nodesQuery.isError && edgesQuery.isError;
 
-  // Backend data, mapped through the adapter. While loading/erroring we
-  // keep the previous (or offline) set so the canvas still has something
-  // to render and the layout doesn't pop.
+  // Backend data, mapped through the adapter. Empty arrays until the
+  // first response lands — <GraphEmptyState/> handles the empty render.
   const nodes: ReadonlyArray<SampleNode> = React.useMemo(() => {
     if (nodesQuery.data) return nodesQuery.data.map(adapter.toSampleNode);
-    if (nodesErrored) return offline.nodes;
-    return offline.nodes;
-  }, [nodesQuery.data, nodesErrored, offline.nodes]);
+    return [];
+  }, [nodesQuery.data]);
 
   const edges: ReadonlyArray<SampleEdge> = React.useMemo(() => {
     if (edgesQuery.data) return edgesQuery.data.map(adapter.toSampleEdge);
-    if (nodesErrored) return offline.edges;
-    return offline.edges;
-  }, [edgesQuery.data, nodesErrored, offline.edges]);
+    return [];
+  }, [edgesQuery.data]);
 
   // ---- State --------------------------------------------------------------
   const [search, setSearch] = React.useState('');
@@ -308,6 +300,8 @@ export default function KnowledgeCenterPage() {
           onToggle={toggleKind}
           counts={kindCounts}
         />
+
+        <GraphStatsStrip />
 
         {/* Canvas + (optional) inspector side-by-side */}
         <div

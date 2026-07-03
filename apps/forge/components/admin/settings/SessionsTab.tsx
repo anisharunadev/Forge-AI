@@ -21,7 +21,6 @@ import {
   LogOut,
   ShieldOff,
   ChevronDown,
-  MapPin,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -34,93 +33,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { useSessions, useRevokeSession } from '@/lib/hooks/useSettings';
+import type { Session } from '@/lib/settings/types';
 
-type DeviceKind = 'desktop' | 'mobile' | 'tablet';
-
-interface Session {
-  id: string;
-  device: DeviceKind;
-  browser: string;
-  os: string;
-  ip: string;
-  city: string;
-  country: string;
-  lastActive: string; // ISO
-  current: boolean;
-}
-
-const SEED: ReadonlyArray<Session> = [
-  {
-    id: 's-current',
-    device: 'desktop',
-    browser: 'Chrome 128',
-    os: 'macOS 15.0',
-    ip: '103.21.244.18',
-    city: 'Bengaluru',
-    country: 'India',
-    lastActive: new Date(Date.now() - 1000 * 30).toISOString(),
-    current: true,
-  },
-  {
-    id: 's-2',
-    device: 'mobile',
-    browser: 'Safari 17',
-    os: 'iOS 18.1',
-    ip: '49.36.112.4',
-    city: 'Bengaluru',
-    country: 'India',
-    lastActive: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
-    current: false,
-  },
-  {
-    id: 's-3',
-    device: 'desktop',
-    browser: 'Firefox 130',
-    os: 'Ubuntu 24.04',
-    ip: '157.45.21.99',
-    city: 'London',
-    country: 'United Kingdom',
-    lastActive: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-    current: false,
-  },
-  {
-    id: 's-4',
-    device: 'tablet',
-    browser: 'Safari 17',
-    os: 'iPadOS 18',
-    ip: '203.0.113.42',
-    city: 'Singapore',
-    country: 'Singapore',
-    lastActive: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-    current: false,
-  },
-];
-
-const STORAGE_KEY = 'forge.sessions.v1';
-
-function loadSessions(): Session[] {
-  if (typeof window === 'undefined') return [...SEED];
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [...SEED];
-    return JSON.parse(raw) as Session[];
-  } catch {
-    return [...SEED];
-  }
-}
-
-function persistSessions(s: Session[]): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-  } catch {
-    /* noop */
-  }
-}
-
-function DeviceIcon({ kind, className }: { kind: DeviceKind; className?: string }) {
-  if (kind === 'mobile') return <Smartphone className={className} aria-hidden="true" />;
-  if (kind === 'tablet') return <Tablet className={className} aria-hidden="true" />;
+function DeviceIcon({ label, className }: { label: string; className?: string }) {
+  const l = label.toLowerCase();
+  if (l.includes('ipad') || l.includes('tablet')) return <Tablet className={className} aria-hidden="true" />;
+  if (l.includes('iphone') || l.includes('android') || l.includes('mobile')) return <Smartphone className={className} aria-hidden="true" />;
   return <Laptop className={className} aria-hidden="true" />;
 }
 
@@ -136,30 +55,32 @@ function timeAgo(iso: string): string {
 }
 
 export function SessionsTab() {
-  const [sessions, setSessions] = React.useState<ReadonlyArray<Session>>(SEED);
+  const sessionsQ = useSessions();
+  const revokeMut = useRevokeSession();
+  const sessions: ReadonlyArray<Session> = sessionsQ.data ?? [];
   const [confirmAll, setConfirmAll] = React.useState(false);
   const [confirmOne, setConfirmOne] = React.useState<Session | null>(null);
   const [trustedOpen, setTrustedOpen] = React.useState(false);
-  const [trusted, setTrusted] = React.useState<ReadonlyArray<string>>(['s-current']);
+  // step 73: trusted devices remain localStorage (no backend field)
+  const [trusted, setTrusted] = React.useState<ReadonlyArray<string>>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = window.localStorage.getItem('forge.sessions.trusted');
+      return raw ? (JSON.parse(raw) as string[]) : [];
+    } catch {
+      return [];
+    }
+  });
 
-  React.useEffect(() => {
-    setSessions(loadSessions());
-  }, []);
-
-  const others = sessions.filter((s) => !s.current);
+  const others = sessions.filter((s) => !s.isCurrent);
   const othersCount = others.length;
 
   const revokeOne = (id: string) => {
-    const next = sessions.filter((s) => s.id !== id);
-    setSessions(next);
-    persistSessions(next);
-    setConfirmOne(null);
+    revokeMut.mutate(id, { onSuccess: () => setConfirmOne(null) });
   };
 
   const revokeAllOthers = () => {
-    const next = sessions.filter((s) => s.current);
-    setSessions(next);
-    persistSessions(next);
+    others.forEach((s) => revokeMut.mutate(s.id));
     setConfirmAll(false);
   };
 
@@ -201,7 +122,7 @@ export function SessionsTab() {
               key={s.id}
               className={cn(
                 'flex items-center justify-between gap-4 rounded-[var(--radius-md)] border p-4 transition-colors',
-                s.current
+                s.isCurrent
                   ? 'border-[var(--accent-emerald)]/40 bg-[var(--accent-emerald)]/5'
                   : 'border-[var(--border-subtle)] bg-[var(--bg-inset)]',
               )}
@@ -211,19 +132,19 @@ export function SessionsTab() {
                 <span
                   className={cn(
                     'flex h-10 w-10 items-center justify-center rounded-full border',
-                    s.current
+                    s.isCurrent
                       ? 'border-[var(--accent-emerald)]/40 bg-[var(--accent-emerald)]/10 text-[var(--accent-emerald)]'
                       : 'border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--fg-secondary)]',
                   )}
                 >
-                  <DeviceIcon kind={s.device} className="h-4 w-4" />
+                  <DeviceIcon label={s.label} className="h-4 w-4" />
                 </span>
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
                     <span className="text-[var(--text-sm)] font-semibold text-[var(--fg-primary)]">
-                      {s.browser} · {s.os}
+                      {s.label || s.userAgent}
                     </span>
-                    {s.current ? (
+                    {s.isCurrent ? (
                       <span
                         className="inline-flex items-center gap-1 rounded-full bg-[var(--accent-emerald)]/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--accent-emerald)]"
                         data-testid="session-current-badge"
@@ -234,24 +155,20 @@ export function SessionsTab() {
                   </div>
                   <span className="mt-0.5 flex items-center gap-3 text-[var(--text-xs)] text-[var(--fg-tertiary)]">
                     <span className="inline-flex items-center gap-1">
-                      <MapPin className="h-3 w-3" aria-hidden="true" />
-                      {s.city}, {s.country}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
                       <Globe className="h-3 w-3" aria-hidden="true" />
                       {s.ip}
                     </span>
-                    <span>· Last active {timeAgo(s.lastActive)}</span>
+                    <span>· Last active {timeAgo(s.lastSeenAt)}</span>
                   </span>
                 </div>
               </div>
-              {s.current ? null : (
+              {s.isCurrent ? null : (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setConfirmOne(s)}
                   data-testid={`session-signout-${s.id}`}
-                  aria-label={`Sign out ${s.browser} on ${s.os}`}
+                  aria-label={`Sign out ${s.label || s.userAgent}`}
                 >
                   <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
                   Sign out
@@ -301,9 +218,9 @@ export function SessionsTab() {
                   data-testid={`trusted-${s.id}`}
                 >
                   <div className="flex items-center gap-3">
-                    <DeviceIcon kind={s.device} className="h-4 w-4 text-[var(--fg-secondary)]" />
+                    <DeviceIcon label={s.label} className="h-4 w-4 text-[var(--fg-secondary)]" />
                     <span className="text-[var(--text-sm)] text-[var(--fg-primary)]">
-                      {s.browser} · {s.os}
+                      {s.label || s.userAgent}
                     </span>
                   </div>
                   <Button
@@ -338,7 +255,7 @@ export function SessionsTab() {
             <DialogTitle>Sign out this session?</DialogTitle>
             <DialogDescription>
               {confirmOne
-                ? `${confirmOne.browser} on ${confirmOne.os} (${confirmOne.city}, ${confirmOne.country}) will be signed out immediately.`
+                ? `${confirmOne.label || confirmOne.userAgent} from ${confirmOne.ip} will be signed out immediately.`
                 : ''}
             </DialogDescription>
           </DialogHeader>

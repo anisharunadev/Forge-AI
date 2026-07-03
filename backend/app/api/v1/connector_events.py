@@ -7,7 +7,7 @@ owns the event-shape contract; this router is the HTTP layer only.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.services.connector_ingestion.bus_bridge import (
     ConnectorEventEnvelope,

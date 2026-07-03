@@ -21,9 +21,20 @@ import {
   type RunsView,
   type StageRecord,
 } from '@/lib/api';
+import { api } from '@/lib/api/client';
+import type { RunExplainability } from '@/lib/api/runs-types';
 
 export { createRun, getRun, getRunStages, getRunsView, listRuns } from '@/lib/api';
 export type { CreateRunInput, RunRecord, RunsView, StageRecord } from '@/lib/api';
+
+/**
+ * GET /api/v1/runs/{id}/explainability — CodeRabbit 5-question bundle
+ * (Step-64 Sub-step A). Recomputed on every request from existing
+ * tables; no caching layer on the server.
+ */
+export async function getRunExplainability(runId: string): Promise<RunExplainability> {
+  return api.get<RunExplainability>(`/runs/${encodeURIComponent(runId)}/explainability`);
+}
 
 /**
  * High-level helper for the `/runs` index page. Returns the

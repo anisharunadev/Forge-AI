@@ -21,10 +21,9 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class WebhookDirection(str, enum.Enum):
@@ -74,6 +73,9 @@ class Webhook(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     events: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)
+    # ponytail: project JSONB degrades to JSON on SQLite so test schema
+    # builds; renders as PG_JSONB on Postgres so prod on-disk shape is
+    # unchanged.
     auth_type: Mapped[WebhookAuthType] = mapped_column(
         SAEnum(WebhookAuthType, name="webhook_auth_type"),
         nullable=False,

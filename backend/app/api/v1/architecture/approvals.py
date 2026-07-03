@@ -1,13 +1,15 @@
 """F-305 — Architecture Approval HTTP endpoints."""
 
 from __future__ import annotations
+from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.architecture import (
     ArchitectureApprovalDecisionRequest,
     ArchitectureApprovalListResponse,
@@ -37,8 +39,8 @@ def _workflow() -> ArchitectureApprovalWorkflow:
 @audit(action="architecture.approval.request", target_type="approval")
 async def request_approval(
     body: ArchitectureApprovalRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:approval:request"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:approval:request"))
 ) -> ArchitectureApprovalResponse:
     """Open a new approval request for an artifact."""
     project_id = body.project_id or principal.project_id
@@ -62,8 +64,8 @@ async def request_approval(
 @router.get("", response_model=ArchitectureApprovalListResponse)
 @audit(action="architecture.approval.list", target_type="approval")
 async def list_approvals(
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:approval:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:approval:read")),
     approval_status: str | None = Query(default=None, alias="status"),
     tenant_id: UUID | None = Query(default=None),
 ) -> ArchitectureApprovalListResponse:
@@ -82,8 +84,8 @@ async def list_approvals(
 @audit(action="architecture.approval.get", target_type="approval")
 async def get_approval(
     approval_id: UUID,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:approval:read"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:approval:read"))
 ) -> ArchitectureApprovalResponse:
     approval = await _workflow().get_approval(approval_id)
     if approval is None or str(approval.tenant_id) != str(principal.tenant_id):
@@ -96,8 +98,8 @@ async def get_approval(
 async def decide_approval(
     approval_id: UUID,
     body: ArchitectureApprovalDecisionRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:approval:decide"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:approval:decide"))
 ) -> ArchitectureApprovalResponse:
     try:
         approval = await _workflow().decide(
@@ -120,8 +122,8 @@ async def decide_approval(
 async def cancel_approval(
     approval_id: UUID,
     body: ArchitectureApprovalDecisionRequest,
-    principal: Principal,
-    _perm: Principal = require_permission("architecture:approval:cancel"),
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:approval:cancel"))
 ) -> ArchitectureApprovalResponse:
     try:
         approval = await _workflow().cancel(
