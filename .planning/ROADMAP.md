@@ -141,28 +141,62 @@ Plans:
 - [ ] 03-03: LiteLLM virtual-key quota tuning per tenant
 - [ ] 03-04: Audit chain anchor frequency review
 
-### Phase 4: Expansion (Multi-Tenant Verification)
+### Phase 4: Expansion — Scale & Enterprise (Features 16-20)
 
-**Goal**: Verify multi-tenancy end-to-end before any second tenant is onboarded — Rule 2 + Rule 5 must hold under real cross-tenant queries.
-**Mode**: mvp
+**Goal**: Make Forge AI enterprise-ready and scale-ready: clients can talk to LiteLLM in any provider-native format (OpenAI / Anthropic / Bedrock / Vertex / Gemini / multimodal), long-running agents survive hours via Realtime / A2A / background responses, enterprise identity flows through OAuth / SCIM / SSO, response caching cuts cost at scale, and FinOps + provider credentials are first-class operations surfaces.
+**Mode**: standard (NOT mvp; services are already split per-feature so horizontal layers per feature is correct)
 **Depends on**: Phase 3
-**Requirements**: PILOT-04-MT, PILOT-04-MT2, PILOT-04-MT3, PILOT-04-MT4, PILOT-04-MT5
+**Requirements**: SCALE-F16-AC1..AC10, SCALE-F17-AC1..AC10, SCALE-F18-AC1..AC10, SCALE-F19-AC1..AC10, SCALE-F20-AC1..AC10 (40 acceptance criteria total)
 **Success Criteria** (what must be TRUE):
 
-  1. A second tenant can be provisioned and a non-admin user from tenant B sees empty (or 403) responses when listing tenant A's artifacts, audit, and cost rows — verified by an automated smoke test (PILOT-04-MT).
-  2. Every ideation / cost / audit signature raises `TypeError` when `tenant_id` or `project_id` is missing — no `= None` defaults remain (PILOT-04-MT2).
-  3. `IDEATION_JIRA_PROJECT_KEY` is wired from connector config, not hard-coded (PILOT-04-MT3).
-  4. Multi-region active-active LiteLLM Proxy is live with per-tenant rate limits; per-tenant CMK is rolled out at tenant #3 or #5 (PILOT-04-MT4, PILOT-04-MT5).
+  1. A client using a raw OpenAI SDK can call LiteLLM through Forge Backend with zero code change; Forge applies policies, guardrails, and spend tracking.
+  2. Realtime / A2A / background-response sessions run for ≥ 12 hours without dropping state.
+  3. SCIM v2 provisioning works for at least one major IdP (Okta / Azure AD / Google Workspace).
+  4. SSO via OIDC succeeds for at least one corporate IdP; JWT verification uses LiteLLM's published JWKS.
+  5. Response cache hit rate ≥ 30% on a representative production workload (24h rolling).
+  6. CloudZero or Vantage export reconciles to within 0.5% of LiteLLM's authoritative spend log.
+  7. Multimodal endpoints (audio / image / video / moderation) work end-to-end through Forge Backend.
+  8. Phase 1 + Phase 2 + Phase 3 acceptance criteria still pass — no regression.
+  9. All Phase 4 actions are auditable; all health checks are monitored; all costs are attributed.
+  10. SOC 2 control mapping document is generated from the audit log.
 
-**Plans**: TBD
+**Plans**: 16 plans (1 Wave 0 + 5 feature waves). See `.planning/phases/04-expansion-multi-tenant-verification/04-{00..16}-PLAN.md`.
 
 Plans:
 
-- [ ] 04-01: Tenant-isolation smoke test (PILOT-04-MT)
-- [ ] 04-02: Required tenant_id/project_id on ideation/cost/audit signatures (PILOT-04-MT2)
-- [ ] 04-03: IDEATION_JIRA_PROJECT_KEY from connector config (PILOT-04-MT3)
-- [ ] 04-04: Multi-region LiteLLM Proxy + per-tenant rate limit (PILOT-04-MT5)
-- [ ] 04-05: Per-tenant CMK rollout at tenant #3 or #5 (PILOT-04-MT4)
+**Wave 0** *(blocking — must land first)*
+
+- [ ] 04-00: Wave 0 — alembic migration for 13 Phase 4 tables + multi-tenant conftest + 4 admin tab stubs
+
+**Wave 1** *(F19 Cache)*
+
+- [ ] 04-01: Cache service end-to-end + chat_complete_cached wrapper + CacheTab wiring
+- [ ] 04-02: Streaming cache + reconciliation + guardrail invalidation
+- [ ] 04-03: PII skip + cross-tenant isolation probe + tenant-offboard purge + flushall UI
+
+**Wave 2** *(F16 Pass-through + Multimodal + F20 Ops/Vault/FinOps)*
+
+- [ ] 04-04: Fix _top_level_proxy (settings.litellm_proxy_url + metadata injection) + Cursor-compat test
+- [ ] 04-05: SSE byte-identical streaming + Bedrock SigV4 + Vertex IAM + provider mounts
+- [ ] 04-06: /api/forge/media routes (audio/image/video/moderation)
+- [ ] 04-07: Credentials CRUD + VaultConfig + NEVER-RETURNED test + BrandingTab wiring
+- [ ] 04-08: CloudZero export + reconciliation + FinOpsTab + spend-tagged cache invalidation
+- [ ] 04-09: Vantage export mirror + email event settings + EmailSettingsTab
+
+**Wave 3** *(F17 Realtime/A2A)*
+
+- [ ] 04-10: SessionsService end-to-end (UUID v7 + DB state machine) + sessions routes + SessionsTab
+- [ ] 04-11: WS /api/forge/realtime handler + JWT auth + 4h soak + compact
+- [ ] 04-12: /a2a/.well-known agent card + /a2a/message WS handler + delegation JWT + handshake test
+- [ ] 04-13: /api/forge/responses routes + 24h retention + cancel-within-100ms
+
+**Wave 4** *(F18 Identity SSO/SCIM/OAuth/JWT)*
+
+- [ ] 04-14: SSOSettings service + /sso/readiness proxy + claim mapping + SCIM Users CRUD
+- [ ] 04-15: SCIM Groups + ServiceProviderConfig + filter parser + OAuth server (authorize/token/register/fallback)
+- [ ] 04-16: JWKS + key rotation + MCP-JWT issuance test
+
+**Renumbering note** (see `.planning/phases/04-expansion-multi-tenant-verification/01-CONTEXT.md` §deferred): the original GSD Phase 4 Multi-Tenant Verification REQ-IDs `PILOT-04-MT..MT5` are reassigned to a follow-up phase (Phase 5.5 / Phase 6 candidate). The current Phase 4 covers Scale & Enterprise (F16-F20).
 
 ## Progress
 
