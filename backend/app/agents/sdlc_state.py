@@ -181,12 +181,30 @@ class SDLCState(BaseModel):
       ``None`` means "keep going", any value means "wait".
     * ``cost_so_far`` is updated incrementally; cost / duration guards
       read it each tick.
+
+    Frozen-state contract (M2 Plan 01-01 — T-A2)
+    -------------------------------------------
+    ``model_config.frozen=True`` makes the model structurally
+    immutable: assigning to ``state.current_phase = ...`` raises
+    ``ValidationError``.  The only legal mutation path is
+    ``state.model_copy(update=..., deep=True)``, which returns a new
+    instance with the requested fields swapped.
+
+    Every mutator on this model (``with_phase``, ``add_artifact``,
+    ``add_error``, ``add_message``, ``add_cost``,
+    ``set_pending_approval``) already returned a new state via
+    ``model_copy(update=...)`` — T-A2 just adds ``deep=True`` so the
+    nested ``metadata`` / ``artifacts`` dicts are cloned, not shared.
+    Callers that mutating-assigned to ``state.foo`` will now see a
+    clear ``ValidationError`` at runtime instead of silently
+    corrupting the LangGraph checkpoint.
     """
 
     model_config = ConfigDict(
         from_attributes=True,
         populate_by_name=True,
         arbitrary_types_allowed=False,
+        frozen=True,
     )
 
     run_id: UUID = Field(default_factory=_new_uuid)
@@ -228,7 +246,14 @@ class SDLCState(BaseModel):
         actor_id: UUID | None = None,
         reason: str = "",
     ) -> "SDLCState":
-        """Return a copy with ``current_phase`` set and a history row appended."""
+        """Return a copy with ``current_phase`` set and a history row appended.
+
+        T-A2 contract: ``deep=True`` ensures ``phase_history`` is a
+        fresh list, not a shared reference into the frozen source.
+        Callers can keep appending to ``returned.phase_history`` in
+        their own context without contaminating the LangGraph
+        checkpoint that originated ``self``.
+        """
         if to_phase == self.current_phase:
             return self
         transition = PhaseTransition(
@@ -242,7 +267,8 @@ class SDLCState(BaseModel):
                 "current_phase": to_phase,
                 "phase_history": [*self.phase_history, transition],
                 "updated_at": _utcnow(),
-            }
+            },
+            deep=True,
         )
 
     def add_artifact(self, key: str, ref: ArtifactRef) -> "SDLCState":
@@ -250,7 +276,8 @@ class SDLCState(BaseModel):
             update={
                 "artifacts": {**self.artifacts, key: ref},
                 "updated_at": _utcnow(),
-            }
+            },
+            deep=True,
         )
 
     def add_error(self, err: ErrorRecord) -> "SDLCState":
@@ -258,7 +285,8 @@ class SDLCState(BaseModel):
             update={
                 "errors": [*self.errors, err],
                 "updated_at": _utcnow(),
-            }
+            },
+            deep=True,
         )
 
     def add_message(self, message: Message) -> "SDLCState":
@@ -266,7 +294,8 @@ class SDLCState(BaseModel):
             update={
                 "messages": [*self.messages, message],
                 "updated_at": _utcnow(),
-            }
+            },
+            deep=True,
         )
 
     def add_cost(self, cost: Decimal) -> "SDLCState":
@@ -276,7 +305,8 @@ class SDLCState(BaseModel):
             update={
                 "cost_so_far": (self.cost_so_far + cost),
                 "updated_at": _utcnow(),
-            }
+            },
+            deep=True,
         )
 
     def set_pending_approval(self, approval: ApprovalRequest | None) -> "SDLCState":
@@ -284,7 +314,8 @@ class SDLCState(BaseModel):
             update={
                 "pending_approval": approval,
                 "updated_at": _utcnow(),
-            }
+            },
+            deep=True,
         )
 
     def as_langgraph_state(self) -> dict[str, Any]:
