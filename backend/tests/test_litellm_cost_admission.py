@@ -339,7 +339,9 @@ async def test_pre_call_admission_denies_over_cap(
 
 
 @pytest.mark.skip(
-    reason="Cross-file test isolation: this case passes solo but fails when run after test_approval_phase_decorator.py. The stubbed_ledger fixture's monkeypatch on app.services.cost_ledger.record_actual is overridden by cached LiteLLMClient instance state from earlier tests. Tracked as M12 production hardening follow-up; manual verify of the happy path is below in this module."
+    reason="Cross-file test isolation: passes solo, fails after decorator tests. "
+    "stubbed_ledger monkeypatch on app.services.cost_ledger.record_actual is "
+    "overridden by cached LiteLLMClient instance state. Tracked for M12 hardening."
 )
 @pytest.mark.asyncio
 async def test_chat_records_actual_row_after_successful_response(
