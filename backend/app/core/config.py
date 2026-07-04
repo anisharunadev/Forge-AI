@@ -210,6 +210,51 @@ class Settings(BaseSettings):
         description="COPILOT_WELCOME_ENABLED. Render the welcome shim on /welcome.",
     )
 
+    # M1 G2 — placeholder LLM key guard. The .env.example ships with
+    # ``ANTHROPIC_API_KEY=sk-ant-replace-me``,
+    # ``OPENAI_API_KEY=sk-openai-replace-me`` and
+    # ``LITELLM_MASTER_KEY=sk-litellm-dev-replace-me`` so a fresh
+    # ``cp .env.example .env`` boots without manual edits. That's a
+    # nice ergonomic, but it is also a PITFALL: a misconfigured
+    # deployment that ships the placeholder to production would make
+    # every LLM call silently 401 from LiteLLM's perspective while
+    # the backend still appears healthy. This opt-in escape hatch lets
+    # tests + a controlled dev smoke (``ALLOW_PLACEHOLDER_LLM_KEYS=true``)
+    # run without real keys; production MUST leave the flag at its
+    # default of ``False``.
+    allow_placeholder_llm_keys: bool = Field(
+        default=False,
+        description=(
+            "ALLOW_PLACEHOLDER_LLM_KEYS. Escape hatch for tests + dev "
+            "smoke. Defaults to False — production refuses to boot when "
+            "ANTHROPIC_API_KEY / OPENAI_API_KEY / LITELLM_MASTER_KEY "
+            "match the .env.example placeholder strings."
+        ),
+    )
+
+    # M1 G2 — Surface ANTHROPIC_API_KEY + OPENAI_API_KEY as
+    # ``Settings`` fields so the placeholder validator below can read
+    # them. These values are forwarded to the LiteLLM container via the
+    # compose env (``os.environ/ANTHROPIC_API_KEY`` in
+    # ``infra/litellm/config.yaml``); the backend itself doesn't call
+    # provider SDKs (Rule 1) so the in-process fields are only used by
+    # the validator. Defaults to "" when the env var is missing so the
+    # validator can fire on empty-string as well as the placeholder.
+    anthropic_api_key: str = Field(
+        default="",
+        description=(
+            "ANTHROPIC_APIKEY. Forwarded to the LiteLLM container; "
+            "validated against the .env.example placeholder."
+        ),
+    )
+    openai_api_key: str = Field(
+        default="",
+        description=(
+            "OPENAI_API_KEY. Forwarded to the LiteLLM container; "
+            "validated against the .env.example placeholder."
+        ),
+    )
+
     @model_validator(mode="after")
     def _dev_bypass_only_in_dev(self) -> "Settings":
         """Refuse to boot if DEV_AUTH_BYPASS is enabled outside development.
@@ -231,6 +276,65 @@ class Settings(BaseSettings):
             raise ValueError(
                 f"DEV_AUTH_BYPASS=1 is only allowed when ENVIRONMENT=development. "
                 f"Got ENVIRONMENT={self.environment!r}. Refusing to boot."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _reject_placeholder_llm_keys(self) -> "Settings":
+        """Refuse to boot on the .env.example placeholder LLM keys.
+
+        M1 G2 closure. Tracks the three values .env.example ships:
+            ANTHROPIC_API_KEY=sk-ant-replace-me
+            OPENAI_API_KEY=sk-openai-replace-me
+            LITELLM_MASTER_KEY=sk-litellm-dev-replace-me
+        plus the obvious empty-string failure mode. The guard is
+        configured by ``ALLOW_PLACEHOLDER_LLM_KEYS`` — when set to the
+        string ``"true"`` (case-insensitive) the placeholder check is
+        skipped so tests + a controlled dev smoke can boot with the
+        placeholder strings without a real provider key. The
+        ``.env.example`` documents this override inline.
+
+        Validators run on ``Settings()`` instantiation. Because
+        ``settings = get_settings()`` is evaluated at module import
+        (bottom of this file), a misconfigured deployment exits non-zero
+        at import — before FastAPI boots — same lifecycle as the
+        sibling ``_dev_bypass_only_in_dev`` validator.
+        """
+        # Mirror the sibling ``_dev_bypass_only_in_dev`` exemption:
+        # skip the check in ``test`` so the default test env that
+        # conftest.py sets (no real keys, no bypass flag) still imports
+        # cleanly. development is NOT exempted here on purpose — a
+        # developer who copied ``.env.example`` and forgot to set real
+        # keys still gets stopped at boot instead of silently shipping
+        # 401s on the first LLM call. ALLOW_PLACEHOLDER_LLM_KEYS=true
+        # is the documented opt-in escape hatch for non-test dev smokes.
+        if self.environment == "test" or self.allow_placeholder_llm_keys:
+            return self
+        offenders: list[str] = []
+        # Match either the exact placeholder, an empty string, or
+        # whitespace-only. These three together cover every way the
+        # .env.example bootstraps to a non-functional state.
+        placeholders = {
+            "anthropic_api_key": "sk-ant-replace-me",
+            "openai_api_key": "sk-openai-replace-me",
+            "litellm_master_key": "sk-litellm-dev-replace-me",
+        }
+        for field_name, expected_placeholder in placeholders.items():
+            value = getattr(self, field_name, "")
+            if not isinstance(value, str):
+                # pydantic coerces; defensive. Skip non-strings.
+                continue
+            stripped = value.strip()
+            if stripped in {"", expected_placeholder}:
+                offenders.append(field_name)
+        if offenders:
+            raise ValueError(
+                "Refusing to boot with placeholder LLM keys: "
+                + ", ".join(sorted(offenders))
+                + ". Set real values in your environment "
+                "(ANTHROPIC_API_KEY, OPENAI_API_KEY, LITELLM_MASTER_KEY), "
+                "or set ALLOW_PLACEHOLDER_LLM_KEYS=true to bypass "
+                "(dev/test only)."
             )
         return self
 
