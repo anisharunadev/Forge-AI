@@ -68,7 +68,14 @@ from app.agents.sdlc_state import (
 )
 from app.core.logging import get_logger
 from app.services.event_bus import EventType, bus as default_bus
-from app.services.workflow_budget import workflow_budget_service
+
+# ``workflow_budget_service`` is imported lazily inside the gate's
+# ``__init__`` to avoid a circular import — Track A retrofit (T-A3)
+# has ``app.services.workflow_budget`` depending on
+# ``app.agents.approval_gate`` for the decorator, while the gate
+# itself wants to call ``workflow_budget_service.surface_at_gate``
+# for NFR-044 budget snapshots.  Resolving one direction lazily
+# breaks the cycle without changing either module's public API.
 
 
 APPROVAL_TIMEOUT_HOURS = 24
@@ -176,7 +183,13 @@ def _decision_metadata_key(phase: SDLCPhase) -> str:
 
 def _envelope_metadata_key(phase: SDLCPhase) -> str:
     """Stable metadata key for the frozen :class:`ApprovalEnvelope`."""
-    return f"approval:{phase}:envelope"
+    # Use ``phase.value`` (e.g. ``"architecture"``) rather than
+    # ``phase.name`` (``"ARCHITECTURE"``) so the key matches the
+    # gate's existing ``approval:<phase>:decision`` convention.
+    # ``SDLCPhase`` is a ``str`` Enum so ``phase.value`` returns
+    # the canonical lowercase string the supervisor writes.
+    phase_str = phase.value if hasattr(phase, "value") else str(phase)
+    return f"approval:{phase_str}:envelope"
 
 
 def _coerce_sdlc_state(args: tuple[Any, ...]) -> SDLCState | None:
@@ -420,7 +433,14 @@ class ApprovalGateNode:
         timeout_hours: int = APPROVAL_TIMEOUT_HOURS,
     ) -> None:
         self._bus = event_bus or default_bus
-        self._budget_service = budget_service or workflow_budget_service
+        # Lazy import to break the approval_gate ↔ workflow_budget
+        # circular import (see module-level note).  The fallback
+        # ``None`` is preserved for tests that don't need the
+        # budget snapshot.
+        if budget_service is None:
+            from app.services.workflow_budget import workflow_budget_service
+            budget_service = workflow_budget_service
+        self._budget_service = budget_service
         self._timeout_hours = timeout_hours
 
     # ---- LangGraph surface --------------------------------------------
