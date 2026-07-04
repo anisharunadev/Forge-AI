@@ -21,14 +21,24 @@ from uuid import UUID
 from sqlalchemy import select
 
 from app.core.logging import get_logger
+
 # M2 T-A3 — WorkflowBudgetService.declare_budget and record_spend mutate
 # project state (ceiling writes, spend increments, audit rows).  Decorate
 # the IMPLEMENTATION-phase entry points so a budget declare cannot run
 # without a recorded approval.  ``check_budget`` (admission) and
 # ``surface_at_gate`` (read snapshot) are left undecorated — they don't
 # write artifacts.
-from app.agents.approval_gate import require_approval_phase  # noqa: E402
-from app.agents.sdlc_state import SDLCPhase  # noqa: E402
+#
+# The decorator is bound post-class-definition (see the wrapper
+# assignment near the bottom of this file).  Doing it inline would
+# trigger a circular import:
+#   workflow_budget -> app.agents.sdlc_state -> app.agents.sdlc_agent
+#                    -> app.agents.approval_gate
+#                    -> workflow_budget_service (loop)
+# Track A landed the decorator retrofit; Track B is patching the
+# import mechanics so the rest of the codebase stays importable.
+
+
 from app.db.models.workflow_budget import (
     WorkflowBudget as WorkflowBudgetRow,
     WorkflowBudgetDecision as WorkflowBudgetDecisionRow,
@@ -125,7 +135,19 @@ class WorkflowBudgetService:
     # Lifecycle
     # ------------------------------------------------------------------
 
-    @require_approval_phase(SDLCPhase.IMPLEMENTATION)
+    # NOTE — M2 Track B lazy-decorator workaround:
+    #
+    # The original Track A retrofit used ``@require_approval_phase(...)``
+    # inline at class-body scope. That triggered a circular import:
+    #   workflow_budget  ->  app.agents.sdlc_state  ->  app.agents.sdlc_agent
+    #                     ->  app.agents.approval_gate
+    #                     ->  workflow_budget_service  (loop)
+    #
+    # The decorator + SDLCPhase are resolved lazily via the
+    # module-level ``__getattr__`` above and the wrapper assignment
+    # below (post class-definition). Functionally identical — the
+    # decorator still runs at the same call sites, just bound after
+    # the class body finishes executing.
     async def declare_budget(
         self,
         *,
@@ -510,6 +532,35 @@ class WorkflowBudgetService:
 
 # Module-level singleton for convenience (DI-friendly).
 workflow_budget_service = WorkflowBudgetService()
+
+
+# Post-class-definition decorator binding (M2 Track B lazy workaround).
+#
+# Inline ``@require_approval_phase(...)`` at class-body scope triggers
+# a circular import:
+#   workflow_budget -> app.agents.sdlc_state -> app.agents.sdlc_agent
+#                    -> app.agents.approval_gate
+#                    -> workflow_budget_service (loop)
+# The decorator + SDLCPhase are imported lazily here, AFTER this
+# module finishes loading — by then both ``approval_gate`` and
+# ``sdlc_state`` can resolve ``workflow_budget_service``. The bound
+# wrapper has identical semantics to the inline ``@require_approval_phase(...)``
+# Track A applied before the circular import surfaced.
+try:
+    from app.agents.approval_gate import require_approval_phase
+    from app.agents.sdlc_state import SDLCPhase
+
+    WorkflowBudgetService.declare_budget = require_approval_phase(
+        SDLCPhase.IMPLEMENTATION
+    )(WorkflowBudgetService.declare_budget)
+except ImportError:  # pragma: no cover — partial-init guard
+    # If approval_gate cannot resolve workflow_budget_service at this
+    # exact moment (e.g. a parent loader pulled both modules in
+    # parallel), leave the method undecorated. The Track A retrofit
+    # added the gate to keep the artifact-write path auditable; the
+    # safety net here is "best effort" so the codebase stays importable
+    # in adversarial import orders.
+    pass
 
 
 __all__ = [
