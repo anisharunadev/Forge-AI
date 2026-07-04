@@ -27,6 +27,7 @@ Migration strategy (see plan §"Migration Strategy"):
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any, AsyncIterator
 from uuid import UUID
 
@@ -53,6 +54,85 @@ logger = get_logger(__name__)
 # defaults so facade callers see identical admission behavior.
 _DEFAULT_PROJECTED_CHAT_USD = 0.05
 _DEFAULT_PROJECTED_EMBED_USD = 0.0001
+
+
+# ---------------------------------------------------------------------------
+# M2 ADR-009 — Per-RUN cumulative cap (Track B T-B3)
+# ---------------------------------------------------------------------------
+
+
+@dataclass(slots=True, frozen=True)
+class AdmissionDecision:
+    """Result of a per-RUN pre-call admission check (ADR-009 Appendix B).
+
+    Frozen dataclass so callers cannot mutate the result and shadow
+    the audit trail. All fields are public; the consumer typically
+    only checks ``allowed`` and reads ``reason`` for telemetry.
+    """
+
+    allowed: bool
+    projected_cost_usd: float
+    spent_usd: float
+    ceiling_usd: float
+    reason: str
+
+
+class CostCapExceeded(RuntimeError):
+    """Raised when a pre-call admission check denies an LLM call.
+
+    Distinct from the existing per-WORKFLOW ``BudgetExceeded`` exception
+    in :mod:`app.services.workflow_budget`. ``CostCapExceeded`` is the
+    per-RUN cap (ADR-009) — both checks run before every LLM call
+    during the M2 cut-over so a runaway agent cannot blow past either
+    limit. Mapped to HTTP 429 at the API boundary (Track C will
+    centralize the mapping).
+
+    Attributes mirror :class:`AdmissionDecision` plus the run and
+    tenant identity needed for the audit row.
+    """
+
+    def __init__(
+        self,
+        *,
+        projected_usd: float,
+        spent_usd: float,
+        ceiling_usd: float,
+        run_id: UUID | str,
+        tenant_id: UUID | str,
+        reason: str = "ceiling_exceeded",
+    ) -> None:
+        self.projected_usd = float(projected_usd)
+        self.spent_usd = float(spent_usd)
+        self.ceiling_usd = float(ceiling_usd)
+        self.run_id = run_id
+        self.tenant_id = tenant_id
+        super().__init__(
+            f"cost cap exceeded for run={run_id} tenant={tenant_id}: "
+            f"spent={spent_usd:.4f} + projected={projected_usd:.4f} > "
+            f"ceiling={ceiling_usd:.4f} ({reason})"
+        )
+
+
+def project_cost_usd(
+    model: str | None,
+    prompt_tokens: int,
+    completion_tokens: int,
+) -> float:
+    """Project the USD cost of an LLM call from pricing YAML.
+
+    Thin re-export of :func:`app.services.litellm_pricing.project_cost_usd`
+    so callers don't have to import the pricing module separately.
+    Drives :meth:`LiteLLMClient.pre_call_admission` and any caller-side
+    surface that wants to compute a projection without instantiating
+    the client (e.g. unit tests, batch forecasters).
+    """
+    from app.services.litellm_pricing import project_cost_usd as _project_cost_usd
+
+    return _project_cost_usd(
+        model=model,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -194,6 +274,8 @@ class LiteLLMClient:
         projected_cost_usd: float | None = None,
         stream: bool = False,
         proxy_token: str | None = None,
+        run_id: UUID | str | None = None,
+        agent: str | None = None,
         **kwargs: Any,
     ) -> dict[str, Any] | AsyncIterator[dict[str, Any]]:
         """Call /v1/chat/completions and record cost.
@@ -201,21 +283,42 @@ class LiteLLMClient:
         Non-streaming returns the full response dict; streaming returns
         an async iterator of chunk dicts (the SSE-decoded JSON bodies).
 
-        Admission control (NFR-044): if ``workflow_id`` has a declared
-        budget and ``spent + projected_cost_usd > ceiling``, this method
-        raises :class:`BudgetExceeded` *before* any provider traffic is
-        sent. ``projected_cost_usd`` defaults to a conservative bound.
+        Admission control:
+
+        - **NFR-044 (per-WORKFLOW):** if ``workflow_id`` has a declared
+          budget and ``spent + projected_cost_usd > ceiling``, this
+          method raises :class:`BudgetExceeded` *before* any provider
+          traffic is sent.
+        - **M2 ADR-009 (per-RUN):** if ``run_id`` is supplied, the
+          cumulative-cap rule (sum of confirmed spend + projection <=
+          ``run_budget_cap_usd[tenant_id]``) runs and raises
+          :class:`CostCapExceeded` on deny.
+
+        ``projected_cost_usd`` defaults to a conservative bound.
 
         step-65: pass ``proxy_token`` (RS256 JWT, signed at login) to
         switch auth from the per-tenant Virtual Key to the proxy's
         JWT-auth mode.  When ``None`` the call falls back to the
         existing Virtual Key path (default for the 14 existing call
         sites).  Both paths coexist during the rollout.
+
+        M2: when ``run_id`` is supplied, the post-call settlement
+        writes a ``projected=False`` cost_ledger row via
+        :meth:`_record_actual_for_run`.
         """
         projected = (
             projected_cost_usd
             if projected_cost_usd is not None
             else _DEFAULT_PROJECTED_CHAT_USD
+        )
+        # M2 ADR-009 — per-RUN admission runs BEFORE per-WORKFLOW so a
+        # breached RUN cap short-circuits before the per-WORKFLOW check
+        # logs/audits anything. run_id=None → short-circuit allow.
+        await self.pre_call_admission(
+            run_id=run_id,
+            tenant_id=tenant_id,
+            model=model,
+            projected_cost_usd=projected,
         )
         # Pre-call admission — same logic as the legacy client, kept
         # here so the facade works even if the canonical client evolves.
@@ -231,7 +334,7 @@ class LiteLLMClient:
             chat_kwargs = dict(kwargs)
             if proxy_token is not None:
                 chat_kwargs["proxy_token"] = proxy_token
-            return await self._impl.chat(
+            response = await self._impl.chat(
                 messages,
                 model,
                 tenant_id=tenant_id,
@@ -242,6 +345,20 @@ class LiteLLMClient:
                 stream=stream,
                 **chat_kwargs,
             )
+            # M2 ADR-009 — per-RUN settlement for non-streaming returns.
+            # Streaming returns an AsyncIterator; settlement for streams
+            # happens in :meth:`_chat_stream` when the terminal chunk
+            # arrives (the existing path stays intact).
+            if not stream and run_id is not None and isinstance(response, dict):
+                await self._record_actual_for_run(
+                    response_body=response,
+                    tenant_id=tenant_id,
+                    project_id=project_id,
+                    run_id=run_id,
+                    agent=agent or "litellm_chat",
+                    model=model or "unknown",
+                )
+            return response
 
         # Legacy fallback path (integration package missing).
         chat_kwargs = dict(kwargs)
@@ -256,6 +373,8 @@ class LiteLLMClient:
             actor_id=actor_id,
             stream=stream,
             projected_cost_usd=projected,
+            run_id=run_id,
+            agent=agent,
             **chat_kwargs,
         )
 
@@ -270,6 +389,8 @@ class LiteLLMClient:
         actor_id: UUID | str | None,
         projected_cost_usd: float,
         stream: bool,
+        run_id: UUID | str | None = None,
+        agent: str | None = None,
         **kwargs: Any,
     ) -> dict[str, Any] | AsyncIterator[dict[str, Any]]:
         from app.core.config import settings
@@ -286,6 +407,15 @@ class LiteLLMClient:
         data = response.json()
 
         await self._record_cost(data, tenant_id, project_id, workflow_id, model)
+        if run_id is not None:
+            await self._record_actual_for_run(
+                response_body=data,
+                tenant_id=tenant_id,
+                project_id=project_id,
+                run_id=run_id,
+                agent=agent or "litellm_chat",
+                model=model,
+            )
         await self._commit_spend(workflow_id, data, tenant_id, project_id)
         await default_bus.publish(
             EventType.AGENT_RUN_COMPLETED,
@@ -336,16 +466,27 @@ class LiteLLMClient:
         project_id: UUID | str | None,
         workflow_id: UUID | str | None = None,
         projected_cost_usd: float | None = None,
+        run_id: UUID | str | None = None,
+        agent: str | None = None,
     ) -> list[list[float]]:
         """Call /v1/embeddings.
 
         Admission control (NFR-044) runs before the call when a
-        ``workflow_id`` is provided.
+        ``workflow_id`` is provided. M2 ADR-009 per-RUN admission runs
+        when ``run_id`` is provided; both checks short-circuit to ALLOW
+        when their respective scope is unset.
         """
         projected = (
             projected_cost_usd
             if projected_cost_usd is not None
             else _DEFAULT_PROJECTED_EMBED_USD
+        )
+        # M2 ADR-009 — per-RUN admission (Track B T-B3).
+        await self.pre_call_admission(
+            run_id=run_id,
+            tenant_id=tenant_id,
+            model=model,
+            projected_cost_usd=projected,
         )
         await self._admit_call(
             workflow_id=workflow_id,
@@ -354,7 +495,7 @@ class LiteLLMClient:
         )
 
         if self._impl is not None and hasattr(self._impl, "embed"):
-            return await self._impl.embed(
+            vectors = await self._impl.embed(
                 texts,
                 model,
                 tenant_id=tenant_id,
@@ -362,6 +503,27 @@ class LiteLLMClient:
                 workflow_id=workflow_id,
                 projected_cost_usd=projected,
             )
+            if run_id is not None:
+                # Embeddings don't return usage; projection IS the actual
+                # for embed calls (token counts are bounded by input size).
+                try:
+                    from app.services.cost_ledger import cost_ledger
+                    if self._cost_ledger is None:
+                        self._cost_ledger = cost_ledger
+                    await self._cost_ledger.record_actual(
+                        tenant_id=tenant_id,
+                        project_id=project_id,
+                        run_id=run_id,
+                        agent=agent or "litellm_embed",
+                        model=model,
+                        prompt_tokens=0,
+                        completion_tokens=0,
+                        cost_usd=projected,
+                        source="litellm",
+                    )
+                except Exception:  # noqa: BLE001
+                    logger.exception("litellm.record_actual_failed_embed", run_id=str(run_id))
+            return vectors
 
         return await self._legacy_embed(
             texts,
@@ -482,6 +644,8 @@ class LiteLLMClient:
         projected_cost_usd: float | None = None,
         tool_choice: str | dict[str, Any] = "auto",
         model: str | None = None,
+        run_id: UUID | str | None = None,
+        agent: str | None = None,
         **kwargs: Any,
     ) -> tuple[dict[str, Any], list[ToolCall]]:
         """Single ``/v1/chat/completions`` call with a ``tools=`` body.
@@ -527,6 +691,13 @@ class LiteLLMClient:
             if projected_cost_usd is not None
             else _DEFAULT_PROJECTED_CHAT_USD
         )
+        # M2 ADR-009 — per-RUN admission (Track B T-B3).
+        await self.pre_call_admission(
+            run_id=run_id,
+            tenant_id=tenant_id,
+            model=model,
+            projected_cost_usd=projected,
+        )
         await self._admit_call(
             workflow_id=workflow_id,
             projected_cost_usd=projected,
@@ -550,6 +721,15 @@ class LiteLLMClient:
         data = response.json()
 
         await self._record_cost(data, tenant_id, project_id, workflow_id, chosen_model)
+        if run_id is not None:
+            await self._record_actual_for_run(
+                response_body=data,
+                tenant_id=tenant_id,
+                project_id=project_id,
+                run_id=run_id,
+                agent=agent or "litellm_chat_with_tools",
+                model=chosen_model,
+            )
         await self._commit_spend(workflow_id, data, tenant_id, project_id)
         await default_bus.publish(
             EventType.AGENT_RUN_COMPLETED,
@@ -700,6 +880,140 @@ class LiteLLMClient:
                 ceiling=check.ceiling_usd,
             )
 
+    # ------------------------------------------------------------------
+    # M2 ADR-009 — Per-RUN pre-call admission (Track B T-B3)
+    # ------------------------------------------------------------------
+
+    async def pre_call_admission(
+        self,
+        *,
+        run_id: UUID | str | None,
+        tenant_id: UUID | str,
+        model: str | None,
+        projected_cost_usd: float | None = None,
+        prompt_tokens: int = 0,
+        completion_tokens: int = 0,
+    ) -> AdmissionDecision:
+        """Pre-call admission gate for the per-RUN cumulative cap.
+
+        Implements the cumulative-cap rule (ADR-009 Appendix B):
+
+            ceiling_usd = settings.run_budget_cap_overrides.get(
+                tenant_id, settings.run_budget_cap_usd
+            )
+            spent_usd = sum(cost_usd
+                            FROM cost_entries
+                            WHERE run_id = X AND projected = false)
+            projected = projected_cost_usd
+                        or project_cost_usd(model, pt, ct)
+            decision = (spent + projected <= ceiling) ? ALLOWED : BLOCKED
+
+        A ``run_id`` of ``None`` short-circuits to ALLOWED — admission
+        is opt-in per run; call sites that have not yet migrated to the
+        per-RUN scope continue to work without the cap.
+
+        Raises :class:`CostCapExceeded` when the call would breach the
+        cap; returns the :class:`AdmissionDecision` otherwise.
+        """
+        from app.core.config import settings
+        from app.services.cost_ledger import cost_ledger
+
+        if run_id is None:
+            return AdmissionDecision(
+                allowed=True,
+                projected_cost_usd=0.0,
+                spent_usd=0.0,
+                ceiling_usd=float(settings.run_budget_cap_usd),
+                reason="no_run_id",
+            )
+
+        tenant_key = str(tenant_id)
+        ceiling_usd = float(
+            settings.run_budget_cap_overrides.get(
+                tenant_key, settings.run_budget_cap_usd
+            )
+        )
+        spent_usd = await cost_ledger.sum_spent_for_run(run_id)
+        if projected_cost_usd is None:
+            projected_cost_usd = project_cost_usd(
+                model=model,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+            )
+        projected_cost_usd = max(0.0, float(projected_cost_usd))
+
+        if spent_usd + projected_cost_usd > ceiling_usd:
+            logger.warning(
+                "litellm.cost_cap_exceeded",
+                run_id=str(run_id),
+                tenant_id=tenant_key,
+                spent_usd=spent_usd,
+                ceiling_usd=ceiling_usd,
+                projected_cost_usd=projected_cost_usd,
+            )
+            raise CostCapExceeded(
+                projected_usd=projected_cost_usd,
+                spent_usd=spent_usd,
+                ceiling_usd=ceiling_usd,
+                run_id=run_id,
+                tenant_id=tenant_id,
+                reason="ceiling_exceeded",
+            )
+
+        return AdmissionDecision(
+            allowed=True,
+            projected_cost_usd=projected_cost_usd,
+            spent_usd=spent_usd,
+            ceiling_usd=ceiling_usd,
+            reason="within_ceiling",
+        )
+
+    async def _record_actual_for_run(
+        self,
+        *,
+        response_body: dict[str, Any],
+        tenant_id: UUID | str,
+        project_id: UUID | str | None,
+        run_id: UUID | str,
+        agent: str,
+        model: str,
+    ) -> None:
+        """Append a confirmed-cost row to the ledger (ADR-009).
+
+        Called after every successful LLM response when the caller
+        supplied ``run_id``. Writes the ``projected=False`` row that
+        the cumulative-cap rule counts. Failures are logged and
+        swallowed — the LLM call result must not be masked by a
+        ledger write error.
+        """
+        from app.services.cost_ledger import cost_ledger
+
+        if self._cost_ledger is None:
+            self._cost_ledger = cost_ledger
+        usage = response_body.get("usage") or {}
+        prompt_tokens = int(usage.get("prompt_tokens", 0))
+        completion_tokens = int(usage.get("completion_tokens", 0))
+        cost_usd = float(response_body.get("cost_usd") or usage.get("cost_usd") or 0.0)
+        if not (prompt_tokens or completion_tokens or cost_usd):
+            return
+        try:
+            await self._cost_ledger.record_actual(
+                tenant_id=tenant_id,
+                project_id=project_id,
+                run_id=run_id,
+                agent=agent,
+                model=model,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                cost_usd=cost_usd,
+                source="litellm",
+            )
+        except Exception:  # noqa: BLE001 — never let ledger mask call result
+            logger.exception(
+                "litellm.record_actual_failed",
+                run_id=str(run_id),
+            )
+
     async def _commit_spend(
         self,
         workflow_id: UUID | str | None,
@@ -756,6 +1070,9 @@ __all__ = [
     "ToolSpec",
     "ToolLoopExhausted",
     "ToolExecutor",
+    "AdmissionDecision",
+    "CostCapExceeded",
+    "project_cost_usd",
 ]
 
 
@@ -850,7 +1167,14 @@ try:
         ForgeLLMClient,
         forge_llm_client,
     )
-    __all__ = ["LiteLLMClient", "ForgeLLMClient", "forge_llm_client"]
+    __all__ = [
+        "LiteLLMClient",
+        "ForgeLLMClient",
+        "forge_llm_client",
+        "AdmissionDecision",
+        "CostCapExceeded",
+        "project_cost_usd",
+    ]
 except ImportError:  # pragma: no cover — integration package still being built
     ForgeLLMClient = None  # type: ignore[assignment,misc]
     forge_llm_client = None  # type: ignore[assignment,misc]
