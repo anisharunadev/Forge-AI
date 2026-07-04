@@ -101,6 +101,17 @@ class BootstrapResult(TenantScopedModel):
     error: str | None = None
 
 
+# M2 Plan 01-07 (T-A8, G27) — ``BootstrapReport`` is the new name the
+# downstream services expect (architecture attestation, policy engine,
+# ideation intake all import it under that name).  Aliasing rather
+# than renaming keeps the surface zero-behavior-change while the
+# older callers migrate — ``isinstance(x, BootstrapReport)`` and
+# ``isinstance(x, BootstrapResult)`` both resolve to True for the
+# same object.  See Q-M2-1 in the M2 spec for the rename-vs-alias
+# decision rationale.
+BootstrapReport = BootstrapResult
+
+
 class BootstrapStatusRead(ForgeBaseModel):
     """Lightweight read for the status endpoint."""
 
