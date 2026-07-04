@@ -14,10 +14,15 @@
 .omc/
 .serena/
 
-# Archived historical code (Paperclip era) — not deployed
-archive/
-# M1 T1.5: legacy Keycloak realm archive is intentionally tracked.
+# Archived historical code (Paperclip era) — not deployed.
+# M1 T1.5 exception: the legacy Keycloak realm archive IS tracked so
+# the canonicalization step leaves an audit trail of what got demoted.
+# Use a glob so descendants of archive/keycloak-init-legacy can be
+# re-included via the `!` rules below (negation does not un-anchor
+# a top-level directory pattern).
+archive/*
 !archive/keycloak-init-legacy/
+!archive/keycloak-init-legacy/**
 
 # Node build artefacts
 node_modules/

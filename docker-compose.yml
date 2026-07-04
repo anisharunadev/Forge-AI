@@ -86,10 +86,16 @@ services:
     # start-dev + --import-realm boots with the forge realm preloaded.
     # In production, Keycloak runs in `start` mode behind a managed
     # Postgres and is fronted by the identity-broker (see ADR-001).
-    # step-53 Zone 1: scripts/keycloak-init/forge-realm.json defines
+    # step-53 Zone 1: infra/keycloak/realm-forge.json defines
     # the `forge` realm (clients: forge-ui public+PKCE, forge-backend
     # confidential) and the dev seed user arun@acme-corp.com with the
     # acme-corp tenant attributes attached.
+    #
+    # M1 T1.5: canonicalized on infra/keycloak/realm-forge.json (716 lines,
+    # 7 forge-* realm roles, SAML, WebAuthn, IdP placeholders). The legacy
+    # scripts/keycloak-init/forge-realm.json (146 lines, 3 roles) is now
+    # archived under archive/keycloak-init-legacy/. See that README for
+    # why this mount was changed.
     command: ["start-dev", "--import-realm"]
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
@@ -106,7 +112,7 @@ services:
       # as a realm definition on first boot of a fresh Keycloak data
       # volume. Idempotent on subsequent boots (Keycloak skips realms
       # that already exist by name).
-      - ./scripts/keycloak-init:/opt/keycloak/data/import:ro
+      - ./infra/keycloak:/opt/keycloak/data/import:ro
     healthcheck:
       # Keycloak container has no curl/wget, but the bundled `/bin/sh`
       # supports the bash /dev/tcp pseudo-device. The OIDC discovery

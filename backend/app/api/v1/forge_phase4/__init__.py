@@ -77,7 +77,7 @@ def mount_phase4_top_level(app: Any) -> None:
     Idempotent: subsequent calls are no-ops so a refactor that adds a
     second ``app`` (e.g. for A/B testing) does not double-mount.
     """
-    global forge_phase4_mounted
+    global forge_phase4_mounted  # noqa: PLW0603 — module-level flag is the documented contract for the /healthz probe.
     if forge_phase4_mounted:
         return
     mount_passthrough(app)
