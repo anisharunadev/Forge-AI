@@ -86,10 +86,16 @@ services:
     # start-dev + --import-realm boots with the forge realm preloaded.
     # In production, Keycloak runs in `start` mode behind a managed
     # Postgres and is fronted by the identity-broker (see ADR-001).
-    # step-53 Zone 1: scripts/keycloak-init/forge-realm.json defines
+    # step-53 Zone 1: infra/keycloak/realm-forge.json defines
     # the `forge` realm (clients: forge-ui public+PKCE, forge-backend
     # confidential) and the dev seed user arun@acme-corp.com with the
     # acme-corp tenant attributes attached.
+    #
+    # M1 T1.5: canonicalized on infra/keycloak/realm-forge.json (716 lines,
+    # 7 forge-* realm roles, SAML, WebAuthn, IdP placeholders). The legacy
+    # scripts/keycloak-init/forge-realm.json (146 lines, 3 roles) is now
+    # archived under archive/keycloak-init-legacy/. See that README for
+    # why this mount was changed.
     command: ["start-dev", "--import-realm"]
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
@@ -106,7 +112,7 @@ services:
       # as a realm definition on first boot of a fresh Keycloak data
       # volume. Idempotent on subsequent boots (Keycloak skips realms
       # that already exist by name).
-      - ./scripts/keycloak-init:/opt/keycloak/data/import:ro
+      - ./infra/keycloak:/opt/keycloak/data/import:ro
     healthcheck:
       # Keycloak container has no curl/wget, but the bundled `/bin/sh`
       # supports the bash /dev/tcp pseudo-device. The OIDC discovery
@@ -250,10 +256,31 @@ services:
         condition: service_healthy
       keycloak:
         condition: service_healthy
+      # M1 G10 — wait for litellm /health/liveliness before starting the
+      # backend. ``service_started`` only proves the container PID
+      # exists; the proxy is unable to serve /chat/completions for the
+      # first few seconds while it warms its model registry. Switching
+      # to ``service_healthy`` (litellm service declares its own
+      # healthcheck that hits /health/liveliness every 10s) means the
+      # backend only starts when the proxy can actually answer a
+      # request, eliminating the F-829a cold-start race that previously
+      # manifested as intermittent 503s on the first /copilot call.
       litellm:
-        condition: service_started
+        condition: service_healthy
       floci:
         condition: service_started
+    # M1 G14 — backend healthcheck reads the new top-level /healthz
+    # (added by T1.3) which runs all 7 probes (db_health,
+    # redis_health, keycloak_reachable, litellm_health, audit_sink,
+    # floci_health, forge_phase4_mounted). 10s interval matches the
+    # litellm healthcheck cadence so compose catches backend regression
+    # on roughly the same wall-clock cycle.
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/healthz', timeout=3).status == 200 else 1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - forge-net
 
@@ -272,6 +299,18 @@ services:
       - "${FORGE_UI_PORT:-3000}:3000"
     depends_on:
       - backend
+    # M1 G15 — frontend healthcheck. Next.js dev server returns 200 on
+    # any matched route, so we hit ``/`` (the shell always renders).
+    # 15s interval: slower than backend because the page recompiles
+    # hot-reloaded source and may briefly serve stale HTML during the
+    # recompile; we don't want a transient 500 to flip the container
+    # unhealthy while Next is mid-build.
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:3000/', timeout=3).status == 200 else 1)\""]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     # F-829 fix: the production Dockerfile (apps/forge/Dockerfile) only
     # copies .next/, public/, package.json, next.config.mjs, and
     # node_modules/ to the runner stage — NOT the app/ source directory.
@@ -313,6 +352,15 @@ services:
       - "${DOCS_SITE_PORT:-4321}:4321"
     depends_on:
       - backend
+    # M1 G16 — docs-site healthcheck. Astro preview serves the static
+    # /index.html at /. 30s interval is fine because the docs are a
+    # static surface; we only care that the container is up.
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:4321/', timeout=3).status == 200 else 1)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - forge-net
 
