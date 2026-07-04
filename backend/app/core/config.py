@@ -146,6 +146,19 @@ class Settings(BaseSettings):
     # Per-commit cost cap for pre-call admission control (USD).
     merge_gate_per_commit_cost_cap_usd: float = 1.0
 
+    # M2 ADR-009 — Per-RUN cumulative budget cap (Track B T-B4)
+    # The default ceiling in USD enforced by the cumulative-cap rule
+    # ``sum(cost_usd WHERE run_id=X AND projected=false) +
+    # projected_cost_usd <= run_budget_cap_usd[tenant_id]``. Per-tenant
+    # overrides live in ``run_budget_cap_overrides`` below. Bounded
+    # 0 < x <= 10000 so a typo cannot allocate an unlimited budget.
+    run_budget_cap_usd: float = Field(default=50.0, gt=0, le=10000)
+    # Per-tenant override map: tenant_id (stringified UUID) -> ceiling USD.
+    # Used by pre_call_admission() to look up the cap for the requesting
+    # tenant. Empty dict means "everyone uses run_budget_cap_usd".
+    # Validated positive by ``_validate_run_budget_caps_positive`` below.
+    run_budget_cap_overrides: dict[str, float] = Field(default_factory=dict)
+
     # step-75 Phase 1 — Config & Auth foundation (F1)
     # Cache TTL (seconds) for the /api/forge/health readiness probe.
     forge_health_cache_ttl_seconds: int = 60
@@ -277,6 +290,26 @@ class Settings(BaseSettings):
                 f"DEV_AUTH_BYPASS=1 is only allowed when ENVIRONMENT=development. "
                 f"Got ENVIRONMENT={self.environment!r}. Refusing to boot."
             )
+        return self
+
+    @model_validator(mode="after")
+    def _validate_run_budget_caps_positive(self) -> "Settings":
+        """Assert every per-tenant override is positive (M2 ADR-009).
+
+        The cumulative-cap rule (ADR-009 Appendix B) refuses to admit
+        calls that would push ``spent + projected`` over ``ceiling``.
+        A non-positive ceiling would silently disable the cap (every
+        call would either fail at zero or be admitted unconditionally
+        at negative). Validators run at ``Settings()`` instantiation;
+        a misconfigured deployment exits non-zero at import.
+        """
+        for tenant_id, ceiling in self.run_budget_cap_overrides.items():
+            if ceiling is None or ceiling <= 0:
+                raise ValueError(
+                    f"run_budget_cap_overrides[{tenant_id!r}] must be > 0, "
+                    f"got {ceiling!r}. A non-positive ceiling would silently "
+                    f"disable the per-RUN cumulative cap (ADR-009)."
+                )
         return self
 
     @model_validator(mode="after")
