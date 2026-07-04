@@ -24,17 +24,16 @@ from __future__ import annotations
 
 import json
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import httpx
 import pytest
 import pytest_asyncio
 
-
 # ---------------------------------------------------------------------------
 # Stub the DB session before any module that touches it gets imported.
 # ---------------------------------------------------------------------------
-import app.db.session as _session_mod
+import app.db.session as _session_mod  # noqa: E402
 
 
 class _StubSession:
@@ -43,7 +42,7 @@ class _StubSession:
     def __init__(self) -> None:
         self.added: list[Any] = []
 
-    async def __aenter__(self) -> "_StubSession":
+    async def __aenter__(self) -> _StubSession:
         return self
 
     async def __aexit__(self, *args: Any) -> None:
@@ -81,7 +80,7 @@ def _stub_get_session_factory() -> Any:
 _session_mod.get_session_factory = _stub_get_session_factory  # type: ignore[assignment]
 
 
-from app.services.cost_ledger import cost_ledger
+from app.services.cost_ledger import cost_ledger  # noqa: E402
 from app.services.litellm_client import (  # noqa: E402
     AdmissionDecision,
     CostCapExceeded,
@@ -89,7 +88,6 @@ from app.services.litellm_client import (  # noqa: E402
     project_cost_usd,
 )
 from app.services.litellm_pricing import get_pricing  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -214,7 +212,13 @@ def _chat_response(
     return {
         "id": "chatcmpl-test",
         "model": model,
-        "choices": [{"index": 0, "message": {"role": "assistant", "content": content}, "finish_reason": "stop"}],
+        "choices": [
+            {
+                "index": 0,
+                "message": {"role": "assistant", "content": content},
+                "finish_reason": "stop",
+            }
+        ],
         "usage": {
             "prompt_tokens": prompt_tokens,
             "completion_tokens": completion_tokens,

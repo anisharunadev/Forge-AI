@@ -24,21 +24,22 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from datetime import datetime, timezone
-from typing import Annotated, Any, AsyncIterator
+from collections.abc import AsyncIterator
+from datetime import UTC, datetime
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import StreamingResponse
 
+from app.agents.approval_gate import require_approval_phase
 from app.agents.sdlc_state import (
     ApprovalResponse,
     SDLCPhase,
     SDLCState,
 )
-from app.api.deps import DbSession, Principal, require_permission, get_current_principal
+from app.api.deps import DbSession, get_current_principal
 from app.core.security import AuthenticatedPrincipal
-from app.services.audit_service import audit_service
 from app.schemas.sdlc import (
     ApprovalResponseRequest,
     ApprovalResponseResponse,
@@ -46,17 +47,17 @@ from app.schemas.sdlc import (
     ArtifactSummary,
     CostSummaryResponse,
     PhaseTransitionResponse,
+    SDLCancelRequest,
     SDLCRunCreateRequest,
     SDLCRunListResponse,
     SDLCRunStateResponse,
-    SDLCancelRequest,
 )
+from app.services.audit_service import audit_service
 from app.services.sdlc_run_manager import (
     CostSummary,
     SDLCRunManager,
     get_default_manager,
 )
-from app.agents.approval_gate import require_approval_phase
 
 logger = logging.getLogger(__name__)
 
@@ -235,7 +236,7 @@ async def stream_run(
             while True:
                 try:
                     snapshot = await asyncio.wait_for(sub.queue.get(), timeout=15.0)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     yield b": keep-alive\n\n"
                     continue
                 yield _sse_format(_state_to_response(snapshot).model_dump(mode="json"))
@@ -264,7 +265,7 @@ async def resume_run(
         approval_id=body.approval_id,
         granted=body.granted,
         decided_by=principal.user_id,
-        decided_at=datetime.now(timezone.utc),
+        decided_at=datetime.now(UTC),
         reason=body.reason,
     )
     new_state = await manager.resume_run(run_id, approval_response=response)
@@ -470,7 +471,7 @@ async def get_run_explainability(
 
 
 def _sse_format(payload: dict[str, Any]) -> bytes:
-    return f"data: {json.dumps(payload, default=str)}\n\n".encode("utf-8")
+    return f"data: {json.dumps(payload, default=str)}\n\n".encode()
 
 
 __all__ = ["router"]

@@ -20,7 +20,6 @@ ledger schema itself is portable, so we inspect the SQLAlchemy
 
 from __future__ import annotations
 
-
 # ---------------------------------------------------------------------------
 # 1. required-columns
 # ---------------------------------------------------------------------------

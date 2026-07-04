@@ -9,7 +9,7 @@ from uuid import UUID
 from sqlalchemy import Boolean, DateTime, Index, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class CostEntry(Base, UUIDPrimaryKeyMixin, TimestampMixin):

@@ -21,7 +21,7 @@ explicit ``record_projected`` / ``record_actual`` split.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -145,7 +145,7 @@ class CostLedger:
                 cost_usd=cost_usd,
                 source=source,
                 projected=projected,
-                recorded_at=datetime.now(timezone.utc),
+                recorded_at=datetime.now(UTC),
                 metadata_=metadata or {},
             )
             session.add(entry)

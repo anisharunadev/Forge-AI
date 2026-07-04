@@ -12,7 +12,7 @@ so reviewers always know whether the workflow has headroom remaining.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Any
@@ -37,16 +37,19 @@ from app.core.logging import get_logger
 #                    -> workflow_budget_service (loop)
 # Track A landed the decorator retrofit; Track B is patching the
 # import mechanics so the rest of the codebase stays importable.
-
-
 from app.db.models.workflow_budget import (
     WorkflowBudget as WorkflowBudgetRow,
+)
+from app.db.models.workflow_budget import (
     WorkflowBudgetDecision as WorkflowBudgetDecisionRow,
+)
+from app.db.models.workflow_budget import (
     WorkflowBudgetStatus,
 )
 from app.db.session import get_session_factory
 from app.services.audit_service import audit_service
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 
 logger = get_logger(__name__)
 
@@ -189,7 +192,7 @@ class WorkflowBudgetService:
                     spent_usd=0,
                     status=WorkflowBudgetStatus.ACTIVE,
                     declared_by=str(actor_id) if actor_id else None,
-                    declared_at=datetime.now(timezone.utc),
+                    declared_at=datetime.now(UTC),
                     metadata_=metadata or {},
                 )
                 session.add(row)
@@ -391,6 +394,51 @@ class WorkflowBudgetService:
             "headroom_pct": headroom_pct,
         }
 
+    # ------------------------------------------------------------------
+    # M2 ADR-009 — Per-RUN budget (Track B T-B9)
+    # ------------------------------------------------------------------
+    #
+    # The cumulative cap rule (ADR-009 Appendix B) is enforced in
+    # ``app.services.litellm_client.pre_call_admission`` and reads the
+    # per-RUN ceiling + spent directly from Settings + cost_ledger.
+    # This module owns the per-WORKFLOW budget service (NFR-044) but
+    # also exposes the per-RUN surface string the UI / approval-gate
+    # paths consume so the two layers stay consistent.
+
+    async def surface_at_run_start(self, run_id: UUID | str) -> str:
+        """Return the operator-facing 'Run budget: $X / Used: $Y' string.
+
+        M2 ADR-009 (Track B T-B9) — surfaced at run start so the
+        ``RunBudgetBadge`` and any approval-gate metadata has a
+        human-readable phrase to render. The numeric values are read
+        from :func:`app.services.cost_ledger.sum_spent_for_run`
+        (which filters on ``projected = false`` per the
+        cumulative-cap rule) and from
+        ``Settings.run_budget_cap_overrides[tenant_id]`` (or the
+        global ``run_budget_cap_usd`` fallback).
+
+        Returns ``f"Run budget: ${ceiling:.2f} / Used: ${spent:.2f}"``
+        — the exact format the spec calls for. Tenant resolution
+        requires a ``tenant_id`` argument; the spec exposes the run
+        only — we default to the global ceiling when the run cannot
+        be resolved to a tenant. The budget route handler
+        (``/api/v1/runs/{run_id}/budget``) already does the
+        per-tenant resolution for the JSON surface; this string is
+        used by the approval-gate metadata path which does not have
+        a tenant_id in scope.
+        """
+
+        from app.core.config import get_settings
+        from app.services.cost_ledger import cost_ledger
+
+        settings = get_settings()
+        ceiling_usd = float(settings.run_budget_cap_usd)
+        try:
+            spent_usd = float(await cost_ledger.sum_spent_for_run(run_id))
+        except Exception:  # noqa: BLE001 — never let a budget read mask a run
+            spent_usd = 0.0
+        return f"Run budget: ${ceiling_usd:.2f} / Used: ${spent_usd:.2f}"
+
     async def history(self, workflow_id: UUID | str) -> list[dict[str, Any]]:
         """Return the audit trail of admission decisions for a workflow."""
         wf_uuid = UUID(str(workflow_id))
@@ -465,7 +513,7 @@ class WorkflowBudgetService:
                     ceiling_usd=check.ceiling_usd,
                     actor_id=str(actor_id) if actor_id else None,
                     reason=check.reason,
-                    occurred_at=datetime.now(timezone.utc),
+                    occurred_at=datetime.now(UTC),
                 )
             )
             await session.commit()

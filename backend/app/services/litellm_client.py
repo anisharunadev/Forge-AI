@@ -27,8 +27,9 @@ Migration strategy (see plan §"Migration Strategy"):
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Any, AsyncIterator
+from typing import Any
 from uuid import UUID
 
 from app.core.logging import get_logger
@@ -198,7 +199,7 @@ class LiteLLMClient:
         # inside ``__aenter__`` so the constructor never raises.
         self._impl: Any | None = None
 
-    async def __aenter__(self) -> "LiteLLMClient":
+    async def __aenter__(self) -> LiteLLMClient:
         ForgeLLMClient = _load_canonical()
         if ForgeLLMClient is not None:
             # Delegate to the canonical implementation. Forward only
@@ -394,7 +395,8 @@ class LiteLLMClient:
         **kwargs: Any,
     ) -> dict[str, Any] | AsyncIterator[dict[str, Any]]:
         from app.core.config import settings
-        from app.services.event_bus import EventType, bus as default_bus
+        from app.services.event_bus import EventType
+        from app.services.event_bus import bus as default_bus
 
         model = model or settings.litellm_default_model
         body: dict[str, Any] = {"model": model, "messages": messages, "stream": stream, **kwargs}
@@ -705,7 +707,8 @@ class LiteLLMClient:
         )
 
         from app.core.config import settings
-        from app.services.event_bus import EventType, bus as default_bus
+        from app.services.event_bus import EventType
+        from app.services.event_bus import bus as default_bus
 
         chosen_model = model or settings.litellm_default_model
         body: dict[str, Any] = {
@@ -915,8 +918,13 @@ class LiteLLMClient:
         Raises :class:`CostCapExceeded` when the call would breach the
         cap; returns the :class:`AdmissionDecision` otherwise.
         """
-        from app.core.config import settings
+        from app.core.config import get_settings
         from app.services.cost_ledger import cost_ledger
+
+        # Read settings via the cached accessor so tests can clear the
+        # cache (``get_settings.cache_clear()``) or monkeypatch the
+        # returned ``Settings`` object to inject per-tenant overrides.
+        settings = get_settings()
 
         if run_id is None:
             return AdmissionDecision(
