@@ -1,0 +1,44 @@
+# Forge LiteLLM pricing source of truth (ADR-009 Appendix B).
+#
+# Drives the per-RUN cumulative cap rule: `pre_call_admission()`
+# reads this YAML to project the cost of an upcoming LLM call
+# before any provider traffic is sent.
+#
+# Schema:
+#   models.<model_name>.prompt_per_1k       # USD per 1,000 prompt tokens
+#   models.<model_name>.completion_per_1k   # USD per 1,000 completion tokens
+#   default.prompt_per_1k                   # fallback when model is unknown
+#   default.completion_per_1k               # fallback when model is unknown
+#
+# Pricing is intentionally conservative (matches what LiteLLM proxy
+# returns on `response.usage.cost_usd` so the projection lands close
+# to the actual settlement). Refresh runbook is owned by Track C.
+#
+# Last reviewed: 2026-07-05.
+
+models:
+  gpt-4o-mini:
+    prompt_per_1k: 0.00015
+    completion_per_1k: 0.0006
+
+  gpt-4o:
+    prompt_per_1k: 0.0025
+    completion_per_1k: 0.01
+
+  claude-3-5-sonnet-latest:
+    prompt_per_1k: 0.003
+    completion_per_1k: 0.015
+
+  gemini-1.5-pro:
+    prompt_per_1k: 0.00125
+    completion_per_1k: 0.005
+
+# Default fallback — used when the requested model is not in the
+# `models` block above. Picked to match gpt-4o-mini (the
+# cheap-default) so unknown models conservatively under-estimate
+# rather than over-estimating. The cumulative cap rule filters on
+# `projected = false` (ADR-009 Appendix B), so over-estimating
+# never silently consumes the budget.
+default:
+  prompt_per_1k: 0.00015
+  completion_per_1k: 0.0006

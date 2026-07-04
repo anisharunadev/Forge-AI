@@ -19,6 +19,8 @@ from app.schemas.ideation import (
     RoadmapUpdate,
 )
 from app.services.ideation.roadmap_generator import roadmap_generator
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/ideation/roadmaps", tags=["ideation"])
 
@@ -38,6 +40,7 @@ def _to_read(roadmap) -> RoadmapRead:
         created_at=roadmap.created_at,
         updated_at=roadmap.updated_at,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("", response_model=RoadmapRead, status_code=status.HTTP_201_CREATED)
@@ -95,6 +98,7 @@ async def get_roadmap(
     except PermissionError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return _to_read(roadmap)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/{roadmap_id}", response_model=RoadmapRead)
@@ -119,6 +123,7 @@ async def update_roadmap(
     except PermissionError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return _to_read(roadmap)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{roadmap_id}/approve", response_model=RoadmapRead)
@@ -137,6 +142,7 @@ async def approve_roadmap(
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return _to_read(roadmap)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{roadmap_id}/regenerate", response_model=RoadmapRead)
@@ -157,6 +163,7 @@ async def regenerate_roadmap(
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return _to_read(roadmap)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{roadmap_id}/items", response_model=RoadmapRead)
@@ -181,6 +188,7 @@ async def add_to_roadmap(
     except PermissionError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return _to_read(roadmap)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.delete(

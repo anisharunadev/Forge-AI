@@ -18,8 +18,11 @@ from app.schemas.project_intelligence import (
     QASource,
 )
 from app.services.project_intelligence.qa import qa_service
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/qa", tags=["qa"])
+@require_approval_phase(SDLCPhase.TESTING)
 
 
 @router.post("/ask", response_model=QAAnswer)
@@ -87,6 +90,7 @@ async def history(
             for m in messages
         ],
     )
+@require_approval_phase(SDLCPhase.TESTING)
 
 
 @router.delete(

@@ -51,6 +51,8 @@ from app.core.config import settings
 from app.core.logging import get_logger
 from app.db.models.tenant import Tenant
 from app.db.models.user import User
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -185,6 +187,7 @@ async def _mirror_user_into_tenant(
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("", response_model=TenantRead, status_code=status.HTTP_201_CREATED)
@@ -280,6 +283,7 @@ async def create_tenant(
     )
 
     return _tenant_to_read(tenant, role="owner", is_current=False)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post(
@@ -431,6 +435,7 @@ async def get_branding(
     settings = dict(tenant.settings or {})
     branding = dict(_BRANDING_DEFAULTS, **(settings.get("branding") or {}))
     return BrandingRead(**branding)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/{tenant_id}/branding", response_model=BrandingRead)

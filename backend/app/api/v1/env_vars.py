@@ -20,6 +20,8 @@ from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.core.crypto import decrypt, encrypt
 from app.db.models.env_var import EnvVar
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/projects/{project_id}/env-vars", tags=["env-vars"])
 
@@ -89,6 +91,7 @@ async def list_env_vars(
         .order_by(EnvVar.key)
     )
     return [_to_read(ev) for ev in result.scalars().all()]
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("", response_model=EnvVarRead, status_code=201)
@@ -129,6 +132,7 @@ async def create_env_var(
     await db.commit()
     await db.refresh(ev)
     return _to_read(ev)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/{env_var_id}", response_model=EnvVarRead)
@@ -166,6 +170,7 @@ async def update_env_var(
     await db.commit()
     await db.refresh(ev)
     return _to_read(ev)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.delete("/{env_var_id}")
@@ -192,6 +197,7 @@ async def delete_env_var(
     await db.delete(ev)
     await db.commit()
     return None
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{env_var_id}/reveal", response_model=EnvVarReveal)

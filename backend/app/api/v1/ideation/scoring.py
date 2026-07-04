@@ -18,6 +18,8 @@ from app.services.ideation.scoring import (
     ScoreComponents,
     opportunity_scoring_service,
 )
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/ideation/ideas", tags=["ideation"])
 
@@ -39,6 +41,7 @@ def _to_read(row) -> OpportunityScoreRead:
         created_at=row.created_at,
         updated_at=row.updated_at,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{idea_id}/score", response_model=OpportunityScoreRead)
@@ -64,6 +67,7 @@ async def score_idea(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return _to_read(score)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/score/batch", response_model=list[OpportunityScoreRead])
@@ -101,6 +105,7 @@ async def get_score(
     if score is None:
         return None
     return _to_read(score)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{idea_id}/score/override", response_model=OpportunityScoreRead)

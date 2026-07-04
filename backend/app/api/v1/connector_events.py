@@ -13,8 +13,11 @@ from app.services.connector_ingestion.bus_bridge import (
     ConnectorEventEnvelope,
     publish_connector_event,
 )
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/connector-events", tags=["connector_events"])
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/observed", status_code=status.HTTP_202_ACCEPTED)

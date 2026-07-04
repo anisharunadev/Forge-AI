@@ -22,6 +22,24 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+# M2 Plan 01-01 (T-A3) — the approval-phase decorator is the canonical
+# gate that every artifact-writing handler must be wrapped with.  Re-
+# exporting it from the package-wiring seam lets downstream code
+# (Track A retrofits, Track B/C agents) import from a single surface
+# rather than chasing the absolute path:
+#
+#     from app.api.v1._package_wiring import require_approval_phase
+#
+# The decorator itself lives in ``app.agents.approval_gate``; this
+# re-export is purely a convenience seam.
+from app.agents.approval_gate import (  # noqa: F401 — re-exported seam
+    ApprovalEnvelope,
+    ApprovalGateNode,
+    ApprovalRequiredError,
+    frozen_state_envelope,
+    require_approval_phase,
+)
+
 
 @dataclass(frozen=True)
 class PackageWiringStatus:
@@ -191,4 +209,12 @@ __all__ = [
     "PACKAGE_WIRING",
     "by_state",
     "all_packages",
+    # M2 T-A3 — re-exported from app.agents.approval_gate so route
+    # handlers and downstream services can import the decorator from
+    # the single canonical seam.
+    "ApprovalEnvelope",
+    "ApprovalRequiredError",
+    "ApprovalGateNode",
+    "frozen_state_envelope",
+    "require_approval_phase",
 ]

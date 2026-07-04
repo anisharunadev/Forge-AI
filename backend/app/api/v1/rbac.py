@@ -11,6 +11,8 @@ from app.core.security import AuthenticatedPrincipal
 from app.schemas.common import ForgeBaseModel
 from app.db.models.role import Role
 from sqlalchemy import select
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/roles", tags=["roles"])
 
@@ -47,6 +49,7 @@ async def list_roles(
         )
         for r in rows
     ]
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("", response_model=RoleRead, status_code=status.HTTP_201_CREATED)

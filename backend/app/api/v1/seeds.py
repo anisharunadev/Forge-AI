@@ -50,6 +50,8 @@ from seeds.framework.exceptions import (
     SeedError,
     SeedNotFoundError,
 )
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/seeds", tags=["seeds"])
 
@@ -170,6 +172,7 @@ async def list_seed_runs(
 # ---------------------------------------------------------------------------
 # POST endpoints
 # ---------------------------------------------------------------------------
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{name}/apply", response_model=SeedRunRead)
@@ -199,6 +202,7 @@ async def apply_seed(
         )
     except SeedError as exc:
         raise _seed_error_to_http(exc) from exc
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{name}/reset", response_model=SeedRunRead)
@@ -237,6 +241,7 @@ async def reset_seed(
         )
     except SeedError as exc:
         raise _seed_error_to_http(exc) from exc
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{name}/rollback", response_model=SeedRunRead)

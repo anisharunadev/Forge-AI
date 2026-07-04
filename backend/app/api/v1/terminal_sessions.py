@@ -19,6 +19,8 @@ from pydantic import BaseModel, Field
 from app.api.deps import AuthenticatedPrincipal, get_current_principal, require_permission
 from app.core.audit import audit
 from app.terminal.session_manager import AgentType, session_manager
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/terminal", tags=["terminal-sessions"])
 
@@ -33,6 +35,7 @@ class CreateSessionResponse(BaseModel):
     id: str
     agent_type: AgentType
     websocket_path: str
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(

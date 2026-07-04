@@ -22,6 +22,8 @@ from app.schemas.connector_credentials import (
     ConnectorCredentialReveal,
 )
 from app.services.credential_vault import credential_vault
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/connectors/credentials", tags=["connectors"])
 
@@ -38,6 +40,7 @@ async def list_credentials(
         connector_id=connector_id,
     )
     return [ConnectorCredentialRead.model_validate(r) for r in rows]
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("", response_model=ConnectorCredentialRead, status_code=201)
@@ -61,6 +64,7 @@ async def create_credential(
         actor_id=principal.user_id,
     )
     return ConnectorCredentialRead.model_validate(cred)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/{credential_id}/reveal", response_model=ConnectorCredentialReveal)
@@ -84,6 +88,7 @@ async def reveal_credential(
         expires_at=result.expires_at,
         rotated_at=result.rotated_at,
     )
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/{credential_id}/rotate", response_model=ConnectorCredentialRead)
@@ -109,6 +114,7 @@ async def rotate_credential(
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     return ConnectorCredentialRead.model_validate(cred)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.delete(

@@ -11,6 +11,8 @@ from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.runtime import RuntimeHandle, RuntimeMetrics
 from app.services.runtime_management import runtime_management
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/runtime", tags=["runtime-management"])
 
@@ -42,6 +44,7 @@ async def list_all_runtimes(
             )
         )
     return out
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/agents/{handle_id}/restart", response_model=RuntimeHandle)
@@ -53,6 +56,7 @@ async def restart_runtime(
 ) -> RuntimeHandle:
     new_handle = await runtime_management.restart_runtime(handle_id)
     return _handle_to_schema(new_handle)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/agents/{handle_id}/stop", response_model=RuntimeHandle)

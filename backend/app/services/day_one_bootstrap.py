@@ -44,6 +44,15 @@ from app.schemas.day_one_bootstrap import (
 )
 from app.services.audit_service import audit_service
 
+# M2 T-A3 — Day-One Bootstrap persists Standards / Templates / Policies /
+# SteeringRule rows that all mutate project state.  Decorate the public
+# ``load_baseline`` and ``rerun`` entry points so the bootstrap cannot run
+# without a recorded PLANNING approval.  Read-only helpers
+# (``get_status``, ``status_read``, ``is_project_bootstrap_ready``) are
+# left undecorated — they don't write artifacts.
+from app.agents.approval_gate import require_approval_phase  # noqa: E402
+from app.agents.sdlc_state import SDLCPhase  # noqa: E402
+
 logger = get_logger(__name__)
 
 
@@ -384,6 +393,7 @@ class DayOneBootstrapService:
 
     # ----- baseline loading -------------------------------------------------
 
+    @require_approval_phase(SDLCPhase.PLANNING)
     async def load_baseline(
         self,
         project_id: UUID | str,
@@ -548,6 +558,7 @@ class DayOneBootstrapService:
             updated_at=run.completed_at or run.started_at,
         )
 
+    @require_approval_phase(SDLCPhase.PLANNING)
     async def rerun(
         self,
         project_id: UUID | str,

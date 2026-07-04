@@ -20,6 +20,8 @@ from app.schemas.ideation import (
     WorkflowStartRequest,
 )
 from app.services.ideation.realtime_workflow import realtime_workflow
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/ideation/workflows", tags=["ideation"])
 
@@ -39,6 +41,7 @@ def _to_read(row, steps: list[dict]) -> WorkflowSessionRead:
         created_at=row.created_at,
         updated_at=row.updated_at,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post(
@@ -94,6 +97,7 @@ async def get_workflow(
     async with factory() as session:
         row = await session.get(WorkflowSession, str(session_id))
     return _to_read(row, state.steps)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{session_id}/intervene", response_model=WorkflowSessionRead)
@@ -126,6 +130,7 @@ async def intervene_workflow(
     async with factory() as session:
         row = await session.get(WorkflowSession, str(session_id))
     return _to_read(row, new_state.steps)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{session_id}/complete", response_model=dict)

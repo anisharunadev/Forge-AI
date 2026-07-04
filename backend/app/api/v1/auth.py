@@ -57,6 +57,8 @@ from app.db.models.user import User
 from app.db.session import get_session_factory
 from app.services.tenants import _coerce_tenant_id, get_or_create_tenant
 from app.services.users import get_or_create_user, get_user_by_id
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -203,6 +205,7 @@ class SsoConfigRead(BaseModel):
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/oidc/callback", response_model=TokenResponse)
@@ -397,6 +400,7 @@ async def oidc_callback(req: OIDCCallbackRequest) -> TokenResponse:
         user=user,
         tenant=tenant,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/refresh", response_model=AccessTokenResponse)
@@ -474,6 +478,7 @@ async def refresh(req: RefreshRequest) -> AccessTokenResponse:
         access_token=forge_access,
         proxy_token=proxy_token_value,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/logout")
@@ -560,6 +565,7 @@ async def get_me(
             detail="user_not_found",
         )
     return user
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/me", response_model=dict[str, Any])

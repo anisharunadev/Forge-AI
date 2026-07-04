@@ -15,6 +15,8 @@ from app.db.models.approval import ApprovalRequest, ApprovalStatus
 from app.schemas.approvals import ApprovalCreate, ApprovalDecision, ApprovalRead
 from app.services.event_bus import EventType, bus
 from sqlalchemy import select
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/approvals", tags=["approvals"])
 
@@ -29,6 +31,7 @@ async def list_approvals(
     stmt = select(ApprovalRequest).where(ApprovalRequest.tenant_id == principal.tenant_id)
     rows = (await db.execute(stmt)).scalars().all()
     return [ApprovalRead.model_validate(r) for r in rows]
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("", response_model=ApprovalRead, status_code=status.HTTP_201_CREATED)
@@ -59,6 +62,7 @@ async def request_approval(
         actor_id=principal.user_id,
     )
     return ApprovalRead.model_validate(approval)
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/{approval_id}/decide", response_model=ApprovalRead)

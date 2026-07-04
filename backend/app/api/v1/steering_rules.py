@@ -15,6 +15,8 @@ from app.schemas.steering_rules import (
     SteeringRuleRead,
 )
 from app.services.steering_rules import steering_engine
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/steering-rules", tags=["steering-rules"])
 
@@ -47,6 +49,7 @@ async def get_catalog(
         tenant_id=principal.tenant_id,
         project_id=project_id,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("", response_model=SteeringRuleRead, status_code=status.HTTP_201_CREATED)
@@ -67,6 +70,7 @@ async def create_steering_rule(
         project_id=project_id,
         body=body,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.delete(

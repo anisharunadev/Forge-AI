@@ -27,6 +27,8 @@ from app.db.models.project_member import ProjectMember
 from app.schemas.day_one_bootstrap import BootstrapResult, BootstrapStatusRead
 from app.schemas.project import ProjectCreate, ProjectRead, ProjectUpdate
 from app.services.day_one_bootstrap import day_one_bootstrap
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -65,6 +67,7 @@ async def list_projects(
         .order_by(Project.created_at.desc())
     )
     return [_project_to_read(p) for p in result.scalars().all()]
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("", response_model=ProjectRead, status_code=201)
@@ -124,6 +127,7 @@ async def get_project(
     if project is None:
         raise HTTPException(status_code=404, detail="project_not_found")
     return _project_to_read(project)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/{project_id}", response_model=ProjectRead)
@@ -251,6 +255,7 @@ async def settings_counts(
 # ---------------------------------------------------------------------------
 # Day-One Bootstrap (F-021) — preserved from step-52
 # ---------------------------------------------------------------------------
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post(
@@ -286,6 +291,7 @@ async def bootstrap_status(
     return await day_one_bootstrap.status_read(
         project_id=project_id, tenant_id=principal.tenant_id
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post(

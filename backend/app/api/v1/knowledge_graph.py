@@ -24,6 +24,8 @@ from app.services.knowledge_graph import (
     GraphStatus,
     knowledge_graph_service,
 )
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/kg", tags=["knowledge-graph"])
 
@@ -119,6 +121,7 @@ async def list_edges(
         )
         for e in edges
     ]
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/query/cypher")
@@ -130,6 +133,7 @@ async def query_cypher(
 ) -> dict[str, object]:
     rows = await knowledge_graph_service.query_cypher(body.query, body.params)
     return {"rows": rows}
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/query/sql")
@@ -141,6 +145,7 @@ async def query_sql(
 ) -> dict[str, object]:
     rows = await knowledge_graph_service.query_sql(body.query, body.params)
     return {"rows": rows}
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/query/hybrid")
@@ -156,6 +161,7 @@ async def query_hybrid(
         params=body.params,
     )
     return {"rows": rows}
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/search/vector", response_model=list[KGNodeRead])

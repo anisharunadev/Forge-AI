@@ -38,6 +38,9 @@ from app.services.scheduler.jobs.forge_spend_reconcile import (
 from app.services.scheduler.jobs.forge_key_rotate import (
     run as forge_key_rotate,
 )
+from app.services.scheduler.jobs.approval_timeout_scan import (
+    approval_timeout_scan,
+)
 from app.services.scheduler.jobs.memory_consolidate import (
     nightly_memory_consolidate,
 )
@@ -137,6 +140,24 @@ class Scheduler:
             max_instances=1,
             coalesce=True,
         )
+        # M2 T-A7 — PITFALL-6 closure.  Every 5 minutes the
+        # approval-timeout scan walks the in-process run registry for
+        # pending approvals whose ``requested_at + timeout_hours``
+        # has passed.  Each stale approval gets
+        # ``EventType.APPROVAL_EXPIRED`` published to the bus so
+        # audit + WS subscribers can mark the run as failed and the
+        # operator dashboard can render the 'Stale approval' badge.
+        # Per-tenant timeout overrides land via
+        # :attr:`Settings.approval_timeout_overrides`.
+        self._scheduler.add_job(
+            approval_timeout_scan,
+            "interval",
+            minutes=5,
+            id="approval_timeout_scan",
+            replace_existing=True,
+            max_instances=1,
+            coalesce=True,
+        )
         self._scheduler.start()
         self._started = True
         logger.info(
@@ -149,6 +170,7 @@ class Scheduler:
                 "lessons_digest_monthly",
                 "forge_spend_reconcile",
                 "forge_key_rotate",
+                "approval_timeout_scan",
             ],
             ingest_hour_utc=ingest_hour,
         )

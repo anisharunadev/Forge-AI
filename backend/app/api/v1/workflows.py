@@ -55,6 +55,8 @@ from app.services.workflow_service import (
     WorkflowService,
     WorkflowValidationError,
 )
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -73,6 +75,7 @@ def _snapshot_to_read(snapshot) -> BudgetRead:
         status=snapshot.status,
         headroom_pct=headroom_pct,
     )
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(
@@ -163,6 +166,7 @@ async def list_workflows(
         include_deleted=include_deleted,
     )
     return [_workflow_to_read(r) for r in rows]
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("", response_model=WorkflowRead, status_code=status.HTTP_201_CREATED)
@@ -185,6 +189,7 @@ async def create_workflow(
     except WorkflowConflictError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return _workflow_to_read(wf)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/{workflow_id}/publish", response_model=WorkflowRead)
@@ -208,6 +213,7 @@ async def publish_workflow(
     except WorkflowConflictError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return _workflow_to_read(wf)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/{workflow_id}/duplicate", response_model=WorkflowRead, status_code=status.HTTP_201_CREATED)
@@ -255,6 +261,7 @@ async def get_workflow_run(
     except WorkflowNotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return WorkflowRunRead.model_validate(run)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/runs/{run_id}/cancel", response_model=WorkflowRunRead)
@@ -292,6 +299,7 @@ async def get_workflow(
     except WorkflowNotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return _workflow_to_read(wf)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.patch("/{workflow_id}", response_model=WorkflowRead)
@@ -317,6 +325,7 @@ async def update_workflow(
     except WorkflowConflictError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return _workflow_to_read(wf)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.delete(
@@ -367,6 +376,7 @@ async def list_workflow_runs(
         db, tenant_id=principal.tenant_id, workflow_id=workflow_id
     )
     return [WorkflowRunRead.model_validate(r) for r in rows]
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(
@@ -562,6 +572,7 @@ async def stream_run_events(
                 bus._typed_handlers[et].remove(_handler)  # noqa: SLF001
 
     return StreamingResponse(_gen(), media_type="text/event-stream")
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/runs/{run_id}/resume", response_model=WorkflowRunRead)

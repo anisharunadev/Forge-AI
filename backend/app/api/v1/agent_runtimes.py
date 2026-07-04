@@ -15,6 +15,8 @@ from app.schemas.runtime import (
     RuntimeStartRequest,
 )
 from app.services.agent_runtime import agent_runtime
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/runtimes", tags=["agent-runtimes"])
 
@@ -27,6 +29,7 @@ async def list_runtimes(
 ) -> list[RuntimeHandle]:
     handles = await agent_runtime.list_runtimes(principal.tenant_id)
     return [_handle_to_schema(h) for h in handles]
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/start", response_model=RuntimeHandle)
@@ -44,6 +47,7 @@ async def start_runtime(
         kind=body.kind,
     )
     return _handle_to_schema(handle)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/{handle_id}/stop", response_model=RuntimeHandle)

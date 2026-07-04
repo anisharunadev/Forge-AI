@@ -39,6 +39,8 @@ from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.standard import Standard
 from app.services.litellm_admin import list_guardrails
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/standards", tags=["standards"])
 
@@ -156,6 +158,7 @@ async def list_standards(
     manual_standards = [_standard_row_to_attestation(r) for r in rows]
 
     return llm_standards + manual_standards
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("", response_model=StandardRead, status_code=201)

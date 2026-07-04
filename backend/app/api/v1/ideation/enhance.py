@@ -21,8 +21,11 @@ from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import IdeaAnalysisRead, IdeaEnhanceRequest
 from app.services.ideation.idea_enhance import idea_enhance_service
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/ideation/ideas", tags=["ideation"])
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{idea_id}/enhance", response_model=IdeaAnalysisRead)

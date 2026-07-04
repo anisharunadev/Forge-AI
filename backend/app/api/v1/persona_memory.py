@@ -20,6 +20,8 @@ from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.persona_memory import PERSONA_KEYS, PERSONA_NAMES
 from app.services.memory.persona_store import PersonaMemoryStore
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/persona/memory", tags=["persona"])
 
@@ -67,6 +69,7 @@ async def read_memory(
     body = store.read(principal.tenant_id, persona, key)
     recent = await store.recent_entries(principal.tenant_id, persona, key)
     return PersonaMemoryRead(body=body, recent_entries=recent)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{key}", status_code=status.HTTP_201_CREATED)

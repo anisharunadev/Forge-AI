@@ -46,6 +46,8 @@ from app.services.litellm_admin import (
     list_teams,
     update_guardrail,
 )
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -288,6 +290,7 @@ def _derive_status(action: LiteLLMKeyAction | str) -> str:
 class RotateKeyRequest(BaseModel):
     actor_id: str | None = None
     reason: str | None = None
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post(
@@ -343,6 +346,7 @@ async def rotate_tenant_key(
 class RevokeKeyRequest(BaseModel):
     actor_id: str | None = None
     reason: str = Field(..., min_length=1)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post(
@@ -501,6 +505,7 @@ async def list_guardrails_endpoint(
     """List configured LiteLLM guardrails."""
     result = await list_guardrails()
     return list(result) if isinstance(result, list) else []
+@require_approval_phase(SDLCPhase.SECURITY)
 
 
 @router.post("/guardrails/{name}/enable", response_model=dict)
@@ -513,6 +518,7 @@ async def enable_guardrail(
     """Enable a LiteLLM guardrail by name."""
     result = await update_guardrail(name, {"enabled": True})
     return result if isinstance(result, dict) else {"enabled": True, "guardrail_name": name}
+@require_approval_phase(SDLCPhase.SECURITY)
 
 
 @router.post("/guardrails/{name}/disable", response_model=dict)

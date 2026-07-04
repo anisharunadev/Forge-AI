@@ -12,6 +12,8 @@ from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import ImpactComparison, ImpactGraph
 from app.services.ideation.impact_graph import impact_graph_service
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/ideation/ideas", tags=["ideation"])
 
@@ -40,6 +42,7 @@ async def build_impact_graph(
         generated_at=graph.generated_at,
         summary=graph.summary,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/impact/compare", response_model=ImpactComparison)

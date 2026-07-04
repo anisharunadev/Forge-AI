@@ -62,6 +62,7 @@ from app.schemas.steering_rules import (
     STEERING_STAGES,
     InjectionResult,
     SteeringCatalog,
+    SteeringDecision,
     SteeringRuleCreate,
     SteeringRuleRead,
 )
@@ -272,6 +273,14 @@ class SteeringRuleCatalog:
 # ---------------------------------------------------------------------------
 
 
+# M2 T-A3 — SteeringEngine mutates project state when it persists the
+# rule catalog (``SteeringRuleCatalog`` rows + audit events).  Decorate
+# ``build_catalog`` with the planning-phase gate so a rule reload
+# cannot run without a recorded PLANNING approval.
+from app.agents.approval_gate import require_approval_phase  # noqa: E402
+from app.agents.sdlc_state import SDLCPhase  # noqa: E402
+
+
 def _file_hash(content: str) -> str:
     return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
@@ -325,6 +334,7 @@ class SteeringEngine:
                 seen.add(path.resolve())
         return sorted(seen)
 
+    @require_approval_phase(SDLCPhase.PLANNING)
     async def build_catalog(
         self,
         *,
@@ -541,6 +551,121 @@ class SteeringEngine:
                 )
                 for e in catalog.entries
             ],
+        )
+
+    def evaluate(
+        self,
+        *,
+        tenant_id: UUID | str,
+        project_id: UUID | str,
+        stage: str,
+        draft_payload: Mapping[str, Any] | None = None,
+    ) -> SteeringDecision:
+        """Evaluate the rules catalog for ``stage`` and return a typed ``SteeringDecision``.
+
+        M2 Plan 01-07 (T-C2). The decision is **rules-only** per
+        ADR-009: we walk the catalog, match rules whose
+        ``applies_to_stages`` includes ``stage``, and combine their
+        ``severity`` hints into a single ``allow`` / ``warn`` / ``block``
+        action.
+
+        Action policy (deliberately simple, deterministic, and
+        documented):
+
+        * No matching rules -> ``allow`` (no rule fired).
+        * All matches ``info`` / unset  -> ``allow``.
+        * Any match ``warn`` -> ``warn``.
+        * Any match ``block`` -> ``block`` (block wins over warn).
+
+        Front-matter ``severity`` is optional; rules without a
+        severity are treated as ``info``. This matches the
+        ``CodeValidator`` semantics already used by ``F-501``.
+
+        Parameters
+        ----------
+        tenant_id, project_id:
+            Same scoping as :meth:`inject_into_context`.
+        stage:
+            One of :data:`STEERING_STAGES`. Unknown stages raise
+            :class:`ValueError` so the supervisor fails fast instead
+            of silently allowing.
+        draft_payload:
+            Optional agent payload to surface in ``metadata``. The
+            evaluator never reads it for the action decision (rules
+            are the only source of truth) but the audit row carries
+            the payload so reviewers can correlate decisions to
+            drafts.
+
+        Returns
+        -------
+        SteeringDecision
+            Typed Pydantic model with ``stage``, ``rules_applied``,
+            ``action`` (literal ``allow``/``warn``/``block``),
+            ``reason``, and ``metadata``.
+        """
+        if stage not in STEERING_STAGES:
+            raise ValueError(
+                f"unknown steering stage {stage!r}; "
+                f"expected one of {STEERING_STAGES}"
+            )
+
+        catalog = self.get_catalog(
+            tenant_id=tenant_id, project_id=project_id
+        )
+        if catalog is None:
+            # No catalog means no rules fired -- safe default is allow.
+            return SteeringDecision(
+                stage=stage,
+                rules_applied=[],
+                action="allow",
+                reason="no catalog indexed for this tenant/project",
+                metadata={
+                    "tenant_id": str(tenant_id),
+                    "project_id": str(project_id),
+                    "draft_keys": sorted((draft_payload or {}).keys()),
+                },
+            )
+
+        matches = catalog.rules_for_stage(stage)
+        rule_ids: list[str] = [m.rule_id for m in matches]
+        severities = [
+            str((m.metadata or {}).get("severity") or "info").lower()
+            for m in matches
+        ]
+
+        if any(s == "block" for s in severities):
+            action: str = "block"
+        elif any(s in {"warn", "warning"} for s in severities):
+            action = "warn"
+        else:
+            action = "allow"
+
+        reason_suffix = f" {len(matches)} rule(s) matched" if matches else " no rules matched"
+        reason = (
+            f"rules-only evaluation of stage={stage!r}; "
+            + (
+                f"severity ladder says {action!r} because"
+                + reason_suffix
+            )
+            if False
+            else (
+                f"severity ladder resolved to {action!r} (matched "
+                f"severities: {sorted(set(severities)) or 'none'})"
+            )
+        )
+
+        return SteeringDecision(
+            stage=stage,
+            rules_applied=rule_ids,
+            action=action,  # type: ignore[arg-type]  # narrowed by ladder above
+            reason=reason,
+            metadata={
+                "tenant_id": str(tenant_id),
+                "project_id": str(project_id),
+                "severities": severities,
+                "catalog_files": len(catalog.entries),
+                "draft_keys": sorted((draft_payload or {}).keys()),
+            },
         )
 
     # ------------------------------------------------------------------

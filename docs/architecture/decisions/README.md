@@ -14,6 +14,9 @@ This directory contains the locked Architecture Decision Records for the Forge A
 | [ADR-006](0006-terminal-center-xterm-native-pty.md) | Terminal Center via xterm.js + native PTY | Accepted | xterm.js to FastAPI WebSocket to native Python `pty`; workspace isolation + 100% audit capture. |
 | [ADR-007](0007-langgraph-sdlc-agent-orchestrator.md) | LangGraph as SDLC agent orchestrator | Accepted | SDLCState (Pydantic) + supervisor graph; GSD phases as nodes; native HITL and checkpointing. |
 | [ADR-008](0008-append-only-worm-audit-trail.md) | Append-only WORM audit trail | Accepted | Audit table with DB-level INSERT-only triggers + daily hash chain; tamper-evident, queryable, GDPR-compatible. |
+| [ADR-009](0009-cost-ledger-schema.md) | Cost Ledger Schema and Cumulative Cap | Accepted 2026-07-05 | typed cost_ledger rows (projected + actual) with cumulative per-run USD cap enforced by pre_call_admission. |
+| [ADR-010](0010-pilot-vs-mt-conflict-resolution.md) | Pilot-vs-Multi-Tenant Conflict-Resolution Policy | Accepted 2026-07-05 | Deterministic per-conflict decision table (5 categories) with pilot vs MT modes + escalation paths. |
+| [ADR-011](0011-kms.md) | Pilot-vs-Multi-Tenant KMS Topology | Accepted 2026-07-05 | Single forge-shared-pilot CMK until per_tenant_cmk_threshold (default 3); per-tenant CMKs at enrollment thereafter. |
 
 ## Format
 
@@ -38,7 +41,10 @@ Each ADR uses the MADR layout:
 - ADR-005 (LiteLLM) -> ADR-007 (orchestrator uses abstraction), ADR-008 (LLM calls audited).
 - ADR-006 (Terminal Center) -> ADR-004, ADR-008.
 - ADR-007 (LangGraph) -> ADR-004 (GSD wrapping), ADR-005 (LLM calls), ADR-003 (graph state).
-- ADR-008 (WORM audit) -> ADR-001, ADR-002, ADR-003, ADR-005, ADR-006, ADR-007 (every component writes here).
+- ADR-008 (WORM audit) -> ADR-001, ADR-002, ADR-003, ADR-005, ADR-006, ADR-007 (every component writes here), ADR-009 (cost rows anchored), ADR-010 (conflict resolution rows anchored), ADR-011 (tenant_enrollment rows anchored).
+- ADR-009 (Cost ledger + cap) -> ADR-008 (cost rows anchored), ADR-010 (cost_cap_exceeded is a named conflict category), ADR-005 (cost surfaced on every LLM call).
+- ADR-010 (Pilot-vs-MT conflict policy) -> ADR-002 (RLS as the dividing line), ADR-003 (Steward priority tiebreaker), ADR-008 (every resolution immutable), ADR-011 (pilot cutoff rule fires per-tenant CMK rollout).
+- ADR-011 (KMS topology) -> ADR-001 (AWS KMS), ADR-002 (Aurora uses a separate infra CMK; RLS remains the per-row primitive), ADR-010 (pilot cutoff fires per-tenant CMK rollout), ADR-008 (tenant_enrollment anchored).
 
 ## Related Research
 
@@ -46,7 +52,7 @@ The research file that informs these ADRs lives at [docs/research-forge-architec
 
 ## Authoring Conventions
 
-- New ADRs continue the numeric sequence (next is ADR-009).
+- New ADRs continue the numeric sequence (next is ADR-012).
 - Status changes (Accepted -> Superseded) are recorded in-place with a dated note; the original decision is preserved.
 - Each ADR must reference at least one other ADR or constitutional rule.
 - Each ADR must include at least two alternatives with pros/cons.

@@ -12,6 +12,8 @@ from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import ArchPreviewRead
 from app.services.ideation.arch_preview import arch_preview_service
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/ideation/ideas", tags=["ideation"])
 
@@ -32,6 +34,7 @@ def _to_read(preview) -> ArchPreviewRead:
         created_at=preview.created_at,
         updated_at=preview.updated_at,
     )
+@require_approval_phase(SDLCPhase.REVIEW)
 
 
 @router.post(
@@ -76,6 +79,7 @@ async def get_arch_preview(
     if preview is None:
         return None
     return _to_read(preview)
+@require_approval_phase(SDLCPhase.REVIEW)
 
 
 @router.post("/{idea_id}/arch-preview/regenerate", response_model=ArchPreviewRead)

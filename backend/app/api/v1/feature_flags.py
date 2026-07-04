@@ -29,6 +29,8 @@ from app.core.security import AuthenticatedPrincipal
 from app.db.models.tenant import Tenant
 from app.db.session import get_session_factory
 from app.services.feature_flag_catalog import get_catalog
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -90,6 +92,7 @@ async def list_feature_flags(
                 )
             )
     return flags
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/{key}", response_model=FeatureFlag)

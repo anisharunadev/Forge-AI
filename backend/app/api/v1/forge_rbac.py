@@ -48,6 +48,8 @@ from app.schemas.rbac_v2 import (
     TeamRead,
 )
 from app.services.rbac_v2_service import rbac_v2_service
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/forge/rbac", tags=["forge.rbac"])
 logger = get_logger(__name__)
@@ -75,6 +77,7 @@ async def list_orgs(
         page=page,
         page_size=page_size,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/orgs", response_model=OrganizationRead, status_code=status.HTTP_201_CREATED)
@@ -107,6 +110,7 @@ async def get_org(
     if org is None:
         raise HTTPException(status_code=404, detail="org_not_found")
     return OrganizationRead.model_validate(org)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/orgs/{org_id}", response_model=OrganizationRead)
@@ -126,6 +130,7 @@ async def update_org(
     if org is None:
         raise HTTPException(status_code=404, detail="org_not_found")
     return OrganizationRead.model_validate(org)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.delete("/orgs/{org_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
@@ -163,6 +168,7 @@ async def list_teams(
         page=page,
         page_size=page_size,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/teams", response_model=TeamRead, status_code=status.HTTP_201_CREATED)
@@ -195,6 +201,7 @@ async def get_team(
     if team is None:
         raise HTTPException(status_code=404, detail="team_not_found")
     return TeamRead.model_validate(team)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/teams/{team_id}/block", response_model=TeamRead)
@@ -208,6 +215,7 @@ async def block_team(
     if team is None:
         raise HTTPException(status_code=404, detail="team_not_found")
     return TeamRead.model_validate(team)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/teams/{team_id}/unblock", response_model=TeamRead)
@@ -259,6 +267,7 @@ async def list_members(
         for m in members
     ]
     return Page(items=items, total=len(items), page=1, page_size=len(items) or 1)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post(
@@ -288,6 +297,7 @@ async def add_member(
         status=member.status,
         created_at=member.created_at,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/teams/{team_id}/members/{user_id}", response_model=TeamMemberRead)
@@ -316,6 +326,7 @@ async def change_member_role(
         status=member.status,
         created_at=member.created_at,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.delete(
@@ -358,6 +369,7 @@ async def list_customers(
         page=1,
         page_size=len(items) or 1,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/customers", response_model=CustomerRead, status_code=status.HTTP_201_CREATED)
@@ -376,6 +388,7 @@ async def create_customer(
         billing_ref=payload.billing_ref,
     )
     return CustomerRead.model_validate(customer)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/customers/{customer_id}/block", response_model=CustomerRead)
@@ -391,6 +404,7 @@ async def block_customer(
     if customer is None:
         raise HTTPException(status_code=404, detail="customer_not_found")
     return CustomerRead.model_validate(customer)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/customers/{customer_id}/unblock", response_model=CustomerRead)
@@ -449,6 +463,7 @@ async def users_available(
 # ---------------------------------------------------------------------------
 # Admin: bootstrap tenant (super-admin only)
 # ---------------------------------------------------------------------------
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/admin/bootstrap-tenant", status_code=status.HTTP_201_CREATED)
@@ -494,6 +509,7 @@ async def list_projects(
         page=page,
         page_size=page_size,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/projects", response_model=ProjectRead, status_code=status.HTTP_201_CREATED)
@@ -530,6 +546,7 @@ async def get_project(
     if project is None:
         raise HTTPException(status_code=404, detail="project_not_found")
     return ProjectRead.model_validate(project)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/projects/{project_id}", response_model=ProjectRead)
@@ -549,6 +566,7 @@ async def update_project(
     if project is None:
         raise HTTPException(status_code=404, detail="project_not_found")
     return ProjectRead.model_validate(project)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
@@ -568,6 +586,7 @@ async def delete_project(
 # ---------------------------------------------------------------------------
 # Bulk member add (step-78 F12 acceptance #3)
 # ---------------------------------------------------------------------------
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post(
@@ -601,6 +620,7 @@ async def add_members_bulk(
 # ---------------------------------------------------------------------------
 # Customer update + delete (step-78 F12 §"Forge-side CRUD")
 # ---------------------------------------------------------------------------
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/customers/{customer_id}", response_model=CustomerRead)
@@ -620,6 +640,7 @@ async def update_customer(
     if customer is None:
         raise HTTPException(status_code=404, detail="customer_not_found")
     return CustomerRead.model_validate(customer)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.delete("/customers/{customer_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
@@ -639,6 +660,7 @@ async def delete_customer(
 # ---------------------------------------------------------------------------
 # Team model allowlist (step-78 F12 §"Tag-based access")
 # ---------------------------------------------------------------------------
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post(
@@ -658,6 +680,7 @@ async def add_team_model(
     if team is None:
         raise HTTPException(status_code=404, detail="team_not_found")
     return TeamModelAllowlistResponse(team_id=team.id, model_allowlist=team.model_allowlist)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post(
@@ -719,6 +742,7 @@ async def list_team_permissions(
         ),
         overrides=overrides,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/teams/{team_id}/permissions_update", response_model=TeamPermissionsList)

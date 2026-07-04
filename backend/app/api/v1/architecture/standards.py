@@ -23,6 +23,8 @@ from app.services.architecture.standards_attestation import (
 from app.services.artifact_registry import artifact_registry
 from app.services.audit_service import audit_service
 from app.services.event_bus import bus
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/architecture/standards", tags=["architecture:standards"])
 
@@ -34,6 +36,7 @@ def _service() -> StandardsAttestationService:
         audit_service=audit_service,
         event_bus=bus,
     )
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post(
@@ -96,6 +99,7 @@ async def check_artifact(
         project_id=project_id,
     )
     return [StandardCheckResponse.model_validate(r) for r in rows]
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post(

@@ -9,6 +9,8 @@ from app.api.deps import DbSession, Principal, require_permission, get_current_p
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.templates import TemplateCreate, TemplateRead
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/templates", tags=["templates"])
 
@@ -27,6 +29,7 @@ async def list_templates(
     stmt = select(Template).where(Template.tenant_id == principal.tenant_id)
     rows = (await db.execute(stmt)).scalars().all()
     return [TemplateRead.model_validate(r) for r in rows]
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("", response_model=TemplateRead, status_code=status.HTTP_201_CREATED)

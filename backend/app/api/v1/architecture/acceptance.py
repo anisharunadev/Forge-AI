@@ -25,6 +25,8 @@ from app.services.architecture.context_aware import ContextAwareGenerator
 from app.services.artifact_registry import artifact_registry
 from app.services.event_bus import bus
 from app.services.litellm_client import LiteLLMClient
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(
     prefix="/architecture", tags=["architecture:acceptance"]
@@ -48,6 +50,7 @@ def _context_generator() -> ContextAwareGenerator:
         project_intelligence=None,
         event_bus=bus,
     )
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post(
@@ -86,6 +89,7 @@ async def get_criteria(
     if record is None or record["tenant_id"] != str(principal.tenant_id):
         raise HTTPException(status_code=404, detail="acceptance_criteria_not_found")
     return AcceptanceCriteriaResponse.model_validate(record)
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post(
@@ -122,6 +126,7 @@ async def coverage(
         project_id=project_id,
     )
     return CoverageReportResponse.model_validate(report)
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post(

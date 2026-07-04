@@ -42,6 +42,8 @@ from app.services.forge_key_broker import (
     forge_key_broker,
 )
 from app.core.auth import CurrentUser
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/forge", tags=["forge.keys"])
 logger = get_logger(__name__)
@@ -115,6 +117,7 @@ def _status_to_issue_response(status_obj: ForgeKeyStatus) -> ForgeKeyIssueRespon
         model_scope=list(status_obj.model_scope),
         created_at=status_obj.created_at,
     )
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(
@@ -178,6 +181,7 @@ async def get_key_status(
             detail="no_active_key",
         )
     return status_obj
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(
@@ -211,6 +215,7 @@ async def rotate_key(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(exc),
         ) from exc
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(

@@ -25,6 +25,8 @@ from app.services.forge_spend import (
     SpendSummary,
     spend_service,
 )
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/forge", tags=["forge.spend"])
 logger = get_logger(__name__)
@@ -169,6 +171,7 @@ class BackfillRequest(BaseModel):
 
     since: datetime = Field(..., description="ISO-8601 lower bound")
     dry_run: bool = Field(default=False)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post(

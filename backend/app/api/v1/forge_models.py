@@ -19,6 +19,8 @@ from app.schemas.forge_models import (
     RefreshResponse,
 )
 from app.services.forge_models import ModelsService
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/forge", tags=["forge.models"])
 logger = get_logger(__name__)
@@ -103,6 +105,7 @@ async def get_model(
             detail="model_not_found",
         )
     return descriptor
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post(

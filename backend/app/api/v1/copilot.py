@@ -54,6 +54,8 @@ from app.services.copilot_service import (
 )
 from app.services.rbac import COPILOT_PERMISSION_USE
 from app.services.workflow_budget import BudgetExceeded
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -93,6 +95,7 @@ def _sse_format(payload: dict[str, Any]) -> bytes:
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(
@@ -190,6 +193,7 @@ async def post_chat(
                 "max_turns": exc.max_turns,
             },
         ) from exc
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(
@@ -341,6 +345,7 @@ async def get_conversation(
         return await service.get_conversation(conversation_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.delete(
@@ -366,6 +371,7 @@ async def delete_conversation(
     # try to JSON-encode the response and trip
     # `assert is_body_allowed_for_status_code(...)` in routing.py:509.
     return Response(content=b"")
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(

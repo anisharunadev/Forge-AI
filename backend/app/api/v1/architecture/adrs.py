@@ -20,6 +20,8 @@ from app.services.architecture.adr_generator import ADRGenerator
 from app.services.artifact_registry import artifact_registry
 from app.services.event_bus import bus
 from app.services.litellm_client import LiteLLMClient
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/architecture/adrs", tags=["architecture:adrs"])
 
@@ -31,6 +33,7 @@ def _generator() -> ADRGenerator:
         artifact_registry=artifact_registry,
         event_bus=bus,
     )
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("", response_model=ADRResponse, status_code=status.HTTP_201_CREATED)
@@ -88,6 +91,7 @@ async def get_adr(
     if adr is None or adr.tenant_id != principal.tenant_id:
         raise HTTPException(status_code=404, detail="adr_not_found")
     return ADRResponse.model_validate(adr)
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/{adr_id}/supersede", response_model=ADRResponse)

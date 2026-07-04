@@ -229,11 +229,26 @@ async def test_deployment_node_requires_approval(event_bus):
 
 # ---------------------------------------------------------------------------
 # Approval gate
+#
+# M2 Plan 01-01 (T-A1) migrated ``ApprovalGateNode.__call__`` to use
+# the ``@require_approval_phase`` decorator, which enforces:
+#   - pending_approval is set
+#   - pending_approval.type matches an allowed phase
+#   - metadata["approval:<phase>:decision"] is recorded AND granted
+# When any of those checks fail, the decorator raises
+# :class:`ApprovalRequiredError`.  The pre-M2 expectation that the
+# gate silently returns BLOCKED_APPROVAL is replaced by an explicit
+# raise; LangGraph's :func:`interrupt` (added in T-A1) handles the
+# actual pause-on-the-wire for graph runs, while direct Python
+# callers see the raised error.
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_approval_gate_pauses_graph():
-    from backend.app.agents.approval_gate import ApprovalGateNode
+async def test_approval_gate_raises_on_missing_decision():
+    from backend.app.agents.approval_gate import (
+        ApprovalGateNode,
+        ApprovalRequiredError,
+    )
     from backend.app.agents.sdlc_state import ApprovalRequest, SDLCPhase
 
     gate = ApprovalGateNode()
@@ -246,9 +261,8 @@ async def test_approval_gate_pauses_graph():
     state = _state().set_pending_approval(pending).with_phase(
         SDLCPhase.BLOCKED_APPROVAL
     )
-    new_state = await gate(state)
-    assert new_state.current_phase == SDLCPhase.BLOCKED_APPROVAL
-    assert new_state.pending_approval is not None
+    with pytest.raises(ApprovalRequiredError):
+        await gate(state)
 
 
 @pytest.mark.asyncio
@@ -285,8 +299,11 @@ async def test_approval_grant_resumes_graph():
 
 
 @pytest.mark.asyncio
-async def test_approval_deny_fails_run():
-    from backend.app.agents.approval_gate import ApprovalGateNode
+async def test_approval_deny_raises():
+    from backend.app.agents.approval_gate import (
+        ApprovalGateNode,
+        ApprovalRequiredError,
+    )
     from backend.app.agents.sdlc_state import (
         ApprovalRequest,
         ApprovalResponse,
@@ -314,13 +331,26 @@ async def test_approval_deny_fails_run():
             reason="no",
         ),
     )
-    new_state = await gate(state)
-    assert new_state.current_phase == SDLCPhase.FAILED
+    with pytest.raises(ApprovalRequiredError):
+        await gate(state)
 
 
 @pytest.mark.asyncio
-async def test_approval_timeout_fails_run():
-    from backend.app.agents.approval_gate import ApprovalGateNode
+async def test_approval_timeout_raises_before_intervention():
+    """Timeout path: gate raises because no decision was recorded.
+
+    The decorator's missing-decision check fires BEFORE the timeout
+    branch can emit ``APPROVAL_EXPIRED`` and route to FAILED — that
+    path now lives in the scheduler (T-A7) which scans for stale
+    pending approvals out-of-band.  Direct callers of the gate see
+    ``ApprovalRequiredError``; the LangGraph engine handles the
+    in-graph timeout via the :func:`interrupt` payload (which
+    surfaces the deadline to the human reviewer).
+    """
+    from backend.app.agents.approval_gate import (
+        ApprovalGateNode,
+        ApprovalRequiredError,
+    )
     from backend.app.agents.sdlc_state import ApprovalRequest, SDLCPhase
 
     gate = ApprovalGateNode()
@@ -335,8 +365,8 @@ async def test_approval_timeout_fails_run():
         .set_pending_approval(pending)
         .with_phase(SDLCPhase.BLOCKED_APPROVAL)
     )
-    new_state = await gate(state)
-    assert new_state.current_phase == SDLCPhase.FAILED
+    with pytest.raises(ApprovalRequiredError):
+        await gate(state)
 
 
 # ---------------------------------------------------------------------------

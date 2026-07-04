@@ -32,6 +32,8 @@ from app.schemas.prompt import (
     PromptVersionRead,
 )
 from app.services.prompt_service import PromptError, prompt_service
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/forge/prompts", tags=["forge.prompts"])
 logger = get_logger(__name__)
@@ -88,6 +90,7 @@ async def list_prompts(
         page=page,
         page_size=page_size,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("", response_model=PromptRead, status_code=status.HTTP_201_CREATED)
@@ -119,6 +122,7 @@ async def get_prompt(
     if item is None:
         raise HTTPException(status_code=404, detail="prompt_not_found")
     return item
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/{prompt_id}", response_model=PromptRead)
@@ -142,6 +146,7 @@ async def update_prompt(
     if item is None:
         raise HTTPException(status_code=404, detail="prompt_not_found")
     return item
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{prompt_id}/archive", response_model=PromptRead)
@@ -206,6 +211,7 @@ async def diff_versions(
 # ---------------------------------------------------------------------------
 # Render / test / count
 # ---------------------------------------------------------------------------
+@require_approval_phase(SDLCPhase.REVIEW)
 
 
 @router.post("/{prompt_id}/preview", response_model=PromptRenderResponse)
@@ -227,6 +233,7 @@ async def render_preview(
         )
     except PromptError as exc:
         raise _prompt_error_to_http(exc) from exc
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{prompt_id}/test", response_model=PromptTestResponse)
@@ -248,6 +255,7 @@ async def test_prompt(
         )
     except PromptError as exc:
         raise _prompt_error_to_http(exc) from exc
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{prompt_id}/count", response_model=PromptCountResponse)
@@ -274,6 +282,7 @@ async def count_tokens(
 # ---------------------------------------------------------------------------
 # Dotprompt import (acceptance #5)
 # ---------------------------------------------------------------------------
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post(

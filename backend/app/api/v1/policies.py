@@ -52,6 +52,8 @@ from app.services.policies_service import (
     ResolveContext,
     policies_service,
 )
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/policies", tags=["policies"])
 
@@ -96,6 +98,7 @@ async def list_policies(
             )
         )
     return Page(items=items, total=len(items))
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("", response_model=PolicyReadV2, status_code=status.HTTP_201_CREATED)
@@ -147,6 +150,7 @@ async def get_policy(
         active=bool(info.get("active", True)),
         metadata={k: v for k, v in info.items() if k not in {"id", "policy_id", "name", "description", "priority", "status", "active"}},
     )
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.patch("/{policy_id}", response_model=PolicyReadV2)
@@ -172,6 +176,7 @@ async def update_policy(
             detail=PolicyResolutionErrorEnvelope(missing_fields=exc.missing_fields).model_dump(),
         )
     return PolicyReadV2(id=policy_id, name=policy_id, status=body.status or "active", active=True)
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/{policy_id}/archive", response_model=PolicyReadV2)
@@ -189,6 +194,7 @@ async def archive_policy(
         actor_id=getattr(principal, "user_id", None),
     )
     return PolicyReadV2(id=policy_id, name=policy_id, status="archived", active=False)
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/{policy_id}/test", response_model=PolicyTestPipelineResult)
@@ -206,6 +212,7 @@ async def test_policy_pipeline(
         modified_text=raw.get("modified_text"),
         decisions=list(raw.get("decisions") or []),
     )
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/resolve", response_model=ResolveResult)
@@ -235,6 +242,7 @@ async def resolve_policies(
         effective_guardrails=list(effective.effective_guardrails),
         tool_policy=PolicyToolPolicy(**(effective.tool_policy or {})),
     )
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/compare", response_model=CompareResult)
@@ -277,6 +285,7 @@ async def list_templates(
         )
         for r in rows
     ]
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/templates/{template_id}/clone", response_model=PolicyReadV2, status_code=status.HTTP_201_CREATED)
@@ -329,6 +338,7 @@ async def list_attachments(
             )
         )
     return out
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/attachments", response_model=PolicyAttachment, status_code=status.HTTP_201_CREATED)

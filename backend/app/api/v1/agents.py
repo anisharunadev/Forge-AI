@@ -12,6 +12,8 @@ from app.db.models.agent import Agent
 from app.schemas.agents import AgentCreate, AgentRead, AgentUpdate
 from app.services.agent_registry import agent_registry
 from app.services.forge_key_broker import forge_key_broker
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
@@ -43,6 +45,7 @@ async def get_agent(
     if str(agent.tenant_id) != str(principal.tenant_id):
         raise HTTPException(status_code=404, detail="agent_not_found")
     return AgentRead.model_validate(agent)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("", response_model=AgentRead, status_code=status.HTTP_201_CREATED)
@@ -63,6 +66,7 @@ async def create_agent(
     )
     background_tasks.add_task(forge_key_broker.issue_or_rotate, agent)
     return AgentRead.model_validate(agent)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.patch("/{agent_id}", response_model=AgentRead)
@@ -89,6 +93,7 @@ async def update_agent(
     )
     background_tasks.add_task(forge_key_broker.issue_or_rotate, updated)
     return AgentRead.model_validate(updated)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.delete(
@@ -114,6 +119,7 @@ async def delete_agent(
 # step-54 — Phase 2 test endpoint. The backend currently does not
 # actually invoke the agent runtime (that lives in `agent_runtime.py`
 # and requires a container/sandbox); this returns a typed TestResult
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 # so the UI can wire a "Test connection" button and surface status.
 # A real invocation can be layered on later via `agent_runtime`.
 @router.post("/{agent_id}/test")

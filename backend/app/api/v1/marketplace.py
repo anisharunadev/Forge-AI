@@ -19,6 +19,8 @@ from app.schemas.marketplace import (
 from app.services.connector_manager import connector_manager
 from app.services.marketplace import marketplace
 from app.schemas.connectors import ConnectorRead
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/marketplace/connectors", tags=["marketplace"])
 
@@ -70,6 +72,7 @@ async def get_marketplace_entry(
         downloads=entry.downloads,
         rating=entry.rating,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{slug}/install", response_model=MarketplaceInstallResult)

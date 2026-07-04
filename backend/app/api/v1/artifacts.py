@@ -11,6 +11,8 @@ from app.core.security import AuthenticatedPrincipal
 from app.db.models.artifact import ArtifactStatus
 from app.schemas.artifacts import ArtifactCreate, ArtifactRead
 from app.services.artifact_registry import artifact_registry
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/artifacts", tags=["artifacts"])
 
@@ -56,6 +58,7 @@ async def _list_active_all(principal) -> list:
             .order_by(Artifact.type, Artifact.version.desc())
         )
         return list((await session.execute(stmt)).scalars().all())
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("", response_model=ArtifactRead, status_code=status.HTTP_201_CREATED)

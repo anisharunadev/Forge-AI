@@ -22,6 +22,8 @@ from app.services.phase4_providers import (
     list_providers,
     set_provider_enabled,
 )
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/providers", tags=["phase4-providers"])
 
@@ -52,6 +54,7 @@ async def get_one(
         "upstream": meta["upstream"],
         "enabled_for_tenant": await is_provider_enabled(principal.tenant_id, name),
     }
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{name}/enable")
@@ -69,6 +72,7 @@ async def enable(
         )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="unknown_provider") from exc
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{name}/disable")

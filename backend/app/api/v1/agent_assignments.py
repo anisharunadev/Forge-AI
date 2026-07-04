@@ -14,8 +14,11 @@ from app.schemas.agents import (
     AgentRead,
 )
 from app.services.agent_assignment import agent_assignment
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/agent-assignments", tags=["agent-assignments"])
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("", response_model=AgentAssignmentRead)

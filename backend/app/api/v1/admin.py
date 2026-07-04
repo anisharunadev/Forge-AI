@@ -14,6 +14,8 @@ from app.schemas.admin import (
     CachePurgeResult,
 )
 from app.services.admin_service import admin_service
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -34,6 +36,7 @@ async def get_health(
     _perm: AuthenticatedPrincipal = Depends(require_permission("admin:read"))
 ) -> AdminHealthReport:
     return await admin_service.health()
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/cache/purge", response_model=CachePurgeResult)

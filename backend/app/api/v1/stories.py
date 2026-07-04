@@ -31,6 +31,8 @@ from app.schemas.stories import (
 )
 from app.services import stories as stories_svc
 from app.services.users import get_user_by_id
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 # Three routers — one per resource. They all live under `/api/v1/`.
 router = APIRouter(tags=["stories"])
@@ -62,6 +64,7 @@ async def list_stories(
         priority=priority, assignee_id=assignee_id, label=label, search=search,
     )
     return [StoryRead.model_validate(s) for s in stories]
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/stories", response_model=StoryRead, status_code=201)
@@ -104,6 +107,7 @@ async def get_story(
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
     return StoryRead.model_validate(story)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.patch("/stories/{story_id}", response_model=StoryRead)
@@ -129,6 +133,7 @@ async def update_story(
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
     return StoryRead.model_validate(story)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.delete(
@@ -147,6 +152,7 @@ async def delete_story(
     if not ok:
         raise HTTPException(status_code=404, detail="Story not found")
     return Response()
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.patch("/stories/bulk", response_model=list[StoryRead])
@@ -201,6 +207,7 @@ async def list_comments(
             edited_at=c.edited_at,
         ))
     return out
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(
@@ -238,6 +245,7 @@ async def add_comment(
 
 # ---------------------------------------------------------------------------
 # Jira sync
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 # ---------------------------------------------------------------------------
 
 @router.post("/stories/{story_id}/sync-jira", response_model=StoryRead)
@@ -252,6 +260,7 @@ async def sync_to_jira(
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
     return StoryRead.model_validate(story)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/stories/{story_id}/link-jira", response_model=StoryRead)
@@ -271,6 +280,7 @@ async def link_to_jira(
 
 # ---------------------------------------------------------------------------
 # Start implementation
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 # ---------------------------------------------------------------------------
 
 @router.post(

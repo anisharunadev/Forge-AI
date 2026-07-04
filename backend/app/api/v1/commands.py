@@ -37,6 +37,8 @@ from app.services.forge_commands import (
     get_forge_command,
     route_to_gsd,
 )
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -58,6 +60,7 @@ class CommandRunResponse(BaseModel):
     tenant_id: UUID
     project_id: UUID
     output: Any
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/{name}/run", response_model=CommandRunResponse)
@@ -188,6 +191,7 @@ async def get_command_artifact(
         ).isoformat(),
         etag=etag,
     )
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.put("/{name}/artifact", response_model=CommandArtifact)

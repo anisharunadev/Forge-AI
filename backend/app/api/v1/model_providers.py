@@ -19,6 +19,8 @@ from app.schemas.model_providers import (
     ModelProviderUpdate,
 )
 from app.services.model_provider_registry import model_provider_registry
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -49,6 +51,7 @@ async def get_provider(
     if str(provider.tenant_id) != str(principal.tenant_id):
         raise HTTPException(status_code=404, detail="model_provider_not_found")
     return ModelProviderRead.model_validate(provider)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("", response_model=ModelProviderRead, status_code=status.HTTP_201_CREATED)
@@ -69,6 +72,7 @@ async def create_provider(
         rate_limit_tpm=body.rate_limit_tpm,
     )
     return ModelProviderRead.model_validate(provider)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/{provider_id}", response_model=ModelProviderRead)
@@ -94,6 +98,7 @@ async def update_provider(
         rate_limit_tpm=body.rate_limit_tpm,
     )
     return ModelProviderRead.model_validate(updated)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.delete(
@@ -139,6 +144,7 @@ async def resolve_provider(
 # step-54 — Phase 2 real connection test. Performs an actual HTTP
 # round-trip to the upstream provider and reports real status +
 # latency_ms. The exact URL/headers/body shape is dictated by the
+@require_approval_phase(SDLCPhase.PLANNING)
 # provider type (anthropic, openai, bedrock, vertex, azure_openai,
 # custom) — see the spec at docs/goals/step-54-v4.md.
 @router.post("/{provider_id}/test")

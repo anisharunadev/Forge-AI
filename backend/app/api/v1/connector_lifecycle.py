@@ -28,8 +28,11 @@ from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.connectors import ConnectorRead, ConnectorTestResult
 from app.services.connectors.lifecycle import connector_lifecycle
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/connectors", tags=["connectors"])
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/install", response_model=ConnectorRead, status_code=201)
@@ -99,6 +102,7 @@ async def install_connector(
         actor_id=principal.user_id,
     )
     return ConnectorRead.model_validate(connector)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/{connector_id}/rotate", response_model=ConnectorRead)
@@ -125,6 +129,7 @@ async def rotate_connector(
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     return ConnectorRead.model_validate(connector)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/{connector_id}/test", response_model=ConnectorTestResult)

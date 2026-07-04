@@ -20,6 +20,8 @@ from app.schemas.ideation import (
     PushToJiraRequest,
 )
 from app.services.ideation.push_to_delivery import push_to_delivery_service
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/ideation/ideas", tags=["ideation"])
 
@@ -39,6 +41,7 @@ def _push_to_read(record) -> PushRecordRead:
         created_at=record.created_at,
         updated_at=record.updated_at,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{idea_id}/push/jira", response_model=PushResult)
@@ -68,6 +71,7 @@ async def push_to_jira(
         error=result.error,
         record_id=result.record_id,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{idea_id}/push/confluence", response_model=PushResult)
@@ -97,6 +101,7 @@ async def push_to_confluence(
         error=result.error,
         record_id=result.record_id,
     )
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/{idea_id}/push/architecture", response_model=PushResult)
@@ -124,6 +129,7 @@ async def push_to_architecture(
         error=result.error,
         record_id=result.record_id,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{idea_id}/push/all", response_model=list[PushResult])

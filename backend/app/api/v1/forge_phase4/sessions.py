@@ -22,6 +22,8 @@ from app.services.phase4_sessions import (
     record_a2a_handshake,
     resume_session,
 )
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="", tags=["phase4-sessions"])
 
@@ -65,6 +67,7 @@ async def sessions_get(
     if row is None:
         raise HTTPException(status_code=404, detail="session_not_found")
     return row
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/sessions/{session_id}/heartbeat")
@@ -74,6 +77,7 @@ async def sessions_heartbeat(
     duration_ms: int | None = None,
 ) -> dict[str, Any]:
     return await heartbeat(session_id, principal.tenant_id, duration_ms=duration_ms)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/sessions/{session_id}/extend")
@@ -87,6 +91,7 @@ async def sessions_extend(
         project_id=principal.project_id or "00000000-0000-0000-0000-000000000000",
         additional_seconds=additional_seconds,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/sessions/{session_id}/cancel")
@@ -99,6 +104,7 @@ async def sessions_cancel(
         project_id=principal.project_id or "00000000-0000-0000-0000-000000000000",
     )
     return {"cancelled": True}
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/sessions/{session_id}/resume")
@@ -113,6 +119,7 @@ async def sessions_resume(
 
 
 # ── Realtime ─────────────────────────────────────────────────────────
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/realtime/client-secret")
@@ -126,6 +133,7 @@ async def realtime_client_secret(
         actor_id=principal.user_id,
         session_id=session_id,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/realtime/sessions")
@@ -158,6 +166,7 @@ def mount_a2a(app: Any) -> None:
         methods=["GET"],
         include_in_schema=False,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/a2a/message")
@@ -178,6 +187,7 @@ async def a2a_message(
 
 
 # ── Background responses (F17 §Background) ──────────────────────────
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/responses")

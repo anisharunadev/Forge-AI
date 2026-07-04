@@ -49,6 +49,14 @@ from app.agents.code_validator_state import (
 )
 from app.agents.prompts import load_code_validator_prompt
 
+# M2 T-A3 — Code Validator is the artifact-writing handler for the
+# implementation phase (PASS/FAIL reports land in the architecture
+# attestation stream and the gate decides).  Decorate the public
+# entry points so a validator sub-graph run is gated on a recorded
+# implementation-phase approval.
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+
 logger = logging.getLogger(__name__)
 
 
@@ -203,11 +211,74 @@ class ValidatorRunResult(TypedDict):
     state: CodeValidatorState
 
 
+# ---------------------------------------------------------------------------
+# M2 T-A3 — Supervisor-facing entry point.
+# ---------------------------------------------------------------------------
+# The sub-graph itself operates on its own :class:`CodeValidatorState`
+# (no SDLCState access) so the decorator cannot wrap the internal
+# scanner nodes.  Instead we expose a thin adapter
+# :func:`run_code_validator_with_approval` that the supervisor calls
+# AFTER a recorded implementation-phase approval.  The adapter
+# enforces the gate, then delegates to the sub-graph and returns a
+# :class:`ValidatorRunResult`.
+
+
+async def run_code_validator_with_approval(
+    state: Any,  # SDLCState — typed as Any to avoid the circular import
+    *,
+    graph: Any | None = None,
+    checkpointer: Any | None = None,
+) -> ValidatorRunResult:
+    """Run the code validator sub-graph with approval enforcement.
+
+    Wraps :func:`build_code_validator_graph` and adds the
+    :func:`require_approval_phase` guard so a direct caller (e.g.
+    the F-503 merge gate, the F-501 validator hook) cannot bypass
+    the supervisor's recorded approval.
+
+    Parameters
+    ----------
+    state:
+        The SDLCState from the supervisor.  Must have a recorded
+        ``metadata["approval:implementation:decision"].granted=True``
+        entry; otherwise the decorator raises
+        :class:`ApprovalRequiredError` (SDLCPhase.IMPLEMENTATION).
+    graph:
+        Optional pre-compiled graph; defaults to a freshly built
+        one with an in-memory :class:`MemorySaver`.
+    """
+
+    # The decorator would raise on missing/denied approval; we
+    # invoke the inner guard manually so the wrapper itself stays
+    # free of nested-decorator surprises.
+    from app.agents.approval_gate import (
+        ApprovalRequiredError,
+        _enforce,
+    )
+
+    _enforce(state, (SDLCPhase.IMPLEMENTATION,))
+
+    if graph is None:
+        graph = build_code_validator_graph(checkpointer=checkpointer)
+    validator_state = CodeValidatorState(
+        run_id=state.run_id,
+        tenant_id=state.tenant_id,
+        project_id=state.project_id,
+        actor_id=state.actor_id,
+    )
+    result_state = await graph.ainvoke(validator_state)
+    return ValidatorRunResult(
+        report=result_state.report,
+        state=result_state,
+    )
+
+
 __all__ = [
     "VALIDATOR_VIRTUAL_KEY_PREFIX",
     "validator_virtual_key_alias",
     "build_code_validator_graph",
     "load_prompt",
     "make_validator_virtual_key",
+    "run_code_validator_with_approval",
     "ValidatorRunResult",
 ]

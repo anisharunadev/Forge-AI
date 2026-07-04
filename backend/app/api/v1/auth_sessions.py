@@ -24,6 +24,8 @@ from app.core.logging import get_logger
 from app.core.security import AuthenticatedPrincipal, get_current_principal
 from app.db.models.user_session import UserSession
 from app.db.session import get_session_factory
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -87,6 +89,7 @@ async def list_sessions(
         )
         for r in rows
     ]
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.delete("/{session_id}")

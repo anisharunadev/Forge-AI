@@ -27,6 +27,8 @@ from app.core.logging import get_logger
 from app.core.security import AuthenticatedPrincipal, get_current_principal
 from app.db.models.user_session import UserApiToken
 from app.db.session import get_session_factory
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -85,6 +87,7 @@ async def list_api_tokens(
         ).scalars().all()
 
     return [_to_read(r) for r in rows]
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("", response_model=ApiTokenCreated, status_code=status.HTTP_201_CREATED)
@@ -128,6 +131,7 @@ async def create_api_token(
         scope=body.scope,
     )
     return ApiTokenCreated(**_to_read(row).model_dump(), secret=secret)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.delete("/{token_id}")
