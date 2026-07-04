@@ -34,8 +34,8 @@ from dataclasses import dataclass
 # re-export is purely a convenience seam.
 from app.agents.approval_gate import (  # noqa: F401 — re-exported seam
     ApprovalEnvelope,
-    ApprovalRequiredError,
     ApprovalGateNode,
+    ApprovalRequiredError,
     frozen_state_envelope,
     require_approval_phase,
 )

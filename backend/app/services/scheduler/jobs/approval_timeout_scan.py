@@ -21,7 +21,7 @@ The job is best-effort:
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from app.core.config import settings
@@ -57,7 +57,10 @@ async def _scan_pending_approvals() -> list[dict[str, Any]]:
     no-op that the next tick will retry.
     """
     try:
-        from app.services.sdlc_run_manager import SDLCRunManager
+        # Lazy import: SDLCRunManager pulls in the SDLC supervisor
+        # which pulls in this scheduler package; we resolve at call
+        # time to keep the module-level import graph acyclic.
+        from app.services.sdlc_run_manager import SDLCRunManager  # noqa: PLC0415
     except Exception as exc:  # pragma: no cover — partial-init guard
         logger.debug("approval_timeout.run_manager_unavailable", error=str(exc))
         return []
@@ -65,7 +68,7 @@ async def _scan_pending_approvals() -> list[dict[str, Any]]:
     try:
         manager = SDLCRunManager()
         rows: list[dict[str, Any]] = []
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         for run_id, handle in list(manager._tasks.items()):  # type: ignore[attr-defined]
             state = getattr(handle, "state", None)
             if state is None:

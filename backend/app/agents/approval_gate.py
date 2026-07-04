@@ -54,8 +54,9 @@ from __future__ import annotations
 
 import functools
 import inspect
-from datetime import datetime, timezone
-from typing import Any, Callable, ParamSpec, TypeVar
+from collections.abc import Callable
+from datetime import UTC, datetime
+from typing import Any, ParamSpec, TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -67,7 +68,34 @@ from app.agents.sdlc_state import (
     SDLCState,
 )
 from app.core.logging import get_logger
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
+
+# ``_langgraph_interrupt`` is the handle we call from the gate's
+# no-decision pause path.  Resolved once at module load (langgraph
+# is a hard runtime dep) so the gate's hot path doesn't pay the
+# import cost on every call.  When the optional langgraph dep is
+# missing the gate falls through to the older empty-edge-set pause
+# (returning state unchanged).
+try:
+    from langgraph.types import interrupt as _langgraph_interrupt
+except ImportError:  # pragma: no cover — langgraph is a hard dep
+    _langgraph_interrupt = None  # type: ignore[assignment]
+
+
+def _resolve_workflow_budget_service() -> Any:
+    """Lazy loader for :data:`workflow_budget_service`.
+
+    Extracted from :meth:`ApprovalGateNode.__init__` so ruff's
+    PLC0415 (``import`` should be at the top-level of a file``)
+    stays happy while the cycle stays broken.  The local import is
+    intentional — the cycle is approval_gate <-> workflow_budget
+    and resolving one direction lazily is the standard fix.
+    """
+    # ruff: noqa: PLC0415 — intentional lazy import for cycle break.
+    from app.services.workflow_budget import workflow_budget_service
+
+    return workflow_budget_service
 
 # ``workflow_budget_service`` is imported lazily inside the gate's
 # ``__init__`` to avoid a circular import — Track A retrofit (T-A3)
@@ -123,7 +151,7 @@ class ApprovalEnvelope(BaseModel):
         tenant_id: UUID,
         project_id: UUID,
         response: ApprovalResponse,
-    ) -> "ApprovalEnvelope":
+    ) -> ApprovalEnvelope:
         """Build an envelope from a recorded :class:`ApprovalResponse`."""
         return cls(
             approval_id=response.approval_id,
@@ -240,7 +268,9 @@ def _coerce_sdlc_state(args: tuple[Any, ...]) -> SDLCState | None:
     return None
 
 
-def require_approval_phase(*allowed_phases: SDLCPhase) -> Callable[[Callable[_P, _R]], Callable[_P, _R]]:
+def require_approval_phase(
+    *allowed_phases: SDLCPhase,
+) -> Callable[[Callable[_P, _R]], Callable[_P, _R]]:
     """Module-level decorator that gates a handler on recorded approval.
 
     Usage::
@@ -286,7 +316,10 @@ def require_approval_phase(*allowed_phases: SDLCPhase) -> Callable[[Callable[_P,
         # Stash the allowed phases on the wrapper for introspection /
         # tooling — the CI hygiene grep (Step 3) reads this attribute
         # to verify coverage without re-parsing the source AST.
-        setattr(func, "__approval_required_phases__", allowed)
+        # The attribute name is intentionally a constant — the CI
+        # hygiene grep (Step 3) reads it as a sentinel for
+        # decorator-coverage introspection.
+        func.__approval_required_phases__ = allowed  # noqa: B010
 
         if inspect.iscoroutinefunction(func):
 
@@ -395,7 +428,7 @@ def frozen_state_envelope(state: SDLCState, envelope: ApprovalEnvelope) -> SDLCS
     return state.model_copy(
         update={
             "metadata": metadata,
-            "updated_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(UTC),
         },
         deep=True,
     )
@@ -438,8 +471,7 @@ class ApprovalGateNode:
         # ``None`` is preserved for tests that don't need the
         # budget snapshot.
         if budget_service is None:
-            from app.services.workflow_budget import workflow_budget_service
-            budget_service = workflow_budget_service
+            budget_service = _resolve_workflow_budget_service()  # noqa: PLC0415
         self._budget_service = budget_service
         self._timeout_hours = timeout_hours
 
@@ -513,7 +545,7 @@ class ApprovalGateNode:
                     **state.metadata,
                     self._budget_key(pending): snapshot,
                 },
-                "updated_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(UTC),
             },
             deep=True,
         )
@@ -557,7 +589,7 @@ class ApprovalGateNode:
         state = state.model_copy(
             update={
                 "metadata": new_metadata,
-                "updated_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(UTC),
             },
             deep=True,
         )
@@ -570,7 +602,7 @@ class ApprovalGateNode:
         state: SDLCState,
         pending: ApprovalRequest,
     ) -> SDLCState:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if pending.expires_at <= now:
             await self._bus.publish(
                 EventType.APPROVAL_EXPIRED,
@@ -592,9 +624,11 @@ class ApprovalGateNode:
         # way to pause a run for human input.  Replaces the older
         # empty-edge-set trick (where the supervisor had no outgoing
         # edges to declare the pause) — M2 Plan 01-01 step 8.
-        try:
-            from langgraph.types import interrupt  # local import: langgraph is heavy
-        except ImportError:  # pragma: no cover — langgraph is a hard dep
+        # ``_langgraph_interrupt`` is resolved at module load (see
+        # the import block at the top of this file); when the
+        # optional langgraph dep is missing we surface a clear log
+        # line and return the state unchanged.
+        if _langgraph_interrupt is None:
             logger.warning("approval_gate.interrupt_unavailable")
             return state
 
@@ -612,8 +646,8 @@ class ApprovalGateNode:
             "project_id": str(state.project_id),
             "budget_snapshot": state.metadata.get(self._budget_key(pending)),
         }
-        # ``interrupt`` returns the human's response on resume.
-        interrupt(interrupt_payload)
+        # ``_langgraph_interrupt`` returns the human's response on resume.
+        _langgraph_interrupt(interrupt_payload)
         return state
 
     async def _grant(

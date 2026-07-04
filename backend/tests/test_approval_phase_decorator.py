@@ -25,9 +25,10 @@ All five cases use the in-memory SDLCState from conftest's
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
+from pydantic import ValidationError
 
 from app.agents.approval_gate import (
     ApprovalEnvelope,
@@ -41,7 +42,6 @@ from app.agents.sdlc_state import (
     SDLCPhase,
     SDLCState,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -66,7 +66,7 @@ def _make_pending(*, phase: str = "architecture") -> ApprovalRequest:
         approval_id=uuid.uuid4(),
         type=phase,
         required_role="forge-architect",
-        expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        expires_at=datetime.now(UTC) + timedelta(hours=1),
     )
 
 
@@ -76,7 +76,7 @@ def _make_decision(*, granted: bool = True) -> dict:
         "granted": granted,
         "decided_by": str(uuid.uuid4()),
         "reason": "test",
-        "decided_at": datetime.now(timezone.utc).isoformat(),
+        "decided_at": datetime.now(UTC).isoformat(),
     }
 
 
@@ -245,7 +245,7 @@ def test_frozen_state_envelope_writes_to_metadata():
         granted=True,
         decided_by=uuid.uuid4(),
         reason="ok",
-        decided_at=datetime.now(timezone.utc),
+        decided_at=datetime.now(UTC),
     )
     envelope = ApprovalEnvelope.from_response(
         phase=SDLCPhase.ARCHITECTURE,
@@ -272,9 +272,9 @@ def test_approval_envelope_is_frozen():
         tenant_id=uuid.uuid4(),
         project_id=uuid.uuid4(),
         decided_by=uuid.uuid4(),
-        decided_at=datetime.now(timezone.utc),
+        decided_at=datetime.now(UTC),
         granted=True,
         reason="ok",
     )
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         envelope.granted = False  # type: ignore[misc]
