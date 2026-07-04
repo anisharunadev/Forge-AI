@@ -7,6 +7,34 @@
 #
 # Guardrails are declared here as the source of truth. Per-key or
 # per-team overrides go through the admin API.
+#
+# ============================================================================
+# M1 G13 — guardrail activation deferred to M2 cost-admission work.
+#
+# The four guardrails below (pii_masking, prompt_injection_detection,
+# content_moderation, secret_detection) are declared with
+# ``callbacks: []`` and ``default_on: false``. That makes them
+# explicit no-ops at the proxy level — the proxy boots, every
+# guardrail name is registered, and no per-request rewrite happens.
+#
+# This is intentional for M1: we want the proxy to start cleanly
+# with the placeholder keys from .env.example (the M1 G2 env
+# validator now refuses to boot on those unless
+# ``ALLOW_PLACEHOLDER_LLM_KEYS=true``), and we want the model
+# catalog to enumerate so /api/v1/forge/models can list it. The
+# real callbacks (presidio, lakera_prompt_injection, hide_secrets,
+# etc.) require additional infra, billing, and per-tenant policy
+# decisions that are owned by M2 cost-admission work.
+#
+# To activate any guardrail: populate ``callbacks`` with the real
+# callback names per the LiteLLM docs, set ``default_on: true``,
+# and add the matching per-call ``guardrail`` block to the backend
+# chat path. Track this with a single PR once M2 lands; do NOT
+# surface the activation flag through environment variables (Rule
+# 8 — configurable everything, but flip should go through code
+# review, not env wiring).
+# ============================================================================
+
 
 model_list:
   - model_name: gpt-4o
