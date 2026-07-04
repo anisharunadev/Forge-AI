@@ -273,6 +273,14 @@ class SteeringRuleCatalog:
 # ---------------------------------------------------------------------------
 
 
+# M2 T-A3 — SteeringEngine mutates project state when it persists the
+# rule catalog (``SteeringRuleCatalog`` rows + audit events).  Decorate
+# ``build_catalog`` with the planning-phase gate so a rule reload
+# cannot run without a recorded PLANNING approval.
+from app.agents.approval_gate import require_approval_phase  # noqa: E402
+from app.agents.sdlc_state import SDLCPhase  # noqa: E402
+
+
 def _file_hash(content: str) -> str:
     return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
@@ -326,6 +334,7 @@ class SteeringEngine:
                 seen.add(path.resolve())
         return sorted(seen)
 
+    @require_approval_phase(SDLCPhase.PLANNING)
     async def build_catalog(
         self,
         *,

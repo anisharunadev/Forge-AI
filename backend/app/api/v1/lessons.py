@@ -26,6 +26,8 @@ from app.schemas.lesson import (
     MonthlyDigest,
 )
 from app.services.lesson_service import LessonService, _to_wire
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/lessons", tags=["lessons"])
 
@@ -61,6 +63,7 @@ async def list_lessons(
         approved_count=counts["approved"],
         rejected_count=counts["rejected"],
     )
+@require_approval_phase(SDLCPhase.REVIEW)
 
 
 @router.post("/{lesson_id}/approve", response_model=LessonDecisionResult)
@@ -78,6 +81,7 @@ async def approve_lesson(
         decision=LessonStatus.APPROVED,
         body=body,
     )
+@require_approval_phase(SDLCPhase.REVIEW)
 
 
 @router.post("/{lesson_id}/reject", response_model=LessonDecisionResult)

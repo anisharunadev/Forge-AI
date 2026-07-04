@@ -15,6 +15,8 @@ from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.agent import Agent
 from app.db.models.agent_config import AgentConfig
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/projects/{project_id}/agent-config", tags=["agent-config"])
 
@@ -104,6 +106,7 @@ async def get_agent_config(
         raise HTTPException(status_code=404, detail="agent_config_not_found")
     cfg, agent = result
     return _to_read(cfg, agent)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/{agent_id}", response_model=AgentConfigRead)

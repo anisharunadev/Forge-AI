@@ -21,6 +21,8 @@ from app.core.logging import get_logger
 from app.core.security import AuthenticatedPrincipal, get_current_principal
 from app.db.models.user import User
 from app.db.session import get_session_factory
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -67,6 +69,7 @@ async def get_notification_prefs(
     """
     prefs = await _load_prefs(principal)
     return NotificationPrefsRead(**prefs)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/notifications", response_model=NotificationPrefsRead)

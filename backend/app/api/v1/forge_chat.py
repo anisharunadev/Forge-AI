@@ -40,6 +40,8 @@ from app.services.forge_chat_errors import (
     UpstreamError,
     ValidationError,
 )
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/forge", tags=["forge.chat"])
 logger = get_logger(__name__)
@@ -87,6 +89,7 @@ def _sse_error(code: str, message: str) -> bytes:
     """Typed-error envelope for the SSE error channel."""
     payload = json.dumps({"code": code, "message": message})
     return f"event: error\ndata: {payload}\n\n".encode("utf-8")
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(
@@ -140,6 +143,7 @@ async def stream_chat_endpoint(
         "Content-Type": "text/event-stream",
     }
     return StreamingResponse(generator(), media_type="text/event-stream", headers=headers)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(

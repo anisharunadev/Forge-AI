@@ -26,6 +26,8 @@ from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.core.logging import get_logger
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -88,6 +90,7 @@ async def list_jobs(
 ) -> dict[str, Any]:
     """Return registered jobs (id, name, next_run_time, trigger)."""
     return {"jobs": _list_jobs()}
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/jobs/{job_id}/run")

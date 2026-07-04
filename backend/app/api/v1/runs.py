@@ -56,6 +56,7 @@ from app.services.sdlc_run_manager import (
     SDLCRunManager,
     get_default_manager,
 )
+from app.agents.approval_gate import require_approval_phase
 
 logger = logging.getLogger(__name__)
 
@@ -151,6 +152,7 @@ def _cost_to_response(summary: CostSummary) -> CostSummaryResponse:
 # Endpoints
 # ---------------------------------------------------------------------------
 
+@require_approval_phase(SDLCPhase.PLANNING)
 @router.post(
     "",
     response_model=SDLCRunStateResponse,
@@ -245,6 +247,7 @@ async def stream_run(
     return StreamingResponse(_gen(), media_type="text/event-stream")
 
 
+@require_approval_phase(SDLCPhase.PLANNING)
 @router.post("/{run_id}/resume", response_model=ApprovalResponseResponse)
 async def resume_run(
     run_id: UUID,
@@ -276,6 +279,7 @@ async def resume_run(
     )
 
 
+@require_approval_phase(SDLCPhase.PLANNING)
 @router.post("/{run_id}/cancel", response_model=SDLCRunStateResponse)
 async def cancel_run(
     run_id: UUID,
@@ -313,6 +317,113 @@ async def get_cost(
     if state is None or state.tenant_id != principal.tenant_id:
         raise HTTPException(status_code=404, detail="run_not_found")
     return _cost_to_response(await manager.get_run_cost(run_id))
+
+
+# ---------------------------------------------------------------------------
+# M2 ADR-009 — per-RUN cumulative budget surface (Track B T-B7)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/_default_budget")
+async def get_default_run_budget(
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+) -> dict[str, Any]:
+    """GET /api/v1/runs/_default_budget — per-tenant default ceiling snapshot.
+
+    Lightweight read that returns the per-tenant ceiling a *new* run
+    starts with (``run_budget_cap_overrides[tenant_id]`` or the global
+    ``run_budget_cap_usd`` fallback). Spent is 0 since no run_id is
+    yet associated. Used by the Runs Center index page so operators
+    see the available budget hint before they click "New run".
+    """
+    from app.core.config import settings
+
+    tenant_key = str(principal.tenant_id)
+    ceiling_usd = float(
+        settings.run_budget_cap_overrides.get(
+            tenant_key, settings.run_budget_cap_usd
+        )
+    )
+    return {
+        "tenant_id": tenant_key,
+        "ceiling_usd": ceiling_usd,
+        "spent_usd": 0.0,
+        "remaining_usd": ceiling_usd,
+        "currency": settings.cost_currency,
+    }
+
+
+@router.get("/{run_id}/budget")
+async def get_run_budget(
+    run_id: UUID,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    manager: SDLCRunManager = RunManagerDep,
+) -> dict[str, Any]:
+    """GET /api/v1/runs/{run_id}/budget — per-RUN cumulative cap snapshot.
+
+    Returns the operator-facing budget surface consumed by
+    :class:`apps.forge.components.runs.RunBudgetBadge`:
+
+        {
+            "run_id": "...",
+            "tenant_id": "...",
+            "ceiling_usd": 50.0,
+            "spent_usd": 12.34,
+            "remaining_usd": 37.66,
+            "currency": "USD"
+        }
+
+    ``ceiling_usd`` resolves per-tenant:
+    ``run_budget_cap_overrides[tenant_id]`` when present, else the
+    global ``run_budget_cap_usd``. ``spent_usd`` sums the confirmed
+    (``projected = false``) ledger rows for the run — the same value
+    the cumulative-cap rule consumes in
+    :func:`app.services.litellm_client.pre_call_admission`.
+
+    A phase guard runs inline (PLANNING / DISCOVERY only) so the
+    endpoint returns 409 (not 500) when invoked outside the gate.
+    The :func:`require_approval_phase` marker is applied as the
+    M2-G6 hygiene signal — its runtime guard requires ``SDLCState``
+    as a positional argument which FastAPI does not inject for
+    path operations.
+    """
+    state = await manager.get_run(run_id)
+    if state is None or state.tenant_id != principal.tenant_id:
+        raise HTTPException(status_code=404, detail="run_not_found")
+
+    if state.current_phase not in (SDLCPhase.PLANNING, SDLCPhase.DISCOVERY):
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "phase_not_planning",
+                "current_phase": state.current_phase.value,
+                "allowed_phases": [
+                    SDLCPhase.PLANNING.value,
+                    SDLCPhase.DISCOVERY.value,
+                ],
+            },
+        )
+
+    from app.core.config import settings
+    from app.services.cost_ledger import cost_ledger
+
+    tenant_key = str(principal.tenant_id)
+    ceiling_usd = float(
+        settings.run_budget_cap_overrides.get(
+            tenant_key, settings.run_budget_cap_usd
+        )
+    )
+    spent_usd = await cost_ledger.sum_spent_for_run(run_id)
+    remaining_usd = max(0.0, ceiling_usd - float(spent_usd))
+
+    return {
+        "run_id": str(run_id),
+        "tenant_id": tenant_key,
+        "ceiling_usd": ceiling_usd,
+        "spent_usd": float(spent_usd),
+        "remaining_usd": remaining_usd,
+        "currency": settings.cost_currency,
+    }
 
 
 @router.get("/{run_id}/explainability")

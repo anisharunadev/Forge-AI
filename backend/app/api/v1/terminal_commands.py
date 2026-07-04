@@ -17,6 +17,8 @@ from app.services.terminal.command_integration import (
 )
 # `OutputChunk` is referenced via the local `_chunk_dict` helper below.
 from app.terminal.session_manager import AgentType, session_manager
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/terminal", tags=["terminal-commands"])
 
@@ -44,6 +46,7 @@ class InjectCommandResponse(BaseModel):
 class OutputResponse(BaseModel):
     output: list[dict[str, Any]]
     new_cursor: int
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(
@@ -82,6 +85,7 @@ async def launch_command(
         websocket_url=f"/ws/terminal/{session.id}",
         agent_type=session.agent_type.value,
     )
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(

@@ -18,6 +18,8 @@ from app.db.models.project_invitation import ProjectInvitation
 from app.db.models.project_member import ProjectMember
 from app.db.models.role import Role
 from app.db.models.user import User
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/projects/{project_id}/members", tags=["members"])
 
@@ -126,6 +128,7 @@ async def list_members(
         )
 
     return MemberListResponse(members=members, invitations=invitations)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/invite", response_model=InvitationRead, status_code=201)
@@ -185,6 +188,7 @@ async def invite_member(
         created_at=invitation.created_at,
         token=token,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/{member_id}", response_model=MemberRead)
@@ -233,6 +237,7 @@ async def update_member_role(
         status=pm.status,
         joined_at=pm.created_at,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.delete("/{member_id}")

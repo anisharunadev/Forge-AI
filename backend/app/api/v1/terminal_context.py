@@ -12,6 +12,8 @@ from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.services.terminal.knowledge_context import ContextItem, knowledge_context
 from app.terminal.session_manager import session_manager
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/terminal", tags=["terminal-context"])
 
@@ -50,6 +52,7 @@ async def list_context(
         )
     items = await knowledge_context.get_context_for_session(session_id)
     return [_to_response(i) for i in items]
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(

@@ -4,6 +4,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from app.services.architecture.versioning import ArchitectureVersioningService
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/api/v1/architecture", tags=["architecture-versions"])
 
@@ -22,6 +24,7 @@ class RollbackRequest(BaseModel):
 
 def get_versioning_service() -> ArchitectureVersioningService:
     return ArchitectureVersioningService()
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/versions")
@@ -48,6 +51,7 @@ async def diff_versions(
     service: ArchitectureVersioningService = Depends(get_versioning_service),
 ):
     return await service.diff_versions(version_a, version_b)
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/versions/rollback")

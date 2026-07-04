@@ -68,6 +68,8 @@ from app.services.rbac import (
     GOVERNANCE_PERMISSION_MANAGE,
     GOVERNANCE_PERMISSION_READ,
 )
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -186,6 +188,7 @@ async def list_policies(
             )
         )
     return out
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/policies/{policy_id}/accept", response_model=PolicyRead)
@@ -304,6 +307,7 @@ async def _decide_approval(
         decidedAt=approval.decided_at,
         reason=approval.reason,
     )
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/approvals/{approval_id}/accept", response_model=ApprovalRead)
@@ -324,6 +328,7 @@ async def accept_approval(
         state=ApprovalState.ACCEPTED,
         action="governance.approval.accept",
     )
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/approvals/{approval_id}/decline", response_model=ApprovalRead)
@@ -414,6 +419,7 @@ async def list_board_confirmations(
         )
         for r in rows
     ]
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/board-confirmations", response_model=BoardConfirmationRead)

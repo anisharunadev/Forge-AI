@@ -36,6 +36,8 @@ from app.schemas.dashboard import (
     TopProviderRow,
 )
 from app.services.dashboard import dashboard_service
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -91,6 +93,7 @@ async def list_pinned_items(
     return await dashboard_service.list_pins(
         db, tenant_id=principal.tenant_id, user_id=principal.user_id
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post(
@@ -111,6 +114,7 @@ async def create_pinned_item(
         user_id=principal.user_id,
         body=body,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.delete(
@@ -131,6 +135,7 @@ async def delete_pinned_item(
         pin_id=pin_id,
     )
     return None
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/pinned/reorder")
@@ -168,6 +173,7 @@ async def list_insights(
         user_id=principal.user_id,
         limit=limit,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/insights/{insight_id}/read")
@@ -182,6 +188,7 @@ async def mark_insight_read(
         db, user_id=principal.user_id, insight_id=insight_id
     )
     return {"ok": True}
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/insights/{insight_id}/dismiss")
@@ -219,6 +226,7 @@ async def list_alerts(
         severity=severity,  # type: ignore[arg-type]
         limit=limit,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/alerts/{alert_id}/read")
@@ -231,6 +239,7 @@ async def mark_alert_read(
 ) -> dict[str, bool]:
     await dashboard_service.mark_alert_read(db, alert_id=alert_id)
     return {"ok": True}
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/alerts/read-all")
@@ -258,6 +267,7 @@ async def get_dashboard_layout(
     return await dashboard_service.get_or_create_layout(
         db, tenant_id=principal.tenant_id, user_id=principal.user_id
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.put("/layout", response_model=DashboardLayout)

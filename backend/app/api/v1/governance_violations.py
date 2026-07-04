@@ -34,6 +34,8 @@ from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.services.litellm_admin import list_spend_logs
 from app.services.rbac import GOVERNANCE_PERMISSION_MANAGE, GOVERNANCE_PERMISSION_READ
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/governance", tags=["governance"])
 
@@ -118,6 +120,7 @@ async def list_violations(
     canonical record is in LiteLLM, surfaced through ``list_spend_logs``.
     """
     return await _load_violations(principal.tenant_id, severity, days)
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/violations/{violation_id}/resolve")
@@ -135,6 +138,7 @@ async def resolve_violation(
         "resolved_by": principal.user_id,
         "resolved_at": datetime.utcnow().isoformat(),
     }
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/violations/{violation_id}/reopen")
@@ -152,6 +156,7 @@ async def reopen_violation(
         "reopened_by": principal.user_id,
         "reopened_at": datetime.utcnow().isoformat(),
     }
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/violations/poll")

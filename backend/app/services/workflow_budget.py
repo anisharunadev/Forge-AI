@@ -21,6 +21,14 @@ from uuid import UUID
 from sqlalchemy import select
 
 from app.core.logging import get_logger
+# M2 T-A3 — WorkflowBudgetService.declare_budget and record_spend mutate
+# project state (ceiling writes, spend increments, audit rows).  Decorate
+# the IMPLEMENTATION-phase entry points so a budget declare cannot run
+# without a recorded approval.  ``check_budget`` (admission) and
+# ``surface_at_gate`` (read snapshot) are left undecorated — they don't
+# write artifacts.
+from app.agents.approval_gate import require_approval_phase  # noqa: E402
+from app.agents.sdlc_state import SDLCPhase  # noqa: E402
 from app.db.models.workflow_budget import (
     WorkflowBudget as WorkflowBudgetRow,
     WorkflowBudgetDecision as WorkflowBudgetDecisionRow,
@@ -117,6 +125,7 @@ class WorkflowBudgetService:
     # Lifecycle
     # ------------------------------------------------------------------
 
+    @require_approval_phase(SDLCPhase.IMPLEMENTATION)
     async def declare_budget(
         self,
         *,

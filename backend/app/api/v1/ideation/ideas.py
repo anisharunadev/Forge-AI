@@ -22,8 +22,11 @@ from app.schemas.ideation import (
 )
 from app.services.ideation import idea_analysis_service, idea_intake_service
 from app.services.ideation.idea_intake import extract_entities, validate_idea
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/ideation/ideas", tags=["ideation"])
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("", response_model=IdeaRead, status_code=status.HTTP_201_CREATED)
@@ -82,6 +85,7 @@ async def get_idea(
     except PermissionError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return IdeaRead.model_validate(idea)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/{idea_id}", response_model=IdeaRead)
@@ -104,6 +108,7 @@ async def update_idea(
     except PermissionError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return IdeaRead.model_validate(idea)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{idea_id}/analyze", response_model=IdeaAnalysisRead)
@@ -142,6 +147,7 @@ async def get_analysis(
     if analysis is None:
         return None
     return IdeaAnalysisRead.model_validate(analysis)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{idea_id}/reanalyze", response_model=IdeaAnalysisRead)
@@ -162,6 +168,7 @@ async def reanalyze_idea(
     except PermissionError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return IdeaAnalysisRead.model_validate(analysis)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{idea_id}/archive", response_model=IdeaRead)
@@ -182,6 +189,7 @@ async def archive_idea(
     except PermissionError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return IdeaRead.model_validate(idea)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{idea_id}/artifacts", response_model=IdeaRead)
@@ -204,6 +212,7 @@ async def attach_artifact(
     except PermissionError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return IdeaRead.model_validate(idea)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/validate", response_model=IdeaValidationResult)
@@ -216,6 +225,7 @@ async def validate_idea_payload(
     """Standalone validation pass — useful for the UI before submit."""
     result = validate_idea(body)
     return IdeaValidationResult(valid=result.valid, errors=result.errors)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/extract-entities", response_model=EntityExtraction)

@@ -21,6 +21,8 @@ from app.api.deps import require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.services.phase4_cache import phase4_cache_service
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/cache", tags=["phase4-cache"])
 
@@ -87,6 +89,7 @@ async def cache_get_settings(
     principal: AuthenticatedPrincipal = Depends(require_permission("cache:read")),
 ) -> dict[str, Any]:
     return await phase4_cache_service.get_settings()
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/settings")
@@ -106,6 +109,7 @@ async def cache_update_settings(
         after=after,
     )
     return after
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/invalidate")

@@ -16,6 +16,8 @@ from app.schemas.ideation import (
     PRDSectionUpdate,
 )
 from app.services.ideation.prd_generator import BMAD_SECTIONS, prd_generator
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/ideation", tags=["ideation"])
 
@@ -35,6 +37,7 @@ def _to_read(prd) -> PRDRead:
         created_at=prd.created_at,
         updated_at=prd.updated_at,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post(
@@ -79,6 +82,7 @@ async def get_prd(
     if prd is None:
         return None
     return _to_read(prd)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/prds/{prd_id}/sections/{section}", response_model=PRDRead)
@@ -108,6 +112,7 @@ async def update_prd_section(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return _to_read(prd)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/prds/{prd_id}/submit", response_model=PRDRead)
@@ -126,6 +131,7 @@ async def submit_prd(
     except PermissionError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return _to_read(prd)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/prds/{prd_id}/approve", response_model=PRDRead)

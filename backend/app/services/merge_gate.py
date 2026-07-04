@@ -187,6 +187,7 @@ class MergeGate:
 
     # ---- Public API ----------------------------------------------------
 
+    @require_approval_phase(SDLCPhase.REVIEW)
     async def enforce_security_gate(
         self,
         commit_sha: str,

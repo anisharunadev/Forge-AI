@@ -28,6 +28,8 @@ from app.services.phase4_identity import (
     sso_readiness,
     sso_test_connection,
 )
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/identity", tags=["phase4-identity"])
 
@@ -61,6 +63,7 @@ async def sso_status(
     cfg = await get_sso_config(principal.tenant_id)
     readiness = await sso_readiness(principal.tenant_id)
     return {"config": cfg, "readiness": readiness}
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/sso/configure")
@@ -80,6 +83,7 @@ async def sso_configure(
         scopes=body.scopes,
         enabled=body.enabled,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/sso/test")
@@ -97,6 +101,7 @@ async def scim_status_ep(
     principal: AuthenticatedPrincipal = Depends(require_permission("forge:read")),
 ) -> dict[str, Any]:
     return await scim_status(principal.tenant_id)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/scim/token")
@@ -118,6 +123,7 @@ async def oauth_clients_list(
     principal: AuthenticatedPrincipal = Depends(require_permission("forge:read")),
 ) -> dict[str, Any]:
     return {"clients": await list_oauth_clients(principal.tenant_id)}
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/oauth/clients")
@@ -133,6 +139,7 @@ async def oauth_clients_register(
         redirect_uris=body.redirect_uris,
         scopes=body.scopes,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.delete("/oauth/clients/{client_id}")
@@ -157,6 +164,7 @@ async def jwt_keys_list(
     principal: AuthenticatedPrincipal = Depends(require_permission("forge:read")),
 ) -> dict[str, Any]:
     return {"keys": await list_jwt_keys()}
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/jwt/keys")
@@ -168,6 +176,7 @@ async def jwt_keys_create(
         project_id=principal.project_id or "00000000-0000-0000-0000-000000000000",
         actor_id=principal.user_id,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/jwt/keys/rotate")
@@ -179,6 +188,7 @@ async def jwt_keys_rotate(
         project_id=principal.project_id or "00000000-0000-0000-0000-000000000000",
         actor_id=principal.user_id,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.delete("/jwt/keys/{key_id}")

@@ -22,6 +22,8 @@ from app.services.architecture.approval_workflow import (
 )
 from app.services.event_bus import bus
 from app.services.litellm_client import LiteLLMClient
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(
     prefix="/architecture/approvals",
@@ -31,6 +33,7 @@ router = APIRouter(
 
 def _workflow() -> ArchitectureApprovalWorkflow:
     return ArchitectureApprovalWorkflow(litellm_client=LiteLLMClient(), event_bus=bus)
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post(
@@ -91,6 +94,7 @@ async def get_approval(
     if approval is None or str(approval.tenant_id) != str(principal.tenant_id):
         raise HTTPException(status_code=404, detail="approval_not_found")
     return _serialize(approval)
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/{approval_id}/decide", response_model=ArchitectureApprovalResponse)
@@ -115,6 +119,7 @@ async def decide_approval(
     if str(approval.tenant_id) != str(principal.tenant_id):
         raise HTTPException(status_code=404, detail="approval_not_found")
     return _serialize(approval)
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/{approval_id}/cancel", response_model=ArchitectureApprovalResponse)

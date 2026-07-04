@@ -21,6 +21,8 @@ from app.schemas.connectors import (
 )
 from app.services.connector_manager import connector_manager
 from app.services.event_bus import EventType, bus
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/connectors", tags=["connectors"])
 
@@ -53,6 +55,7 @@ async def get_connector(
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return ConnectorRead.model_validate(connector)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("", response_model=ConnectorRead, status_code=status.HTTP_201_CREATED)
@@ -71,6 +74,7 @@ async def create_connector(
         actor_id=principal.user_id,
     )
     return ConnectorRead.model_validate(connector)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.patch("/{connector_id}", response_model=ConnectorRead)
@@ -95,6 +99,7 @@ async def update_connector(
         actor_id=principal.user_id,
     )
     return ConnectorRead.model_validate(updated)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.delete(
@@ -119,6 +124,7 @@ async def delete_connector(
         connector_id, actor_id=principal.user_id
     )
     return ConnectorRead.model_validate(quarantined)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/{connector_id}/sync", response_model=ConnectorSyncHistoryRead)

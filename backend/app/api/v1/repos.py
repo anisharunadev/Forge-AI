@@ -23,8 +23,11 @@ from app.schemas.project_intelligence import (
     RepoUpdate,
 )
 from app.services.project_intelligence.repo_ingestion import repo_ingestion_service
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/repos", tags=["repos"])
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("", response_model=RepoRead, status_code=status.HTTP_201_CREATED)
@@ -74,6 +77,7 @@ async def get_repo(
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     return RepoRead.model_validate(repo)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.patch("/{repo_id}", response_model=RepoRead)
@@ -98,6 +102,7 @@ async def update_repo(
         await session.commit()
         await session.refresh(repo)
     return RepoRead.model_validate(repo)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/{repo_id}/ingest", response_model=IngestionRunRead)
@@ -154,6 +159,7 @@ async def list_ingestions(
         )
         for r in runs
     ]
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/discover", response_model=RepoDiscoverResponse)
@@ -220,6 +226,7 @@ async def get_status(
             finished_commit_sha=active.finished_commit_sha,
         ) if active else None,
     )
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.delete(

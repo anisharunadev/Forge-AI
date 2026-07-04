@@ -16,6 +16,8 @@ from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.services.terminal.exporter import ExportFormat, session_exporter
 from app.terminal.session_manager import session_manager
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/terminal", tags=["terminal-export"])
 
@@ -79,6 +81,7 @@ async def export_session(
             "X-Audit-Chain-Length": str(len(rendered.audit_hash_chain)),
         },
     )
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(

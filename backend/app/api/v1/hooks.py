@@ -19,6 +19,8 @@ from app.schemas.hooks import (
     HookUpdate,
 )
 from app.services.hook_orchestrator import hook_orchestrator
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/hooks", tags=["hooks"])
 
@@ -48,6 +50,7 @@ async def get_hook(
     if hook.tenant_id != principal.tenant_id:
         raise HTTPException(status_code=404, detail="hook_not_found")
     return HookRead.model_validate(hook)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("", response_model=HookRead, status_code=status.HTTP_201_CREATED)
@@ -70,6 +73,7 @@ async def create_hook(
         timeout_seconds=body.timeout_seconds,
     )
     return HookRead.model_validate(hook)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.patch("/{hook_id}", response_model=HookRead)
@@ -97,6 +101,7 @@ async def update_hook(
         timeout_seconds=body.timeout_seconds,
     )
     return HookRead.model_validate(updated)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.delete(
@@ -118,6 +123,7 @@ async def delete_hook(
     if existing.tenant_id != principal.tenant_id:
         raise HTTPException(status_code=404, detail="hook_not_found")
     await hook_orchestrator.delete_hook(hook_id)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/{hook_id}/test", response_model=list[HookResult])

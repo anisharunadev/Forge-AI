@@ -12,6 +12,8 @@ from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.services.terminal.broadcast import session_broadcaster
 from app.terminal.session_manager import session_manager
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/terminal", tags=["terminal-broadcast"])
 
@@ -54,6 +56,7 @@ async def list_broadcasters(
         )
     rows = await session_broadcaster.list_broadcasters(session_id)
     return [BroadcasterResponse(**row) for row in rows]
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(
@@ -85,6 +88,7 @@ async def grant_write(
             detail=str(exc),
         ) from exc
     return GrantResponse(ok=True, write_grants=grants)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(

@@ -33,6 +33,8 @@ from app.services.project_onboarding.wizard import (
     WizardError,
     onboarding_wizard,
 )
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -42,6 +44,7 @@ router = APIRouter(prefix="/onboarding", tags=["onboarding"])
 # ---------------------------------------------------------------------------
 # Session CRUD (unchanged from step-49; the 4 routes are still here).
 # ---------------------------------------------------------------------------
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post(
@@ -73,6 +76,7 @@ async def get_session(
     if str(state.tenant_id) != principal.tenant_id:
         raise HTTPException(status_code=404, detail="onboarding_session_not_found")
     return state
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/sessions/{session_id}/advance", response_model=OnboardingSessionRead)
@@ -90,6 +94,7 @@ async def advance_session(
         return await onboarding_wizard.advance(session_id, body)
     except WizardError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/sessions/{session_id}/cancel", response_model=OnboardingSessionRead)
@@ -284,6 +289,7 @@ async def _run_provision_job(
             tenant_id=principal.tenant_id,
             error=str(exc),
         )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/provision", status_code=202)

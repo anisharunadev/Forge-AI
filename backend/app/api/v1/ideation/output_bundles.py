@@ -13,6 +13,8 @@ from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import OutputBundleRead
 from app.services.ideation.output_bundle import output_bundle_service
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/ideation", tags=["ideation"])
 
@@ -28,6 +30,7 @@ def _to_read(bundle) -> OutputBundleRead:
         created_at=bundle.created_at,
         updated_at=bundle.updated_at,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post(

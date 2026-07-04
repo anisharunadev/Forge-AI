@@ -22,6 +22,8 @@ from app.schemas.tool_bundles import (
 )
 from app.services.audit_service import audit_service
 from app.services.tool_bundles import tool_bundles
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/tool-bundles", tags=["tool-bundles"])
 
@@ -55,6 +57,7 @@ async def list_tool_bundles(
         row = tool_bundles.override_row(stage)
         out.append(_row_to_read(stage, bundle, row))
     return out
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.put("/{stage}", response_model=ToolBundleRead)

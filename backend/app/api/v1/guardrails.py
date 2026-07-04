@@ -50,6 +50,8 @@ from app.services.guardrails_service import (
     GuardrailViolation,
     guardrails_service,
 )
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -127,6 +129,7 @@ async def get_guardrail_endpoint(
 # ---------------------------------------------------------------------
 # Register / update
 # ---------------------------------------------------------------------
+@require_approval_phase(SDLCPhase.SECURITY)
 
 
 @router.post("", response_model=GuardrailRead, status_code=status.HTTP_201_CREATED)
@@ -157,6 +160,7 @@ async def register_guardrail_endpoint(
         default_params=body.litellm_params.model_dump(exclude_none=True),
         enabled=True,
     )
+@require_approval_phase(SDLCPhase.SECURITY)
 
 
 @router.patch("/{name}", response_model=GuardrailRead)
@@ -192,6 +196,7 @@ async def update_guardrail_endpoint(
 # ---------------------------------------------------------------------
 # Test
 # ---------------------------------------------------------------------
+@require_approval_phase(SDLCPhase.SECURITY)
 
 
 @router.post("/{name}/test", response_model=GuardrailApplyResult)
@@ -216,6 +221,7 @@ async def test_guardrail_endpoint(
         reason=raw.get("reason"),
         latency_ms=int(raw.get("latency_ms", 0)),
     )
+@require_approval_phase(SDLCPhase.SECURITY)
 
 
 @router.post("/test-custom-code", response_model=GuardrailApplyResult)
@@ -323,6 +329,7 @@ async def list_ui_rules_endpoint(
             )
         )
     return Page(items=items, total=len(items))
+@require_approval_phase(SDLCPhase.SECURITY)
 
 
 @router.post("/ui", response_model=GuardrailUIRule, status_code=status.HTTP_201_CREATED)

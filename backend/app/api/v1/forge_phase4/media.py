@@ -22,6 +22,8 @@ from app.core.security import AuthenticatedPrincipal
 from app.db.models.tenant import Tenant
 from app.db.session import get_session_factory
 from app.services.audit_service import audit_service
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -86,6 +88,7 @@ async def _proxy(
         },
         media_type=response.headers.get("content-type"),
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/audio/speech")
@@ -99,6 +102,7 @@ async def audio_speech(
         audit_action=Phase4AuditAction.MEDIA_AUDIO_GENERATED,
         principal=principal,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/audio/transcriptions")
@@ -112,6 +116,7 @@ async def audio_transcriptions(
         audit_action=Phase4AuditAction.MEDIA_TRANSCRIBED,
         principal=principal,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/images/generations")
@@ -125,6 +130,7 @@ async def image_generations(
         audit_action=Phase4AuditAction.MEDIA_IMAGE_GENERATED,
         principal=principal,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/images/edits")
@@ -138,6 +144,7 @@ async def image_edits(
         audit_action=Phase4AuditAction.MEDIA_IMAGE_EDITED,
         principal=principal,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/videos")
@@ -180,6 +187,7 @@ async def videos_content(
         audit_action=Phase4AuditAction.MEDIA_VIDEO_COMPLETED,
         principal=principal,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/moderations")
@@ -193,6 +201,7 @@ async def moderations(
         audit_action=Phase4AuditAction.MEDIA_MODERATION_RUN,
         principal=principal,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/containers")

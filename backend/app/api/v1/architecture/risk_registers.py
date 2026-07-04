@@ -22,6 +22,8 @@ from app.services.architecture.risk_register import RiskRegisterService
 from app.services.artifact_registry import artifact_registry
 from app.services.event_bus import bus
 from app.services.litellm_client import LiteLLMClient
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(
     prefix="/architecture/risk-registers",
@@ -35,6 +37,7 @@ def _service() -> RiskRegisterService:
         artifact_registry=artifact_registry,
         event_bus=bus,
     )
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("", response_model=RiskRegisterResponse, status_code=status.HTTP_201_CREATED)
@@ -97,6 +100,7 @@ async def get_risk_register(
     if register is None or register.tenant_id != principal.tenant_id:
         raise HTTPException(status_code=404, detail="risk_register_not_found")
     return _serialize(register)
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post(
@@ -123,6 +127,7 @@ async def add_risk(
     if register.tenant_id != principal.tenant_id:
         raise HTTPException(status_code=404, detail="risk_register_not_found")
     return _serialize(register)
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.patch("/{register_id}/risks/{risk_id}", response_model=RiskRegisterResponse)

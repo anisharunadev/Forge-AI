@@ -19,8 +19,11 @@ from app.core.security import AuthenticatedPrincipal
 from app.schemas.project_intelligence import KGNodeRead
 from app.schemas.ideation import IdeaGraphRead
 from app.services.ideation.kg_integration import ideation_kg_service
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/ideation", tags=["ideation"])
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post(
@@ -75,6 +78,7 @@ async def get_idea_graph(
         edges=[e.to_dict() for e in graph.edges],
         generated_at=graph.generated_at,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/ideas/{idea_id}/related", response_model=list[KGNodeRead])

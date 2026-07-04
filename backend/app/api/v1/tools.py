@@ -30,6 +30,8 @@ from app.schemas.tools_v2 import (
     ToolRead,
 )
 from app.services.tools_service import tools_service
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/tools", tags=["tools"])
 
@@ -81,6 +83,7 @@ async def get_tool_overrides(
     _perm: AuthenticatedPrincipal = Depends(require_permission("tools:read")),
 ) -> ToolOverrides | None:
     return await tools_service.get_overrides(name=name)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.put("/{name}/overrides", response_model=ToolOverrides)
@@ -102,6 +105,7 @@ async def put_tool_overrides(
         # UI's optimistic update doesn't break.
         return body.overrides
     return result
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.delete("/{name}", status_code=status.HTTP_204_NO_CONTENT)
@@ -126,6 +130,7 @@ async def list_search_tools(
 ) -> Page[dict[str, Any]]:
     items = await tools_service.search_tools_ui()
     return Page(items=items, total=len(items))
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(

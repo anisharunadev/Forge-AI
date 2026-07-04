@@ -19,6 +19,8 @@ from app.schemas.ideation import (
     ApprovalQueueResponse,
 )
 from app.services.ideation.approval_queue import approval_queue_service
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/ideation/approvals", tags=["ideation"])
 
@@ -41,6 +43,7 @@ def _to_read(row) -> ApprovalItemRead:
         created_at=row.created_at,
         updated_at=row.updated_at,
     )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("", response_model=ApprovalItemRead, status_code=status.HTTP_201_CREATED)
@@ -87,6 +90,7 @@ async def list_approvals(
     )
     items = [_to_read(r) for r in rows]
     return ApprovalQueueResponse(items=items, total=len(items))
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{approval_id}/decide", response_model=ApprovalItemRead)
@@ -112,6 +116,7 @@ async def decide_approval(
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return _to_read(row)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{approval_id}/assign", response_model=ApprovalItemRead)
@@ -136,6 +141,7 @@ async def assign_approval(
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return _to_read(row)
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/{approval_id}/delegate", response_model=ApprovalItemRead)

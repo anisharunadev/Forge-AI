@@ -31,6 +31,8 @@ from app.schemas.webhooks import (
     WebhookTestResult,
 )
 from sqlalchemy import select
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
@@ -50,6 +52,7 @@ async def list_webhooks(
         stmt = stmt.order_by(Webhook.created_at.desc())
         rows = list((await session.execute(stmt)).scalars().all())
         return [WebhookRead.model_validate(r) for r in rows]
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("", response_model=WebhookRead, status_code=201)
@@ -77,6 +80,7 @@ async def create_webhook(
         await session.commit()
         await session.refresh(hook)
         return WebhookRead.model_validate(hook)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/{webhook_id}/test", response_model=WebhookTestResult)

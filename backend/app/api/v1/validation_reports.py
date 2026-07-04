@@ -42,6 +42,8 @@ from app.schemas.validation_report import (
 from app.services.artifact_registry import artifact_registry
 from app.services.audit_service import audit_service
 from app.services.event_bus import EventType, bus as default_bus
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 
 router = APIRouter(prefix="/validation-reports", tags=["validation-reports"])
@@ -68,6 +70,7 @@ def _dict_to_report(payload: dict) -> ValidationReport:
     """
     raw = {k: v for k, v in payload.items() if k != "commit_sha"}
     return ValidationReport.model_validate(raw)
+@require_approval_phase(SDLCPhase.SECURITY)
 
 
 @router.post(

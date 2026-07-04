@@ -20,6 +20,8 @@ from app.services.architecture.api_contract_generator import APIContractGenerato
 from app.services.artifact_registry import artifact_registry
 from app.services.event_bus import bus
 from app.services.litellm_client import LiteLLMClient
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(
     prefix="/architecture/contracts", tags=["architecture:contracts"]
@@ -32,6 +34,7 @@ def _generator() -> APIContractGenerator:
         artifact_registry=artifact_registry,
         event_bus=bus,
     )
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("", response_model=APIContractResponse, status_code=status.HTTP_201_CREATED)
@@ -85,6 +88,7 @@ async def get_contract(
     if contract is None or contract.tenant_id != principal.tenant_id:
         raise HTTPException(status_code=404, detail="contract_not_found")
     return APIContractResponse.model_validate(contract)
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/{contract_id}/validate", response_model=APIContractValidationResponse)
@@ -97,6 +101,7 @@ async def validate_contract(
     return APIContractValidationResponse(
         **await _generator().validate_spec(contract_id)
     )
+@require_approval_phase(SDLCPhase.ARCHITECTURE)
 
 
 @router.post("/{contract_id}/publish", response_model=APIContractResponse)

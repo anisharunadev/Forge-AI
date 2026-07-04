@@ -14,6 +14,8 @@ from app.api.deps import DbSession, Principal, get_current_principal
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.role import Role
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/roles", tags=["roles"])
 
@@ -56,6 +58,7 @@ async def list_roles(
     # Sort: system roles first.
     rows = sorted(rows, key=lambda r: (not (r.permissions == ["*"]), r.name))
     return [RoleRead.model_validate(r) for r in rows]
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.patch("/{role_id}", response_model=RoleRead)

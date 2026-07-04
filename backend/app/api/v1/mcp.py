@@ -51,6 +51,8 @@ from app.services.mcp_service import (
     mcp_service,
 )
 from app.services.mcp_registry import MCPCategory
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/mcp", tags=["mcp"])
 
@@ -96,6 +98,7 @@ async def list_categories(
 # ---------------------------------------------------------------------
 # Registration (Phase 2 — admin write)
 # ---------------------------------------------------------------------
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post(
@@ -132,6 +135,7 @@ async def register_server(
             capabilities=[],
         )
     return MCPServerRead(**details)
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.delete("/servers/{name}", status_code=status.HTTP_204_NO_CONTENT)
@@ -151,6 +155,7 @@ async def unregister_server(
 # ---------------------------------------------------------------------
 # Connection test (AC #7)
 # ---------------------------------------------------------------------
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/servers/{name}/test", response_model=MCPServerTestResult)
@@ -204,6 +209,7 @@ async def auth_status(
                 occurred_at=datetime.now(timezone.utc),
             ).model_dump(),
         )
+@require_approval_phase(SDLCPhase.PLANNING)
 
 
 @router.post("/servers/{name}/auth/refresh", response_model=dict[str, Any])
@@ -238,6 +244,7 @@ async def public_hub(
 # ---------------------------------------------------------------------
 # Internal dispatch (used by the chat loop)
 # ---------------------------------------------------------------------
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/call", response_model=MCPToolCallResult)

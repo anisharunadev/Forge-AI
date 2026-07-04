@@ -34,6 +34,8 @@ from app.schemas.skills import (
 )
 from app.services.skills_service import SkillRenderError as SkillRenderExc
 from app.services.skills_service import skills_service
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/skills", tags=["skills"])
 
@@ -50,6 +52,7 @@ async def list_skills(
         tenant_id=principal.tenant_id, category=category, status=status_filter
     )
     return Page(items=items, total=len(items))
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("", response_model=SkillRead, status_code=status.HTTP_201_CREATED)
@@ -96,6 +99,7 @@ async def list_hub(
             )
         )
     return out
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/hub/import", response_model=SkillRead, status_code=status.HTTP_201_CREATED)
@@ -113,6 +117,7 @@ async def import_hub(
         )
     except LookupError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+@require_approval_phase(SDLCPhase.REVIEW)
 
 
 @router.post("/preview", response_model=SkillRenderResult)
@@ -157,6 +162,7 @@ async def get_skill(
     if detail is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="skill not found")
     return detail
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.patch("/{skill_id}", response_model=SkillRead)
@@ -183,6 +189,7 @@ async def update_skill(
     if result is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="skill not found")
     return result
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
 
 
 @router.post("/{skill_id}/archive", response_model=SkillRead)
