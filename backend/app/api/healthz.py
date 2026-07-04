@@ -197,15 +197,22 @@ def _probe_floci() -> str:
 
 
 def _aggregate_status(probes: dict[str, Any]) -> str:
-    """Return 'ok' if every probe is 'ok'; else 'degraded'."""
+    """Return 'ok' if every probe is 'ok'; else 'degraded'.
+
+    Three probe value shapes are recognized:
+      - string: ``"ok"`` or ``"down"``
+      - bool: a green / red flag (``True`` == green, ``False`` == red)
+      - dict: compound probes (audit_sink leaves otel + audit_table);
+        green only when every leaf is ``"ok"``
+    """
     for value in probes.values():
-        # Probe values are either the literal string "ok"/"down" or a
-        # nested dict for compound probes like audit_sink. Treat a
-        # nested dict as green only when every leaf is "ok".
         if isinstance(value, dict):
             for leaf in value.values():
                 if leaf != "ok":
                     return "degraded"
+        elif isinstance(value, bool):
+            if not value:
+                return "degraded"
         elif value != "ok":
             return "degraded"
     return "ok"
