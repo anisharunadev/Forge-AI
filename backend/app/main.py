@@ -6,7 +6,11 @@ Terminal WebSocket route. Lifespan handles bus + telemetry startup.
 
 from __future__ import annotations
 
+import asyncio
+import os
+import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncIterator
 
 from fastapi import FastAPI
@@ -44,9 +48,183 @@ from app.core.telemetry import init_telemetry
 from app.integrations.litellm.health_monitor import health_monitor
 from app.integrations.litellm.litellm_base_client import LiteLLMBaseClient
 from app.services import lesson_service
+from app.services.audit_service import audit_service
 from app.services.event_bus import bus
 
 logger = get_logger(__name__)
+
+# M1 T1.9 — auto-migrate + auto-seed on first boot. The spec calls for
+# ``alembic upgrade head`` then ``seed_runner.apply(...)`` for each demo
+# package; both are gated by env vars so CI can opt out cleanly. The
+# helpers below are intentionally tiny and additive so Track A's wiring
+# stays untouched. See:
+#   - https://internal/spec/M1#T1.9 — auto-seed order
+#   - docs/operations/dev-bootstrap.md — operator-facing recipe
+#   - docs/operations/seed-data.md      — seed catalog (Track C)
+#
+# Env overrides (read directly so we don't take a dependency on the
+# pydantic settings module — these are boot-only escape hatches, not
+# user-facing config):
+#   SKIP_AUTO_MIGRATE=true    → skip ``alembic upgrade head``.
+#   SKIP_AUTO_SEED=true       → skip the seed-if-empty pass.
+#   AUTO_SEED_PACKAGES        → comma-separated override of the seed
+#                               packages to apply. Default is the
+#                               three-package smoke set the M1 spec
+#                               requested: ``acme-corp``, ``kn-base``,
+#                               ``acme-secondary`` (which may not yet
+#                               ship — see ``_AUTO_SEED_DEFAULT``).
+_SKIP_AUTO_MIGRATE = os.environ.get("SKIP_AUTO_MIGRATE", "").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+}
+_SKIP_AUTO_SEED = os.environ.get("SKIP_AUTO_SEED", "").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+}
+_AUTO_SEED_DEFAULT = "acme-corp,kn-base,acme-secondary"
+_AUTO_SEED_PACKAGES = [
+    item.strip()
+    for item in os.environ.get("AUTO_SEED_PACKAGES", _AUTO_SEED_DEFAULT).split(",")
+    if item.strip()
+]
+_AUTO_SEED_SYSTEM_ACTOR_ID = __import__("uuid").UUID(int=0)
+
+
+# ---------------------------------------------------------------------------
+# M1 T1.9 — boot helpers (auto-migrate + auto-seed).
+#
+# Both helpers are intentionally tolerant — a failing migration aborts
+# the boot (we don't want to serve traffic against an out-of-date schema),
+# but a missing seed package is logged-and-skipped rather than crashing
+# the deploy. ``python -m seeds apply <name>`` is the explicit escape
+# hatch when an operator needs to backfill a single package.
+# ---------------------------------------------------------------------------
+
+
+async def _run_alembic_upgrade_head() -> None:
+    """Invoke ``alembic upgrade head`` from inside the event loop.
+
+    The alembic ``env.py`` ships an async engine; we still run the
+    upgrade on a worker thread because alembic's command surface
+    blocks on the IO loop and would deadlock FastAPI's lifespan.
+    The subprocess import is local so the module stays importable
+    in environments where alembic isn't on PYTHONPATH.
+
+    Set ``SKIP_AUTO_MIGRATE=true`` to bypass.
+    """
+    if _SKIP_AUTO_MIGRATE:
+        logger.info("forge.startup.auto_migrate_skipped")
+        return
+    backend_root = Path(__file__).resolve().parents[1]
+    ini_path = backend_root / "alembic.ini"
+    if not ini_path.exists():
+        logger.warning(
+            "forge.startup.auto_migrate_no_alembic_ini",
+            path=str(ini_path),
+        )
+        return
+    cmd = [
+        sys.executable,
+        "-m",
+        "alembic",
+        "-c",
+        str(ini_path),
+        "upgrade",
+        "head",
+    ]
+    logger.info("forge.startup.auto_migrate_start", cmd=" ".join(cmd))
+
+    def _run() -> None:
+        import subprocess
+
+        subprocess.run(cmd, cwd=str(backend_root), check=True)
+
+    try:
+        await asyncio.to_thread(_run)
+    except Exception as exc:  # noqa: BLE001
+        logger.error(
+            "forge.startup.auto_migrate_failed",
+            error=str(exc),
+        )
+        raise
+    logger.info("forge.startup.auto_migrate_complete")
+
+
+async def _run_autoseed_if_empty() -> None:
+    """Apply each demo seed package, but only if the seed_runs table is empty.
+
+    The idempotency check prevents re-seeding on every boot; it also
+    surfaces a clean "already seeded" log line so an operator can
+    tell at a glance whether this is a fresh boot or a re-boot. We
+    deliberately bail loud on a failing apply so a broken seed
+    manifest doesn't ship silently.
+
+    Set ``SKIP_AUTO_SEED=true`` to bypass (test + CI use this when
+    they manage seeds out of band).
+    """
+    if _SKIP_AUTO_SEED:
+        logger.info("forge.startup.auto_seed_skipped")
+        return
+    # Local imports — defer the dependency on session machinery to
+    # the moment we actually need it, so a SKIP_AUTO_SEED=true
+    # boot doesn't pay the cost (or risk the side effects) of an
+    # extra session factory.
+    from sqlalchemy import func, select
+
+    from app.db.models.seed import SeedRun as SeedRunRow
+    from app.db.session import get_session_factory
+    from seeds.framework.seed_runner import SeedRunner
+
+    session_factory = get_session_factory()
+    async with session_factory() as session:
+        result = await session.execute(select(func.count(SeedRunRow.id)))
+        existing_runs = int(result.scalar_one() or 0)
+    if existing_runs > 0:
+        logger.info(
+            "forge.startup.auto_seed_skipped_existing",
+            seed_runs=existing_runs,
+        )
+        return
+
+    runner = SeedRunner(
+        session_factory=session_factory,
+        audit_service=audit_service,
+        env=settings.environment,
+    )
+    available = {summary.name for summary in runner.list()}
+    for package in _AUTO_SEED_PACKAGES:
+        if package not in available:
+            # Spec lists ``acme-secondary`` even though the package
+            # is not yet on disk. Skip-with-warning keeps the spec
+            # alignment while not breaking a fresh deploy.
+            logger.warning(
+                "forge.startup.auto_seed_missing_package",
+                package=package,
+                available=sorted(available),
+            )
+            continue
+        try:
+            run = await runner.apply(
+                seed_name=package,
+                actor_id=_AUTO_SEED_SYSTEM_ACTOR_ID,
+                triggered_by="bootstrap",
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.error(
+                "forge.startup.auto_seed_failed",
+                package=package,
+                error=str(exc),
+            )
+            raise
+        logger.info(
+            "forge.startup.auto_seed_applied",
+            package=package,
+            manifest_version=run.manifest_version,
+            row_counts=run.row_counts,
+            duration_ms=run.duration_ms,
+        )
 
 
 @asynccontextmanager
@@ -111,6 +289,21 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         environment=settings.environment,
         otlp=settings.otlp_endpoint or "disabled",
     )
+    # M1 T1.9 — order:
+    #   1. (already done) env validator runs when ``settings`` is imported,
+    #      so any placeholder-LLM-key failure has already aborted the
+    #      process by this point.
+    #   2. alembic upgrade head — bring the schema to head before any
+    #      request hits the orchestrator. Idempotent; runs on every boot
+    #      but is a no-op once we're at head.
+    #   3. seed-if-empty — apply the demo seed packages on a fresh DB.
+    #      Idempotent on re-boot: the seed_runs table acts as the gate.
+    #   4. (already done) the /healthz probe is registered as part of the
+    #      Track A app-building sequence (``app.include_router(healthz_router)``
+    #      above). We don't repeat the registration here.
+    await _run_alembic_upgrade_head()
+    await _run_autoseed_if_empty()
+    logger.info("forge.startup.boot_complete")
     try:
         yield
     finally:
