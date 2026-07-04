@@ -54,6 +54,35 @@ class Settings(BaseSettings):
     litellm_api_key: str = Field(..., description="Bearer token for the LiteLLM Proxy")
     litellm_default_model: str = "gpt-4o-mini"
 
+    # M2 T-A7 — PITFALL-6 closure (Plan 01-04).  Per-tenant override
+    # for the approval-timeout window.  Keyed by tenant UUID (str);
+    # value is the timeout in HOURS.  When a tenant_id is not in the
+    # dict, the scheduler uses ``approval_timeout_hours`` (the
+    # global default below).  Empty dict is the safe default — the
+    # scheduler falls back to the global default for every tenant.
+    approval_timeout_overrides: dict[str, int] = Field(
+        default_factory=dict,
+        description=(
+            "APPROVAL_TIMEOUT_OVERRIDES. Per-tenant approval timeout "
+            "(hours) keyed by tenant UUID (str)."
+        ),
+    )
+    # M2 T-A7 — global approval timeout default.  24 hours mirrors
+    # ``ApprovalGateNode.APPROVAL_TIMEOUT_HOURS`` so the two surfaces
+    # stay in lock-step when neither override nor class default is
+    # consulted.  Exposed via Settings so the scheduler job can read
+    # it without instantiating the gate.
+    approval_timeout_hours: int = Field(
+        default=24,
+        ge=1,
+        le=24 * 30,
+        description=(
+            "APPROVAL_TIMEOUT_HOURS. Global default for the "
+            "approval-timeout scheduler; per-tenant overrides live in "
+            "approval_timeout_overrides."
+        ),
+    )
+
     # F-829 — LiteLLM Integration Layer (Phase A foundation)
     # Bearer token for LiteLLM management endpoints. Distinct from the
     # chat key above; admin key is long-lived, chat key is the

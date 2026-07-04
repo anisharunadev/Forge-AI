@@ -62,6 +62,14 @@ class EventType(str, enum.Enum):
     APPROVAL_REQUESTED = "approval.requested"
     APPROVAL_GRANTED = "approval.granted"
     APPROVAL_DENIED = "approval.denied"
+    # M2 T-A7 — PITFALL-6 closure (Plan 01-04).  Emitted by the
+    # approval-timeout scheduler job when an ApprovalRequest's
+    # ``requested_at + timeout_hours`` has passed without a recorded
+    # decision.  Subscribers (audit sink, run-dashboard WS feed)
+    # listen on this event in addition to APPROVAL_DENIED so the
+    # operator-facing 'Stale approval' badge can distinguish
+    # 'human said no' from 'human never said anything'.
+    APPROVAL_EXPIRED = "approval.expired"
 
     COST_INCURRED = "cost.incurred"
     POLICY_EVALUATED = "policy.evaluated"
