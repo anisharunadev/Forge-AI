@@ -2,6 +2,7 @@
 
 from app.db.models.agent import Agent
 from app.db.models.agent_config import AgentConfig
+from app.db.models.alert_config import AlertConfig
 from app.db.models.approval import ApprovalRequest
 from app.db.models.artifact import Artifact
 from app.db.models.audit import AuditEvent
@@ -59,6 +60,7 @@ from app.db.models.policy import Policy
 from app.db.models.project import Project
 from app.db.models.prompt import Prompt, PromptVersion
 from app.db.models.project_invitation import ProjectInvitation
+from app.db.models.rag import RagChunk, VectorStore
 from app.db.models.project_member import ProjectMember
 from app.db.models.repo_ingestion import (
     IngestionArtifact,
@@ -108,6 +110,7 @@ from app.db.models.workflow_budget import (
 __all__ = [
     "Agent",
     "AgentConfig",
+    "AlertConfig",
     "AIInsight",
     "AIInsightRead",
     "ApprovalDecision",

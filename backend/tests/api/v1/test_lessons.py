@@ -216,7 +216,7 @@ def _client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
     app = FastAPI()
     app.include_router(lessons_router.router, prefix="/api/v1")
 
-    async def _stub_check(*_args: Any, **_kwargs: Any) -> Any:
+    def _stub_check(*_args: Any, **_kwargs: Any) -> Any:
         class _Result:
             allowed = True
             reason = None

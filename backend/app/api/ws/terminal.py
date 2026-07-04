@@ -98,7 +98,7 @@ async def terminal_websocket(
             return
 
     # RBAC: require terminal:connect
-    decision = await rbac.check(principal, "terminal:connect")
+    decision = rbac.check(principal, "terminal:connect")
     if not decision.allowed:
         await _send(websocket, {"type": "error", "message": decision.reason})
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)

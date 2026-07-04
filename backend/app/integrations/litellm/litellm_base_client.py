@@ -34,6 +34,9 @@ import httpx
 
 from app.core.config import settings
 from app.core.logging import get_logger
+from app.integrations.litellm.async_client import AsyncClientGroup
+from app.integrations.litellm.observability_client import ObservabilityClientGroup
+from app.integrations.litellm.rag_client import RAGClientGroup
 from app.integrations.litellm.rbac_client import RBACClientGroup
 
 try:  # pragma: no cover — telemetry is optional at import time
@@ -194,6 +197,43 @@ class LiteLLMBaseClient:
         stateless so the cost is just a constructor call.
         """
         return RBACClientGroup(self._require_client())
+
+    @property
+    def observability(self) -> ObservabilityClientGroup:
+        """F15 Audit / Health / Compliance method group.
+
+        Mirrors :attr:`rbac` exactly — stateless wrapper on the admin
+        client. The proxied endpoints (audit, health/*, compliance/*,
+        nudges, event-logging, callback) are all admin-authed, so they
+        share the master-key pool.
+        """
+        return ObservabilityClientGroup(self._require_client())
+
+    @property
+    def async_(self) -> AsyncClientGroup:
+        """F14 Async method group — files/batches/fine-tuning/responses proxy.
+
+        Mirrors :attr:`rbac` exactly: stateless wrapper on the admin
+        client, rebuilt per access.
+        """
+        return AsyncClientGroup(self._require_client())
+
+    @property
+    def rag(self) -> RAGClientGroup:
+        """F13 RAG method group — embeddings/vector-stores/RAG/OCR/search-tools.
+
+        Stateless wrapper on the admin client, rebuilt per access.
+        """
+        return RAGClientGroup(self._require_client())
+
+    @property
+    def observability(self) -> ObservabilityClientGroup:
+        """F15 Observability method group — audit/health/compliance proxy.
+
+        Mirrors :attr:`rbac` exactly: stateless wrapper on the admin
+        client, rebuilt per access.
+        """
+        return ObservabilityClientGroup(self._require_client())
 
     def chat_client(
         self,
@@ -552,4 +592,10 @@ def _null_cm() -> "_NullCM":
     return _NullCM()
 
 
-__all__ = ["LiteLLMBaseClient", "RBACClientGroup"]
+__all__ = [
+    "AsyncClientGroup",
+    "LiteLLMBaseClient",
+    "ObservabilityClientGroup",
+    "RAGClientGroup",
+    "RBACClientGroup",
+]

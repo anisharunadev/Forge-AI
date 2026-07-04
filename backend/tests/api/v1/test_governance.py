@@ -17,12 +17,11 @@ All read endpoints require ``governance:read``; all mutations require
 In-memory SQLite + dependency override for the principal — same
 fixture strategy as ``test_settings.py``.
 
-ponytail: these tests are **currently expected to fail at the
-``require_permission`` dependency** (``app/api/deps.py`` line 66
-``await rbac.check(...)`` on a sync function). The bug is pre-existing
-across the repo, not introduced by Step-72. The tests document the
-expected behaviour and pass once that bug is fixed (Step-72 does not
-own the rbac async/await fix). Run with:
+ponytail: ``app/api/deps.py`` previously ``await``-ed the sync
+``rbac.check()`` which crashed every protected endpoint with
+``TypeError: object CheckResult can't be used in 'await' expression``.
+Fixed by removing the bogus ``await`` at all three call sites
+(``deps.py``, ``ws/terminal.py``, ``ws/terminal_broadcast.py``). Run with:
 
     pytest tests/api/v1/test_governance.py -v
 """

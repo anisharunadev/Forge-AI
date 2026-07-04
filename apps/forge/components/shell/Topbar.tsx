@@ -18,7 +18,6 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from './ThemeToggle';
 import { useShell } from './ShellProvider';
 import { pathnameToSegments } from './Breadcrumbs';
-import { TenantSwitcher } from '@/components/tenant-switcher';
 import { UserMenu } from '@/components/user-menu';
 
 /**
@@ -155,10 +154,6 @@ export function Topbar() {
 
       {/* Right cluster */}
       <div className="flex items-center gap-1">
-        {/* Tenant switcher (step-52 Zone 6) — shows the active workspace
-            and lets the user bounce to another one. */}
-        <TenantSwitcher />
-
         {/* Theme toggle */}
         <ThemeInlineToggle
           isDark={resolvedTheme === 'dark'}

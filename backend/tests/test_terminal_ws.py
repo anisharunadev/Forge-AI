@@ -20,7 +20,7 @@ import json
 import uuid
 from datetime import UTC, datetime
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -132,7 +132,7 @@ def test_create_session_endpoint_returns_201_and_uuid(http_app, http_principal) 
         mod_sessions.session_manager, "create_session", AsyncMock(return_value=fake)
     ), patch(
         "app.api.deps.rbac.check",
-        AsyncMock(return_value=SimpleNamespace(allowed=True, reason="")),
+        Mock(return_value=SimpleNamespace(allowed=True, reason="")),
     ), TestClient(app) as client:
         resp = client.post(
             "/terminal/sessions",
@@ -163,7 +163,7 @@ def test_create_session_endpoint_requires_project(http_app) -> None:
 
     with patch(
         "app.api.deps.rbac.check",
-        AsyncMock(return_value=SimpleNamespace(allowed=True, reason="")),
+        Mock(return_value=SimpleNamespace(allowed=True, reason="")),
     ), TestClient(app) as client:
         resp = client.post(
             "/terminal/sessions",
@@ -198,7 +198,7 @@ def test_ws_accepts_valid_token_and_emits_ready() -> None:
     ), patch.object(ws_mod.agent_launcher, "launch", return_value=pty), patch.object(
         ws_mod.rbac,
         "check",
-        AsyncMock(return_value=SimpleNamespace(allowed=True, reason="")),
+        Mock(return_value=SimpleNamespace(allowed=True, reason="")),
     ), patch.object(
         ws_mod.terminal_audit, "record_session_lifecycle", audit_mock
     ), TestClient(app) as client, client.websocket_connect(

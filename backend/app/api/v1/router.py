@@ -32,7 +32,10 @@ from app.api.v1 import (
     forge_models,
     forge_spend,
     forge_keys,
+    forge_async,
+    forge_observability,
     forge_prompts,
+    forge_rag,
     forge_rbac,
     governance_core,
     governance_violations,
@@ -101,6 +104,12 @@ api_router.include_router(forge_keys.router)
 api_router.include_router(forge_chat.router)
 # step-78 — Phase 3 F11 Prompts (`/api/forge/prompts/*`).
 api_router.include_router(forge_prompts.router)
+# step-78 — Phase 3 F14 Async (files/batches/fine-tuning/responses).
+api_router.include_router(forge_async.router)
+# step-78 — Phase 3 F13 RAG (embeddings/vector-stores/rag/ocr/search-tools).
+api_router.include_router(forge_rag.router)
+# step-78 — Phase 3 F15 Audit / Health / Compliance / Alerts / Drift / GDPR.
+api_router.include_router(forge_observability.router)
 # step-78 — Phase 3 F12 RBAC (`/api/forge/rbac/*`).
 api_router.include_router(forge_rbac.router)
 api_router.include_router(standards.router)

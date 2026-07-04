@@ -145,11 +145,9 @@ export function NavList({ pathname, collapsed }: NavListProps) {
   );
 }
 
-// ponytail: Sidebar previously had its own hardcoded workspace switcher
-// (mock Acme/Beta/Cosmic list + `⌘\` shortcut). Canonical TenantSwitcher
-// now lives in Topbar; Sidebar renders the same component so workspace
-// state stays in one place. The collapsed rail wraps it in a Tooltip
-// so the 64px width stays usable.
+// ponytail: Sidebar is the single canonical <TenantSwitcher/> location
+// (step-75 dedupe; the topbar variant was removed). Collapsed rail wraps
+// the component in a Tooltip so the 64px width stays usable.
 /**
  * Tenant health status pill pinned to the bottom of the sidebar.
  *
@@ -267,10 +265,9 @@ export function Sidebar() {
         data-testid="app-sidebar"
         data-collapsed={sidebarCollapsed ? 'true' : 'false'}
       >
-        {/* Workspace switcher (top) — canonical TenantSwitcher; same
-            component as the topbar so workspace state stays in one
-            place. Wrapped in a tooltip when collapsed to keep the 64px
-            rail usable. */}
+        {/* Workspace switcher (top) — single canonical location.
+            Wrapped in a tooltip when collapsed so the 64px rail stays
+            usable. */}
         <div className={cn('flex shrink-0 items-center', sidebarCollapsed ? 'justify-center px-2 pt-4' : 'px-3 pt-4')}>
           {sidebarCollapsed ? (
             <Tooltip>

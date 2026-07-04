@@ -328,7 +328,7 @@ async def test_enhance_endpoint_returns_403_without_permission(sqlite_db):
        the factory + RBAC wiring by stubbing the RBAC service.
     """
     import inspect
-    from unittest.mock import AsyncMock, patch
+    from unittest.mock import AsyncMock, Mock, patch
 
     from app.api.v1.ideation import enhance as enhance_module
     from app.api.deps import require_permission
@@ -340,7 +340,7 @@ async def test_enhance_endpoint_returns_403_without_permission(sqlite_db):
     # 2. The factory returns a coroutine that raises 403 when RBAC denies.
     with patch(
         "app.api.deps.rbac.check",
-        AsyncMock(return_value=type("R", (), {"allowed": False, "reason": "no"})()),
+        Mock(return_value=type("R", (), {"allowed": False, "reason": "no"})()),
     ):
         from fastapi import HTTPException
 

@@ -63,7 +63,7 @@ def require_permission(permission: str, *, policy_id: UUID | None = None):
     async def _dep(
         principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     ) -> AuthenticatedPrincipal:
-        result = await rbac.check(principal, permission, policy_id=policy_id)
+        result = rbac.check(principal, permission, policy_id=policy_id)
         if not result.allowed:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

@@ -128,7 +128,7 @@ async def update_org(
     return OrganizationRead.model_validate(org)
 
 
-@router.delete("/orgs/{org_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/orgs/{org_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 @audit(action="forge.rbac.org_deleted", target_type="organization")
 async def delete_org(
     org_id: UUID,
@@ -321,6 +321,7 @@ async def change_member_role(
 @router.delete(
     "/teams/{team_id}/members/{user_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
 )
 @audit(action="forge.rbac.member_removed", target_type="team_member")
 async def remove_member(
@@ -550,7 +551,7 @@ async def update_project(
     return ProjectRead.model_validate(project)
 
 
-@router.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 @audit(action="forge.rbac.project_deleted", target_type="project")
 async def delete_project(
     project_id: UUID,
@@ -621,7 +622,7 @@ async def update_customer(
     return CustomerRead.model_validate(customer)
 
 
-@router.delete("/customers/{customer_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/customers/{customer_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 @audit(action="forge.rbac.customer_deleted", target_type="customer")
 async def delete_customer(
     customer_id: UUID,

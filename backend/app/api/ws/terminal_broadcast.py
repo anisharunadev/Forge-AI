@@ -82,7 +82,7 @@ async def terminal_broadcast_websocket(
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
             return
 
-    decision = await rbac.check(principal, "terminal:read")
+    decision = rbac.check(principal, "terminal:read")
     if not decision.allowed:
         await _send(websocket, {"type": "error", "message": decision.reason})
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)

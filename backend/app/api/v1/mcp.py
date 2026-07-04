@@ -134,7 +134,7 @@ async def register_server(
     return MCPServerRead(**details)
 
 
-@router.delete("/servers/{name}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/servers/{name}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 @audit(action="mcp.servers.unregister", target_type="mcp_server")
 async def unregister_server(
     name: str,

@@ -23,6 +23,7 @@ from app.core.logging import get_logger
 from app.integrations.litellm.litellm_base_client import LiteLLMBaseClient
 from app.schemas.forge import ForgeHealth, LiteLLMHealthDetail
 from app.services.forge_config import get_forge_config
+from app.services.observability_service import observability_service
 
 router = APIRouter(prefix="/forge", tags=["forge.health"])
 logger = get_logger(__name__)
@@ -129,7 +130,16 @@ async def forge_health() -> ForgeHealth:
         litellm_version=litellm.version,
         integration_enabled=cfg.integration_enabled,
     )
-    return ForgeHealth(status=status, litellm=litellm)
+    # step-78 F15 — extend the response with the per-process Forge
+    # detail so the enterprise dashboard can render uptime / error
+    # rates / latency p50/p95/p99 alongside the LiteLLM reachability
+    # block (spec line 610).
+    forge_detail = observability_service.forge_health_detail()
+    return ForgeHealth(
+        status=status,
+        litellm=litellm,
+        forge=forge_detail.model_dump(),
+    )
 
 
 __all__ = ["router"]

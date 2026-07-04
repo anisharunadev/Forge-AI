@@ -104,7 +104,7 @@ async def put_tool_overrides(
     return result
 
 
-@router.delete("/{name}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{name}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 @audit(action="tools.archive", target_type="litellm_tool")
 async def archive_tool(
     name: str,
