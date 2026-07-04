@@ -160,6 +160,38 @@ async def _probe_audit_sink() -> dict[str, str]:
     return statuses
 
 
+def _probe_otel_exporter() -> str:
+    """M2 T-A6 — PITFALL-5 closure (Plan 01-03).
+
+    Reports ``ok`` when the OpenTelemetry exporter is wired to a
+    non-empty endpoint (either via the ``OTEL_EXPORTER_OTLP_ENDPOINT``
+    env var or via :attr:`Settings.otlp_endpoint`).  The probe is
+    intentionally synchronous because the check is a single
+    attribute read — the exporter itself is initialized at app
+    startup by :mod:`app.core.telemetry`, not on every /healthz
+    request.
+
+    The probe returns ``down`` when neither source is set so the
+    operator sees a clear signal that audit + trace spans are
+    landing in the no-op exporter (M2 spec §2.2 G19).  Note that
+    this probe is best-effort — a backend that boots without an
+    OTel collector still serves traffic, it just loses the
+    distributed-trace surface area.
+    """
+    # Prefer the env var (the canonical OpenTelemetry SDK lookup)
+    # over the Settings field so the probe matches what the SDK
+    # itself sees at runtime.
+    import os
+
+    endpoint = (
+        os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
+        or getattr(settings, "otlp_endpoint", None)
+    )
+    if endpoint and str(endpoint).strip():
+        return "ok"
+    return "down"
+
+
 def _probe_floci() -> str:
     """Synchronous check against ``AWS_ENDPOINT_URL/_localstack/health``.
 
@@ -259,6 +291,10 @@ async def healthz() -> dict[str, Any]:
         "audit_sink": audit_v,
         "floci_health": floci_value,
         "forge_phase4_mounted": bool(forge_phase4_mounted),
+        # M2 T-A6 — Plan 01-03, G18 + G19 closure.  The probe is
+        # synchronous because the underlying check is a single
+        # attribute read; no event-loop work is required.
+        "otel_exporter_configured": _probe_otel_exporter(),
     }
     status = _aggregate_status(probes)
     logger.info(
@@ -271,6 +307,7 @@ async def healthz() -> dict[str, Any]:
         audit=audit_v,
         floci=floci_value,
         phase4=bool(forge_phase4_mounted),
+        otel_exporter=probes["otel_exporter_configured"],
     )
     return {
         "status": status,

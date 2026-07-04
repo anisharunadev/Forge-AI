@@ -247,6 +247,14 @@ services:
       S3_BUCKET_TERMINAL_EXPORTS: "${S3_BUCKET_TERMINAL_EXPORTS:-forge-terminal-exports}"
       S3_BUCKET_DOCS: "${S3_BUCKET_DOCS:-forge-docs}"
       ENV: "development"
+      # M2 T-A6 — PITFALL-5 closure.  When the otel-collector service
+      # is running (see infra/observability/otel-collector-config.yaml)
+      # the backend exports spans + metrics to it.  When unset the
+      # backend falls back to the no-op exporter (see telemetry.py)
+      # so a fresh ``docker compose up`` boots without the collector
+      # being live — the ``/healthz`` otel_exporter_configured probe
+      # reports ``ok`` once the env var resolves to a usable endpoint.
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}"
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:
