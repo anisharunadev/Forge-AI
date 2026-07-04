@@ -14,8 +14,8 @@ Flow
    the ``run_code_validator`` callable, which is supplied by
    ``sdlc_agent`` / ``code_validator`` modules and mocked in tests).
 3. Read ``ValidationReport.decision`` (PASS / FAIL).
-4. PASS  → ``GateDecision(allowed=True,  report_id=X)``
-5. FAIL  → ``GateDecision(allowed=False, report_id=X, findings=Y)``
+4. PASS  → ``MergeGateDecision(allowed=True,  report_id=X)``
+5. FAIL  → ``MergeGateDecision(allowed=False, report_id=X, findings=Y)``
 6. Always emit an AuditEvent row via F-005 audit trail.
 
 Webhook callers (e.g. ``POST /api/v1/webhooks/github/pre-commit``)
@@ -40,18 +40,21 @@ by ``ValidationReport.finalize`` per NFR-042.
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Callable, Awaitable
+from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID, uuid4
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase, SDLCState
 from app.core.logging import get_logger
 from app.services.audit_service import audit_service
+from app.services.litellm_client import LiteLLMClient
 from app.services.remediation_router import (
     RemediationRouter,
     remediation_router_default,
 )
-from app.services.litellm_client import LiteLLMClient
 
 logger = get_logger(__name__)
 
@@ -95,12 +98,23 @@ class GateFinding:
 
 
 @dataclass(slots=True)
-class GateDecision:
-    """The deterministic binary decision for a single commit.
+class MergeGateDecision:
+    """The deterministic binary decision for a single commit (M2 rename).
+
+    Renamed from :class:`GateDecision` per M2 Plan 01-07 (T-C1). The
+    original name remains importable as a back-compat alias so existing
+    callers and tests do not break during the substrate lock.
 
     ``report_id`` is always populated (the validator always produces a
     report, even when admission is denied up-front). ``findings`` is
     populated only on FAIL.
+
+    This stays a plain dataclass (not a Pydantic model) because the
+    gate returns across the F-503 webhook boundary as a JSON payload;
+    converting to Pydantic would force an extra model_dump on every
+    gate call without changing the wire shape. The companion
+    :class:`MergeGateDecisionPayload` (Pydantic v2) carries the same
+    fields for callers that want a typed artifact handle.
     """
 
     allowed: bool
@@ -111,7 +125,7 @@ class GateDecision:
     tenant_id: UUID | None = None
     project_id: UUID | None = None
     commit_sha: str = ""
-    evaluated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    evaluated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -125,6 +139,13 @@ class GateDecision:
             "commit_sha": self.commit_sha,
             "evaluated_at": self.evaluated_at.isoformat(),
         }
+
+
+# Back-compat alias (M2 Plan 01-07 / T-C1). New code MUST reference
+# ``MergeGateDecision``; the bare ``GateDecision`` name is retained
+# only so legacy imports keep resolving. Will be removed after the
+# next minor version bump.
+GateDecision = MergeGateDecision
 
 
 # Type aliases for the collaborator injection seams.
@@ -174,14 +195,14 @@ class MergeGate:
         tenant_id: UUID | str | None = None,
         actor_id: UUID | str | None = None,
         commit_author: str | None = None,
-    ) -> GateDecision:
+    ) -> MergeGateDecision:
         """Run the deterministic gate for ``commit_sha``.
 
         Steps (per spec):
           1. Pre-call admission control (deny if cost > cap).
           2. Trigger F-501 Code Validator sub-graph on the diff.
           3. Read ``ValidationReport.decision`` (PASS/FAIL).
-          4. Return the appropriate ``GateDecision``.
+          4. Return the appropriate ``MergeGateDecision``.
           5. Write an AuditEvent regardless of the outcome.
           6. On FAIL, route to Jira via the remediation router.
         """
@@ -192,7 +213,7 @@ class MergeGate:
         # 1) Pre-call admission.
         projected_cost = float(self._cost_projector(commit_sha) or 0.0)
         if projected_cost > self._per_commit_cost_cap_usd:
-            decision = GateDecision(
+            decision = MergeGateDecision(
                 allowed=False,
                 report_id=uuid4(),
                 decision="ADMISSION_DENIED",
@@ -222,7 +243,7 @@ class MergeGate:
 
         if decision_str == "FAIL":
             gate_findings = [_coerce_finding(f) for f in raw_findings]
-            decision = GateDecision(
+            decision = MergeGateDecision(
                 allowed=False,
                 report_id=_coerce_uuid(getattr(report, "report_id", None)),
                 decision="FAIL",
@@ -233,7 +254,7 @@ class MergeGate:
                 commit_sha=commit_sha,
             )
         else:
-            decision = GateDecision(
+            decision = MergeGateDecision(
                 allowed=True,
                 report_id=_coerce_uuid(getattr(report, "report_id", None)),
                 decision="PASS",
@@ -256,6 +277,70 @@ class MergeGate:
             )
 
         return decision
+
+    @require_approval_phase(SDLCPhase.REVIEW)
+    async def enforce_with_approval(
+        self,
+        state: SDLCState,
+        *,
+        commit_sha: str,
+        commit_author: str | None = None,
+        actor_id: UUID | str | None = None,
+    ) -> MergeGateDecision:
+        """Run the deterministic gate *after* verifying REVIEW-phase approval.
+
+        M2 Plan 01-07 (T-C1). This is the additive entry point that the
+        SDLC supervisor calls when the run is in the ``review`` phase;
+        it is decorated with :func:`require_approval_phase` so the call
+        itself fails fast if the envelope on ``state.pending_approval``
+        has not been granted by a reviewer.
+
+        The underlying enforcement logic, audit row, and remediation
+        routing are unchanged — they live in
+        :meth:`enforce_security_gate` and are shared.
+
+        Parameters
+        ----------
+        state:
+            The LangGraph-supplied :class:`SDLCState` for the active
+            run. The decorator reads ``state.pending_approval`` and
+            ``state.metadata[approval:review:decision]`` from this
+            object.
+        commit_sha:
+            The commit being gated.
+        commit_author:
+            Forwarded into remediation routing so the Jira ticket can
+            be auto-assigned.
+        actor_id:
+            Override for the audit row's actor_id. Defaults to
+            ``state.actor_id`` which is the principal that started the
+            review.
+
+        Returns
+        -------
+        MergeGateDecision
+            Same shape as :meth:`enforce_security_gate`. The audit
+            row at ``merge_gate.evaluate`` is emitted exactly once per
+            call.
+        """
+        resolved_actor = (
+            actor_id if actor_id is not None else getattr(state, "actor_id", None)
+        )
+        resolved_tenant = getattr(state, "tenant_id", None)
+        resolved_project = getattr(state, "project_id", None)
+        logger.info(
+            "merge_gate.enforce_with_approval",
+            run_id=str(getattr(state, "run_id", "")),
+            commit_sha=commit_sha,
+            phase=SDLCPhase.REVIEW.value,
+        )
+        return await self.enforce_security_gate(
+            commit_sha=commit_sha,
+            project_id=resolved_project,
+            tenant_id=resolved_tenant,
+            actor_id=resolved_actor,
+            commit_author=commit_author,
+        )
 
     # ---- Internal helpers ----------------------------------------------
 
@@ -293,7 +378,7 @@ class MergeGate:
 
     async def _audit(
         self,
-        decision: GateDecision,
+        decision: MergeGateDecision,
         *,
         actor_id: UUID | str | None,
     ) -> None:
@@ -317,7 +402,7 @@ class MergeGate:
     async def _route_remediation(
         self,
         *,
-        decision: GateDecision,
+        decision: MergeGateDecision,
         report: Any,
         actor_id: UUID | str | None,
         commit_author: str | None,
@@ -398,6 +483,72 @@ def lite_llm_cost_projector(
 # ---------------------------------------------------------------------------
 
 
+# Pydantic v2 mirror of :class:`MergeGateDecision`.
+#
+# M2 Plan 01-07 (T-C1) — typed artifact for callers that want a
+# validated model handle (LangGraph state, F-010 registry, REST API).
+# The runtime path still uses the dataclass above because the webhook
+# boundary serializes via ``to_dict``; the Pydantic mirror is offered
+# as an additive import.
+
+try:
+    from pydantic import BaseModel
+    from pydantic import ConfigDict as _ConfigDict
+
+    class MergeGateDecisionPayload(BaseModel):
+        """Typed Pydantic v2 mirror of :class:`MergeGateDecision`.
+
+        Same fields as the dataclass. Conversion is via
+        :meth:`from_decision`.
+        """
+
+        model_config = _ConfigDict(extra="forbid")
+
+        allowed: bool
+        report_id: UUID
+        decision: str
+        findings: list[GateFindingPayload] = []
+        reason: str = ""
+        tenant_id: UUID | None = None
+        project_id: UUID | None = None
+        commit_sha: str = ""
+        evaluated_at: datetime
+
+        @classmethod
+        def from_decision(
+            cls, decision: MergeGateDecision
+        ) -> MergeGateDecisionPayload:
+            return cls(
+                allowed=decision.allowed,
+                report_id=decision.report_id,
+                decision=decision.decision,
+                findings=[
+                    GateFindingPayload(**f.to_dict()) for f in decision.findings
+                ],
+                reason=decision.reason,
+                tenant_id=decision.tenant_id,
+                project_id=decision.project_id,
+                commit_sha=decision.commit_sha,
+                evaluated_at=decision.evaluated_at,
+            )
+
+    class GateFindingPayload(BaseModel):
+        """Typed Pydantic v2 mirror of :class:`GateFinding`."""
+
+        model_config = _ConfigDict(extra="forbid")
+
+        finding_id: str
+        severity: str
+        rule_id: str
+        file_path: str
+        line: int
+        evidence: str
+        recommended_fix: str = ""
+except ImportError:  # pragma: no cover - pydantic always present at runtime
+    MergeGateDecisionPayload = None  # type: ignore[assignment]
+    GateFindingPayload = None  # type: ignore[assignment]
+
+
 def _coerce_uuid(value: Any) -> UUID:
     if isinstance(value, UUID):
         return value
@@ -453,9 +604,10 @@ def merge_gate_default() -> MergeGate:
 
 __all__ = [
     "DEFAULT_PER_COMMIT_COST_CAP_USD",
-    "GateDecision",
+    "GateDecision",  # back-compat alias (M2 T-C1)
     "GateFinding",
     "MergeGate",
+    "MergeGateDecision",
     "ValidatorFn",
     "CostProjector",
     "lite_llm_cost_projector",
