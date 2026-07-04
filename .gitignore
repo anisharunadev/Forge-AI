@@ -16,6 +16,8 @@
 
 # Archived historical code (Paperclip era) — not deployed
 archive/
+# M1 T1.5: legacy Keycloak realm archive is intentionally tracked.
+!archive/keycloak-init-legacy/
 
 # Node build artefacts
 node_modules/
