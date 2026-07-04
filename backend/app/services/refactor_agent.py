@@ -491,7 +491,7 @@ def _extract_chunks_from_unified(unified: str) -> list[DiffChunk]:
             path = line[4:].split("\t", 1)[0].strip()
             if path == "/dev/null":
                 continue
-            current_path = path.lstrip("b/")
+            current_path = path.removeprefix("b/")
             chunks.setdefault(current_path, DiffChunk(file_path=current_path))
             continue
         if line.startswith("--- "):
@@ -499,7 +499,7 @@ def _extract_chunks_from_unified(unified: str) -> list[DiffChunk]:
             # tentative file, but the '+++' side overrides.
             path = line[4:].split("\t", 1)[0].strip()
             if path and path != "/dev/null":
-                tentative = path.lstrip("a/")
+                tentative = path.removeprefix("a/")
                 chunks.setdefault(
                     tentative, DiffChunk(file_path=tentative)
                 )
