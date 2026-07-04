@@ -8,7 +8,7 @@ on:
 
 jobs:
   grep-gate:
-    name: Rule 1 + UUID literal gate
+    name: Rule 1 + UUID literal gate + decorator coverage
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -49,9 +49,62 @@ jobs:
             --exclude-dir=.next \
             --exclude-dir=dist \
             apps/forge/lib || true)
-          if [ -n "$matches" ]; then
+          if [ -n "$offenders" ]; then
             echo "::error::HYG-03 violation: UUID literal in apps/forge/lib/:"
             echo "$matches"
             exit 1
           fi
           echo "OK: no UUID literals in apps/forge/lib/"
+
+      # ----------------------------------------------------------------
+      # M2 Plan 01-01 — T-A4 (Step 3 — decorator coverage)
+      # ----------------------------------------------------------------
+      # Scans every Python file under backend/app/api/v1/ that defines a
+      # ``@router.(post|put|patch|delete)`` handler and verifies that
+      # ``@require_approval_phase`` is within 3 lines above the
+      # decorator stack.  Routes without the approval gate fail with
+      # an ``OPS-01 violation`` annotation so the PR author sees the
+      # exact offender in the workflow run log.
+      #
+      # Allowlist: a deliberate bypass can be requested by adding a
+      # ``# allowlist: approval-decorator`` comment on the same line
+      # as the route decorator.  This is for routes that operate on
+      # read-only state (no artifact write) — e.g. ``/health``, the
+      # GET-only ``/runs/{run_id}/events`` SSE stream — and is the
+      # exception, not the rule.
+      # ----------------------------------------------------------------
+      - name: Approval decorator coverage
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+          offenders=""
+          files=$(find backend/app/api/v1 -type f -name '*.py' ! -name '__init__.py' ! -name '_package_wiring.py' ! -name 'health*.py' 2>/dev/null || true)
+          for f in $files; do
+            # Find every @router.(post|put|patch|delete) line number.
+            router_lines=$(grep -nE '^@router\.(post|put|patch|delete)\b' "$f" || true)
+            [ -z "$router_lines" ] && continue
+            while IFS= read -r line; do
+              ln=$(echo "$line" | cut -d: -f1)
+              # Allowlist: route has '# allowlist: approval-decorator' on same line.
+              if echo "$line" | grep -q '# allowlist: approval-decorator'; then
+                continue
+              fi
+              # Look at the 3 lines ABOVE the router decorator for
+              # @require_approval_phase.  ``-B 3`` may sweep past the
+              # start of the file — guard with ``|| true`` so the
+              # grep never fails the loop.
+              ctx_start=$(( ln - 3 ))
+              [ $ctx_start -lt 1 ] && ctx_start=1
+              ctx=$(sed -n "${ctx_start},${ln}p" "$f" || true)
+              if echo "$ctx" | grep -q '@require_approval_phase'; then
+                continue
+              fi
+              offenders+="${f}:${ln}: missing @require_approval_phase above @router.*"$'\n'
+            done <<< "$router_lines"
+          done
+          if [ -n "$offenders" ]; then
+            echo "::error::OPS-01 violation: @require_approval_phase missing on the following route handlers (3-line lookback window; add '# allowlist: approval-decorator' to opt out):"
+            echo "$offenders"
+            exit 1
+          fi
+          echo "OK: every @router.(post|put|patch|delete) under backend/app/api/v1/ is decorated with @require_approval_phase"
