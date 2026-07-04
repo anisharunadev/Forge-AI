@@ -30,6 +30,8 @@ def _patched_get_typed_signature(call):
 _fdep_utils.get_typed_signature = _patched_get_typed_signature
 
 from app import __version__
+from app.api.healthz import router as healthz_router
+from app.api.v1.forge_phase4 import mount_phase4_top_level
 from app.api.v1.router import api_router
 from app.api.ws.ideation import router as ideation_ws_router
 from app.api.ws.runs import router as runs_ws_router
@@ -142,12 +144,23 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api/v1")
+# M1 T1.3 — top-level /healthz for k8s probes + docker-compose backend
+# healthcheck (T1.1.1). The route is outside /api/v1/ on purpose so
+# it's reachable from any network namespace and stays valid even if
+# the v1 surface is renamed.
+app.include_router(healthz_router)
 app.include_router(terminal_ws_router)
 app.include_router(terminal_broadcast_ws_router)
 app.include_router(ideation_ws_router)
 app.include_router(runs_ws_router)
 # step-80 — Phase 4 error handler (PassThroughDisabled, SSOMisconfigured, …).
 register_phase4_exception_handlers(app)
+# M1 T1.8 — mount Phase 4 top-level routes (/openai/*, /.well-known/*,
+# /a2a/*) directly on ``app``. Until this runs, those routes are
+# unreachable, which is exactly what the G1 audit flagged. The flag
+# ``forge_phase4_mounted`` is flipped inside the helper and read by
+# the /healthz probe to confirm the wiring is live in CI.
+mount_phase4_top_level(app)
 
 
 @app.get("/", tags=["root"])

@@ -53,6 +53,16 @@ router.include_router(identity_router)
 router.include_router(ops_router)
 router.include_router(sessions_router)
 
+# M1 T1.8 — module-level flag the top-level ``/healthz`` route (T1.3)
+# reads to confirm Phase 4 was wired in. Flipped by
+# :func:`mount_phase4_top_level` (defined below) once the top-level
+# pass-through / identity / A2A routers are mounted on ``app``.
+# Declared here (after imports and after the include_router calls)
+# so a missing main.py call surfaces as
+# ``forge_phase4_mounted == False`` at /healthz time rather than a
+# NameError. Read directly by ``app.api.healthz.healthz``.
+forge_phase4_mounted: bool = False
+
 
 @router.get("/_phase4/health", include_in_schema=False)
 async def phase4_health() -> dict[str, str]:
@@ -64,10 +74,16 @@ def mount_phase4_top_level(app: Any) -> None:
     """Mount Phase 4 routes that live at app root, not under /api/v1/forge.
 
     Called from ``app/main.py`` after the v1 routers are included.
+    Idempotent: subsequent calls are no-ops so a refactor that adds a
+    second ``app`` (e.g. for A/B testing) does not double-mount.
     """
+    global forge_phase4_mounted
+    if forge_phase4_mounted:
+        return
     mount_passthrough(app)
     mount_identity_discovery(app)
     mount_a2a(app)
+    forge_phase4_mounted = True
 
 
-__all__ = ["router", "mount_phase4_top_level"]
+__all__ = ["router", "mount_phase4_top_level", "forge_phase4_mounted"]
