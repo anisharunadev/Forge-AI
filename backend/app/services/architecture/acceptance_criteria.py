@@ -51,13 +51,14 @@ class AcceptanceCriteriaService:
 
     def __init__(
         self,
-        litellm_client: Any,
-        artifact_registry: Any,
-        test_service: Any,
-        event_bus: Any,
+        litellm_client: Any | None = None,
+        artifact_registry: Any | None = None,
+        test_service: Any | None = None,
+        event_bus: Any | None = None,
     ) -> None:
+        from app.services.artifact_registry import artifact_registry as _default_registry
         self._llm = litellm_client
-        self._registry = artifact_registry
+        self._registry = artifact_registry if artifact_registry is not None else _default_registry
         self._tests = test_service
         self._bus = event_bus
 

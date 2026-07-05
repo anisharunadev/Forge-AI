@@ -128,7 +128,7 @@ async def test_risk_register_generate_from_adr(
                 "alternatives": [],
             }
         ),
-        artifact_registry=MagicMock(),
+        artifact_registry=None,
         event_bus=event_bus,
     )
     adr = await adr_gen.generate_adr(
@@ -140,7 +140,7 @@ async def test_risk_register_generate_from_adr(
 
     svc = RiskRegisterService(
         litellm_client=_FakeLLM(_risk_payload()),
-        artifact_registry=MagicMock(),
+        artifact_registry=None,
         event_bus=event_bus,
     )
     register = await svc.generate_from_adr(adr_id=adr.id, actor_id=uuid.uuid4())
@@ -180,7 +180,7 @@ async def test_risk_register_add_risk(sqlite_db, event_bus, captured_events):
                 "alternatives": [],
             }
         ),
-        artifact_registry=MagicMock(),
+        artifact_registry=None,
         event_bus=event_bus,
     )
     adr = await adr_gen.generate_adr(
@@ -192,7 +192,7 @@ async def test_risk_register_add_risk(sqlite_db, event_bus, captured_events):
 
     svc = RiskRegisterService(
         litellm_client=_FakeLLM(_risk_payload()),
-        artifact_registry=MagicMock(),
+        artifact_registry=None,
         event_bus=event_bus,
     )
     register = await svc.generate_from_adr(adr_id=adr.id, actor_id=uuid.uuid4())
@@ -226,7 +226,7 @@ async def test_risk_register_score_calculation(sqlite_db, event_bus, captured_ev
 
     svc = RiskRegisterService(
         litellm_client=_FakeLLM(_risk_payload()),
-        artifact_registry=MagicMock(),
+        artifact_registry=None,
         event_bus=event_bus,
     )
     # Use generate_from_breakdown with a stubbed breakdown; the LLM
@@ -288,7 +288,7 @@ async def test_risk_register_top_risks_sorted(sqlite_db, event_bus, captured_eve
     }
     svc = RiskRegisterService(
         litellm_client=_FakeLLM(payload),
-        artifact_registry=MagicMock(),
+        artifact_registry=None,
         event_bus=event_bus,
     )
     factory = sqlite_db

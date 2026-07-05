@@ -58,12 +58,13 @@ class StandardsAttestationService:
 
     def __init__(
         self,
-        artifact_registry: Any,
-        standard_service: Any,
-        audit_service: Any,
-        event_bus: Any,
+        artifact_registry: Any | None = None,
+        standard_service: Any | None = None,
+        audit_service: Any | None = None,
+        event_bus: Any | None = None,
     ) -> None:
-        self._registry = artifact_registry
+        from app.services.artifact_registry import artifact_registry as _default_registry
+        self._registry = artifact_registry if artifact_registry is not None else _default_registry
         self._standards = standard_service
         self._audit = audit_service
         self._bus = event_bus

@@ -220,11 +220,44 @@ async def sqlite_db(monkeypatch: pytest.MonkeyPatch):
             Column("name", String(200), nullable=False),
         )
 
+    # M5 T-A6 — also import the service-level KGNode / KGEdge models so
+    # ``metadata.create_all`` registers ``kg_nodes`` for the new
+    # artifact_registry.register path and the SecurityReport service
+    # can mirror rows. KGNode lives in app.services.knowledge_graph
+    # (not app.db.models) so a bare ``from app.db.models import …``
+    # doesn't pick it up.
+    from app.services import knowledge_graph as _kg_module  # noqa: F401
+
     engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
     factory = async_sessionmaker(bind=engine, expire_on_commit=False, autoflush=False)
 
-    async with engine.begin() as conn:
-        await conn.run_sync(base_mod.metadata.create_all)
+    # M5 T-A6 — sqlite_db must accept models that declare PG-only
+    # ``ARRAY`` columns (e.g. ``phase4_sso_configs``) without those
+    # tables blowing up the entire ``create_all`` pass on SQLite.
+    # We try the full metadata first, and if any compile fails we
+    # drop the offending tables and re-run.
+    pg_only_tables: list = []
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(base_mod.metadata.create_all)
+    except Exception as exc:  # noqa: BLE001 — any sqlite compile failure
+        # Identify the offending tables by retrying each one in isolation.
+        from sqlalchemy import create_engine as _ce
+        sync_url = "sqlite:///:memory:"
+        sync_engine = _ce(sync_url)
+        for table in list(base_mod.metadata.tables.values()):
+            try:
+                table.create(sync_engine, checkfirst=False)
+            except Exception:  # noqa: BLE001
+                pg_only_tables.append(table.name)
+        # Drop the PG-only tables from the metadata so the SQLite path
+        # can create_all without tripping on them.
+        for name in pg_only_tables:
+            tbl = base_mod.metadata.tables.get(name)
+            if tbl is not None:
+                base_mod.metadata.remove(tbl)
+        async with engine.begin() as conn:
+            await conn.run_sync(base_mod.metadata.create_all)
 
     import app.db.session as session_mod
 

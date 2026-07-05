@@ -243,7 +243,7 @@ class SecurityReportService:
         factory = get_session_factory()
         async with factory() as session:
             row = await session.get(SecurityReport, str(report_id))
-        if row is None or row.tenant_id != str(tenant_id):
+        if row is None or str(row.tenant_id) != str(tenant_id):
             return None
         return row
 
@@ -264,7 +264,7 @@ class SecurityReportService:
         now = _utcnow()
         async with factory() as session:
             row = await session.get(SecurityReport, str(report_id))
-            if row is None or row.tenant_id != str(tenant_id):
+            if row is None or str(row.tenant_id) != str(tenant_id):
                 raise LookupError("security_report_not_found")
             new_status = _validate_status_transition(row.status, target_status)
             row.status = new_status
@@ -308,17 +308,26 @@ class SecurityReportService:
           0 instead of going negative.
         """
         factory = get_session_factory()
-        open_filter = [SecurityReport.status == "open"]
+        # Pull ALL rows (open + closed) so closed count + score bonus
+        # are correct. ``severity_counts`` is computed from rows that
+        # are still ``open`` further down (so the *open* severity
+        # breakdown reflects triage work, not history).
+        project_filter = []
         if project_id is not None:
-            open_filter.append(SecurityReport.project_id == str(project_id))
+            project_filter.append(SecurityReport.project_id == str(project_id))
         stmt = select(SecurityReport.severity, SecurityReport.status).where(
             SecurityReport.tenant_id == str(tenant_id),
-            *open_filter,
+            *project_filter,
         )
         async with factory() as session:
             rows = list((await session.execute(stmt)).all())
 
-        severity_counts: Counter[str] = Counter(r.severity for r in rows if r.severity)
+        # severity_counts is open-only (a closed severity is history,
+        # not a deployment risk); status_counts is global so the
+        # closed bonus lands the right side of the score.
+        severity_counts: Counter[str] = Counter(
+            r.severity for r in rows if r.severity and r.status == "open"
+        )
         status_counts: Counter[str] = Counter(r.status for r in rows if r.status)
 
         # By-category breakdown (open only — closed categories aren't
@@ -350,7 +359,6 @@ class SecurityReportService:
         penalty = sum(
             _SEVERITY_PENALTY.get(sev, 0) * count
             for sev, count in severity_counts.items()
-            if status_counts.get(sev, 0) >= 0  # all severities included
         )
         closed_bonus = status_counts.get("closed", 0) * _CLOSED_BONUS
         raw_score = max(0, min(100, 100 - penalty + closed_bonus))

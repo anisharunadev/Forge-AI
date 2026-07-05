@@ -58,12 +58,13 @@ class RiskRegisterService:
     def __init__(
         self,
         litellm_client: Any,
-        artifact_registry: Any,
-        event_bus: Any,
+        artifact_registry: Any | None = None,
+        event_bus: Any | None = None,
         idea_service: Any | None = None,
     ) -> None:
+        from app.services.artifact_registry import artifact_registry as _default_registry
         self._llm = litellm_client
-        self._registry = artifact_registry
+        self._registry = artifact_registry if artifact_registry is not None else _default_registry
         self._bus = event_bus
         self._idea_service = idea_service
 
