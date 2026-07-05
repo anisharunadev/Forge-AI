@@ -39,6 +39,7 @@ class ConnectorStatus(str, enum.Enum):
     STALE = "stale"
     QUARANTINED = "quarantined"
     FAILED = "failed"
+    DISCONNECTED = "disconnected"
 
 
 class SyncStatus(str, enum.Enum):
