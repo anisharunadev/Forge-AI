@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 import pytest_asyncio
@@ -59,11 +59,8 @@ async def test_full_approval_gate_chain(sqlite_db, event_bus):
     from sqlalchemy import func, select
 
     from app.db.models.architecture import (
-        APIContract,
         ADR,
         ArchitectureApproval,
-        RiskRegister,
-        TaskBreakdown,
     )
     from app.db.session import get_session_factory
     from app.services.architecture.approval_workflow import (
@@ -154,7 +151,11 @@ async def test_full_approval_gate_chain(sqlite_db, event_bus):
             artifact_id=str(adr_id),
             requested_by=uuid.uuid4(),
             status="pending",
-            reason='{"reviewers": [{"role": "forge-architect", "status": "pending", "decided_by": null, "decided_at": null, "reason": null}]}',
+            reason=(
+                '{"reviewers": [{"role": "forge-architect",'
+                ' "status": "pending", "decided_by": null,'
+                ' "decided_at": null, "reason": null}]}'
+            ),
         )
         session.add(approval_row)
         await session.commit()

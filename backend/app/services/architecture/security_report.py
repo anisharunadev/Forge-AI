@@ -19,11 +19,11 @@ The service:
 from __future__ import annotations
 
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 
 from app.core.logging import get_logger
 from app.db.models.security_report import (
@@ -36,6 +36,11 @@ from app.db.session import get_session_factory
 from app.services.artifact_registry import artifact_registry
 from app.services.event_bus import EventType
 
+# Eagerly imported at module load so the lazy-import ruff rule
+# (PLC0415) doesn't flag the in-method fallback below; the bus is the
+# only cross-service singleton that the service needs at runtime.
+from app.services.event_bus import bus as default_bus
+
 logger = get_logger(__name__)
 
 
@@ -47,7 +52,7 @@ _MAX_LIMIT = 200
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _normalize_severity(value: str) -> str:
@@ -98,14 +103,10 @@ class SecurityReportService:
         audit_service: Any | None = None,
     ) -> None:
         self._registry = artifact_registry_instance or artifact_registry
-        # Importing the bus via the property avoids a circular import
-        # at module load (event_bus imports service modules that may
-        # in turn import this one for downstream consumers).
-        if event_bus is None:
-            from app.services.event_bus import bus as default_bus
-
-            event_bus = default_bus
-        self._bus = event_bus
+        # The bus module is imported eagerly at the top of this file so
+        # the in-method fallback below stays a constant lookup (avoids
+        # PLC0415).
+        self._bus = event_bus or default_bus
         self._audit = audit_service
 
     # ------------------------------------------------------------------

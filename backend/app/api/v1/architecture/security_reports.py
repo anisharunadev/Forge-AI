@@ -47,7 +47,11 @@ def _service() -> SecurityReportService:
     A future patch can inject a real audit service here; for now the
     service falls back to no-op when audit is None.
     """
-    return SecurityReportService(artifact_registry_instance=None, event_bus=None, audit_service=None)
+    return SecurityReportService(
+        artifact_registry_instance=None,
+        event_bus=None,
+        audit_service=None,
+    )
 
 
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
