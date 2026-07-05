@@ -20,8 +20,10 @@ from app.api.v1 import (
     auth_sessions,
     auth_tokens,
     commands,
+    connector_activity,
     connector_credentials,
     connector_lifecycle,
+    connector_oauth,
     connectors,
     copilot,
     dashboard,
@@ -123,6 +125,8 @@ api_router.include_router(artifacts.router)
 api_router.include_router(connectors.router)
 api_router.include_router(connector_lifecycle.router)
 api_router.include_router(connector_credentials.router)
+api_router.include_router(connector_activity.router)
+api_router.include_router(connector_oauth.router)
 api_router.include_router(agents.router)
 api_router.include_router(agent_assignments.router)
 api_router.include_router(model_providers.router)

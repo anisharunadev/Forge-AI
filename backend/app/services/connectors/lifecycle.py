@@ -42,6 +42,7 @@ from app.core.logging import get_logger
 from app.db.models.connector import (
     Connector,
     ConnectorHealthHistory,
+    ConnectorStatus,
     ConnectorType,
 )
 from app.db.session import get_session_factory
@@ -261,6 +262,80 @@ class ConnectorLifecycle:
             },
         )
         return result
+
+    # ------------------------------------------------------------------
+    # disconnect (M3-G2)
+    # ------------------------------------------------------------------
+
+    async def disconnect(
+        self,
+        *,
+        connector_id: UUID | str,
+        tenant_id: UUID | str,
+        actor_id: UUID | str,
+    ) -> Connector:
+        """M3-G2 — soft-delete a connector (idempotent).
+
+        Behaviour:
+        - tenant-scoped (raises PermissionError if cross-tenant);
+        - idempotent: calling disconnect on a row whose status is
+          already DISCONNECTED returns the row without writing a
+          second audit row + a second activity row. The HTTP handler
+          asserts on this zero-write guarantee.
+        - writes one AuditEvent + one ConnectorActivity row each time
+          a transition happens; the activity row carries
+          event_type=disconnect so the Activity tab can highlight
+          disconnect events distinctly from sync/test/install events.
+        """
+        connector = await self._manager.get_connector(
+            connector_id, tenant_id=tenant_id
+        )
+        prior_status = ConnectorStatus(connector.status)
+        if prior_status == ConnectorStatus.DISCONNECTED:
+            # No-op; don't double-write audit / activity.
+            return connector
+
+        refreshed = await self._manager.disconnect_connector(
+            connector.id, actor_id=actor_id
+        )
+
+        await audit_service.record(
+            tenant_id=tenant_id,
+            project_id=refreshed.project_id,
+            actor_id=actor_id,
+            action="connector.disconnect",
+            target_type="connector",
+            target_id=str(refreshed.id),
+            payload={
+                "from_state": prior_status.value,
+                "to_state": refreshed.status.value,
+                "disconnected_at": (
+                    refreshed.disconnected_at.isoformat()
+                    if refreshed.disconnected_at
+                    else None
+                ),
+            },
+        )
+        await self._manager.record_activity(
+            tenant_id=tenant_id,
+            project_id=refreshed.project_id,
+            connector_id=refreshed.id,
+            event_type="disconnect",
+            status="success",
+            started_at=refreshed.disconnected_at or datetime.now(timezone.utc),
+            finished_at=refreshed.disconnected_at or datetime.now(timezone.utc),
+            actor_id=actor_id,
+            event_metadata={
+                "from_state": prior_status.value,
+                "to_state": refreshed.status.value,
+            },
+        )
+        logger.info(
+            "connector.lifecycle.disconnected",
+            connector_id=str(refreshed.id),
+            from_state=prior_status.value,
+        )
+        return refreshed
 
     # ------------------------------------------------------------------
     # helpers
