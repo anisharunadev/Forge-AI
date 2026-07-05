@@ -1,6 +1,8 @@
 """F-306 API router."""
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query
+
 from app.services.architecture.traceability import TraceabilityService
 
 router = APIRouter(prefix="/api/v1/architecture", tags=["architecture-traceability"])

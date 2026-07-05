@@ -1,13 +1,15 @@
 """F-310 — Acceptance Criteria HTTP endpoints."""
 
 from __future__ import annotations
-from typing import Annotated
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.architecture import (
@@ -25,8 +27,6 @@ from app.services.architecture.context_aware import ContextAwareGenerator
 from app.services.artifact_registry import artifact_registry
 from app.services.event_bus import bus
 from app.services.litellm_client import LiteLLMClient
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(
     prefix="/architecture", tags=["architecture:acceptance"]

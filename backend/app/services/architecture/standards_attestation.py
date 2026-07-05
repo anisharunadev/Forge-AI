@@ -12,10 +12,9 @@ rewriting history.
 
 from __future__ import annotations
 
-import json
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -91,7 +90,7 @@ class StandardsAttestationService:
         all_passed = all(c.get("passed", False) for c in checks) if checks else True
         status = "attested" if all_passed else "failed"
         attestation_id = uuid.uuid4()
-        attested_at = datetime.now(timezone.utc)
+        attested_at = datetime.now(UTC)
 
         payload = {
             "id": str(attestation_id),
@@ -208,7 +207,7 @@ class StandardsAttestationService:
         if existing.get("status") == "revoked":
             return existing
 
-        revoked_at = datetime.now(timezone.utc)
+        revoked_at = datetime.now(UTC)
         existing["status"] = "revoked"
         existing["revoked_at"] = revoked_at.isoformat()
         existing["revoker_id"] = str(revoker_id)

@@ -9,11 +9,9 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
-
-from sqlalchemy import select
 
 from app.core.logging import get_logger
 from app.db.session import get_session_factory
@@ -105,7 +103,7 @@ class AcceptanceCriteriaService:
             "test_links": {},
             "tenant_id": str(tenant_id),
             "project_id": str(project_id),
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "generated_by": str(actor_id),
         }
         await self._persist_record(envelope)

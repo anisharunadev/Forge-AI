@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -126,7 +126,7 @@ class ContextAwareGenerator:
             "content": parsed,
             "context_refs": sections_used,
             "generated_by": str(actor_id),
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "tenant_id": str(tenant_id) if tenant_id else None,
             "project_id": str(project_id) if project_id else None,
         }

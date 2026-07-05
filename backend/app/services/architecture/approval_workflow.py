@@ -8,7 +8,7 @@ approve before the artifact is promoted.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -17,10 +17,7 @@ from sqlalchemy import select
 from app.core.logging import get_logger
 from app.db.models.architecture import (
     APIContract,
-    ADR,
     ArchitectureApproval,
-    RiskRegister,
-    TaskBreakdown,
 )
 from app.db.session import get_session_factory
 from app.services.artifact_registry import artifact_registry
@@ -154,7 +151,7 @@ class ArchitectureApprovalWorkflow:
         if decision not in {"approve", "deny"}:
             raise ValueError(f"unsupported decision: {decision}")
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         factory = get_session_factory()
         async with factory() as session:
             approval = await session.get(ArchitectureApproval, str(approval_id))
@@ -185,15 +182,14 @@ class ArchitectureApprovalWorkflow:
                 new_status = "denied"
                 decided_by = str(reviewer_id)
                 decided_at = now
+            elif all(r["status"] == "approved" for r in reviewers):
+                new_status = "approved"
+                decided_by = str(reviewer_id)
+                decided_at = now
             else:
-                if all(r["status"] == "approved" for r in reviewers):
-                    new_status = "approved"
-                    decided_by = str(reviewer_id)
-                    decided_at = now
-                else:
-                    new_status = "in_review"
-                    decided_by = None
-                    decided_at = None
+                new_status = "in_review"
+                decided_by = None
+                decided_at = None
 
             approval.status = new_status
             approval.reason = _encode_reviewers(reviewers)

@@ -8,17 +8,17 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
 from app.db.models.artifact import Artifact, ArtifactStatus
 from app.db.session import get_session_factory
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 from app.services.knowledge_graph import KGNode
 
 logger = get_logger(__name__)
@@ -148,7 +148,7 @@ class ArtifactRegistry:
                 {
                     "new_id": str(new.id),
                     "old_id": str(current.id),
-                    "ts": datetime.now(timezone.utc),
+                    "ts": datetime.now(UTC),
                 },
             )
             await session.commit()
@@ -251,7 +251,7 @@ class ArtifactRegistry:
             or node_payload.get("title")
             or f"{artifact_type}:{artifact_id}"
         )
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         async with factory() as session:
             row = KGNode(
                 tenant_id=str(tenant_id),

@@ -1,7 +1,6 @@
 """F-306: Traceability Matrix service."""
-from typing import Optional
-from uuid import UUID
 import logging
+from uuid import UUID
 
 logger = logging.getLogger(__name__)
 

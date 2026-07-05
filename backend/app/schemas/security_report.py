@@ -12,13 +12,12 @@ the caller passes an unknown severity/category/status.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Literal
 from uuid import UUID
 
 from pydantic import Field
 
 from app.schemas.common import ForgeBaseModel
-
 
 Severity = Literal["low", "medium", "high", "critical"]
 Category = Literal[

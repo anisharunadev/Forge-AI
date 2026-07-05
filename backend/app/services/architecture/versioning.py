@@ -1,8 +1,7 @@
 """F-307: Architecture versioning service."""
-from typing import Optional
-from uuid import UUID
-from datetime import datetime
 import logging
+from datetime import datetime
+from uuid import UUID
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +25,6 @@ class ArchitectureVersioningService:
 
     async def create_version(self, artifact_type: str, artifact_id: UUID, snapshot_reason: str, actor_id: UUID) -> ArchitectureVersion:
         """Snapshot the artifact to artifact_registry."""
-        from datetime import datetime
         from uuid import uuid4
         version = ArchitectureVersion(
             version_id=uuid4(),
