@@ -49,11 +49,17 @@ import type {
   ApprovalDecisionInput,
   ApprovalQueueResponse,
   ArchitecturePreview,
+  CustomerClusterListResponse,
+  DestinationListResponse,
   Idea,
   IdeaAnalysis,
   IdeaCreateInput,
   IdeaListResponse,
   IdeaUpdateInput,
+  IdeationSourceListResponse,
+  IdeationSourceSyncResult,
+  MarketSignalKind,
+  MarketSignalListResponse,
   OpportunityScore,
   PRD,
   PushResult,
@@ -61,6 +67,14 @@ import type {
   Roadmap,
   RoadmapListResponse,
 } from '@/lib/ideation/types';
+
+import {
+  fetchCustomerVoice,
+  fetchDestinations,
+  fetchMarketSignals,
+  fetchSources,
+  syncSourceById,
+} from '@/lib/api/ideation';
 
 // ---------------------------------------------------------------------------
 // Query keys — stable, hierarchical, and predictable so HMR / route
@@ -107,6 +121,35 @@ export const ideationQueryKeys = {
   prds: {
     all: ['ideation', 'prds'] as const,
     list: ['ideation', 'prds', 'list'] as const,
+  },
+
+  // ---- M4 sources (F-260) ---------------------------------------
+  sources: {
+    all: ['ideation', 'sources'] as const,
+    list: () => ['ideation', 'sources', 'list'] as const,
+    detail: (id: string) => ['ideation', 'sources', 'detail', id] as const,
+    sync: (id: string) => ['ideation', 'sources', 'sync', id] as const,
+  },
+
+  // ---- M4 market signals (F-261) --------------------------------
+  marketSignals: {
+    all: ['ideation', 'market-signals'] as const,
+    list: (filters?: { kind?: string }) =>
+      ['ideation', 'market-signals', 'list', filters ?? {}] as const,
+  },
+
+  // ---- M4 customer voice (F-262) --------------------------------
+  customerVoice: {
+    all: ['ideation', 'customer-voice'] as const,
+    list: () => ['ideation', 'customer-voice', 'list'] as const,
+    detail: (id: string) => ['ideation', 'customer-voice', 'detail', id] as const,
+  },
+
+  // ---- M4 destinations (F-263) ----------------------------------
+  destinations: {
+    all: ['ideation', 'destinations'] as const,
+    list: () => ['ideation', 'destinations', 'list'] as const,
+    detail: (id: string) => ['ideation', 'destinations', 'detail', id] as const,
   },
 } as const;
 
@@ -433,5 +476,111 @@ export function usePushIdeaToJira() {
         description: readErrorMessage(err),
       });
     },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// M4 hooks (F-260..F-263) — back the Sources / MarketSignals /
+// CustomerVoice / Destinations tabs. Each owns its own slice of the
+// `ideationQueryKeys` hierarchy so the WS fan-out can invalidate
+// without touching ideas / roadmaps / approvals.
+// ---------------------------------------------------------------------------
+
+/**
+ * `GET /ideation/sources` — list configured ingest sources.
+ *
+ * Backs `<SourcesTab>` (M4-G6). Stale window is 30 s; the WS hook
+ * forces a refetch on `source.sync.completed`.
+ */
+export function useSources() {
+  return useQuery<IdeationSourceListResponse, ApiError>({
+    queryKey: ideationQueryKeys.sources.list(),
+    queryFn: () => fetchSources(),
+    staleTime: 30_000,
+  });
+}
+
+/**
+ * `POST /ideation/sources/{id}/sync` — trigger a pull.
+ *
+ * Invalidates the sources list on success so the `status` reflects
+ * the new sync state immediately. The backend also pushes the result
+ * over WS — the fan-out debounce in `use-pipeline-ws.ts` will handle
+ * the invalidation for those arriving late (no double-refetch in
+ * flight because TanStack dedupes by queryKey).
+ */
+export function useSyncSource() {
+  const qc = useQueryClient();
+  return useMutation<IdeationSourceSyncResult, ApiError, string>({
+    mutationFn: (sourceId: string) => syncSourceById(sourceId),
+    onSuccess: (result, sourceId) => {
+      void qc.invalidateQueries({ queryKey: ideationQueryKeys.sources.all });
+      void qc.invalidateQueries({
+        queryKey: ideationQueryKeys.sources.detail(sourceId),
+      });
+      void qc.invalidateQueries({
+        queryKey: ideationQueryKeys.sources.sync(sourceId),
+      });
+      toast.success(
+        result.ok ? 'Sync started' : 'Sync queued',
+        {
+          description:
+            result.message ??
+            (result.pulled > 0
+              ? `Pulled ${result.pulled} new signals.`
+              : 'No new signals — see Signals tab for context.'),
+        },
+      );
+    },
+    onError: (err) => {
+      toast.error('Sync failed', { description: readErrorMessage(err) });
+    },
+  });
+}
+
+/**
+ * `GET /ideation/market-signals?kind=...` — list market signals,
+ * optionally filtered by kind (`competitor` | `trend` | `tech`).
+ *
+ * Backs `<MarketSignalsTab>` (M4-G7). The fixture mapping is filtered
+ * client-side today because the backend keeps the kind discriminator
+ * for free; passing it server-side is a single-param future tweak.
+ */
+export function useMarketSignals(filters?: { kind?: MarketSignalKind }) {
+  return useQuery<MarketSignalListResponse, ApiError>({
+    queryKey: ideationQueryKeys.marketSignals.list({ kind: filters?.kind }),
+    queryFn: () => fetchMarketSignals(filters),
+    staleTime: 60_000,
+  });
+}
+
+/**
+ * `GET /ideation/customer-voice` — list customer-feedback clusters.
+ *
+ * Backs `<CustomerVoiceTab>` (M4-G8). Result is fully self-contained
+ * (sentiment + frequency + representative excerpts live on the same
+ * row), so no further joins are needed in the UI.
+ */
+export function useCustomerVoice() {
+  return useQuery<CustomerClusterListResponse, ApiError>({
+    queryKey: ideationQueryKeys.customerVoice.list(),
+    queryFn: () => fetchCustomerVoice(),
+    staleTime: 60_000,
+  });
+}
+
+/**
+ * `GET /ideation/destinations` — list configured push destinations.
+ *
+ * Backs `<DestinationsTab>` (M4-G9). Each row carries `has_connector`
+ * so the UI can swap between "Configure" (already wired) and
+ * "Connect" (needs setup) CTAs without an extra round-trip to the
+ * connector center.
+ */
+export function useDestinations() {
+  return useQuery<DestinationListResponse, ApiError>({
+    queryKey: ideationQueryKeys.destinations.list(),
+    queryFn: () => fetchDestinations(),
+    staleTime: 60_000,
   });
 }
