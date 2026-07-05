@@ -14,13 +14,27 @@
  *   - `useCreateRun()`    — mutation hook used by the New run
  *     dialog. On success the caller is expected to
  *     `router.push(\`/runs/\${run.id}\`)`.
+ *   - `useRunBudget(id)`  — M6-G2: live per-run budget feed; polls
+ *     `/api/v1/runs/{id}/budget` every 5 s while the run is
+ *     non-terminal and invalidates on the WS frame
+ *     `run.cost.updated` for that run.
+ *   - `useReplayRun()`    — M6-G1: mutation that POSTs `/api/v1/runs/{id}/replay`
+ *     and returns the freshly-created run header.
  *
  * Server-side fetches should NOT import this file — call the
  * functions in `lib/api.ts` directly so Next.js can server-render
  * the page.
  */
 
-import { useMutation, useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseQueryResult,
+} from '@tanstack/react-query';
 
 import {
   createRun,
@@ -35,7 +49,14 @@ import {
   type WorkflowRunsView,
 } from '@/lib/api';
 import type { RunExplainability } from '@/lib/api/runs-types';
-import { getRunExplainability } from '@/lib/runs/data';
+import {
+  getRunBudget,
+  getRunExplainability,
+  replayRun,
+  type RunBudget,
+  type ReplayRunResponse,
+} from '@/lib/runs/data';
+import { useRealtime, type WsFrame } from '@/lib/useRealtime';
 
 /** Stable query keys so the cache survives HMR / route changes. */
 export const runsQueryKeys = {
@@ -45,6 +66,7 @@ export const runsQueryKeys = {
   detail: (id: string) => [...runsQueryKeys.all, 'detail', id] as const,
   stages: (id: string) => [...runsQueryKeys.all, 'stages', id] as const,
   explainability: (id: string) => [...runsQueryKeys.all, 'explainability', id] as const,
+  budget: (id: string) => [...runsQueryKeys.all, 'budget', id] as const,
 };
 
 const NON_TERMINAL = new Set<RunRecord['status']>([
@@ -152,5 +174,103 @@ export function useRunExplainability(runId: string): UseQueryResult<RunExplainab
     queryFn: () => getRunExplainability(runId),
     enabled: Boolean(runId),
     staleTime: 30_000,
+  });
+}
+
+/**
+ * M6-G2 — live per-RUN budget surface.
+ *
+ *   - TanStack Query against `GET /api/v1/runs/{runId}/budget` (FastAPI).
+ *   - `refetchInterval` is 5 s while the run is in a NON_TERMINAL status
+ *     so the badge flips to the warn tone within ~5 s of a spend spike.
+ *   - Subscribes to the `run.cost.updated` WS topic (the per-run envelope
+ *     carries `run_id`); on every matching frame we invalidate the
+ *     budget query so the polling loop yields to a fresh fetch.
+ *   - Subscribes to `run.updated` so a status transition into a terminal
+ *     state stops the polling cadence (TanStack re-evaluates
+ *     `refetchInterval` whenever the cached data changes).
+ *
+ * Only mounted for the selected row in the drawer — never for every row
+ * in the index table — to avoid hammering the backend on a 200-row
+ * tenant. The index table uses the row's last-known `cost_spent_usd`
+ * via the static `<RunBudgetBadge />` instead.
+ */
+export function useRunBudget(runId: string): UseQueryResult<RunBudget> {
+  const qc = useQueryClient();
+  const { subscribe } = useRealtime();
+
+  useEffect(() => {
+    if (!runId) return;
+    const offCost = subscribe('run.cost.updated', (frame: WsFrame) => {
+      const env = frame.envelope as { run_id?: unknown } | null | undefined;
+      if (env && typeof env.run_id === 'string' && env.run_id === runId) {
+        void qc.invalidateQueries({ queryKey: runsQueryKeys.budget(runId) });
+      }
+    });
+    const offUpdate = subscribe('run.updated', (frame: WsFrame) => {
+      const env = frame.envelope as { id?: unknown } | null | undefined;
+      if (env && typeof env.id === 'string' && env.id === runId) {
+        void qc.invalidateQueries({ queryKey: runsQueryKeys.budget(runId) });
+      }
+    });
+    return () => {
+      offCost();
+      offUpdate();
+    };
+  }, [runId, qc, subscribe]);
+
+  return useQuery<RunBudget>({
+    queryKey: runsQueryKeys.budget(runId),
+    queryFn: () => getRunBudget(runId),
+    enabled: Boolean(runId),
+    refetchInterval: (q) => {
+      const data = q.state.data as RunBudget | undefined;
+      if (!data) return 5_000;
+      // Stop polling once the run reached a terminal budget status.
+      if (data.status === 'closed' || data.status === 'exhausted') return false;
+      return 5_000;
+    },
+    staleTime: 5_000,
+  });
+}
+
+/**
+ * M6-G1 — replay a finished/failed run.
+ *
+ *   - `mutate(runId)` POSTs `/api/v1/runs/{runId}/replay` and returns
+ *     the freshly-created run header.
+ *   - On success: toast.success + router.push to `/runs/{newRunId}` so
+ *     the operator lands on the new run's detail page (mirrors the
+ *     `useCreateRun` contract that the NewRunDialog follows).
+ *   - On failure: toast.error with the orchestrator's message; the
+ *     caller does NOT need to navigate (the source run stays put).
+ *
+ * The hook is consumed by `<ReplayButton />` which also blocks the
+ * click while the run is `running` / `pending` — see M6-G1.
+ */
+export function useReplayRun() {
+  const router = useRouter();
+  const qc = useQueryClient();
+  return useMutation<ReplayRunResponse, Error, string>({
+    mutationFn: (runId) => replayRun(runId),
+    onSuccess: (data) => {
+      const newId = data.run?.id;
+      toast.success('Run replayed', {
+        description: newId
+          ? `Opening run ${newId}…`
+          : 'New run dispatched.',
+      });
+      // Invalidate the index list so the new row appears within the
+      // next poll cycle without a hard refresh.
+      void qc.invalidateQueries({ queryKey: runsQueryKeys.all });
+      if (newId) {
+        router.push(`/runs/${encodeURIComponent(newId)}`);
+      }
+    },
+    onError: (err) => {
+      toast.error('Replay failed', {
+        description: err instanceof Error ? err.message : String(err),
+      });
+    },
   });
 }

@@ -22,11 +22,22 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-/** The five WS topics the orchestrator exposes (FORA-514 §1). */
+/** The WS topics the orchestrator exposes (FORA-514 §1).
+ *
+ * Step M6 widens the set with `run.cost.updated` (per-RUN budget
+ * feed — `useRunBudget` invalidates its cache on this frame so the
+ * badge flips to the warn tone within 250 ms of a cost-guard
+ * pre_call_admission) and `approval.stale` (UI signal from the
+ * `approval_timeout_scan` scheduler — `StaleApprovalBadge` mounts
+ * in the run detail drawer). Both topics follow the existing JSON
+ * envelope contract `{ topic, envelope }`.
+ */
 export const WS_TOPICS = [
   'run.created',
   'run.updated',
   'run.stage_changed',
+  'run.cost.updated',
+  'approval.stale',
   'issue.created',
   'issue.updated',
 ] as const;
