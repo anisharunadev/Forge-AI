@@ -555,6 +555,46 @@ class PushRecord(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
 
 
+class PushAttempt(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    """Idempotency cache for the push endpoints (M4-G5, G20).
+
+    Every successful (or attempted) push with an ``Idempotency-Key``
+    header writes one row here. The UNIQUE constraint on
+    ``(tenant_id, idea_id, idempotency_key)`` is the contract — a
+    second push with the same triple returns the cached result
+    instead of re-executing the underlying delivery call.
+    """
+
+    __tablename__ = "ideation_push_attempts"
+
+    tenant_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, index=True)
+    idea_id: Mapped[UUID] = mapped_column(
+        GUID(), ForeignKey("ideas.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    idempotency_key: Mapped[str] = mapped_column(String(128), nullable=False)
+    target: Mapped[PushTarget] = mapped_column(
+        SAEnum(PushTarget, name="push_attempt_target"),
+        nullable=False,
+    )
+    result: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    actor_id: Mapped[UUID] = mapped_column(GUID(), nullable=False)
+
+    __table_args__ = (
+        Index(
+            "uq_push_attempts_tenant_idea_key",
+            "tenant_id",
+            "idea_id",
+            "idempotency_key",
+            unique=True,
+        ),
+        Index(
+            "ix_push_attempts_tenant_key",
+            "tenant_id",
+            "idempotency_key",
+        ),
+    )
+
+
 __all__ = [
     "ApprovalDecision",
     "ApprovalItem",
@@ -569,6 +609,7 @@ __all__ = [
     "OutputBundle",
     "PRD",
     "PRDStatus",
+    "PushAttempt",
     "PushRecord",
     "PushStatus",
     "PushTarget",

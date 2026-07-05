@@ -390,3 +390,191 @@ export interface PushAllInput {
   confluence_space?: string | null;
   architecture?: boolean;
 }
+
+// ---------------------------------------------------------------------------
+// Ingest sources (F-260 — `GET /ideation/sources`,
+// `POST /ideation/sources/{id}/sync`)
+//
+// Mirrors the `IngestSource` ORM rows seeded by Track A (M4-G1,
+// M4-G11). The fixture shape in `lib/ideation/pipeline-data.ts` has
+// been superseded by this wire type — every UI consumer now goes
+// through `useSources()`.
+// ---------------------------------------------------------------------------
+
+/** Ingest source kinds — closed set matching `SOURCE_NAMES` in
+ *  `backend/app/db/models/ideation_signal.py` extended with the
+ *  generic kinds the UI exposes. */
+export type IdeationSourceKind =
+  | 'support'
+  | 'market'
+  | 'codebase'
+  | 'team'
+  | 'doc'
+  | 'webhook'
+  | 'feed'
+  | 'email'
+  | 'confluence'
+  | 'slack'
+  | 'zendesk'
+  | 'manual';
+
+export type IdeationSourceStatus =
+  | 'connected'
+  | 'available'
+  | 'syncing'
+  | 'error'
+  | 'disabled';
+
+export interface IngestSourceRead {
+  id: string;
+  tenant_id: string;
+  project_id: string;
+  /** Stable slug used by the URL `{id}/sync` and React keys. */
+  slug: string;
+  name: string;
+  kind: IdeationSourceKind;
+  /** UI hint — accent / icon lookup key. */
+  accent: 'cyan' | 'amber' | 'indigo' | 'violet' | 'rose' | 'emerald';
+  description: string;
+  status: IdeationSourceStatus;
+  /** Last successful sync relative text, e.g. "12m ago". */
+  last_sync: string | null;
+  /** Number of signals ingested today. */
+  today_count: number;
+  /** Number of signals ingested this week. */
+  week_count: number;
+  /** Cron-ish frequency description. */
+  frequency: string;
+  /** Latest few ingested items (titles + relative ts). */
+  preview: ReadonlyArray<{ title: string; at: string }>;
+  /** ISO8601 of last sync attempt — used for ordering / staleness. */
+  last_sync_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IdeationSourceListResponse {
+  items: ReadonlyArray<IngestSourceRead>;
+  total: number;
+}
+
+/** Response from `POST /ideation/sources/{id}/sync`. Backend may
+ *  return either the updated read model or an ack envelope. */
+export interface IdeationSourceSyncResult {
+  source_id: string;
+  ok: boolean;
+  /** How many new signals the run pulled (0 if no-op). */
+  pulled: number;
+  /** Human-readable status string for the toast. */
+  message: string;
+}
+
+// ---------------------------------------------------------------------------
+// Market signals (F-261 — `GET /ideation/market-signals`)
+// Mirrors `MarketSignalRead` schema (Track A — M4-G2, M4-G12).
+// Field `why_it_matters` is the AI annotation (UI: 'AI annotation').
+// ---------------------------------------------------------------------------
+
+export type MarketSignalKind = 'competitor' | 'trend' | 'tech';
+export type MarketSignalPriority = 'low' | 'medium' | 'high';
+
+export interface MarketSignalRead {
+  id: string;
+  tenant_id: string;
+  /** `competitor` / `trend` / `tech`. */
+  kind: MarketSignalKind;
+  title: string;
+  source: string;
+  url: string;
+  published_at: string;
+  /** Relative text mirror (matches fixture UX). */
+  published_at_rel: string;
+  /** AI-generated "why it matters" annotation. */
+  why_it_matters: string;
+  priority: MarketSignalPriority;
+  created_at: string;
+}
+
+export interface MarketSignalListResponse {
+  items: ReadonlyArray<MarketSignalRead>;
+  total: number;
+}
+
+// ---------------------------------------------------------------------------
+// Customer voice clusters (F-262 — `GET /ideation/customer-voice`)
+// Mirrors `CustomerClusterRead` schema (Track A — M4-G3, M4-G13).
+// ---------------------------------------------------------------------------
+
+export type ClusterSentiment = 'positive' | 'neutral' | 'negative';
+export type ClusterTrend = 'up' | 'down' | 'flat';
+
+export interface CustomerClusterRead {
+  id: string;
+  tenant_id: string;
+  project_id: string;
+  /** Stable slug used in `data-cluster-id` on the row + URL. */
+  slug: string;
+  theme: string;
+  icon: string; // lucide icon name (string for transport)
+  ticket_count: number;
+  trend_delta: string; // e.g., "+32%"
+  trend_direction: ClusterTrend;
+  /** 0..10. */
+  impact_score: number;
+  sentiment: {
+    positive: number;
+    neutral: number;
+    negative: number;
+  };
+  timeline: ReadonlyArray<{ day: string; count: number }>;
+  top_excerpts: ReadonlyArray<string>;
+  sample_quotes: ReadonlyArray<string>;
+  linked_code_signals: ReadonlyArray<string>;
+  updated_at: string;
+}
+
+export interface CustomerClusterListResponse {
+  items: ReadonlyArray<CustomerClusterRead>;
+  total: number;
+}
+
+// ---------------------------------------------------------------------------
+// Push destinations (F-263 — `GET /ideation/destinations`)
+// Mirrors `DestinationRead` schema (Track A — M4-G4, M4-G14).
+// ---------------------------------------------------------------------------
+
+export type DestinationKind =
+  | 'pm' // Jira / Linear / GitHub Projects
+  | 'docs' // Confluence / Notion / Google Docs
+  | 'ide' // AI agent via MCP / Cursor / Claude Code
+  | 'chat' // Slack / Microsoft Teams
+  | 'digest' // Email digest
+  | 'mirror'; // GitHub Issues mirror
+
+export interface DestinationRead {
+  id: string;
+  tenant_id: string;
+  project_id: string;
+  /** Stable URL slug. */
+  slug: string;
+  name: string;
+  kind: DestinationKind;
+  icon: string;
+  description: string;
+  status: IdeationSourceStatus;
+  accent: 'cyan' | 'amber' | 'indigo' | 'violet' | 'rose' | 'emerald';
+  last_sync: string | null;
+  last_sync_at: string | null;
+  kpi: string;
+  metric?: { label: string; value: string };
+  /** True if this destination can be reached via the connector
+   *  center — UI shows a "Configure" / "Connect" CTA accordingly. */
+  has_connector: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DestinationListResponse {
+  items: ReadonlyArray<DestinationRead>;
+  total: number;
+}

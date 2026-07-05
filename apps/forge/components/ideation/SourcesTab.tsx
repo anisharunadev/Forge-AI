@@ -1,24 +1,27 @@
 'use client';
 
 /**
- * `<SourcesTab>` — Step 28.
+ * `<SourcesTab>` — Step 28 + M4 Track B (T-B2 / M4-G6).
  *
  * Grid of ingest source cards. Connected sources render their preview
  * (last 3 ingested items), disconnected sources show a "Connect"
  * affordance. Layout: 3-column grid on `md+`, single column on mobile.
  *
- * TODO(step-7x): register `GET /api/v1/ideation/sources` and replace
- * the `INGEST_SOURCES` fixture import below with a TanStack hook.
- * Puller services exist under `backend/app/services/ideation/sources/`
- * but no REST surface is mounted (verified Step-69).
+ * M4 rewire: the component now reads live data from
+ * `GET /ideation/sources` via `useSources()`. The "Sync" button is
+ * wired to `useSyncSource().mutate(source.id)`. The
+ * `<ConnectorSpotlight>` cross-cut is preserved so the page can also
+ * pull a connector install CTA without leaving.
  */
 
 import * as React from 'react';
 import {
-  BookOpen, CheckCircle2,
+  BookOpen,
+  CheckCircle2,
   Code,
   Cog,
   Headphones,
+  Inbox,
   Mail,
   MessageSquare,
   Plug,
@@ -26,16 +29,104 @@ import {
   Settings,
   TrendingUp,
   Webhook,
-  Zap
+  Zap,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { INGEST_SOURCES, type IngestSource } from '@/lib/ideation/pipeline-data';
+
+import { IdeationQueryState } from '@/components/ideation/IdeationQueryState';
+import { useSources, useSyncSource } from '@/lib/hooks/useIdeation';
+import type { IngestSourceRead } from '@/lib/ideation/types';
 import { ConnectorSpotlight } from '@/components/connectors/ConnectorSpotlight';
 
-function accentClasses(accent: IngestSource['accent']): {
+// ---------------------------------------------------------------------------
+// Local mappers — turn wire shape into the legacy fixture structure
+// the cards below were written against. Keeps the presentational
+// layer untouched while making the swap obvious in one place.
+// ---------------------------------------------------------------------------
+
+type SourceAccent = IngestSourceRead['accent'];
+
+function wireToFixture(src: IngestSourceRead): IngestSourceFixture {
+  return {
+    id: src.id,
+    name: src.name,
+    kind: src.kind,
+    icon: iconForKind(src.kind, src.slug),
+    description: src.description,
+    // Preserve all wire statuses; the card surfaces 'syncing',
+    // 'connected', 'available', 'error', 'disabled' with their own
+    // visual treatment (badge color etc.).
+    status: src.status,
+    accent: src.accent,
+    lastSync: src.last_sync ?? '—',
+    todayCount: src.today_count,
+    weekCount: src.week_count,
+    kpi: `${src.week_count} this week`,
+    preview: src.preview,
+    frequency: src.frequency,
+  };
+}
+
+function iconForKind(
+  kind: IngestSourceRead['kind'],
+  _slug: string,
+): IngestSourceFixture['icon'] {
+  switch (kind) {
+    case 'support':
+      return 'Headphones';
+    case 'market':
+      return 'TrendingUp';
+    case 'codebase':
+      return 'Code';
+    case 'team':
+      return 'Slack';
+    case 'doc':
+      return 'BookOpen';
+    case 'webhook':
+      return 'Webhook';
+    case 'feed':
+      return 'Rss';
+    case 'email':
+      return 'Mail';
+    case 'confluence':
+    case 'slack':
+    case 'zendesk':
+      return 'Slack';
+    case 'manual':
+    default:
+      return 'MessageSquare';
+  }
+}
+
+interface IngestSourceFixture {
+  readonly id: string;
+  readonly name: string;
+  readonly kind: IngestSourceRead['kind'];
+  readonly icon:
+    | 'Headphones'
+    | 'TrendingUp'
+    | 'Code'
+    | 'MessageSquare'
+    | 'BookOpen'
+    | 'Rss'
+    | 'Mail'
+    | 'Webhook'
+    | 'Slack';
+  readonly description: string;
+  readonly status: IngestSourceRead['status'];
+  readonly accent: SourceAccent;
+  readonly lastSync: string;
+  readonly todayCount: number;
+  readonly weekCount: number;
+  readonly kpi: string;
+  readonly preview: ReadonlyArray<{ title: string; at: string }>;
+  readonly frequency: string;
+}
+
+function accentClasses(accent: SourceAccent): {
   ring: string;
   bg: string;
   text: string;
@@ -56,7 +147,7 @@ function accentClasses(accent: IngestSource['accent']): {
   }
 }
 
-function sourceIconNode(name: IngestSource['icon']): React.ReactNode {
+function sourceIconNode(name: IngestSourceFixture['icon']): React.ReactNode {
   switch (name) {
     case 'Headphones':
       return <Headphones className="h-5 w-5" aria-hidden="true" />;
@@ -79,9 +170,19 @@ function sourceIconNode(name: IngestSource['icon']): React.ReactNode {
   }
 }
 
-function SourceCardGrid({ source }: { source: IngestSource }) {
+// ---------------------------------------------------------------------------
+// Card
+// ---------------------------------------------------------------------------
+
+interface SourceCardProps {
+  readonly source: IngestSourceFixture;
+  readonly onSync?: (id: string) => void;
+  readonly syncing?: boolean;
+}
+
+function SourceCardGrid({ source, onSync, syncing }: SourceCardProps) {
   const accent = accentClasses(source.accent);
-  const connected = source.status === 'connected';
+  const connected = source.status === 'connected' || source.status === 'syncing';
 
   return (
     <article
@@ -116,7 +217,9 @@ function SourceCardGrid({ source }: { source: IngestSource }) {
             'inline-flex items-center gap-1 rounded-[var(--radius-sm)] px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider',
             connected
               ? 'bg-[rgba(16,185,129,0.12)] text-[var(--accent-emerald)]'
-              : 'bg-[var(--bg-inset)] text-[var(--fg-tertiary)]',
+              : source.status === 'error'
+                ? 'bg-[rgba(244,63,94,0.12)] text-[var(--accent-rose)]'
+                : 'bg-[var(--bg-inset)] text-[var(--fg-tertiary)]',
           )}
         >
           {connected ? (
@@ -124,7 +227,13 @@ function SourceCardGrid({ source }: { source: IngestSource }) {
           ) : (
             <Plug className="h-3 w-3" aria-hidden="true" />
           )}
-          {connected ? 'connected' : 'available'}
+          {syncing
+            ? 'syncing'
+            : connected
+              ? 'connected'
+              : source.status === 'error'
+                ? 'error'
+                : 'available'}
         </span>
       </header>
 
@@ -187,13 +296,24 @@ function SourceCardGrid({ source }: { source: IngestSource }) {
           {connected ? (
             <Button
               type="button"
-              variant="ghost"
               size="sm"
-              data-testid={`source-disconnect-${source.id}`}
-              onClick={() => toast.info(`Disconnect ${source.name}`)}
-              className="text-[var(--accent-rose)] hover:bg-[rgba(244,63,94,0.10)] hover:text-[var(--accent-rose)]"
+              variant="outline"
+              data-testid={`source-sync-${source.id}`}
+              disabled={syncing}
+              onClick={() => onSync?.(source.id)}
+              className="border-[var(--border-default)] text-[var(--fg-primary)] hover:bg-[var(--bg-elevated)]"
             >
-              Disconnect
+              {syncing ? (
+                <>
+                  <Settings className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                  Syncing…
+                </>
+              ) : (
+                <>
+                  <Zap className="h-3.5 w-3.5" aria-hidden="true" />
+                  Sync
+                </>
+              )}
             </Button>
           ) : (
             <Button
@@ -215,13 +335,152 @@ function SourceCardGrid({ source }: { source: IngestSource }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Skeleton placeholder — six neutral cards while the live fetch resolves.
+// ---------------------------------------------------------------------------
+
+function SourcesSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {[...Array(6)].map((_, i) => (
+        <div
+          key={i}
+          role="status"
+          aria-busy="true"
+          className="flex flex-col gap-3 rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4"
+        >
+          <div className="flex items-start gap-3">
+            <span className="h-10 w-10 animate-pulse rounded-md bg-[var(--bg-inset)]" />
+            <div className="flex flex-1 flex-col gap-2">
+              <span className="h-3 w-3/5 animate-pulse rounded-[var(--radius-sm)] bg-[var(--bg-inset)]" />
+              <span className="h-2 w-2/5 animate-pulse rounded-[var(--radius-sm)] bg-[var(--bg-inset)]" />
+            </div>
+          </div>
+          <div className="h-16 animate-pulse rounded-[var(--radius-md)] bg-[var(--bg-inset)]" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Empty state — Rule 15: icon + value prop + primary CTA.
+// ---------------------------------------------------------------------------
+
+function SourcesEmpty({ onSetup }: { onSetup?: () => void }) {
+  return (
+    <div
+      data-testid="sources-empty"
+      className="flex flex-col items-center justify-center gap-4 rounded-[var(--radius-xl)] border border-dashed border-[var(--border-default)] bg-[var(--bg-surface)] p-10 text-center"
+    >
+      <Inbox className="h-10 w-10 text-[var(--fg-muted)]" aria-hidden="true" />
+      <div>
+        <h3 className="text-sm font-semibold text-[var(--fg-primary)]">
+          No ingest sources configured
+        </h3>
+        <p className="text-xs text-[var(--fg-tertiary)]">
+          Forge pulls signals from Confluence, Slack, Zendesk, GitHub, Linear, Notion,
+          Intercom, RSS and more. Add your first source to start ingesting.
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <Button
+          type="button"
+          size="sm"
+          onClick={onSetup ?? (() => toast.info('Settings → Integrations opens next.'))}
+          className="bg-[var(--accent-primary)] text-white hover:opacity-90"
+        >
+          <Settings className="h-3.5 w-3.5" aria-hidden="true" />
+          Go to Settings → Integrations
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => toast.success('Mock connect: Custom webhook')}
+          className="border-[var(--border-default)] text-[var(--fg-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--fg-primary)]"
+        >
+          <Plug className="h-3.5 w-3.5" aria-hidden="true" />
+          Add a custom webhook
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Tab
+// ---------------------------------------------------------------------------
+
 export interface SourcesTabProps {
   readonly onAddCustom?: () => void;
 }
 
 export function SourcesTab({ onAddCustom }: SourcesTabProps) {
-  const connected = INGEST_SOURCES.filter((s) => s.status === 'connected');
-  const available = INGEST_SOURCES.filter((s) => s.status !== 'connected');
+  const sourcesQuery = useSources();
+  const syncMutation = useSyncSource();
+
+  const items = sourcesQuery.data?.items ?? [];
+  const sources: ReadonlyArray<IngestSourceFixture> = items.map(wireToFixture);
+  const connected = sources.filter((s) => s.status === 'connected');
+  const available = sources.filter((s) => s.status !== 'connected');
+
+  // Per-source "is this one mid-sync?" — drives the per-card button.
+  const syncingId =
+    syncMutation.isPending && syncMutation.variables
+      ? syncMutation.variables
+      : null;
+
+  if (sourcesQuery.isLoading) {
+    return (
+      <section aria-label="Ingest sources" data-testid="sources-tab" className="flex flex-col gap-6">
+        <header className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-[var(--fg-tertiary)]">
+              Sources
+            </p>
+            <h2 className="text-lg font-semibold text-[var(--fg-primary)]">
+              Ingest from your stack
+            </h2>
+            <p className="text-xs text-[var(--fg-tertiary)]">Loading…</p>
+          </div>
+        </header>
+        <SourcesSkeleton />
+      </section>
+    );
+  }
+
+  if (sourcesQuery.isError) {
+    return (
+      <IdeationQueryState
+        isLoading={false}
+        isError
+        error={(sourcesQuery.error as { message?: string } | null)?.message ?? 'Failed to load sources'}
+        onRetry={() => void sourcesQuery.refetch()}
+        loadingRows={6}
+      >
+        <></>
+      </IdeationQueryState>
+    );
+  }
+
+  if (sources.length === 0) {
+    return (
+      <section aria-label="Ingest sources" data-testid="sources-tab" className="flex flex-col gap-6">
+        <header className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-[var(--fg-tertiary)]">
+              Sources
+            </p>
+            <h2 className="text-lg font-semibold text-[var(--fg-primary)]">
+              Ingest from your stack
+            </h2>
+          </div>
+        </header>
+        <SourcesEmpty onSetup={onAddCustom} />
+      </section>
+    );
+  }
 
   return (
     <section aria-label="Ingest sources" data-testid="sources-tab" className="flex flex-col gap-6">
@@ -250,8 +509,13 @@ export function SourcesTab({ onAddCustom }: SourcesTabProps) {
       </header>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {INGEST_SOURCES.map((s) => (
-          <SourceCardGrid key={s.id} source={s} />
+        {sources.map((s) => (
+          <SourceCardGrid
+            key={s.id}
+            source={s}
+            syncing={syncingId === s.id}
+            onSync={(id) => syncMutation.mutate(id)}
+          />
         ))}
       </div>
 
