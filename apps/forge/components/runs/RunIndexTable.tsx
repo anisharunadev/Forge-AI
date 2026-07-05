@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { Activity } from 'lucide-react';
 
 import { RunStatusBadge } from '@/components/RunStatusBadge';
+import { RunBudgetBadge } from '@/components/runs/RunBudgetBadge';
 import { seedAliasFor } from '@/lib/api';
 import { EmptyState } from '@/src/components/empty-state';
 import type { RunRecord } from '@/lib/types';
@@ -104,7 +105,17 @@ export function RunIndexTable({ runs, onClearFilters }: RunIndexTableProps) {
                   </span>
                 </td>
                 <td className="px-3 py-2 font-mono text-xs text-foreground">
-                  ${r.cost_spent_usd} / ${r.cost_ceiling_usd}
+                  {/* M6-G2 — wire the per-RUN RunBudgetBadge into the index row.
+                      Replaces the previous plain-text "${spent} / ${ceiling}"
+                      with the badge so the 0.80 warn threshold flips at $40
+                      of a $50 ceiling. Live feed (per-RUN polling) lives in
+                      the drawer via useRunBudget (T-B1); the index table
+                      uses the row's last-known figures so 200 rows don't
+                      hammer the budget endpoint. */}
+                  <RunBudgetBadge
+                    ceilingUsd={r.cost_ceiling_usd}
+                    spentUsd={r.cost_spent_usd}
+                  />
                 </td>
                 <td className="px-3 py-2 text-xs text-muted-foreground">
                   <span className="font-mono">
