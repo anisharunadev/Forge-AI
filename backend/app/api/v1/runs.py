@@ -362,8 +362,20 @@ async def get_run_budget(
 ) -> dict[str, Any]:
     """GET /api/v1/runs/{run_id}/budget — per-RUN cumulative cap snapshot.
 
-    Returns the operator-facing budget surface consumed by
-    :class:`apps.forge.components.runs.RunBudgetBadge`:
+    M6-G3: previously this endpoint returned ``409 phase_not_planning``
+    whenever the run was past DISCOVERY (architecture / implementation
+    / review / deployment phases). The new behavior:
+
+    * 200 with the live snapshot for any *active* phase (PLANNING,
+      DISCOVERY, ARCHITECTURE, IMPLEMENTATION, TESTING, SECURITY,
+      REVIEW, DEPLOYMENT).
+    * 200 with ``frozen_at`` populated for terminal phases (DONE /
+      FAILED) — the snapshot is the last known spend, frozen when
+      the run hit the terminal phase. Operators can still review
+      the budget for a completed run.
+    * 404 when the run is unknown or cross-tenant (unchanged).
+
+    Response shape:
 
         {
             "run_id": "...",
@@ -371,7 +383,9 @@ async def get_run_budget(
             "ceiling_usd": 50.0,
             "spent_usd": 12.34,
             "remaining_usd": 37.66,
-            "currency": "USD"
+            "currency": "USD",
+            "current_phase": "architecture",
+            "frozen_at": null | "<iso8601 timestamp>"
         }
 
     ``ceiling_usd`` resolves per-tenant:
@@ -381,29 +395,13 @@ async def get_run_budget(
     the cumulative-cap rule consumes in
     :func:`app.services.litellm_client.pre_call_admission`.
 
-    A phase guard runs inline (PLANNING / DISCOVERY only) so the
-    endpoint returns 409 (not 500) when invoked outside the gate.
-    The :func:`require_approval_phase` marker is applied as the
-    M2-G6 hygiene signal — its runtime guard requires ``SDLCState``
-    as a positional argument which FastAPI does not inject for
-    path operations.
+    ``frozen_at`` is the UTC timestamp the run entered its terminal
+    phase (``state.updated_at`` for DONE / FAILED). ``null`` while
+    the run is still in motion.
     """
     state = await manager.get_run(run_id)
     if state is None or state.tenant_id != principal.tenant_id:
         raise HTTPException(status_code=404, detail="run_not_found")
-
-    if state.current_phase not in (SDLCPhase.PLANNING, SDLCPhase.DISCOVERY):
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "code": "phase_not_planning",
-                "current_phase": state.current_phase.value,
-                "allowed_phases": [
-                    SDLCPhase.PLANNING.value,
-                    SDLCPhase.DISCOVERY.value,
-                ],
-            },
-        )
 
     from app.core.config import settings
     from app.services.cost_ledger import cost_ledger
@@ -417,6 +415,13 @@ async def get_run_budget(
     spent_usd = await cost_ledger.sum_spent_for_run(run_id)
     remaining_usd = max(0.0, ceiling_usd - float(spent_usd))
 
+    # M6-G3: surface the terminal-phase snapshot with a populated
+    # ``frozen_at`` so the UI can render a muted badge once the run
+    # is in DONE / FAILED — active phases emit ``frozen_at=null``.
+    frozen_at: str | None = None
+    if state.current_phase in (SDLCPhase.DONE, SDLCPhase.FAILED):
+        frozen_at = state.updated_at.isoformat()
+
     return {
         "run_id": str(run_id),
         "tenant_id": tenant_key,
@@ -424,7 +429,71 @@ async def get_run_budget(
         "spent_usd": float(spent_usd),
         "remaining_usd": remaining_usd,
         "currency": settings.cost_currency,
+        "current_phase": state.current_phase.value,
+        "frozen_at": frozen_at,
     }
+
+
+@require_approval_phase(SDLCPhase.PLANNING)
+@router.post("/{run_id}/replay", response_model=SDLCRunStateResponse)
+async def replay_run(
+    run_id: UUID,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    manager: SDLCRunManager = RunManagerDep,
+    idempotency_key: str | None = Query(
+        default=None,
+        alias="idempotency_key",
+        description=(
+            "Optional Idempotency-Key for replay retries. The replay "
+            "API collapses retries with the same (run_id, key) tuple "
+            "to the original new run."
+        ),
+    ),
+) -> SDLCRunStateResponse:
+    """POST /api/v1/runs/{run_id}/replay — replay a finished run (M6-G1).
+
+    The replay endpoint seeds a fresh SDLC run from a finished or
+    failed source run, copying goal / project_id / tenant_id /
+    actor_id / budget cap and stamping ``metadata["replay_of"]``
+    with the source id so downstream audit + UI can render
+    lineage. Idempotent via the optional ``idempotency_key`` query
+    parameter (also accepted via ``Idempotency-Key`` header for
+    parity with M3/M4 conventions).
+
+    Status codes
+    ------------
+    * ``200`` — replay succeeded; response body is the new run's
+      ``SDLCRunStateResponse``.
+    * ``404`` — source run not found OR caller is in a different
+      tenant (we collapse cross-tenant leaks to the same shape).
+    * ``409`` — source run is still active (cannot replay a live
+      run; cancel first or wait for terminal state).
+    * ``422`` — invalid UUID path parameter.
+    """
+    source = await manager.get_run(run_id)
+    if source is None or source.tenant_id != principal.tenant_id:
+        raise HTTPException(status_code=404, detail="run_not_found")
+
+    # Operators cannot replay a still-active run — cancel first.
+    # DONE / FAILED are the only replayable source phases.
+    if source.current_phase not in (SDLCPhase.DONE, SDLCPhase.FAILED):
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "source_still_active",
+                "current_phase": source.current_phase.value,
+                "replayable_phases": [
+                    SDLCPhase.DONE.value,
+                    SDLCPhase.FAILED.value,
+                ],
+            },
+        )
+
+    # Accept the Idempotency-Key header as a fallback when the
+    # query param isn't supplied — matches the M3/M4 API style.
+    key = idempotency_key or None
+    new_state = await manager.replay_run(run_id, idempotency_key=key)
+    return _state_to_response(new_state)
 
 
 @router.get("/{run_id}/explainability")

@@ -106,6 +106,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { useWorkflowRunsIndex } from '@/lib/hooks/useRuns';
+import { StaleApprovalBadge } from '@/components/runs/StaleApprovalBadge';
+import { useRealtime, type WsFrame } from '@/lib/useRealtime';
 import type { WorkflowRun, WorkflowRunStatus } from '@/lib/workflows/types';
 
 // ----------------------------------------------------------------------------
@@ -209,6 +211,35 @@ function usePrefersReducedMotion(): boolean {
 
 export function RunCenterPage() {
   const res = useWorkflowRunsIndex();
+
+  // M6-G5 — subscribe to the WS `approval.stale` topic. The envelope
+  // shape (mirrors Track A's backend event) is:
+  //   { topic: 'approval.stale', envelope: { run_id: string, expired_at: string } }
+  // When a frame lands we record the timestamp keyed by run id so the
+  // detail drawer can render <StaleApprovalBadge /> when the operator
+  // opens that run. The subscription is cleaned up on unmount.
+  const { subscribe: subscribeRealtime } = useRealtime();
+  React.useEffect(() => {
+    const off = subscribeRealtime('approval.stale', (frame: WsFrame) => {
+      const env = frame.envelope as
+        | { run_id?: unknown; expired_at?: unknown }
+        | null
+        | undefined;
+      if (!env) return;
+      const runId = typeof env.run_id === 'string' ? env.run_id : null;
+      const expiredAt =
+        typeof env.expired_at === 'string'
+          ? env.expired_at
+          : new Date().toISOString();
+      if (!runId) return;
+      setStaleApprovals((prev) => {
+        const next = new Map(prev);
+        next.set(runId, expiredAt);
+        return next;
+      });
+    });
+    return off;
+  }, [subscribeRealtime]);
   const [statusFilter, setStatusFilter] = React.useState<WorkflowRunStatus | 'all'>('all');
   const [agentFilter, setAgentFilter] = React.useState<string>('all');
   const [commandFilter, setCommandFilter] = React.useState<string>('all');
@@ -225,6 +256,17 @@ export function RunCenterPage() {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [drawerRun, setDrawerRun] = React.useState<EnrichedRun | null>(null);
   const [drawerTab, setDrawerTab] = React.useState<DrawerTab>('overview');
+
+  // M6-G5 — stale-approval signal per run id. The `approval_timeout_scan`
+  // scheduler emits `approval.stale` on the WS topic whenever a run's
+  // pending approval lapses its timeout window. We capture the timestamp
+  // here keyed by run id so the drawer can render <StaleApprovalBadge />
+  // for the run the operator has open. The map survives drawer close /
+  // reopen, matching the operator's mental model — "this run's approval
+  // is stale, full stop" — not "until I close the drawer".
+  const [staleApprovals, setStaleApprovals] = React.useState<
+    ReadonlyMap<string, string>
+  >(() => new Map());
 
   // Pagination (virtualized infinite scroll)
   const [visibleCount, setVisibleCount] = React.useState(50);
@@ -514,6 +556,7 @@ export function RunCenterPage() {
                 activeTab={drawerTab}
                 onTabChange={setDrawerTab}
                 onClose={closeDrawer}
+                staleApproval={staleApprovals.get(drawerRun.id) ?? null}
               />
             ) : null}
           </SheetContent>
@@ -1844,11 +1887,19 @@ function RunDrawer({
   activeTab,
   onTabChange,
   onClose,
+  staleApproval,
 }: {
   run: EnrichedRun;
   activeTab: DrawerTab;
   onTabChange: (t: DrawerTab) => void;
   onClose: () => void;
+  /**
+   * M6-G5 — ISO timestamp of the most recent `approval.stale` SSE
+   * frame for this run, or `null` when the run's approval is healthy.
+   * Forwarded to <StaleApprovalBadge /> which renders the rose-toned
+   * pill or nothing based on the value.
+   */
+  staleApproval: string | null;
 }) {
   // Esc + ArrowLeft handling
   React.useEffect(() => {
@@ -1893,6 +1944,12 @@ function RunDrawer({
             />
             {STATUS_LABEL[run.status]}
           </span>
+          {/*
+            M6-G5 — render the stale-approval pill next to the status pill
+            whenever the SSE frame has marked this run's approval as
+            stale. The badge self-hides when staleApproval is null.
+          */}
+          <StaleApprovalBadge staleApproval={staleApproval} />
           <button
             type="button"
             onClick={onClose}

@@ -18,9 +18,10 @@ import enum
 import json
 import uuid
 from collections import defaultdict
+from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Awaitable, Callable, Iterable
+from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
 
 try:
@@ -54,6 +55,13 @@ class EventType(str, enum.Enum):
     AGENT_RUN_STARTED = "agent.run.started"
     AGENT_RUN_COMPLETED = "agent.run.completed"
     AGENT_RUN_FAILED = "agent.run.failed"
+
+    # F-301 / M6-G1 — Run-replay events. Emitted by
+    # :meth:`SDLCRunManager.replay_run` whenever an operator replays
+    # an existing run with the same goal/project/budget. Subscribers
+    # (audit sink, run-dashboard WS feed) listen on this event so
+    # the UI can render "Replayed from <src_run_id>" lineage.
+    RUN_REPLAYED = "run.replayed"
 
     TERMINAL_COMMAND_EXECUTED = "terminal.command.executed"
     TERMINAL_SESSION_STARTED = "terminal.session.started"
@@ -167,7 +175,7 @@ class Event:
     payload: dict[str, Any]
     actor_id: UUID | str | None = None
     event_id: UUID = field(default_factory=uuid.uuid4)
-    occurred_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    occurred_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)

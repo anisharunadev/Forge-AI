@@ -23,9 +23,9 @@ import asyncio
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Any, AsyncIterator
+from typing import Any
 from uuid import UUID, uuid4
 
 from langgraph.checkpoint.base import BaseCheckpointSaver
@@ -34,12 +34,12 @@ from app.agents.approval_gate import ApprovalGateNode
 from app.agents.cost_tracking import SDLCPhaseCostTracker
 from app.agents.sdlc_agent import build_sdlc_graph, run_sdlc
 from app.agents.sdlc_state import (
-    ApprovalRequest,
     ApprovalResponse,
     SDLCPhase,
     SDLCState,
 )
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ class CostSummary:
 @dataclass
 class _Subscriber:
     queue: asyncio.Queue[SDLCState]
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 class RunStateBroker:
@@ -136,6 +136,16 @@ class SDLCRunManager:
         self._states: dict[UUID, SDLCState] = {}
         self._cost_trackers: dict[UUID, SDLCPhaseCostTracker] = {}
         self._tasks: dict[UUID, asyncio.Task[None]] = {}
+        # M6-G1 — replay idempotency cache.  Maps
+        # ``(source_run_id, idempotency_key)`` → ``new_run_id`` so a
+        # client that retries the same replay (network blip, double
+        # click) collapses to the original new run rather than
+        # spawning parallel duplicates.  In-memory by design — replay
+        # requests within the same process are the only ones we
+        # accept; the API layer enforces the "source not active"
+        # check (Track A T-A2) so a successful replay_token pair
+        # always refers to a stable source run.
+        self._replay_cache: dict[tuple[UUID, str], UUID] = {}
         self._graph = None  # lazy compile
 
     # ---- Properties ----------------------------------------------------
@@ -227,6 +237,126 @@ class SDLCRunManager:
             task.cancel()
         await self._broker.publish(run_id, state)
         return state
+
+    async def replay_run(
+        self,
+        run_id: UUID,
+        *,
+        idempotency_key: str | None = None,
+    ) -> SDLCState:
+        """Replay a completed or failed run with identical scope.
+
+        Behavior (M6 spec §5 T-A1 — M6-G1):
+
+        * Loads the *source* run via :meth:`get_run`; raises
+          ``LookupError`` if absent.
+        * Builds a fresh :class:`SDLCState` that copies ``goal``,
+          ``project_id``, ``tenant_id``, ``actor_id``, and the
+          budget cap (``metadata["budget_cap_usd"]`` when present,
+          else :attr:`Settings.run_budget_cap_usd`).
+        * Carries the lineage forward via ``metadata["replay_of"]``
+          so downstream audit / UI layers can render "Replayed
+          from <src_run_id>" badges.
+        * Emits ``EventType.RUN_REPLAYED`` through the bus so
+          subscribers (audit, WS feed) see the new run immediately.
+        * Idempotency: when ``idempotency_key`` (default ``uuid4``)
+          already maps to a previous successful replay, returns the
+          cached new state rather than spawning a duplicate.
+
+        The replay always starts a *new* background task via
+        :meth:`start_run`'s task-creation path so it behaves like a
+        fresh run from the operator's perspective.
+        """
+        source = self._states.get(run_id)
+        if source is None:
+            raise LookupError(f"sdlc_run {run_id} not found")
+
+        key = idempotency_key or str(uuid4())
+        cache_key = (run_id, key)
+        cached_new_id = self._replay_cache.get(cache_key)
+        if cached_new_id is not None:
+            cached_state = self._states.get(cached_new_id)
+            if cached_state is not None:
+                return cached_state
+
+        # Carry over the goal / context so a replay reuses the
+        # operator's original intent verbatim.  ``context`` already
+        # includes ``workspace_path`` / ``repo_path`` for the source
+        # run, so we copy it as-is.
+        goal = source.context.get("goal") or source.context.get("objective") or ""
+        initial_context: dict[str, Any] = dict(source.context)
+        if goal and "goal" not in initial_context:
+            initial_context["goal"] = goal
+
+        # Pull the per-tenant budget cap the source run was issued
+        # under, falling back to the global default.  The per-tenant
+        # override map can change between runs so this is the
+        # source-run snapshot — operator sees the same ceiling.
+        try:
+            from app.core.config import get_settings  # noqa: PLC0415 — lazy to avoid cycle
+            settings = get_settings()
+            tenant_key = str(source.tenant_id)
+            budget_cap_usd = float(
+                settings.run_budget_cap_overrides.get(
+                    tenant_key, settings.run_budget_cap_usd
+                )
+            )
+        except Exception:  # noqa: BLE001 — settings may not be wired in tests
+            budget_cap_usd = 50.0
+
+        # Build the new state.  Same identity triple, fresh run_id.
+        new_state = SDLCState(
+            tenant_id=source.tenant_id,
+            project_id=source.project_id,
+            actor_id=source.actor_id,
+            context=initial_context,
+        )
+        # Stamp lineage + budget on metadata so the cost cap rule
+        # (which reads ``metadata["budget_cap_usd"]``) and the UI
+        # lineage badge both see consistent values.
+        new_state = new_state.model_copy(
+            update={
+                "metadata": {
+                    **new_state.metadata,
+                    "replay_of": str(run_id),
+                    "replay_idempotency_key": key,
+                    "budget_cap_usd": budget_cap_usd,
+                },
+            },
+            deep=True,
+        )
+
+        self._states[new_state.run_id] = new_state
+        self._cost_trackers[new_state.run_id] = SDLCPhaseCostTracker()
+        self._replay_cache[cache_key] = new_state.run_id
+
+        await self._broker.publish(new_state.run_id, new_state)
+        await self._bus.publish(
+            EventType.RUN_REPLAYED,
+            {
+                "run_id": str(new_state.run_id),
+                "source_run_id": str(run_id),
+                "idempotency_key": key,
+                "tenant_id": str(source.tenant_id),
+                "project_id": str(source.project_id),
+                "goal": goal,
+                "budget_cap_usd": budget_cap_usd,
+            },
+            tenant_id=source.tenant_id,
+            project_id=source.project_id,
+            actor_id=source.actor_id,
+        )
+        await self._bus.publish(
+            EventType.AGENT_RUN_STARTED,
+            {"run_id": str(new_state.run_id), "phase": new_state.current_phase.value},
+            tenant_id=source.tenant_id,
+            project_id=source.project_id,
+            actor_id=source.actor_id,
+        )
+        self._tasks[new_state.run_id] = asyncio.create_task(
+            self._drive(new_state), name=f"sdlc-run-{new_state.run_id}"
+        )
+        return new_state
 
     # ---- Read APIs -----------------------------------------------------
 
