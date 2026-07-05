@@ -128,6 +128,22 @@ class ADRGenerator:
             project_id=project_id,
             actor_id=actor_id,
         )
+        # M5-G2 — mirror the ADR row into the Knowledge Graph so the
+        # React Flow viz (M8) and downstream features see a typed
+        # ``KGNode(artifact_type='adr')`` node. Idempotency is left to
+        # the consumer (the KG is append-only by Rule 4).
+        await self._registry.register(
+            artifact_type="adr",
+            artifact_id=str(adr.id),
+            tenant_id=tenant_id,
+            project_id=project_id,
+            payload={
+                "number": adr.number,
+                "title": adr.title,
+                "status": adr.status,
+            },
+            actor_id=actor_id,
+        )
         logger.info(
             "adr.created",
             tenant_id=str(tenant_id),

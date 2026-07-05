@@ -137,6 +137,25 @@ class StandardsAttestationService:
             project_id=project_id,
             actor_id=attestor_id,
         )
+        # M5-G2 — mirror the attestation into the Knowledge Graph so
+        # the React Flow viz sees a typed
+        # ``KGNode(artifact_type='standard_attestation')`` node keyed by
+        # attestation id (the source-of-truth row is the audit event
+        # in :func:`_audit.record` above).
+        await self._registry.register(
+            artifact_type="standard_attestation",
+            artifact_id=str(attestation_id),
+            tenant_id=tenant_id,
+            project_id=project_id,
+            payload={
+                "source_artifact_type": artifact_type,
+                "source_artifact_id": str(artifact_id),
+                "attestor_id": str(attestor_id),
+                "status": status,
+                "check_count": len(checks),
+            },
+            actor_id=attestor_id,
+        )
         logger.info(
             "standards.attested",
             tenant_id=str(tenant_id),

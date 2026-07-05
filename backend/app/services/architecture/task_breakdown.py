@@ -123,6 +123,22 @@ class TaskBreakdownGenerator:
             project_id=project_id,
             actor_id=actor_id,
         )
+        # M5-G2 — mirror the task breakdown into the Knowledge Graph.
+        await self._registry.register(
+            artifact_type="task_breakdown",
+            artifact_id=str(breakdown.id),
+            tenant_id=tenant_id,
+            project_id=project_id,
+            payload={
+                "name": breakdown.name,
+                "parent_artifact_type": "adr",
+                "parent_artifact_id": str(adr_id),
+                "task_count": len(tasks),
+                "total_estimate_hours": total_hours,
+                "status": breakdown.status,
+            },
+            actor_id=actor_id,
+        )
         logger.info(
             "task_breakdown.created",
             tenant_id=tenant_id,

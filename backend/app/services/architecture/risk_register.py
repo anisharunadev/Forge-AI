@@ -391,6 +391,41 @@ class RiskRegisterService:
             project_id=project_id,
             actor_id=actor_id,
         )
+        # M5-G2 — mirror the risk register into the Knowledge Graph so
+        # the React Flow viz (M8) sees a typed
+        # ``KGNode(artifact_type='risk_register')`` node.
+        await self._registry.register(
+            artifact_type="risk_register",
+            artifact_id=str(register.id),
+            tenant_id=tenant_id,
+            project_id=project_id,
+            payload={
+                "name": register.name,
+                "status": register.status,
+                "risk_count": len(risks),
+                "source_type": source_type,
+                "source_id": source_id,
+            },
+            actor_id=actor_id,
+        )
+        # M5-G2 — each risk inside the register ALSO lands a per-row
+        # KG node so the KG can render the risk graph distinctly.
+        for risk in risks:
+            await self._registry.register(
+                artifact_type="risk",
+                artifact_id=f"{register.id}:{risk.get('id', '')}",
+                tenant_id=tenant_id,
+                project_id=project_id,
+                payload={
+                    "register_id": str(register.id),
+                    "title": risk.get("title"),
+                    "category": risk.get("category"),
+                    "score": risk.get("score"),
+                    "status": risk.get("status"),
+                    "owner": risk.get("owner"),
+                },
+                actor_id=actor_id,
+            )
         logger.info(
             "risk_register.created",
             tenant_id=str(tenant_id),

@@ -122,6 +122,21 @@ class AcceptanceCriteriaService:
             project_id=project_id,
             actor_id=actor_id,
         )
+        # M5-G2 — mirror the criteria envelope into the Knowledge Graph
+        # so the React Flow viz sees a typed
+        # ``KGNode(artifact_type='acceptance_criteria')`` node.
+        await self._registry.register(
+            artifact_type="acceptance_criteria",
+            artifact_id=str(record_id),
+            tenant_id=tenant_id,
+            project_id=project_id,
+            payload={
+                "source_artifact_type": artifact_type,
+                "source_artifact_id": str(artifact_id),
+                "count": len(criteria),
+            },
+            actor_id=actor_id,
+        )
         logger.info(
             "acceptance_criteria.generated",
             tenant_id=str(tenant_id),

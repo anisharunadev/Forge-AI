@@ -125,6 +125,22 @@ class APIContractGenerator:
             project_id=project_id,
             actor_id=actor_id,
         )
+        # M5-G2 — mirror the API Contract row into the Knowledge Graph
+        # so the React Flow viz sees a typed
+        # ``KGNode(artifact_type='api_contract')`` node.
+        await self._registry.register(
+            artifact_type="api_contract",
+            artifact_id=str(contract.id),
+            tenant_id=tenant_id,
+            project_id=project_id,
+            payload={
+                "name": contract.name,
+                "spec_type": contract_type,
+                "status": contract.status,
+                "valid": validation["valid"],
+            },
+            actor_id=actor_id,
+        )
         logger.info(
             "api_contract.created",
             tenant_id=str(tenant_id),

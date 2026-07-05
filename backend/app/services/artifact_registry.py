@@ -19,6 +19,7 @@ from app.core.logging import get_logger
 from app.db.models.artifact import Artifact, ArtifactStatus
 from app.db.session import get_session_factory
 from app.services.event_bus import EventType, bus as default_bus
+from app.services.knowledge_graph import KGNode
 
 logger = get_logger(__name__)
 
@@ -210,6 +211,84 @@ class ArtifactRegistry:
                 .order_by(Artifact.version.desc())
             )
             return list((await session.execute(stmt)).scalars().all())
+
+    # ------------------------------------------------------------------
+    # M5 Architecture Center (T-A2) — KG mirror via register()
+    # ------------------------------------------------------------------
+    async def register(
+        self,
+        *,
+        artifact_type: str,
+        artifact_id: UUID | str,
+        tenant_id: UUID | str,
+        project_id: UUID | str,
+        payload: dict[str, Any] | None = None,
+        repo_id: UUID | str | None = None,
+        actor_id: UUID | str | None = None,
+        freshness_source: str = "architecture-generator",
+    ) -> KGNode:
+        """Mirror a domain artifact into the Knowledge Graph (M5-G2).
+
+        Each architecture generator calls this once per row commit so
+        the typed ADR / API Contract / Risk Register / Standard
+        Attestation / Task Breakdown / Acceptance Criteria artifact
+        appears in the M8 React Flow KG viz. ``payload`` carries the
+        hand-curated fields (number, title, status, severity…) while
+        ``artifact_id`` is the primary-key id of the underlying row
+        (so consumers can join back to the source table).
+
+        Idempotency: a duplicate (artifact_type, artifact_id) pair
+        produces an additional KG node (KG is append-only); the
+        consumer dedup window is left to the caller.
+        """
+        factory = get_session_factory()
+        node_payload: dict[str, Any] = dict(payload or {})
+        node_payload["artifact_type"] = artifact_type
+        node_payload["artifact_id"] = str(artifact_id)
+
+        resolved_name = (
+            node_payload.get("name")
+            or node_payload.get("title")
+            or f"{artifact_type}:{artifact_id}"
+        )
+        now = datetime.now(timezone.utc)
+        async with factory() as session:
+            row = KGNode(
+                tenant_id=str(tenant_id),
+                project_id=str(project_id),
+                repo_id=str(repo_id) if repo_id else None,
+                node_type=artifact_type,
+                name=str(resolved_name)[:512],
+                properties=node_payload,
+                freshness_at=now,
+                freshness_source=freshness_source,
+            )
+            session.add(row)
+            await session.commit()
+            await session.refresh(row)
+
+        await self._bus.publish(
+            EventType.ARTIFACT_CREATED,
+            {
+                "graph_event": "node_added",
+                "node_id": str(row.id),
+                "node_type": artifact_type,
+                "artifact_type": artifact_type,
+                "artifact_id": str(artifact_id),
+            },
+            tenant_id=tenant_id,
+            project_id=project_id,
+            actor_id=actor_id,
+        )
+        logger.info(
+            "artifact_registry.registered",
+            tenant_id=str(tenant_id),
+            project_id=str(project_id),
+            artifact_type=artifact_type,
+            artifact_id=str(artifact_id),
+            node_id=str(row.id),
+        )
+        return row
 
 
 artifact_registry = ArtifactRegistry()
