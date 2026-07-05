@@ -75,7 +75,11 @@ const ROWS: ReadonlyArray<{
     'standards' | 'templates' | 'governance_policies' | 'steering_rules'
   >;
   label: string;
-  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+  icon: React.ComponentType<{
+    className?: string;
+    style?: React.CSSProperties;
+    'aria-hidden'?: boolean;
+  }>;
 }> = [
   { key: 'standards', label: 'Standards', icon: ScrollText },
   { key: 'templates', label: 'Templates', icon: FileCode2 },
