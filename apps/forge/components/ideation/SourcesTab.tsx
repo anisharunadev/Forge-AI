@@ -56,7 +56,10 @@ function wireToFixture(src: IngestSourceRead): IngestSourceFixture {
     kind: src.kind,
     icon: iconForKind(src.kind, src.slug),
     description: src.description,
-    status: src.status === 'syncing' ? 'connected' : src.status,
+    // Preserve all wire statuses; the card surfaces 'syncing',
+    // 'connected', 'available', 'error', 'disabled' with their own
+    // visual treatment (badge color etc.).
+    status: src.status,
     accent: src.accent,
     lastSync: src.last_sync ?? '—',
     todayCount: src.today_count,
@@ -113,7 +116,7 @@ interface IngestSourceFixture {
     | 'Webhook'
     | 'Slack';
   readonly description: string;
-  readonly status: 'connected' | 'available' | 'error';
+  readonly status: IngestSourceRead['status'];
   readonly accent: SourceAccent;
   readonly lastSync: string;
   readonly todayCount: number;
