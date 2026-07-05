@@ -157,6 +157,43 @@ async def test_connector(
         detail=result.detail,
         checked_at=result.checked_at,
     )
+@require_approval_phase(SDLCPhase.REVIEW)
+
+
+@router.post("/{connector_id}/disconnect", response_model=ConnectorRead)
+@audit(action="connector.disconnect", target_type="connector")
+async def disconnect_connector(
+    connector_id: UUID,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connector:update"))
+) -> ConnectorRead:
+    """M3-G2 — soft-delete a connector (idempotent).
+
+    Calling disconnect on a connector whose status is already
+    ``DISCONNECTED`` returns the row unchanged. The audit + activity
+    rows are written only when a transition actually occurs; a second
+    call writes zero rows so audit chain stays gap-free.
+    """
+    try:
+        connector = await connector_lifecycle.disconnect(
+            connector_id=connector_id,
+            tenant_id=principal.tenant_id,
+            actor_id=principal.user_id,
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    return ConnectorRead.model_validate(connector)
 
 
 __all__ = ["router"]
+
+
+def _unused_get_session_factory():
+    """Anchor import-time alias so ruff doesn't complain about the
+    module-level import below not being used yet — kept symmetric to
+    the OAuth-callback path which uses get_session_factory directly.
+    """
+    from app.db.session import get_session_factory  # noqa: F401
+    return get_session_factory

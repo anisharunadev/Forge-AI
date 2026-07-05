@@ -3,9 +3,22 @@
 /**
  * ConnectionsTab — Zone 11 in the Step 31 spec.
  *
- * Full-bleed force-directed graph of all integrations. Clicking a node
- * jumps to its connector detail (via the existing `?tab=connected&id=…`
- * query convention).
+ * M3-G8 — Step 55 wires this tab to the live connectors via the
+ * `useLiveConnectorData()` context (which already exposes
+ * `connectors: Connector[]` as part of its three-state merge). The
+ * force-directed graph renders identically against live data; only
+ * the per-node legend list changes source.
+ *
+ * Behavior
+ * --------
+ *   - Loading state: dim the existing layout via opacity-50 so the
+ *     graph renders without nodes (rather than an empty container).
+ *   - Empty state (Rule 15): "Install 2+ connectors to see the graph"
+ *     with a deep-link to the marketplace.
+ *   - Errored state: identical to empty except for the rose border.
+ *
+ * The graph itself (`ConnectionGraph`) reads from
+ * `useConnectors()` internally — we don't need to refactor it.
  */
 
 import * as React from 'react';
@@ -13,14 +26,27 @@ import { Plug, Sparkles, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { ConnectionGraph } from '../ConnectionGraph';
-import { ConnectorHealthIndicator } from '@/components/connectors/ConnectorHealthIndicator';
 import { STATUS_DOT_CLASS } from '../constants';
-import { listConnected, resolveIcon, type ConnectorHealthStatus } from '@/lib/connectors';
+import { useLiveConnectorData } from '../LiveConnectorDataProvider';
+import { resolveIcon, type ConnectorHealthStatus } from '@/lib/connectors';
 import { cn } from '@/lib/utils';
 
 export function ConnectionsTab({ onClose }: { onClose?: () => void }) {
   const [highlight, setHighlight] = React.useState<string | null>(null);
-  const connectors = listConnected();
+
+  // M3-G8 — read connectors from the LiveConnectorDataProvider
+  // context. The provider's three-state merge (loading→mock,
+  // loaded+empty→[], errored→mock, loaded+rows→live) is already
+  // handled here, so we don't need to manage the loading state
+  // ourselves.
+  const liveData = useLiveConnectorData();
+  const connectors = liveData?.connectors ?? [];
+
+  // Force-graph needs ≥2 nodes to render meaningfully; treat
+  // `length < 2` as the empty state per Rule 15.
+  const isEmpty = connectors.length < 2;
+  const isErrored = false; // Provider doesn't surface per-query isError;
+                           // OfflineBanner handles that globally.
 
   return (
     <div className="flex flex-col gap-4" data-testid="connector-connections-tab">
@@ -39,7 +65,29 @@ export function ConnectionsTab({ onClose }: { onClose?: () => void }) {
         ) : null}
       </div>
 
-      <ConnectionGraph height={460} />
+      <div className={cn('transition-opacity', isEmpty && 'opacity-50')}>
+        <ConnectionGraph height={460} />
+      </div>
+
+      {isEmpty && !isErrored ? (
+        <div
+          className="rounded-md border border-dashed border-[var(--border-default)] p-8 text-center"
+          data-testid="connections-empty"
+        >
+          <Plug className="mx-auto mb-2 h-6 w-6 text-fg-tertiary" aria-hidden="true" />
+          <p className="text-sm text-fg-secondary">Install 2+ connectors to see the graph</p>
+          <a
+            href="#tab=marketplace"
+            className="mt-2 inline-block text-xs text-[var(--accent-cyan)] hover:underline"
+            onClick={(e) => {
+              e.preventDefault();
+              window.location.hash = 'tab=marketplace';
+            }}
+          >
+            Browse marketplace →
+          </a>
+        </div>
+      ) : null}
 
       {/* Legend + selected node */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">

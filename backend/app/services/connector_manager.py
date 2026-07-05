@@ -12,7 +12,7 @@ import random
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from sqlalchemy import select
@@ -26,6 +26,7 @@ from app.db.models.connector import (
     ConnectorType,
     SyncStatus,
 )
+from app.db.models.connector_activity import ConnectorActivity
 from app.db.session import get_session_factory
 from app.services.connector_states import ConnectorState, connector_state_machine
 from app.services.event_bus import EventType, bus as default_bus
@@ -345,6 +346,158 @@ class ConnectorManager:
         """Stub probe. Real implementation issues a HEAD/GET to the upstream URL."""
         if not connector.config:
             raise RuntimeError("connector_missing_config")
+
+    # ------------------------------------------------------------------
+    # M3 — activity timeline + disconnect (Gaps M3-G1 / M3-G2)
+    # ------------------------------------------------------------------
+
+    async def list_activity(
+        self,
+        tenant_id: UUID | str,
+        *,
+        connector_id: UUID | str | None = None,
+        event_type: str | None = None,
+        since: datetime | None = None,
+        limit: int = 50,
+        before_id: UUID | str | None = None,
+    ) -> list[ConnectorActivity]:
+        """Read a slice of the ``connector_activity`` timeline.
+
+        Query plan:
+        - tenant-scoped (Rule 2);
+        - sorted by ``started_at DESC`` with ``id`` as a deterministic
+          tiebreaker so pagination via ``before_id`` is stable even
+          when two events share a started_at millisecond;
+        - the per-call limit is clamped into the [1, 200] band per
+          the spec, with a sensible default of 50;
+        - ``before_id`` enables cursor pagination: rows strictly older
+          than the cursor row (as ordered by ``(started_at, id)``) are
+          returned, so a follow-up call yields the next page without
+          overlap. The cursor row is resolved via a subquery against
+          ``started_at`` so the age comparison is precise even when the
+          UUID space is random.
+        """
+        bounded_limit = max(1, min(int(limit), 200))
+        factory = get_session_factory()
+        async with factory() as session:
+            stmt = select(ConnectorActivity).where(
+                ConnectorActivity.tenant_id == str(tenant_id)
+            )
+            if connector_id is not None:
+                stmt = stmt.where(
+                    ConnectorActivity.connector_id == str(connector_id)
+                )
+            if event_type is not None:
+                stmt = stmt.where(ConnectorActivity.event_type == event_type)
+            if since is not None:
+                stmt = stmt.where(ConnectorActivity.started_at >= since)
+            if before_id is not None:
+                # Resolve the cursor row's started_at so the age
+                # comparison can be expressed in (started_at, id) order
+                # rather than relying on UUID randomness. When the
+                # cursor isn't in this tenant we treat it as a no-op
+                # rather than returning nothing.
+                cursor_row = await session.get(
+                    ConnectorActivity, str(before_id)
+                )
+                if cursor_row is not None and str(
+                    cursor_row.tenant_id
+                ) == str(tenant_id):
+                    cursor_started_at = cursor_row.started_at
+                    stmt = stmt.where(
+                        (ConnectorActivity.started_at < cursor_started_at)
+                        | (
+                            (ConnectorActivity.started_at == cursor_started_at)
+                            & (ConnectorActivity.id < str(before_id))
+                        )
+                    )
+            stmt = stmt.order_by(
+                ConnectorActivity.started_at.desc(),
+                ConnectorActivity.id.desc(),
+            ).limit(bounded_limit)
+            return list((await session.execute(stmt)).scalars().all())
+
+    async def record_activity(
+        self,
+        *,
+        tenant_id: UUID | str,
+        project_id: UUID | str,
+        connector_id: UUID | str,
+        event_type: str,
+        status: str = "success",
+        started_at: datetime | None = None,
+        finished_at: datetime | None = None,
+        records_affected: int | None = None,
+        actor_id: UUID | str | None = None,
+        error_message: str | None = None,
+        event_metadata: dict[str, Any] | None = None,
+    ) -> ConnectorActivity:
+        """Append one row to ``connector_activity``.
+
+        Used by the disconnect endpoint (event_type='disconnect') and
+        the OAuth callback (event_type='install'). Other call sites are
+        free to use it too — the schema is broad enough to hold all
+        event_type values declared in
+        :mod:`app.schemas.connector_activity`.
+        """
+        factory = get_session_factory()
+        async with factory() as session:
+            row = ConnectorActivity(
+                tenant_id=str(tenant_id),
+                project_id=str(project_id),
+                connector_id=str(connector_id),
+                event_type=event_type,
+                status=status,
+                started_at=started_at or datetime.now(timezone.utc),
+                finished_at=finished_at,
+                records_affected=records_affected,
+                actor_id=str(actor_id) if actor_id else None,
+                error_message=error_message,
+                event_metadata=event_metadata or {},
+            )
+            session.add(row)
+            await session.commit()
+            await session.refresh(row)
+        return row
+
+    async def disconnect_connector(
+        self,
+        connector_id: UUID | str,
+        *,
+        actor_id: UUID | str | None = None,
+    ) -> Connector:
+        """M3-G2 — soft-delete a connector.
+
+        Idempotent: if the connector is already DISCONNECTED the row is
+        returned as-is and no audit/activity rows are written. The
+        HTTP layer relies on this to surface a zero-write second call.
+        """
+        factory = get_session_factory()
+        async with factory() as session:
+            connector = await session.get(Connector, str(connector_id))
+            if connector is None:
+                raise LookupError(f"Connector {connector_id} not found")
+            prior_status = ConnectorStatus(connector.status)
+            if prior_status == ConnectorStatus.DISCONNECTED:
+                return connector
+            connector.status = ConnectorStatus.DISCONNECTED
+            connector.disconnected_at = datetime.now(timezone.utc)
+            await session.commit()
+            await session.refresh(connector)
+
+        await self._bus.publish(
+            EventType.CONNECTOR_SYNCING,
+            {
+                "connector_id": str(connector.id),
+                "event": "disconnected",
+                "from_state": prior_status.value,
+                "to_state": ConnectorStatus.DISCONNECTED.value,
+            },
+            tenant_id=connector.tenant_id,
+            project_id=connector.project_id,
+            actor_id=actor_id,
+        )
+        return connector
 
 
 # Re-export for caller convenience.

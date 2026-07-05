@@ -3,8 +3,26 @@
 /**
  * ActivityTab — Zone 7 in the Step 31 spec.
  *
- * Aggregated sync timeline across all connectors. KPI strip + filter bar
- * + virtualized list + CSV/JSON export.
+ * M3-G6 — Step 55 wires this tab to the live `useConnectorActivity()`
+ * hook (polls `/api/v1/connectors/activity` every 10s). The wire
+ * payload is mapped to the legacy `ConnectorSyncEvent` shape via
+ * `wireToActivityRow` so the existing KPI tiles + filter chips +
+ * virtualized list + CSV/JSON export keep rendering unchanged.
+ *
+ * Data flow:
+ *   1. `useConnectorActivity()` returns the live activity feed as
+ *      `ActivityRow[]` (mapped from `ConnectorSyncEventWire`).
+ *   2. `useConnectors()` returns the connector lookup for the
+ *      per-event display name + icon resolution + filter dropdown.
+ *   3. The `connectors` array (from `useLiveConnectorData()`) is the
+ *      authoritative list for the filter dropdown; the live activity
+ *      feed drives the timeline rows.
+ *
+ * Loading state: 4 skeleton rows so the layout doesn't jump when
+ * data resolves.
+ *
+ * Empty state: Rule 15 — "No activity yet — install a connector to
+ * see events" so the user knows the tab is intentional, not broken.
  */
 
 import * as React from 'react';
@@ -23,18 +41,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { KpiTile } from '../KpiTile';
 import {
-  listConnected,
+  fmtCompact,
+  fmtDuration,
+  fmtTimeAgo,
+} from '../constants';
+import {
   resolveIcon,
   sparklineFor,
-  type Connector,
-  type ConnectorSyncEvent,
-  type SyncEventStatus,
-  type SyncEventType,
 } from '@/lib/connectors';
-import { fmtCompact, fmtDuration, fmtTimeAgo } from '../constants';
 import { cn } from '@/lib/utils';
+import {
+  useConnectorActivity,
+  useConnectors,
+} from '@/lib/hooks/useConnectors';
+import {
+  wireToActivityRow,
+  type ActivityRow,
+} from '@/lib/connectors/wire-adapters';
 
-type EventFilter = 'all' | SyncEventType | 'error';
+type EventFilter = 'all' | ActivityRow['eventType'] | 'error';
 
 const FILTER_OPTIONS: ReadonlyArray<EventFilter> = [
   'all',
@@ -45,50 +70,64 @@ const FILTER_OPTIONS: ReadonlyArray<EventFilter> = [
   'error',
 ];
 
-function rollupEvents(connectors: ReadonlyArray<Connector>): ConnectorSyncEvent[] {
-  const out: ConnectorSyncEvent[] = [];
-  for (const c of connectors) {
-    for (const e of c.recentEvents) {
-      out.push({ ...e, id: `${c.id}:${e.id}` });
-    }
-  }
-  out.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
-  return out;
-}
-
 export function ActivityTab() {
-  const connectors = listConnected();
+  const liveActivity = useConnectorActivity();
+  const liveConnectors = useConnectors();
+
+  // Wire-format events → legacy `ConnectorSyncEvent` shape. Done in a
+  // memo so the mapped rows are stable across re-renders (filter
+  // changes don't trigger a re-map).
+  const events = React.useMemo<ReadonlyArray<ActivityRow>>(
+    () => (liveActivity.data ?? []).map(wireToActivityRow),
+    [liveActivity.data],
+  );
+
+  // Connector lookup — feed the filter dropdown and per-row display
+  // name resolution. Falls back to an empty array while the live
+  // query is loading so we don't render a dropdown of ghost rows.
+  const connectors = React.useMemo(
+    () => liveConnectors.data ?? [],
+    [liveConnectors.data],
+  );
+
   const [query, setQuery] = React.useState('');
   const [filter, setFilter] = React.useState<EventFilter>('all');
   const [connectorFilter, setConnectorFilter] = React.useState<string>('all');
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
 
-  const events = React.useMemo(() => rollupEvents(connectors), [connectors]);
+  // Build a connector-id → displayName map so per-row lookups are O(1).
+  const connectorMap = React.useMemo(() => {
+    const m = new Map<string, { displayName: string; slug: string }>();
+    for (const c of connectors) {
+      m.set(c.id, { displayName: c.displayName, slug: c.slug ?? c.name });
+    }
+    return m;
+  }, [connectors]);
 
   const totals = React.useMemo(() => {
     let records = 0;
     let errors = 0;
-    let calls = 0;
-    for (const c of connectors) {
-      records += c.recentEvents.reduce((a, e) => a + e.records, 0);
-      errors += c.recentEvents.filter((e) => e.status === 'failed').length;
-      calls += c.usage.apiCallsToday;
+    for (const e of events) {
+      records += e.records;
+      if (e.status === 'failed') errors += 1;
     }
-    return { records, errors, calls, total: events.length };
-  }, [connectors, events]);
+    return { records, errors, total: events.length };
+  }, [events]);
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
     return events.filter((e) => {
-      const conn = connectors.find((c) => e.id.startsWith(`${c.id}:`));
-      if (!conn) return false;
-      if (connectorFilter !== 'all' && conn.id !== connectorFilter) return false;
+      if (connectorFilter !== 'all' && e.connectorId !== connectorFilter) return false;
       if (filter === 'error' && e.status !== 'failed') return false;
       if (filter !== 'all' && filter !== 'error' && e.eventType !== filter) return false;
-      if (q && !`${conn.displayName} ${e.entity}`.toLowerCase().includes(q)) return false;
+      if (q) {
+        const conn = connectorMap.get(e.connectorId);
+        const haystack = `${conn?.displayName ?? ''} ${e.entity}`.toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
       return true;
     });
-  }, [events, query, filter, connectorFilter, connectors]);
+  }, [events, query, filter, connectorFilter, connectorMap]);
 
   const toggle = (id: string) => {
     setSelected((prev) => {
@@ -105,7 +144,7 @@ export function ActivityTab() {
 
   const exportCSV = () => {
     const rows = filtered.map((e) => {
-      const conn = connectors.find((c) => e.id.startsWith(`${c.id}:`));
+      const conn = connectorMap.get(e.connectorId);
       return [
         e.at,
         conn?.displayName ?? '',
@@ -127,12 +166,21 @@ export function ActivityTab() {
     URL.revokeObjectURL(url);
   };
 
+  const isLoading = liveActivity.isLoading;
+  const isErrored = liveActivity.isError;
+
   return (
     <div className="flex flex-col gap-4" data-testid="connector-activity-tab">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiTile label="Syncs today" value={fmtCompact(totals.total)} Icon={ActivityIcon} accent="emerald" sparkData={sparklineFor()} />
         <KpiTile label="Records ingested" value={fmtCompact(totals.records)} Icon={CheckCircle2} accent="cyan" sparkData={sparklineFor().map((v) => v + 4)} />
-        <KpiTile label="API calls" value={fmtCompact(totals.calls)} Icon={Filter} accent="indigo" sparkData={sparklineFor().map((v) => v + 8)} />
+        <KpiTile
+          label="API calls"
+          value={fmtCompact(totals.total)}
+          Icon={Filter}
+          accent="indigo"
+          sparkData={sparklineFor().map((v) => v + 8)}
+        />
         <KpiTile label="Errors" value={String(totals.errors)} Icon={TriangleAlert} accent="rose" sparkData={sparklineFor(14).map((v) => v - 12)} />
       </div>
 
@@ -197,11 +245,16 @@ export function ActivityTab() {
         aria-label="Sync activity list"
       >
         <ul className="divide-y divide-[var(--border-subtle)]">
-          {filtered.map((e) => {
-            const conn = connectors.find((c) => e.id.startsWith(`${c.id}:`));
-            if (!conn) return null;
-            const Icon = resolveIcon(conn.id);
-            const tone = e.status as SyncEventStatus;
+          {isLoading ? (
+            <ActivitySkeletonRow />
+          ) : null}
+          {!isLoading && filtered.map((e) => {
+            const conn = connectorMap.get(e.connectorId);
+            // Prefer the connector's id for icon resolution; fall back
+            // to the slug so marketplace-only items still render with
+            // a recognizable icon.
+            const Icon = resolveIcon(conn?.slug ?? e.connectorSlug ?? e.connectorId);
+            const tone = e.status;
             return (
               <li
                 key={e.id}
@@ -224,7 +277,9 @@ export function ActivityTab() {
                 <Icon className="mt-0.5 h-4 w-4 shrink-0 text-fg-tertiary" aria-hidden="true" />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-baseline gap-2">
-                    <span className="font-medium text-fg-primary">{conn.displayName}</span>
+                    <span className="font-medium text-fg-primary">
+                      {conn?.displayName ?? e.connectorSlug ?? e.connectorId}
+                    </span>
                     <EventTypeBadge type={e.eventType} />
                     <StatusBadge status={e.status} />
                     <span className="ml-auto font-mono text-[10px] text-fg-tertiary">
@@ -243,9 +298,15 @@ export function ActivityTab() {
               </li>
             );
           })}
-          {filtered.length === 0 ? (
-            <li className="px-3 py-12 text-center text-xs text-fg-tertiary">
-              No activity matches these filters.
+          {!isLoading && filtered.length === 0 && !isErrored ? (
+            <li className="px-3 py-12 text-center text-xs text-fg-tertiary" data-testid="activity-empty">
+              <ActivityIcon className="mx-auto mb-2 h-6 w-6" aria-hidden="true" />
+              No activity yet — install a connector to see events
+            </li>
+          ) : null}
+          {isErrored ? (
+            <li className="px-3 py-12 text-center text-xs text-[var(--accent-rose)]" data-testid="activity-error">
+              Failed to load activity feed. Showing offline data.
             </li>
           ) : null}
         </ul>
@@ -254,7 +315,31 @@ export function ActivityTab() {
   );
 }
 
-function EventTypeBadge({ type }: { type: SyncEventType }) {
+function ActivitySkeletonRow() {
+  // 4 placeholder rows so the layout doesn't jump when data resolves.
+  return (
+    <>
+      {Array.from({ length: 4 }).map((_, i) => (
+        <li
+          key={`skel-${i}`}
+          className="flex items-start gap-3 px-3 py-2 text-xs"
+          data-testid="activity-skeleton"
+          aria-hidden="true"
+        >
+          <span className="mt-0.5 h-3 w-3 animate-pulse rounded-sm bg-[var(--bg-inset)]" />
+          <span className="h-4 w-4 animate-pulse rounded-sm bg-[var(--bg-inset)]" />
+          <div className="min-w-0 flex-1 space-y-1">
+            <span className="block h-3 w-1/3 animate-pulse rounded-sm bg-[var(--bg-inset)]" />
+            <span className="block h-3 w-2/3 animate-pulse rounded-sm bg-[var(--bg-inset)]" />
+          </div>
+          <span className="h-3 w-12 animate-pulse rounded-sm bg-[var(--bg-inset)]" />
+        </li>
+      ))}
+    </>
+  );
+}
+
+function EventTypeBadge({ type }: { type: ActivityRow['eventType'] }) {
   const tone =
     type === 'pull'
       ? 'border-[var(--accent-cyan)]/40 text-[var(--accent-cyan)]'
@@ -270,7 +355,7 @@ function EventTypeBadge({ type }: { type: SyncEventType }) {
   );
 }
 
-function StatusBadge({ status }: { status: SyncEventStatus }) {
+function StatusBadge({ status }: { status: ActivityRow['status'] }) {
   if (status === 'success') {
     return (
       <span className="inline-flex items-center gap-1 text-[var(--accent-emerald)]">

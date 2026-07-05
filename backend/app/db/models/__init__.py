@@ -8,6 +8,7 @@ from app.db.models.artifact import Artifact
 from app.db.models.audit import AuditEvent
 from app.db.models.board_confirmation import BoardConfirmation, BoardConfirmationOutcome
 from app.db.models.connector import Connector, ConnectorSyncHistory
+from app.db.models.connector_activity import ConnectorActivity
 from app.db.models.connector_credential import (
     ConnectorCredential,
     CredentialScope,

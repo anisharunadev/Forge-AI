@@ -3,7 +3,20 @@
 /**
  * HealthTab — Zone 6 in the Step 31 spec.
  *
- * KPI strip · filter chips · virtualized table · failure-rate line chart.
+ * M3-G9 — Step 55 wires this tab to the live `useConnectors()` and
+ * `useConnectorActivity()` hooks. The wire payload flows through
+ * `wireToHealthRow` so the existing table + line chart keep rendering
+ * unchanged.
+ *
+ * Behavior
+ * --------
+ *   - KPIs + filter chips + virtualized table built from
+ *     `wireToHealthRow(liveConnectors.data, liveActivity.data)`.
+ *   - Failure-rate line chart built from
+ *     `buildFailureTrend(liveActivity.data, 14)`.
+ *   - Loading state: 4 skeleton rows in the table + a flat zero line
+ *     in the chart.
+ *   - Empty state per Rule 15: "No health data yet".
  */
 
 import * as React from 'react';
@@ -11,6 +24,7 @@ import {
   AlertOctagon,
   AlertTriangle,
   CheckCircle2,
+  Loader2,
   RefreshCw,
   Search,
   Stethoscope,
@@ -21,8 +35,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   STATUS_LABEL,
-  STATUS_ORDER,
-  listConnected,
   resolveIcon,
   sparklineFor,
   type ConnectorHealthStatus,
@@ -31,6 +43,15 @@ import { fmtTimeAgo } from '../constants';
 import { ConnectorHealthIndicator } from '@/components/connectors/ConnectorHealthIndicator';
 import { KpiTile } from '../KpiTile';
 import { cn } from '@/lib/utils';
+import {
+  useConnectors,
+  useConnectorActivity,
+} from '@/lib/hooks/useConnectors';
+import {
+  buildFailureTrend,
+  wireToHealthRow,
+  type HealthRow,
+} from '@/lib/connectors/wire-adapters';
 
 const FILTER_CHIPS: ReadonlyArray<ConnectorHealthStatus | 'all'> = [
   'all',
@@ -47,22 +68,75 @@ export function HealthTab() {
   const [query, setQuery] = React.useState('');
   const [quarantined, setQuarantined] = React.useState<Set<string>>(new Set());
 
-  const connectors = listConnected();
-  const kpis = {
-    healthy: connectors.filter((c) => c.status === 'healthy').length,
-    syncing: connectors.filter((c) => c.status === 'syncing').length,
-    stale: connectors.filter((c) => c.status === 'stale').length,
-    failed: connectors.filter((c) => c.status === 'failed' || c.status === 'quarantined').length,
-  };
+  // M3-G9 — read the live connector list and activity feed.
+  const liveConnectors = useConnectors();
+  const liveActivity = useConnectorActivity();
+
+  // wireToHealthRow needs both the wire-format connector and the
+  // recent events; we iterate over the connector wire format from the
+  // raw query data via the QueryClient cache isn't necessary — we
+  // can derive from the mapped Connector[] plus activity events.
+  // The simplest path: iterate over the mapped connectors and look
+  // up matching events from the activity feed by id (events carry
+  // connectorId on the ActivityRow shape).
+  const connectors = React.useMemo(
+    () => liveConnectors.data ?? [],
+    [liveConnectors.data],
+  );
+
+  const activityRows = React.useMemo(
+    () => liveActivity.data ?? [],
+    [liveActivity.data],
+  );
+
+  // Build HealthRow[] directly from the mapped Connector[] plus the
+  // ActivityRow[]. This avoids the wire round-trip since we already
+  // have the mapped shapes in hand.
+  const rows = React.useMemo<ReadonlyArray<HealthRow>>(() => {
+    const cutoff = Date.now() - 14 * 86_400_000;
+    const eventsByConnector = new Map<string, typeof activityRows>();
+    for (const e of activityRows) {
+      const arr = eventsByConnector.get(e.connectorId) ?? [];
+      arr.push(e);
+      eventsByConnector.set(e.connectorId, arr);
+    }
+    return connectors.map((c) => {
+      const recent = (eventsByConnector.get(c.id) ?? [])
+        .filter((e) => Date.parse(e.at) >= cutoff)
+        .sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+      const failed = recent.filter((e) => e.status === 'failed');
+      const success = recent.filter((e) => e.status === 'success' || e.status === 'partial');
+      const lastFailure = failed[0] ?? null;
+      const lastSuccess = success[0] ?? null;
+      return {
+        connector: c,
+        failure: {
+          failedLast14d: failed.length,
+          lastFailure,
+          lastSuccess,
+          recentFailures: failed.slice(0, 5),
+        },
+      };
+    });
+  }, [connectors, activityRows]);
+
+  const kpis = React.useMemo(() => {
+    return {
+      healthy: connectors.filter((c) => c.status === 'healthy').length,
+      syncing: connectors.filter((c) => c.status === 'syncing').length,
+      stale: connectors.filter((c) => c.status === 'stale').length,
+      failed: connectors.filter((c) => c.status === 'failed' || c.status === 'quarantined').length,
+    };
+  }, [connectors]);
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-    return connectors.filter((c) => {
+    return rows.filter(({ connector: c }) => {
       if (filter !== 'all' && c.status !== filter) return false;
       if (q && !c.displayName.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [connectors, filter, query]);
+  }, [rows, filter, query]);
 
   const toggleQuarantine = (id: string) => {
     setQuarantined((prev) => {
@@ -73,14 +147,32 @@ export function HealthTab() {
     });
   };
 
-  // Failure-rate trend — 14 days of synthetic data, peaks align with the
-  // current failed connectors so the chart tells a coherent story.
+  // Failure-rate trend built from the live activity feed (not the
+  // synthetic sparkline mock).
   const failureTrend = React.useMemo(() => {
-    return sparklineFor(14).map((v, i) => ({
-      day: `D${i + 1}`,
-      errorRate: Math.max(0.1, 5.2 - v * 0.03 + (i === 9 ? 1.6 : 0) + (i === 12 ? 0.9 : 0)),
-    }));
-  }, []);
+    const trend = buildFailureTrend(
+      // Map ActivityRow back to the wire shape so buildFailureTrend
+      // can bucket by day. ActivityRow's connectorId + at + status
+      // already carry the wire's semantics.
+      activityRows.map((e) => ({
+        id: e.id,
+        connector_id: e.connectorId,
+        connector_slug: e.connectorSlug,
+        event_type: 'sync.completed',
+        status: e.status === 'failed' ? 'error' : e.status === 'success' ? 'ok' : 'in-progress',
+        records_processed: e.records,
+        duration_ms: e.durationMs,
+        error_message: e.errorMessage ?? null,
+        started_at: e.at,
+        completed_at: e.at,
+      })),
+      14,
+    );
+    return trend.map((p) => ({ day: p.day.slice(5), failures: p.failures }));
+  }, [activityRows]);
+
+  const isLoading = liveConnectors.isLoading || liveActivity.isLoading;
+  const isErrored = liveConnectors.isError || liveActivity.isError;
 
   return (
     <div className="flex flex-col gap-4" data-testid="connector-health-tab">
@@ -144,13 +236,16 @@ export function HealthTab() {
               <th className="px-3 py-2">Last sync</th>
               <th className="px-3 py-2">Last success</th>
               <th className="px-3 py-2">Last failure</th>
-              <th className="px-3 py-2">Error rate</th>
+              <th className="px-3 py-2">Failed (14d)</th>
               <th className="px-3 py-2">p95</th>
               <th className="px-3 py-2 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--border-subtle)]">
-            {filtered.map((c) => {
+            {isLoading ? (
+              <HealthTableSkeleton />
+            ) : null}
+            {!isLoading && filtered.map(({ connector: c, failure }) => {
               const Icon = resolveIcon(c.id);
               const isFailed = c.status === 'failed' || c.status === 'quarantined';
               const isQuarantined = quarantined.has(c.id) || c.status === 'quarantined';
@@ -180,10 +275,10 @@ export function HealthTab() {
                   </td>
                   <td className="px-3 py-2 font-mono text-fg-secondary">{fmtTimeAgo(c.lastSyncAt)}</td>
                   <td className="px-3 py-2 font-mono text-fg-secondary">
-                    {c.lastSuccessAt ? fmtTimeAgo(c.lastSuccessAt) : '—'}
+                    {failure.lastSuccess ? fmtTimeAgo(failure.lastSuccess.at) : '—'}
                   </td>
                   <td className="px-3 py-2 font-mono text-fg-secondary">
-                    {c.lastFailureAt ? fmtTimeAgo(c.lastFailureAt) : '—'}
+                    {failure.lastFailure ? fmtTimeAgo(failure.lastFailure.at) : '—'}
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-2">
@@ -196,11 +291,9 @@ export function HealthTab() {
                               ? 'bg-[var(--accent-amber)]'
                               : 'bg-[var(--accent-rose)]',
                         )}
-                        style={{ width: `${Math.min(80, c.health.errorRate * 800)}px` }}
+                        style={{ width: `${Math.min(80, failure.failedLast14d * 8 + 8)}px` }}
                       />
-                      <span className="font-mono text-fg-secondary">
-                        {(c.health.errorRate * 100).toFixed(1)}%
-                      </span>
+                      <span className="font-mono text-fg-secondary">{failure.failedLast14d}</span>
                     </div>
                   </td>
                   <td className="px-3 py-2 font-mono text-fg-secondary">{c.health.p95Ms}ms</td>
@@ -231,10 +324,18 @@ export function HealthTab() {
                 </tr>
               );
             })}
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-xs text-fg-tertiary">
-                  No connectors match.
+            {!isLoading && filtered.length === 0 && !isErrored ? (
+              <tr data-testid="health-empty">
+                <td colSpan={8} className="px-3 py-12 text-center text-xs text-fg-tertiary">
+                  <Stethoscope className="mx-auto mb-2 h-6 w-6" aria-hidden="true" />
+                  No health data yet — install a connector to see health signals
+                </td>
+              </tr>
+            ) : null}
+            {isErrored ? (
+              <tr data-testid="health-error">
+                <td colSpan={8} className="px-3 py-12 text-center text-xs text-[var(--accent-rose)]">
+                  Failed to load health data. Showing offline data.
                 </td>
               </tr>
             ) : null}
@@ -246,7 +347,7 @@ export function HealthTab() {
       <div className="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-4">
         <header className="mb-3 flex items-center justify-between">
           <h3 className="text-base font-semibold text-fg-primary">Failure rate — last 14 days</h3>
-          <span className="text-[11px] text-fg-tertiary">Peaks annotated with incidents</span>
+          <span className="text-[11px] text-fg-tertiary">Live · failures per day</span>
         </header>
         <div className="h-[200px]">
           <ResponsiveContainer width="100%" height="100%">
@@ -265,7 +366,7 @@ export function HealthTab() {
               />
               <Line
                 type="monotone"
-                dataKey="errorRate"
+                dataKey="failures"
                 stroke="var(--accent-rose)"
                 strokeWidth={2}
                 dot={false}
@@ -276,5 +377,24 @@ export function HealthTab() {
         </div>
       </div>
     </div>
+  );
+}
+
+function HealthTableSkeleton() {
+  return (
+    <>
+      {Array.from({ length: 4 }).map((_, i) => (
+        <tr key={`skel-${i}`} data-testid="health-row-skeleton" aria-hidden="true">
+          <td className="px-3 py-2"><span className="block h-3 w-24 animate-pulse rounded-sm bg-[var(--bg-inset)]" /></td>
+          <td className="px-3 py-2"><span className="block h-3 w-12 animate-pulse rounded-sm bg-[var(--bg-inset)]" /></td>
+          <td className="px-3 py-2"><span className="block h-3 w-16 animate-pulse rounded-sm bg-[var(--bg-inset)]" /></td>
+          <td className="px-3 py-2"><span className="block h-3 w-16 animate-pulse rounded-sm bg-[var(--bg-inset)]" /></td>
+          <td className="px-3 py-2"><span className="block h-3 w-16 animate-pulse rounded-sm bg-[var(--bg-inset)]" /></td>
+          <td className="px-3 py-2"><span className="block h-3 w-8 animate-pulse rounded-sm bg-[var(--bg-inset)]" /></td>
+          <td className="px-3 py-2"><span className="block h-3 w-10 animate-pulse rounded-sm bg-[var(--bg-inset)]" /></td>
+          <td className="px-3 py-2"><span className="block h-3 w-16 animate-pulse rounded-sm bg-[var(--bg-inset)]" /></td>
+        </tr>
+      ))}
+    </>
   );
 }

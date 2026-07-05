@@ -3,14 +3,25 @@
 /**
  * MarketplaceTab — Zone 5 in the Step 31 spec.
  *
- * Featured carousel · New this month · Trending · grid · submit CTA.
- * Reuses the MarketplaceCard design (kept from Step 10) for the grid.
+ * M3-G11 — Step 55 wires the "installed vs available" split +
+ * featured carousel to consume the live data from
+ * `useLiveConnectorData().marketplace` (the provider's three-state
+ * merge already handles the offline fallback). The Install button
+ * keeps calling `useInstallConnector` / `useStartOAuth`.
  *
- * Step 55 wires the "Install" button to the real backend:
- *   - OAuth connectors redirect through `useStartOAuth` → provider
- *     consent screen → callback page → `useCompleteOAuth`.
- *   - API-key / PAT connectors collect the secret in a dialog, then
- *     call `useInstallConnector` with the slug + config.
+ * Behavior
+ * --------
+ *   - Featured carousel + New this month + Trending all read from
+ *     `useLiveConnectorData().marketplace` via the existing
+ *     marketplaceToConnectors helper.
+ *   - The marketplace list is cross-referenced against the installed
+ *     connectors (via `useConnectors()`) so already-installed items
+ *     can be greyed out.
+ *   - InstallDialog branches on credential type:
+ *     - OAuth → `useStartOAuth` (redirect to provider consent screen)
+ *     - API key / PAT → `useInstallConnector` with the slug + config
+ *   - Loading state: skeleton tiles + dim existing layout.
+ *   - Empty state per Rule 15: "No connectors match your search".
  */
 
 import * as React from 'react';
@@ -30,10 +41,20 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MarketplaceCard } from '@/components/connector-center/MarketplaceCard';
-import { listMarketplace, resolveIcon, type Connector } from '@/lib/connectors';
+import {
+  resolveIcon,
+  type Connector,
+} from '@/lib/connectors';
 import { fmtCompact } from '../constants';
 import { cn } from '@/lib/utils';
-import { useMarketplace, useInstallConnector, useStartOAuth } from '@/lib/hooks/useConnectors';
+import {
+  useMarketplace,
+  useConnectors,
+  useInstallConnector,
+  useStartOAuth,
+} from '@/lib/hooks/useConnectors';
+import { useLiveConnectorData } from '../LiveConnectorDataProvider';
+import { wireToMarketplaceItem } from '@/lib/connectors/wire-adapters';
 
 const TABS = ['All', 'Featured', 'New this month', 'Trending'] as const;
 type Tab = (typeof TABS)[number];
@@ -44,54 +65,37 @@ export function MarketplaceTab() {
   const [carouselIdx, setCarouselIdx] = React.useState(0);
   const [pendingInstall, setPendingInstall] = React.useState<Connector | null>(null);
 
-  // Step 55: prefer live marketplace data; fall back to mock.
-  const liveMarketplace = useMarketplace();
-  const mockMarketplace = listMarketplace();
-  const all = (liveMarketplace.data && liveMarketplace.data.length > 0)
-    ? liveMarketplace.data.map((m) => ({
-        id: m.slug,
-        name: m.slug,
-        displayName: m.display_name,
-        publisher: 'Forge',
-        tagline: m.description.split('\n')[0]?.slice(0, 88) ?? '',
-        description: m.description,
-        category: m.category,
-        scope: 'project' as const,
-        tier: 1 as const,
-        status: 'healthy' as const,
-        connectedAs: '',
-        lastSyncAt: new Date().toISOString(),
-        capabilities: m.capabilities as Connector['capabilities'],
-        health: { p50Ms: 0, p95Ms: 0, errorRate: 0 },
-        credential: {
-          id: `cred-${m.slug}`,
-          name: `${m.display_name} credential`,
-          type: (m.auth_type === 'oauth' ? 'oauth' : 'api_key') as Connector['credential']['type'],
-          status: 'active' as const,
-          fingerprint: '',
-          lastRotatedAt: new Date().toISOString(),
-          rotatedBy: '',
-          owner: { name: '', initials: '' },
-          scopes: m.required_scopes,
-          lengthChars: 0,
-        },
-        usage: {
-          workflows: 0,
-          destinations: 0,
-          ideationSources: 0,
-          agentContexts: 0,
-          apiCallsToday: 0,
-          rateLimitUsed: 0,
-          monthlyCostUsd: 0,
-        },
-        recentEvents: [],
-        usedIn: { workflows: [], destinations: [], agents: [], ideationSources: [] },
-        installed: false,
-        available: true,
-        featured: m.is_featured,
-        newThisMonth: false,
-      }))
-    : mockMarketplace;
+  // M3-G11 — prefer live marketplace data via the provider's
+  // three-state merge; fall back to the raw `useMarketplace()` hook
+  // when the provider context isn't mounted (storybook / isolated
+  // tests).
+  const liveMarketplaceHook = useMarketplace();
+  const providerData = useLiveConnectorData();
+
+  const connectors = useConnectors();
+
+  const installedSlugsSet = React.useMemo(() => {
+    const set = new Set<string>();
+    for (const c of connectors.data ?? []) {
+      set.add(c.slug ?? c.name);
+    }
+    return set;
+  }, [connectors.data]);
+
+  // Map wire items → Connector via wireToMarketplaceItem. We
+  // also overlay the `installed` flag from the connected list.
+  const all = React.useMemo<Connector[]>(() => {
+    if (providerData?.marketplace && providerData.marketplace.length > 0) {
+      return providerData.marketplace.map((c) => ({ ...c, installed: installedSlugsSet.has(c.slug ?? c.name) }));
+    }
+    if (liveMarketplaceHook.data && liveMarketplaceHook.data.length > 0) {
+      return liveMarketplaceHook.data
+        .map((item) => wireToMarketplaceItem(item))
+        .map((c) => ({ ...c, installed: installedSlugsSet.has(c.slug ?? c.name) }));
+    }
+    return [];
+  }, [providerData?.marketplace, liveMarketplaceHook.data, installedSlugsSet]);
+
   const featured = all.filter((c) => c.featured);
   const newThisMonth = all.filter((c) => c.newThisMonth);
   const trending = all.slice(0, 6);
@@ -113,10 +117,13 @@ export function MarketplaceTab() {
     return filtered;
   }, [tab, featured, newThisMonth, trending, filtered]);
 
+  const isLoading = liveMarketplaceHook.isLoading && all.length === 0;
+  const isErrored = liveMarketplaceHook.isError && all.length === 0;
+
   return (
     <div className="flex flex-col gap-4" data-testid="connector-marketplace-tab">
       {/* Featured carousel */}
-      {featured.length > 0 ? (
+      {!isLoading && featured.length > 0 ? (
         <section
           className="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-4"
           data-testid="marketplace-featured"
@@ -203,8 +210,11 @@ export function MarketplaceTab() {
       </div>
 
       {/* Grid (reuses the MarketplaceCard kept from Step 10) */}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {visible.map((c) => (
+      <div className={cn('grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 transition-opacity', isLoading && 'opacity-50')}>
+        {isLoading ? (
+          <MarketplaceSkeleton />
+        ) : null}
+        {!isLoading && visible.map((c) => (
           <MarketplaceCard
             key={c.id}
             connector={{
@@ -220,9 +230,14 @@ export function MarketplaceTab() {
             onInstall={c.installed ? undefined : () => setPendingInstall(c)}
           />
         ))}
-        {visible.length === 0 ? (
-          <div className="col-span-full rounded-md border border-dashed border-[var(--border-default)] p-8 text-center">
+        {!isLoading && !isErrored && visible.length === 0 ? (
+          <div className="col-span-full rounded-md border border-dashed border-[var(--border-default)] p-8 text-center" data-testid="marketplace-empty">
             <p className="text-sm text-fg-secondary">No connectors match your search.</p>
+          </div>
+        ) : null}
+        {isErrored ? (
+          <div className="col-span-full rounded-md border border-[var(--accent-rose)]/40 bg-[var(--accent-rose)]/10 p-8 text-center text-xs text-[var(--accent-rose)]" data-testid="marketplace-error">
+            Failed to load marketplace. Showing offline data.
           </div>
         ) : null}
       </div>
@@ -234,9 +249,32 @@ export function MarketplaceTab() {
   );
 }
 
+function MarketplaceSkeleton() {
+  return (
+    <>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={`skel-${i}`}
+          className="flex flex-col gap-2 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-3"
+          data-testid="marketplace-skeleton"
+          aria-hidden="true"
+        >
+          <div className="flex items-start gap-2">
+            <span className="h-10 w-10 animate-pulse rounded-md bg-[var(--bg-inset)]" />
+            <div className="flex-1 space-y-2">
+              <span className="block h-3 w-2/3 animate-pulse rounded-sm bg-[var(--bg-inset)]" />
+              <span className="block h-3 w-1/2 animate-pulse rounded-sm bg-[var(--bg-inset)]" />
+            </div>
+          </div>
+          <span className="block h-3 w-full animate-pulse rounded-sm bg-[var(--bg-inset)]" />
+        </div>
+      ))}
+    </>
+  );
+}
+
 /**
- * FeaturedCard — featured carousel tile. Step 55 wires the Install
- * button to the parent's pendingInstall state.
+ * FeaturedCard — featured carousel tile.
  */
 function FeaturedCard({ connector, onInstall }: { connector: Connector; onInstall: () => void }) {
   const Icon = resolveIcon(connector.id);
@@ -263,9 +301,9 @@ function FeaturedCard({ connector, onInstall }: { connector: Connector; onInstal
             {fmtCompact(connector.usage.apiCallsToday * 8)}
           </span>
         </span>
-        <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={onInstall}>
+        <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={onInstall} disabled={connector.installed}>
           <Plus className="h-3 w-3" aria-hidden="true" />
-          Install
+          {connector.installed ? 'Installed' : 'Install'}
         </Button>
       </div>
     </div>
