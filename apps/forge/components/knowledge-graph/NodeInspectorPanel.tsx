@@ -15,7 +15,12 @@ import {
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { useKGNode, useKGFreshness } from '@/lib/hooks/useKnowledgeGraph';
+import {
+  useKGNode,
+  useKGFreshness,
+  useBacklinks,
+} from '@/lib/hooks/useKnowledgeGraph';
+import { adapter } from '@/lib/knowledge-graph/adapter';
 import { EDGE_COLOR, EDGE_LABEL, KIND_COLOR, KIND_ICON } from './graph-palette';
 import type {
   EdgeKind,
@@ -85,6 +90,26 @@ export function NodeInspectorPanel({
         ? 'var(--accent-amber)'
         : 'var(--accent-rose)';
 
+  // ---- M8 T-B4: backlinks via dedicated hook ----------------------------
+  // The legacy implementation computed incoming edges ad-hoc by scanning
+  // the live `edges` list for `target === node.id`. M8 splits the
+  // computation in two:
+  //
+  //   outgoing ── built from the live `edges` prop (edgesQuery.data) so
+  //               freshly added outgoing edges show up immediately.
+  //   incoming ── fetched from `GET /api/v1/kg/nodes/{id}/backlinks` via
+  //               the new `useBacklinks` hook (30s poll) so the
+  //               "Referenced by" list stays fresh even if the parent
+  //               page's edge cache hasn't refetched yet.
+  //
+  // The hook returns the wire shape; we project through the existing
+  // adapter so the row renderer can consume SampleNode uniformly.
+  const backlinksQuery = useBacklinks(wireNodeId);
+  const backlinkNodes = React.useMemo<ReadonlyArray<SampleNode>>(() => {
+    if (!backlinksQuery.data) return [];
+    return backlinksQuery.data.map((wire) => adapter.toSampleNode(wire));
+  }, [backlinksQuery.data]);
+
   // ---- Connections grouped by edge kind, outgoing + incoming --------------
 
   const groups = React.useMemo<ConnectionGroup[]>(() => {
@@ -98,17 +123,33 @@ export function NodeInspectorPanel({
       }
       return g;
     };
+    // Outgoing: live list from the parent page's edgesQuery.
     for (const e of edges) {
       if (e.source === node.id) {
         const g = ensure(e.kind);
         g.rows.push({ edge: e, other: nodeIndex.get(e.target) ?? null, direction: 'out' });
-      } else if (e.target === node.id) {
-        const g = ensure(e.kind);
-        g.rows.push({ edge: e, other: nodeIndex.get(e.source) ?? null, direction: 'in' });
       }
     }
+    // Incoming: synthesise one row per backlink source. The dedicated
+    // endpoint doesn't return per-edge kind, so we collapse all backlinks
+    // into the canonical 'references' bucket — the same kind the typed
+    // React Flow view uses for primary incoming relations.
+    const backlinkBucket = ensure('references');
+    for (const source of backlinkNodes) {
+      backlinkBucket.rows.push({
+        edge: {
+          id: `backlink-${source.id}`,
+          source: source.id,
+          target: node.id,
+          kind: 'references',
+          strength: 2,
+        },
+        other: source,
+        direction: 'in',
+      });
+    }
     return Array.from(buckets.values());
-  }, [node, edges, nodeIndex]);
+  }, [node, edges, nodeIndex, backlinkNodes]);
 
   const outTotal = React.useMemo(
     () => groups.reduce((acc, g) => acc + g.rows.filter((r) => r.direction === 'out').length, 0),
@@ -118,6 +159,16 @@ export function NodeInspectorPanel({
     () => groups.reduce((acc, g) => acc + g.rows.filter((r) => r.direction === 'in').length, 0),
     [groups],
   );
+  // M8 T-B4: surface the backlinks hook state in the DOM so AC-3 tests
+  // (vitest + Playwright) can assert on it without coupling to React
+  // Query internals.
+  const backlinksState: 'idle' | 'loading' | 'ready' | 'error' = backlinksQuery.isError
+    ? 'error'
+    : backlinksQuery.isLoading
+      ? 'loading'
+      : backlinksQuery.data
+        ? 'ready'
+        : 'idle';
 
   if (!node) return null;
 
@@ -297,6 +348,7 @@ export function NodeInspectorPanel({
         <section
           className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3"
           data-testid="node-connections"
+          data-backlinks-state={backlinksState}
         >
           <header className="mb-2 flex items-baseline justify-between">
             <h3 className="text-sm font-semibold text-[var(--fg-primary)]">Connections</h3>
