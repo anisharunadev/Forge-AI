@@ -1,0 +1,56 @@
+# OpenTelemetry Collector config for Forge (Phase 5).
+#
+# Receives traces + metrics from the backend OTLP exporter, applies
+# tenant-id resource attribute mapping, tail-samples for error +
+# latency-aware retention, and forwards everything to the configured
+# backend (Tempo/Jaeger/OTLP-compatible).
+#
+# Validate with:
+#   otelcol validate infra/otel-collector.yaml
+#   yamllint infra/otel-collector.yaml
+
+receivers:
+  otlp:
+    protocols:
+      grpc: {}
+      http: {}
+
+processors:
+  resource:
+    attributes:
+      - key: tenant.id
+        from_attribute: tenant_id
+        action: insert
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 50000
+    expected_new_traces_per_sec: 500
+    policies:
+      - name: errors-always
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+      - name: latency
+        type: latency
+        latency:
+          threshold_ms: 2000
+  batch: {}
+
+exporters:
+  otlp:
+    endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+    tls:
+      insecure: false
+  logging:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [resource, tail_sampling, batch]
+      exporters: [otlp]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp]

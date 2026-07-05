@@ -1,3 +1,8 @@
+# step-48
+
+> **Status:** completed
+> **Last classified:** 2026-07-05
+
 /goal
 
 Finalize `packages/forge-pi/` and `packages/forge-browser/` to match the same level of polish, branding, and integration as `packages/forge-core/`. Both packages exist in the monorepo but need the full rename pass + wiring. Read .claude/design-system/ first.
@@ -155,6 +160,9 @@ markdown
 
 Copy
 # @forge-ai/forge-pi
+
+> **Status:** completed
+> **Last classified:** 2026-07-05
 
 
 > Product Intelligence for Forge AI

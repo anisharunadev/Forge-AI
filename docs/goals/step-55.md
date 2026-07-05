@@ -1,3 +1,8 @@
+# step-55
+
+> **Status:** completed
+> **Last classified:** 2026-07-05
+
 /goal
 
 
@@ -1657,6 +1662,9 @@ python
 
 Copy
 # backend/app/api/v1/connectors.py
+
+> **Status:** completed
+> **Last classified:** 2026-07-05
 
 @router.get("/connectors")
 

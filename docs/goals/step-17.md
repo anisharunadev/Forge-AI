@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Audit page in Forge AI Agent OS. Tokens, shell, empty states, error states, and Steps 7–16 are done. Read .claude/design-system/ first.

@@ -1,5 +1,8 @@
 # Forge Backend — Phase 1 Implementation Spec
 
+> **Status:** completed
+> **Last classified:** 2026-07-05
+
 > **Phase:** 1 of 4 — Foundation
 > **Goal of this doc:** spec the 5 features in Phase 1 with explicit goals, contracts, and acceptance criteria — no code, just the contract.
 > **Source API:** LiteLLM `1.82.6` at `https://litellm-api.up.railway.app/` (see `forge-litellm-integration.md` for full endpoint map).

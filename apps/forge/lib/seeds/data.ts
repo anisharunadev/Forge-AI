@@ -13,8 +13,7 @@
  * import the fetchers here directly.
  */
 
-import { forgeFetch } from '@/lib/forge-api';
-
+import { api } from '@/lib/api/client';
 import type {
   SeedApplyRequest,
   SeedDiffRead,
@@ -29,35 +28,27 @@ const SEEDS_PATH = '/api/v1/seeds';
 
 /** `GET /api/v1/seeds` — manifest summaries for the picker / list view. */
 export async function listSeeds(): Promise<SeedManifestSummary[]> {
-  return forgeFetch<SeedManifestSummary[]>(SEEDS_PATH);
+  return api.get<SeedManifestSummary[]>(SEEDS_PATH);
 }
 
 /** `GET /api/v1/seeds/{name}` — full manifest with data files + counts. */
 export async function getSeed(name: string): Promise<SeedManifestRead> {
-  return forgeFetch<SeedManifestRead>(
-    `${SEEDS_PATH}/${encodeURIComponent(name)}`,
-  );
+  return api.get<SeedManifestRead>(`${SEEDS_PATH}/${encodeURIComponent(name)}`);
 }
 
 /** `GET /api/v1/seeds/{name}/status` — applied? checksum? drift? */
 export async function getSeedStatus(name: string): Promise<SeedStatusRead> {
-  return forgeFetch<SeedStatusRead>(
-    `${SEEDS_PATH}/${encodeURIComponent(name)}/status`,
-  );
+  return api.get<SeedStatusRead>(`${SEEDS_PATH}/${encodeURIComponent(name)}/status`);
 }
 
 /** `GET /api/v1/seeds/{name}/diff` — live-vs-manifest delta. */
 export async function getSeedDiff(name: string): Promise<SeedDiffRead> {
-  return forgeFetch<SeedDiffRead>(
-    `${SEEDS_PATH}/${encodeURIComponent(name)}/diff`,
-  );
+  return api.get<SeedDiffRead>(`${SEEDS_PATH}/${encodeURIComponent(name)}/diff`);
 }
 
 /** `GET /api/v1/seeds/{name}/runs` — recent apply/reset/rollback history. */
 export async function getSeedRuns(name: string): Promise<SeedRunRead[]> {
-  return forgeFetch<SeedRunRead[]>(
-    `${SEEDS_PATH}/${encodeURIComponent(name)}/runs`,
-  );
+  return api.get<SeedRunRead[]>(`${SEEDS_PATH}/${encodeURIComponent(name)}/runs`);
 }
 
 /** `POST /api/v1/seeds/{name}/apply` — idempotent re-apply. */
@@ -65,13 +56,8 @@ export async function applySeed(
   name: string,
   body: SeedApplyRequest = {},
 ): Promise<SeedRunRead> {
-  return forgeFetch<SeedRunRead>(
-    `${SEEDS_PATH}/${encodeURIComponent(name)}/apply`,
-    {
-      method: 'POST',
-      body: JSON.stringify(body),
-    },
-  );
+  return api.post<SeedRunRead>(`${SEEDS_PATH}/${encodeURIComponent(name)}/apply`, body, {
+    });
 }
 
 /** `POST /api/v1/seeds/{name}/reset` — `scope` controls how aggressive. */
@@ -79,21 +65,12 @@ export async function resetSeed(
   name: string,
   body: SeedResetRequest,
 ): Promise<SeedRunRead> {
-  return forgeFetch<SeedRunRead>(
-    `${SEEDS_PATH}/${encodeURIComponent(name)}/reset`,
-    {
-      method: 'POST',
-      body: JSON.stringify(body),
-    },
-  );
+  return api.post<SeedRunRead>(`${SEEDS_PATH}/${encodeURIComponent(name)}/reset`, body, {
+    });
 }
 
 /** `POST /api/v1/seeds/{name}/rollback` — undo the most recent apply. */
 export async function rollbackSeed(name: string): Promise<SeedRunRead> {
-  return forgeFetch<SeedRunRead>(
-    `${SEEDS_PATH}/${encodeURIComponent(name)}/rollback`,
-    {
-      method: 'POST',
-    },
-  );
+  return api.post<SeedRunRead>(`${SEEDS_PATH}/${encodeURIComponent(name)}/rollback`, {
+});
 }

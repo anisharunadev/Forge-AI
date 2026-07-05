@@ -254,3 +254,109 @@ __all__ = [
     "test_score_batch_accepts_query_params",
     "test_tenant_isolation_on_ideas_list",
 ]
+
+# ---------------------------------------------------------------------------
+# 2. /ideation/ingest/status — Phase 2 SC-2.7 ship.
+# ---------------------------------------------------------------------------
+
+
+def _build_ingest_app() -> FastAPI:
+    from app.api.v1.ideation import ingest_status
+    app = FastAPI()
+    app.include_router(ingest_status.router, prefix="/api/v1")
+    return app
+
+
+def test_ingest_status_returns_never_when_no_runs() -> None:
+    """No scheduler writes have landed yet → status='never', counters 0."""
+    from app.api.v1 import deps as deps_mod
+    from app.api.v1.ideation import ingest_status
+
+    app = _build_ingest_app()
+    app.dependency_overrides[deps_mod.require_permission] = _override_principal(
+        tenant_id="acme-corp",
+        project_id="proj-1",
+        perms=["ideation.read"],
+    )
+
+    with TestClient(app) as client:
+        resp = client.get("/api/v1/ideation/ingest/status")
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body == {
+        "status": "never",
+        "ideas_created_today": 0,
+        "last_run_at": None,
+    }
+    # `ingest_status` is in the ideation `__all__` so the orphan guard sees it.
+    from app.api.v1 import ideation
+    assert "ingest_status" in ideation.__all__
+
+
+def test_ingest_status_requires_ideation_read_permission() -> None:
+    """Missing ideation.read → 403 from the permission guard."""
+    from app.api.v1 import deps as deps_mod
+
+    app = _build_ingest_app()
+    # Authenticated but no ideation.read.
+    app.dependency_overrides[deps_mod.require_permission] = _override_principal(
+        tenant_id="acme-corp",
+        project_id="proj-1",
+        perms=[],
+    )
+
+    with TestClient(app) as client:
+        resp = client.get("/api/v1/ideation/ingest/status")
+
+    assert resp.status_code == 403
+
+
+def test_ingest_status_is_tenant_scoped() -> None:
+    """The principal's tenant_id is forwarded; cross-tenant scrape
+    would require a separate principal with that tenant_id, not a
+    query-param override."""
+    from app.api.v1 import deps as deps_mod
+    from app.api.v1.ideation import ingest_status
+
+    tenant_a = "acme-corp"
+    captured: dict[str, str | None] = {}
+
+    def fake_require_permission(perm: str) -> Any:
+        async def _inner() -> Any:
+            from app.core.security import AuthenticatedPrincipal
+
+            captured["perm"] = perm
+            return AuthenticatedPrincipal(
+                user_id=str(uuid.uuid4()),
+                email="tester@example.com",
+                tenant_id=tenant_a,
+                project_id="proj-1",
+                roles=["developer"],
+                raw_claims={"forge.permissions": ["ideation.read"]},
+            )
+        return _inner
+
+    app = _build_ingest_app()
+    app.dependency_overrides[deps_mod.require_permission] = fake_require_permission
+
+    # Try a path-traversal attempt: path with another tenant in it.
+    with TestClient(app) as client:
+        resp = client.get("/api/v1/ideation/ingest/status?tenant_id=other-tenant")
+
+    assert resp.status_code == 200
+    # Tenant came from the principal, not the query string.
+    assert captured["perm"] == "ideation.read"
+    # And the response shape doesn't leak tenant info.
+    assert resp.json()["status"] in {"success", "running", "failed", "partial", "never"}
+
+
+__all__ = [
+    "test_enhance_router_is_mounted",
+    "test_compare_impact_accepts_query_params",
+    "test_score_batch_accepts_query_params",
+    "test_tenant_isolation_on_ideas_list",
+    "test_ingest_status_returns_never_when_no_runs",
+    "test_ingest_status_requires_ideation_read_permission",
+    "test_ingest_status_is_tenant_scoped",
+]

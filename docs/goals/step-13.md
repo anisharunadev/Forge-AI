@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Settings page in Forge AI Agent OS. Tokens, shell, empty states, and Steps 7–12 are done. Read .claude/design-system/ first.

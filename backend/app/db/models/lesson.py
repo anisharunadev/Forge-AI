@@ -89,7 +89,7 @@ class LessonCandidate(Base, UUIDPrimaryKeyMixin):
         DateTime(timezone=True), nullable=False
     )
 
-    __table_args__ = (
+    __table_args__ = (        Index("ix_lesson_candidates_tenant_project", "tenant_id", "project_id"),
         Index("ix_lessons_tenant_status", "tenant_id", "status"),
         Index("ix_lessons_tenant_created", "tenant_id", "created_at"),
     )

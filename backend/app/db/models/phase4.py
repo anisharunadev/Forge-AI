@@ -113,7 +113,7 @@ class Phase4SessionEvent(Base, UUIDPrimaryKeyMixin, TenantScopedMixin):
 
 class Phase4RealtimeClientSecret(Base, UUIDPrimaryKeyMixin, TenantScopedMixin):
     __tablename__ = "phase4_realtime_client_secrets"
-    __table_args__ = (
+    __table_args__ = (        Index("ix_phase4_realtime_client_secrets_tenant_project", "tenant_id", "project_id"),
         Index("ix_phase4_realtime_client_secrets_session", "session_id"),
         Index("ix_phase4_realtime_client_secrets_expires", "expires_at"),
     )
@@ -208,11 +208,12 @@ class Phase4JwtSigningKey(Base, UUIDPrimaryKeyMixin):
 
 
 # ── F20 Credentials / Vault / FinOps ──────────────────────────────────
+    _audit_scope = "global"
 
 
 class Phase4Credential(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMixin):
     __tablename__ = "phase4_credentials"
-    __table_args__ = (
+    __table_args__ = (        Index("ix_phase4_credentials_tenant_project", "tenant_id", "project_id"),
         UniqueConstraint("tenant_id", "credential_name", name="tenant_id"),
     )
 
@@ -226,7 +227,7 @@ class Phase4Credential(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMi
 
 class Phase4VaultConfig(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "phase4_vault_configs"
-    __table_args__ = (
+    __table_args__ = (        Index("ix_phase4_vault_configs_tenant_project", "tenant_id", "project_id"),
         UniqueConstraint("tenant_id", name="tenant_id"),
     )
 
@@ -266,7 +267,7 @@ class Phase4FinopsExport(Base, UUIDPrimaryKeyMixin, TenantScopedMixin):
 
 class Phase4FinopsSettings(Base, UUIDPrimaryKeyMixin, TenantScopedMixin):
     __tablename__ = "phase4_finops_settings"
-    __table_args__ = (
+    __table_args__ = (        Index("ix_phase4_finops_settings_tenant_project", "tenant_id", "project_id"),
         UniqueConstraint("tenant_id", "destination", name="tenant_id"),
     )
 

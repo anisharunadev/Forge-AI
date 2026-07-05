@@ -97,6 +97,7 @@ class ConnectorActivity(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )  # noqa: A003 — see module docstring re: Base.metadata clash
 
     __table_args__ = (
+        Index("ix_connector_activity_tenant_project", "tenant_id", "project_id"),
         Index("ix_connector_activity_tenant_started", "tenant_id", "started_at"),
         Index(
             "ix_connector_activity_connector_started", "connector_id", "started_at"

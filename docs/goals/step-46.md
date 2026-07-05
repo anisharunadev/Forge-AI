@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Project Onboarding wizard in Forge AI Agent OS. Currently has 6 generic steps — needs to become a 10-step AI-powered setup that uses forge-core, forge-pi, and forge-browser to auto-configure the workspace. Read .claude/design-system/ first.

@@ -20,6 +20,7 @@ from app.core.secret_filter import secret_filter
 tenant_id_ctx: ContextVar[str | None] = ContextVar("tenant_id", default=None)
 project_id_ctx: ContextVar[str | None] = ContextVar("project_id", default=None)
 actor_id_ctx: ContextVar[str | None] = ContextVar("actor_id", default=None)
+request_id_ctx: ContextVar[str | None] = ContextVar("request_id", default=None)
 
 
 def _inject_context(_logger: Any, _name: str, event_dict: dict[str, Any]) -> dict[str, Any]:
@@ -30,6 +31,8 @@ def _inject_context(_logger: Any, _name: str, event_dict: dict[str, Any]) -> dic
         event_dict.setdefault("project_id", pid)
     if (aid := actor_id_ctx.get()) is not None:
         event_dict.setdefault("actor_id", aid)
+    if (rid := request_id_ctx.get()) is not None:
+        event_dict.setdefault("request_id", rid)
     return event_dict
 
 

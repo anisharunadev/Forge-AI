@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Make the Agent Center self-explanatory — users currently don't understand what agents, providers, runtimes, and assignments are or why they need them. Add 6 clarity-focused additions to help users understand and get started. Read .claude/design-system/ first.

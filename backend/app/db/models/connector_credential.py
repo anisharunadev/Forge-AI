@@ -89,6 +89,7 @@ class ConnectorCredential(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     created_by: Mapped[UUID] = mapped_column(GUID(), nullable=False)
 
     __table_args__ = (
+        Index("ix_connector_credentials_tenant_project", "tenant_id", "project_id"),
         Index(
             "ix_credential_tenant_connector",
             "tenant_id",

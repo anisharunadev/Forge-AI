@@ -97,7 +97,7 @@ class Webhook(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     error_count_24h: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_by: Mapped[UUID] = mapped_column(GUID(), nullable=False)
 
-    __table_args__ = (
+    __table_args__ = (        Index("ix_webhooks_tenant_project", "tenant_id", "project_id"),
         Index("ix_webhook_tenant_status", "tenant_id", "status"),
         Index("ix_webhook_tenant_direction", "tenant_id", "direction"),
     )
@@ -130,7 +130,7 @@ class WebhookDelivery(Base, UUIDPrimaryKeyMixin):
     payload_preview: Mapped[str] = mapped_column(Text, nullable=False, default="")
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    __table_args__ = (
+    __table_args__ = (        Index("ix_webhook_deliveries_tenant_project", "tenant_id", "project_id"),
         Index(
             "ix_webhook_delivery_webhook_attempted",
             "webhook_id",

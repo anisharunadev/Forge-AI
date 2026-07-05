@@ -1,0 +1,19 @@
+repos:
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.10
+    hooks:
+      - id: bandit
+        # bandit is heavy and slow; use only on changed files in CI
+        # separately, the workflow job runs it over the whole tree.
+        args: ['-c', 'pyproject.toml']
+        files: '^backend/app/.*\.py$'
+
+  - repo: local
+    hooks:
+      - id: no-fstring-sql
+        name: forbid f-string SQL in backend/app
+        entry: bash scripts/check-raw-sql.sh
+        language: system
+        files: '^backend/app/.*\.py$'
+        # Excludes backend/alembic per the brief.
+        exclude: '^backend/alembic/'

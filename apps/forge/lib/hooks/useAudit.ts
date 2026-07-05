@@ -24,8 +24,7 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query';
 
-import { forgeFetch } from '@/lib/forge-api';
-
+import { api } from '@/lib/api/client';
 // ---------------------------------------------------------------------------
 // Shape returned by `GET /api/v1/audit/integrity`
 //
@@ -69,9 +68,9 @@ export const auditQueryKeys = {
 // ---------------------------------------------------------------------------
 
 async function fetchAuditIntegrity(): Promise<AuditIntegrity> {
-  return forgeFetch<AuditIntegrity>('/audit/integrity', {
-    cache: 'no-store',
-  });
+  return api.get<AuditIntegrity>('/audit/integrity', {
+    cache: 'no-store'
+});
 }
 
 /**

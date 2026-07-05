@@ -29,7 +29,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import DateTime, String, event
+from sqlalchemy import DateTime, Index, String, event
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.logging import get_logger
@@ -90,6 +90,13 @@ class AuditEvent(Base, UUIDPrimaryKeyMixin):
     hash_chain_ref: Mapped[str | None] = mapped_column(
         String(64), nullable=True, index=True
     )
+
+
+
+    __table_args__ = (
+        Index("ix_audit_events_tenant_project", "tenant_id", "project_id"),
+    )
+
 
 
 # SQLAlchemy ORM-level immutability: any UPDATE or DELETE attempt is

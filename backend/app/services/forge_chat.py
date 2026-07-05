@@ -36,6 +36,7 @@ from app.schemas.forge_chat import (
 )
 from app.services.audit_service import audit_service
 from app.services.forge_budget_guard import budget_guard
+from app.services.cost_ledger import cost_ledger
 from app.services.forge_spend import SpendRecord, spend_service
 
 logger = get_logger(__name__)
@@ -522,32 +523,58 @@ async def _record_spend(
     run_id: UUID,
     model: str,
     usage: dict,
+    partial: bool = False,
 ) -> None:
-    """Best-effort: write a spend record keyed by run_id."""
+    """Phase 6 SC-6.8 — per-chunk projected write, terminal actual write.
+
+    On ``partial=False`` (the happy stream chunk) we call
+    ``cost_ledger.record_projected`` for the cumulative-cap rule to skip
+    while the stream is in flight. On ``partial=True`` (the disconnect
+    path) we call ``record_actual`` so the reconciler in PR-6.8 can
+    finalize.
+    """
     usage_obj = usage.get("usage") if isinstance(usage, dict) and "usage" in usage else usage
     prompt = int((usage_obj or {}).get("prompt_tokens") or 0)
     completion = int((usage_obj or {}).get("completion_tokens") or 0)
     cost = float(usage.get("cost_usd") or 0.0)
+    tenant_uuid = UUID(str(principal["tenant_id"]))
+    project_uuid = (
+        UUID(str(principal["project_id"]))
+        if principal.get("project_id")
+        else UUID("00000000-0000-0000-0000-000000000000")
+    )
     try:
-        await spend_service.record_from_usage(
-            tenant_id=UUID(str(principal["tenant_id"])),
-            project_id=UUID(str(principal["project_id"]))
-            if principal.get("project_id")
-            else UUID("00000000-0000-0000-0000-000000000000"),
-            agent_id=agent_id,
-            user_id=UUID(str(principal["user_id"])),
-            team_id=UUID(str(principal["team_id"])) if principal.get("team_id") else None,
-            model=model,
-            prompt_tokens=prompt,
-            completion_tokens=completion,
-            litellm_request_id=str(run_id),
-            cost_usd=cost,
-        )
+        if partial:
+            await cost_ledger.record_actual(
+                tenant_id=tenant_uuid,
+                project_id=project_uuid,
+                run_id=run_id,
+                agent=str(agent_id),
+                model=model,
+                prompt_tokens=prompt,
+                completion_tokens=completion,
+                cost_usd=cost,
+                source="litellm.partial",
+                metadata={"partial": True},
+            )
+        else:
+            await cost_ledger.record_projected(
+                tenant_id=tenant_uuid,
+                project_id=project_uuid,
+                run_id=run_id,
+                agent=str(agent_id),
+                model=model,
+                prompt_tokens=prompt,
+                completion_tokens=completion,
+                cost_usd=cost,
+                source="litellm",
+                metadata=None,
+            )
     except Exception:  # noqa: BLE001
         logger.warning(
             "forge_chat.spend_record_failed",
             run_id=str(run_id),
-            error="record_from_usage raised",
+            error="cost_ledger raised",
         )
 
 

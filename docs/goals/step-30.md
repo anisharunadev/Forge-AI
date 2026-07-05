@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Architecture Center in Forge AI Agent OS — currently has 6 tabs (ADRs / API Contracts / Task Breakdowns / Risk Registers / Traceability / Versions) all with minimal content and a broken empty state on ADRs (says "No ADRs yet" while count shows 6). User wants every tab curated and modernized with as many features as possible. Read .claude/design-system/ first.

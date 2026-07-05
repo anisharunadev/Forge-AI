@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Projects page (Project Intelligence) in Forge AI Agent OS. Tokens, shell, empty/error states, and Steps 7–19 are done. Read .claude/design-system/ first.

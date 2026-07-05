@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Forge Terminal in Forge AI Agent OS — currently shows a cluttered layout with disconnected state, sidecar warning, tips + keyboard card, terminal pane with connection error, and audit log. User wants: (1) much more modern, less cluttered UI, (2) inject context from project intelligence, ADRs, architecture, knowledge — ALL Forge entities, (3) connect to Claude Code, Codex, Kiro, Gemini CLI and more, (4) run any forge command and forge skill from the terminal, (5) configure anything. This is the terminal becoming a **Forge command center** with AI CLI integration. Read .claude/design-system/ first.

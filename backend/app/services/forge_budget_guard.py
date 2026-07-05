@@ -14,15 +14,20 @@ missing schema.
 
 from __future__ import annotations
 
+import asyncio
+from datetime import UTC, datetime, timedelta
 import time
 from functools import lru_cache
 from uuid import UUID
 
-from sqlalchemy import func, select, text
+from sqlalchemy import select, text
 from sqlalchemy.exc import NoSuchTableError, ProgrammingError
 
+from app.core.config import settings
 from app.core.logging import get_logger
+from app.db.models.tenant import Tenant
 from app.db.session import get_session_factory
+from app.services import cost_ledger
 from app.services.audit_service import audit_service
 
 logger = get_logger(__name__)
@@ -207,10 +212,162 @@ class BudgetGuard:
 budget_guard = BudgetGuard()
 
 
+class TenantBudgetExceeded(Exception):
+    """Raised when a tenant's projected spend would breach its ceiling."""
+
+    def __init__(
+        self,
+        tenant_id: UUID,
+        *,
+        spent_usd: float,
+        ceiling_usd: float,
+        retry_after_seconds: int,
+    ) -> None:
+        self.tenant_id = tenant_id
+        self.spent_usd = spent_usd
+        self.ceiling_usd = ceiling_usd
+        self.retry_after_seconds = retry_after_seconds
+        self.code = "tenant_budget_exceeded"
+        super().__init__(
+            f"tenant {tenant_id} budget exhausted: "
+            f"spent={spent_usd} ceiling={ceiling_usd}"
+        )
+
+
+class TenantBudgetGuard:
+    """Pre-call admission control for a tenant (Phase 6 SC-6.1).
+
+    Reads ``Tenant.settings['budget_enforcement_v2']`` to decide whether
+    to enforce the tenant ceiling. Reads
+    ``Tenant.settings['tenant_budget_usd']`` for the ceiling; falls back
+    to ``settings.tenant_default_budget_usd`` (default 5000 USD/mo).
+    """
+
+    DEFAULT_CEILING_USD = 5000.00
+    WINDOW_DAYS = 30
+    DEFAULT_RETRY_AFTER_SECONDS = 3600
+
+    def __init__(self) -> None:
+        # ponytail: 60s TTL avoids hammering the SUM; switch to Redis when
+        # a multi-tenant dashboard needs to dodge the SQL across many tenants.
+        self._cache: dict[str, tuple[float, dict]] = {}
+        self._cache_lock = asyncio.Lock()
+
+    async def _load_tenant(
+        self, tenant_id: UUID
+    ) -> tuple[dict | None, float]:
+        """Return (settings_dict, ceiling_usd) for a tenant; default when missing."""
+        now = time.monotonic()
+        async with self._cache_lock:
+            cached = self._cache.get(str(tenant_id))
+            if cached and now - cached[0] < 60.0:
+                return (
+                    cached[1].get("settings"),
+                    cached[1].get("ceiling_usd", self.DEFAULT_CEILING_USD),
+                )
+
+        factory = get_session_factory()
+        async with factory() as session:
+            row = (
+                await session.execute(select(Tenant).where(Tenant.id == tenant_id))
+            ).scalar_one_or_none()
+        tenant_settings = (getattr(row, "settings", {}) or {}) if row else {}
+        ceiling = float(
+            tenant_settings.get("tenant_budget_usd") or self.DEFAULT_CEILING_USD
+        )
+        async with self._cache_lock:
+            self._cache[str(tenant_id)] = (
+                now,
+                {"settings": tenant_settings, "ceiling_usd": ceiling},
+            )
+        return tenant_settings, ceiling
+
+    def _is_enforced(self, tenant_settings: dict | None) -> bool:
+        if not tenant_settings:
+            return bool(settings.tenant_budget_enforcement_v2_default)
+        return bool(
+            tenant_settings.get(
+                "budget_enforcement_v2",
+                settings.tenant_budget_enforcement_v2_default,
+            )
+        )
+
+    async def check_pre_call(
+        self,
+        tenant_id: UUID,
+        est_cost_usd: float = 0.0,
+    ) -> dict:
+        """Admit or block a projected call for a tenant.
+
+        Returns ``{allow, spent_usd, ceiling_usd, pct, retry_after_seconds}``.
+        Raises :class:`TenantBudgetExceeded` on overrun.
+        """
+        if est_cost_usd < 0:
+            raise ValueError("est_cost_usd must be non-negative")
+
+        tenant_settings, ceiling_usd = await self._load_tenant(tenant_id)
+        if not self._is_enforced(tenant_settings):
+            return {
+                "allow": True,
+                "spent_usd": 0.0,
+                "ceiling_usd": ceiling_usd,
+                "pct": 0.0,
+                "retry_after_seconds": 0,
+            }
+
+        spent_usd = await cost_ledger.cost_ledger.get_total_for_tenant(
+            tenant_id=tenant_id,
+            since=datetime.now(UTC) - timedelta(days=self.WINDOW_DAYS),
+        )
+
+        if spent_usd + est_cost_usd > ceiling_usd:
+            try:
+                await audit_service.record(
+                    tenant_id=tenant_id,
+                    project_id=None,
+                    actor_id=None,
+                    action="forge.spend.tenant_budget_exceeded",
+                    target_type="tenant",
+                    target_id=str(tenant_id),
+                    payload={
+                        "spent_usd": spent_usd,
+                        "ceiling_usd": ceiling_usd,
+                        "projected_cost_usd": est_cost_usd,
+                    },
+                )
+            except Exception:  # noqa: BLE001
+                logger.exception(
+                    "forge_budget_guard.tenant_audit_failed",
+                    tenant_id=str(tenant_id),
+                )
+            # ponytail: 1h backoff — daily-burn-aware retry would need an
+            # extra SUM query; bump when we have a daily-burn signal.
+            raise TenantBudgetExceeded(
+                tenant_id,
+                spent_usd=spent_usd,
+                ceiling_usd=ceiling_usd,
+                retry_after_seconds=self.DEFAULT_RETRY_AFTER_SECONDS,
+            )
+
+        return {
+            "allow": True,
+            "spent_usd": spent_usd,
+            "ceiling_usd": ceiling_usd,
+            "pct": (spent_usd / ceiling_usd) if ceiling_usd > 0 else 0.0,
+            "retry_after_seconds": 0,
+        }
+
+
+tenant_budget_guard = TenantBudgetGuard()
+
+
 __all__ = [
     "AgentBudgetExceeded",
     "AgentBudgetWarning",
     "BudgetGuard",
+    "TenantBudgetExceeded",
+    "TenantBudgetGuard",
     "budget_guard",
+    "tenant_budget_guard",
     "DEFAULT_BUDGET_USD",
 ]

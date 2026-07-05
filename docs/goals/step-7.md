@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Forge Command Center page in Forge AI Agent OS (React + TS + Next.js + Tailwind + shadcn/ui + Framer Motion + lucide-react). Tokens, shell, and empty states from Steps 1–6 are already in place. Read .claude/design-system/ first.

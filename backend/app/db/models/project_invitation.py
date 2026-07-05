@@ -53,4 +53,6 @@ class ProjectInvitation(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
 
 
+    _audit_scope = "project-only"
+
 __all__ = ["ProjectInvitation"]

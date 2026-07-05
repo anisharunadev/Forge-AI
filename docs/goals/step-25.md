@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 The Dashboard is still showing the OLD two-card layout + broken runs section — Step 18 wasn't implemented or got reverted. Now build it properly with the user's additional ask: "we need to curate improve more feature." Read .claude/design-system/ first.

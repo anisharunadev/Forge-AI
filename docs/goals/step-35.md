@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Massive modernization of the Governance Center in Forge AI Agent OS — currently shows three empty sections (Board Confirmation History / Policies / RBAC Roles). The user has a serious enterprise stack (`forge-dev` docker-compose) including **LiteLLM as the provider abstraction layer** (DL-025) — this means Forge can intercept every LLM call and apply guardrails. The user wants: **policies as guardrails** (pre-tool, PII, content filtering), **loadable standards** (ISO 27000, SOC2, GDPR, HIPAA, PCI-DSS, etc.), **LiteLLM control** (model allowlist/denylist, rate limits, spend caps), and **configurable everything**. Read .claude/design-system/ first.

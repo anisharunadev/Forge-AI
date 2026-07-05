@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 STEP 5 OF 6 — IDEATION CENTER REDESIGN. Foundation, shell, empty states, and Agent Center are done. Now rebuild Ideation Center. Read .claude/design-system/ first.

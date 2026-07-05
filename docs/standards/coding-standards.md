@@ -22,6 +22,11 @@ Forge is a TypeScript + Python codebase with strict conventions to keep AI agent
 
 ---
 
+
+## Related standards
+
+- [Documentation standard](./documentation.md) — every doc must follow D1–D6.
+
 ## 1. General principles
 
 ### 1.1 — Readability over cleverness

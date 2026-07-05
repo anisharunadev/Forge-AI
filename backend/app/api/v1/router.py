@@ -37,6 +37,7 @@ from app.api.v1 import (
     forge_models,
     forge_observability,
     forge_phase4,
+    observability,
     forge_prompts,
     forge_rag,
     forge_rbac,
@@ -111,6 +112,7 @@ api_router.include_router(forge_async.router)
 api_router.include_router(forge_rag.router)
 # step-78 — Phase 3 F15 Audit / Health / Compliance / Alerts / Drift / GDPR.
 api_router.include_router(forge_observability.router)
+api_router.include_router(observability.router)
 # step-78 — Phase 3 F12 RBAC (`/api/forge/rbac/*`).
 api_router.include_router(forge_rbac.router)
 api_router.include_router(standards.router)
@@ -196,6 +198,7 @@ api_router.include_router(ideation.sources.router)
 api_router.include_router(ideation.market_signals.router)
 api_router.include_router(ideation.customer_voice.router)
 api_router.include_router(ideation.destinations.router)
+api_router.include_router(ideation.ingest_status.router)
 # Architecture Center (F-301..F-310)
 api_router.include_router(architecture.standards.router)
 api_router.include_router(architecture.adrs.router)

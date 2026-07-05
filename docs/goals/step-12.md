@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Organization Knowledge page in Forge AI Agent OS. Tokens, shell, empty states, and Steps 7–11 are done. Read .claude/design-system/ first.

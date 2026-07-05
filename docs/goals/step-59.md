@@ -1,3 +1,8 @@
+# step-59
+
+> **Status:** completed
+> **Last classified:** 2026-07-05
+
 /goal
 
 
@@ -277,6 +282,9 @@ async def _request(method: str, path: str, **kwargs) -> dict[str, Any] | list[An
 
 
 # ---------------------------------------------------------------------------
+
+> **Status:** completed
+> **Last classified:** 2026-07-05
 
 # Spend tracking — direct passthrough to LiteLLM
 

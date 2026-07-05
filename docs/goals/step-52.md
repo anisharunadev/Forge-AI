@@ -1,3 +1,4 @@
+> **Status:** completed
 import { start } from "repl"
 
 /goal

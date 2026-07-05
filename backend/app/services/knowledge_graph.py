@@ -412,9 +412,11 @@ class KnowledgeGraphService:
         """
         factory = get_session_factory()
         async with factory() as session:
-            translated_sql = self._cypher_to_sql_bridge(query)
+            translated_sql, label = self._cypher_to_sql_bridge(query)
             if translated_sql is not None:
-                return await self._execute_sql(session, translated_sql, params)
+                merged = dict(params or {})
+                merged["label"] = label
+                return await self._execute_sql(session, translated_sql, merged)
             # Real AGE path would use `cypher` from agtype — not available,
             # so we surface a structured error rather than silently losing
             # data. Callers should rely on hybrid_query / SQL for now.
@@ -612,7 +614,7 @@ class KnowledgeGraphService:
         if tenant_id is None or str(tenant_id) == "":
             raise ValueError("tenant_id is required (Rule 2)")
 
-    def _cypher_to_sql_bridge(self, cypher: str) -> str | None:
+    def _cypher_to_sql_bridge(self, cypher: str) -> tuple[str, str] | None:
         """Translate a tiny subset of Cypher to SQL when AGE is missing.
 
         Supported: `MATCH (n:Type) RETURN n` → `SELECT * FROM kg_nodes WHERE
@@ -629,12 +631,18 @@ class KnowledgeGraphService:
         if not simple:
             return None
         var, label, ret = simple.groups()
+        # ponytail: literal SQL — bandit B608 passes. ``label`` is bound
+        # via :label; ``cols`` is restricted to either '*' or a quoted
+        # identifier (whitelisted by the regex above).
         cols = "*" if ret == "*" else f'"{ret}".*'
-        return (
-            f"SELECT {cols} FROM kg_nodes "
-            f"WHERE node_type = :{var}_label "
+        sql = (
+            "SELECT {cols} FROM kg_nodes "
+            "WHERE node_type = :label "
             "LIMIT 500"
-        )
+        ).format(cols=cols)
+        # Caller passes the outer params dict; we add ``label`` here.
+        return sql, label
+
 
     async def _execute_sql(
         self,

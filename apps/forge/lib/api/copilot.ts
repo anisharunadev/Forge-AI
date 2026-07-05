@@ -15,7 +15,7 @@
  * If you change one side, change the other.
  */
 
-import { forgeFetch, ForgeApiError } from '@/lib/forge-api';
+import { api, FORGE_API_BASE_URL, ForgeApiError } from '@/lib/api/client';
 import { SEED_TENANT_ID } from '@/lib/auth';
 
 // ---------------------------------------------------------------------------
@@ -159,9 +159,9 @@ export { ForgeApiError };
 export async function listConversations(
   tenantId: string = SEED_TENANT_ID,
 ): Promise<CopilotConversationSummary[]> {
-  return forgeFetch<CopilotConversationSummary[]>('/copilot/conversations', {
-    tenantId,
-  });
+  return api.get<CopilotConversationSummary[]>('/copilot/conversations', {
+    tenantId
+});
 }
 
 /**
@@ -171,10 +171,7 @@ export async function getConversation(
   id: string,
   tenantId: string = SEED_TENANT_ID,
 ): Promise<CopilotConversationRead> {
-  return forgeFetch<CopilotConversationRead>(
-    `/copilot/conversations/${encodeURIComponent(id)}`,
-    { tenantId },
-  );
+  return api.get<CopilotConversationRead>(`/copilot/conversations/${encodeURIComponent(id)}`, { tenantId });
 }
 
 /**
@@ -185,9 +182,7 @@ export async function sendMessage(
   req: CopilotChatRequest,
   tenantId: string = SEED_TENANT_ID,
 ): Promise<CopilotChatResponse> {
-  return forgeFetch<CopilotChatResponse>('/copilot/conversations', {
-    method: 'POST',
-    body: JSON.stringify(req),
+  return api.post<CopilotChatResponse>('/copilot/conversations', req, {
     tenantId,
   });
 }
@@ -221,13 +216,22 @@ export function streamMessage(
   void (async () => {
     let res: Response;
     try {
-      res = await forgeFetch<Response>('/copilot/conversations:stream', {
-        method: 'POST',
-        body: JSON.stringify(req),
-        tenantId,
-        stream: true,
-        signal: controller.signal,
-      });
+      // Stream endpoint — bypass the JSON-buffering `api` client.
+      // `api.ws` would attach the bearer token but the server expects
+      // `?token=` AND body, which doesn't fit the WS contract.
+      const streamHeaders: Record<string, string> = {
+        'content-type': 'application/json',
+        'x-forge-tenant-id': tenantId ?? SEED_TENANT_ID,
+      };
+      res = await fetch(
+        `${FORGE_API_BASE_URL}/copilot/conversations:stream`,
+        {
+          method: 'POST',
+          headers: streamHeaders,
+          body: JSON.stringify(req),
+          signal: controller.signal,
+        },
+      );
     } catch (err) {
       onEvent({
         event: 'error',
@@ -284,10 +288,7 @@ export async function deleteConversation(
   id: string,
   tenantId: string = SEED_TENANT_ID,
 ): Promise<void> {
-  await forgeFetch<void>(
-    `/copilot/conversations/${encodeURIComponent(id)}`,
-    { method: 'DELETE', tenantId },
-  );
+  await api.delete<void>(`/copilot/conversations/${encodeURIComponent(id)}`, { tenantId });
 }
 
 /**
@@ -303,10 +304,7 @@ export async function submitFeedback(
   const body: CopilotFeedbackRequest = comment
     ? { rating, comment }
     : { rating };
-  await forgeFetch<void>(
-    `/copilot/messages/${encodeURIComponent(messageId)}/feedback`,
-    { method: 'POST', body: JSON.stringify(body), tenantId },
-  );
+  await api.post<void>(`/copilot/messages/${encodeURIComponent(messageId)}/feedback`, { body: JSON.stringify(body), tenantId });
 }
 
 /**
@@ -316,10 +314,7 @@ export async function getCost(
   conversationId: string,
   tenantId: string = SEED_TENANT_ID,
 ): Promise<CopilotCostRead> {
-  return forgeFetch<CopilotCostRead>(
-    `/copilot/conversations/${encodeURIComponent(conversationId)}/cost`,
-    { tenantId },
-  );
+  return api.get<CopilotCostRead>(`/copilot/conversations/${encodeURIComponent(conversationId)}/cost`, { tenantId });
 }
 
 /**
@@ -328,5 +323,5 @@ export async function getCost(
 export async function listTools(
   tenantId: string = SEED_TENANT_ID,
 ): Promise<CopilotToolRead[]> {
-  return forgeFetch<CopilotToolRead[]>('/copilot/tools', { tenantId });
+  return api.get<CopilotToolRead[]>('/copilot/tools', { tenantId });
 }

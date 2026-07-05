@@ -17,6 +17,7 @@ from app.db.models.connector_credential import (
     CredentialType,
 )
 from app.db.models.cost import CostEntry
+from app.db.models.cost_rollup import CostMinuteRollup
 from app.db.models.customer import Customer
 from app.db.models.organization import Organization
 from app.db.models.team import Team
@@ -77,6 +78,7 @@ from app.db.models.standard import Standard
 from app.db.models.steering_rule import SteeringRule
 from app.db.models.template import Template
 from app.db.models.tenant import Tenant
+from app.db.models.tenant_settings import TenantSettings
 from app.db.models.terminal_cost import TerminalSessionCost
 from app.db.models.user import User
 # step-80 — Phase 4 (cache, sessions, identity, credentials, finops).

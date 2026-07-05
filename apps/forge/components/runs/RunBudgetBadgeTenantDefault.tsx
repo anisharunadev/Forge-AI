@@ -21,7 +21,7 @@
 
 import * as React from 'react';
 
-import { forgeFetch } from '@/lib/forge-api';
+import { api } from '@/lib/api/client';
 import { RunBudgetBadge } from '@/components/runs/RunBudgetBadge';
 
 interface RunBudgetSnapshot {
@@ -40,10 +40,7 @@ interface RunBudgetResponse extends RunBudgetSnapshot {
 
 async function fetchRunBudgetDefault(tenantId: string): Promise<RunBudgetResponse | null> {
   try {
-    return await forgeFetch<RunBudgetResponse>(
-      `/runs/_budget_default`,
-      { tenantId, cache: 'no-store' },
-    );
+    return await api.get<RunBudgetResponse>(`/runs/_budget_default`, { tenantId, cache: 'no-store' });
   } catch {
     return null;
   }

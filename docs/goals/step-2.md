@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 STEP 2 OF 6 — SHELL REDESIGN. Tokens from Step 1 are in place. Now modernize the global app shell. Read .claude/design-system/ first — the skill's outputs are authoritative.

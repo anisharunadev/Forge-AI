@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Forge Co-pilot and add a persistent floating AI widget available from every page. Tokens, shell, empty/error states, and Steps 7–18 are done. Read .claude/design-system/ first.

@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Dashboard page — the first thing users see on login. Tokens, shell, empty states, error states, and Steps 7–17 are done. Read .claude/design-system/ first.

@@ -20,7 +20,7 @@ import {
   type UseMutationResult,
 } from '@tanstack/react-query';
 
-import { forgeFetch } from '@/lib/forge-api';
+import { api } from '@/lib/api/client';
 import { settingsQueryKeys } from '@/lib/hooks/useSettings';
 
 export interface ReconcileButtonProps {
@@ -42,13 +42,8 @@ export interface ReconcileResult {
 }
 
 async function postReconcile(tenantId: string): Promise<ReconcileResult> {
-  return forgeFetch<ReconcileResult>(
-    `/api/v1/admin/llm-gateway/reconcile`,
-    {
-      method: 'POST',
-      body: JSON.stringify({ tenant_id: tenantId }),
-    },
-  );
+  return api.post<ReconcileResult>(`/api/v1/admin/llm-gateway/reconcile`, { tenant_id: tenantId }, {
+    });
 }
 
 export function ReconcileButton(

@@ -285,3 +285,49 @@ async def sqlite_db(monkeypatch: pytest.MonkeyPatch):
         if not has_tenant_fk:
             base_mod.metadata.remove(proj)
 
+
+# ---------------------------------------------------------------------------
+# Phase 4 SC-4.3 / SC-4.4 — shared tenant fixtures.
+#
+# Avoid the per-file ``Tenant(slug=f"t-{uuid.uuid4().hex[:8]}", name=...)``
+# ceremony. Use ``two_tenants`` to grab (tenant_a, tenant_b, project_for_a)
+# in one call. PR-4.5 will fold any stragglers onto these fixtures.
+# ---------------------------------------------------------------------------
+
+
+@pytest_asyncio.fixture
+async def two_tenants_factory(sqlite_db):
+    """Returns (tenant_a, tenant_b, project_for_a) — three DB rows.
+
+    Usage::
+
+        async def test_foo(two_tenants_factory):
+            ta, tb, pa = await two_tenants_factory()
+            ...
+    """
+    from app.db.models.tenant import Tenant
+    from app.db.models.project import Project
+
+    session_factory = sqlite_db
+
+    async def _make():
+        async with session_factory() as s:
+            ta = Tenant(slug=f"ta-{uuid.uuid4().hex[:8]}", name="TenantA")
+            tb = Tenant(slug=f"tb-{uuid.uuid4().hex[:8]}", name="TenantB")
+            s.add_all([ta, tb])
+            await s.flush()
+            pa = Project(
+                tenant_id=ta.id, slug="p-a", name="ProjectA", created_by=None
+            )
+            s.add(pa)
+            await s.commit()
+            s.expunge_all()
+            return ta, tb, pa
+
+    return _make
+
+
+@pytest_asyncio.fixture
+async def two_tenants(two_tenants_factory):
+    """Convenience: ``ta, tb, pa = await two_tenants``."""
+    return await two_tenants_factory()

@@ -37,4 +37,6 @@ class MarketplaceConnector(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
 
 
+    _audit_skip = ("catalog", "Vendor catalog (marketplace). Read-only.")
+
 __all__ = ["MarketplaceConnector"]

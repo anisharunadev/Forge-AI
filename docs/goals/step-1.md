@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize Forge AI Agent OS (React + TS + Next.js + Tailwind + shadcn/ui + Framer Motion + lucide-react).

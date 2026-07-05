@@ -41,7 +41,7 @@ import {
   LEFT_RAIL_SECTIONS,
   RIGHT_RAIL_SECTIONS,
 } from '@/lib/terminal-ui-store';
-import { FORGE_API_BASE_URL } from '@/lib/forge-api';
+import { api, FORGE_API_BASE_URL } from '@/lib/api/client';
 import type { TerminalConnectionState } from '@/hooks/use-terminal';
 
 import { SessionTabs } from './SessionTabs';

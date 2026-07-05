@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Polish the Forge Terminal in Forge AI Agent OS — terminal area is too small because TIPS + KEYBOARD + AUDIT LOG panels eat the canvas. User wants the same collapsible-rail pattern as the Workflows editor (shown in the second screenshot). Make the terminal the hero, side panels become collapsible tools. Read .claude/design-system/ first.

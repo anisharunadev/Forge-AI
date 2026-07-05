@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Terminal page in Forge AI Agent OS. Tokens, shell, empty states, error states, and Steps 7–14 are done. Read .claude/skills/ui-ux-pro-max first.

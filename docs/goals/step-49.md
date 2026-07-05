@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Fix the Onboarding wizard layout bug — when clicking any step in the left stepper (steps 2-10), the page scrolls to the bottom instead of keeping the form content visible. The form should be visible alongside the stepper at all times. Read .claude/design-system/ first.

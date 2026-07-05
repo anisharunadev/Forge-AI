@@ -45,6 +45,7 @@ class Hook(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     timeout_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=30)
 
     __table_args__ = (
+        Index("ix_hooks_tenant_project", "tenant_id", "project_id"),
         Index("ix_hooks_tenant_event_enabled", "tenant_id", "event_type", "enabled"),
     )
 

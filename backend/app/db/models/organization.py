@@ -49,4 +49,6 @@ class Organization(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         return f"<Organization id={self.id} name={self.name!r}>"
 
 
+    _audit_scope = "tenant-only"
+
 __all__ = ["Organization"]

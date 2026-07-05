@@ -151,6 +151,15 @@ class Settings(BaseSettings):
 
     # JWT — local verification key (HS256 dev / RS256 prod via JWKS)
     jwt_secret: str = Field(..., description="HMAC secret or PEM public key")
+    jwt_secret_previous: str | None = Field(
+        default=None,
+        description=(
+            "Previous JWT signing key. When set, decode_token tries this "
+            "key as a fallback after the primary rejects — enables a "
+            "rotation overlap window without invalidating live tokens. "
+            "Phase 7 SC-7.2."
+        ),
+    )
     jwt_algorithm: str = "HS256"
     jwt_audience: str | None = None
     jwt_issuer: str | None = None
@@ -243,6 +252,47 @@ class Settings(BaseSettings):
     copilot_rate_limit_per_min: int = Field(
         default=10,
         description="COPILOT_RATE_LIMIT_PER_MIN. Per-user request cap.",
+    )
+    # Phase 6 SC-6.4 — graceful degradation queue.
+    degradation_queue_max: int = Field(
+        default=100,
+        description=(
+            "DEGRADATION_QUEUE_MAX. Default per-tenant max queue size "
+            "when LiteLLM is unreachable. Per-tenant override via "
+            "Tenant.settings['max_queue_size']."
+        ),
+    )
+    degradation_queue_ttl_seconds: int = Field(
+        default=300,
+        description=(
+            "DEGRADATION_QUEUE_TTL_SECONDS. TTL on each queue list; stale "
+            "requests auto-expire."
+        ),
+    )
+    # Phase 6 SC-6.2 — per-tenant rate limit.
+    chat_rate_limit_per_min: int = Field(
+        default=60,
+        description=(
+            "CHAT_RATE_LIMIT_PER_MIN. Default per-tenant cap for chat "
+            "completions and other LLM-backed surfaces. Override via "
+            "Tenant.settings['rate_limit_overrides'][surface]."
+        ),
+    )
+    rate_limit_redis_url: str | None = Field(
+        default=None,
+        description=(
+            "RATE_LIMIT_REDIS_URL. Falls back to REDIS_URL when unset."
+        ),
+    )
+    # Phase 6 SC-6.1 — TenantBudgetGuard v2 ceiling default.
+    tenant_budget_enforcement_v2_default: bool = Field(
+        default=True,
+        description=(
+            "TENANT_BUDGET_ENFORCEMENT_V2_DEFAULT. When True, "
+            "TenantBudgetGuard enforces Tenant.settings['tenant_budget_usd'] "
+            "(default 5000 USD/mo) on every chat call. Per-tenant override "
+            "via Tenant.settings['budget_enforcement_v2']."
+        ),
     )
     # When True, the /welcome page stub shows the Co-pilot intro
     # card on first visit. F-805 will own this surface; the stub

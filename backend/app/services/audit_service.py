@@ -20,15 +20,20 @@ M7 — Tamper-evident hash chain:
 
 from __future__ import annotations
 
+import os
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
+import redis.asyncio as aioredis
 from sqlalchemy import text
 
+from app.core.logging import get_logger
 from app.db.models.audit import AuditEvent
 from app.db.session import get_session_factory
 from app.services.observability_service import observability_service
+
+logger = get_logger(__name__)
 
 
 def _coerce_uuid(value: UUID | str | None) -> UUID | None:
@@ -109,10 +114,47 @@ class AuditService:
             )
             await session.commit()
 
-            return row.id  # type: ignore[return-value]
+        # ponytail: best-effort fanout to live audit subscribers.
+        # Failures MUST NOT block audit durability; the row is already
+        # committed at this point.
+        try:
+            redis_client = _redis_client()
+            if redis_client is not None:
+                await redis_client.xadd(
+                    f"audit:{tenant_uuid}",
+                    {
+                        "id": str(row.id),
+                        "action": action,
+                        "ts": str(row.created_at),
+                    },
+                    maxlen=10_000,
+                    approximate=True,
+                )
+                await redis_client.close()
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "audit_stream_xadd_failed",
+                audit_id=str(row.id),
+                error=str(exc),
+            )
+
+        return row.id  # type: ignore[return-value]
+
+
+def _redis_client() -> aioredis.Redis | None:
+    """Lazy Redis client for live audit fanout.
+
+    Returns None when REDIS_URL is unset (e.g. unit tests).
+    The :meth:AuditService.record XADD call swallows connection
+    errors, so a misconfigured Redis is non-fatal.
+    """
+    url = os.environ.get("REDIS_URL")
+    if not url:
+        return None
+    return aioredis.from_url(url, decode_responses=True)
 
 
 audit_service = AuditService()
 
 
-__all__ = ["AuditService", "audit_service"]
+__all__ = ["AuditService", "audit_service", "_redis_client"]

@@ -17,8 +17,7 @@
  * returned value server-side as well.
  */
 
-import { forgeFetch } from '@/lib/forge-api';
-
+import { api } from '@/lib/api/client';
 // ---------------------------------------------------------------------------
 // Health (GET /health/litellm)
 // ---------------------------------------------------------------------------
@@ -31,7 +30,7 @@ export interface LiteLLMHealthSnapshot {
 }
 
 export async function getLiteLLMHealth(): Promise<LiteLLMHealthSnapshot> {
-  return forgeFetch<LiteLLMHealthSnapshot>('/health/litellm');
+  return api.get<LiteLLMHealthSnapshot>('/health/litellm');
 }
 
 // ---------------------------------------------------------------------------
@@ -55,9 +54,7 @@ export interface TenantLLMConfig {
 export async function getTenantLLMConfig(
   tenantId: string,
 ): Promise<TenantLLMConfig> {
-  return forgeFetch<TenantLLMConfig>(
-    `/admin/llm-gateway/tenants/${encodeURIComponent(tenantId)}`,
-  );
+  return api.get<TenantLLMConfig>(`/admin/llm-gateway/tenants/${encodeURIComponent(tenantId)}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -79,9 +76,7 @@ export interface VirtualKeyMetadata {
 export async function listTenantKeys(
   tenantId: string,
 ): Promise<ReadonlyArray<VirtualKeyMetadata>> {
-  return forgeFetch<ReadonlyArray<VirtualKeyMetadata>>(
-    `/admin/llm-gateway/tenants/${encodeURIComponent(tenantId)}/keys`,
-  );
+  return api.get<ReadonlyArray<VirtualKeyMetadata>>(`/admin/llm-gateway/tenants/${encodeURIComponent(tenantId)}/keys`);
 }
 
 export interface RotateKeyInput {
@@ -93,13 +88,8 @@ export async function rotateTenantKey(
   tenantId: string,
   body: RotateKeyInput = {},
 ): Promise<VirtualKeyMetadata> {
-  return forgeFetch<VirtualKeyMetadata>(
-    `/admin/llm-gateway/tenants/${encodeURIComponent(tenantId)}/keys/rotate`,
-    {
-      method: 'POST',
-      body: JSON.stringify(body),
-    },
-  );
+  return api.post<VirtualKeyMetadata>(`/admin/llm-gateway/tenants/${encodeURIComponent(tenantId)}/keys/rotate`, body, {
+    });
 }
 
 export interface RevokeKeyInput {
@@ -112,13 +102,8 @@ export async function revokeTenantKey(
   keyId: string,
   body: RevokeKeyInput,
 ): Promise<VirtualKeyMetadata> {
-  return forgeFetch<VirtualKeyMetadata>(
-    `/admin/llm-gateway/tenants/${encodeURIComponent(tenantId)}/keys/${encodeURIComponent(keyId)}/revoke`,
-    {
-      method: 'POST',
-      body: JSON.stringify(body),
-    },
-  );
+  return api.post<VirtualKeyMetadata>(`/admin/llm-gateway/tenants/${encodeURIComponent(tenantId)}/keys/${encodeURIComponent(keyId)}/revoke`, body, {
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -136,9 +121,7 @@ export interface MCPServerEntry {
 }
 
 export async function listMCPServers(): Promise<ReadonlyArray<MCPServerEntry>> {
-  return forgeFetch<ReadonlyArray<MCPServerEntry>>(
-    '/admin/llm-gateway/mcp-servers',
-  );
+  return api.get<ReadonlyArray<MCPServerEntry>>('/admin/llm-gateway/mcp-servers');
 }
 
 // ---------------------------------------------------------------------------
@@ -155,7 +138,7 @@ export interface AdminLLMHealth {
 }
 
 export async function getAdminLLMHealth(): Promise<AdminLLMHealth> {
-  return forgeFetch<AdminLLMHealth>('/admin/llm-gateway/health');
+  return api.get<AdminLLMHealth>('/admin/llm-gateway/health');
 }
 
 // ---------------------------------------------------------------------------
@@ -182,9 +165,7 @@ export async function listSpendTeams(params: {
     search.set('days', String(params.days));
   }
   const qs = search.toString();
-  return forgeFetch<ReadonlyArray<SpendTeamRow>>(
-    `/admin/llm-gateway/spend/teams${qs ? `?${qs}` : ''}`,
-  );
+  return api.get<ReadonlyArray<SpendTeamRow>>(`/admin/llm-gateway/spend/teams${qs ? `?${qs}` : ''}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -219,9 +200,7 @@ export async function listSpendModels(params: {
     search.set('days', String(params.days));
   }
   const qs = search.toString();
-  return forgeFetch<ReadonlyArray<SpendModelRow>>(
-    `/admin/llm-gateway/spend/models${qs ? `?${qs}` : ''}`,
-  );
+  return api.get<ReadonlyArray<SpendModelRow>>(`/admin/llm-gateway/spend/models${qs ? `?${qs}` : ''}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -270,7 +249,7 @@ export async function listSpendLogs(params: {
     search.set('limit', String(params.limit));
   }
   const qs = search.toString();
-  return forgeFetch<ReadonlyArray<SpendLogEntry>>(`/costs${qs ? `?${qs}` : ''}`);
+  return api.get<ReadonlyArray<SpendLogEntry>>(`/costs${qs ? `?${qs}` : ''}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -297,29 +276,21 @@ export interface GuardrailEntry {
 
 /** GET /admin/llm-gateway/guardrails */
 export async function listGuardrails(): Promise<ReadonlyArray<GuardrailEntry>> {
-  return forgeFetch<ReadonlyArray<GuardrailEntry>>(
-    '/admin/llm-gateway/guardrails',
-  );
+  return api.get<ReadonlyArray<GuardrailEntry>>('/admin/llm-gateway/guardrails');
 }
 
 /** POST /admin/llm-gateway/guardrails/{name}/enable */
 export async function enableGuardrail(
   name: string,
 ): Promise<GuardrailEntry> {
-  return forgeFetch<GuardrailEntry>(
-    `/admin/llm-gateway/guardrails/${encodeURIComponent(name)}/enable`,
-    { method: 'POST' },
-  );
+  return api.post<GuardrailEntry>(`/admin/llm-gateway/guardrails/${encodeURIComponent(name)}/enable`, { });
 }
 
 /** POST /admin/llm-gateway/guardrails/{name}/disable */
 export async function disableGuardrail(
   name: string,
 ): Promise<GuardrailEntry> {
-  return forgeFetch<GuardrailEntry>(
-    `/admin/llm-gateway/guardrails/${encodeURIComponent(name)}/disable`,
-    { method: 'POST' },
-  );
+  return api.post<GuardrailEntry>(`/admin/llm-gateway/guardrails/${encodeURIComponent(name)}/disable`, { });
 }
 
 // ---------------------------------------------------------------------------
@@ -341,5 +312,5 @@ export interface ModelInfoEntry {
 
 /** GET /admin/llm-gateway/models */
 export async function listModels(): Promise<ReadonlyArray<ModelInfoEntry>> {
-  return forgeFetch<ReadonlyArray<ModelInfoEntry>>('/admin/llm-gateway/models');
+  return api.get<ReadonlyArray<ModelInfoEntry>>('/admin/llm-gateway/models');
 }

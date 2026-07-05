@@ -193,6 +193,9 @@ class ApprovalQueueService:
                 raise ValueError(f"cannot_decide_in_status:{row.status}")
 
             now = datetime.now(timezone.utc)
+            # Phase 8 SC-8.2 - reject decisions on expired items.
+            if row.expires_at is not None and now > row.expires_at:
+                raise ValueError(f"approval_expired:expires_at={row.expires_at}")
             row.decided_by = str(actor_id)
             row.decided_at = now
             row.reason = reason

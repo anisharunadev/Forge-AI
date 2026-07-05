@@ -1,0 +1,83 @@
+name: docs
+
+on:
+  pull_request:
+    paths:
+      - 'backend/app/api/v1/**'
+      - 'backend/app/db/models/**'
+      - 'docs/reference/**'
+      - 'docs/goals/**'
+      - 'docs/plan/**'
+      - 'docs/litellm/**'
+      - 'docs/standards/**'
+      - 'scripts/gen-api-catalog.*'
+      - 'scripts/gen-db-schema.*'
+      - 'scripts/check-doc-drift.sh'
+      - 'scripts/check-goal-status.*'
+      - 'scripts/check-goal-reality.*'
+      - 'scripts/check-plan-links.*'
+      - 'scripts/check-litellm-matrix.*'
+      - 'scripts/check-doc-links.sh'
+      - '.github/workflows/docs.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'backend/app/api/v1/**'
+      - 'backend/app/db/models/**'
+      - 'docs/reference/**'
+      - 'docs/goals/**'
+      - 'docs/plan/**'
+      - 'docs/litellm/**'
+      - 'docs/standards/**'
+      - 'scripts/gen-api-catalog.*'
+      - 'scripts/gen-db-schema.*'
+      - 'scripts/check-doc-drift.sh'
+      - 'scripts/check-goal-status.*'
+      - 'scripts/check-goal-reality.*'
+      - 'scripts/check-plan-links.*'
+      - 'scripts/check-litellm-matrix.*'
+      - 'scripts/check-doc-links.sh'
+      - '.github/workflows/docs.yml'
+
+# Cancel in-flight runs for the same PR / branch push.
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: docs / drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Doc drift detector
+        run: bash scripts/check-doc-drift.sh
+
+      - name: Goal status
+        run: bash scripts/check-goal-status.sh
+
+      - name: Goal reality
+        run: bash scripts/check-goal-reality.sh
+
+      - name: Plan links
+        run: bash scripts/check-plan-links.sh
+
+      - name: LiteLLM matrix
+        run: bash scripts/check-litellm-matrix.sh
+
+      - name: Phase doc structure
+        run: bash scripts/check-phase-docs.sh
+
+      - name: Broken links (lychee)
+        # Phase 3 PR-3.8: flipped to blocking.
+        run: bash scripts/check-doc-links.sh

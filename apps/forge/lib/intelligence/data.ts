@@ -29,8 +29,7 @@ import type {
   Story,
 } from "./types";
 
-import { FORGE_API_BASE_URL } from "@/lib/forge-api";
-
+import { api, FORGE_API_BASE_URL } from '@/lib/api/client';
 export const SEED_TENANT_ID = "acme-corp";
 
 const API_BASE = FORGE_API_BASE_URL;

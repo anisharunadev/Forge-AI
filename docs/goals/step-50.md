@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Replace default browser scrollbars with themed, premium scrollbars across the entire Forge AI app. Current scrollbars are OS defaults — too thick, wrong color, no rounded corners. Should look intentional and match the dark theme. Read .claude/design-system/ first.

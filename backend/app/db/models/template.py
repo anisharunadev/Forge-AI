@@ -31,7 +31,7 @@ class Template(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     variables: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
     version: Mapped[int] = mapped_column(nullable=False, default=1)
 
-    __table_args__ = (
+    __table_args__ = (        Index("ix_templates_tenant_project", "tenant_id", "project_id"),
         Index("ix_templates_tenant_type", "tenant_id", "type"),
     )
 

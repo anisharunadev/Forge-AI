@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 

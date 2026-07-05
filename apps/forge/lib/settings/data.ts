@@ -21,7 +21,7 @@
  * invalidate its query keys after success.
  */
 
-import { forgeFetch } from '@/lib/forge-api';
+import { api } from '@/lib/api/client';
 import type {
   AgentConfig,
   AgentConfigUpdate,
@@ -55,16 +55,14 @@ import type {
 // ---------------------------------------------------------------------------
 
 export async function getProject(projectId: string): Promise<Project> {
-  return forgeFetch<Project>(`/projects/${encodeURIComponent(projectId)}`);
+  return api.get<Project>(`/projects/${encodeURIComponent(projectId)}`);
 }
 
 export async function updateProject(
   projectId: string,
   body: ProjectUpdate,
 ): Promise<Project> {
-  return forgeFetch<Project>(`/projects/${encodeURIComponent(projectId)}`, {
-    method: 'PATCH',
-    body: JSON.stringify(body),
+  return api.patch<Project>(`/projects/${encodeURIComponent(projectId)}`, body, {
   });
 }
 
@@ -78,28 +76,19 @@ export interface MemberListResult {
 }
 
 export async function listMembers(projectId: string): Promise<MemberListResult> {
-  return forgeFetch<MemberListResult>(
-    `/projects/${encodeURIComponent(projectId)}/members`,
-  );
+  return api.get<MemberListResult>(`/projects/${encodeURIComponent(projectId)}/members`);
 }
 
 export async function inviteMember(
   projectId: string,
   body: InviteCreate,
 ): Promise<Invitation> {
-  return forgeFetch<Invitation>(
-    `/projects/${encodeURIComponent(projectId)}/members/invite`,
-    {
-      method: 'POST',
-      body: JSON.stringify(body),
-    },
-  );
+  return api.post<Invitation>(`/projects/${encodeURIComponent(projectId)}/members/invite`, body, {
+    });
 }
 
 export async function acceptInvite(token: string): Promise<Member> {
-  return forgeFetch<Member>('/projects/_/members/accept', {
-    method: 'POST',
-    body: JSON.stringify({ token }),
+  return api.post<Member>('/projects/_/members/accept', { token }, {
   });
 }
 
@@ -108,20 +97,14 @@ export async function updateMemberRole(
   memberId: string,
   body: RoleUpdate,
 ): Promise<Member> {
-  return forgeFetch<Member>(
-    `/projects/${encodeURIComponent(projectId)}/members/${encodeURIComponent(memberId)}`,
-    { method: 'PATCH', body: JSON.stringify(body) },
-  );
+  return api.patch<Member>(`/projects/${encodeURIComponent(projectId)}/members/${encodeURIComponent(memberId)}`, { body: JSON.stringify(body) });
 }
 
 export async function removeMember(
   projectId: string,
   memberId: string,
 ): Promise<void> {
-  await forgeFetch<void>(
-    `/projects/${encodeURIComponent(projectId)}/members/${encodeURIComponent(memberId)}`,
-    { method: 'DELETE' },
-  );
+  await api.delete<void>(`/projects/${encodeURIComponent(projectId)}/members/${encodeURIComponent(memberId)}`, { });
 }
 
 // ---------------------------------------------------------------------------
@@ -129,19 +112,14 @@ export async function removeMember(
 // ---------------------------------------------------------------------------
 
 export async function listEnvVars(projectId: string): Promise<ReadonlyArray<EnvVar>> {
-  return forgeFetch<ReadonlyArray<EnvVar>>(
-    `/projects/${encodeURIComponent(projectId)}/env-vars`,
-  );
+  return api.get<ReadonlyArray<EnvVar>>(`/projects/${encodeURIComponent(projectId)}/env-vars`);
 }
 
 export async function createEnvVar(
   projectId: string,
   body: EnvVarCreate,
 ): Promise<EnvVar> {
-  return forgeFetch<EnvVar>(
-    `/projects/${encodeURIComponent(projectId)}/env-vars`,
-    { method: 'POST', body: JSON.stringify(body) },
-  );
+  return api.post<EnvVar>(`/projects/${encodeURIComponent(projectId)}/env-vars`, { body: JSON.stringify(body) });
 }
 
 export async function updateEnvVar(
@@ -149,20 +127,14 @@ export async function updateEnvVar(
   key: string,
   body: EnvVarUpdate,
 ): Promise<EnvVar> {
-  return forgeFetch<EnvVar>(
-    `/projects/${encodeURIComponent(projectId)}/env-vars/${encodeURIComponent(key)}`,
-    { method: 'PATCH', body: JSON.stringify(body) },
-  );
+  return api.patch<EnvVar>(`/projects/${encodeURIComponent(projectId)}/env-vars/${encodeURIComponent(key)}`, { body: JSON.stringify(body) });
 }
 
 export async function deleteEnvVar(
   projectId: string,
   key: string,
 ): Promise<void> {
-  await forgeFetch<void>(
-    `/projects/${encodeURIComponent(projectId)}/env-vars/${encodeURIComponent(key)}`,
-    { method: 'DELETE' },
-  );
+  await api.delete<void>(`/projects/${encodeURIComponent(projectId)}/env-vars/${encodeURIComponent(key)}`, { });
 }
 
 /**
@@ -176,10 +148,7 @@ export async function revealEnvVar(
   projectId: string,
   key: string,
 ): Promise<EnvVarReveal> {
-  return forgeFetch<EnvVarReveal>(
-    `/projects/${encodeURIComponent(projectId)}/env-vars/${encodeURIComponent(key)}/reveal`,
-    { method: 'POST' },
-  );
+  return api.post<EnvVarReveal>(`/projects/${encodeURIComponent(projectId)}/env-vars/${encodeURIComponent(key)}/reveal`, { });
 }
 
 // ---------------------------------------------------------------------------
@@ -189,19 +158,14 @@ export async function revealEnvVar(
 export async function getAgentConfig(
   agentId: string,
 ): Promise<AgentConfig> {
-  return forgeFetch<AgentConfig>(
-    `/agents/${encodeURIComponent(agentId)}/config`,
-  );
+  return api.get<AgentConfig>(`/agents/${encodeURIComponent(agentId)}/config`);
 }
 
 export async function updateAgentConfig(
   agentId: string,
   body: AgentConfigUpdate,
 ): Promise<AgentConfig> {
-  return forgeFetch<AgentConfig>(
-    `/agents/${encodeURIComponent(agentId)}/config`,
-    { method: 'PATCH', body: JSON.stringify(body) },
-  );
+  return api.patch<AgentConfig>(`/agents/${encodeURIComponent(agentId)}/config`, { body: JSON.stringify(body) });
 }
 
 // ---------------------------------------------------------------------------
@@ -209,15 +173,13 @@ export async function updateAgentConfig(
 // ---------------------------------------------------------------------------
 
 export async function listProviders(): Promise<ReadonlyArray<ModelProvider>> {
-  return forgeFetch<ReadonlyArray<ModelProvider>>('/model-providers');
+  return api.get<ReadonlyArray<ModelProvider>>('/model-providers');
 }
 
 export async function createProvider(
   body: ModelProviderCreate,
 ): Promise<ModelProvider> {
-  return forgeFetch<ModelProvider>('/model-providers', {
-    method: 'POST',
-    body: JSON.stringify(body),
+  return api.post<ModelProvider>('/model-providers', body, {
   });
 }
 
@@ -225,10 +187,7 @@ export async function updateProvider(
   id: string,
   body: Partial<ModelProviderCreate> & { enabled?: boolean },
 ): Promise<ModelProvider> {
-  return forgeFetch<ModelProvider>(
-    `/model-providers/${encodeURIComponent(id)}`,
-    { method: 'PATCH', body: JSON.stringify(body) },
-  );
+  return api.patch<ModelProvider>(`/model-providers/${encodeURIComponent(id)}`, { body: JSON.stringify(body) });
 }
 
 // ---------------------------------------------------------------------------
@@ -236,7 +195,7 @@ export async function updateProvider(
 // ---------------------------------------------------------------------------
 
 export async function listRoles(): Promise<ReadonlyArray<Role>> {
-  return forgeFetch<ReadonlyArray<Role>>('/roles');
+  return api.get<ReadonlyArray<Role>>('/roles');
 }
 
 // ---------------------------------------------------------------------------
@@ -259,9 +218,7 @@ export async function listAuditSettings(
   if (filter.limit) params.set('limit', String(filter.limit));
   if (filter.before) params.set('before', filter.before);
   const qs = params.toString();
-  return forgeFetch<ReadonlyArray<AuditEvent>>(
-    `/audit${qs ? `?${qs}` : ''}`,
-  );
+  return api.get<ReadonlyArray<AuditEvent>>(`/audit${qs ? `?${qs}` : ''}`);
 }
 
 
@@ -280,13 +237,11 @@ export interface MeUser {
 }
 
 export async function getMe(): Promise<MeUser> {
-  return forgeFetch<MeUser>('/auth/me');
+  return api.get<MeUser>('/auth/me');
 }
 
 export async function patchMe(body: Partial<MeUser>): Promise<MeUser> {
-  return forgeFetch<MeUser>('/auth/me', {
-    method: 'PATCH',
-    body: JSON.stringify(body),
+  return api.patch<MeUser>('/auth/me', body, {
   });
 }
 
@@ -310,7 +265,7 @@ export interface ApiTokenCreated extends ApiToken {
 }
 
 export async function listApiTokens(): Promise<ReadonlyArray<ApiToken>> {
-  return forgeFetch<ReadonlyArray<ApiToken>>('/auth/api-tokens');
+  return api.get<ReadonlyArray<ApiToken>>('/auth/api-tokens');
 }
 
 export async function createApiToken(body: {
@@ -318,16 +273,13 @@ export async function createApiToken(body: {
   scope?: string;
   expiresInDays?: number | null;
 }): Promise<ApiTokenCreated> {
-  return forgeFetch<ApiTokenCreated>('/auth/api-tokens', {
-    method: 'POST',
-    body: JSON.stringify(body),
+  return api.post<ApiTokenCreated>('/auth/api-tokens', body, {
   });
 }
 
 export async function revokeApiToken(tokenId: string): Promise<void> {
-  await forgeFetch<void>(`/auth/api-tokens/${encodeURIComponent(tokenId)}`, {
-    method: 'DELETE',
-  });
+  await api.delete<void>(`/auth/api-tokens/${encodeURIComponent(tokenId)}`, {
+});
 }
 
 // ---------------------------------------------------------------------------
@@ -346,13 +298,12 @@ export interface Session {
 }
 
 export async function listSessions(): Promise<ReadonlyArray<Session>> {
-  return forgeFetch<ReadonlyArray<Session>>('/auth/sessions');
+  return api.get<ReadonlyArray<Session>>('/auth/sessions');
 }
 
 export async function revokeSession(sessionId: string): Promise<void> {
-  await forgeFetch<void>(`/auth/sessions/${encodeURIComponent(sessionId)}`, {
-    method: 'DELETE',
-  });
+  await api.delete<void>(`/auth/sessions/${encodeURIComponent(sessionId)}`, {
+});
 }
 
 // ---------------------------------------------------------------------------
@@ -367,15 +318,13 @@ export interface NotificationPrefs {
 }
 
 export async function getNotifications(): Promise<NotificationPrefs> {
-  return forgeFetch<NotificationPrefs>('/users/me/notifications');
+  return api.get<NotificationPrefs>('/users/me/notifications');
 }
 
 export async function patchNotifications(
   body: Partial<NotificationPrefs>,
 ): Promise<NotificationPrefs> {
-  return forgeFetch<NotificationPrefs>('/users/me/notifications', {
-    method: 'PATCH',
-    body: JSON.stringify(body),
+  return api.patch<NotificationPrefs>('/users/me/notifications', body, {
   });
 }
 
@@ -392,19 +341,14 @@ export interface Branding {
 }
 
 export async function getBranding(tenantId: string): Promise<Branding> {
-  return forgeFetch<Branding>(
-    `/tenants/${encodeURIComponent(tenantId)}/branding`,
-  );
+  return api.get<Branding>(`/tenants/${encodeURIComponent(tenantId)}/branding`);
 }
 
 export async function patchBranding(
   tenantId: string,
   body: Partial<Branding>,
 ): Promise<Branding> {
-  return forgeFetch<Branding>(
-    `/tenants/${encodeURIComponent(tenantId)}/branding`,
-    { method: 'PATCH', body: JSON.stringify(body) },
-  );
+  return api.patch<Branding>(`/tenants/${encodeURIComponent(tenantId)}/branding`, { body: JSON.stringify(body) });
 }
 
 // ---------------------------------------------------------------------------
@@ -420,7 +364,7 @@ export interface SsoConfig {
 }
 
 export async function getSsoConfig(): Promise<SsoConfig> {
-  return forgeFetch<SsoConfig>('/auth/sso/config');
+  return api.get<SsoConfig>('/auth/sso/config');
 }
 
 // ---------------------------------------------------------------------------
@@ -438,9 +382,7 @@ export interface BillingUsage {
 export async function getBillingQuota(
   tenantId: string,
 ): Promise<BillingUsage> {
-  return forgeFetch<BillingUsage>(
-    `/analytics/quota?tenant_id=${encodeURIComponent(tenantId)}`,
-  );
+  return api.get<BillingUsage>(`/analytics/quota?tenant_id=${encodeURIComponent(tenantId)}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -459,17 +401,14 @@ export interface FeatureFlag {
 }
 
 export async function listFeatureFlags(): Promise<ReadonlyArray<FeatureFlag>> {
-  return forgeFetch<ReadonlyArray<FeatureFlag>>('/feature-flags');
+  return api.get<ReadonlyArray<FeatureFlag>>('/feature-flags');
 }
 
 export async function patchFeatureFlag(
   key: string,
   value: FeatureFlagValue,
 ): Promise<FeatureFlag> {
-  return forgeFetch<FeatureFlag>(
-    `/feature-flags/${encodeURIComponent(key)}`,
-    { method: 'PATCH', body: JSON.stringify({ value }) },
-  );
+  return api.patch<FeatureFlag>(`/feature-flags/${encodeURIComponent(key)}`, { body: JSON.stringify({ value }) });
 }
 
 // ---------------------------------------------------------------------------
@@ -483,17 +422,14 @@ export interface SeedManifestSummary {
 }
 
 export async function listSeeds(): Promise<ReadonlyArray<SeedManifestSummary>> {
-  return forgeFetch<ReadonlyArray<SeedManifestSummary>>('/seeds');
+  return api.get<ReadonlyArray<SeedManifestSummary>>('/seeds');
 }
 
 export async function applySeed(
   name: string,
   body: Record<string, unknown> = {},
 ): Promise<unknown> {
-  return forgeFetch<unknown>(
-    `/seeds/${encodeURIComponent(name)}/apply`,
-    { method: 'POST', body: JSON.stringify(body) },
-  );
+  return api.post<unknown>(`/seeds/${encodeURIComponent(name)}/apply`, { body: JSON.stringify(body) });
 }
 
 // ---------------------------------------------------------------------------
@@ -502,35 +438,28 @@ export async function applySeed(
 
 export async function listWebhooks(direction?: 'inbound' | 'outbound'): Promise<ReadonlyArray<Webhook>> {
   const qs = direction ? `?direction=${encodeURIComponent(direction)}` : '';
-  return forgeFetch<ReadonlyArray<Webhook>>(`/webhooks${qs}`);
+  return api.get<ReadonlyArray<Webhook>>(`/webhooks${qs}`);
 }
 
 export async function createWebhook(body: WebhookCreate): Promise<Webhook> {
-  return forgeFetch<Webhook>('/webhooks', { method: 'POST', body: JSON.stringify(body) });
+  return api.post<Webhook>('/webhooks', { body: JSON.stringify(body) });
 }
 
 export async function updateWebhook(id: string, body: WebhookUpdate): Promise<Webhook> {
-  return forgeFetch<Webhook>(`/webhooks/${encodeURIComponent(id)}`, {
-    method: 'PATCH',
-    body: JSON.stringify(body),
+  return api.patch<Webhook>(`/webhooks/${encodeURIComponent(id)}`, body, {
   });
 }
 
 export async function deleteWebhook(id: string): Promise<void> {
-  await forgeFetch<void>(`/webhooks/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  await api.delete<void>(`/webhooks/${encodeURIComponent(id)}`, { });
 }
 
 export async function testWebhook(id: string): Promise<WebhookTestResult> {
-  return forgeFetch<WebhookTestResult>(
-    `/webhooks/${encodeURIComponent(id)}/test`,
-    { method: 'POST' },
-  );
+  return api.post<WebhookTestResult>(`/webhooks/${encodeURIComponent(id)}/test`, { });
 }
 
 export async function listWebhookDeliveries(id: string): Promise<ReadonlyArray<WebhookDelivery>> {
-  return forgeFetch<ReadonlyArray<WebhookDelivery>>(
-    `/webhooks/${encodeURIComponent(id)}/deliveries`,
-  );
+  return api.get<ReadonlyArray<WebhookDelivery>>(`/webhooks/${encodeURIComponent(id)}/deliveries`);
 }
 
 // ---------------------------------------------------------------------------
@@ -538,17 +467,17 @@ export async function listWebhookDeliveries(id: string): Promise<ReadonlyArray<W
 // ---------------------------------------------------------------------------
 
 export async function listAIGatewayModels(): Promise<ReadonlyArray<AIGatewayModel>> {
-  return forgeFetch<ReadonlyArray<AIGatewayModel>>('/admin/llm-gateway/models');
+  return api.get<ReadonlyArray<AIGatewayModel>>('/admin/llm-gateway/models');
 }
 
 export async function listAIGatewayMcpServers(): Promise<ReadonlyArray<AIGatewayMcpServer>> {
-  return forgeFetch<ReadonlyArray<AIGatewayMcpServer>>('/admin/llm-gateway/mcp-servers');
+  return api.get<ReadonlyArray<AIGatewayMcpServer>>('/admin/llm-gateway/mcp-servers');
 }
 
 export async function getAIGatewayHealth(): Promise<AIGatewayHealth> {
-  return forgeFetch<AIGatewayHealth>('/admin/llm-gateway/health');
+  return api.get<AIGatewayHealth>('/admin/llm-gateway/health');
 }
 
 export async function listAIGatewaySpend(): Promise<ReadonlyArray<AIGatewaySpend>> {
-  return forgeFetch<ReadonlyArray<AIGatewaySpend>>('/admin/llm-gateway/spend/teams');
+  return api.get<ReadonlyArray<AIGatewaySpend>>('/admin/llm-gateway/spend/teams');
 }

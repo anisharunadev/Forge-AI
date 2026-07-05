@@ -51,7 +51,7 @@ def init_telemetry() -> None:
             insecure=settings.otel_exporter_otlp_insecure,
         )
 
-        tracer_provider = TracerProvider(resource=resource)
+        tracer_provider = TracerProvider(resource=resource, sampler=_build_sampler())
         tracer_provider.add_span_processor(BatchSpanProcessor(span_exporter))
         trace.set_tracer_provider(tracer_provider)
 
@@ -63,11 +63,32 @@ def init_telemetry() -> None:
         logger.info("telemetry.otlp_initialized", endpoint=settings.otlp_endpoint)
     else:
         # No exporter — keep SDK defaults but still tag resources.
-        trace.set_tracer_provider(TracerProvider(resource=resource))
+        trace.set_tracer_provider(TracerProvider(resource=resource, sampler=_build_sampler()))
         metrics.set_meter_provider(MeterProvider(resource=resource))
         logger.info("telemetry.noop_initialized")
 
     _initialized = True
+
+
+def _build_sampler():
+    """Build a tenant-scoped sampler when redis + session factory are available."""
+    from app.core.tenant_sampler import TenantSettingsCache, make_sampler
+    try:
+        from app.core.config import settings
+        from app.db.session import get_session_factory
+        import redis.asyncio as aioredis
+        redis_client = None
+        if settings.redis_url:
+            try:
+                redis_client = aioredis.from_url(settings.redis_url, decode_responses=True)
+            except Exception:  # noqa: BLE001
+                redis_client = None
+        cache = TenantSettingsCache(redis_client, get_session_factory())
+        return make_sampler(cache)
+    except Exception:  # noqa: BLE001
+        logger.warning("telemetry.sampler_unavailable")
+        from opentelemetry.sdk.trace.sampling import ParentBased, TraceIdRatioBased
+        return ParentBased(TraceIdRatioBased(1.0))
 
 
 def get_tracer(name: str = "forge") -> trace.Tracer:

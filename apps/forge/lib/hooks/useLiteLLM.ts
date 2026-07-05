@@ -22,8 +22,7 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query';
 
-import { forgeFetch } from '@/lib/forge-api';
-
+import { api } from '@/lib/api/client';
 import {
   disableGuardrail,
   enableGuardrail,
@@ -312,9 +311,7 @@ export function useSpendByDay(
   return useQuery<ReadonlyArray<SpendByDayBucket>, Error>({
     queryKey: governanceQueryKeys.spendByDay(days),
     queryFn: () =>
-      forgeFetch<ReadonlyArray<SpendByDayBucket>>(
-        `/admin/llm-gateway/spend/by-day?days=${days}`,
-      ),
+      api.get<ReadonlyArray<SpendByDayBucket>>(`/admin/llm-gateway/spend/by-day?days=${days}`),
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
@@ -332,9 +329,7 @@ export function useSpendByTeam(): UseQueryResult<
   return useQuery<ReadonlyArray<SpendByTeam>, Error>({
     queryKey: governanceQueryKeys.spendByTeam(),
     queryFn: () =>
-      forgeFetch<ReadonlyArray<SpendByTeam>>(
-        '/admin/llm-gateway/spend/teams',
-      ),
+      api.get<ReadonlyArray<SpendByTeam>>('/admin/llm-gateway/spend/teams'),
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
@@ -351,7 +346,7 @@ export function useGuardrails(): UseQueryResult<
 > {
   return useQuery<ReadonlyArray<LiteLLMGuardrail>, Error>({
     queryKey: governanceQueryKeys.guardrails(),
-    queryFn: () => forgeFetch<ReadonlyArray<LiteLLMGuardrail>>('/policies'),
+    queryFn: () => api.get<ReadonlyArray<LiteLLMGuardrail>>('/policies'),
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
@@ -368,7 +363,7 @@ export function useModels(): UseQueryResult<
   return useQuery<ReadonlyArray<LlmModelInfo>, Error>({
     queryKey: governanceQueryKeys.models(),
     queryFn: () =>
-      forgeFetch<ReadonlyArray<LlmModelInfo>>('/admin/llm-gateway/models'),
+      api.get<ReadonlyArray<LlmModelInfo>>('/admin/llm-gateway/models'),
     refetchInterval: 60_000,
     staleTime: 60_000,
   });
@@ -384,7 +379,7 @@ export function useStandards(): UseQueryResult<
 > {
   return useQuery<ReadonlyArray<StandardRead>, Error>({
     queryKey: governanceQueryKeys.standards(),
-    queryFn: () => forgeFetch<ReadonlyArray<StandardRead>>('/standards'),
+    queryFn: () => api.get<ReadonlyArray<StandardRead>>('/standards'),
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
@@ -402,9 +397,7 @@ export function useAuditEvents(
   return useQuery<ReadonlyArray<AuditEventEntry>, Error>({
     queryKey: governanceQueryKeys.auditEvents(days, limit),
     queryFn: () =>
-      forgeFetch<ReadonlyArray<AuditEventEntry>>(
-        `/audit?days=${days}&limit=${limit}`,
-      ),
+      api.get<ReadonlyArray<AuditEventEntry>>(`/audit?days=${days}&limit=${limit}`),
     refetchInterval: 30_000,
     staleTime: 15_000,
   });
@@ -422,9 +415,7 @@ export function useLLMTraffic(
   return useQuery<ReadonlyArray<LlmTrafficEntry>, Error>({
     queryKey: governanceQueryKeys.llmTraffic(days, limit),
     queryFn: () =>
-      forgeFetch<ReadonlyArray<LlmTrafficEntry>>(
-        `/audit/llm-traffic?days=${days}&limit=${limit}`,
-      ),
+      api.get<ReadonlyArray<LlmTrafficEntry>>(`/audit/llm-traffic?days=${days}&limit=${limit}`),
     refetchInterval: 30_000,
     staleTime: 15_000,
   });

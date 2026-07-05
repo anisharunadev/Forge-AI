@@ -21,7 +21,7 @@ from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from app.schemas.common import ForgeBaseModel, Page
 
@@ -101,6 +101,46 @@ class HealthServicesResponse(ForgeBaseModel):
     db: str = Field(description='`ok` | `degraded` | `down`')
     cache: str = Field(description='`ok` | `degraded` | `down`')
     providers: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# Phase 6 SC-6.1 — Tenant budget snapshot
+# ---------------------------------------------------------------------------
+
+
+class TenantBudgetRead(ForgeBaseModel):
+    """Output of GET /forge/observability/budget/{tenant_id}."""
+
+    tenant_id: UUID
+    spent_30d_usd: float = 0.0
+    ceiling_usd: float = 0.0
+    pct: float = 0.0
+    today_usd: float = 0.0
+    has_activity: bool = False
+
+
+class CostRealtimeBucket(ForgeBaseModel):
+    """One minute-bucket in the 60-bucket last-hour sparkline."""
+
+    bucket_ts: datetime
+    cost_usd: float = 0.0
+
+
+class CostRealtimeResponse(ForgeBaseModel):
+    """Output of GET /forge/observability/cost/realtime (Phase 6 SC-6.6)."""
+
+    tenant_id: UUID
+    today_usd: float = 0.0
+    last_minute_usd: float = 0.0
+    budget_remaining_usd: float = 0.0
+    top_models: list[dict[str, Any]] = Field(default_factory=list)
+    last_hour_sparkline: list[CostRealtimeBucket] = Field(default_factory=list)
+    has_activity: bool = False
+
+    @model_validator(mode="after")
+    def _set_has_activity(self) -> "CostRealtimeResponse":
+        object.__setattr__(self, "has_activity", self.today_usd > 0)
+        return self
 
 
 # ---------------------------------------------------------------------------

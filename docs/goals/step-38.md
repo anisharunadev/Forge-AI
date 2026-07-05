@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Fix the shared-tab issue (Projects and Stories are both highlighted in the sidebar) and modernize both Project Intelligence + Stories with deeper cross-module integration. The headline feature: **start implementing a story → opens a terminal session with the story's full context injected**. Read .claude/design-system/ first.

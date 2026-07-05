@@ -1,5 +1,11 @@
 # Phase 2 — Routing & API Hygiene
 
+## Checklist items owned
+
+- #2
+- #3
+
+
 **Status:** PENDING
 **Owner:** TBA
 **Depends on:** Phase 1 (tests must run so we can verify)
@@ -154,3 +160,19 @@ For each documented-but-missing endpoint:
 - 5 missing ideation endpoints: all decided.
 - Coverage baseline recorded.
 - CI green.
+
+## Phase Close-out (filled at the end)
+
+```
+Implementation date: 2026-07-05 (Phase 3 — Documentation as Code)
+PR(s): phase-3/* (8 PRs; see docs/plan/phase-3-detailed.md)
+
+api-catalog.md: regenerated, was 305 routes claimed, code has 635 (2.1× undercount)
+db-schema.md:   regenerated, was 43 files / ~150 tables claimed, code has 61 files / 112 classes
+goal docs with Status header: 78 / 78 primary
+step-69.md: in-progress (4 endpoints shipped via Phase 2 PR-2.6; /ideation/ingest/status is optional per the doc itself)
+lychee broken links fixed: (collected via continue-on-error in CI; not yet blocking)
+Phase doc cross-links: 22/22 bidirectional
+Workflow docs.yml: created, required check: pending (warn-only in PR-3.3; gate flip in PR-3.8)
+Follow-up tickets opened: none
+```

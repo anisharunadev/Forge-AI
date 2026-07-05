@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 STEP 6 OF 6 — POLISH & AUDIT. All five previous steps are in. Final pass.

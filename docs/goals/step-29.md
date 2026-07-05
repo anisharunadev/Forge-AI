@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Organization Knowledge (Artifacts) page in Forge AI Agent OS — currently has empty state with Standards/Templates/Policies/Activity tabs. User wants to add organization-wise + project-scoped artifacts, knowledge best practices, templates (PRDs/ADRs/bugs), and many curated features. This should feel like a knowledge management hub: Confluence + Notion + Obsidian for engineering artifacts. Read .claude/design-system/ first.

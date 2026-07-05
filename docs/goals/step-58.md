@@ -1,3 +1,8 @@
+# step-58
+
+> **Status:** completed
+> **Last classified:** 2026-07-05
+
 /goal
 
 
@@ -1941,6 +1946,9 @@ python
 
 Copy
 # backend/app/api/v1/stories.py
+
+> **Status:** completed
+> **Last classified:** 2026-07-05
 
 @router.get("/stories")
 

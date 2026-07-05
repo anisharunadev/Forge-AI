@@ -6,8 +6,7 @@ import {
   FORGE_COMMANDS,
   type ForgeCommand,
 } from '@/lib/forge-commands';
-import { forgeFetch } from '@/lib/forge-api';
-
+import { api } from '@/lib/api/client';
 export type RunStatus = 'idle' | 'queued' | 'running' | 'succeeded' | 'failed';
 
 export interface RunState {
@@ -43,9 +42,7 @@ export function useForgeCommands() {
     }));
 
     try {
-      await forgeFetch(`/commands/${encodeURIComponent(command.name)}/run`, {
-        method: 'POST',
-        body: JSON.stringify({ name: command.name }),
+      await api.post(`/commands/${encodeURIComponent(command.name)}/run`, { name: command.name }, {
       });
       const finished: RunState = {
         ...initial,

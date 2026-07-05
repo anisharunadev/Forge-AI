@@ -414,7 +414,7 @@ class OutputBundle(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     bundle: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     storage_ref: Mapped[str | None] = mapped_column(String(512), nullable=True)
 
-    __table_args__ = (
+    __table_args__ = (        Index("ix_output_bundles_tenant_project", "tenant_id", "project_id"),
         Index("ix_output_bundles_idea", "idea_id"),
     )
 
@@ -441,7 +441,7 @@ class WorkflowSession(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         DateTime(timezone=True), nullable=True
     )
 
-    __table_args__ = (
+    __table_args__ = (        Index("ix_workflow_sessions_tenant_project", "tenant_id", "project_id"),
         Index("ix_workflow_sessions_tenant_status", "tenant_id", "status"),
         Index("ix_workflow_sessions_idea", "idea_id"),
     )
@@ -513,6 +513,12 @@ class ApprovalItem(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         DateTime(timezone=True), nullable=True
     )
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Phase 8 SC-8.2 - SLA window. NULL means "no expiry" until a
+    # per-tenant default SLA is configured. The approval service
+    # rejects decisions on items past this timestamp.
+    expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     __table_args__ = (
         Index(
@@ -522,6 +528,12 @@ class ApprovalItem(Base, UUIDPrimaryKeyMixin, TimestampMixin):
             "status",
         ),
         Index("ix_approval_items_idea_type", "idea_id", "request_type"),
+        Index("ix_ideation_approval_items_tenant_project", "tenant_id", "project_id"),
+        Index(
+            "ix_approval_items_status_expires",
+            "status",
+            "expires_at",
+        ),
     )
 
 
@@ -552,6 +564,7 @@ class PushRecord(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __table_args__ = (
         Index("ix_push_records_idea_target", "idea_id", "target"),
         Index("ix_push_records_tenant_status", "tenant_id", "status"),
+        Index("ix_ideation_push_records_tenant_project", "tenant_id", "project_id"),
     )
 
 

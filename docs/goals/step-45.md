@@ -1,3 +1,4 @@
+> **Status:** completed
 My take: 3-package spec-driven stack
 Package	What it does	What it powers in Forge
 forge-core (already done)	Methodology + skills + agents + commands	Every workflow, the 7 GSD phases, ticket → execute → deploy

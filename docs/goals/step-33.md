@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Massive modernization of the Forge Command Center in Forge AI Agent OS — currently a simple command catalog (categories + cards + recent runs). User wants to integrate the GSD-core spec-driven development methodology (renamed to `packages/forge-core/` — already done per the screenshot). The Command Center should become a real developer workbench: ticket-driven entry, full SDLC phases (Spike → Plan → Execute → Verify → Validate → Deploy), multi-work management, and orchestration across all Forge modules. Read .claude/design-system/ first.

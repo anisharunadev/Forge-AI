@@ -312,6 +312,13 @@ class ForgeLLMClient:
                 extra_kwargs=kwargs,
             )
         except (LLMUnavailableError,):
+            # Phase 6 SC-6.4 — try to enqueue when LiteLLM is unreachable.
+            # If the queue is full, re-raise the original LLMUnavailableError
+            # so the HTTP layer can return 503 + Retry-After.
+            await self._maybe_enqueue_on_failure(
+                tenant_id=tenant_id,
+                forge_trace_id=forge_trace_id,
+            )
             raise
         except Exception as exc:  # noqa: BLE001 — map any other failure to LLMUnavailableError
             latency_ms = int((time.monotonic() - started) * 1000)
@@ -892,6 +899,50 @@ class ForgeLLMClient:
     # ------------------------------------------------------------------
     # Recording helpers
     # ------------------------------------------------------------------
+
+    async def _maybe_enqueue_on_failure(
+        self,
+        *,
+        tenant_id: UUID | None,
+        forge_trace_id: UUID | None,
+    ) -> None:
+        """Phase 6 SC-6.4 — graceful degradation hook.
+
+        Called when ``base_client.chat`` raises :class:`LLMUnavailableError`.
+        Best-effort enqueue into the Redis-backed bounded FIFO; the
+        :class:`QueueFull` exception is logged and swallowed so the
+        upstream ``LLMUnavailableError`` propagates and the HTTP layer
+        emits ``503 + Retry-After``.
+        """
+        if tenant_id is None:
+            return
+        try:
+            from app.services.llm_degradation_queue import (
+                QueueFull,
+                degradation_queue,
+            )
+
+            entry = await degradation_queue.enqueue(
+                tenant_id=tenant_id, payload=b""
+            )
+            logger.info(
+                "litellm.degradation_queued",
+                tenant_id=str(tenant_id),
+                request_id=str(entry.request_id),
+                forge_trace_id=str(forge_trace_id) if forge_trace_id else None,
+            )
+        except QueueFull:
+            logger.warning(
+                "litellm.degradation_queue_full",
+                tenant_id=str(tenant_id),
+                forge_trace_id=str(forge_trace_id) if forge_trace_id else None,
+            )
+        except Exception:  # noqa: BLE001
+            # Queue path must never break the failure surfacing.
+            logger.exception(
+                "litellm.degradation_enqueue_failed",
+                tenant_id=str(tenant_id),
+            )
 
     async def _record_successful_call(
         self,

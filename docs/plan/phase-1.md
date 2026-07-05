@@ -1,5 +1,10 @@
 # Phase 1 — Test Infrastructure Foundation
 
+## Checklist items owned
+
+- #1
+
+
 **Status:** PENDING
 **Owner:** TBA
 **Depends on:** nothing

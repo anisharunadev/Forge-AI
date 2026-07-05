@@ -30,4 +30,6 @@ class Tenant(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         return f"<Tenant id={self.id} slug={self.slug!r}>"
 
 
+    _audit_root: bool = True
+
 __all__ = ["Tenant", "UUID"]

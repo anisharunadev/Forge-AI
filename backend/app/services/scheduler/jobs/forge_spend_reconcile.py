@@ -99,5 +99,55 @@ async def run(tenant_id: str | None = None) -> None:
                 error=str(exc),
             )
 
+        # Phase 6 SC-6.8 — finalize partial cost_ledger rows once /spend/logs
+        # has confirmed the cost. Drift bound = 5 min (this job runs every
+        # 5 min). Best-effort: if the column isn't present, skip.
+        try:
+            await _finalize_cost_ledger(last_sync=last_sync)
+        except Exception:  # noqa: BLE001
+            logger.exception("forge_spend_reconcile.cost_ledger_finalize_failed")
 
-__all__ = ["run"]
+
+async def _finalize_cost_ledger(*, last_sync: datetime) -> int:
+    """Flip partial ``cost_entries`` rows to ``final=True`` once confirmed.
+
+    Ponytail: the column ``cost_entries.final`` is added by the Phase 6
+    migration; this helper is a no-op when the column is absent so the
+    reconciler runs before and after the migration without errors.
+    """
+    import sqlalchemy as sa
+
+    from app.db.models.cost import CostEntry
+    from app.db.session import get_session_factory
+
+    columns = {c.name for c in CostEntry.__table__.columns}
+    if "final" not in columns:
+        return 0
+
+    factory = get_session_factory()
+    async with factory() as session:
+        rows = (
+            await session.execute(
+                sa.select(CostEntry).where(
+                    CostEntry.final.is_(False),
+                    CostEntry.recorded_at >= last_sync,
+                ).limit(500)
+            )
+        ).scalars().all()
+        partial_ids = [
+            r.id for r in rows
+            if (getattr(r, "metadata_", None) or {}).get("partial") is True
+        ]
+        if not partial_ids:
+            return 0
+        await session.execute(
+            sa.update(CostEntry)
+            .where(CostEntry.id.in_(partial_ids))
+            .values(final=True)
+        )
+        await session.commit()
+    logger.info("forge_spend_reconcile.cost_ledger_finalized", n=len(partial_ids))
+    return len(partial_ids)
+
+
+__all__ = ["run", "_finalize_cost_ledger"]

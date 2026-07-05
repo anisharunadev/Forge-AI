@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Apply 5 focused polish fixes to the Dashboard in Forge AI Agent OS. The dashboard is mostly working — these are targeted improvements for spacing, breadcrumbs, redundant indicators, and icon consistency. Read .claude/design-system/ first.

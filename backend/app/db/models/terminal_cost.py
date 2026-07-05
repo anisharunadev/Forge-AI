@@ -41,7 +41,7 @@ class TerminalSessionCost(Base, UUIDPrimaryKeyMixin):
     command_count: Mapped[int] = mapped_column(nullable=False, default=0)
     duration_seconds: Mapped[float] = mapped_column(nullable=False, default=0.0)
 
-    __table_args__ = (
+    __table_args__ = (        Index("ix_terminal_session_costs_tenant_project", "tenant_id", "project_id"),
         Index("ix_tsc_session_model", "session_id", "model"),
         Index("ix_tsc_tenant_recorded", "tenant_id", "recorded_at"),
     )

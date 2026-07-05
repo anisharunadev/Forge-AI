@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Polish the Workflow editor in Forge AI Agent OS — built in Step 22 but the user reports: nodes too small, hard to edit, no breathing room, panels feel cramped. Read .claude/design-system/ first.

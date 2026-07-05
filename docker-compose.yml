@@ -147,7 +147,8 @@ services:
     # DL-025: Provider Abstraction Layer. Every LLM call in the
     # backend targets http://litellm:4000 regardless of which
     # upstream provider actually serves the request.
-    image: ghcr.io/berriai/litellm:main-latest
+    # Phase 7 SC-7.6 — pinned by digest (refresh quarterly).
+    image: ghcr.io/berriai/litellm@sha256:aca3b6d31c55f421b2b7b2158b533583f8406036f7012f328c3b63a16cf2d21d
     container_name: forge-litellm
     restart: unless-stopped
     volumes:
@@ -200,7 +201,8 @@ services:
     # non-empty AWS credentials, so the test/test defaults in .env are
     # fine. The Docker socket is mounted so floci can spin up
     # Docker-backed services (Lambda, RDS emulation) when requested.
-    image: floci/floci:latest
+    # Phase 7 SC-7.6 — pinned by digest (refresh quarterly).
+    image: floci/floci@sha256:0ac8aa799e6dbb4251a182b3263ed4c5846d8af0d69192d0f9f11ba4c9d8b984
     container_name: forge-floci
     restart: unless-stopped
     environment:

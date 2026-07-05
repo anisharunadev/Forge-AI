@@ -102,7 +102,7 @@ class IngestionRun(Base, UUIDPrimaryKeyMixin):
     started_commit_sha: Mapped[str | None] = mapped_column(String(64), nullable=True)
     finished_commit_sha: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
-    __table_args__ = (
+    __table_args__ = (        Index("ix_ingestion_runs_tenant_project", "tenant_id", "project_id"),
         Index("ix_ingestion_runs_repo_started", "repo_id", "started_at"),
         Index("ix_ingestion_runs_status", "status"),
     )
@@ -129,7 +129,7 @@ class IngestionArtifact(Base, UUIDPrimaryKeyMixin):
     size_bytes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    __table_args__ = (
+    __table_args__ = (        Index("ix_ingestion_artifacts_tenant_project", "tenant_id", "project_id"),
         Index("ix_ingestion_artifacts_run_type", "ingestion_run_id", "type"),
     )
 

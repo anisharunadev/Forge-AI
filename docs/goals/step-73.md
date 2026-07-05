@@ -1,6 +1,9 @@
 # Step 73 — Phase 12 Settings: Wire remaining 13 tabs (partial)
 
-> **Status:** Partially shipped 2026-07-01 — backend foundation + frontend SDK/hooks done; **13 tab rewires still pending** (front-end work blocked on context). See "What shipped" and "Still TODO" below.
+> **Status:** in-progress
+> **Last classified:** 2026-07-05
+> **Note:** Wire remaining 13 Settings tabs (Backend foundation + SDK/hooks shipped 2026-07-01; 13 tab rewires still pending per doc)
+
 
 ## Context
 

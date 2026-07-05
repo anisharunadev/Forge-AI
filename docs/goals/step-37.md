@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Polish the floating Forge Co-pilot panel in Forge AI Agent OS — currently feels cramped, has a stuck error state, the input area is too busy, header has too many icons, and the backdrop dims the wrong area. Make it clean, focused, more chat-like. Read .claude/design-system/ first.

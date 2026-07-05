@@ -130,6 +130,44 @@ class AlertManager:
         """Testing seam: list of payloads sent so far."""
         return list(self._fired)
 
+    async def send(
+        self,
+        *,
+        title: str,
+        body: str,
+        labels: dict[str, str] | None = None,
+        severity: str = "warning",
+    ) -> None:
+        """Send an ad-hoc alert built from a title + body.
+
+        Used by the SLO evaluator (Phase 5) which is not driven by
+        the event bus. We construct an :class:AlertPayload and
+        route it through the same webhook / log-only path as
+        :meth:check_and_alert.
+        """
+        payload = AlertPayload(
+            alertname=title,
+            severity=severity,
+            summary=body,
+            labels=dict(labels or {}),
+            annotations={},
+        )
+        self._fired.append(payload)
+        url = self._webhook_url()
+        if not url:
+            logger.warning(
+                "observability.alert.log_only",
+                alertname=payload.alertname,
+                severity=payload.severity,
+                labels=payload.labels,
+            )
+            return
+        # Wrap into a minimal McpAuditEvent so the existing dispatcher
+        # path can handle it without an event_bus event.
+        # ponytail: deliberately skips _build_payload; the SLO surface
+        # is its own contract.
+        asyncio.create_task(self._post(url=url, payload=payload))
+
     # ------------------------------------------------------------------
     # Internals
     # ------------------------------------------------------------------

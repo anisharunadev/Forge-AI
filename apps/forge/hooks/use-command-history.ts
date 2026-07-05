@@ -2,8 +2,7 @@
 
 import * as React from 'react';
 
-import { forgeFetch } from '@/lib/forge-api';
-
+import { api } from '@/lib/api/client';
 export interface CommandRun {
   id: string;
   command: string;
@@ -41,7 +40,7 @@ export function useCommandHistory(
     let cancelled = false;
     setLoading(true);
     setError(null);
-    forgeFetch<CommandRun[]>(`/commands/${encodeURIComponent(name)}/runs`)
+    api.get<CommandRun[]>(`/commands/${encodeURIComponent(name)}/runs`)
       .then((data) => {
         if (cancelled) return;
         setRuns(data);

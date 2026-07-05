@@ -102,6 +102,7 @@ class ConnectorSyncHistory(Base, UUIDPrimaryKeyMixin):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     __table_args__ = (
+        Index("ix_connector_sync_history_tenant_project", "tenant_id", "project_id"),
         Index("ix_sync_history_connector_started", "connector_id", "started_at"),
     )
 
@@ -122,6 +123,7 @@ class ConnectorHealthHistory(Base, UUIDPrimaryKeyMixin):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     __table_args__ = (
+        Index("ix_connector_health_history_tenant_project", "tenant_id", "project_id"),
         Index("ix_health_history_connector_probed", "connector_id", "probed_at"),
     )
 

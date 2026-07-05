@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Polish the Forge AI Agent OS Dashboard — built in Step 18 v2. Read .claude/design-system/ first. Address the 15 issues I surfaced, in priority order.

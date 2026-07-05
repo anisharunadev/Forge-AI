@@ -21,6 +21,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 
 from app.core.logging import get_logger
+from app.core.rate_limit import enforce_rate_limit
 from app.core.security import AuthenticatedPrincipal
 from app.core.auth import CurrentUser
 from app.schemas.forge_chat import (
@@ -30,6 +31,7 @@ from app.schemas.forge_chat import (
     ChatStreamRequest,
     ForgeRunStatus,
 )
+from app.services.forge_budget_guard import TenantBudgetExceeded, tenant_budget_guard
 from app.services.forge_chat import Principal, cancel_run, get_run_status, stream_chat
 from app.services.forge_chat_errors import (
     AgentBudgetExceededError,
@@ -105,13 +107,42 @@ def _sse_error(code: str, message: str) -> bytes:
         502: {"description": "Upstream LLM error"},
     },
 )
+async def _chat_rate_limit_dep(
+    principal: Annotated[AuthenticatedPrincipal, Depends(require_tenant)],
+) -> None:
+    """Per-tenant sliding-window cap on chat completion calls."""
+    await enforce_rate_limit(
+        "chat", tenant_id=UUID(str(principal.tenant_id))
+    )
+
+
 async def stream_chat_endpoint(
     body: ChatStreamRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(require_tenant)],
+    _rl: Annotated[None, Depends(_chat_rate_limit_dep)] = None,
 ) -> StreamingResponse:
     """Stream Forge SSE envelopes for ``body.agent_id``."""
     agent_id = body.agent_id
     principal_td = _principal_from(principal)
+
+    # Phase 6 SC-6.1 — tenant budget guard runs BEFORE the SSE stream
+    # opens so we can return HTTP 429 cleanly. The agent-level guard
+    # still runs inside stream_chat() (forge_chat.py:200).
+    try:
+        await tenant_budget_guard.check_pre_call(
+            tenant_id=UUID(str(principal.tenant_id)),
+            est_cost_usd=0.0,
+        )
+    except TenantBudgetExceeded as exc:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "error": exc.code,
+                "message": str(exc),
+                "retry_after_seconds": exc.retry_after_seconds,
+            },
+            headers={"Retry-After": str(exc.retry_after_seconds)},
+        ) from exc
 
     async def generator() -> AsyncIterator[bytes]:
         try:
@@ -134,6 +165,32 @@ async def stream_chat_endpoint(
             yield _sse_error(exc.code, exc.message)
         except UpstreamError as exc:
             yield _sse_error(exc.code, exc.message)
+        # Phase 6 SC-6.4 — graceful degradation signals.
+        except Exception as exc:  # noqa: BLE001 — last-resort safety net
+            from app.services.llm_degradation_queue import (
+                QueuedForLater,
+                QueueFull,
+            )
+
+            if isinstance(exc, QueuedForLater):
+                payload = json.dumps(
+                    {"event": "queued", "request_id": exc.request_id}
+                )
+                yield f"event: queued\ndata: {payload}\n\n".encode("utf-8")
+                return
+            if isinstance(exc, QueueFull):
+                payload = json.dumps(
+                    {
+                        "code": "queue_full",
+                        "message": "LiteLLM unreachable; queue full. Retry shortly.",
+                        "retry_after_seconds": exc.retry_after_seconds,
+                    }
+                )
+                yield f"event: error\ndata: {payload}\n\n".encode("utf-8")
+                return
+            # Anything else: surface as a generic 500-ish SSE error.
+            logger.exception("forge_chat.unexpected_error")
+            yield _sse_error("internal_error", str(exc))
         except ForgeChatError as exc:
             yield _sse_error(exc.code, exc.message)
 

@@ -97,7 +97,7 @@ apps/forge/
 │   ├── workflows/
 │   └── ...
 ├── lib/                          # Framework-free utilities
-│   ├── api/                      # API client (forgeFetch)
+│   ├── api/                      # API client (only client.ts allowed, no api.ts or forge-api.ts)
 │   ├── hooks/                    # TanStack Query hooks
 │   ├── auth.ts                   # Auth store
 │   ├── design-system/            # Token source of truth
@@ -635,6 +635,10 @@ await fetch("/api/v1/workflows", { method: "POST", body });
 
 // ❌ Direct SDK imports
 import OpenAI from "openai";
+
+// ❌ Legacy API transports (P0 consolidation)
+import { forgeFetch } from '@/lib/forge-api';  // Use `api` from `lib/api/client.ts`
+import { ping } from '@/lib/api';              // Use `api` from `lib/api/client.ts`
 
 // ❌ spinners (use skeletons)
 {isLoading && <Spinner />}

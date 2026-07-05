@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Ship the killer features of the Command Center — the pieces that turn it from "command catalog" into "actual developer workbench." This is focused scope: Ticket-as-entry-point, full GSD methodology in UI, cross-module orchestration, plus the 3 quick wins as the implementation path. Read .claude/design-system/ first.

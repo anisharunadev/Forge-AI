@@ -18,8 +18,7 @@
 
 import * as React from 'react';
 
-import { FORGE_TERMINAL_WS_URL } from '@/lib/forge-api';
-
+import { api, FORGE_TERMINAL_WS_URL } from '@/lib/api/client';
 export type SidecarState = 'connecting' | 'connected' | 'disconnected' | 'failed';
 
 export interface UseSidecarProbeOptions {

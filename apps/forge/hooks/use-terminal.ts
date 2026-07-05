@@ -6,7 +6,7 @@ import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 
 import { openForgeWebSocket, type ForgeWebSocketHandle } from '@/lib/websocket';
-import { FORGE_TERMINAL_WS_URL } from '@/lib/forge-api';
+import { api, FORGE_TERMINAL_WS_URL } from '@/lib/api/client';
 import {
   FORGE_DARK_THEME,
   FORGE_TERMINAL_FONT,

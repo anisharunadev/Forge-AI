@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 STEP 4 OF 6 — AGENT CENTER REDESIGN. Foundation, shell, and empty states are done. Now redesign the Agent Center page. Read .claude/design-system/ first.

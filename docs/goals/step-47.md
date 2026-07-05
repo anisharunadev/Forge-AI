@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Add 10 missing tabs to the Settings (Admin) page in Forge AI Agent OS. Current 10 tabs cover the basics — need to add Profile, Notifications, API Tokens, Webhooks, Connected Apps, SSO, Branding, Billing, Feature Flags, Keyboard Shortcuts. Read .claude/design-system/ first.

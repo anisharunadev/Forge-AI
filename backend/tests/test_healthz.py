@@ -159,6 +159,7 @@ async def test_healthz_happy_path_all_probes_green(app, phase4_flag_on):
         patch("app.api.healthz.httpx.AsyncClient") as htx_cls,
         patch("app.api.healthz.LiteLLMBaseClient") as litellm_cls,
         patch("app.api.healthz._otel_initialized", True),
+        patch("app.api.healthz._probe_otel_exporter", return_value=("ok", 0.0)),
         patch("app.api.healthz.urllib.request.urlopen") as floci_open,
     ):
         # Redis ping -> True
@@ -212,15 +213,15 @@ async def test_healthz_happy_path_all_probes_green(app, phase4_flag_on):
     ):
         assert key in body["probes"], f"missing probe {key}: {body}"
     # Per-probe values when green
-    assert body["probes"]["db_health"] == "ok"
-    assert body["probes"]["redis_health"] == "ok"
-    assert body["probes"]["keycloak_reachable"] == "ok"
-    assert body["probes"]["litellm_health"] == "ok"
-    assert body["probes"]["floci_health"] == "ok"
-    assert body["probes"]["forge_phase4_mounted"] is True
+    assert body["probes"]["db_health"]["status"] == "ok"
+    assert body["probes"]["redis_health"]["status"] == "ok"
+    assert body["probes"]["keycloak_reachable"]["status"] == "ok"
+    assert body["probes"]["litellm_health"]["status"] == "ok"
+    assert body["probes"]["floci_health"]["status"] == "ok"
+    assert body["probes"]["forge_phase4_mounted"]["status"] is True
     # audit_sink is a structured dict; check its leaves
-    assert body["probes"]["audit_sink"]["otel"] == "ok"
-    assert body["probes"]["audit_sink"]["audit_table"] == "ok"
+    assert body["probes"]["audit_sink"]["status"]["otel"] == "ok"
+    assert body["probes"]["audit_sink"]["status"]["audit_table"] == "ok"
 
 
 # ---------------------------------------------------------------------------
@@ -244,6 +245,7 @@ async def test_healthz_degraded_when_db_down(app, phase4_flag_on):
         patch("app.api.healthz.httpx.AsyncClient") as htx_cls,
         patch("app.api.healthz.LiteLLMBaseClient") as litellm_cls,
         patch("app.api.healthz._otel_initialized", True),
+        patch("app.api.healthz._probe_otel_exporter", return_value=("ok", 0.0)),
         patch("app.api.healthz.urllib.request.urlopen") as floci_open,
     ):
         redis_client = AsyncMock()
@@ -270,14 +272,14 @@ async def test_healthz_degraded_when_db_down(app, phase4_flag_on):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
             r = await ac.get("/healthz")
 
-    assert r.status_code == 200
+    assert r.status_code == 503, r.text
     body = r.json()
     assert body["status"] == "degraded"
-    assert body["probes"]["db_health"] == "down"
+    assert body["probes"]["db_health"]["status"] == "down"
     # Other probes still green
-    assert body["probes"]["redis_health"] == "ok"
-    assert body["probes"]["keycloak_reachable"] == "ok"
-    assert body["probes"]["litellm_health"] == "ok"
+    assert body["probes"]["redis_health"]["status"] == "ok"
+    assert body["probes"]["keycloak_reachable"]["status"] == "ok"
+    assert body["probes"]["litellm_health"]["status"] == "ok"
 
 
 @pytest.mark.asyncio
@@ -311,6 +313,7 @@ async def test_healthz_degraded_when_redis_down(app, phase4_flag_on):
         patch("app.api.healthz.httpx.AsyncClient") as htx_cls,
         patch("app.api.healthz.LiteLLMBaseClient") as litellm_cls,
         patch("app.api.healthz._otel_initialized", True),
+        patch("app.api.healthz._probe_otel_exporter", return_value=("ok", 0.0)),
         patch("app.api.healthz.urllib.request.urlopen") as floci_open,
     ):
         kc_response = _mock_httpx_response(200)
@@ -332,11 +335,11 @@ async def test_healthz_degraded_when_redis_down(app, phase4_flag_on):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
             r = await ac.get("/healthz")
 
-    assert r.status_code == 200
+    assert r.status_code == 503, r.text
     body = r.json()
     assert body["status"] == "degraded"
-    assert body["probes"]["redis_health"] == "down"
-    assert body["probes"]["db_health"] == "ok"
+    assert body["probes"]["redis_health"]["status"] == "down"
+    assert body["probes"]["db_health"]["status"] == "ok"
 
 
 @pytest.mark.asyncio
@@ -369,6 +372,7 @@ async def test_healthz_degraded_when_keycloak_down(app, phase4_flag_on):
         ),
         patch("app.api.healthz.LiteLLMBaseClient") as litellm_cls,
         patch("app.api.healthz._otel_initialized", True),
+        patch("app.api.healthz._probe_otel_exporter", return_value=("ok", 0.0)),
         patch("app.api.healthz.urllib.request.urlopen") as floci_open,
     ):
         redis_client = AsyncMock()
@@ -391,10 +395,10 @@ async def test_healthz_degraded_when_keycloak_down(app, phase4_flag_on):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
             r = await ac.get("/healthz")
 
-    assert r.status_code == 200
+    assert r.status_code == 503, r.text
     body = r.json()
     assert body["status"] == "degraded"
-    assert body["probes"]["keycloak_reachable"] == "down"
+    assert body["probes"]["keycloak_reachable"]["status"] == "down"
 
 
 @pytest.mark.asyncio
@@ -424,6 +428,7 @@ async def test_healthz_degraded_when_litellm_down(app, phase4_flag_on):
         patch("app.api.healthz.httpx.AsyncClient") as htx_cls,
         patch("app.api.healthz.LiteLLMBaseClient") as litellm_cls,
         patch("app.api.healthz._otel_initialized", True),
+        patch("app.api.healthz._probe_otel_exporter", return_value=("ok", 0.0)),
         patch("app.api.healthz.urllib.request.urlopen") as floci_open,
     ):
         redis_client = AsyncMock()
@@ -453,10 +458,10 @@ async def test_healthz_degraded_when_litellm_down(app, phase4_flag_on):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
             r = await ac.get("/healthz")
 
-    assert r.status_code == 200
+    assert r.status_code == 503, r.text
     body = r.json()
     assert body["status"] == "degraded"
-    assert body["probes"]["litellm_health"] == "down"
+    assert body["probes"]["litellm_health"]["status"] == "down"
 
 
 @pytest.mark.asyncio
@@ -517,10 +522,10 @@ async def test_healthz_degraded_when_otel_uninitialized(app, phase4_flag_on):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
             r = await ac.get("/healthz")
 
-    assert r.status_code == 200
+    assert r.status_code == 503, r.text
     body = r.json()
     assert body["status"] == "degraded"
-    assert body["probes"]["audit_sink"]["otel"] == "down"
+    assert body["probes"]["audit_sink"]["status"]["otel"] == "down"
 
 
 @pytest.mark.asyncio
@@ -550,6 +555,7 @@ async def test_healthz_degraded_when_floci_down(app, phase4_flag_on):
         patch("app.api.healthz.httpx.AsyncClient") as htx_cls,
         patch("app.api.healthz.LiteLLMBaseClient") as litellm_cls,
         patch("app.api.healthz._otel_initialized", True),
+        patch("app.api.healthz._probe_otel_exporter", return_value=("ok", 0.0)),
         # floci urlopen raises -> probe reports 'down'
         patch(
             "app.api.healthz.urllib.request.urlopen",
@@ -574,10 +580,10 @@ async def test_healthz_degraded_when_floci_down(app, phase4_flag_on):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
             r = await ac.get("/healthz")
 
-    assert r.status_code == 200
+    assert r.status_code == 503, r.text
     body = r.json()
     assert body["status"] == "degraded"
-    assert body["probes"]["floci_health"] == "down"
+    assert body["probes"]["floci_health"]["status"] == "down"
 
 
 @pytest.mark.asyncio
@@ -607,6 +613,7 @@ async def test_healthz_degraded_when_phase4_not_mounted(app, phase4_flag_off):
         patch("app.api.healthz.httpx.AsyncClient") as htx_cls,
         patch("app.api.healthz.LiteLLMBaseClient") as litellm_cls,
         patch("app.api.healthz._otel_initialized", True),
+        patch("app.api.healthz._probe_otel_exporter", return_value=("ok", 0.0)),
         patch("app.api.healthz.urllib.request.urlopen") as floci_open,
     ):
         redis_client = AsyncMock()
@@ -633,10 +640,10 @@ async def test_healthz_degraded_when_phase4_not_mounted(app, phase4_flag_off):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
             r = await ac.get("/healthz")
 
-    assert r.status_code == 200
+    assert r.status_code == 503, r.text
     body = r.json()
     assert body["status"] == "degraded"
-    assert body["probes"]["forge_phase4_mounted"] is False
+    assert body["probes"]["forge_phase4_mounted"]["status"] is False
 
 
 # ---------------------------------------------------------------------------
@@ -687,6 +694,7 @@ async def test_healthz_version_field_present(app, phase4_flag_on):
         patch("app.api.healthz.httpx.AsyncClient") as htx_cls,
         patch("app.api.healthz.LiteLLMBaseClient") as litellm_cls,
         patch("app.api.healthz._otel_initialized", True),
+        patch("app.api.healthz._probe_otel_exporter", return_value=("ok", 0.0)),
         patch("app.api.healthz.urllib.request.urlopen") as floci_open,
     ):
         redis_client = AsyncMock()
@@ -717,3 +725,206 @@ async def test_healthz_version_field_present(app, phase4_flag_on):
     assert "version" in body
     assert "environment" in body
     assert body["environment"] == "test"
+
+
+# ---------------------------------------------------------------------------
+# Phase 7 SC-7.5 — git_sha + latency_ms + 503-on-degraded
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_healthz_includes_git_sha(app, phase4_flag_on, monkeypatch):
+    """SC-7.5: every response carries a non-empty git_sha field."""
+    from unittest.mock import patch
+
+    monkeypatch.setenv("GIT_SHA", "abc1234")
+    # Reload the module-level cache so the env is read.
+    import app.api.healthz as h
+    h._GIT_SHA = "abc1234"
+
+    with (
+        patch("app.api.healthz.get_engine") as engine,
+        patch("app.api.healthz.aioredis.from_url") as redis_from_url,
+        patch("app.api.healthz.httpx.AsyncClient") as htx_cls,
+        patch("app.api.healthz.LiteLLMBaseClient") as litellm_cls,
+        patch("app.api.healthz._otel_initialized", True),
+        patch("app.api.healthz._probe_otel_exporter", return_value=("ok", 0.0)),
+        patch("app.api.healthz.urllib.request.urlopen") as floci_open,
+    ):
+        engine.return_value.connect.return_value.__aenter__.return_value.execute = AsyncMock()
+        redis_client = AsyncMock()
+        redis_client.ping = AsyncMock(return_value=True)
+        redis_client.aclose = AsyncMock(return_value=None)
+        redis_from_url.return_value = redis_client
+        kc_response = _mock_httpx_response(200)
+        htx_cls.return_value = _patched_httpx_client(kc_response)
+        litellm_instance = AsyncMock()
+        litellm_instance.readiness = AsyncMock(return_value={"reachable": True})
+        litellm_instance.__aenter__ = AsyncMock(return_value=litellm_instance)
+        litellm_instance.__aexit__ = AsyncMock(return_value=None)
+        litellm_cls.return_value = litellm_instance
+        from unittest.mock import MagicMock
+        floci_resp = MagicMock()
+        floci_resp.status = 200
+        floci_resp_cm = MagicMock()
+        floci_resp_cm.__enter__ = MagicMock(return_value=floci_resp)
+        floci_resp_cm.__exit__ = MagicMock(return_value=False)
+        floci_open.return_value = floci_resp_cm
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            r = await ac.get("/healthz")
+    body = r.json()
+    assert body["git_sha"] == "abc1234"
+
+
+@pytest.mark.asyncio
+async def test_healthz_probe_shape_includes_latency(app, phase4_flag_on):
+    """SC-7.5: every probe carries a latency_ms field."""
+    from unittest.mock import patch
+
+    with (
+        patch("app.api.healthz.get_engine") as engine,
+        patch("app.api.healthz.aioredis.from_url") as redis_from_url,
+        patch("app.api.healthz.httpx.AsyncClient") as htx_cls,
+        patch("app.api.healthz.LiteLLMBaseClient") as litellm_cls,
+        patch("app.api.healthz._otel_initialized", True),
+        patch("app.api.healthz._probe_otel_exporter", return_value=("ok", 0.0)),
+        patch("app.api.healthz.urllib.request.urlopen") as floci_open,
+    ):
+        engine.return_value.connect.return_value.__aenter__.return_value.execute = AsyncMock()
+        redis_client = AsyncMock()
+        redis_client.ping = AsyncMock(return_value=True)
+        redis_client.aclose = AsyncMock(return_value=None)
+        redis_from_url.return_value = redis_client
+        kc_response = _mock_httpx_response(200)
+        htx_cls.return_value = _patched_httpx_client(kc_response)
+        litellm_instance = AsyncMock()
+        litellm_instance.readiness = AsyncMock(return_value={"reachable": True})
+        litellm_instance.__aenter__ = AsyncMock(return_value=litellm_instance)
+        litellm_instance.__aexit__ = AsyncMock(return_value=None)
+        litellm_cls.return_value = litellm_instance
+        from unittest.mock import MagicMock
+        floci_resp = MagicMock()
+        floci_resp.status = 200
+        floci_resp_cm = MagicMock()
+        floci_resp_cm.__enter__ = MagicMock(return_value=floci_resp)
+        floci_resp_cm.__exit__ = MagicMock(return_value=False)
+        floci_open.return_value = floci_resp_cm
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            r = await ac.get("/healthz")
+    body = r.json()
+    for name in ("db_health", "redis_health", "keycloak_reachable",
+                 "litellm_health", "floci_health",
+                 "otel_exporter_configured", "forge_phase4_mounted"):
+        probe = body["probes"][name]
+        assert "latency_ms" in probe, name
+        assert isinstance(probe["latency_ms"], (int, float)), name
+
+
+@pytest.mark.asyncio
+async def test_healthz_returns_503_when_db_down(app, phase4_flag_on):
+    """SC-7.5: single down probe flips the response to 503."""
+    from unittest.mock import patch
+
+    async def fake_db_down():
+        return "down", 1.0
+
+    with patch("app.api.healthz._probe_db", new=fake_db_down):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            r = await ac.get("/healthz")
+    assert r.status_code == 503, r.text
+    body = r.json()
+    assert body["status"] == "degraded"
+    assert body["probes"]["db_health"]["status"] == "down"
+
+
+@pytest.mark.asyncio
+async def test_healthz_returns_503_when_keycloak_down(app, phase4_flag_on):
+    """SC-7.5: keycloak_reachable down -> 503."""
+    from unittest.mock import patch
+
+    async def fake_keycloak_down():
+        return "down", 1.0
+
+    with patch("app.api.healthz._probe_keycloak", new=fake_keycloak_down):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            r = await ac.get("/healthz")
+    assert r.status_code == 503
+    body = r.json()
+    assert body["probes"]["keycloak_reachable"]["status"] == "down"
+
+
+@pytest.mark.asyncio
+async def test_healthz_returns_503_when_redis_down(app, phase4_flag_on):
+    """SC-7.5: redis_health down -> 503."""
+    from unittest.mock import patch
+
+    async def fake_redis_down():
+        return "down", 1.0
+
+    with patch("app.api.healthz._probe_redis", new=fake_redis_down):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            r = await ac.get("/healthz")
+    assert r.status_code == 503
+    body = r.json()
+    assert body["probes"]["redis_health"]["status"] == "down"
+
+
+@pytest.mark.asyncio
+async def test_healthz_returns_503_when_litellm_down(app, phase4_flag_on):
+    """SC-7.5: litellm_health down -> 503."""
+    from unittest.mock import patch
+
+    async def fake_litellm_down():
+        return "down", 5.0
+
+    with patch("app.api.healthz._probe_litellm", new=fake_litellm_down):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            r = await ac.get("/healthz")
+    assert r.status_code == 503
+    body = r.json()
+    assert body["probes"]["litellm_health"]["status"] == "down"
+
+
+@pytest.mark.asyncio
+async def test_healthz_returns_200_when_all_ok(app, phase4_flag_on, monkeypatch):
+    """SC-7.5: status=ok -> 200."""
+    from unittest.mock import patch
+
+    monkeypatch.setenv("GIT_SHA", "deadbeef")
+    import app.api.healthz as h
+    h._GIT_SHA = "deadbeef"
+
+    with (
+        patch("app.api.healthz.get_engine") as engine,
+        patch("app.api.healthz.aioredis.from_url") as redis_from_url,
+        patch("app.api.healthz.httpx.AsyncClient") as htx_cls,
+        patch("app.api.healthz.LiteLLMBaseClient") as litellm_cls,
+        patch("app.api.healthz._otel_initialized", True),
+        patch("app.api.healthz._probe_otel_exporter", return_value=("ok", 0.0)),
+        patch("app.api.healthz.urllib.request.urlopen") as floci_open,
+    ):
+        engine.return_value.connect.return_value.__aenter__.return_value.execute = AsyncMock()
+        redis_client = AsyncMock()
+        redis_client.ping = AsyncMock(return_value=True)
+        redis_client.aclose = AsyncMock(return_value=None)
+        redis_from_url.return_value = redis_client
+        kc_response = _mock_httpx_response(200)
+        htx_cls.return_value = _patched_httpx_client(kc_response)
+        litellm_instance = AsyncMock()
+        litellm_instance.readiness = AsyncMock(return_value={"reachable": True})
+        litellm_instance.__aenter__ = AsyncMock(return_value=litellm_instance)
+        litellm_instance.__aexit__ = AsyncMock(return_value=None)
+        litellm_cls.return_value = litellm_instance
+        from unittest.mock import MagicMock
+        floci_resp = MagicMock()
+        floci_resp.status = 200
+        floci_resp_cm = MagicMock()
+        floci_resp_cm.__enter__ = MagicMock(return_value=floci_resp)
+        floci_resp_cm.__exit__ = MagicMock(return_value=False)
+        floci_open.return_value = floci_resp_cm
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            r = await ac.get("/healthz")
+    body = r.json()
+    if body["status"] == "ok":
+        assert r.status_code == 200
+        assert body["git_sha"] == "deadbeef"

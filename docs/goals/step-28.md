@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Ideation Center in Forge AI Agent OS — built in Step 5. The user's organization has a bigger vision now: **one-click pipeline from idea → PRD → Jira ticket → Confluence page → AI IDE execution**, with continuous ingest from multiple sources. This is the "Continuous Context Orchestration" hub shown in the user's exec deck. Read .claude/design-system/ first.

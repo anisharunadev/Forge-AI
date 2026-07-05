@@ -1,6 +1,9 @@
 # Step 64 — Explainability + Slack Agent + Knowledge Loop
 
-> **Status:** Ready to run (3-step bundle — Explainability first)
+> **Status:** in-progress
+> **Last classified:** 2026-07-05
+> **Note:** Explainability + Slack Agent + Knowledge Loop (Ready to run, 3-step bundle — Explainability first)
+
 > **Workspace:** `forge-ai`
 > **Duration estimate:** ~2-3 weeks for the full bundle, ~1 week for Explainability alone
 > **Phase:** CodeRabbit Agentic SDLC mapping — closes the 4 framework gaps

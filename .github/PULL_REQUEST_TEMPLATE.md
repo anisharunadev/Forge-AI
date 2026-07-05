@@ -73,6 +73,23 @@
 - Owner:
 - Follow-up:
 
+## Schema changes
+
+<!-- Required if this PR touches `backend/app/db/models/`, `backend/alembic/versions/`, or any service that issues SQL. Skip otherwise by removing the entire section. -->
+
+- [ ] Migration adds `tenant_id` / `project_id` columns where missing
+- [ ] Composite index `(tenant_id, project_id, ...)` added or updated
+- [ ] Isolation test included (2-tenant, see `backend/tests/services/*_isolation.py`)
+- [ ] Downgrade executed locally with `scripts/check-migrations.sh` (round-trip green)
+- [ ] `EXPLAIN ANALYZE` captured on a representative query (attach output below)
+- [ ] `python3 scripts/audit-tenancy.py --strict --require-composite-index` exits 0
+
+EXPLAIN ANALYZE output:
+
+```sql
+-- paste here
+```
+
 ## Checklist
 
 - [ ] Problem and acceptance criteria filled in

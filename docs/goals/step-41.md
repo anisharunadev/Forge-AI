@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Fix the Knowledge Graph in Forge AI Agent OS — the nodes are positioned in the top-right of the canvas by default, leaving most of the viewport empty. The graph should be CENTERED. Read .claude/design-system/ first.

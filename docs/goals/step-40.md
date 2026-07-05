@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Complete redesign of the Forge AI documentation site (currently Astro.js + Starlight, light theme) into an enterprise-grade dark-themed documentation site that aligns with the Forge AI app design language. Read .claude/design-system/ first + explore docs-site/src/content/docs/ for existing content.

@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 STEP 3 OF 6 — EMPTY STATES. Shell from Step 2 is done. Fix every dead-end empty state. This is the highest-leverage visual win — the user is staring at empty screens.

@@ -1,3 +1,8 @@
+# step-53
+
+> **Status:** completed
+> **Last classified:** 2026-07-05
+
 User clicks "Sign in" 
   → Frontend redirects to Keycloak (http://localhost:8080/realms/forge/protocol/openid-connect/auth)
   → User logs in on Keycloak
@@ -149,6 +154,9 @@ REFRESH_TOKEN_EXPIRE = timedelta(days=7)
 
 
 # Token endpoint discovery
+
+> **Status:** completed
+> **Last classified:** 2026-07-05
 
 KEYCLOAK_TOKEN_URL = f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/token"
 

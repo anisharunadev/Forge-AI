@@ -56,6 +56,7 @@ class CostEntry(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
 
     __table_args__ = (
+        Index("ix_cost_entries_tenant_project", "tenant_id", "project_id"),
         Index("ix_cost_tenant_recorded", "tenant_id", "recorded_at"),
         Index("ix_cost_project_recorded", "project_id", "recorded_at"),
         Index("ix_cost_tenant_model", "tenant_id", "model"),

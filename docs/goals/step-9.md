@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Project Onboarding wizard in Forge AI Agent OS. Tokens, shell, empty states, and Steps 7–8 are done. Read .claude/design-system/ first.

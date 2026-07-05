@@ -23,6 +23,14 @@ logger = get_logger(__name__)
 _TENANT_SETTING = "app.tenant_id"
 _PROJECT_SETTING = "app.project_id"
 
+# Literal SQL probe — kept outside any f-string so bandit B608 passes.
+_PROBE_GUCS = text(
+    "SELECT current_setting('app.tenant_id', true) AS tid, "
+    "current_setting('app.project_id', true) AS pid"
+)
+_SET_LOCAL_TENANT = text("SET LOCAL app.tenant_id = :tid")
+_SET_LOCAL_PROJECT = text("SET LOCAL app.project_id = :pid")
+
 
 def _coerce(value: UUID | str | None) -> str | None:
     if value is None:
@@ -51,8 +59,9 @@ async def tenant_context(
         # we still require an explicit empty-string sentinel for RLS.
         pid = ""
 
-    await session.execute(text(f"SET LOCAL {_TENANT_SETTING} = :tid"), {"tid": tid})
-    await session.execute(text(f"SET LOCAL {_PROJECT_SETTING} = :pid"), {"pid": pid})
+    # Literal SQL — no f-string. tenant_id and project_id are bound params.
+    await session.execute(_SET_LOCAL_TENANT, {"tid": tid})
+    await session.execute(_SET_LOCAL_PROJECT, {"pid": pid})
     logger.debug("rls.context_set", tenant_id=tid, project_id=pid or "*")
     try:
         yield session
@@ -83,8 +92,12 @@ def rls_required(
         if session is None:
             raise RuntimeError("rls_required: no AsyncSession in call args")
 
-        tid = await session.scalar(text(f"SELECT current_setting('{_TENANT_SETTING}', true)"))
-        pid = await session.scalar(text(f"SELECT current_setting('{_PROJECT_SETTING}', true)"))
+        # ponytail: probe both GUCs in one round-trip; literal SQL — no f-string.
+        row = (await session.execute(_PROBE_GUCS)).one_or_none()
+        if row is None:
+            return _enforce_missing()
+        tid = row.tid or None
+        pid = row.pid or None
         if not tid:
             raise PermissionError("RLS: app.tenant_id not set on session (Rule 2 violation)")
         # project_id may be empty for org-level queries but must be explicitly set.

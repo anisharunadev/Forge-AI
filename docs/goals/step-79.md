@@ -1,5 +1,8 @@
 # Forge Backend — Phase 4 Implementation Spec
 
+> **Status:** completed
+> **Last classified:** 2026-07-05
+
 > **Phase:** 4 of 4 — Scale & Enterprise
 > **Goal of this doc:** spec the 5 features in Phase 4 with explicit goals, contracts, and acceptance criteria — no code, just the contract.
 > **Depends on:** Phase 1 (Foundation), Phase 2 (Safety & Tooling), Phase 3 (Productivity).

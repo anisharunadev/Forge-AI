@@ -32,11 +32,22 @@
  *   - No client-side password validation (server is source of truth).
  */
 
-import {
-  FORGE_API_BASE_URL,
-  FORGE_WS_BASE_URL,
-  ForgeApiError,
-} from '@/lib/forge-api';
+const FORGE_API_BASE_URL: string =
+  process.env.NEXT_PUBLIC_FORGE_API_URL ??
+  process.env.FORA_FORGE_API_URL ??
+  'http://localhost:8000/api/v1';
+
+const FORGE_WS_BASE_URL: string =
+  process.env.NEXT_PUBLIC_FORGE_WS_URL ??
+  process.env.FORA_FORGE_WS_URL ??
+  'ws://localhost:8000/api/v1';
+
+// Terminal sidecar runs on :4001 in dev (see bin/terminal-server.mjs).
+const FORGE_TERMINAL_WS_URL: string =
+  process.env.NEXT_PUBLIC_FORGE_TERMINAL_WS_URL ??
+  process.env.FORA_FORGE_TERMINAL_WS_URL ??
+  'ws://localhost:4001/ws/terminal';
+
 import { SEED_TENANT_ID } from '@/lib/auth';
 
 // ---------------------------------------------------------------------------
@@ -273,4 +284,9 @@ export const api = {
   },
 };
 
-export { FORGE_API_BASE_URL, FORGE_WS_BASE_URL, ForgeApiError };
+export { FORGE_API_BASE_URL, FORGE_WS_BASE_URL, FORGE_TERMINAL_WS_URL };
+
+// Legacy error-class alias — `forge-api.ts` used to export a class
+// named `ForgeApiError`. Tests still import it via copilot.ts.
+// ponytail: shim, delete when no caller imports `ForgeApiError`.
+export const ForgeApiError = ApiError;

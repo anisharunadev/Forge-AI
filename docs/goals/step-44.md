@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Address 6 specific improvements to the Stories page in Forge AI Agent OS. The page looks good but has URL, integration, and feature gaps. Read .claude/design-system/ first.

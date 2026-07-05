@@ -25,7 +25,7 @@ import {
 } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import { FORGE_API_BASE_URL } from '@/lib/forge-api';
+import { api, FORGE_API_BASE_URL } from '@/lib/api/client';
 import { useAuth } from '@/lib/api/auth';
 
 import {

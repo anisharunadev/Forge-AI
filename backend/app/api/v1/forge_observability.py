@@ -44,11 +44,14 @@ from app.schemas.observability_v2 import (
     AuditPage,
     AlertConfig as AlertConfigSchema,
     ComplianceReport,
+    CostRealtimeBucket,
+    CostRealtimeResponse,
     GdprDeleteRequest,
     GdprDeleteResponse,
     GdprExportResponse,
     HealthServicesResponse,
     MetricsResponse,
+    TenantBudgetRead,
 )
 from app.services.observability_service import (
     ObservabilityError,
@@ -200,6 +203,45 @@ async def metrics_latency(
         db, tenant_id=_tenant_id(principal), window_seconds=window_seconds
     )
     return metrics
+
+
+# ---------------------------------------------------------------------------
+# Phase 6 SC-6.1 — Tenant budget snapshot
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/budget/{tenant_id}",
+    response_model=TenantBudgetRead,
+    summary="Tenant budget snapshot (today + 30-day rolling)",
+)
+@audit(action="forge.budget.snapshot_served", target_type="budget")
+async def get_tenant_budget(
+    tenant_id: UUID,
+    db: DbSession,
+    principal: Annotated[object, Depends(require_permission("budget:read"))],
+) -> TenantBudgetRead:
+    """Return the tenant's current budget status (Phase 6 SC-6.1)."""
+    from datetime import UTC, datetime
+    from app.services.cost_ledger import cost_ledger
+    from app.services.forge_budget_guard import tenant_budget_guard
+
+    snapshot = await tenant_budget_guard.check_pre_call(
+        tenant_id=tenant_id, est_cost_usd=0.0
+    )
+    today_start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_usd = await cost_ledger.get_total_for_tenant(
+        tenant_id=tenant_id,
+        since=today_start,
+    )
+    return TenantBudgetRead(
+        tenant_id=tenant_id,
+        spent_30d_usd=snapshot["spent_usd"],
+        ceiling_usd=snapshot["ceiling_usd"],
+        pct=snapshot["pct"],
+        today_usd=today_usd,
+        has_activity=today_usd > 0,
+    )
 
 
 # ---------------------------------------------------------------------------

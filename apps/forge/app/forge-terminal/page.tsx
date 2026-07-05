@@ -47,7 +47,7 @@ import { SidecarBanner } from '@/components/forge-terminal/SidecarBanner';
 import { LeftRail } from '@/components/forge-terminal/LeftRail';
 import { AuditRail } from '@/components/forge-terminal/AuditRail';
 import { useSidecarProbe, type SidecarState } from '@/hooks/use-sidecar-probe';
-import { FORGE_TERMINAL_WS_URL } from '@/lib/forge-api';
+import { api, FORGE_TERMINAL_WS_URL } from '@/lib/api/client';
 import type { TerminalConnectionState } from '@/hooks/use-terminal';
 
 const TerminalPanel = dynamic(

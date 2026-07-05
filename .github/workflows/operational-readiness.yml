@@ -1,0 +1,138 @@
+name: operational-readiness
+
+on:
+  pull_request:
+    paths:
+      - 'docker-compose.yml'
+      - 'scripts/rotate-secrets.sh'
+      - 'scripts/check-image-pinning.sh'
+      - 'scripts/check-env-example.sh'
+      - 'scripts/backup-postgres.sh'
+      - 'scripts/restore-postgres.sh'
+      - 'docs/runbooks/**'
+      - '.github/workflows/operational-readiness.yml'
+      - '.env.example'
+  push:
+    branches: [main]
+    paths:
+      - 'docker-compose.yml'
+      - 'scripts/**'
+      - 'docs/runbooks/**'
+      - '.github/workflows/operational-readiness.yml'
+      - '.env.example'
+
+concurrency:
+  group: op-readiness-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  image-pinning:
+    name: docker images pinned (no :latest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check image pinning
+        run: bash scripts/check-image-pinning.sh
+
+  env-example:
+    name: .env.example completeness
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install backend
+        working-directory: backend
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install -r requirements.txt
+      - name: Check env completeness
+        run: bash scripts/check-env-example.sh
+
+  rotate-secrets:
+    name: secrets rotation smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bring up dev stack
+        run: |
+          docker compose up -d postgres redis keycloak
+          for _ in $(seq 1 60); do
+              docker compose exec -T postgres pg_isready -U forge -d forge && break
+              sleep 2
+          done
+      - name: Run rotate-secrets
+        env:
+          KEYCLOAK_ADMIN: admin
+          KEYCLOAK_ADMIN_PASSWORD: admin
+          POSTGRES_USER: forge
+          POSTGRES_PASSWORD: forge
+        run: |
+          mkdir -p infra/env
+          cat > infra/env/dev.env <<EOF
+          ENVIRONMENT=dev
+          JWT_SECRET=dev-old-secret-replace-me-32-chars-long-aaaaaaaaa
+          LITELLM_MASTER_KEY=sk-old-key-replace-me
+          POSTGRES_USER=forge
+          POSTGRES_PASSWORD=forge
+          KEYCLOAK_URL=http://localhost:8080
+          KEYCLOAK_REALM=forge
+          KEYCLOAK_ADMIN=admin
+          KEYCLOAK_ADMIN_PASSWORD=admin
+          EOF
+          bash scripts/rotate-secrets.sh --env=dev --no-db --no-keycloak --overlap-seconds=60
+      - name: Teardown
+        if: always()
+        run: docker compose down -v
+
+  backup-restore-smoke:
+    name: backup+restore round-trip
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: forge
+          POSTGRES_PASSWORD: forge
+          POSTGRES_DB: forge
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install psql
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Install backend
+        working-directory: backend
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install -r requirements.txt
+      - name: Seed + backup
+        env:
+          DATABASE_URL: postgresql+asyncpg://forge:forge@localhost:5432/forge
+          POSTGRES_USER: forge
+          POSTGRES_PASSWORD: forge
+          POSTGRES_DB: forge
+        run: |
+          mkdir -p infra/backups infra/env
+          echo "ENVIRONMENT=dev" > infra/env/dev.env
+          echo "DATABASE_URL=postgresql+asyncpg://forge:forge@localhost:5432/forge" >> infra/env/dev.env
+          (cd backend && source ../infra/env/dev.env && alembic upgrade head)
+          bash scripts/backup-postgres.sh --env=dev
+      - name: Restore
+        env:
+          DATABASE_URL: postgresql+asyncpg://forge:forge@localhost:5432/forge
+        run: |
+          bash scripts/restore-postgres.sh --file=$(ls -t infra/backups/forge-dev-*.sql.gz | head -1)

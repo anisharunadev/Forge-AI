@@ -27,26 +27,37 @@ import {
   type CopilotToolRead,
 } from '../../lib/api/copilot';
 
-// Mock the underlying `forgeFetch` transport so we can intercept
-// requests without hitting a real network.
-vi.mock('../../lib/forge-api', async () => {
-  const actual = await vi.importActual<typeof import('../../lib/forge-api')>(
-    '../../lib/forge-api',
+// Mock the canonical `api` client (replaces the lib/forge-api
+// `forgeFetch` transport after Phase 2 consolidation).
+vi.mock('@/lib/api/client', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/api/client')>(
+    '@/lib/api/client',
   );
   return {
     ...actual,
-    forgeFetch: vi.fn(),
+    api: {
+      ...actual.api,
+      get: vi.fn(),
+      post: vi.fn(),
+      put: vi.fn(),
+      patch: vi.fn(),
+      delete: vi.fn(),
+      ws: actual.api.ws,
+    },
   };
 });
 
-import { forgeFetch } from '../../lib/forge-api';
+import { api } from '@/lib/api/client';
 
-const mockedFetch = vi.mocked(forgeFetch);
+const mockedGet = vi.mocked(api.get);
+const mockedPost = vi.mocked(api.post);
+const mockedDelete = vi.mocked(api.delete);
+const mockedPut = vi.mocked(api.put);
 
 const TENANT = 'acme-corp';
 
 beforeEach(() => {
-  mockedFetch.mockReset();
+  mockedGet.mockReset();
 });
 
 afterEach(() => {
@@ -65,11 +76,11 @@ describe('listConversations', () => {
         archived_at: null,
       },
     ];
-    mockedFetch.mockResolvedValueOnce(summaries);
+    mockedGet.mockResolvedValueOnce(summaries);
 
     const result = await listConversations(TENANT);
 
-    expect(mockedFetch).toHaveBeenCalledWith('/copilot/conversations', {
+    expect(mockedGet).toHaveBeenCalledWith('/copilot/conversations', {
       tenantId: TENANT,
     });
     expect(result).toEqual(summaries);
@@ -89,11 +100,11 @@ describe('getConversation', () => {
       messages: [],
       archived_at: null,
     };
-    mockedFetch.mockResolvedValueOnce(detail);
+    mockedGet.mockResolvedValueOnce(detail);
 
     const result = await getConversation(detail.id, TENANT);
 
-    expect(mockedFetch).toHaveBeenCalledWith(
+    expect(mockedGet).toHaveBeenCalledWith(
       '/copilot/conversations/c%2Fwith%20spaces',
       { tenantId: TENANT },
     );
@@ -128,11 +139,11 @@ describe('sendMessage', () => {
       model: 'test',
       latency_ms: 10,
     };
-    mockedFetch.mockResolvedValueOnce(response);
+    mockedGet.mockResolvedValueOnce(response);
 
     const result = await sendMessage(req, TENANT);
 
-    expect(mockedFetch).toHaveBeenCalledWith('/copilot/conversations', {
+    expect(mockedGet).toHaveBeenCalledWith('/copilot/conversations', {
       method: 'POST',
       body: JSON.stringify(req),
       tenantId: TENANT,
@@ -143,10 +154,10 @@ describe('sendMessage', () => {
 
 describe('deleteConversation', () => {
   it('DELETEs /copilot/conversations/{id}', async () => {
-    mockedFetch.mockResolvedValueOnce(undefined);
+    mockedGet.mockResolvedValueOnce(undefined);
     await deleteConversation('c-1', TENANT);
 
-    expect(mockedFetch).toHaveBeenCalledWith(
+    expect(mockedGet).toHaveBeenCalledWith(
       '/copilot/conversations/c-1',
       { method: 'DELETE', tenantId: TENANT },
     );
@@ -155,10 +166,10 @@ describe('deleteConversation', () => {
 
 describe('submitFeedback', () => {
   it('POSTs feedback body without a comment', async () => {
-    mockedFetch.mockResolvedValueOnce(undefined);
+    mockedGet.mockResolvedValueOnce(undefined);
     await submitFeedback('m-1', 'up', undefined, TENANT);
 
-    expect(mockedFetch).toHaveBeenCalledWith(
+    expect(mockedGet).toHaveBeenCalledWith(
       '/copilot/messages/m-1/feedback',
       {
         method: 'POST',
@@ -169,10 +180,10 @@ describe('submitFeedback', () => {
   });
 
   it('POSTs feedback body with a comment when provided', async () => {
-    mockedFetch.mockResolvedValueOnce(undefined);
+    mockedGet.mockResolvedValueOnce(undefined);
     await submitFeedback('m-1', 'down', 'not quite right', TENANT);
 
-    expect(mockedFetch).toHaveBeenCalledWith(
+    expect(mockedGet).toHaveBeenCalledWith(
       '/copilot/messages/m-1/feedback',
       {
         method: 'POST',
@@ -194,11 +205,11 @@ describe('getCost', () => {
       budget_ceiling_usd: 1.0,
       budget_status: 'active',
     };
-    mockedFetch.mockResolvedValueOnce(cost);
+    mockedGet.mockResolvedValueOnce(cost);
 
     const result = await getCost('c-1', TENANT);
 
-    expect(mockedFetch).toHaveBeenCalledWith(
+    expect(mockedGet).toHaveBeenCalledWith(
       '/copilot/conversations/c-1/cost',
       { tenantId: TENANT },
     );
@@ -216,11 +227,11 @@ describe('listTools', () => {
         rate_limit_per_min: 10,
       },
     ];
-    mockedFetch.mockResolvedValueOnce(tools);
+    mockedGet.mockResolvedValueOnce(tools);
 
     const result = await listTools(TENANT);
 
-    expect(mockedFetch).toHaveBeenCalledWith('/copilot/tools', {
+    expect(mockedGet).toHaveBeenCalledWith('/copilot/tools', {
       tenantId: TENANT,
     });
     expect(result).toBe(tools);
@@ -230,7 +241,7 @@ describe('listTools', () => {
 describe('error handling', () => {
   it('propagates ForgeApiError on 401', async () => {
     const errorBody = { detail: 'Unauthorized' };
-    mockedFetch.mockRejectedValueOnce(
+    mockedGet.mockRejectedValueOnce(
       new ForgeApiError('Forge API 401', 401, errorBody),
     );
 
@@ -243,7 +254,7 @@ describe('error handling', () => {
 
   it('propagates ForgeApiError on 429', async () => {
     const errorBody = { detail: 'Too Many Requests' };
-    mockedFetch.mockRejectedValueOnce(
+    mockedGet.mockRejectedValueOnce(
       new ForgeApiError('Forge API 429', 429, errorBody),
     );
 

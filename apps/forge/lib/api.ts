@@ -15,7 +15,7 @@ import type { LifecycleVerb, RunId, RunRecord, StageRecord } from './types';
 import { DEV_TENANT_UUID, SEED_RUN_UUID, SEED_RUN_ALIAS } from '../config/dev-seeds';
 import { listAllWorkflowRuns } from './workflows/data';
 
-export { FORGE_WS_BASE_URL } from './forge-api';
+export { FORGE_WS_BASE_URL } from './api/client';
 export type { RunRecord, StageRecord };
 export type { WorkflowRun as WorkflowRunRecord } from './workflows/types';
 

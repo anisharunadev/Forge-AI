@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Polish the Knowledge Graph in Forge AI Agent OS — currently shows 48 nodes and 72 edges but the initial layout is a clumsy cluster, labels overlap, and most of the canvas is empty. The right panel works great when you click a node, but the initial visual is broken. Goal: make the graph look like an Obsidian-style galaxy — nodes spread beautifully across the canvas, subtle glow effects, readable labels, community clustering. Read .claude/design-system/ first.

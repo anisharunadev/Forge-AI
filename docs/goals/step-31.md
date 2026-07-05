@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Connector Center in Forge AI Agent OS — currently has 4 tabs (Connected / Marketplace / Health / Activity) all with sparse empty states. User wants two things: (1) modernize each tab, and (2) make connectors USABLE anywhere in the app — not siloed here. A user in Ideation should be able to pull from Zendesk; a user in Workflows should be able to trigger Slack. Connectors must be cross-cutting. Read .claude/design-system/ first.

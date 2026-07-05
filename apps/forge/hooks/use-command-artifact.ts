@@ -2,8 +2,7 @@
 
 import * as React from 'react';
 
-import { forgeFetch } from '@/lib/forge-api';
-
+import { api } from '@/lib/api/client';
 export interface CommandArtifact {
   command: string;
   /** Path of the source file inside @forge-ai/forge-core. */
@@ -52,9 +51,7 @@ export function useCommandArtifact(
     let cancelled = false;
     setLoading(true);
     setError(null);
-    forgeFetch<CommandArtifact>(
-      `/commands/${encodeURIComponent(name)}/artifact`,
-    )
+    api.get<CommandArtifact>(`/commands/${encodeURIComponent(name)}/artifact`)
       .then((data) => {
         if (cancelled) return;
         setArtifact(data);
@@ -78,16 +75,11 @@ export function useCommandArtifact(
       setSaving(true);
       setError(null);
       try {
-        const updated = await forgeFetch<CommandArtifact>(
-          `/commands/${encodeURIComponent(name)}/artifact`,
-          {
-            method: 'PUT',
-            body: JSON.stringify({ content }),
+        const updated = await api.put<CommandArtifact>(`/commands/${encodeURIComponent(name)}/artifact`, { content }, {
             headers: artifact?.etag
               ? { 'If-Match': artifact.etag }
-              : undefined,
-          },
-        );
+              : undefined
+});
         setArtifact(updated);
       } finally {
         setSaving(false);

@@ -1,6 +1,9 @@
 # Step 69 — Phase 8 Ideation: Wire 9 Tabs to 54 Routes
 
-> **Status:** Ready to run
+> **Status:** in-progress
+> **Last classified:** 2026-07-05
+> **Note:** Wire 9 Tabs to 54 Routes (Phase 2 PR-2.6 shipped 4 endpoints; /ideation/ingest/status is optional per doc)
+
 > **Workspace:** `/workspace/codebase/forge-ai/`
 > **Duration estimate:** ~1.5 weeks (6 zones)
 > **Phase:** 8 — Ideation (currently `Planned` in `built-features.yaml`); also Centers row 16 currently `Beta`

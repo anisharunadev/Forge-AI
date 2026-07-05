@@ -42,6 +42,7 @@ class AgentConfig(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     config: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
 
     __table_args__ = (
+        Index("ix_agent_configs_tenant_project", "tenant_id", "project_id"),
         Index(
             "ix_agent_configs_project_agent",
             "project_id",

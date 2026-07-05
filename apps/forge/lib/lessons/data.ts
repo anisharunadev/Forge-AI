@@ -6,8 +6,7 @@
  * `lib/hooks/useLessons.ts` wrap these.
  */
 
-import { forgeFetch } from '@/lib/forge-api';
-
+import { api } from '@/lib/api/client';
 import type {
   LessonCandidateListResponse,
   LessonDecideRequest,
@@ -28,35 +27,23 @@ export async function listLessons(
   if (params.status) search.set('status', params.status);
   if (params.limit) search.set('limit', String(params.limit));
   const suffix = search.toString();
-  return forgeFetch<LessonCandidateListResponse>(
-    `/lessons${suffix ? `?${suffix}` : ''}`,
-  );
+  return api.get<LessonCandidateListResponse>(`/lessons${suffix ? `?${suffix}` : ''}`);
 }
 
 export async function approveLesson(
   lessonId: string,
   body: LessonDecideRequest,
 ): Promise<LessonDecisionResult> {
-  return forgeFetch<LessonDecisionResult>(
-    `/lessons/${encodeURIComponent(lessonId)}/approve`,
-    {
-      method: 'POST',
-      body: JSON.stringify(body),
-    },
-  );
+  return api.post<LessonDecisionResult>(`/lessons/${encodeURIComponent(lessonId)}/approve`, body, {
+    });
 }
 
 export async function rejectLesson(
   lessonId: string,
   body: LessonDecideRequest,
 ): Promise<LessonDecisionResult> {
-  return forgeFetch<LessonDecisionResult>(
-    `/lessons/${encodeURIComponent(lessonId)}/reject`,
-    {
-      method: 'POST',
-      body: JSON.stringify(body),
-    },
-  );
+  return api.post<LessonDecisionResult>(`/lessons/${encodeURIComponent(lessonId)}/reject`, body, {
+    });
 }
 
 export async function getMonthlyDigest(
@@ -66,7 +53,5 @@ export async function getMonthlyDigest(
   if (params.period_start) search.set('period_start', params.period_start);
   if (params.period_end) search.set('period_end', params.period_end);
   const suffix = search.toString();
-  return forgeFetch<MonthlyDigest>(
-    `/lessons/digest${suffix ? `?${suffix}` : ''}`,
-  );
+  return api.get<MonthlyDigest>(`/lessons/digest${suffix ? `?${suffix}` : ''}`);
 }

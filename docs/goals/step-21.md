@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Stories page in Forge AI Agent OS. Tokens, shell, empty/error states, and Steps 7–20 are done. Read .claude/design-system/ first.

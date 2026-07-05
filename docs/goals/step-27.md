@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Knowledge Graph in Forge AI Agent OS — currently shows node kinds + zoom toolbar + empty state. User wants Obsidian-style connected knowledge: link projects, tickets, PRDs, ADRs, ideas, runs, agents — any artifact — into a navigable graph. Read .claude/design-system/ first.

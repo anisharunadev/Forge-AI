@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Polish the Forge Co-pilot in Forge AI Agent OS — built in Step 19 but the user reports it needs curation and modernization. Read .claude/design-system/ first.

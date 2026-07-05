@@ -1,5 +1,8 @@
 # Forge Backend — Phase 3 Implementation Spec
 
+> **Status:** completed
+> **Last classified:** 2026-07-05
+
 > **Phase:** 3 of 4 — Productivity
 > **Goal of this doc:** spec the 5 features in Phase 3 with explicit goals, contracts, and acceptance criteria — no code, just the contract.
 > **Depends on:** Phase 1 (Config, Models, Keys, Chat SSE, Spend), Phase 2 (Guardrails, Policies, MCP, Skills, Tools).

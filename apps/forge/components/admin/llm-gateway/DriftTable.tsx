@@ -15,7 +15,7 @@
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
-import { forgeFetch } from '@/lib/forge-api';
+import { api } from '@/lib/api/client';
 import { settingsQueryKeys } from '@/lib/hooks/useSettings';
 
 export interface DriftRow {
@@ -33,10 +33,7 @@ export interface DriftTableProps {
 }
 
 async function fetchDrift(tenantId: string): Promise<ReadonlyArray<DriftRow>> {
-  return forgeFetch<ReadonlyArray<DriftRow>>(
-    `/api/v1/admin/llm-gateway/drift?tenant_id=${encodeURIComponent(tenantId)}`,
-    { method: 'GET' },
-  );
+  return api.get<ReadonlyArray<DriftRow>>(`/api/v1/admin/llm-gateway/drift?tenant_id=${encodeURIComponent(tenantId)}`, { });
 }
 
 export function DriftTable(props: DriftTableProps): React.ReactElement {

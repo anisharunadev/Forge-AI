@@ -40,6 +40,7 @@ class EnvVar(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
 
     __table_args__ = (
+        Index("ix_env_vars_tenant_project", "tenant_id", "project_id"),
         Index("ix_env_vars_project_key", "project_id", "key", unique=True),
         Index("ix_env_vars_tenant", "tenant_id"),
     )

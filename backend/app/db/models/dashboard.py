@@ -53,6 +53,7 @@ class AIInsightRead(Base, UUIDPrimaryKeyMixin):
     read_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
+    _audit_scope = "global"
 
 
 class AIInsight(Base, UUIDPrimaryKeyMixin):

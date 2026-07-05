@@ -90,7 +90,7 @@ class WorkflowBudgetDecision(Base, UUIDPrimaryKeyMixin):
         DateTime(timezone=True), nullable=False, index=True
     )
 
-    __table_args__ = (
+    __table_args__ = (        Index("ix_workflow_budget_decisions_tenant_project", "tenant_id", "project_id"),
         Index(
             "ix_workflow_budget_decisions_workflow",
             "workflow_id",

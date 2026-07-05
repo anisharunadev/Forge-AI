@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Governance Center page in Forge AI Agent OS. Tokens, shell, empty states, and Step 7 are done. Read .claude/design-system/ first.

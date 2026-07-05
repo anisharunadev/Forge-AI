@@ -57,4 +57,6 @@ class ModelProvider(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
 
 
+    _audit_skip = ("catalog", "Vendor catalog (model provider). Read-only.")
+
 __all__ = ["ModelProvider", "ModelProviderType"]

@@ -1,3 +1,4 @@
+> **Status:** completed
 /goal
 
 Modernize the Workflows page in Forge AI Agent OS — turn it into a visual workflow builder (n8n-style) using React Flow. Tokens, shell, empty/error states, and Steps 7–21 are done. Read .claude/design-system/ first.

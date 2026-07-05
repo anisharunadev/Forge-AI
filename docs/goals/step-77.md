@@ -1,5 +1,8 @@
 # Forge Backend — Phase 2 Implementation Spec
 
+> **Status:** completed
+> **Last classified:** 2026-07-05
+
 > **Phase:** 2 of 4 — Safety & Tooling
 > **Goal of this doc:** spec the 5 features in Phase 2 with explicit goals, contracts, and acceptance criteria — no code, just the contract.
 > **Depends on:** Phase 1 (Config & Auth, Models, Virtual Keys, Chat SSE, Spend Aggregation).

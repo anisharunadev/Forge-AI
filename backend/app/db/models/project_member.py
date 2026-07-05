@@ -50,4 +50,6 @@ class ProjectMember(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
 
 
+    _audit_scope = "project-only"
+
 __all__ = ["ProjectMember"]

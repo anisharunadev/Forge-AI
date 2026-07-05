@@ -48,23 +48,37 @@ class AuthenticatedPrincipal:
 
 
 def decode_token(token: str) -> dict[str, Any]:
-    """Decode + verify a JWT, raising HTTPException on failure."""
+    """Decode + verify a JWT, raising HTTPException on failure.
+
+    Phase 7 SC-7.2: when settings.jwt_secret_previous is set (the
+    rotation overlap window), try the primary key first and fall back
+    to the previous key on JWTError. Only applies when
+    jwt_algorithm is symmetric (HS256/HS384/HS512) — the RS256 /
+    JWKS path in prod does not have a single fallback key.
+    """
+    options = {"verify_aud": settings.jwt_audience is not None}
+    common = dict(
+        algorithms=[settings.jwt_algorithm],
+        audience=settings.jwt_audience,
+        issuer=settings.jwt_issuer,
+        options=options,
+    )
     try:
-        options = {"verify_aud": settings.jwt_audience is not None}
-        return jwt.decode(
-            token,
-            settings.jwt_secret,
-            algorithms=[settings.jwt_algorithm],
-            audience=settings.jwt_audience,
-            issuer=settings.jwt_issuer,
-            options=options,
-        )
-    except JWTError as exc:
+        return jwt.decode(token, settings.jwt_secret, **common)
+    except JWTError as primary_exc:
+        prev = settings.jwt_secret_previous
+        symmetric = settings.jwt_algorithm.upper().startswith("HS")
+        if prev and symmetric:
+            try:
+                return jwt.decode(token, prev, **common)
+            except JWTError:
+                # fall through to the original 401
+                pass
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid token: {exc}",
+            detail=f"Invalid token: {primary_exc}",
             headers={"WWW-Authenticate": "Bearer"},
-        ) from exc
+        ) from primary_exc
 
 
 def principal_from_token(token: str) -> AuthenticatedPrincipal:
