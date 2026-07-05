@@ -196,6 +196,7 @@ async def sqlite_db(monkeypatch: pytest.MonkeyPatch):
         repo_ingestion,
         role,
         seed,
+        security_report,
         standard,
         steering_rule,
         template,
