@@ -112,6 +112,12 @@ async def approval_timeout_scan() -> None:
     itself) react to the event the same way they react to
     ``APPROVAL_DENIED`` — except the UI badge says 'Stale approval'
     instead of 'Denied'.
+
+    M6-G5: the payload uses ``reason='approval_expired'`` (the
+    contract the SSE stream + frontend ``StaleApprovalBadge`` listen
+    for) and the scan additionally publishes the same event to the
+    in-process :class:`RunStateBroker` so subscribers to the run's
+    SSE channel see the stale-approval frame within one tick.
     """
     try:
         rows = await _scan_pending_approvals()
@@ -128,7 +134,7 @@ async def approval_timeout_scan() -> None:
                     "run_id": row["run_id"],
                     "approval_id": row["approval_id"],
                     "type": row["type"],
-                    "reason": "timeout",
+                    "reason": "approval_expired",
                     "requested_at": row["requested_at"],
                     "expires_at": row["expires_at"],
                 },
@@ -139,6 +145,53 @@ async def approval_timeout_scan() -> None:
         except Exception as exc:  # noqa: BLE001
             logger.warning(
                 "approval_timeout.publish_failed",
+                run_id=row["run_id"],
+                error=str(exc),
+            )
+
+        # M6-G5 — also surface the stale-approval event on the
+        # in-process RunStateBroker so the run's SSE stream
+        # (``GET /api/v1/runs/{id}/stream``) flushes a frame within
+        # the next consumer tick.  The broker only holds live
+        # snapshots, so we send the latest ``SDLCState`` if present
+        # — the WS frame shape mirrors what ``broker.publish`` does
+        # for state transitions and lets the frontend's
+        # ``approval.stale`` topic subscriber update without a
+        # full reload.
+        try:
+            from uuid import UUID as _UUID
+
+            from app.services.sdlc_run_manager import get_default_manager
+
+            manager = get_default_manager()
+            try:
+                run_uuid = _UUID(row["run_id"])
+            except (TypeError, ValueError):
+                continue
+            state = manager._states.get(run_uuid)  # type: ignore[attr-defined]
+            if state is not None:
+                # Surface the stale-approval metadata so the SSE
+                # consumer can render ``StaleApprovalBadge`` directly
+                # without a follow-up /runs/{id}/explainability hit.
+                augmented = state.model_copy(
+                    update={
+                        "metadata": {
+                            **state.metadata,
+                            "approval_stale": {
+                                "approval_id": row["approval_id"],
+                                "type": row["type"],
+                                "reason": "approval_expired",
+                                "expired_at": row["expires_at"],
+                            },
+                        },
+                    },
+                    deep=True,
+                )
+                manager._states[run_uuid] = augmented  # type: ignore[attr-defined]
+                await manager.broker.publish(run_uuid, augmented)  # type: ignore[attr-defined]
+        except Exception as exc:  # noqa: BLE001 — broker publish must never crash scan
+            logger.warning(
+                "approval_timeout.broker_publish_failed",
                 run_id=row["run_id"],
                 error=str(exc),
             )
