@@ -29,6 +29,7 @@ import type {
   NodeKind,
   SampleNode,
 } from '@/src/data/sample-graph';
+import { kgNodeStates, type KGNodeState } from '@/lib/design-system/forge-color-tokens';
 
 export type Layout = 'force' | 'tb' | 'lr' | 'radial' | 'grid' | 'timeline';
 
@@ -49,6 +50,45 @@ export interface KnowledgeGraphCanvasProps {
   hiddenEdgeKinds: ReadonlyArray<EdgeKind>;
   /** Optional callback fired when a right-click context menu is requested. */
   onContextMenu?: (node: SampleNode, screenX: number, screenY: number) => void;
+}
+
+// ---- M8 T-B2: kgStateTone passthrough ----------------------------------
+//
+// The legacy canvas historically tinted nodes by `NodeKind` only (the
+// 14-kind palette in `graph-palette.ts`). M8 adds a status-tone overlay:
+// when a node carries a known `KGNodeState` (`draft` / `approved` /
+// `conflicted` / `deployed`) we tint its body via `kgNodeStates[state].color`
+// — the same single source of truth the typed React Flow nodes read from.
+//
+// The canvas is rendered with canvas2D (no per-node DOM), so the per-node
+// `data-tone` attribute lives on the floating hover preview (a real DOM
+// element) and on the wrapper itself (single element, dominant tone).
+// The `canonicalTone` map collapses hex tints into the four AC-2 tones
+// (`emerald` / `amber` / `rose` / `neutral`) so consumers don't need to
+// know the full tone palette to render a chip.
+
+type CanonicalTone = 'emerald' | 'amber' | 'rose' | 'neutral';
+
+const canonicalTone: Record<KGNodeState, CanonicalTone> = {
+  draft: 'neutral',
+  approved: 'emerald',
+  conflicted: 'amber',
+  deployed: 'emerald',
+};
+
+function kgStateForNode(node: SampleNode): KGNodeState | null {
+  const s = node.status;
+  if (s === 'draft' || s === 'approved' || s === 'conflicted' || s === 'deployed') {
+    return s;
+  }
+  return null;
+}
+
+/** Hex color for a node body. Falls back to the kind palette. */
+function nodeBodyColor(node: SampleNode): string {
+  const st = kgStateForNode(node);
+  if (st) return kgNodeStates[st].color;
+  return KIND_COLOR[node.kind];
 }
 
 interface HoverState {
@@ -596,14 +636,14 @@ export function KnowledgeGraphCanvas({
       } else if (n.degree >= 10) {
         ctx.beginPath();
         ctx.arc(n.x, n.y, r + 4, 0, Math.PI * 2);
-        ctx.fillStyle = hexToRgba(KIND_COLOR[meta.kind], 0.16);
+        ctx.fillStyle = hexToRgba(nodeBodyColor(meta), 0.16);
         ctx.fill();
       }
 
       // Node body.
       ctx.beginPath();
       ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-      ctx.fillStyle = KIND_COLOR[meta.kind];
+      ctx.fillStyle = nodeBodyColor(meta);
       ctx.fill();
 
       // Outline (selected: indigo + 2px; hovered: white; default: subtle).
@@ -788,6 +828,7 @@ export function KnowledgeGraphCanvas({
       <div
         ref={wrapperRef}
         data-testid="knowledge-graph-canvas"
+        data-tone="neutral"
         className="relative flex h-full min-h-[400px] items-center justify-center rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-base)]"
       >
         <div className="flex flex-col items-center gap-2 text-[var(--fg-tertiary)]">
@@ -814,10 +855,29 @@ export function KnowledgeGraphCanvas({
         .slice(0, 3)
     : [];
 
+  // ---- M8 T-B2: dominant tone for the canvas wrapper --------------------
+  // Falls back through: selected > hovered > first-with-tone > 'neutral'.
+  // AC-2 calls for `emerald`/`amber`/`rose`/`neutral`; we collapse the
+  // 4-status palette into the same 4 names via `canonicalTone` above.
+  const dominantTone: CanonicalTone = (() => {
+    const pick = (n: SampleNode | null | undefined): CanonicalTone | null => {
+      if (!n) return null;
+      const st = kgStateForNode(n);
+      return st ? canonicalTone[st] : null;
+    };
+    return (
+      pick(selectedId ? nodes.find((n) => n.id === selectedId) ?? null : null) ??
+      pick(hoveredNode) ??
+      pick(displayNodes.find((n) => kgStateForNode(n) != null) ?? null) ??
+      'neutral'
+    );
+  })();
+
   return (
     <div
       ref={wrapperRef}
       data-testid="knowledge-graph-canvas"
+      data-tone={dominantTone}
       className="relative h-full min-h-[480px] w-full overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-base)]"
     >
       {/* Galaxy background — radial gradient mesh + star field */}
@@ -974,6 +1034,11 @@ export function KnowledgeGraphCanvas({
       {/* Floating hover preview — appears near cursor when hovering a node */}
       {hoveredNode && (
         <div
+          data-testid="kg-canvas-hover-preview"
+          data-tone={(() => {
+            const st = kgStateForNode(hoveredNode);
+            return st ? canonicalTone[st] : 'neutral';
+          })()}
           className="pointer-events-none absolute z-20 w-[280px] -translate-x-1/2 -translate-y-full rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-elevated)]/95 p-3 text-xs shadow-[var(--shadow-lg)] backdrop-blur"
           style={{
             left: Math.max(150, Math.min(size.w - 20, hover.screenX)),
@@ -984,7 +1049,7 @@ export function KnowledgeGraphCanvas({
           <div className="mb-1.5 flex items-center gap-2">
             <span
               className="inline-block h-2.5 w-2.5 rounded-full"
-              style={{ background: KIND_COLOR[hoveredNode.kind] }}
+              style={{ background: nodeBodyColor(hoveredNode) }}
             />
             <span className="font-semibold text-[var(--fg-primary)]">{hoveredNode.label}</span>
             <span className="ml-auto rounded-full bg-[var(--bg-inset)] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-[var(--fg-tertiary)]">

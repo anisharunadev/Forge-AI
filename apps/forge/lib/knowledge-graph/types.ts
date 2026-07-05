@@ -209,6 +209,8 @@ export const kgQueryKeys = {
     [...kgQueryKeys.vector(), input] as const,
   cypher: () => [...kgQueryKeys.all, 'cypher'] as const,
   freshness: (id: string) => [...kgQueryKeys.all, 'freshness', id] as const,
+  /** M8 T-B3: incoming-only backlinks (Obsidian "Referenced by"). */
+  backlinks: (id: string) => [...kgQueryKeys.all, 'backlinks', id] as const,
   sql: () => [...kgQueryKeys.all, 'sql'] as const,
   hybrid: () => [...kgQueryKeys.all, 'hybrid'] as const,
 };

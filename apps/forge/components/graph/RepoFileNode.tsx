@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Handle, Position, type Node, type NodeProps } from '@xyflow/react';
 
 import { cn } from '@/lib/utils';
-import { toneClasses } from '@/lib/design-system/status';
+import { toneClasses, canonicalTone } from '@/lib/design-system/status';
 import type { NodeRepoFileData } from './types';
 
 /**
@@ -45,6 +45,7 @@ export function RepoFileNode({ data, selected }: RepoFileNodeProps) {
       data-testid="graph-node"
       data-node-kind="repoFile"
       data-language={data.language}
+      data-tone={canonicalTone[toneForLoc(data.loc)]}
       className={cn(
         'rounded-md border px-3 py-2 text-foreground shadow-elev-xs min-w-[200px]',
         tone.bg,

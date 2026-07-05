@@ -8,6 +8,7 @@ import {
   toneClasses,
   runStateTone,
   agentStateGlyph,
+  canonicalTone,
 } from '@/lib/design-system/status';
 import type { NodeApprovalData } from './types';
 
@@ -34,6 +35,7 @@ export function ApprovalNode({ data, selected }: ApprovalNodeProps) {
       data-node-kind="approval"
       data-phase={data.phase}
       data-run-state={data.runState}
+      data-tone={canonicalTone[runStateTone[data.runState] ?? 'idle']}
       className={cn(
         'rounded-md border px-3 py-2 text-foreground shadow-elev-xs min-w-[180px]',
         tone.bg,

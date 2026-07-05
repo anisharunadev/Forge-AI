@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { AdminShell } from '@/components/admin/AdminShell';
 import { useGraphShortcuts } from '@/components/knowledge-graph/use-graph-shortcuts';
@@ -27,11 +27,81 @@ import {
   useKGStats,
 } from '@/lib/hooks/useKnowledgeGraph';
 import { adapter } from '@/lib/knowledge-graph/adapter';
+import { KnowledgeGraphView } from '@/components/graph/KnowledgeGraphView';
+import type { KGNode as TypedKGNode, KGEdge as TypedKGEdge } from '@/lib/knowledge-center/data';
 import { Loader2 } from 'lucide-react';
 
 // ---- Static layout cycle used by the 'L' shortcut ----------------------------
 
 const LAYOUT_CYCLE: ReadonlyArray<GraphLayout> = ['force', 'tb', 'lr', 'radial', 'grid', 'timeline'];
+
+// ---- M8 T-B1: typed-view adapter + opt-in rendering ----
+//
+// The Knowledge Center historically rendered the dynamic, force-directed
+// `KnowledgeGraphCanvas` (untyped). M8 promotes the typed
+// `KnowledgeGraphView` (`@/components/graph/KnowledgeGraphView`) — backed
+// by the 5 typed React Flow node components (ArtifactNode, RepoFileNode,
+// ServiceNode, AgentStepNode, ApprovalNode) and the `kgStateTone` palette
+// — as the *default* renderer on `/knowledge-center?view=graph`. PMs/CTOs
+// who still want the force-directed canvas can opt back in with
+// `?render=force` (e.g. `/knowledge-center?view=graph&render=force`).
+//
+// The typed view consumes the `KGNode` / `KGEdge` shape from
+// `@/lib/knowledge-center/data` (which is narrower than the page's
+// `SampleNode` / `SampleEdge`); `sampleNodeToTyped` and
+// `sampleEdgeToTyped` bridge the two. `TYPED_VIEW_KINDS` is the subset
+// of `ALL_KINDS` the typed view's `NodeKind` union accepts — Agent /
+// Run / Story / Epic / Command / PRD are dropped automatically.
+
+const TYPED_VIEW_KINDS: ReadonlyArray<TypedKGNode['kind']> = [
+  'Repo',
+  'Service',
+  'Component',
+  'ADR',
+  'Idea',
+  'Risk',
+  'Task',
+  'Test',
+];
+
+const TYPED_VIEW_EDGE_KINDS = new Set<string>([
+  'references',
+  'depends_on',
+  'blocks',
+  'implements',
+  'supersedes',
+  'related_to',
+]);
+
+function sampleNodeToTyped(node: SampleNode): TypedKGNode {
+  // SampleNode.kind is the broader union (14 kinds incl. Agent/Run/Story/
+  // Epic/Command/PRD); the typed view only knows 8. We already filter
+  // the displayed set by `visibleKinds` above; cast through unknown so
+  // TS doesn't reject the wider narrowing at this seam.
+  return {
+    id: node.id,
+    label: node.label,
+    kind: node.kind as TypedKGNode['kind'],
+    x: node.seedX,
+    y: node.seedY,
+    updatedAt: node.updatedAt,
+  };
+}
+
+function sampleEdgeToTyped(edge: SampleEdge): TypedKGEdge {
+  return {
+    id: edge.id,
+    source: edge.source,
+    target: edge.target,
+    kind: (TYPED_VIEW_EDGE_KINDS.has(edge.kind) ? edge.kind : 'relates_to') as TypedKGEdge['kind'],
+  };
+}
+
+/** Map page layout → typed view layout. Default to LR. */
+function toTypedLayout(layout: GraphLayout): 'LR' | 'TB' {
+  if (layout === 'tb') return 'TB';
+  return 'LR';
+}
 
 export default function KnowledgeCenterPage() {
   // ---- Data ---------------------------------------------------------------
@@ -78,7 +148,15 @@ export default function KnowledgeCenterPage() {
   });
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const searchInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  // ---- M8 T-B1: render-variant opt-in ----------------------------------
+  // `?render=force` opts back into the legacy force-directed canvas.
+  // Anything else (including no param) defaults to the typed view
+  // (M8-G1 acceptance criterion). Read once per render so the layout
+  // shortcuts re-route the renderer cleanly when the user toggles it.
+  const useLegacyCanvas = searchParams?.get('render') === 'force';
 
   // ---- Derived lookups ---------------------------------------------------
 
@@ -333,18 +411,32 @@ export default function KnowledgeCenterPage() {
                 onAuto={openIngest}
               />
             ) : viewMode === 'graph' ? (
-              <KnowledgeGraphCanvas
-                nodes={displayNodes}
-                edges={filteredEdges}
-                visibleKinds={visibleKinds}
-                selectedId={selectedId}
-                onSelect={setSelectedId}
-                onOpen={onNavigate}
-                layout={layout}
-                localActive={localActive}
-                localHops={localHops}
-                hiddenEdgeKinds={filters.hiddenEdgeKinds}
-              />
+              useLegacyCanvas ? (
+                <KnowledgeGraphCanvas
+                  nodes={displayNodes}
+                  edges={filteredEdges}
+                  visibleKinds={visibleKinds}
+                  selectedId={selectedId}
+                  onSelect={setSelectedId}
+                  onOpen={onNavigate}
+                  layout={layout}
+                  localActive={localActive}
+                  localHops={localHops}
+                  hiddenEdgeKinds={filters.hiddenEdgeKinds}
+                />
+              ) : (
+                <div data-testid="kg-typed-graph">
+                  <KnowledgeGraphView
+                    nodes={displayNodes.map(sampleNodeToTyped)}
+                    edges={filteredEdges.map(sampleEdgeToTyped)}
+                    visibleKinds={TYPED_VIEW_KINDS}
+                    onSelect={(n) => setSelectedId(n ? n.id : null)}
+                    selectedId={selectedId ?? undefined}
+                    layout={toTypedLayout(layout)}
+                    height={560}
+                  />
+                </div>
+              )
             ) : viewMode === 'list' ? (
               <GraphListView
                 nodes={displayNodes}

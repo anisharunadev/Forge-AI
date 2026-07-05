@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Handle, Position, type Node, type NodeProps } from '@xyflow/react';
 
 import { cn } from '@/lib/utils';
-import { toneClasses } from '@/lib/design-system/status';
+import { toneClasses, canonicalTone } from '@/lib/design-system/status';
 import type { NodeServiceData } from './types';
 
 /**
@@ -39,6 +39,7 @@ export function ServiceNode({ data, selected }: ServiceNodeProps) {
       data-node-kind="service"
       data-service-kind={data.serviceKind}
       data-status={data.status}
+      data-tone={canonicalTone[toneKey]}
       className={cn(
         'rounded-md border px-3 py-2 text-foreground shadow-elev-xs min-w-[160px]',
         tone.bg,

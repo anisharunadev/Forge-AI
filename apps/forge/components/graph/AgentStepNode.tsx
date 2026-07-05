@@ -9,6 +9,7 @@ import {
   agentStateToTone,
   agentStateGlyph,
   agentStatePulse,
+  canonicalTone,
 } from '@/lib/design-system/status';
 import type { NodeAgentStepData } from './types';
 
@@ -37,6 +38,7 @@ export function AgentStepNode({ data, selected }: AgentStepNodeProps) {
       data-testid="graph-node"
       data-node-kind="agentStep"
       data-state={data.state}
+      data-tone={canonicalTone[agentStateToTone(data.state)]}
       className={cn(
         'rounded-md border px-3 py-2 text-foreground shadow-elev-xs min-w-[180px]',
         tone.bg,

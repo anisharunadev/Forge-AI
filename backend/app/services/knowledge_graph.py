@@ -318,6 +318,65 @@ class KnowledgeGraphService:
             rows = list((await session.execute(stmt)).scalars().all())
             return [Node.from_orm(r) for r in rows]
 
+    async def backlinks_for(
+        self,
+        node_id: UUID | str,
+        *,
+        tenant_id: UUID | str,
+        limit: int = 100,
+    ) -> list[Node]:
+        """Return source nodes for every incoming edge of ``node_id``.
+
+        Mirrors the Obsidian-style "Referenced by" semantics in the
+        frontend inspector panel. Backlinks are deduplicated by source
+        node id and ordered by the most recent edge insertion (newest
+        edge first) — the same ordering contract used by ``list_edges``.
+
+        Caller is responsible for confirming ``node_id`` exists for the
+        tenant first; this method only reads edges. Use ``get_node``
+        to surface a 404 from the API layer.
+        """
+        self._ensure_tenant_isolation(tenant_id)
+        factory = get_session_factory()
+        async with factory() as session:
+            edge_stmt = (
+                select(KGEdge)
+                .where(KGEdge.tenant_id == str(tenant_id))
+                .where(KGEdge.to_node_id == str(node_id))
+                .order_by(KGEdge.created_at.desc())
+                .limit(max(1, min(limit, 1000)))
+            )
+            edges = list((await session.execute(edge_stmt)).scalars().all())
+
+            seen_source_ids: set[str] = set()
+            ordered_source_ids: list[str] = []
+            for edge in edges:
+                src_id = str(edge.from_node_id)
+                if src_id in seen_source_ids:
+                    continue
+                seen_source_ids.add(src_id)
+                ordered_source_ids.append(src_id)
+
+            if not ordered_source_ids:
+                return []
+
+            node_stmt = (
+                select(KGNode)
+                .where(KGNode.tenant_id == str(tenant_id))
+                .where(KGNode.id.in_(ordered_source_ids))
+            )
+            rows = {
+                str(r.id): r
+                for r in list((await session.execute(node_stmt)).scalars().all())
+            }
+
+        # Re-order the resolved rows to match the edge-recency ordering.
+        return [
+            Node.from_orm(rows[src_id])
+            for src_id in ordered_source_ids
+            if src_id in rows
+        ]
+
     async def list_edges(
         self,
         *,
