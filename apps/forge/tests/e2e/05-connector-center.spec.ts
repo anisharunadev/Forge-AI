@@ -72,4 +72,59 @@ test.describe('Connector Center', () => {
       timeout: 5_000,
     });
   });
+
+  // ==========================================================================
+  // M3-G22 — Playwright e2e extend to 7 cases (one per tab). Each test
+  // verifies the tab loads without error and shows either real data or
+  // a Rule-15 empty state, never just an offline banner.
+  // ==========================================================================
+
+  test('connector center credentials tab shows real data or empty state', async ({ page }) => {
+    await navigateTo(page, '/connector-center');
+    await page.getByTestId('tab-credentials').click();
+    await expect(page.getByTestId('tab-credentials')).toHaveAttribute(
+      'data-state',
+      'active',
+    );
+    // Either at least one credential card, or the Rule-15 empty-state copy.
+    const cardCount = await page.locator('[data-testid^="credential-"]').count();
+    const emptyVisible = await page
+      .getByText(/No credentials saved|no credentials configured/i)
+      .first()
+      .isVisible()
+      .catch(() => false);
+    expect(cardCount > 0 || emptyVisible).toBe(true);
+  });
+
+  test('connector center webhooks tab shows real data or empty state', async ({ page }) => {
+    await navigateTo(page, '/connector-center');
+    await page.getByTestId('tab-webhooks').click();
+    await expect(page.getByTestId('tab-webhooks')).toHaveAttribute(
+      'data-state',
+      'active',
+    );
+    const rowCount = await page.locator('[data-testid^="webhook-"]').count();
+    const emptyVisible = await page
+      .getByText(/No webhooks configured/i)
+      .first()
+      .isVisible()
+      .catch(() => false);
+    expect(rowCount > 0 || emptyVisible).toBe(true);
+  });
+
+  test('connector center activity tab shows ≥1 event or empty state', async ({ page }) => {
+    await navigateTo(page, '/connector-center');
+    await page.getByTestId('tab-activity').click();
+    await expect(page.getByTestId('tab-activity')).toHaveAttribute(
+      'data-state',
+      'active',
+    );
+    const eventCount = await page.locator('[data-testid^="activity-event-"]').count();
+    const emptyVisible = await page
+      .getByText(/No activity yet/i)
+      .first()
+      .isVisible()
+      .catch(() => false);
+    expect(eventCount > 0 || emptyVisible).toBe(true);
+  });
 });
