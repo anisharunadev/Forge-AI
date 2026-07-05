@@ -3,9 +3,25 @@
 /**
  * ConnectedTab — Zone 4 in the Step 31 spec.
  *
- * Filterable grid of installed connectors with rich cards. Hover lifts,
- * inline error box for last sync error, configure drawer, pause/resume
- * toggle and 3-dot menu.
+ * M3-G7 — Step 55 wires this tab to the live `useConnectors()` hook
+ * (30s poll against `GET /api/v1/connectors`). The wire payload flows
+ * through `wireToConnectedCard` (alias of `wireToConnector`) so the
+ * existing card UI keeps rendering unchanged.
+ *
+ * Behavior
+ * --------
+ *   - Filter chips (category / status / scope) + search work against
+ *     the live data shape.
+ *   - 3-dot menu's "Disconnect" action calls
+ *     `useDisconnectConnector().mutate(connector.id)` and the
+ *     React Query invalidation kicks the list refresh.
+ *   - Loading state: 4 skeleton cards.
+ *   - Empty state (Rule 15): "No connectors installed — visit the
+ *     Marketplace tab" with a deep-link to the marketplace.
+ *
+ * The hover lift, configure drawer, and pause/resume toggle are kept
+ * exactly as they were — they're purely client-side affordances and
+ * don't need the live data path.
  */
 
 import * as React from 'react';
@@ -13,6 +29,7 @@ import {
   CircleDot,
   Clock,
   Filter,
+  Loader2,
   MoreVertical,
   Pause,
   PauseCircle,
@@ -22,7 +39,6 @@ import {
   Workflow,
 } from 'lucide-react';
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -39,8 +55,6 @@ import {
   CATEGORY_ORDER,
   SCOPE_LABEL,
   STATUS_LABEL,
-  STATUS_ORDER,
-  listConnected,
   resolveIcon,
   sparklineFor,
   type Connector,
@@ -48,6 +62,10 @@ import {
 } from '@/lib/connectors';
 import { fmtCompact, fmtTimeAgo } from '../constants';
 import { cn } from '@/lib/utils';
+import {
+  useConnectors,
+  useDisconnectConnector,
+} from '@/lib/hooks/useConnectors';
 
 const STATUS_FILTERS: ReadonlyArray<ConnectorHealthStatus | 'all'> = [
   'all',
@@ -67,7 +85,15 @@ export function ConnectedTab() {
   const [pausedIds, setPausedIds] = React.useState<Set<string>>(new Set());
   const [openId, setOpenId] = React.useState<string | null>(null);
 
-  const connectors = listConnected();
+  // M3-G7 — read the live connector list. `data` is `Connector[]`
+  // (the wire-to-legacy mapping is applied by the hook's `select`).
+  const liveConnectors = useConnectors();
+  const disconnect = useDisconnectConnector();
+
+  const connectors = React.useMemo(
+    () => liveConnectors.data ?? [],
+    [liveConnectors.data],
+  );
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -88,6 +114,10 @@ export function ConnectedTab() {
       return next;
     });
   };
+
+  const isLoading = liveConnectors.isLoading;
+  const isErrored = liveConnectors.isError;
+  const hasResults = filtered.length > 0;
 
   return (
     <div className="flex flex-col gap-4" data-testid="connector-connected-tab">
@@ -112,30 +142,66 @@ export function ConnectedTab() {
 
       {/* Grid */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
-        {filtered.map((c) => (
+        {isLoading ? (
+          <ConnectedCardSkeleton />
+        ) : null}
+        {!isLoading && hasResults ? filtered.map((c) => (
           <ConnectedCard
             key={c.id}
             connector={c}
             paused={pausedIds.has(c.id)}
             onPauseToggle={() => togglePause(c.id)}
             onConfigure={() => setOpenId(c.id)}
+            onDisconnect={() => {
+              if (window.confirm(`Disconnect ${c.displayName}? You can re-install later from the Marketplace tab.`)) {
+                disconnect.mutate(c.id);
+              }
+            }}
+            isDisconnecting={disconnect.isPending && disconnect.variables === c.id}
           />
-        ))}
-        {filtered.length === 0 ? (
-          <div className="col-span-full rounded-md border border-dashed border-[var(--border-default)] p-8 text-center">
-            <p className="text-sm text-fg-secondary">No connectors match these filters.</p>
-            <button
-              type="button"
-              onClick={() => {
-                setQuery('');
-                setCategory('all');
-                setStatusFilter('all');
-                setScope('all');
-              }}
-              className="mt-2 text-xs text-[var(--accent-cyan)] hover:underline"
-            >
-              Clear filters
-            </button>
+        )) : null}
+        {!isLoading && !hasResults && !isErrored ? (
+          <div
+            className="col-span-full rounded-md border border-dashed border-[var(--border-default)] p-8 text-center"
+            data-testid="connected-empty"
+          >
+            <p className="text-sm text-fg-secondary">
+              {connectors.length === 0
+                ? 'No connectors installed — visit the Marketplace tab'
+                : 'No connectors match these filters.'}
+            </p>
+            {connectors.length === 0 ? (
+              <a
+                href="#tab=marketplace"
+                className="mt-2 inline-block text-xs text-[var(--accent-cyan)] hover:underline"
+                onClick={(e) => {
+                  // Real navigation is the parent's setTabAndHash; the
+                  // anchor's href is a hint to storybook / e2e tests.
+                  e.preventDefault();
+                  window.location.hash = 'tab=marketplace';
+                }}
+              >
+                Browse marketplace →
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery('');
+                  setCategory('all');
+                  setStatusFilter('all');
+                  setScope('all');
+                }}
+                className="mt-2 text-xs text-[var(--accent-cyan)] hover:underline"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+        ) : null}
+        {isErrored ? (
+          <div className="col-span-full rounded-md border border-[var(--accent-rose)]/40 bg-[var(--accent-rose)]/10 p-8 text-center text-xs text-[var(--accent-rose)]" data-testid="connected-error">
+            Failed to load connectors. Showing offline data.
           </div>
         ) : null}
       </div>
@@ -195,9 +261,11 @@ interface ConnectedCardProps {
   readonly paused: boolean;
   readonly onPauseToggle: () => void;
   readonly onConfigure: () => void;
+  readonly onDisconnect: () => void;
+  readonly isDisconnecting: boolean;
 }
 
-function ConnectedCard({ connector: c, paused, onPauseToggle, onConfigure }: ConnectedCardProps) {
+function ConnectedCard({ connector: c, paused, onPauseToggle, onConfigure, onDisconnect, isDisconnecting }: ConnectedCardProps) {
   const Icon = resolveIcon(c.id);
   const showAsPaused = paused || c.status === 'paused';
   const lastFailureEvent = c.recentEvents.find((e) => e.status === 'failed');
@@ -313,9 +381,18 @@ function ConnectedCard({ connector: c, paused, onPauseToggle, onConfigure }: Con
               View activity
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-[var(--accent-rose)]">
-              <PauseCircle className="h-3.5 w-3.5" aria-hidden="true" />
-              Disconnect
+            <DropdownMenuItem
+              className="text-[var(--accent-rose)]"
+              onClick={onDisconnect}
+              disabled={isDisconnecting}
+              data-testid="connected-disconnect"
+            >
+              {isDisconnecting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+              ) : (
+                <PauseCircle className="h-3.5 w-3.5" aria-hidden="true" />
+              )}
+              {isDisconnecting ? 'Disconnecting…' : 'Disconnect'}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -327,6 +404,32 @@ function ConnectedCard({ connector: c, paused, onPauseToggle, onConfigure }: Con
         </span>
       ) : null}
     </article>
+  );
+}
+
+function ConnectedCardSkeleton() {
+  // 4 placeholder cards so the grid layout doesn't jump when data resolves.
+  return (
+    <>
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div
+          key={`skel-${i}`}
+          className="flex flex-col gap-3 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-5"
+          data-testid="connected-card-skeleton"
+          aria-hidden="true"
+        >
+          <div className="flex items-start gap-3">
+            <span className="h-12 w-12 animate-pulse rounded-md bg-[var(--bg-inset)]" />
+            <div className="flex-1 space-y-2">
+              <span className="block h-4 w-2/3 animate-pulse rounded-sm bg-[var(--bg-inset)]" />
+              <span className="block h-3 w-1/2 animate-pulse rounded-sm bg-[var(--bg-inset)]" />
+            </div>
+          </div>
+          <span className="block h-3 w-full animate-pulse rounded-sm bg-[var(--bg-inset)]" />
+          <span className="block h-3 w-3/4 animate-pulse rounded-sm bg-[var(--bg-inset)]" />
+        </div>
+      ))}
+    </>
   );
 }
 
