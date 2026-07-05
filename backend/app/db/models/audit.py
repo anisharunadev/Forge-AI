@@ -32,8 +32,8 @@ from uuid import UUID
 from sqlalchemy import DateTime, String, event
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, UUIDPrimaryKeyMixin
 from app.core.logging import get_logger
+from app.db.base import GUID, JSONB, Base, UUIDPrimaryKeyMixin
 
 logger = get_logger(__name__)
 
@@ -54,7 +54,7 @@ def set_audit_immutability_bypass(enabled: bool) -> bool:
     consumer — production code MUST leave the default (``False``)
     in place.
     """
-    global _BYPASS_AUDIT_IMMUTABILITY
+    global _BYPASS_AUDIT_IMMUTABILITY  # noqa: PLW0603 — process-local flag
     previous = _BYPASS_AUDIT_IMMUTABILITY
     _BYPASS_AUDIT_IMMUTABILITY = enabled
     return previous

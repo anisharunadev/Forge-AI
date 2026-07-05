@@ -12,22 +12,21 @@ and returns the first broken event id (or ``integrity_ok=True``).
 """
 
 from __future__ import annotations
-from typing import Annotated
 
 from datetime import datetime, timedelta
-
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func, select
 
-from app.api.deps import DbSession, Principal, require_permission, get_current_principal
+from app.api.deps import DbSession, get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.audit import AuditEvent
 from app.schemas.audit import AuditEventRead, AuditIntegrity, AuditPage
 from app.services.litellm_admin import list_spend_logs
 from app.services.observability_service import observability_service
-from sqlalchemy import func, select
 
 router = APIRouter(prefix="/audit", tags=["audit"])
 

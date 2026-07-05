@@ -28,9 +28,8 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
-import pytest
 from sqlalchemy import select, text
 
 from app.db.models.audit import (
@@ -43,7 +42,6 @@ from app.services.observability_service import (
     _HASH_CHAIN,
     observability_service,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers — shared with the production write path so the test mirrors
@@ -76,7 +74,7 @@ async def _seed_events(
     Mirrors production: each row gets a fresh ``hash_chain_ref``
     stamped by ``AuditService.record`` via raw SQL.
     """
-    base = base_ts or datetime.now(timezone.utc)
+    base = base_ts or datetime.now(UTC)  # noqa: UP017  (compatibility across py3.11/3.13 test runners)
     ids: list[uuid.UUID] = []
     for i in range(n):
         payload = {"i": i, "seq": i, "kind": "test_event"}

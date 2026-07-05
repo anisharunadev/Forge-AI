@@ -309,8 +309,10 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     # failure here logs and lets the process boot so startup never
     # blocks on observability concerns.
     try:
-        from app.db.session import get_session_factory
-        from app.services.observability_service import observability_service
+        from app.db.session import get_session_factory  # noqa: PLC0415  (lifespan import)
+        from app.services.observability_service import (  # noqa: PLC0415  (lifespan import)
+            observability_service,
+        )
 
         async with get_session_factory()() as _boot_session:
             await observability_service.reload_chain_heads(_boot_session)

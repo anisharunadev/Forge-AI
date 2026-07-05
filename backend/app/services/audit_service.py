@@ -20,7 +20,7 @@ M7 — Tamper-evident hash chain:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -67,7 +67,7 @@ class AuditService:
 
         factory = get_session_factory()
         payload_dict: dict[str, Any] = payload or {}
-        ts = occurred_at or datetime.now(timezone.utc)
+        ts = occurred_at or datetime.now(UTC)
 
         async with factory() as session:
             row = AuditEvent(
