@@ -417,121 +417,11 @@ function Hero({ exportDisabled, onExport }: HeroProps) {
 // Integrity Banner
 // ───────────────────────────────────────────────────────────────────────────
 
-interface IntegrityBannerProps {
-  recordCount: number;
-  rootHash: string;
-  headHash: string;
-  lastAnchorAt: string;
-  onVerify: () => void;
-  verifying: boolean;
-}
 
-function IntegrityBanner({
-  recordCount,
-  rootHash,
-  headHash,
-  lastAnchorAt,
-  onVerify,
-  verifying,
-}: IntegrityBannerProps) {
-  return (
-    <section
-      className="flex flex-col gap-3 rounded-[var(--radius-lg)] border border-[var(--accent-emerald)]/30 bg-[var(--accent-emerald)]/5 px-5 py-4 md:flex-row md:items-center md:justify-between"
-      data-testid="audit-integrity-banner"
-      aria-label="Integrity banner"
-    >
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-        <div className="flex items-center gap-2">
-          <span
-            className="relative inline-flex h-2.5 w-2.5"
-            aria-hidden="true"
-          >
-            <span className="absolute inset-0 animate-pulse rounded-full bg-[var(--accent-emerald)]/40" />
-            <span className="relative inline-block h-2.5 w-2.5 rounded-full bg-[var(--accent-emerald)]" />
-          </span>
-          <ShieldCheck
-            className="h-4 w-4 text-[var(--accent-emerald)]"
-            aria-hidden="true"
-          />
-          <span className="text-sm font-semibold text-[var(--fg-primary)]">
-            Verified
-          </span>
-          <span className="text-xs text-[var(--fg-tertiary)]">
-            · SHA-256 chain
-          </span>
-        </div>
 
-        <Separator
-          orientation="vertical"
-          className="hidden h-6 bg-[var(--border-default)] md:block"
-        />
 
-        <Stat
-          label="Last anchor"
-          value={
-            <span title={lastAnchorAt}>
-              {lastAnchorAt
-                ? new Date(lastAnchorAt).toLocaleString()
-                : '—'}
-            </span>
-          }
-        />
-        <Stat
-          label="Records"
-          value={
-            <span className="font-mono">{recordCount.toLocaleString()}</span>
-          }
-        />
-        <Stat
-          label="Head"
-          value={
-            <span className="font-mono" title={headHash}>
-              {headHash ? `${headHash.slice(0, 10)}…` : '—'}
-            </span>
-          }
-        />
-        <Stat
-          label="Root"
-          value={
-            <span className="font-mono" title={rootHash}>
-              {rootHash ? `${rootHash.slice(0, 10)}…` : '—'}
-            </span>
-          }
-        />
-      </div>
-      <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          size="sm"
-          onClick={onVerify}
-          disabled={verifying}
-          className="bg-[var(--accent-emerald)] text-white hover:opacity-90"
-          data-testid="audit-verify-now"
-        >
-          <ShieldCheck className="mr-1.5 h-4 w-4" aria-hidden="true" />
-          {verifying ? 'Verifying…' : 'Verify Now'}
-        </Button>
-      </div>
-    </section>
-  );
-}
 
-function Stat({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col">
-      <span className="text-[10px] font-medium uppercase tracking-widest text-[var(--fg-tertiary)]">
-        {label}
-      </span>
-      <span className="text-sm text-[var(--fg-primary)]">{value}</span>
-    </div>
-  );
-}
+
 
 // ───────────────────────────────────────────────────────────────────────────
 // Filter Bar — actor combobox, multi-selects, dates, reset, apply
@@ -2141,7 +2031,7 @@ export default function AuditCenterPage() {
     ip: true,
     hash: true,
   });
-  const [verifying, setVerifying] = React.useState(false);
+  
   const { toast } = useToast();
 
   const filtered = React.useMemo(() => {
@@ -2225,16 +2115,7 @@ export default function AuditCenterPage() {
     toast({ title: `Exported ${filtered.length} record(s) as ${kind.toUpperCase()}` });
   };
 
-  const handleVerifyNow = () => {
-    setVerifying(true);
-    window.setTimeout(() => {
-      setVerifying(false);
-      toast({
-        title: 'Integrity verified',
-        description: `${all.length.toLocaleString()} record(s) · SHA-256 chain intact.`,
-      });
-    }, 900);
-  };
+  
 
   const jumpToHash = (hash: string) => {
     const target = recordByHash.get(hash);
@@ -2284,14 +2165,7 @@ export default function AuditCenterPage() {
         onExport={handleExport}
       />
 
-      <IntegrityBanner
-        recordCount={all.length}
-        rootHash={root?.hash ?? ''}
-        headHash={head?.hash ?? ''}
-        lastAnchorAt={head?.timestamp ?? ''}
-        onVerify={handleVerifyNow}
-        verifying={verifying}
-      />
+      <AuditIntegrityBanner />
 
       <FilterBar
         actors={actors}
