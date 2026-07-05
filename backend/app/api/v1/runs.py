@@ -427,6 +427,68 @@ async def get_run_budget(
     }
 
 
+@require_approval_phase(SDLCPhase.PLANNING)
+@router.post("/{run_id}/replay", response_model=SDLCRunStateResponse)
+async def replay_run(
+    run_id: UUID,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    manager: SDLCRunManager = RunManagerDep,
+    idempotency_key: str | None = Query(
+        default=None,
+        alias="idempotency_key",
+        description=(
+            "Optional Idempotency-Key for replay retries. The replay "
+            "API collapses retries with the same (run_id, key) tuple "
+            "to the original new run."
+        ),
+    ),
+) -> SDLCRunStateResponse:
+    """POST /api/v1/runs/{run_id}/replay — replay a finished run (M6-G1).
+
+    The replay endpoint seeds a fresh SDLC run from a finished or
+    failed source run, copying goal / project_id / tenant_id /
+    actor_id / budget cap and stamping ``metadata["replay_of"]``
+    with the source id so downstream audit + UI can render
+    lineage. Idempotent via the optional ``idempotency_key`` query
+    parameter (also accepted via ``Idempotency-Key`` header for
+    parity with M3/M4 conventions).
+
+    Status codes
+    ------------
+    * ``200`` — replay succeeded; response body is the new run's
+      ``SDLCRunStateResponse``.
+    * ``404`` — source run not found OR caller is in a different
+      tenant (we collapse cross-tenant leaks to the same shape).
+    * ``409`` — source run is still active (cannot replay a live
+      run; cancel first or wait for terminal state).
+    * ``422`` — invalid UUID path parameter.
+    """
+    source = await manager.get_run(run_id)
+    if source is None or source.tenant_id != principal.tenant_id:
+        raise HTTPException(status_code=404, detail="run_not_found")
+
+    # Operators cannot replay a still-active run — cancel first.
+    # DONE / FAILED are the only replayable source phases.
+    if source.current_phase not in (SDLCPhase.DONE, SDLCPhase.FAILED):
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "source_still_active",
+                "current_phase": source.current_phase.value,
+                "replayable_phases": [
+                    SDLCPhase.DONE.value,
+                    SDLCPhase.FAILED.value,
+                ],
+            },
+        )
+
+    # Accept the Idempotency-Key header as a fallback when the
+    # query param isn't supplied — matches the M3/M4 API style.
+    key = idempotency_key or None
+    new_state = await manager.replay_run(run_id, idempotency_key=key)
+    return _state_to_response(new_state)
+
+
 @router.get("/{run_id}/explainability")
 async def get_run_explainability(
     run_id: UUID,
