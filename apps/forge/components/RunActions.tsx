@@ -4,16 +4,24 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { LifecycleVerb, RunStatus } from '@/lib/types';
 
+import { ReplayButton } from '@/components/runs/ReplayButton';
+
 export interface RunActionsProps {
   runId: string;
   status: RunStatus;
 }
 
 /**
- * Operator action bar — pause / resume / cancel. Visible only on the
- * Engineering Lead dashboard (parent hides it for PM and CTO). Buttons
- * are disabled when the verb is not valid for the current status, per
- * the orchestrator state machine (FORA-50 §2.2).
+ * Operator action bar — pause / resume / cancel / replay. Visible only
+ * on the Engineering Lead dashboard (parent hides it for PM and CTO).
+ * Buttons are disabled when the verb is not valid for the current
+ * status, per the orchestrator state machine (FORA-50 §2.2).
+ *
+ * M6-G1 — the Replay button is appended after Cancel and follows the
+ * same disabled semantics as Cancel: it is disabled while the run is
+ * in a LIVE state (`running` / `pending`) so an operator can't race the
+ * in-flight orchestrator. ReplayButton handles its own mutation +
+ * navigation (toast.success + router.push to the new run id).
  */
 export function RunActions({ runId, status }: RunActionsProps) {
   const router = useRouter();
@@ -46,7 +54,7 @@ export function RunActions({ runId, status }: RunActionsProps) {
 
   return (
     <div className="flex flex-col gap-2" data-testid="run-actions">
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           type="button"
           className="btn btn-secondary"
@@ -74,6 +82,13 @@ export function RunActions({ runId, status }: RunActionsProps) {
         >
           {pending === 'cancel' ? 'Cancelling…' : 'Cancel'}
         </button>
+        {/*
+          M6-G1 Replay button — disabled while the source run is live
+          (`running` / `pending`) so the operator can't race the
+          orchestrator. ReplayButton owns its own pending state +
+          success navigation; we don't need to lift that here.
+        */}
+        <ReplayButton runId={runId} status={status} />
       </div>
       {error ? (
         <p className="text-xs text-red-400" role="alert">
