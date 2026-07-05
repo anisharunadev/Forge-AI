@@ -1,23 +1,24 @@
 'use client';
 
 /**
- * `<CustomerVoiceTab>` — Step 28.
+ * `<CustomerVoiceTab>` — Step 28 + M4 Track B (T-B4 / M4-G8).
  *
  * Split view of customer feedback themes (Zendesk + Jira + Intercom):
- *
- * TODO(step-7x): register `GET /api/v1/ideation/voice-clusters` and
- * replace the `CUSTOMER_CLUSTERS` fixture import below with a TanStack
- * hook. No backend endpoint or service module exists today (verified
- * Step-69).
  *   - LEFT (40%): Theme list (cluster cards) — volume, trend, impact
  *   - RIGHT (60%): Selected cluster detail
  *       - Timeline line chart (last 30 days)
  *       - Sentiment pie chart (positive / neutral / negative)
  *       - Top excerpts + sample customer quotes
  *       - Linked codebase signals
- *       - "Convert to idea" primary button
+ *       - 'Convert to idea' primary button
  *
- * Empty state: "Connect a customer feedback source to see themes".
+ * M4 rewire: the CUSTOMER_CLUSTERS fixture is fully replaced by
+ * the live `useCustomerVoice()` hook. The cluster `icon` field is
+ * typed as a string on the wire; the existing icon-name branch
+ * looks it up via lucide like the fixture did.
+ *
+ * Empty state (Rule 15): the no-data render now points the user at
+ * the live customer-feedback connectors instead of mocks.
  */
 
 import * as React from 'react';
@@ -25,6 +26,8 @@ import {
   ArrowDown,
   ArrowUp,
   CreditCard,
+  Headphones,
+  Inbox,
   Lightbulb,
   Lock,
   MessageCircle,
@@ -41,36 +44,35 @@ import { Cell, Pie, PieChart } from 'recharts';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ChartContainer } from '@/components/charts';
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
 import { chartColors } from '@/lib/charts/theme';
 import { toast } from 'sonner';
-import { CUSTOMER_CLUSTERS, type CustomerCluster } from '@/lib/ideation/pipeline-data';
 
-function iconForCluster(name: CustomerCluster['icon']): LucideIcon {
-  switch (name) {
-    case 'CreditCard':
-      return CreditCard;
-    case 'Smartphone':
-      return Smartphone;
-    case 'Receipt':
-      return Receipt;
-    case 'Lock':
-      return Lock;
-    case 'Search':
-      return Search;
-    case 'MessageCircle':
-    default:
-      return MessageCircle;
-  }
+import { IdeationQueryState } from '@/components/ideation/IdeationQueryState';
+import { useCustomerVoice } from '@/lib/hooks/useIdeation';
+import type { CustomerClusterRead } from '@/lib/ideation/types';
+
+// ---------------------------------------------------------------------------
+// Icon mapping — lucide glyph names travel as strings on the wire; map
+// them to real components here so the rest of the file can switch on
+// the typed LucideIcon like the fixture did.
+// ---------------------------------------------------------------------------
+
+const LUCIDE_LOOKUP: Record<string, LucideIcon> = {
+  MessageCircle,
+  CreditCard,
+  Smartphone,
+  Receipt,
+  Lock,
+  Search,
+  Headphones,
+};
+
+function iconForCluster(name: string): LucideIcon {
+  return LUCIDE_LOOKUP[name] ?? MessageCircle;
 }
 
-function trendArrow(direction: CustomerCluster['trendDirection']): {
+function trendArrow(direction: CustomerClusterRead['trend_direction']): {
   Icon: LucideIcon;
   cls: string;
 } {
@@ -82,14 +84,14 @@ function trendArrow(direction: CustomerCluster['trendDirection']): {
 }
 
 interface ClusterRowProps {
-  readonly cluster: CustomerCluster;
+  readonly cluster: CustomerClusterRead;
   readonly active: boolean;
   readonly onSelect: () => void;
 }
 
 function ClusterRow({ cluster, active, onSelect }: ClusterRowProps) {
   const Icon = iconForCluster(cluster.icon);
-  const trend = trendArrow(cluster.trendDirection);
+  const trend = trendArrow(cluster.trend_direction);
   const TrendIcon = trend.Icon;
   return (
     <button
@@ -114,23 +116,23 @@ function ClusterRow({ cluster, active, onSelect }: ClusterRowProps) {
         </div>
         <span className={cn('inline-flex items-center gap-0.5 font-mono text-[10px]', trend.cls)}>
           <TrendIcon className="h-3 w-3" aria-hidden="true" />
-          {cluster.trendDelta}
+          {cluster.trend_delta}
         </span>
       </header>
       <footer className="flex items-center justify-between text-[10px] text-[var(--fg-tertiary)]">
         <span>
-          <span className="font-mono text-[var(--fg-primary)]">{cluster.ticketCount}</span> tickets
+          <span className="font-mono text-[var(--fg-primary)]">{cluster.ticket_count}</span> tickets
         </span>
         <span>
           Impact{' '}
-          <span className="font-mono text-[var(--accent-amber)]">{cluster.impactScore.toFixed(1)}</span>
+          <span className="font-mono text-[var(--accent-amber)]">{cluster.impact_score.toFixed(1)}</span>
         </span>
       </footer>
     </button>
   );
 }
 
-function ClusterDetail({ cluster }: { cluster: CustomerCluster }) {
+function ClusterDetail({ cluster }: { cluster: CustomerClusterRead }) {
   const Icon = iconForCluster(cluster.icon);
 
   const sentimentData = [
@@ -156,8 +158,8 @@ function ClusterDetail({ cluster }: { cluster: CustomerCluster }) {
               {cluster.theme}
             </h3>
             <p className="text-xs text-[var(--fg-tertiary)]">
-              <span className="font-mono text-[var(--fg-primary)]">{cluster.ticketCount}</span> tickets · impact{' '}
-              <span className="font-mono text-[var(--accent-amber)]">{cluster.impactScore.toFixed(1)}</span>
+              <span className="font-mono text-[var(--fg-primary)]">{cluster.ticket_count}</span> tickets · impact{' '}
+              <span className="font-mono text-[var(--accent-amber)]">{cluster.impact_score.toFixed(1)}</span>
             </p>
           </div>
         </div>
@@ -185,7 +187,7 @@ function ClusterDetail({ cluster }: { cluster: CustomerCluster }) {
               Ticket volume · last 30 days
             </h4>
             <span className="font-mono text-[10px] text-[var(--fg-secondary)]">
-              peak {Math.max(...cluster.timeline.map((t) => t.count))}
+              peak {Math.max(...cluster.timeline.map((t) => t.count), 0)}
             </span>
           </header>
           <ChartContainer height={160}>
@@ -250,7 +252,7 @@ function ClusterDetail({ cluster }: { cluster: CustomerCluster }) {
           Top ticket excerpts
         </h4>
         <ul className="space-y-1.5">
-          {cluster.topExcerpts.map((ex, i) => (
+          {cluster.top_excerpts.map((ex, i) => (
             <li
               key={i}
               className="rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-2.5 py-1.5 text-[11px] text-[var(--fg-secondary)]"
@@ -258,6 +260,9 @@ function ClusterDetail({ cluster }: { cluster: CustomerCluster }) {
               {ex}
             </li>
           ))}
+          {cluster.top_excerpts.length === 0 ? (
+            <li className="text-[11px] text-[var(--fg-tertiary)]">No excerpts yet.</li>
+          ) : null}
         </ul>
       </section>
 
@@ -267,7 +272,7 @@ function ClusterDetail({ cluster }: { cluster: CustomerCluster }) {
           Customer quotes
         </h4>
         <ul className="space-y-1.5">
-          {cluster.sampleQuotes.map((q, i) => (
+          {cluster.sample_quotes.map((q, i) => (
             <li
               key={i}
               className="border-l-2 border-[var(--accent-violet)] pl-2.5 text-[11px] italic text-[var(--fg-secondary)]"
@@ -284,7 +289,7 @@ function ClusterDetail({ cluster }: { cluster: CustomerCluster }) {
           Linked codebase signals
         </h4>
         <div className="flex flex-wrap gap-1.5">
-          {cluster.linkedCodeSignals.map((sig) => (
+          {cluster.linked_code_signals.map((sig) => (
             <span
               key={sig}
               className="inline-flex items-center rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-2 py-0.5 text-[10px] font-mono text-[var(--fg-secondary)]"
@@ -297,6 +302,10 @@ function ClusterDetail({ cluster }: { cluster: CustomerCluster }) {
     </article>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Empty / loading / error surfaces (Rule 15).
+// ---------------------------------------------------------------------------
 
 function EmptyState() {
   return (
@@ -348,21 +357,138 @@ function EmptyState() {
   );
 }
 
-export interface CustomerVoiceTabProps {
-  readonly onConvertToIdea?: (cluster: CustomerCluster) => void;
+function CustomerVoiceSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,5fr)]">
+      <div className="flex flex-col gap-2">
+        {[...Array(4)].map((_, i) => (
+          <div
+            key={i}
+            role="status"
+            aria-busy="true"
+            className="flex flex-col gap-2 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3"
+          >
+            <span className="h-3 w-2/3 animate-pulse rounded-[var(--radius-sm)] bg-[var(--bg-inset)]" />
+            <span className="h-2 w-1/2 animate-pulse rounded-[var(--radius-sm)] bg-[var(--bg-inset)]" />
+          </div>
+        ))}
+      </div>
+      <div
+        role="status"
+        aria-busy="true"
+        className="h-96 animate-pulse rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-surface)]"
+      />
+    </div>
+  );
 }
 
-export function CustomerVoiceTab({ onConvertToIdea }: CustomerVoiceTabProps) {
-  const hasData = CUSTOMER_CLUSTERS.length > 0;
-  const [activeId, setActiveId] = React.useState<string>(
-    hasData ? CUSTOMER_CLUSTERS[0].id : '',
-  );
-  const active = React.useMemo(
-    () => CUSTOMER_CLUSTERS.find((c) => c.id === activeId) ?? CUSTOMER_CLUSTERS[0],
-    [activeId],
+// ---------------------------------------------------------------------------
+// Tab
+// ---------------------------------------------------------------------------
+
+export interface CustomerVoiceTabProps {
+  /** Legacy compat: still typed against the old fixture shape (just
+   *  the cluster theme, which is also a string on the wire). */
+  readonly onConvertToIdea?: (cluster: CustomerClusterRead) => void;
+}
+
+export function CustomerVoiceTab(_props: CustomerVoiceTabProps) {
+  const clustersQuery = useCustomerVoice();
+
+  // Loading render — keep header so the chrome doesn't pop.
+  if (clustersQuery.isLoading) {
+    return (
+      <section
+        aria-label="Customer voice"
+        data-testid="customer-voice-tab"
+        className="flex flex-col gap-4"
+      >
+        <header className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-[var(--fg-tertiary)]">
+              Customer Voice
+            </p>
+            <h2 className="text-lg font-semibold text-[var(--fg-primary)]">
+              What customers are saying
+            </h2>
+            <p className="text-xs text-[var(--fg-tertiary)]">Loading clusters…</p>
+          </div>
+        </header>
+        <CustomerVoiceSkeleton />
+      </section>
+    );
+  }
+
+  // Error render — Rule 15: explain + retry.
+  if (clustersQuery.isError) {
+    return (
+      <IdeationQueryState
+        isLoading={false}
+        isError
+        error={(clustersQuery.error as { message?: string } | null)?.message ?? 'Failed to load customer voice clusters'}
+        onRetry={() => void clustersQuery.refetch()}
+        loadingRows={4}
+      >
+        <></>
+      </IdeationQueryState>
+    );
+  }
+
+  const clusters = clustersQuery.data?.items ?? [];
+
+  // Empty render — no clusters at all (zero synth output). Rule-15.
+  if (clusters.length === 0) {
+    return (
+      <section
+        aria-label="Customer voice"
+        data-testid="customer-voice-tab"
+        className="flex flex-col gap-4"
+      >
+        <header className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-[var(--fg-tertiary)]">
+              Customer Voice
+            </p>
+            <h2 className="text-lg font-semibold text-[var(--fg-primary)]">
+              What customers are saying
+            </h2>
+          </div>
+        </header>
+        <div className="flex items-center justify-center gap-2 rounded-[var(--radius-md)] border border-dashed border-[var(--border-default)] bg-[var(--bg-surface)] p-6 text-[11px] text-[var(--fg-tertiary)]">
+          <Inbox className="h-4 w-4" aria-hidden="true" />
+          Synthesizer hasn’t produced any clusters yet — give it a few minutes
+          after the first source sync.
+        </div>
+        <EmptyState />
+      </section>
+    );
+  }
+
+  // Happy path — cluster list + detail. Active selection is held in
+  // local state; default to the first cluster sorted by ticket_count
+  // (the backend already returns them sorted, this is belt-and-braces).
+  const sorted = React.useMemo(
+    () => [...clusters].sort((a, b) => b.ticket_count - a.ticket_count),
+    [clusters],
   );
 
-  if (!hasData || !active) {
+  return <CustomerVoiceBody clusters={sorted} />;
+}
+
+function CustomerVoiceBody({
+  clusters,
+}: {
+  clusters: ReadonlyArray<CustomerClusterRead>;
+}) {
+  const [activeId, setActiveId] = React.useState<string>(() => clusters[0]?.id ?? '');
+  const active = React.useMemo(
+    () => clusters.find((c) => c.id === activeId) ?? clusters[0],
+    [clusters, activeId],
+  );
+
+  if (!active) {
+    // Cannot normally reach this branch — clusters.length > 0 above —
+    // but keeps the contract clean for the calling code.
     return <EmptyState />;
   }
 
@@ -378,14 +504,14 @@ export function CustomerVoiceTab({ onConvertToIdea }: CustomerVoiceTabProps) {
           </h2>
         </div>
         <span className="font-mono text-[10px] text-[var(--fg-tertiary)]">
-          {CUSTOMER_CLUSTERS.length} clusters · sorted by volume
+          {clusters.length} clusters · sorted by volume
         </span>
       </header>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,5fr)]">
         {/* Cluster list */}
         <aside className="flex flex-col gap-2" aria-label="Theme clusters">
-          {CUSTOMER_CLUSTERS.map((c) => (
+          {clusters.map((c) => (
             <ClusterRow
               key={c.id}
               cluster={c}
@@ -396,10 +522,7 @@ export function CustomerVoiceTab({ onConvertToIdea }: CustomerVoiceTabProps) {
         </aside>
 
         {/* Detail */}
-        <ClusterDetail
-          cluster={active}
-          {...(onConvertToIdea ? {} : {})}
-        />
+        <ClusterDetail cluster={active} />
       </div>
     </section>
   );
