@@ -31,6 +31,7 @@ import {
   StepProvision,
   type ProvisionState,
 } from '@/components/onboarding/StepProvision';
+import type { BootstrapReportShape } from '@/components/onboarding/BootstrapReportCard';
 import { useApiData } from '@/hooks/use-api-data';
 import {
   pushStepToUrl,
@@ -192,6 +193,23 @@ export default function ProjectOnboardingPage() {
   const [tenantUrl, setTenantUrl] = React.useState<string | undefined>(undefined);
   const [confirming, setConfirming] = React.useState(false);
   const [provisionError, setProvisionError] = React.useState<string | null>(null);
+
+  // M9-G4 (Track B T-B5) — Day-One bootstrap report. The backend
+  // exposes the canonical payload via
+  // `GET /v1/onboarding/provision/report` (the same shape as
+  // `BootstrapReport` / `BootstrapResult` Pydantic schemas). We
+  // tolerate 404 + unknown: `useApiData` returns `data: null` and
+  // the card renders its Pending state. When the endpoint is live
+  // and `completed_at` is set, the card swaps in the 4-row table.
+  // The polling cadence is roughly once per second while the
+  // provision is running and a single refresh once it completes.
+  const bootstrapReportRes = useApiData<BootstrapReportShape>(
+    provisionState === 'idle' ? null : '/v1/onboarding/provision/report',
+  );
+  const bootstrapReport: BootstrapReportShape | null =
+    provisionState === 'running' && !bootstrapReportRes.data
+      ? null // while running: keep Pending until the backend emits one
+      : bootstrapReportRes.data ?? null;
 
   // Seed catalog values into local state once the wizard catalog loads.
   React.useEffect(() => {
@@ -528,6 +546,7 @@ export default function ProjectOnboardingPage() {
           onReset={handleReset}
           tenantUrl={tenantUrl}
           onStateChange={setProvisionState}
+          report={bootstrapReport}
         />
       )}
 
