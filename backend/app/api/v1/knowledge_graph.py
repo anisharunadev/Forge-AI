@@ -5,7 +5,7 @@ from typing import Annotated
 
 from uuid import UUID
 
-from fastapi import APIRouter, Query, status, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.deps import Principal, require_permission, get_current_principal
 from app.core.audit import audit
@@ -72,8 +72,6 @@ async def get_node(
 ) -> KGNodeRead:
     node = await knowledge_graph_service.get_node(node_id, tenant_id=principal.tenant_id)
     if node is None:
-        from fastapi import HTTPException
-
         raise HTTPException(status_code=404, detail=f"node {node_id} not found")
     return KGNodeRead(
         id=node.id,
@@ -98,8 +96,6 @@ async def list_backlinks(
     limit: int = Query(default=100, ge=1, le=1000),
     _perm: AuthenticatedPrincipal = Depends(require_permission("kg:read"))
 ) -> list[KGNodeRead]:
-    from fastapi import HTTPException
-
     target = await knowledge_graph_service.get_node(
         node_id, tenant_id=principal.tenant_id
     )

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 
 import pytest
@@ -47,7 +47,7 @@ class _FakeFreshnessLedger:
         self.mark_fresh_calls: list[dict] = []
 
     async def mark_fresh(self, *, node_id, source, at=None, tenant_id, metadata=None):
-        at = at or datetime.now(timezone.utc)
+        at = at or datetime.now(UTC)
         self.records[node_id] = {"source": source, "at": at, "tenant_id": str(tenant_id)}
         self.mark_fresh_calls.append(
             {
