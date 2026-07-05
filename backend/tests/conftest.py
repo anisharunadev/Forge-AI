@@ -7,6 +7,8 @@ Postgres / Redis by switching the event bus to in-memory mode.
 from __future__ import annotations
 
 import os
+import uuid
+from datetime import UTC, datetime, timedelta
 
 # Module-level env setup so pydantic-settings can construct ``Settings``
 # at *import* time (e.g. ``from app.db.session import get_session_factory``
@@ -22,6 +24,94 @@ os.environ.setdefault("ENVIRONMENT", "test")
 
 import pytest
 import pytest_asyncio
+
+
+# ---------------------------------------------------------------------------
+# M5 Architecture Center (T-A1) — Grant architecture-approval fixture
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def grant_architecture_approval():
+    """Helper factory that returns a frozen SDLCState with a recorded
+    architecture-phase approval.
+
+    Usage::
+
+        def test_foo(grant_architecture_approval):
+            state, env = grant_architecture_approval()
+            # `state` is an SDLCState with pending_approval set and
+            # metadata["approval:architecture:decision"] recorded as
+            # granted=True — call a `@require_approval_phase(
+            # SDLCPhase.ARCHITECTURE)` decorated handler with `state`
+            # as the first positional argument and the gate passes.
+            # `env` is the frozen ``ApprovalEnvelope`` for assertions.
+
+    The fixture is opt-in — only tests that exercise the gate must
+    pull it in. Existing 37 architecture tests don't touch the gate
+    (they call services directly) so they keep passing unchanged.
+    """
+
+    def _factory(*, granted: bool = True) -> tuple:
+        from app.agents.approval_gate import ApprovalEnvelope, frozen_state_envelope
+        from app.agents.sdlc_state import (
+            ApprovalRequest,
+            ApprovalResponse,
+            SDLCPhase,
+            SDLCState,
+        )
+
+        tenant_id = uuid.uuid4()
+        project_id = uuid.uuid4()
+        actor_id = uuid.uuid4()
+
+        pending = ApprovalRequest(
+            approval_id=uuid.uuid4(),
+            type="architecture",
+            required_role="forge-architect",
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
+        )
+        # Build a baseline state with the pending approval pinned.
+        state = SDLCState(
+            tenant_id=tenant_id,
+            project_id=project_id,
+            actor_id=actor_id,
+            context={"repo_path": "/tmp", "workspace_path": "/tmp/ws"},
+        ).set_pending_approval(pending).with_phase(SDLCPhase.BLOCKED_APPROVAL)
+
+        decision_key = f"approval:{SDLCPhase.ARCHITECTURE.value}:decision"
+        base_metadata = {
+            **state.metadata,
+            decision_key: {
+                "granted": granted,
+                "decided_by": str(uuid.uuid4()),
+                "reason": "test-grant-architecture-approval",
+                "decided_at": datetime.now(UTC).isoformat(),
+            },
+        }
+        state = state.model_copy(
+            update={"metadata": base_metadata}, deep=True
+        )
+
+        # If the caller wants the canonical envelope (e.g. for the
+        # audit/audit-row end of T-A4), build + stamp it.
+        envelope_response = ApprovalResponse(
+            approval_id=pending.approval_id,
+            granted=granted,
+            decided_by=uuid.uuid4(),
+            reason="test-grant-architecture-approval",
+            decided_at=datetime.now(UTC),
+        )
+        envelope = ApprovalEnvelope.from_response(
+            phase=SDLCPhase.ARCHITECTURE,
+            tenant_id=tenant_id,
+            project_id=project_id,
+            response=envelope_response,
+        )
+        state = frozen_state_envelope(state, envelope)
+        return state, envelope
+
+    return _factory
 
 
 @pytest.fixture(autouse=True)
