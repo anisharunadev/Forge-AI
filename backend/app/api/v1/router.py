@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+# step-80 — Phase 4 (cache, pass-through, identity, ops, realtime).
 from app.api.v1 import (
     admin,
     admin_llm_gateway,
@@ -27,16 +28,17 @@ from app.api.v1 import (
     dashboard,
     env_vars,
     feature_flags,
+    forge_async,
     forge_chat,
     forge_health,
-    forge_models,
-    forge_spend,
     forge_keys,
-    forge_async,
+    forge_models,
     forge_observability,
+    forge_phase4,
     forge_prompts,
     forge_rag,
     forge_rbac,
+    forge_spend,
     governance_core,
     governance_violations,
     guardrails,
@@ -72,17 +74,14 @@ from app.api.v1 import (
     terminal_costs,
     terminal_export,
     terminal_sessions,
-    tools,
     tool_bundles,
+    tools,
     users,
     validation_reports,
     webhooks,
     webhooks_full,
     workflows,
 )
-
-# step-80 — Phase 4 (cache, pass-through, identity, ops, realtime).
-from app.api.v1 import forge_phase4
 
 api_router = APIRouter()
 # step-53 Zone 2 — OIDC login + refresh + me. Public surface (no auth
@@ -186,6 +185,13 @@ api_router.include_router(ideation.push.router)
 api_router.include_router(ideation.kg_graph.router)
 api_router.include_router(ideation.workflows.router)
 api_router.include_router(ideation.enhance.router)
+# step-81 — M4 Ideation Center surfaces (sources / market-signals /
+# customer-voice / destinations) back the 4 fixture tabs that read
+# from local fixtures prior to M4 (see M4 spec §3.1 G1..G4).
+api_router.include_router(ideation.sources.router)
+api_router.include_router(ideation.market_signals.router)
+api_router.include_router(ideation.customer_voice.router)
+api_router.include_router(ideation.destinations.router)
 # Architecture Center (F-301..F-310)
 api_router.include_router(architecture.standards.router)
 api_router.include_router(architecture.adrs.router)
