@@ -90,6 +90,45 @@ async def get_node(
     )
 
 
+@router.get("/nodes/{node_id}/backlinks", response_model=list[KGNodeRead])
+@audit(action="kg.list_backlinks", target_type="kg_node")
+async def list_backlinks(
+    node_id: UUID,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    limit: int = Query(default=100, ge=1, le=1000),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("kg:read"))
+) -> list[KGNodeRead]:
+    from fastapi import HTTPException
+
+    target = await knowledge_graph_service.get_node(
+        node_id, tenant_id=principal.tenant_id
+    )
+    if target is None:
+        raise HTTPException(status_code=404, detail=f"node {node_id} not found")
+
+    nodes = await knowledge_graph_service.backlinks_for(
+        node_id,
+        tenant_id=principal.tenant_id,
+        limit=limit,
+    )
+    return [
+        KGNodeRead(
+            id=n.id,
+            node_type=n.node_type,
+            name=n.name,
+            properties=n.properties,
+            tenant_id=n.tenant_id,
+            project_id=n.project_id,
+            repo_id=n.repo_id,
+            freshness_at=n.freshness_at,
+            freshness_source=n.freshness_source,
+            created_at=n.created_at,
+            updated_at=n.updated_at,
+        )
+        for n in nodes
+    ]
+
+
 @router.get("/edges", response_model=list[KGEdgeRead])
 @audit(action="kg.list_edges", target_type="kg_edge")
 async def list_edges(
