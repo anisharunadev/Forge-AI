@@ -55,6 +55,13 @@ class EventType(str, enum.Enum):
     AGENT_RUN_COMPLETED = "agent.run.completed"
     AGENT_RUN_FAILED = "agent.run.failed"
 
+    # F-301 / M6-G1 — Run-replay events. Emitted by
+    # :meth:`SDLCRunManager.replay_run` whenever an operator replays
+    # an existing run with the same goal/project/budget. Subscribers
+    # (audit sink, run-dashboard WS feed) listen on this event so
+    # the UI can render "Replayed from <src_run_id>" lineage.
+    RUN_REPLAYED = "run.replayed"
+
     TERMINAL_COMMAND_EXECUTED = "terminal.command.executed"
     TERMINAL_SESSION_STARTED = "terminal.session.started"
     TERMINAL_SESSION_CLOSED = "terminal.session.closed"
