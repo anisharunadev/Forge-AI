@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * StepProvision — step-61 Zone 3.
+ * StepProvision — step-61 Zone 3, M9-G4 (Track B / T-B5).
  *
  * Wires the wizard's final 5-stage provisioning step to the real
  * backend job (`POST /onboarding/provision` + polled
@@ -19,6 +19,12 @@
  * The 5 UX labels (manifest / graph / connectors / audit / ready)
  * are preserved — only the *driver* changes (backend-reported
  * progress vs. wall-clock interval).
+ *
+ * M9-G4 — once the bootstrap is complete (parent passes a parsed
+ * `BootstrapReport` payload), render the `<BootstrapReportCard />`
+ * underneath the success CTA. When the parent has not yet polled
+ * a report (or the backend hasn't emitted one yet), render the
+ * "Pending — provisioning still running" state from the card.
  */
 
 import * as React from 'react';
@@ -26,6 +32,8 @@ import { Check, Loader2, PartyPopper, RotateCw, AlertTriangle } from 'lucide-rea
 
 import { Button } from '@/components/ui/button';
 import { useProvisionStatus } from '@/lib/api/onboarding-hooks';
+import { BootstrapReportCard } from '@/components/onboarding/BootstrapReportCard';
+import type { BootstrapReportShape } from '@/components/onboarding/BootstrapReportCard';
 import { toast } from 'sonner';
 
 export type ProvisionState = 'idle' | 'running' | 'done' | 'failed';
@@ -38,6 +46,14 @@ export interface StepProvisionProps {
   tenantUrl?: string;
   /** Optional callback fired when polling detects a terminal state. */
   onStateChange?: (next: ProvisionState) => void;
+  /**
+   * Day-one bootstrap report payload (M9-G4). When `null` (the
+   * default), the card renders its Pending state. The page is
+   * expected to source this payload from
+   * `GET /v1/onboarding/provision/report` (or a future equivalent);
+   * until that endpoint is live the card stays in Pending.
+   */
+  report?: BootstrapReportShape | null;
 }
 
 /** 5 sub-stages — each ticks over when the backend reports it done. */
@@ -57,6 +73,7 @@ export function StepProvision({
   onReset,
   tenantUrl,
   onStateChange,
+  report,
 }: StepProvisionProps) {
   // Local mirror of the polling progress. Kept separate from the
   // parent's `state` so an external `setProvisionState('done')`
@@ -286,6 +303,14 @@ export function StepProvision({
           </p>
         </div>
       ) : null}
+
+      {/* M9-G4 (Track B T-B5) — surface the Day-One bootstrap report.
+       * The card renders a "Pending" placeholder when `report` is
+       * null OR has no `completed_at`; otherwise it shows the
+       * 4-row count table (standards, templates, governance,
+       * steering) + the run_id badge. The parent is the source of
+       * truth for the report payload; we just present it. */}
+      <BootstrapReportCard report={report ?? null} />
 
       <div className="flex items-center gap-2 pt-2">
         {state === 'idle' || state === 'failed' ? (

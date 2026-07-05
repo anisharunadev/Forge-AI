@@ -7,6 +7,10 @@ import {
   WizardShell,
 } from '@/components/onboarding/WizardShell';
 import { WizardNav } from '@/components/onboarding/WizardNav';
+import {
+  ProductTourOverlay,
+  TOUR_STOPS,
+} from '@/components/onboarding/ProductTourOverlay';
 import { StepWelcome } from '@/components/onboarding/StepWelcome';
 import { StepTenantSetup } from '@/components/onboarding/StepTenantSetup';
 import { StepConnectProviders } from '@/components/onboarding/StepConnectProviders';
@@ -27,6 +31,7 @@ import {
   StepProvision,
   type ProvisionState,
 } from '@/components/onboarding/StepProvision';
+import type { BootstrapReportShape } from '@/components/onboarding/BootstrapReportCard';
 import { useApiData } from '@/hooks/use-api-data';
 import {
   pushStepToUrl,
@@ -54,6 +59,7 @@ import {
   useWizardSession,
 } from '@/lib/api/onboarding-hooks';
 import type { WizardStepId } from '@/lib/api/onboarding';
+import { useOnboardingTour } from '@/lib/onboarding/tour';
 
 const INITIAL_PROVIDERS: Record<ProviderId, ProviderConnection> =
   PROVIDER_CATALOG.reduce(
@@ -92,6 +98,11 @@ export default function ProjectOnboardingPage() {
   const stepData = useOnboardingStore((s) => s.stepData);
   const sessionId = useOnboardingStore((s) => s.sessionId);
   const setSessionId = useOnboardingStore((s) => s.setSessionId);
+
+  // M9 G-1 — guided product tour (Track B T-B3). The page owns
+  // the tour hook so the overlay survives step transitions; the
+  // StepWelcome "Take a quick tour" button just calls `open()`.
+  const tour = useOnboardingTour();
 
   // Backend session lifecycle (step-74). The page owns the wizard
   // session id (persisted via Zustand) and polls the backend every
@@ -182,6 +193,23 @@ export default function ProjectOnboardingPage() {
   const [tenantUrl, setTenantUrl] = React.useState<string | undefined>(undefined);
   const [confirming, setConfirming] = React.useState(false);
   const [provisionError, setProvisionError] = React.useState<string | null>(null);
+
+  // M9-G4 (Track B T-B5) — Day-One bootstrap report. The backend
+  // exposes the canonical payload via
+  // `GET /v1/onboarding/provision/report` (the same shape as
+  // `BootstrapReport` / `BootstrapResult` Pydantic schemas). We
+  // tolerate 404 + unknown: `useApiData` returns `data: null` and
+  // the card renders its Pending state. When the endpoint is live
+  // and `completed_at` is set, the card swaps in the 4-row table.
+  // The polling cadence is roughly once per second while the
+  // provision is running and a single refresh once it completes.
+  const bootstrapReportRes = useApiData<BootstrapReportShape>(
+    provisionState === 'idle' ? null : '/v1/onboarding/provision/report',
+  );
+  const bootstrapReport: BootstrapReportShape | null =
+    provisionState === 'running' && !bootstrapReportRes.data
+      ? null // while running: keep Pending until the backend emits one
+      : bootstrapReportRes.data ?? null;
 
   // Seed catalog values into local state once the wizard catalog loads.
   React.useEffect(() => {
@@ -461,6 +489,7 @@ export default function ProjectOnboardingPage() {
           onGetStarted={handleGetStarted}
           onUseSample={handleUseSample}
           onSkipSetup={handleSkipSetup}
+          onTakeTour={tour.open}
         />
       ) : currentStep === 2 ? (
         <StepTenantSetup
@@ -517,6 +546,7 @@ export default function ProjectOnboardingPage() {
           onReset={handleReset}
           tenantUrl={tenantUrl}
           onStateChange={setProvisionState}
+          report={bootstrapReport}
         />
       )}
 
@@ -532,6 +562,20 @@ export default function ProjectOnboardingPage() {
           {provisionError}
         </p>
       ) : null}
+
+      {/* M9 G-1 — guided product tour (Track B T-B3). Mounts at
+       * the page root so it survives step transitions. The hook
+       * gates visibility via `isOpen`; `close`, `next`, `prev`,
+       * `skip` are all driven by buttons inside the overlay. */}
+      <ProductTourOverlay
+        isOpen={tour.isOpen}
+        stopIndex={tour.stopIndex}
+        stops={TOUR_STOPS}
+        onPrev={tour.prev}
+        onNext={tour.next}
+        onSkip={tour.skip}
+        onDone={tour.complete}
+      />
     </WizardShell>
   );
 }
