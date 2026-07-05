@@ -249,7 +249,7 @@
       "description": "3 intentional conflicts for ADR-003 demo"
     },
     {
-      "file": "024_ideation_signals.json",
+      "file": "028_ideation_signals.json",
       "table": "ideation_source_signals",
       "order": 24,
       "idempotency_key": [
@@ -260,7 +260,7 @@
       "description": "34 ideation signals (Confluence/Slack/Zendesk raw ingest)"
     },
     {
-      "file": "025_market_signals.json",
+      "file": "029_market_signals.json",
       "table": "market_signals",
       "order": 25,
       "idempotency_key": [
@@ -271,7 +271,7 @@
       "description": "9 synthesized market signals (2 competitor, 4 trend, 3 tech)"
     },
     {
-      "file": "026_customer_voice_clusters.json",
+      "file": "030_customer_voice_clusters.json",
       "table": "customer_voice_clusters",
       "order": 26,
       "idempotency_key": [
@@ -281,7 +281,7 @@
       "description": "5 customer-voice clusters (sentiment + frequency)"
     },
     {
-      "file": "027_push_destinations.json",
+      "file": "031_push_destinations.json",
       "table": "push_destinations",
       "order": 27,
       "idempotency_key": [
