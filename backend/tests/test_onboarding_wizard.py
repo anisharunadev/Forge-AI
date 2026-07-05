@@ -51,7 +51,7 @@ async def test_advance_walks_full_flow(sqlite_db):
     )
     sid = state.id
 
-    for idx, step in enumerate(STEP_ORDER[:-1]):
+    for idx, _step in enumerate(STEP_ORDER[:-1]):
         state = await onboarding_wizard.advance(
             sid,
             type(
