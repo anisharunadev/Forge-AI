@@ -254,6 +254,123 @@ class ObservabilityService:
         return True
 
     # ------------------------------------------------------------------
+    # M7 — DB-backed chain verification + reload-on-boot
+    # ------------------------------------------------------------------
+
+    async def verify_chain_db(
+        self,
+        db: AsyncSession,
+        *,
+        tenant_id: UUID,
+    ) -> tuple[bool, UUID | None, str, int, datetime | None]:
+        """Walk every AuditEvent row for ``tenant_id`` and verify the chain.
+
+        Returns ``(integrity_ok, broken_at_event_id, head_hash, length,
+        last_event_at)``. The chain is recomputed in ``occurred_at``
+        order; the first row whose persisted ``hash_chain_ref`` does
+        not match the recomputed digest is the broken one.
+
+        Ponytail: O(N) scan of all rows for the tenant. Acceptable for
+        M7's expected audit volume (≤ tens of thousands per tenant);
+        upgrade to a cursor + cached head pointer once a tenant
+        crosses 100k rows.
+        """
+        rows = (
+            await db.execute(
+                select(AuditEvent)
+                .where(AuditEvent.tenant_id == tenant_id)
+                .order_by(AuditEvent.occurred_at.asc(), AuditEvent.id.asc())
+            )
+        ).scalars().all()
+
+        prev = ""
+        head_hash = ""
+        last_event_at: datetime | None = None
+        for row in rows:
+            payload = row.payload or {}
+            canonical = json.dumps(payload, sort_keys=True, default=str)
+            expected = hashlib.sha256((prev + canonical).encode("utf-8")).hexdigest()
+            if row.hash_chain_ref is not None and row.hash_chain_ref != expected:
+                return (False, row.id, expected, 0, last_event_at)
+            prev = expected
+            head_hash = expected
+            last_event_at = row.occurred_at
+        return (True, None, head_hash, len(rows), last_event_at)
+
+    async def reload_chain_heads(
+        self,
+        db: AsyncSession,
+        *,
+        per_tenant_limit: int = 1000,
+    ) -> dict[UUID, str]:
+        """Rebuild ``_HASH_CHAIN`` from the DB on FastAPI startup.
+
+        Walks the latest ``per_tenant_limit`` rows per tenant in
+        ``occurred_at`` order and recomputes the chain. Rows whose
+        ``hash_chain_ref`` is NULL are treated as natural restart
+        points (cold-start with ``prev=""``); rows whose
+        ``hash_chain_ref`` does not match the recomputed digest are
+        skipped so the head is never seeded from a broken segment.
+
+        Returns the new ``tenant_id -> head_hash`` map for logging.
+        """
+        # Discover tenants — distinct is cheap with a btree on tenant_id.
+        tenant_rows = (
+            await db.execute(select(AuditEvent.tenant_id).distinct())
+        ).all()
+        tenant_ids: list[UUID] = [
+            r[0] for r in tenant_rows if r[0] is not None
+        ]
+
+        new_heads: dict[UUID, str] = {}
+        for tenant_id in tenant_ids:
+            # Pull the latest N rows in DESC, then re-sort ASC via
+            # Python so we walk the chain forward (avoids a window
+            # function for SQLite-async portability).
+            desc_rows = (
+                await db.execute(
+                    select(AuditEvent)
+                    .where(AuditEvent.tenant_id == tenant_id)
+                    .order_by(AuditEvent.occurred_at.desc(), AuditEvent.id.desc())
+                    .limit(per_tenant_limit)
+                )
+            ).scalars().all()
+            rows = sorted(
+                desc_rows, key=lambda r: (r.occurred_at, str(r.id))
+            )
+
+            prev = ""
+            head = ""
+            trusted = True
+            for row in rows:
+                payload = row.payload or {}
+                canonical = json.dumps(payload, sort_keys=True, default=str)
+                expected = hashlib.sha256(
+                    (prev + canonical).encode("utf-8")
+                ).hexdigest()
+                if (
+                    row.hash_chain_ref is not None
+                    and row.hash_chain_ref != expected
+                ):
+                    # Skipping preserves trust in the next segment if
+                    # it exists, which would be rare on a healthy DB.
+                    trusted = False
+                    break
+                prev = expected
+                head = expected
+
+            if head and trusted:
+                _HASH_CHAIN[tenant_id] = head
+                new_heads[tenant_id] = head
+
+        logger.info(
+            "observability.chain.reload_complete",
+            tenants=len(new_heads),
+            per_tenant_limit=per_tenant_limit,
+        )
+        return new_heads
+
+    # ------------------------------------------------------------------
     # Health (extends /forge/health)
     # ------------------------------------------------------------------
 
