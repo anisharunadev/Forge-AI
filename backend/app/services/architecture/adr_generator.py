@@ -52,9 +52,10 @@ Do not include markdown fences. Do not include commentary outside the JSON.
 class ADRGenerator:
     """Generate, fetch, and supersede ADRs."""
 
-    def __init__(self, litellm_client: Any, artifact_registry: Any, event_bus: Any) -> None:
+    def __init__(self, litellm_client: Any, artifact_registry: Any | None = None, event_bus: Any | None = None) -> None:
+        from app.services.artifact_registry import artifact_registry as _default_registry
         self._llm = litellm_client
-        self._registry = artifact_registry
+        self._registry = artifact_registry if artifact_registry is not None else _default_registry
         self._bus = event_bus
 
     async def generate_adr(
@@ -126,6 +127,22 @@ class ADRGenerator:
             },
             tenant_id=tenant_id,
             project_id=project_id,
+            actor_id=actor_id,
+        )
+        # M5-G2 — mirror the ADR row into the Knowledge Graph so the
+        # React Flow viz (M8) and downstream features see a typed
+        # ``KGNode(artifact_type='adr')`` node. Idempotency is left to
+        # the consumer (the KG is append-only by Rule 4).
+        await self._registry.register(
+            artifact_type="adr",
+            artifact_id=str(adr.id),
+            tenant_id=tenant_id,
+            project_id=project_id,
+            payload={
+                "number": adr.number,
+                "title": adr.title,
+                "status": adr.status,
+            },
             actor_id=actor_id,
         )
         logger.info(

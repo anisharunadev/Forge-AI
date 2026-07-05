@@ -13,6 +13,7 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.logging import get_logger
 from app.db.models.architecture import ADR, TaskBreakdown
@@ -50,9 +51,10 @@ No commentary. No markdown fences.
 class TaskBreakdownGenerator:
     """Generate, fetch, and update task breakdowns."""
 
-    def __init__(self, litellm_client: Any, artifact_registry: Any, event_bus: Any) -> None:
+    def __init__(self, litellm_client: Any, artifact_registry: Any | None = None, event_bus: Any | None = None) -> None:
+        from app.services.artifact_registry import artifact_registry as _default_registry
         self._llm = litellm_client
-        self._registry = artifact_registry
+        self._registry = artifact_registry if artifact_registry is not None else _default_registry
         self._bus = event_bus
 
     async def generate_from_adr(
@@ -123,6 +125,22 @@ class TaskBreakdownGenerator:
             project_id=project_id,
             actor_id=actor_id,
         )
+        # M5-G2 — mirror the task breakdown into the Knowledge Graph.
+        await self._registry.register(
+            artifact_type="task_breakdown",
+            artifact_id=str(breakdown.id),
+            tenant_id=tenant_id,
+            project_id=project_id,
+            payload={
+                "name": breakdown.name,
+                "parent_artifact_type": "adr",
+                "parent_artifact_id": str(adr_id),
+                "task_count": len(tasks),
+                "total_estimate_hours": total_hours,
+                "status": breakdown.status,
+            },
+            actor_id=actor_id,
+        )
         logger.info(
             "task_breakdown.created",
             tenant_id=tenant_id,
@@ -174,6 +192,7 @@ class TaskBreakdownGenerator:
                     float(t.get("estimate_hours") or 0) for t in tasks
                 )
             breakdown.tasks = tasks
+            flag_modified(breakdown, "tasks")
             await session.commit()
             await session.refresh(breakdown)
 

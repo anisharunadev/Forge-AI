@@ -7,6 +7,8 @@ Postgres / Redis by switching the event bus to in-memory mode.
 from __future__ import annotations
 
 import os
+import uuid
+from datetime import UTC, datetime, timedelta
 
 # Module-level env setup so pydantic-settings can construct ``Settings``
 # at *import* time (e.g. ``from app.db.session import get_session_factory``
@@ -22,6 +24,94 @@ os.environ.setdefault("ENVIRONMENT", "test")
 
 import pytest
 import pytest_asyncio
+
+
+# ---------------------------------------------------------------------------
+# M5 Architecture Center (T-A1) — Grant architecture-approval fixture
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def grant_architecture_approval():
+    """Helper factory that returns a frozen SDLCState with a recorded
+    architecture-phase approval.
+
+    Usage::
+
+        def test_foo(grant_architecture_approval):
+            state, env = grant_architecture_approval()
+            # `state` is an SDLCState with pending_approval set and
+            # metadata["approval:architecture:decision"] recorded as
+            # granted=True — call a `@require_approval_phase(
+            # SDLCPhase.ARCHITECTURE)` decorated handler with `state`
+            # as the first positional argument and the gate passes.
+            # `env` is the frozen ``ApprovalEnvelope`` for assertions.
+
+    The fixture is opt-in — only tests that exercise the gate must
+    pull it in. Existing 37 architecture tests don't touch the gate
+    (they call services directly) so they keep passing unchanged.
+    """
+
+    def _factory(*, granted: bool = True) -> tuple:
+        from app.agents.approval_gate import ApprovalEnvelope, frozen_state_envelope
+        from app.agents.sdlc_state import (
+            ApprovalRequest,
+            ApprovalResponse,
+            SDLCPhase,
+            SDLCState,
+        )
+
+        tenant_id = uuid.uuid4()
+        project_id = uuid.uuid4()
+        actor_id = uuid.uuid4()
+
+        pending = ApprovalRequest(
+            approval_id=uuid.uuid4(),
+            type="architecture",
+            required_role="forge-architect",
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
+        )
+        # Build a baseline state with the pending approval pinned.
+        state = SDLCState(
+            tenant_id=tenant_id,
+            project_id=project_id,
+            actor_id=actor_id,
+            context={"repo_path": "/tmp", "workspace_path": "/tmp/ws"},
+        ).set_pending_approval(pending).with_phase(SDLCPhase.BLOCKED_APPROVAL)
+
+        decision_key = f"approval:{SDLCPhase.ARCHITECTURE.value}:decision"
+        base_metadata = {
+            **state.metadata,
+            decision_key: {
+                "granted": granted,
+                "decided_by": str(uuid.uuid4()),
+                "reason": "test-grant-architecture-approval",
+                "decided_at": datetime.now(UTC).isoformat(),
+            },
+        }
+        state = state.model_copy(
+            update={"metadata": base_metadata}, deep=True
+        )
+
+        # If the caller wants the canonical envelope (e.g. for the
+        # audit/audit-row end of T-A4), build + stamp it.
+        envelope_response = ApprovalResponse(
+            approval_id=pending.approval_id,
+            granted=granted,
+            decided_by=uuid.uuid4(),
+            reason="test-grant-architecture-approval",
+            decided_at=datetime.now(UTC),
+        )
+        envelope = ApprovalEnvelope.from_response(
+            phase=SDLCPhase.ARCHITECTURE,
+            tenant_id=tenant_id,
+            project_id=project_id,
+            response=envelope_response,
+        )
+        state = frozen_state_envelope(state, envelope)
+        return state, envelope
+
+    return _factory
 
 
 @pytest.fixture(autouse=True)
@@ -106,6 +196,7 @@ async def sqlite_db(monkeypatch: pytest.MonkeyPatch):
         repo_ingestion,
         role,
         seed,
+        security_report,
         standard,
         steering_rule,
         template,
@@ -129,11 +220,44 @@ async def sqlite_db(monkeypatch: pytest.MonkeyPatch):
             Column("name", String(200), nullable=False),
         )
 
+    # M5 T-A6 — also import the service-level KGNode / KGEdge models so
+    # ``metadata.create_all`` registers ``kg_nodes`` for the new
+    # artifact_registry.register path and the SecurityReport service
+    # can mirror rows. KGNode lives in app.services.knowledge_graph
+    # (not app.db.models) so a bare ``from app.db.models import …``
+    # doesn't pick it up.
+    from app.services import knowledge_graph as _kg_module  # noqa: F401
+
     engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
     factory = async_sessionmaker(bind=engine, expire_on_commit=False, autoflush=False)
 
-    async with engine.begin() as conn:
-        await conn.run_sync(base_mod.metadata.create_all)
+    # M5 T-A6 — sqlite_db must accept models that declare PG-only
+    # ``ARRAY`` columns (e.g. ``phase4_sso_configs``) without those
+    # tables blowing up the entire ``create_all`` pass on SQLite.
+    # We try the full metadata first, and if any compile fails we
+    # drop the offending tables and re-run.
+    pg_only_tables: list = []
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(base_mod.metadata.create_all)
+    except Exception as exc:  # noqa: BLE001 — any sqlite compile failure
+        # Identify the offending tables by retrying each one in isolation.
+        from sqlalchemy import create_engine as _ce
+        sync_url = "sqlite:///:memory:"
+        sync_engine = _ce(sync_url)
+        for table in list(base_mod.metadata.tables.values()):
+            try:
+                table.create(sync_engine, checkfirst=False)
+            except Exception:  # noqa: BLE001
+                pg_only_tables.append(table.name)
+        # Drop the PG-only tables from the metadata so the SQLite path
+        # can create_all without tripping on them.
+        for name in pg_only_tables:
+            tbl = base_mod.metadata.tables.get(name)
+            if tbl is not None:
+                base_mod.metadata.remove(tbl)
+        async with engine.begin() as conn:
+            await conn.run_sync(base_mod.metadata.create_all)
 
     import app.db.session as session_mod
 

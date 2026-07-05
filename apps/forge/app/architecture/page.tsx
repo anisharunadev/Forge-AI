@@ -121,8 +121,11 @@ import {
   useRiskRegisters,
   useArchitectureVersions,
   useTraceability,
+  useArchitectureSecurity,
 } from '@/lib/hooks/useArchitecture';
 import { VersionDiff } from '@/components/architecture/VersionDiff';
+import { SecurityReportPanel } from '@/components/architecture/SecurityReportPanel';
+import { useArchitecturePipelineWS } from '@/lib/architecture/use-pipeline-ws';
 
 import type {
   ADR,
@@ -169,7 +172,8 @@ type TabId =
   | 'trace'
   | 'versions'
   | 'radar'
-  | 'diagrams';
+  | 'diagrams'
+  | 'security';
 
 const TABS: ReadonlyArray<{
   id: TabId;
@@ -188,6 +192,10 @@ const TABS: ReadonlyArray<{
   { id: 'versions', label: 'Versions', shortLabel: 'Versions', icon: History, countTone: 'emerald' },
   { id: 'radar', label: 'Tech Radar', shortLabel: 'Radar', icon: Sparkles, countTone: 'neutral' },
   { id: 'diagrams', label: 'Diagrams', shortLabel: 'Diagrams', icon: GitMerge, countTone: 'neutral' },
+  // M5-G4 — 10th tab. Security Report surfaces deployment-relevant findings
+  // (secrets, dependency vulnerabilities, posture) drawn from
+  // `/architecture/security-reports`. The rose tone telegraphs risk.
+  { id: 'security', label: 'Security Report', shortLabel: 'Security', icon: ShieldAlert, countTone: 'rose' },
 ];
 
 const COUNT_TONE: Record<NonNullable<(typeof TABS)[number]['countTone']>, string> = {
@@ -2034,6 +2042,25 @@ export default function ArchitectureCenterPage() {
   const registersQuery = useRiskRegisters();
   const versionsQuery = useArchitectureVersions();
   const traceabilityQuery = useTraceability();
+  // M5-G4 — Security Report hook. The posture query reads the cached
+  // deployment posture aggregate (total_open / critical_open / score).
+  // The reports list backs the Open Findings inner-tab.
+  const security = useArchitectureSecurity();
+  const securityPostureQuery = security.usePosture();
+  const securityReportsQuery = security.useReports({ status: 'open' });
+  const securityOpenCount = (securityReportsQuery.data?.items ?? []).filter(
+    (r) => r.status === 'open' || r.status === 'mitigating',
+  ).length;
+
+  // M5-G4 — wire the architecture WS bus so Security Report lifecycle
+  // events (`architecture.security_report.created`, posture recompute)
+  // automatically invalidate the security query slice. The hook is a
+  // no-op without a projectId; the seed-derived `acme-corp` project
+  // id from the ADR fixtures is the canonical subscriber when no
+  // persona-scoped project is active.
+  useArchitecturePipelineWS(
+    process.env.NEXT_PUBLIC_FORGE_DEMO_PROJECT_ID ?? '22222222-2222-2222-2222-222222222222',
+  );
 
   const liveAdrs: ReadonlyArray<ADR> = adrsQuery.data?.items ?? [];
   const adrs: ReadonlyArray<ADRWithMeta> = liveAdrs.length > 0
@@ -2163,6 +2190,7 @@ export default function ArchitectureCenterPage() {
     versions: versions.length,
     radar: MOCK_TECH_RADAR.length,
     diagrams: MOCK_DIAGRAMS.length,
+    security: securityOpenCount,
   };
 
   const handleTabChange = (next: TabId) => updateUrl(next);
@@ -2508,7 +2536,7 @@ export default function ArchitectureCenterPage() {
             {tab === 'radar' ? (
               <div className="flex flex-col gap-3">
                 <div className="self-end"><AIAssistantBadge tab="radar" onClick={() => toast.info('AI: suggest tech radar updates based on recent commits')} /></div>
-                <TechRadar blips={MOCK_TECH_RADAR} />
+                <TechRadar projectId={process.env.NEXT_PUBLIC_FORGE_DEMO_PROJECT_ID ?? '22222222-2222-2222-2222-222222222222'} />
               </div>
             ) : null}
 
@@ -2516,6 +2544,29 @@ export default function ArchitectureCenterPage() {
               <div className="flex flex-col gap-3">
                 <div className="self-end"><AIAssistantBadge tab="diagrams" onClick={() => toast.info('AI: regenerate diagrams from live system')} /></div>
                 <DiagramsExplorer diagrams={MOCK_DIAGRAMS} />
+              </div>
+            ) : null}
+
+            {tab === 'security' ? (
+              <div className="flex flex-col gap-3" data-testid="security-tab-panel">
+                <div className="self-end">
+                  <AIAssistantBadge
+                    tab="security"
+                    onClick={() =>
+                      toast.info('AI: triage open findings and draft mitigations')
+                    }
+                  />
+                </div>
+                <SecurityReportPanel
+                  posture={securityPostureQuery.data ?? null}
+                  postureLoading={securityPostureQuery.isLoading}
+                  reports={securityReportsQuery.data?.items ?? []}
+                  reportsLoading={securityReportsQuery.isLoading}
+                  onRefresh={() => {
+                    void securityPostureQuery.refetch();
+                    void securityReportsQuery.refetch();
+                  }}
+                />
               </div>
             ) : null}
           </motion.div>

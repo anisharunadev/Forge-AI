@@ -35,6 +35,13 @@ import {
 import { toast } from 'sonner';
 
 import { api } from '@/lib/api/client';
+import {
+  createSecurityReport,
+  getSecurityPosture,
+  getSecurityReportById,
+  listSecurityReports,
+  updateSecurityReportStatus,
+} from '@/lib/api/architecture';
 import type {
   ADR,
   ADRCreateInput,
@@ -70,6 +77,12 @@ import type {
   RiskRegisterFilter,
   RiskRegisterListResponse,
   RiskUpdateInput,
+  SecurityPosture,
+  SecurityReport,
+  SecurityReportCreateInput,
+  SecurityReportFilter,
+  SecurityReportListResponse,
+  SecurityReportStatusUpdateInput,
   StandardAttestInput,
   StandardAttestation,
   StandardAttestationFilter,
@@ -169,6 +182,17 @@ export const archQueryKeys = {
     all: () => [...archQueryKeys.all, 'acceptance'] as const,
     coverage: (projectId: string) =>
       [...archQueryKeys.acceptance.all(), 'coverage', projectId] as const,
+  },
+  // M5-G4 — Security Report slice. Keeps the Security tab queryable
+  // via the same TanStack Query key hierarchy as the rest of the
+  // Architecture Center.
+  security: {
+    all: () => [...archQueryKeys.all, 'security'] as const,
+    list: (filter?: SecurityReportFilter) =>
+      [...archQueryKeys.security.all(), 'list', filter ?? {}] as const,
+    detail: (id: string) => [...archQueryKeys.security.all(), 'detail', id] as const,
+    posture: (projectId?: string) =>
+      [...archQueryKeys.security.all(), 'posture', projectId ?? ''] as const,
   },
 };
 
@@ -832,5 +856,116 @@ export function useLinkAcceptanceToTest() {
       const message = err instanceof Error ? err.message : 'Failed to link test';
       toast.error(message);
     },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Security Reports (M5-G4 — new surface)
+// ---------------------------------------------------------------------------
+//
+// Aggregate hook surface so the page-level integration has a single
+// import. Each individual hook is also exported directly for fine-grained
+// consumers (drawer detail view, command palette, etc.).
+
+export interface UseArchitectureSecurityApi {
+  /** List hook — paginated findings. Accepts severity/category/status/project filters. */
+  useReports: (filter?: SecurityReportFilter) => UseQueryResult<SecurityReportListResponse>;
+  /** Single-record hook — opens the detail drawer. */
+  useReportById: (id: string | null | undefined) => UseQueryResult<SecurityReport>;
+  /** Posture aggregate — drives SecurityPostureCard + Posture Trend tab. */
+  usePosture: (projectId?: string) => UseQueryResult<SecurityPosture>;
+  /** Mutation — create a new finding. */
+  useCreateReport: () => ReturnType<
+    typeof useMutation<SecurityReport, Error, SecurityReportCreateInput>
+  >;
+  /** Mutation — change status (open / mitigating / accepted / closed). */
+  useUpdateReportStatus: () => ReturnType<
+    typeof useMutation<SecurityReport, Error, SecurityReportStatusUpdateInput & { id: string }>
+  >;
+}
+
+export function useArchitectureSecurity(): UseArchitectureSecurityApi {
+  const useReports = (filter?: SecurityReportFilter) =>
+    useQuery({
+      queryKey: archQueryKeys.security.list(filter),
+      queryFn: () => listSecurityReports(filter),
+      enabled: !!filter?.project_id,
+      staleTime: 60_000,
+    });
+
+  const useReportById = (id: string | null | undefined) =>
+    useQuery({
+      queryKey: archQueryKeys.security.detail(id ?? ''),
+      queryFn: () => getSecurityReportById(id as string),
+      enabled: !!id,
+      staleTime: 60_000,
+    });
+
+  const usePosture = (projectId?: string) =>
+    useQuery({
+      queryKey: archQueryKeys.security.posture(projectId),
+      queryFn: () => getSecurityPosture(projectId),
+      enabled: !!projectId,
+      staleTime: 60_000,
+    });
+
+  const useCreateReport = () => {
+    const qc = useQueryClient();
+    return useMutation({
+      mutationFn: (data: SecurityReportCreateInput) => createSecurityReport(data),
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: archQueryKeys.security.all() });
+        toast.success('Security finding recorded');
+      },
+      onError: (err) => {
+        const message =
+          err instanceof Error ? err.message : 'Failed to record security finding';
+        toast.error(message);
+      },
+    });
+  };
+
+  const useUpdateReportStatus = () => {
+    const qc = useQueryClient();
+    return useMutation({
+      mutationFn: ({ id, ...data }: SecurityReportStatusUpdateInput & { id: string }) =>
+        updateSecurityReportStatus(id, data),
+      onSuccess: (_data, { id }) => {
+        qc.invalidateQueries({ queryKey: archQueryKeys.security.all() });
+        qc.invalidateQueries({ queryKey: archQueryKeys.security.detail(id) });
+        toast.success('Status updated');
+      },
+      onError: (err) => {
+        const message =
+          err instanceof Error ? err.message : 'Failed to update status';
+        toast.error(message);
+      },
+    });
+  };
+
+  return { useReports, useReportById, usePosture, useCreateReport, useUpdateReportStatus };
+}
+
+/** Standalone list hook — convenient for one-off consumers. */
+export function useSecurityReports(
+  filter?: SecurityReportFilter,
+): UseQueryResult<SecurityReportListResponse> {
+  return useQuery({
+    queryKey: archQueryKeys.security.list(filter),
+    queryFn: () => listSecurityReports(filter),
+    enabled: !!filter?.project_id,
+    staleTime: 60_000,
+  });
+}
+
+/** Standalone posture hook. */
+export function useSecurityPosture(
+  projectId?: string,
+): UseQueryResult<SecurityPosture> {
+  return useQuery({
+    queryKey: archQueryKeys.security.posture(projectId),
+    queryFn: () => getSecurityPosture(projectId),
+    enabled: !!projectId,
+    staleTime: 60_000,
   });
 }

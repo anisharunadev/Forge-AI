@@ -23,6 +23,7 @@ from app.db.models.architecture import (
     TaskBreakdown,
 )
 from app.db.session import get_session_factory
+from app.services.artifact_registry import artifact_registry
 from app.services.event_bus import EventType
 
 logger = get_logger(__name__)
@@ -43,9 +44,21 @@ _REVIEWER_MATRIX: dict[str, list[str]] = {
 class ArchitectureApprovalWorkflow:
     """Request, decide, cancel, and list architecture approvals."""
 
-    def __init__(self, litellm_client: Any, event_bus: Any) -> None:
+    def __init__(
+        self,
+        litellm_client: Any,
+        event_bus: Any,
+        artifact_registry_instance: Any | None = None,
+        audit_service: Any | None = None,
+    ) -> None:
         self._llm = litellm_client
         self._bus = event_bus
+        # M5 T-A4 — record the decision to the KG so the React Flow
+        # viz (M8) shows an ``architecture_approval`` node per
+        # terminal decision; audit is plumbed through for the
+        # architecture.approval.grant/deny audit hook.
+        self._registry = artifact_registry_instance or artifact_registry
+        self._audit = audit_service
 
     # ------------------------------------------------------------------
     # Request
@@ -202,21 +215,89 @@ class ArchitectureApprovalWorkflow:
         else:
             event_type = EventType.ARTIFACT_UPDATED
 
+        # M5 T-A4 — enrich the event payload with the canonical decision
+        # fields required by AC-5: tenant_id, project_id, approval_id,
+        # decision, reason, decider_id, decided_at.
+        event_payload = {
+            "artifact_type": approval.artifact_type,
+            "artifact_id": str(approval.artifact_id),
+            "approval_id": str(approval.id),
+            "tenant_id": str(approval.tenant_id),
+            "project_id": str(approval.project_id),
+            "decision": decision,
+            "reviewer_role": target_role,
+            "decider_id": str(reviewer_id),
+            "decided_at": now.isoformat(),
+            "status": new_status,
+            "reason": reason,
+        }
+
         await self._bus.publish(
             event_type,
-            {
-                "artifact_type": approval.artifact_type,
-                "artifact_id": str(approval.artifact_id),
-                "approval_id": str(approval.id),
-                "decision": decision,
-                "reviewer_role": target_role,
-                "status": new_status,
-                "reason": reason,
-            },
+            event_payload,
             tenant_id=approval.tenant_id,
             project_id=approval.project_id,
             actor_id=reviewer_id,
         )
+
+        # M5 T-A4 / M5-G8 — terminal decisions are mirrored to the KG
+        # so the architecture_approval nodes appear in the React Flow
+        # viz (M8). Non-terminal in_review updates are intentionally
+        # skipped to keep the KG free of intermediate churn.
+        if new_status in {"approved", "denied"}:
+            try:
+                await self._registry.register(
+                    artifact_type="architecture_approval",
+                    artifact_id=str(approval.id),
+                    tenant_id=approval.tenant_id,
+                    project_id=approval.project_id,
+                    payload={
+                        "decision": decision,
+                        "granted": decision == "approve",
+                        "reason": reason,
+                        "decider_id": str(reviewer_id),
+                        "decider_role": target_role,
+                        "decided_at": now.isoformat(),
+                        "artifact_type": approval.artifact_type,
+                        "source_artifact_id": str(approval.artifact_id),
+                        "status": new_status,
+                    },
+                    actor_id=reviewer_id,
+                )
+            except Exception:  # noqa: BLE001 — KG mirror must not break decide
+                logger.warning(
+                    "approval.kg_mirror_failed",
+                    approval_id=str(approval.id),
+                    status=new_status,
+                )
+
+        # Optional audit hook — non-fatal if the audit sink is missing.
+        if self._audit is not None and new_status in {"approved", "denied"}:
+            try:
+                await self._audit.record(
+                    tenant_id=approval.tenant_id,
+                    project_id=approval.project_id,
+                    actor_id=reviewer_id,
+                    action=(
+                        "architecture.approval.grant"
+                        if new_status == "approved"
+                        else "architecture.approval.deny"
+                    ),
+                    target_type="approval",
+                    target_id=str(approval.id),
+                    payload={
+                        "decision": decision,
+                        "reason": reason,
+                        "artifact_type": approval.artifact_type,
+                        "source_artifact_id": str(approval.artifact_id),
+                    },
+                )
+            except Exception:  # noqa: BLE001 — audit must not break decide
+                logger.warning(
+                    "approval.audit_skipped",
+                    approval_id=str(approval.id),
+                )
+
         logger.info(
             "approval.decided",
             approval_id=str(approval.id),

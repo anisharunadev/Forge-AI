@@ -91,6 +91,23 @@ class _StubRegistry:
             and r["project_id"] == str(project_id)
         ]
 
+    async def register(self, *, artifact_type: str, artifact_id: Any,
+                       tenant_id: Any, project_id: Any,
+                       payload: dict[str, Any] | None = None,
+                       **_kw: Any) -> dict[str, Any]:
+        """T-A6 stub mirror of ArtifactRegistry.register."""
+        record = {
+            "node_id": str(uuid.uuid4()),
+            "type": artifact_type,
+            "artifact_type": artifact_type,
+            "artifact_id": str(artifact_id),
+            "tenant_id": str(tenant_id),
+            "project_id": str(project_id),
+            "payload": payload or {},
+        }
+        self.rows.append(record)
+        return record
+
 
 @pytest_asyncio.fixture
 async def sqlite_db(sqlite_db):  # type: ignore[no-untyped-def]

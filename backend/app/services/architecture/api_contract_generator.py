@@ -57,9 +57,10 @@ Rules:
 class APIContractGenerator:
     """Generate / validate / publish API contracts."""
 
-    def __init__(self, litellm_client: Any, artifact_registry: Any, event_bus: Any) -> None:
+    def __init__(self, litellm_client: Any, artifact_registry: Any | None = None, event_bus: Any | None = None) -> None:
+        from app.services.artifact_registry import artifact_registry as _default_registry
         self._llm = litellm_client
-        self._registry = artifact_registry
+        self._registry = artifact_registry if artifact_registry is not None else _default_registry
         self._bus = event_bus
 
     async def generate_from_description(
@@ -123,6 +124,22 @@ class APIContractGenerator:
             },
             tenant_id=tenant_id,
             project_id=project_id,
+            actor_id=actor_id,
+        )
+        # M5-G2 — mirror the API Contract row into the Knowledge Graph
+        # so the React Flow viz sees a typed
+        # ``KGNode(artifact_type='api_contract')`` node.
+        await self._registry.register(
+            artifact_type="api_contract",
+            artifact_id=str(contract.id),
+            tenant_id=tenant_id,
+            project_id=project_id,
+            payload={
+                "name": contract.name,
+                "spec_type": contract_type,
+                "status": contract.status,
+                "valid": validation["valid"],
+            },
             actor_id=actor_id,
         )
         logger.info(

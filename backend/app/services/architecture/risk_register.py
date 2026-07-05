@@ -58,12 +58,13 @@ class RiskRegisterService:
     def __init__(
         self,
         litellm_client: Any,
-        artifact_registry: Any,
-        event_bus: Any,
+        artifact_registry: Any | None = None,
+        event_bus: Any | None = None,
         idea_service: Any | None = None,
     ) -> None:
+        from app.services.artifact_registry import artifact_registry as _default_registry
         self._llm = litellm_client
-        self._registry = artifact_registry
+        self._registry = artifact_registry if artifact_registry is not None else _default_registry
         self._bus = event_bus
         self._idea_service = idea_service
 
@@ -391,6 +392,41 @@ class RiskRegisterService:
             project_id=project_id,
             actor_id=actor_id,
         )
+        # M5-G2 — mirror the risk register into the Knowledge Graph so
+        # the React Flow viz (M8) sees a typed
+        # ``KGNode(artifact_type='risk_register')`` node.
+        await self._registry.register(
+            artifact_type="risk_register",
+            artifact_id=str(register.id),
+            tenant_id=tenant_id,
+            project_id=project_id,
+            payload={
+                "name": register.name,
+                "status": register.status,
+                "risk_count": len(risks),
+                "source_type": source_type,
+                "source_id": source_id,
+            },
+            actor_id=actor_id,
+        )
+        # M5-G2 — each risk inside the register ALSO lands a per-row
+        # KG node so the KG can render the risk graph distinctly.
+        for risk in risks:
+            await self._registry.register(
+                artifact_type="risk",
+                artifact_id=f"{register.id}:{risk.get('id', '')}",
+                tenant_id=tenant_id,
+                project_id=project_id,
+                payload={
+                    "register_id": str(register.id),
+                    "title": risk.get("title"),
+                    "category": risk.get("category"),
+                    "score": risk.get("score"),
+                    "status": risk.get("status"),
+                    "owner": risk.get("owner"),
+                },
+                actor_id=actor_id,
+            )
         logger.info(
             "risk_register.created",
             tenant_id=str(tenant_id),

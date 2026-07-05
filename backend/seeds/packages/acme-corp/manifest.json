@@ -289,6 +289,17 @@
         "kind"
       ],
       "description": "5 push destinations (jira, confluence, slack, arch_preview, notion)"
+    },
+    {
+      "file": "032_security_reports.json",
+      "table": "architecture_security_reports",
+      "order": 28,
+      "idempotency_key": [
+        "tenant_id",
+        "project_id",
+        "source_adr_id"
+      ],
+      "description": "8 security findings spanning all 4 severity levels + 7 categories, each cross-referenced to an ADR"
     }
   ],
   "row_counts_expected": {
@@ -318,7 +329,8 @@
     "ideation_source_signals": 34,
     "market_signals": 9,
     "customer_voice_clusters": 5,
-    "push_destinations": 5
+    "push_destinations": 5,
+    "architecture_security_reports": 8
   },
   "production_safety": {
     "allow_in_prod": false

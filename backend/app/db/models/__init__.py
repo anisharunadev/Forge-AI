@@ -6,6 +6,8 @@ from app.db.models.alert_config import AlertConfig
 from app.db.models.approval import ApprovalRequest
 from app.db.models.artifact import Artifact
 from app.db.models.audit import AuditEvent
+# M5 T-A3 — SecurityReport model (architecture_security_reports table).
+from app.db.models.security_report import SecurityReport
 from app.db.models.board_confirmation import BoardConfirmation, BoardConfirmationOutcome
 from app.db.models.connector import Connector, ConnectorSyncHistory
 from app.db.models.connector_activity import ConnectorActivity
@@ -170,6 +172,7 @@ __all__ = [
     "ScoreSource",
     "Standard",
     "SteeringRule",
+    "SecurityReport",
     "Template",
     "Team",
     "TeamMember",

@@ -577,3 +577,97 @@ export interface ArchitectureVersionDiffFilter {
   version_a?: string;
   version_b?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Security Report (M5-G4 — new surface)
+// ---------------------------------------------------------------------------
+
+/** Mirrors `SecurityReportResponse.severity` (literal union). */
+export type SecuritySeverity = 'low' | 'medium' | 'high' | 'critical';
+
+/** Mirrors `SecurityReportResponse.category`. */
+export type SecurityCategory =
+  | 'auth'
+  | 'data'
+  | 'network'
+  | 'dependency'
+  | 'configuration'
+  | 'cryptography'
+  | 'logging';
+
+/** Mirrors `SecurityReportResponse.status`. */
+export type SecurityStatus = 'open' | 'mitigating' | 'accepted' | 'closed';
+
+/** Mirrors `SecurityReportResponse`. */
+export interface SecurityReport {
+  id: string;
+  tenant_id: string;
+  project_id: string;
+  source_adr_id: string | null;
+  title: string;
+  severity: SecuritySeverity;
+  category: SecurityCategory;
+  description: string;
+  affected_service: string;
+  recommendation: string;
+  status: SecurityStatus;
+  discovered_at: string;
+  mitigated_at: string | null;
+  generated_by: string | null;
+}
+
+/** Mirrors `SecurityReportListResponse`. */
+export interface SecurityReportListResponse {
+  items: SecurityReport[];
+  total: number;
+}
+
+/** Mirrors `SecurityReportCreateRequest`. */
+export interface SecurityReportCreateInput {
+  project_id: string;
+  title: string;
+  severity: SecuritySeverity;
+  category: SecurityCategory;
+  description: string;
+  affected_service: string;
+  recommendation: string;
+  source_adr_id?: string;
+}
+
+/** Mirrors `SecurityReportStatusUpdate`. */
+export interface SecurityReportStatusUpdateInput {
+  status: SecurityStatus;
+  note?: string;
+}
+
+/** Mirrors `SecurityReportFilter` — passed as query params to list. */
+export interface SecurityReportFilter {
+  project_id?: string;
+  severity?: SecuritySeverity;
+  category?: SecurityCategory;
+  status?: SecurityStatus;
+  limit?: number;
+}
+
+/**
+ * Deployment posture aggregate returned by
+ * `GET /architecture/security-reports/posture`.
+ *
+ * `score` is a 0–100 risk-weighted figure (higher = healthier). The
+ * counters `total_open` / `critical_open` / `high_open` drive the
+ * SecurityPostureCard KPI strip.
+ */
+export interface SecurityPosture {
+  tenant_id: string;
+  project_id: string;
+  total_open: number;
+  critical_open: number;
+  high_open: number;
+  medium_open: number;
+  low_open: number;
+  score: number;
+  by_category: Record<SecurityCategory, number>;
+  top_affected_services: ReadonlyArray<{ service: string; count: number }>;
+  trend: ReadonlyArray<{ date: string; score: number }>;
+  computed_at: string;
+}

@@ -108,7 +108,7 @@ async def test_adr_generator_creates_with_madr_format(
     )
     gen = ADRGenerator(
         litellm_client=llm,
-        artifact_registry=MagicMock(),
+        artifact_registry=None,
         event_bus=event_bus,
     )
     adr = await gen.generate_adr(
@@ -173,7 +173,7 @@ async def test_adr_generator_numbers_sequentially(
     llm.chat = chat  # type: ignore[assignment]
     gen = ADRGenerator(
         litellm_client=llm,
-        artifact_registry=MagicMock(),
+        artifact_registry=None,
         event_bus=event_bus,
     )
     tenant = uuid.uuid4()
@@ -217,7 +217,7 @@ async def test_adr_generator_emits_event(sqlite_db, event_bus, captured_events):
     )
     gen = ADRGenerator(
         litellm_client=llm,
-        artifact_registry=MagicMock(),
+        artifact_registry=None,
         event_bus=event_bus,
     )
     actor = uuid.uuid4()
@@ -248,7 +248,7 @@ async def test_adr_supersede_chains_history(sqlite_db, event_bus, captured_event
     llm = _FakeLLM(canned)
     gen = ADRGenerator(
         litellm_client=llm,
-        artifact_registry=MagicMock(),
+        artifact_registry=None,
         event_bus=event_bus,
     )
     tenant = uuid.uuid4()
@@ -285,7 +285,7 @@ async def test_api_contract_generate_openapi(sqlite_db, event_bus, captured_even
     llm = _FakeLLM(_openapi_payload())
     gen = APIContractGenerator(
         litellm_client=llm,
-        artifact_registry=MagicMock(),
+        artifact_registry=None,
         event_bus=event_bus,
     )
     contract = await gen.generate_from_description(
@@ -308,7 +308,7 @@ async def test_api_contract_validate_spec(sqlite_db, event_bus, captured_events)
     llm = _FakeLLM(_openapi_payload())
     gen = APIContractGenerator(
         litellm_client=llm,
-        artifact_registry=MagicMock(),
+        artifact_registry=None,
         event_bus=event_bus,
     )
     contract = await gen.generate_from_description(
@@ -345,7 +345,7 @@ async def test_task_breakdown_from_adr(sqlite_db, event_bus, captured_events):
     )
     adr_gen = ADRGenerator(
         litellm_client=adr_llm,
-        artifact_registry=MagicMock(),
+        artifact_registry=None,
         event_bus=event_bus,
     )
     adr = await adr_gen.generate_adr(
@@ -384,7 +384,7 @@ async def test_task_breakdown_from_adr(sqlite_db, event_bus, captured_events):
     )
     breakdown_gen = TaskBreakdownGenerator(
         litellm_client=breakdown_llm,
-        artifact_registry=MagicMock(),
+        artifact_registry=None,
         event_bus=event_bus,
     )
     breakdown = await breakdown_gen.generate_from_adr(
@@ -414,7 +414,7 @@ async def test_task_breakdown_update_task(sqlite_db, event_bus, captured_events)
                 "alternatives": [],
             }
         ),
-        artifact_registry=MagicMock(),
+        artifact_registry=None,
         event_bus=event_bus,
     )
     adr = await adr_gen.generate_adr(
@@ -438,7 +438,7 @@ async def test_task_breakdown_update_task(sqlite_db, event_bus, captured_events)
                 ],
             }
         ),
-        artifact_registry=MagicMock(),
+        artifact_registry=None,
         event_bus=event_bus,
     )
     breakdown = await breakdown_gen.generate_from_adr(

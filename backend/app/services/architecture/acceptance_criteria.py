@@ -51,13 +51,14 @@ class AcceptanceCriteriaService:
 
     def __init__(
         self,
-        litellm_client: Any,
-        artifact_registry: Any,
-        test_service: Any,
-        event_bus: Any,
+        litellm_client: Any | None = None,
+        artifact_registry: Any | None = None,
+        test_service: Any | None = None,
+        event_bus: Any | None = None,
     ) -> None:
+        from app.services.artifact_registry import artifact_registry as _default_registry
         self._llm = litellm_client
-        self._registry = artifact_registry
+        self._registry = artifact_registry if artifact_registry is not None else _default_registry
         self._tests = test_service
         self._bus = event_bus
 
@@ -120,6 +121,21 @@ class AcceptanceCriteriaService:
             },
             tenant_id=tenant_id,
             project_id=project_id,
+            actor_id=actor_id,
+        )
+        # M5-G2 — mirror the criteria envelope into the Knowledge Graph
+        # so the React Flow viz sees a typed
+        # ``KGNode(artifact_type='acceptance_criteria')`` node.
+        await self._registry.register(
+            artifact_type="acceptance_criteria",
+            artifact_id=str(record_id),
+            tenant_id=tenant_id,
+            project_id=project_id,
+            payload={
+                "source_artifact_type": artifact_type,
+                "source_artifact_id": str(artifact_id),
+                "count": len(criteria),
+            },
             actor_id=actor_id,
         )
         logger.info(
