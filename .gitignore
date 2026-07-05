@@ -1,6 +1,5 @@
 # Contains ANTHROPIC_API_KEY.
 # Never commit.
-# **/node_modules
 # archive/**
 .env
 .env.*
@@ -40,4 +39,3 @@ __pycache__/
 
 # Vitest results
 **/vitest/results.json
-node_modules
