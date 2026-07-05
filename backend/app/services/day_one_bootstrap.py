@@ -508,6 +508,19 @@ class DayOneBootstrapService:
             actor_id=actor_id,
         )
 
+        # 8. Sample-data seed hook (M9-G2). Also post-commit and
+        # best-effort: after the bootstrap commits, load 1 sample
+        # connector + 1 sample ADR + 1 sample idea into the new
+        # tenant/project so the dashboard isn't empty on first login,
+        # and emit ``BOOTSTRAP_SAMPLE_DATA_LOADED``. A failure here must
+        # never roll back the completed bootstrap.
+        await self._load_sample_data_on_completion(
+            tenant_id=tid,
+            project_id=pid,
+            run_id=run_id,
+            actor_id=actor_id,
+        )
+
         return await self.get_status(project_id=pid, tenant_id=tid)
 
     # ----- status & rerun ---------------------------------------------------
@@ -1076,6 +1089,53 @@ class DayOneBootstrapService:
             # fails must NOT propagate to the bootstrap caller.
             logger.warning(
                 "bootstrap.kn_base.unavailable",
+                project_id=project_id,
+                tenant_id=tenant_id,
+                error=str(exc),
+            )
+
+    async def _load_sample_data_on_completion(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        run_id: UUID | str | None,
+        actor_id: UUID | str | None,
+    ) -> None:
+        """Load the M9-G2 sample seed after the bootstrap commits.
+
+        Best-effort, post-commit companion to
+        :meth:`_apply_kn_base_post_commit`: seeds 1 sample connector +
+        1 sample ADR + 1 sample idea into the new tenant/project (idspace
+        ``sample-<tenant_id>``) and emits
+        ``EventType.BOOTSTRAP_SAMPLE_DATA_LOADED``. Any exception is
+        logged and swallowed so the bootstrap still returns COMPLETED.
+
+        The loader lives in :mod:`app.services.project_onboarding.sample_data`
+        (no LangGraph deps) so the onboarding suite can exercise it
+        directly; here we just guard it.
+        """
+        try:
+            from app.services.project_onboarding.sample_data import (  # noqa: PLC0415
+                load_sample_data,
+            )
+
+            summary = await load_sample_data(
+                tenant_id=tenant_id,
+                project_id=project_id,
+                run_id=run_id,
+                actor_id=actor_id,
+            )
+            logger.info(
+                "bootstrap.sample_data.applied",
+                project_id=project_id,
+                tenant_id=tenant_id,
+                loaded=summary.get("loaded"),
+                skipped=summary.get("skipped"),
+            )
+        except Exception as exc:  # noqa: BLE001 — best-effort, must not bubble
+            logger.warning(
+                "bootstrap.sample_data.skipped",
                 project_id=project_id,
                 tenant_id=tenant_id,
                 error=str(exc),

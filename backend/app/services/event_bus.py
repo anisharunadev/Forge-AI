@@ -164,6 +164,11 @@ class EventType(str, enum.Enum):
     METRIC_DEGRADED = "metric.degraded"
     RUN_BAD_OUTCOME = "run.bad_outcome"
 
+    # F-507 / M9-G2 — emitted after Day-One Bootstrap completes and the
+    # sample seed (1 connector + 1 ADR + 1 idea) has been loaded into the
+    # freshly-onboarded tenant/project so the dashboard isn't empty.
+    BOOTSTRAP_SAMPLE_DATA_LOADED = "bootstrap.sample_data_loaded"
+
 
 @dataclass
 class Event:
