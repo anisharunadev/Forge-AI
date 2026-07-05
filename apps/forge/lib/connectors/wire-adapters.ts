@@ -52,7 +52,6 @@
 
 import {
   wireToConnector,
-  wireToSyncEvent,
   wireToCredential,
   type ConnectorWire,
   type ConnectorSyncEventWire,
@@ -80,8 +79,55 @@ import type {
 /** Map a wire `Connector` to the legacy card shape used by every tab. */
 export const wireToConnectedCard = wireToConnector;
 
-/** Map a wire sync event to the legacy `ConnectorSyncEvent` shape. */
-export const wireToActivityRow = wireToSyncEvent;
+/**
+ * Activity row — the legacy `ConnectorSyncEvent` shape plus the
+ * `connectorId` / `connectorSlug` so downstream tabs can resolve the
+ * source connector without re-querying. Structurally a superset of
+ * `ConnectorSyncEvent`, so any code that only reads the legacy fields
+ * keeps working unchanged.
+ */
+export interface ActivityRow extends ConnectorSyncEvent {
+  readonly connectorId: string;
+  readonly connectorSlug: string;
+}
+
+/**
+ * Map a wire sync event to the legacy `ConnectorSyncEvent` shape and
+ * preserve the connector FK so the Activity tab can render the source
+ * connector's display name + icon without a second lookup.
+ */
+export function wireToActivityRow(wire: ConnectorSyncEventWire): ActivityRow {
+  const status: SyncEventStatus =
+    wire.status === 'ok'
+      ? 'success'
+      : wire.status === 'in-progress'
+        ? 'partial'
+        : 'failed';
+
+  // Map the wire's event_type vocabulary onto the legacy 4-bucket
+  // taxonomy the UI understands.
+  const eventType: SyncEventType =
+    wire.event_type.startsWith('sync.')
+      ? 'pull'
+      : wire.event_type.startsWith('webhook.')
+        ? 'webhook'
+        : wire.event_type === 'config.updated'
+          ? 'push'
+          : 'test';
+
+  return {
+    id: wire.id,
+    at: wire.started_at,
+    eventType,
+    entity: wire.event_type,
+    status,
+    durationMs: wire.duration_ms,
+    records: wire.records_processed,
+    errorMessage: wire.error_message ?? undefined,
+    connectorId: wire.connector_id,
+    connectorSlug: wire.connector_slug,
+  };
+}
 
 /** Map a wire credential to the legacy embedded `credential` blob. */
 export const wireToCredentialRow = wireToCredential;
