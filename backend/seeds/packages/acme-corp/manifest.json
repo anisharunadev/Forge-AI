@@ -247,6 +247,48 @@
         "title"
       ],
       "description": "3 intentional conflicts for ADR-003 demo"
+    },
+    {
+      "file": "024_ideation_signals.json",
+      "table": "ideation_source_signals",
+      "order": 24,
+      "idempotency_key": [
+        "tenant_id",
+        "source",
+        "external_id"
+      ],
+      "description": "34 ideation signals (Confluence/Slack/Zendesk raw ingest)"
+    },
+    {
+      "file": "025_market_signals.json",
+      "table": "market_signals",
+      "order": 25,
+      "idempotency_key": [
+        "tenant_id",
+        "kind",
+        "title"
+      ],
+      "description": "9 synthesized market signals (2 competitor, 4 trend, 3 tech)"
+    },
+    {
+      "file": "026_customer_voice_clusters.json",
+      "table": "customer_voice_clusters",
+      "order": 26,
+      "idempotency_key": [
+        "tenant_id",
+        "topic"
+      ],
+      "description": "5 customer-voice clusters (sentiment + frequency)"
+    },
+    {
+      "file": "027_push_destinations.json",
+      "table": "push_destinations",
+      "order": 27,
+      "idempotency_key": [
+        "tenant_id",
+        "kind"
+      ],
+      "description": "5 push destinations (jira, confluence, slack, arch_preview, notion)"
     }
   ],
   "row_counts_expected": {
@@ -272,7 +314,11 @@
     "workflow_steps": 120,
     "graph_nodes": 200,
     "graph_edges": 250,
-    "conflicts": 3
+    "conflicts": 3,
+    "ideation_source_signals": 34,
+    "market_signals": 9,
+    "customer_voice_clusters": 5,
+    "push_destinations": 5
   },
   "production_safety": {
     "allow_in_prod": false

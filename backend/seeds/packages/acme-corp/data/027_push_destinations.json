@@ -1,0 +1,9 @@
+{
+  "rows": [
+    {"id": "88888888-8888-8888-8888-888888880001", "tenant_id": "11111111-1111-1111-1111-111111111111", "project_id": "22222222-2222-2222-2222-222222222222", "kind": "jira", "config": {"is_demo": true, "site": "acme-corp.atlassian.net", "project_key": "ACME", "boards": ["ACME", "ACME-PLATFORM", "ACME-PLATFORM-OPS"]}, "last_pushed_at": "2026-07-04T15:30:00Z", "status": "healthy", "is_demo": true},
+    {"id": "88888888-8888-8888-8888-888888880002", "tenant_id": "11111111-1111-1111-1111-111111111111", "project_id": "22222222-2222-2222-2222-222222222222", "kind": "confluence", "config": {"is_demo": true, "site": "acme-corp.atlassian.net", "space_key": "ACME-IDEAS", "parent_page_id": "8292914"}, "last_pushed_at": "2026-07-03T11:15:00Z", "status": "healthy", "is_demo": true},
+    {"id": "88888888-8888-8888-8888-888888880003", "tenant_id": "11111111-1111-1111-1111-111111111111", "project_id": "22222222-2222-2222-2222-222222222222", "kind": "slack", "config": {"is_demo": true, "workspace": "acme-corp", "channel_id": "C-IDEAS", "channel_name": "#acme-ideas"}, "last_pushed_at": "2026-07-05T16:45:00Z", "status": "healthy", "is_demo": true},
+    {"id": "88888888-8888-8888-8888-888888880004", "tenant_id": "11111111-1111-1111-1111-111111111111", "project_id": "22222222-2222-2222-2222-222222222222", "kind": "arch_preview", "config": {"is_demo": true, "path_template": "/ideation/{idea_id}/architecture", "versioning": "append-only", "auto_link_to_adr": true}, "last_pushed_at": "2026-07-05T17:00:00Z", "status": "healthy", "is_demo": true},
+    {"id": "88888888-8888-8888-8888-888888880005", "tenant_id": "11111111-1111-1111-1111-111111111111", "project_id": "22222222-2222-2222-2222-222222222222", "kind": "notion", "config": {"is_demo": true, "workspace": "acme-product", "database_id": "db_product_research", "view": "Inbox"}, "last_pushed_at": "2026-06-29T10:20:00Z", "status": "degraded", "is_demo": true}
+  ]
+}
