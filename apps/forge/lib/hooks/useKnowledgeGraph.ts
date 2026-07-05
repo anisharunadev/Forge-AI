@@ -171,6 +171,31 @@ export function useKGFreshness(id: string | null | undefined) {
 }
 
 /**
+ * Backlinks for a single node — incoming-only references (Obsidian-style
+ * "Referenced by" panel). Hits `GET /api/v1/kg/nodes/{id}/backlinks` and
+ * returns the list of source nodes that link *into* the given node.
+ *
+ * The poll interval (30s) keeps the inspector panel close to live without
+ * hammering the API; the inspector only shows the section when the
+ * selected node has at least one incoming edge, so the cost is bounded
+ * by user interaction. No-op when `nodeId` is null / undefined.
+ *
+ * Returns `KGNode[]` (the canonical wire shape) so callers can re-use
+ * the existing adapter (`@/lib/knowledge-graph/adapter`) to project the
+ * result onto SampleNode for the UI.
+ */
+export function useBacklinks(nodeId: string | null | undefined) {
+  return useQuery<KGNode[], ApiError>({
+    queryKey: kgQueryKeys.backlinks(nodeId ?? ''),
+    queryFn: () =>
+      api.get<KGNode[]>(`/kg/nodes/${nodeId}/backlinks`),
+    enabled: Boolean(nodeId),
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+}
+
+/**
  * Arbitrary SQL query. Mutation for the same reason as cypher.
  * `kg:query` permission gate is enforced server-side.
  */
