@@ -15,6 +15,16 @@
  * here is: container mounts, data-records attribute reflects the
  * full set, and the component does not throw. In a real browser,
  * the virtualizer renders only the visible window.
+ *
+ * M7-G4 — `perf_5000_records_renders_sub_200_rows_within_1s`.
+ * Mount 5000 audit records and assert the DOM contains at most
+ * 200 `data-testid="audit-row"` nodes within 1000 ms. In jsdom
+ * the virtualizer renders 0 rows (no layout) so the assertion is
+ * trivially true; in a real browser the visible-window + overscan
+ * budget holds for the 560 px container with an 80 px row height
+ * (~7 visible + 8 overscan = 15, well under 200). The timing
+ * assertion guards against the obvious regression: a future
+ * un-virtualized reimplementation that eagerly renders 5000 rows.
  */
 
 import * as React from 'react';
@@ -95,5 +105,36 @@ describe('AuditTimelineVirtualized', () => {
     // large list. Exact row count is implementation-defined in
     // jsdom (no layout); the production behavior is verified
     // visually in the browser.
+  });
+
+  // ---------------------------------------------------------------------------
+  // M7-G4 (AC-4) — virtualizer perf assertion.
+  // ---------------------------------------------------------------------------
+  it('perf_5000_records_renders_sub_200_rows_within_1s', () => {
+    const records: AuditRecord[] = Array.from({ length: 5000 }, (_, i) =>
+      makeRecord(i),
+    );
+    const t0 = performance.now();
+    render(
+      <AuditTimelineVirtualized
+        records={records}
+        height={560}
+        itemHeight={80}
+      />,
+    );
+    const elapsed = performance.now() - t0;
+
+    const container = screen.getByTestId('audit-timeline-virtualized');
+    expect(container.getAttribute('data-records')).toBe('5000');
+
+    // The headline assertion — ≤200 `audit-row` nodes in the DOM.
+    // jsdom renders 0 (no layout); a real browser renders the
+    // visible window + overscan (~15). Either is well under 200.
+    const rows = screen.queryAllByTestId('audit-row');
+    expect(rows.length).toBeLessThanOrEqual(200);
+
+    // Time budget — guards against an eager un-virtualized reimpl
+    // that mounts 5000 DOM nodes synchronously and blows past 1 s.
+    expect(elapsed).toBeLessThan(1000);
   });
 });

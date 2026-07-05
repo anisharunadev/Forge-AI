@@ -343,6 +343,23 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     #      above). We don't repeat the registration here.
     await _run_alembic_upgrade_head()
     await _run_autoseed_if_empty()
+    # M7 T-A2 — reload the in-process ``_HASH_CHAIN`` cache from the
+    # DB so new writes that arrive immediately after a restart extend
+    # the chain rather than restarting from ``""``. Best-effort: a
+    # failure here logs and lets the process boot so startup never
+    # blocks on observability concerns.
+    try:
+        from app.db.session import get_session_factory  # noqa: PLC0415  (lifespan import)
+        from app.services.observability_service import (  # noqa: PLC0415  (lifespan import)
+            observability_service,
+        )
+
+        async with get_session_factory()() as _boot_session:
+            await observability_service.reload_chain_heads(_boot_session)
+    except Exception as _chain_exc:  # noqa: BLE001 — boot must not block
+        logger.warning(
+            "forge.startup.chain_reload_failed", error=str(_chain_exc)
+        )
     logger.info("forge.startup.boot_complete")
     try:
         yield

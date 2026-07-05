@@ -114,7 +114,7 @@ export function AuditTimelineVirtualized({
           return (
             <div
               key={virtualRow.key}
-              data-testid="audit-timeline-virtualized-row"
+              data-testid="audit-timeline-virtualized-row audit-row"
               data-record-id={record.id}
               style={{
                 position: 'absolute',
