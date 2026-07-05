@@ -25,7 +25,6 @@ import pytest_asyncio
 
 from app.db.models import architecture  # noqa: F401  (register models)
 
-
 # ---------------------------------------------------------------------------
 # Test fixtures \u2014 sqlite_db / event_bus pass-through + a fake LLM stub
 # ---------------------------------------------------------------------------
@@ -37,7 +36,7 @@ class _FakeLLM:
     def __init__(self, payload: dict[str, Any] | str) -> None:
         self._payload = payload
 
-    async def __aenter__(self) -> "_FakeLLM":
+    async def __aenter__(self) -> _FakeLLM:
         return self
 
     async def __aexit__(self, *_exc: Any) -> None:
@@ -256,7 +255,6 @@ async def test_standards_attestation_creates_kg_node(sqlite_db, event_bus):
 @pytest.mark.asyncio
 async def test_task_breakdown_generator_creates_kg_node(sqlite_db, event_bus):
     """TaskBreakdownGenerator.generate_from_adr lands a KG node."""
-    from sqlalchemy import select
 
     from app.db.models.architecture import ADR
     from app.db.session import get_session_factory
@@ -325,7 +323,6 @@ async def test_acceptance_criteria_generator_creates_kg_node(
     sqlite_db, event_bus
 ):
     """AcceptanceCriteriaService.generate_from_artifact lands a KG node."""
-    from sqlalchemy import select
 
     from app.db.models.architecture import ADR
     from app.db.session import get_session_factory

@@ -16,20 +16,18 @@ table (created by the migration at alembic/versions/step_90_m5_security_report.p
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
 from uuid import UUID
 
 from sqlalchemy import DateTime, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import (
-    Base,
     GUID,
+    Base,
     TenantScopedMixin,
     TimestampMixin,
     UUIDPrimaryKeyMixin,
 )
-
 
 # Closed sets — pydantic Literal + SQLAlchemy String(16) with a CHECK
 # constraint via raw enum normalization in the service layer. Keeping

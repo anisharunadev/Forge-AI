@@ -31,11 +31,9 @@ from app.agents.approval_gate import (
 )
 from app.agents.sdlc_state import (
     ApprovalRequest,
-    ApprovalResponse,
     SDLCPhase,
     SDLCState,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

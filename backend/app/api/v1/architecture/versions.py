@@ -1,11 +1,12 @@
 """F-307 API router."""
 from uuid import UUID
-from typing import Optional
+
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
-from app.services.architecture.versioning import ArchitectureVersioningService
+
 from app.agents.approval_gate import require_approval_phase
 from app.agents.sdlc_state import SDLCPhase
+from app.services.architecture.versioning import ArchitectureVersioningService
 
 router = APIRouter(prefix="/api/v1/architecture", tags=["architecture-versions"])
 
