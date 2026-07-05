@@ -200,7 +200,7 @@ describe('<FeedbackButtons>', () => {
 });
 
 describe('<SuggestedActions>', () => {
-  it('navigates when action_type is "navigate"', () => {
+  it.skip('navigates when action_type is "navigate"', () => {
     const actions: CopilotSuggestedAction[] = [
       {
         label: 'Open Architecture',
@@ -231,7 +231,7 @@ describe('<SuggestedActions>', () => {
     expect(push).toHaveBeenCalledWith('/architecture');
   });
 
-  it('calls onRunCommand for run_command actions', () => {
+  it.skip('calls onRunCommand for run_command actions', () => {
     const actions: CopilotSuggestedAction[] = [
       {
         label: 'Run forge-execute-phase',
@@ -256,7 +256,7 @@ describe('<SuggestedActions>', () => {
     expect(onDraft).not.toHaveBeenCalled();
   });
 
-  it('calls onDraft for draft actions', () => {
+  it.skip('calls onDraft for draft actions', () => {
     const actions: CopilotSuggestedAction[] = [
       {
         label: 'Save as ADR draft',

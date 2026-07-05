@@ -46,10 +46,21 @@ describe('isNavMatch()', () => {
   });
 
   it('handles the ?tab= suffix in item.href for deep links', () => {
-    // Stories item href is '/project-intelligence?tab=stories'.
-    expect(
-      isNavMatch('/project-intelligence?tab=stories', stories),
-    ).toBe(true);
+    // Synthetic deep-link nav item — no production NAV entry uses a
+    // query string since Step 44 moved Stories to `/stories`.
+    const deepLink = {
+      href: '/project-intelligence?tab=stories',
+      label: 'Stories (legacy)',
+      iconName: 'FileText' as const,
+      group: 'centers' as const,
+    };
+    expect(isNavMatch('/project-intelligence?tab=stories', deepLink)).toBe(true);
+    // The bare /project-intelligence does NOT carry the deep-link tab;
+    // the deep-link item must not match it (otherwise Projects and
+    // Stories would both highlight on the bare path).
+    expect(isNavMatch('/project-intelligence', deepLink)).toBe(false);
+    // Also: a different tab query must not match.
+    expect(isNavMatch('/project-intelligence?tab=epics', deepLink)).toBe(false);
   });
 
   it('does not false-positive on different segments', () => {

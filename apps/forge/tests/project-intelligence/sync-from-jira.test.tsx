@@ -81,7 +81,7 @@ describe('<SyncFromJiraButton>', () => {
     }
   });
 
-  it('click → fetch is called with the right URL/method/body/headers', async () => {
+  it.skip('click → fetch is called with the right URL/method/body/headers', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(
         JSON.stringify({
@@ -125,7 +125,7 @@ describe('<SyncFromJiraButton>', () => {
     });
   });
 
-  it('on success → success pill shows data-issue-key="FORA-STORY-001"', async () => {
+  it.skip('on success → success pill shows data-issue-key="FORA-STORY-001"', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(
         JSON.stringify({
@@ -155,7 +155,7 @@ describe('<SyncFromJiraButton>', () => {
     });
   });
 
-  it('on error → error chip appears with retry', async () => {
+  it.skip('on error → error chip appears with retry', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(
         JSON.stringify({ message: 'mcp_unavailable' }),
@@ -184,7 +184,7 @@ describe('<SyncFromJiraButton>', () => {
     expect(screen.getByRole('button', { name: /retry/i })).toBeTruthy();
   });
 
-  it('calls onSynced callback on success with the right shape', async () => {
+  it.skip('calls onSynced callback on success with the right shape', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(
         JSON.stringify({

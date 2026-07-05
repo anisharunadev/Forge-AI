@@ -39,3 +39,6 @@ __pycache__/
 
 # Vitest results
 **/vitest/results.json
+
+# Vitest coverage output (regenerated on every run; uploaded as CI artifact)
+**/coverage/

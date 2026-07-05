@@ -32,12 +32,14 @@ export default defineConfig({
       include: ['app/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}', 'lib/**/*.{ts,tsx}', 'hooks/**/*.{ts,tsx}'],
       exclude: ['**/*.d.ts', '**/*.test.{ts,tsx}', 'tests/**'],
       // Thresholds captured in docs/plan/phase-1-coverage-baseline.md.
-      // Edit both together.
+      // Edit both together. Floor = current baseline (phase-1 start).
+      // Future phases must keep coverage >= these numbers; raising them
+      // is encouraged, lowering is forbidden without a baseline update.
       thresholds: {
-        lines: 0,
-        statements: 0,
-        functions: 0,
-        branches: 0,
+        lines: 8,
+        statements: 8,
+        functions: 6,
+        branches: 5,
       },
     },
     globals: true,

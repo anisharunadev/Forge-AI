@@ -84,8 +84,7 @@ export function AuditTimelineVirtualized({
           title={emptyMessage ? 'No audit records match the current filters' : 'Audit trail is empty'}
           description={
             emptyMessage
-              ? 'Try clearing your filters to see every audit record.'
-              : 'Agent activity, approvals, and policy decisions will appear here as they happen.'
+              ?? 'Agent activity, approvals, and policy decisions will appear here as they happen.'
           }
         />
       </div>

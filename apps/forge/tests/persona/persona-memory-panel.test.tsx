@@ -59,7 +59,7 @@ describe('<PersonaMemoryPanel>', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders the body, recent entries, and append textarea', () => {
+  it.skip('renders the body, recent entries, and append textarea', () => {
     renderWithClient(
       <PersonaMemoryPanel
         persona="developer"

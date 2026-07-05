@@ -197,7 +197,7 @@ export function wireToConnector(wire: ConnectorWire): Connector {
             ? 'paused'
             : 'stale';
 
-  const tagline = wire.description.split('\n')[0]?.slice(0, 88) ?? '';
+  const tagline = (wire.description ?? '').split('\n')[0]?.slice(0, 88) ?? '';
   const lastSyncAt = wire.last_sync_at ?? wire.installed_at;
   const isLive = wire.status !== 'disconnected';
 

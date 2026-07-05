@@ -204,13 +204,11 @@ function stripQuery(href: string): string {
  * live pathname actually carries that tab query.
  */
 export function isNavMatch(pathname: string, item: NavItem): boolean {
-  const href = stripQuery(item.href);
-  if (pathname === href) return true;
-  if (pathname.startsWith(href + '/')) return true;
-  // `?tab=` deep links: only match when the live pathname carries the
-  // exact `?key=value` pair from the nav entry. (Previously matched
-  // bare base too, which made `Projects` + `Stories` both highlight
-  // on `/project-intelligence`.)
+  // Deep-link item (?tab=…): only match when the live pathname carries
+  // the exact ?key=value pair from the nav entry. The bare base
+  // pathname must not match (otherwise two adjacent nav entries — e.g.
+  // Projects and the legacy Stories deep-link — would both highlight
+  // at once).
   if (item.href.includes('?')) {
     const [base, query] = item.href.split('?');
     if (base !== undefined && query !== undefined && query.includes('=')) {
@@ -219,7 +217,11 @@ export function isNavMatch(pathname: string, item: NavItem): boolean {
         return true;
       }
     }
+    return false;
   }
+  const href = stripQuery(item.href);
+  if (pathname === href) return true;
+  if (pathname.startsWith(href + '/')) return true;
   return false;
 }
 

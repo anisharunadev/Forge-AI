@@ -8,3 +8,5 @@ out
 *.log
 playwright-report
 test-results
+# Vitest coverage output (regenerated on every run; uploaded as CI artifact)
+coverage/

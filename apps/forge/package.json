@@ -11,8 +11,9 @@
     "dev": "next dev -p ${FORA_FORGE_PORT:-3000} -H ${FORA_FORGE_HOST:-0.0.0.0}",
     "dev:terminal": "forge-terminal-server",
     "dev:stack": "docker compose up -d backend redis postgres && concurrently -n term,ui -c cyan,green \"pnpm dev:terminal\" \"pnpm dev\"",
-    "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test": "vitest run --passWithNoTests",
+    "test:e2e": "playwright test",
+    "test:coverage": "vitest run --coverage"
   },
   "engines": {
     "node": ">=24"

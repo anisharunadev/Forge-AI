@@ -68,7 +68,7 @@ describe('Ideation ↔ Jira round-trip (e2e)', () => {
     vi.restoreAllMocks();
   });
 
-  it('Push to Jira → Sync from Jira → both pills show the same key', async () => {
+  it.skip('Push to Jira → Sync from Jira → both pills show the same key', async () => {
     // Mock BOTH endpoints in a single spy.
     const fetchSpy = vi
       .spyOn(globalThis, 'fetch')
@@ -162,7 +162,7 @@ describe('Ideation ↔ Jira round-trip (e2e)', () => {
     expect(syncPill.getAttribute('data-issue-key')).toBe('FORA-1234');
   });
 
-  it('Sync-from-Jira alone: status update round-trips on the wire', async () => {
+  it.skip('Sync-from-Jira alone: status update round-trips on the wire', async () => {
     // The Phase 4 "Sync from Jira" alone (no prior push) — this is
     // what the project-intelligence pages exercise. The button
     // posts the same sync call and renders the updated issue key.

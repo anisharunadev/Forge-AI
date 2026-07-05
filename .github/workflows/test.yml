@@ -1,0 +1,74 @@
+name: tests
+
+on:
+  pull_request:
+    paths:
+      - 'apps/forge/**'
+      - 'scripts/check-test-location.sh'
+      - '.github/workflows/test.yml'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/forge/**'
+      - 'scripts/check-test-location.sh'
+      - '.github/workflows/test.yml'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+
+# Cancel in-flight runs for the same PR / branch push.
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  apps-forge:
+    name: apps/forge / test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Orphan test guard
+        # Fail the PR if any *.test.{ts,tsx} file landed outside apps/forge/tests/.
+        # Phase 1 contract: pnpm test picks up tests/**/*.test.{ts,tsx} ONLY.
+        run: bash scripts/check-test-location.sh
+
+      - name: Vitest (apps/forge)
+        run: pnpm --filter forge-dashboard test -- --coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-apps-forge
+          path: apps/forge/coverage/
+          retention-days: 14
+
+      - name: Upload Playwright report (e2e)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/forge/playwright-report/
+          retention-days: 14
+        continue-on-error: true
