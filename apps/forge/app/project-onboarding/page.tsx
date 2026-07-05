@@ -7,6 +7,10 @@ import {
   WizardShell,
 } from '@/components/onboarding/WizardShell';
 import { WizardNav } from '@/components/onboarding/WizardNav';
+import {
+  ProductTourOverlay,
+  TOUR_STOPS,
+} from '@/components/onboarding/ProductTourOverlay';
 import { StepWelcome } from '@/components/onboarding/StepWelcome';
 import { StepTenantSetup } from '@/components/onboarding/StepTenantSetup';
 import { StepConnectProviders } from '@/components/onboarding/StepConnectProviders';
@@ -54,6 +58,7 @@ import {
   useWizardSession,
 } from '@/lib/api/onboarding-hooks';
 import type { WizardStepId } from '@/lib/api/onboarding';
+import { useOnboardingTour } from '@/lib/onboarding/tour';
 
 const INITIAL_PROVIDERS: Record<ProviderId, ProviderConnection> =
   PROVIDER_CATALOG.reduce(
@@ -92,6 +97,11 @@ export default function ProjectOnboardingPage() {
   const stepData = useOnboardingStore((s) => s.stepData);
   const sessionId = useOnboardingStore((s) => s.sessionId);
   const setSessionId = useOnboardingStore((s) => s.setSessionId);
+
+  // M9 G-1 — guided product tour (Track B T-B3). The page owns
+  // the tour hook so the overlay survives step transitions; the
+  // StepWelcome "Take a quick tour" button just calls `open()`.
+  const tour = useOnboardingTour();
 
   // Backend session lifecycle (step-74). The page owns the wizard
   // session id (persisted via Zustand) and polls the backend every
@@ -461,6 +471,7 @@ export default function ProjectOnboardingPage() {
           onGetStarted={handleGetStarted}
           onUseSample={handleUseSample}
           onSkipSetup={handleSkipSetup}
+          onTakeTour={tour.open}
         />
       ) : currentStep === 2 ? (
         <StepTenantSetup
@@ -532,6 +543,20 @@ export default function ProjectOnboardingPage() {
           {provisionError}
         </p>
       ) : null}
+
+      {/* M9 G-1 — guided product tour (Track B T-B3). Mounts at
+       * the page root so it survives step transitions. The hook
+       * gates visibility via `isOpen`; `close`, `next`, `prev`,
+       * `skip` are all driven by buttons inside the overlay. */}
+      <ProductTourOverlay
+        isOpen={tour.isOpen}
+        stopIndex={tour.stopIndex}
+        stops={TOUR_STOPS}
+        onPrev={tour.prev}
+        onNext={tour.next}
+        onSkip={tour.skip}
+        onDone={tour.complete}
+      />
     </WizardShell>
   );
 }

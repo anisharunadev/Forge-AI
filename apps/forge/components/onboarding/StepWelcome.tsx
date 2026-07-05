@@ -10,6 +10,16 @@ export interface StepWelcomeProps {
   onGetStarted: () => void;
   onUseSample: () => void;
   onSkipSetup: () => void;
+  /**
+   * Fired when the user clicks "Take a quick tour". The parent
+   * (project-onboarding page) lifts the `useOnboardingTour` hook so
+   * the overlay can render at the page root. The Step itself does
+   * not own the tour state — it only signals that the user asked
+   * for it.
+   *
+   * Added in M9 T-B3.
+   */
+  onTakeTour?: () => void;
 }
 
 const FEATURES: ReadonlyArray<{
@@ -37,13 +47,15 @@ const FEATURES: ReadonlyArray<{
 /**
  * Step 1 — Welcome. Sets the tone for the wizard: a friendly hero
  * with three feature cards and a primary CTA. The "Take a quick
- * tour" affordance is intentionally a no-op stub — leaving room
- * for a guided product walkthrough to be wired in later.
+ * tour" affordance was a no-op stub in step-61 — wired up in M9
+ * (Track B T-B3) to call `props.onTakeTour` which the page wires
+ * to `useOnboardingTour.open()`.
  */
 export function StepWelcome({
   onGetStarted,
   onUseSample,
   onSkipSetup,
+  onTakeTour,
 }: StepWelcomeProps) {
   return (
     <section
@@ -189,13 +201,13 @@ export function StepWelcome({
             </span>
             <button
               type="button"
-              onClick={onSkipSetup}
+              onClick={onTakeTour ?? onSkipSetup}
               className={cn(
                 'inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors',
                 'hover:bg-[var(--hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]',
               )}
               style={{ color: 'var(--fg-secondary)' }}
-              data-testid="welcome-skip-setup"
+              data-testid="welcome-take-tour"
             >
               <PlayCircle className="h-3 w-3" aria-hidden="true" />
               Take a quick tour
