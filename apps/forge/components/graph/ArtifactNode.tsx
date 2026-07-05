@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Handle, Position, type Node, type NodeProps } from '@xyflow/react';
 
 import { cn } from '@/lib/utils';
-import { toneClasses, kgStateTone, agentStateGlyph } from '@/lib/design-system/status';
+import { toneClasses, kgStateTone, agentStateGlyph, canonicalTone } from '@/lib/design-system/status';
 import { kgNodeStates } from '@/lib/design-system/forge-color-tokens';
 import type { NodeArtifactData } from './types';
 
@@ -37,6 +37,7 @@ export function ArtifactNode({ data, selected }: ArtifactNodeProps) {
       data-node-kind="artifact"
       data-artifact-kind={data.artifactKind}
       data-status={data.status}
+      data-tone={canonicalTone[kgStateTone[data.status] ?? 'idle']}
       className={cn(
         'rounded-md border px-3 py-2 text-foreground shadow-elev-xs min-w-[160px]',
         tone.bg,

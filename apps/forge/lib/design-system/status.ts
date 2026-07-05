@@ -91,3 +91,35 @@ export const kgStateTone: Record<string, StatusTone> = {
   conflicted: 'warn',
   deployed: 'info',
 }
+
+/**
+ * Canonical tone names consumed by tests (AC-2) and `data-tone`
+ * attributes. Every `StatusTone` collapses to one of these four:
+ *
+ *   success   → emerald
+ *   warn      → amber
+ *   danger    → rose
+ *   info      → emerald   (info is a positive state in this product)
+ *   idle      → neutral
+ *   agent     → neutral   (identity channel, not a status)
+ *   execution → neutral   (in-flight — don't alarm the user)
+ *   review    → amber     (waiting attention)
+ *   cost      → amber     (cost / money-amber)
+ *
+ * The collapse keeps vitest cases + DOM observers in a 4-token
+ * vocabulary; consumers that want the full palette can still read
+ * `toneClasses` directly.
+ */
+export type CanonicalTone = 'emerald' | 'amber' | 'rose' | 'neutral';
+
+export const canonicalTone: Record<StatusTone, CanonicalTone> = {
+  success: 'emerald',
+  warn: 'amber',
+  danger: 'rose',
+  info: 'emerald',
+  idle: 'neutral',
+  agent: 'neutral',
+  execution: 'neutral',
+  review: 'amber',
+  cost: 'amber',
+};

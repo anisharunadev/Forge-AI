@@ -34,6 +34,7 @@ vi.mock('../../lib/api/client', async () => {
 
 import { api } from '../../lib/api/client';
 import {
+  useBacklinks,
   useCypherQuery,
   useKGEdges,
   useKGFreshness,
@@ -261,5 +262,49 @@ describe('useCypherQuery', () => {
       params: {},
     });
     expect(result.current.data).toEqual({ rows: [{ name: 'checkout-api' }] });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// useBacklinks (M8 T-B5)
+// ---------------------------------------------------------------------------
+
+describe('useBacklinks', () => {
+  it('is no-op when nodeId is null', () => {
+    mocked.get.mockResolvedValue({} as never);
+    const { wrapper } = makeWrapper();
+
+    const { result } = renderHook(() => useBacklinks(null), { wrapper });
+
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(mocked.get).not.toHaveBeenCalled();
+  });
+
+  it('returns an empty array when the node has no incoming edges', async () => {
+    mocked.get.mockResolvedValueOnce([]);
+    const { wrapper } = makeWrapper();
+
+    const { result } = renderHook(() => useBacklinks('node-leaf'), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual([]);
+    expect(mocked.get).toHaveBeenCalledWith('/kg/nodes/node-leaf/backlinks');
+  });
+
+  it('returns the populated list of source nodes for an in-degree > 0 target', async () => {
+    const populated = [
+      { ...FIXTURE_NODE, id: 'src-1', name: 'adr-tenant-isolation' },
+      { ...FIXTURE_NODE, id: 'src-2', name: 'adr-model-agnostic' },
+      { ...FIXTURE_NODE, id: 'src-3', name: 'service-orchestrator' },
+    ];
+    mocked.get.mockResolvedValueOnce(populated);
+    const { wrapper } = makeWrapper();
+
+    const { result } = renderHook(() => useBacklinks('node-target'), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toHaveLength(3);
+    expect(result.current.data?.map((n) => n.id)).toEqual(['src-1', 'src-2', 'src-3']);
+    expect(mocked.get).toHaveBeenCalledWith('/kg/nodes/node-target/backlinks');
   });
 });
