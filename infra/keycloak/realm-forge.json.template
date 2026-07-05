@@ -444,22 +444,22 @@
           "userSetupAllowed": false
         },
         {
-          "authenticatorFlow": true,
           "authenticator": "identity-provider-redirector",
+          "authenticatorFlow": false,
           "requirement": "ALTERNATIVE",
           "priority": 25,
           "userSetupAllowed": false
         },
         {
           "authenticatorFlow": true,
-          "authenticator": "forge-username-password-forms",
+          "flowAlias": "forge-username-password-forms",
           "requirement": "REQUIRED",
           "priority": 30,
           "userSetupAllowed": false
         },
         {
           "authenticatorFlow": true,
-          "authenticator": "forge-mfa-choice",
+          "flowAlias": "forge-mfa-choice",
           "requirement": "REQUIRED",
           "priority": 40,
           "userSetupAllowed": false
@@ -646,20 +646,6 @@
   ],
   "scopeMappings": [],
   "clientScopeMappings": {},
-  "components": {
-    "org.keycloak.protocol.oidc.OIDCProviderConfig": {
-      "id": "forge-oidc-config",
-      "providerId": "OIDCProviderConfig",
-      "subComponents": {},
-      "config": {
-        "idTokenSignatureAlgorithm": "RS256",
-        "accessTokenSignatureAlgorithm": "RS256",
-        "userInfoSignatureAlgorithm": "RS256",
-        "requestObjectSignatureAlgorithm": "RS256",
-        "authorizationEncryptionAlg": "RSA-OAEP",
-        "authorizationEncryptionEnc": "A256GCM"
-      }
-    }
-  },
+  "components": {},
   "verifiableCredentialsEnabled": false
 }

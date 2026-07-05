@@ -16,6 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import DbSession, Principal, require_permission, get_current_principal
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.lesson import LessonStatus
 from app.services.audit_service import audit_service
 from app.schemas.lesson import (

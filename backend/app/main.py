@@ -33,6 +33,46 @@ def _patched_get_typed_signature(call):
 
 _fdep_utils.get_typed_signature = _patched_get_typed_signature
 
+# FastAPI 0.116 added a new strictness check on APIRoute.__init__
+# (``is_body_allowed_for_status_code(status_code)``) that asserts the
+# route has no response model when status_code is body-less (204/205/304).
+# The auto-inference of ``response_model`` is driven by
+# ``get_typed_return_annotation`` which — unlike ``get_typed_signature``
+# — does NOT unwrap ``functools.wraps``-decorated handlers before reading
+# the return annotation. So an endpoint wrapped by ``@audit`` (whose
+# wrapper is annotated ``-> Any``) ends up with ``response_model=Any``
+# on a 204 route and trips the assertion. Mirror the same unwrap
+# ponytail for the return-annotation resolver.
+from fastapi import routing as _fapi_routing  # noqa: E402 — after the audit-safe sys-path tweak above
+
+_orig_get_typed_return_annotation = _fdep_utils.get_typed_return_annotation
+
+
+def _patched_get_typed_return_annotation(call):
+    """Unwrap ``functools.wraps`` decorators before reading the return annotation.
+
+    Without this, a handler wrapped by ``@audit`` reports ``-> Any`` (the wrapper's
+    explicit return annotation) and FastAPI 0.116 sets ``response_model=Any``,
+    which trips ``is_body_allowed_for_status_code`` on 204/205/304 routes.
+    After unwrapping we still need to coerce literal ``None``/``NoneType`` back
+    to ``None`` because a handler written as ``async def f(...) -> None`` would
+    otherwise be stored as ``response_model=<class 'NoneType'>`` and still trip
+    the same assertion.
+    """
+    res = _orig_get_typed_return_annotation(_inspect.unwrap(call))
+    if res is type(None):
+        return None
+    return res
+
+
+_fdep_utils.get_typed_return_annotation = _patched_get_typed_return_annotation
+# ``fastapi.routing`` already imported ``get_typed_return_annotation`` by
+# name into its own module namespace (``from .dependencies.utils import
+# get_typed_return_annotation``), so we have to swap the resolved function
+# there too — otherwise the routing layer keeps a stale reference and
+# the strictness check still trips on 204 endpoints.
+_fapi_routing.get_typed_return_annotation = _patched_get_typed_return_annotation
+
 from app import __version__
 from app.api.healthz import router as healthz_router
 from app.api.v1.forge_phase4 import mount_phase4_top_level

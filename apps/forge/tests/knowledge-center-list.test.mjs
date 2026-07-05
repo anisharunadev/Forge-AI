@@ -21,8 +21,8 @@
  *          Drift here is a v1.0 GA ship-blocker.
  */
 
-import { listKnowledgeFiles, getKnowledgeFile, listKnowledgeFilesByFolder, listKnowledgeFilesByType, V1_FILE_COUNT, KNOWLEDGE_FOLDERS, KNOWLEDGE_FILE_TYPES, workspaceRoot } from "../lib/knowledge/manifest.ts";
-import { canAccessKnowledgeCenter, isFirstTimeVisitor, knowledgeCenterPersonaLabel } from "../lib/knowledge/rbac.ts";
+import { listKnowledgeFiles, getKnowledgeFile, listKnowledgeFilesByFolder, listKnowledgeFilesByType, V1_FILE_COUNT, KNOWLEDGE_FOLDERS, KNOWLEDGE_FILE_TYPES, workspaceRoot } from "../../lib/knowledge/manifest.ts";
+import { canAccessKnowledgeCenter, isFirstTimeVisitor, knowledgeCenterPersonaLabel } from "../../lib/knowledge/rbac.ts";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 

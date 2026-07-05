@@ -475,7 +475,6 @@ _RUN_SCOPED_EVENTS: tuple[EventType, ...] = (
 @router.get("/runs/{run_id}/events")
 async def stream_run_events(
     run_id: UUID,
-    request: Request,
     principal: Annotated[AuthenticatedPrincipal | None, Depends(get_current_principal)] = None,
     token: str | None = Query(default=None, description="SSE auth fallback (EventSource can't set headers)"),
     db: DbSession = None,  # type: ignore[assignment]

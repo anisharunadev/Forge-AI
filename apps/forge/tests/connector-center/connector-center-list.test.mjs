@@ -17,12 +17,12 @@
  *   AC6 — Sort order: Tier-1 first, then displayName asc.
  */
 
-import { listConnectors, pmPersonaSubset, getConnector, TIER_1_CONNECTORS } from "../lib/connectors/mock-data.ts";
+import { listConnectors, pmPersonaSubset, getConnector, TIER_1_CONNECTORS } from "../../lib/connectors/mock-data.ts";
 import {
   canAccessConnectorCenter,
   escalationPersona,
   escalationPersonaLabel,
-} from "../lib/connectors/rbac.ts";
+} from "../../lib/connectors/rbac.ts";
 
 const FORBIDDEN_RAW_FIELDS = [
   "secret_value",

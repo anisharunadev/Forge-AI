@@ -23,7 +23,7 @@
  *          expected memory / customer / project / glossary rows.
  */
 
-import { listKnowledgeFiles } from "../lib/knowledge/manifest.ts";
+import { listKnowledgeFiles } from "../../lib/knowledge/manifest.ts";
 import {
   listStageInjectionMaps,
   getStageInjectionMap,
@@ -33,7 +33,7 @@ import {
   STAGE_COUNT,
   GLOSSARY_PATH,
   STAGE_LABELS,
-} from "../lib/knowledge/injection-model.ts";
+} from "../../lib/knowledge/injection-model.ts";
 
 function assert(cond, msg) {
   if (!cond) {

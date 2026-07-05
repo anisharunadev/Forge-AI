@@ -80,7 +80,7 @@ services:
       - forge-net
 
   keycloak:
-    image: quay.io/keycloak/keycloak:26.0.0
+    image: quay.io/keycloak/keycloak:26.0.1
     container_name: forge-keycloak
     restart: unless-stopped
     # start-dev + --import-realm boots with the forge realm preloaded.
@@ -100,10 +100,27 @@ services:
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
-      # Confidential client secret read by forge-realm.json via the
-      # ${KEYCLOAK_BACKEND_SECRET} placeholder. Keycloak resolves the
+      # Confidential client secret read by realm-forge.json via the
+      # ${FORGE_BACKEND_CLIENT_SECRET} placeholder. Keycloak resolves the
       # env var when the realm is imported on first boot.
+      FORGE_BACKEND_CLIENT_SECRET: "${FORGE_BACKEND_CLIENT_SECRET:-${KEYCLOAK_BACKEND_SECRET:-forge-backend-dev-secret-change-in-prod}}"
       KEYCLOAK_BACKEND_SECRET: "${KEYCLOAK_BACKEND_SECRET:-forge-backend-dev-secret-change-in-prod}"
+      # Optional dev IdP placeholders used by infra/keycloak/realm-forge.json.
+      # The IdPs are disabled by default, but Keycloak still validates some
+      # provider config fields during import, so unresolved ${...} strings can
+      # fail startup before the server becomes healthy.
+      FORGE_UI_URL: "${FORGE_UI_URL:-http://localhost:3000}"
+      GITHUB_CLIENT_ID: "${GITHUB_CLIENT_ID:-disabled}"
+      GITHUB_CLIENT_SECRET: "${GITHUB_CLIENT_SECRET:-disabled}"
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-disabled}"
+      GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET:-disabled}"
+      OKTA_ENTITY_ID: "${OKTA_ENTITY_ID:-http://localhost:8080/realms/forge}"
+      OKTA_SSO_URL: "${OKTA_SSO_URL:-http://localhost:8080/realms/forge/broker/okta/endpoint}"
+      OKTA_SLO_URL: "${OKTA_SLO_URL:-http://localhost:8080/realms/forge/broker/okta/endpoint}"
+      AZURE_AD_CLIENT_ID: "${AZURE_AD_CLIENT_ID:-disabled}"
+      AZURE_AD_CLIENT_SECRET: "${AZURE_AD_CLIENT_SECRET:-disabled}"
+      AZURE_AD_TENANT_ID: "${AZURE_AD_TENANT_ID:-common}"
+      FORGE_SAML_ACS_URL: "${FORGE_SAML_ACS_URL:-http://localhost:8000/api/v1/auth/saml/acs}"
       KC_HEALTH_ENABLED: "true"
     ports:
       - "${KEYCLOAK_PORT:-8080}:8080"

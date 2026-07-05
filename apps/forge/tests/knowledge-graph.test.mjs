@@ -27,7 +27,7 @@ import {
   knowledgeEdgeCount,
   KNOWLEDGE_FILE_NODE_COUNT,
   KNOWLEDGE_STAGE_NODE_COUNT,
-} from "../lib/knowledge/graph-manifest.ts";
+} from "../../lib/knowledge/graph-manifest.ts";
 
 function assert(cond, msg) {
   if (!cond) {
