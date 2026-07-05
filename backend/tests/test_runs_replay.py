@@ -12,10 +12,10 @@ described in the bonus bullet of the spec.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import uuid
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Service-level test (preferred path; matches test_explainability.py's
@@ -54,10 +54,8 @@ async def test_replay_run_creates_new_run_with_same_goal_and_project_id() -> Non
     task = manager._tasks.get(source.run_id)
     if task is not None and not task.done():
         task.cancel()
-        try:
+        with contextlib.suppress(asyncio.CancelledError, Exception):
             await task
-        except (asyncio.CancelledError, Exception):
-            pass
 
     # Mark the source as DONE so it's a valid replay source.
     from app.agents.sdlc_state import SDLCPhase
@@ -131,17 +129,13 @@ async def test_replay_run_returns_409_when_source_still_active() -> None:
     task = manager._tasks.get(source.run_id)
     if task is not None and not task.done():
         task.cancel()
-        try:
+        with contextlib.suppress(asyncio.CancelledError, Exception):
             await task
-        except (asyncio.CancelledError, Exception):
-            pass
     new_task = manager._tasks.get(new_state.run_id)
     if new_task is not None and not new_task.done():
         new_task.cancel()
-        try:
+        with contextlib.suppress(asyncio.CancelledError, Exception):
             await new_task
-        except (asyncio.CancelledError, Exception):
-            pass
 
 
 __all__ = [

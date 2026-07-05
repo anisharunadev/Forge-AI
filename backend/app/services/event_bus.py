@@ -18,9 +18,10 @@ import enum
 import json
 import uuid
 from collections import defaultdict
+from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Awaitable, Callable, Iterable
+from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
 
 try:
@@ -174,7 +175,7 @@ class Event:
     payload: dict[str, Any]
     actor_id: UUID | str | None = None
     event_id: UUID = field(default_factory=uuid.uuid4)
-    occurred_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    occurred_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)

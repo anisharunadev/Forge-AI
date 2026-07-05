@@ -159,9 +159,11 @@ async def approval_timeout_scan() -> None:
         # ``approval.stale`` topic subscriber update without a
         # full reload.
         try:
-            from uuid import UUID as _UUID
+            from uuid import UUID as _UUID  # noqa: PLC0415
 
-            from app.services.sdlc_run_manager import get_default_manager
+            from app.services.sdlc_run_manager import (  # noqa: PLC0415
+                get_default_manager,
+            )
 
             manager = get_default_manager()
             try:

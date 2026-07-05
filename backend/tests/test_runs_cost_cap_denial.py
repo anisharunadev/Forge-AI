@@ -24,7 +24,6 @@ import pytest
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
-
 # ---------------------------------------------------------------------------
 # Wire admission gate → HTTP 403 surface (mirrors the conversion the
 # spec asks the API to perform).

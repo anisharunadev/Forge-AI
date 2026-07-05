@@ -23,9 +23,9 @@ import asyncio
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Any, AsyncIterator
+from typing import Any
 from uuid import UUID, uuid4
 
 from langgraph.checkpoint.base import BaseCheckpointSaver
@@ -34,12 +34,12 @@ from app.agents.approval_gate import ApprovalGateNode
 from app.agents.cost_tracking import SDLCPhaseCostTracker
 from app.agents.sdlc_agent import build_sdlc_graph, run_sdlc
 from app.agents.sdlc_state import (
-    ApprovalRequest,
     ApprovalResponse,
     SDLCPhase,
     SDLCState,
 )
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ class CostSummary:
 @dataclass
 class _Subscriber:
     queue: asyncio.Queue[SDLCState]
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 class RunStateBroker:
