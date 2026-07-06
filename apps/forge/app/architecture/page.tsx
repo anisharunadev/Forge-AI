@@ -1045,8 +1045,8 @@ function ADRMasterDetail({
           // because resolveSelected returns undefined only in that case.
           <EmptyState
             illustration={<FileText size={40} strokeWidth={1.5} />}
-            title="No ADRs yet"
-            description="ADRs are produced by the architecture pipeline. Create one to get started."
+            title="No architecture decisions recorded"
+            description="Capture your first decision so the team can review and approve it before code lands."
             primaryAction={{
               label: 'Create ADR',
               onClick: () => toast.info('Open ADR template dialog'),
@@ -1561,8 +1561,8 @@ function APIContractMasterDetail({
         ) : (
           <EmptyState
             illustration={<FileCode2 size={40} strokeWidth={1.5} />}
-            title="No API contracts yet"
-            description="API contracts are produced by the architecture pipeline. Sync one from a repo to get started."
+            title="No contracts published yet"
+            description="Sync a service contract so dependent teams can build against the agreed interface."
             primaryAction={{
               label: 'Sync from repo',
               onClick: () => toast.info('Open repo picker'),
@@ -1997,8 +1997,8 @@ function TaskBreakdownMasterDetail({
           ) : (
             <EmptyState
               illustration={<ListTree size={40} strokeWidth={1.5} />}
-              title="No task breakdowns yet"
-              description="Task breakdowns decompose epics into stories and subtasks."
+              title="No work broken down yet"
+              description="Turn an approved decision into the stories engineers will pick up next sprint."
             />
           )}
         </section>
