@@ -1,0 +1,2830 @@
+{
+  "files_total": 274,
+  "coverage_pct_explicit_or_audit": 40.5,
+  "distribution": {
+    "audit-decorator": 110,
+    "structlog-only": 124,
+    "uncovered": 39,
+    "explicit-span": 1
+  },
+  "files": [
+    {
+      "path": "backend/app/services/day_one_bootstrap.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 1148,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/services/tenants.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 121,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/forge_models.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 431,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/cost_ledger.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 346,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/forge_config.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 68,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/audit_service.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 155,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/policies_service.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 702,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/forge_chat.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 624,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/phase4_identity.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 579,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/forge_chat_errors.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 146,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/litellm_admin.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 309,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/seed_service.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 408,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/skills_service.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 604,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/copilot_rate_limit.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 155,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/runtime_management.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 101,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/artifact_registry.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 298,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/llm_degradation_queue.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 167,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/rbac_v2_service.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 873,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/connector_states.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 134,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/steering_rules.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 945,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/services/connector_manager.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 502,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/remediation_router.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 318,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/copilot_service.py",
+      "domain": "general",
+      "has_explicit_span": true,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 1166,
+      "notes": [],
+      "covered": "explicit-span"
+    },
+    {
+      "path": "backend/app/services/tenant_directory.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 66,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/tools_service.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 394,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/event_bus.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 334,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/agent_registry.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 163,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/policy_engine.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 204,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/explainability.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 534,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/async_service.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 318,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/merge_gate.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 611,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/services/rbac.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 177,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/forge_key_broker.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 707,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/phase4_sessions.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 401,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/tool_bundles.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 327,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/guardrails_service.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 603,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/mcp_registry.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 374,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/model_provider_registry.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 168,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/team_sync.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 64,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/marketplace.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 266,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/sdlc_run_manager.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 476,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/copilot_budget.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 126,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/prompt_service.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 692,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/hook_orchestrator.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 266,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/feature_flag_catalog.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 118,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/phase4_providers.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 249,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/phase4_cache.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 313,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/rag_service.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 734,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/freshness_ledger.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 121,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/observability_service.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 848,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/workflow_budget.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 624,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/services/phase4_ops.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 594,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/script_sandbox.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 478,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/users.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 145,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/agent_assignment.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 130,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/dashboard.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 1032,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/forge_spend.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 753,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/gdpr_cascade.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 194,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/workflow_executor.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 642,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/credential_vault.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 184,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/lesson_service.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 368,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/agent_runtime.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 200,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/workflow_service.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 374,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/mcp_service.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 534,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/stories.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 451,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/ttfs_service.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 189,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/admin_service.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 168,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/forge_budget_guard.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 360,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/__init__.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 2,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/refactor_agent.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 826,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/services/litellm_client.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 1184,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/_litellm_tools.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 123,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/aws_transform_client.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 277,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/knowledge_graph.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 710,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/forge_commands.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 570,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/connector_ingestion/bus_bridge.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 126,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/connector_ingestion/__init__.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 8,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/connector_ingestion/jira_consumer.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 233,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/connector_ingestion/jira_commenter.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 145,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/litellm_pricing/__init__.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 141,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/scheduler/service.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 209,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/scheduler/__init__.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 15,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/observability/cost_aggregator.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 117,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/observability/metrics_query.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 25,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/observability/slo_alerts.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 220,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/observability/alerts.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 293,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/project_intelligence/comm_ingestion.py",
+      "domain": "project_intelligence",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 192,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/project_intelligence/doc_ingestion.py",
+      "domain": "project_intelligence",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 159,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/project_intelligence/asset_ingestion.py",
+      "domain": "project_intelligence",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 195,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/project_intelligence/architecture_discovery.py",
+      "domain": "project_intelligence",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 505,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/project_intelligence/catalogs.py",
+      "domain": "project_intelligence",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 414,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/project_intelligence/qa.py",
+      "domain": "project_intelligence",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 344,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/project_intelligence/impact.py",
+      "domain": "project_intelligence",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 186,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/project_intelligence/incremental_sync.py",
+      "domain": "project_intelligence",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 298,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/project_intelligence/__init__.py",
+      "domain": "project_intelligence",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 6,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/project_intelligence/snapshots.py",
+      "domain": "project_intelligence",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 237,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/project_intelligence/repo_ingestion.py",
+      "domain": "project_intelligence",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 799,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/project_onboarding/wizard.py",
+      "domain": "project_onboarding",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 260,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/project_onboarding/sample_data.py",
+      "domain": "project_onboarding",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 242,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/project_onboarding/__init__.py",
+      "domain": "project_onboarding",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 2,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/ideation/impact_graph.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 372,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/ideation/agent_selector.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 271,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/ideation/arch_preview.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 412,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/ideation/roadmap_generator.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 521,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/ideation/idea_analysis.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 428,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/ideation/approval_queue.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 288,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/ideation/jira_status_subscribers.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 348,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/ideation/push_to_delivery.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 471,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/ideation/idea_enhance.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 150,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/ideation/scoring.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 432,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/ideation/realtime_workflow.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 661,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/ideation/output_bundle.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 360,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/ideation/idea_intake.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 477,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/ideation/__init__.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 131,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/ideation/prd_generator.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 455,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/ideation/kg_integration.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 277,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/memory/persona_store.py",
+      "domain": "memory",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 353,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/memory/__init__.py",
+      "domain": "memory",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 8,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/terminal/broadcast.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 363,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/terminal/command_integration.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 291,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/terminal/cost_tracker.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 445,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/terminal/exporter.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 471,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/terminal/knowledge_context.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 334,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/terminal/cast_encoder.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 167,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/architecture/task_breakdown.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 277,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/architecture/context_aware.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 433,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/architecture/acceptance_criteria.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 447,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/architecture/api_contract_generator.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 289,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/architecture/approval_workflow.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 463,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/architecture/risk_register.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 509,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/architecture/versioning.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 71,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/architecture/traceability.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 47,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/architecture/security_report.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 386,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/architecture/__init__.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 1,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/architecture/adr_generator.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 276,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/architecture/standards_attestation.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 533,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/connectors/oauth_state.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 186,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/connectors/lifecycle.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 377,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/connectors/jira_push.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 206,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/connectors/__init__.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 2,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/scheduler/jobs/ideation_ingest.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 198,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/scheduler/jobs/approval_timeout_scan.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 226,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/scheduler/jobs/cost_aggregate.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 27,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/scheduler/jobs/lessons_digest.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 60,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/scheduler/jobs/forge_spend_reconcile.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 155,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/scheduler/jobs/litellm_reconcile.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 206,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/scheduler/jobs/forge_key_rotate.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 126,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/scheduler/jobs/__init__.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 6,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/scheduler/jobs/slo_evaluator.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 46,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/scheduler/jobs/memory_consolidate.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 44,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/scheduler/jobs/litellm_anomaly_check.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 173,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/ideation/sources/synthesizer.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 284,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/ideation/sources/confluence_pull.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 164,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/ideation/sources/slack_pull.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 105,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/services/ideation/sources/__init__.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 14,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/services/ideation/sources/zendesk_pull.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 71,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/api/v1/connector_activity.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 67,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/mcp.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 272,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/tenants.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 461,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/terminal_costs.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 264,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/agent_config.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 174,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/forge_models.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 144,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/connectors.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 162,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/approvals.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 135,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/forge_chat.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 237,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/terminal_broadcast.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 122,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/webhooks_full.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 154,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/forge_prompts.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 307,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/onboarding.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 403,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/auth_tokens.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 193,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/runtime_management.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 114,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/env_vars.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 227,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/runs.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 546,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/admin.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 53,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/steering_rules.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 131,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/agent_assignments.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 80,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/forge_health.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 174,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/api/v1/admin_llm_gateway.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 568,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/forge_keys.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 306,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/connector_events.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 33,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/model_providers.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 297,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/auth.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 860,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/commands.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 293,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/terminal_commands.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 170,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/hooks.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 153,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/webhooks.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 236,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/_package_wiring.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 221,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/api/v1/terminal_context.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 107,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/workflows.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 637,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/tools.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 148,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/seeds.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 275,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/rbac.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 83,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/tool_bundles.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 107,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/templates.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 61,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/copilot.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 431,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/analytics_usage.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 114,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/api/v1/connector_credentials.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 139,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/marketplace.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 104,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/agent_runtimes.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 132,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/audit.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 207,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/qa.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 112,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/roles.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 99,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/forge_async.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 380,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/agents.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 147,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/router.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 236,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/api/v1/lessons.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 165,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/feature_flags.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 179,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/system.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 70,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/api/v1/artifacts.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 85,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/forge_observability.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 397,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/standards.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 198,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/forge_rag.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 326,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/projects.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 332,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/terminal_sessions.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 80,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/users.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 123,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/terminal_export.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 141,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/dashboard.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 326,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/forge_spend.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 191,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/connector_lifecycle.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 201,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/observability.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 50,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/members.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 269,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/scheduler.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 152,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/stories.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 402,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/policies.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 419,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/guardrails.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 365,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/validation_reports.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 327,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/governance_core.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 492,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/skills.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 218,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/repos.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 267,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/__init__.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 2,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/api/v1/persona_memory.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 108,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/connector_oauth.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 217,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/forge_rbac.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 810,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/health.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 77,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/api/v1/knowledge_graph.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 272,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/governance_violations.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 182,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/auth_sessions.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 159,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/forge_phase4/media.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 235,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/forge_phase4/identity.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 244,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/forge_phase4/ops.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 335,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/forge_phase4/providers.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 96,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/forge_phase4/sessions.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 215,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/forge_phase4/cache.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 138,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/forge_phase4/__init__.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 90,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/api/v1/forge_phase4/passthrough.py",
+      "domain": "general",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": false,
+      "line_count": 297,
+      "notes": [],
+      "covered": "structlog-only"
+    },
+    {
+      "path": "backend/app/api/v1/ideation/market_signals.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 202,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/ideation/approvals.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 170,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/ideation/ingest_status.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 42,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/api/v1/ideation/output_bundles.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 107,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/ideation/destinations.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 110,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/ideation/workflows.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 153,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/ideation/roadmaps.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 219,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/ideation/kg_graph.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 120,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/ideation/impact.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 76,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/ideation/scoring.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 140,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/ideation/enhance.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 57,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/ideation/push.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 395,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/ideation/ideas.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 246,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/ideation/sources.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 293,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/ideation/customer_voice.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": true,
+      "has_audit_decorator": true,
+      "line_count": 206,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/ideation/__init__.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 47,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/api/v1/ideation/prds.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 156,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/ideation/arch_previews.py",
+      "domain": "ideation",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 104,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/architecture/approvals.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 165,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/architecture/acceptance.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 174,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/architecture/versions.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 75,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/architecture/contracts.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 120,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/architecture/adrs.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 121,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/architecture/task_breakdowns.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 125,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/architecture/standards.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 129,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/architecture/traceability.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 52,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    },
+    {
+      "path": "backend/app/api/v1/architecture/security_reports.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 177,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/architecture/risk_registers.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": true,
+      "line_count": 186,
+      "notes": [],
+      "covered": "audit-decorator"
+    },
+    {
+      "path": "backend/app/api/v1/architecture/__init__.py",
+      "domain": "architecture",
+      "has_explicit_span": false,
+      "has_structlog_event": false,
+      "has_audit_decorator": false,
+      "line_count": 30,
+      "notes": [
+        "no observability signal at all"
+      ],
+      "covered": "uncovered"
+    }
+  ]
+}

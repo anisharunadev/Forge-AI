@@ -90,6 +90,7 @@ from app.core.logging import configure_logging, get_logger
 from app.core.middleware import RequestIdMiddleware, TenantContextMiddleware
 from app.core.phase4_errors import register_phase4_exception_handlers
 from app.core.telemetry import init_telemetry
+from app.core.error_reporting import error_reporter
 from app.integrations.litellm.health_monitor import health_monitor
 from app.integrations.litellm.litellm_base_client import LiteLLMBaseClient
 from app.services import lesson_service
@@ -285,6 +286,10 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """
     configure_logging(level=settings.log_level)
     init_telemetry()
+    # M15-5 — production hardening (Rec #9). Wire Sentry when a DSN is
+    # set; the shim is a no-op otherwise (dev/test installs don't need
+    # the SDK on the wheel).
+    error_reporter.init()
     await bus.start()
     lesson_service.register(bus)
     # step-77 P0 — start the LiteLLM availability monitor (it was
