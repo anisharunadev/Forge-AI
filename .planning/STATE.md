@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 1
 current_phase_name: Substrate Lock
 status: in_progress
-stopped_at: Plan 01-01 complete (PITFALL-1 approval-phase decorator + CI gate)
-last_updated: "2026-07-07T00:45:00.000Z"
+stopped_at: Plan 01-04 complete (PITFALL-6 approval-expiry scheduler + stale-approval badge)
+last_updated: "2026-07-07T01:16:00.000Z"
 last_activity: 2026-07-07
-last_activity_desc: "Plan 01-01 complete: PITFALL-1 closure via @require_approval_phase decorator + frozen ApprovalEnvelope + ApprovalRequiredError; ci-hygiene-grep.yml extends CI with Step 1 / Rule 1 (provider SDK gate), Step 2 / Rule 2 (SDLCState typed-keys), Step 3 / OPS-01 (approval decorator coverage across 338 v1 endpoints, 30 deferred retrofit documented)."
+last_activity_desc: "Plan 01-04 complete: PITFALL-6 closure via 60-second APPROVAL_EXPIRED scheduler wired into FastAPI lifespan + per-phase/per-tenant approval_timeout_overrides with [1,168] validator + pre-existing M6-G5 StaleApprovalBadge already rendered in RunCenterPage.tsx (drawer). Pre-existing import bug in litellm_anomaly_check.py fixed as Rule 3 blocker. 6/6 pytest cases pass."
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 16
-  completed_plans: 7
+  completed_plans: 8
   percent: 25
 ---
 
@@ -29,12 +29,12 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Current Position
 
-Phase: 1 of 5 (Substrate Lock) — **3/9 plans done** (01-01 PITFALL-1 approval decorator + CI gate, 01-03 PITFALL-5 audit/OTel, 01-09 ADR-009/010/011); 6 plans remaining
+Phase: 1 of 5 (Substrate Lock) — **4/9 plans done** (01-01 PITFALL-1 approval decorator + CI gate, 01-03 PITFALL-5 audit/OTel, 01-04 PITFALL-6 approval-expiry scheduler, 01-09 ADR-009/010/011); 5 plans remaining
 Phase 0 (Pre-Roadmap Hygiene): 4 of 4 plans complete (100%)
 Phase 0.5 (UI Foundation): 5 of 5 plans complete (100%)
 Integration Step: **55 of 13 (Phase 3 — Connectors) — wiring in progress**
-Status: Phase 1 (Substrate Lock) in progress; PITFALL-5 closed; 01-04 through 01-08 still to execute
-Last activity: 2026-07-07 — Plan 01-03 complete: BasePhaseNode.mutate() writes audit by default; configure_otel() + is_otel_configured() canonical OTel accessor; otel-collector sidecar added; /healthz exposes both probes (PITFALL-5 closure).
+Status: Phase 1 (Substrate Lock) in progress; PITFALL-6 closed; 01-05, 01-06, 01-07, 01-08 still to execute
+Last activity: 2026-07-07 — Plan 01-04 complete: 60-second APPROVAL_EXPIRED scheduler wired into FastAPI lifespan (was never started before); per-phase/per-tenant approval_timeout_overrides with [1,168] validator; pre-existing M6-G5 StaleApprovalBadge already rendered in RunCenterPage drawer; 6/6 pytest cases pass.
 
 Progress: [██████████] 25% overall; Phase 0 closed 4/4; Phase 1 3/9 done (01-01 PITFALL-1 approval-decorator + CI, 01-03 PITFALL-5 audit/OTel, 01-09 ADR-009/010/011); Step 55 (Connector Center → real backend) 4/9 zones done
 
