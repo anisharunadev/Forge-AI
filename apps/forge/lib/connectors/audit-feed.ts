@@ -33,6 +33,12 @@ export interface ConnectorAuditFeed {
   readonly connectorId: string;
   readonly entries: ReadonlyArray<AuditEntry>;
   readonly total: number;
+  /**
+   * Sprint 3 (Crash #2): true when the feed was synthesized client-side
+   * because the live TenantScopedAuditFetcher is unreachable. The detail
+   * panel renders an OfflineBanner when this is set.
+   */
+  readonly isMockFallback: boolean;
 }
 
 /**
@@ -50,7 +56,7 @@ export async function getConnectorAuditFeed(
   for (let i = 0; i < bounded; i += 1) {
     entries.push(synthEntry(connectorId, i));
   }
-  return { connectorId, entries, total: bounded };
+  return { connectorId, entries, total: bounded, isMockFallback: true };
 }
 
 /**

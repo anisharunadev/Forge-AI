@@ -32,6 +32,7 @@ import {
   type ConnectorCenterPersona,
 } from "@/lib/connectors/rbac";
 import { ConnectorDetailPanel } from "@/components/ConnectorDetailPanel";
+import { AuditFeedFallbackBanner } from "@/components/connector-center/AuditFeedFallbackBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -125,6 +126,8 @@ export default async function ConnectorDetailPage({ params }: PageProps) {
           ← Connector Center
         </a>
       </nav>
+
+      {feed.isMockFallback ? <AuditFeedFallbackBanner /> : null}
 
       <ConnectorDetailPanel
         connector={connector}
