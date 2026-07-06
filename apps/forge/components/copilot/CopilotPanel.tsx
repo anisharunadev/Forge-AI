@@ -56,10 +56,11 @@ import { ComposerInput } from './ComposerInput';
 import { CopilotHeader } from './CopilotHeader';
 import { DraftReviewModal } from './DraftReviewModal';
 import { EmptyState } from './EmptyState';
-import { ErrorBanner } from './ErrorBanner';
+import { ErrorBanner, GuardrailDenialToast, RateLimitToast } from './ErrorBanner';
 import { HistoryPanel } from './HistoryPanel';
 import { MessageList } from './MessageList';
 import { PermissionDeniedBanner } from './PermissionDeniedBanner';
+import { useCopilotToasts } from '@/hooks/use-copilot-toasts';
 
 export interface CopilotPanelProps {
   /** `"panel"` (default) renders inside a right-side sheet.
@@ -125,6 +126,11 @@ export function CopilotPanel({ mode = 'panel', backHref = '/dashboard' }: Copilo
   // message list re-renders and suggested-action re-dispatches.
   const [draftAction, setDraftAction] =
     React.useState<CopilotSuggestedAction | null>(null);
+  // M10 Track B — rate-limit + guardrail-denial toast queue. The
+  // composer dispatches window events; we subscribe here and render
+  // them inline so the user gets a structured action surface for
+  // these specialized failure modes (not the generic error banner).
+  const { toasts, dismissRateLimit, dismissGuardrail } = useCopilotToasts();
   const [commandAction, setCommandAction] =
     React.useState<CopilotSuggestedAction | null>(null);
   const [draftOpen, setDraftOpen] = React.useState(false);
@@ -204,6 +210,20 @@ export function CopilotPanel({ mode = 'panel', backHref = '/dashboard' }: Copilo
     <>
       {errorBanner}
       {permissionDenied ? <PermissionDeniedBanner /> : null}
+      {toasts.rateLimit ? (
+        <RateLimitToast
+          key={toasts.rateLimit.key}
+          retryAfter={toasts.rateLimit.retryAfter}
+          onDismiss={dismissRateLimit}
+        />
+      ) : null}
+      {toasts.guardrail ? (
+        <GuardrailDenialToast
+          key={toasts.guardrail.key}
+          inline
+          onDismiss={dismissGuardrail}
+        />
+      ) : null}
       {loadingStrip}
 
       <div className="flex flex-1 flex-col overflow-hidden">
