@@ -9,8 +9,10 @@
 
 ## The mission
 
-> **Forge is NOT an AI agent.**
-> **Forge is the operating system that orchestrates agents, knowledge, governance, and delivery workflows.**
+> **Forge is the AI-native software delivery platform:** take a software
+> idea from requirement to production through governed AI workflows.
+
+> Forge is not an AI agent. Forge is the operating system that orchestrates agents, knowledge, governance, and delivery workflows.
 
 Forge AI Agent OS is the **enterprise SDLC Agent Operating System**. It ingests a tenant's repositories, documentation, and ticketing systems into a project intelligence knowledge graph; provides delivery accelerators (Ideation, Architecture, Development, Security, Testing, Deployment) that produce typed artifacts; and governs every action through approval gates, audit, cost attribution, and observability.
 
@@ -168,6 +170,10 @@ Each phase:
 ---
 
 ## The 12 Centers (top-level navigation)
+
+> **These are capabilities, not the product.** They are surfaced in the UI
+> only when the golden workflow requires them.
+> See [positioning.md](./positioning.md) for the canonical framing.
 
 Forge organizes capabilities into **12 Centers** that an operator visits:
 

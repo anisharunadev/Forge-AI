@@ -49,8 +49,9 @@ export default function WelcomePage() {
             Welcome to Forge
           </h1>
           <p className="max-w-2xl text-lg text-muted-foreground">
-            The operating system that orchestrates agents, knowledge,
-            governance, and delivery workflows.
+            Take a software idea from requirement to production through
+            governed AI workflows. The operating system that orchestrates
+            agents, knowledge, governance, and delivery workflows.
           </p>
         </header>
 
