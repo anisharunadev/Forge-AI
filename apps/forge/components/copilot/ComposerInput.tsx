@@ -58,6 +58,11 @@ import { usePathname } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { useSendMessage } from '@/hooks/use-copilot-mutations';
+import {
+  COPILOT_ERROR_CODES,
+  ForgeApiError,
+} from '@/lib/forge-api';
+import { dispatchCopilotRateLimit } from '@/hooks/use-copilot-toasts';
 import { useCopilotStore } from '@/lib/store/copilot';
 import { cn } from '@/lib/utils';
 
@@ -212,8 +217,32 @@ export function ComposerInput() {
           clearDraft();
         },
         onError: (err) => {
-          const status = (err as { status?: number } | null)?.status;
-          if (status === 403) {
+          // M10 Track B — structured failure shapes. We dispatch
+          // toast events instead of (or in addition to) the inline
+          // `lastError` path so the panel renders a tailored toast
+          // rather than a generic "Send failed" line.
+          const forgeErr = err as ForgeApiError | null;
+          const status = forgeErr?.status;
+          const errorCode = forgeErr?.errorCode ?? null;
+          const isRateLimit =
+            status === 429 ||
+            errorCode === COPILOT_ERROR_CODES.RATE_LIMIT_EXCEEDED;
+
+          if (isRateLimit) {
+            // Retry-After header is the authoritative source per
+            // spec (M10-G1). `Headers.get` is already
+            // case-insensitive, but we read both casings for
+            // resilience against intermediaries that re-case.
+            const headers = forgeErr?.headers ?? null;
+            const raw =
+              headers?.get('Retry-After') ?? headers?.get('retry-after');
+            const retryAfter = Number(raw ?? '0');
+            const safeRetry = Number.isFinite(retryAfter) && retryAfter > 0
+              ? retryAfter
+              : 60;
+            dispatchCopilotRateLimit(safeRetry);
+            setError(null);
+          } else if (status === 403) {
             setPermissionDenied(true);
           } else {
             setError(err instanceof Error ? err.message : 'Send failed');
