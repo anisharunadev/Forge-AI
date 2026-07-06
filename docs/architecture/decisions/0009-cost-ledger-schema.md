@@ -1,7 +1,7 @@
 # ADR-009: Cost Ledger Schema and Cumulative Cap
 
 - Status: Accepted
-- Date: 2026-07-05
+- Date: 2026-06-26
 - Deciders: Forge Architecture Working Group
 
 ## Context and Problem Statement
