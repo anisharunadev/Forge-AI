@@ -1,20 +1,14 @@
 /**
  * Forge AI primary navigation — single source of truth.
  *
- * Extracted from the inline `NAV` array that used to live in
- * `app/layout.tsx`. Lives in its own module so that:
- *   - the server-rendered layout can stay a Server Component;
- *   - the sidebar, mobile drawer, and command palette all share one
- *     ordered list and one grouping rule;
- *   - a center can `import { NAV } from '@/components/shell/nav-config'`
- *     to render its own secondary nav without re-declaring types.
+ * Pure data + helpers. No JSX, no React imports, no 'use client'.
+ * Server-importable so the layout stays a Server Component.
  *
- * This file is pure data + helpers. No JSX, no React imports, no
- * 'use client' directive. It must stay server-importable.
- *
- * Rule (from .claude/CLAUDE.md UI First Principle): every shipped
- * capability must be visible. If a new page lands, add a NAV entry
- * here so it is reachable from the shell + the command palette.
+ * Sprint 1.1 (user feedback, see `app/page.tsx`): the OUTCOMES
+ * sidebar group was removed because it duplicated existing entries
+ * (Start a new project → /project-onboarding, Capture an idea →
+ * /ideation, etc.). The workflow spine (components/workflow/*)
+ * replaces it as the unifying surface.
  */
 
 import {
@@ -66,14 +60,8 @@ export type IconName =
   | 'LineChart'
   | 'Sparkles';
 
-/** Grouping used by Sidebar + MobileNav + CommandPalette.
- *
- * M15-4 — outcome-oriented nav (Rec #3 from the audit). The first
- * group users see is now what they can *do* (outcomes), not what
- * subsystem they're in (centers). Capabilities stay reachable
- * in a demoted secondary group + ⌘K.
- */
-export type NavGroup = 'outcomes' | 'workspace' | 'centers' | 'lifecycle';
+/** Grouping used by Sidebar + MobileNav + CommandPalette. */
+export type NavGroup = 'workspace' | 'centers' | 'lifecycle';
 
 /** A single primary-nav entry. */
 export interface NavItem {
@@ -113,89 +101,23 @@ export const ICONS: Record<IconName, LucideIcon> = {
 };
 
 /**
- * Outcome-oriented primary navigation (M15-4).
+ * Primary navigation.
  *
- * Outcomes describe what the *user* wants to accomplish — not which
- * subsystem they end up in. Each outcome maps to one or more existing
- * routes via the same hrefs; the difference is *voice* and *rank*
- * (outcomes come first, capabilities come second).
- *
- * Refs: docs/product/positioning.md + Rec #3 (hide complexity) +
- * Rec #8 (outcomes over features).
- */
-export const OUTCOMES: ReadonlyArray<NavItem> = [
-  {
-    href: '/project-onboarding',
-    label: 'Start a new project',
-    iconName: 'Compass',
-    group: 'outcomes',
-    keywords: ['onboard', 'first run', 'wizard', 'sample data'],
-  },
-  {
-    href: '/ideation',
-    label: 'Capture an idea',
-    iconName: 'Lightbulb',
-    group: 'outcomes',
-    keywords: ['idea', 'prd', 'roadmap', 'intake'],
-  },
-  {
-    href: '/architecture',
-    label: 'Decide an architecture change',
-    iconName: 'Network',
-    group: 'outcomes',
-    keywords: ['adr', 'review', 'approval', 'task', 'breakdown'],
-  },
-  {
-    href: '/audit',
-    label: 'Review AI work',
-    iconName: 'Wrench',
-    group: 'outcomes',
-    keywords: ['timeline', 'log', 'audit', 'explainability'],
-  },
-  {
-    href: '/knowledge-center',
-    label: 'Browse knowledge',
-    iconName: 'Library',
-    group: 'outcomes',
-    keywords: ['kg', 'graph', 'knowledge', 'artifacts'],
-  },
-];
-
-/**
- * Primary navigation — verbatim copy of the array that used to live
- * inline in `app/layout.tsx`. If you add a page, add it here.
- *
- * M15-4 — Capabilities and Lifecycle now render after Outcomes so
- * the primary nav is a verb (action-oriented), not a noun (subsystem).
- * Users who want a center by name still reach it via ⌘K (searchNav)
- * or by expanding the Capabilities group.
+ * If you add a page, add it here. Power users reach any center via
+ * ⌘K (searchNav) or the Capabilities group in the sidebar.
  */
 export const NAV: ReadonlyArray<NavItem> = [
   // Workspace
   { href: '/dashboard', label: 'Dashboard', iconName: 'Home', group: 'workspace' },
-
-  // Co-pilot (F-800) — primary conversational surface. The /copilot
-  // route ships a thin page that opens the panel; the panel itself is
-  // always reachable via Cmd+J (see ShellProvider) or the Topbar
-  // "Co-pilot" button.
   { href: '/copilot', label: 'Co-pilot', iconName: 'Sparkles', group: 'workspace', keywords: ['ai', 'chat', 'assistant', 'cmd+j', '⌘j'] },
 
-  // Agents
+  // Centers (Capabilities)
   { href: '/agent-center', label: 'Agents', iconName: 'Bot', group: 'centers', keywords: ['agent', 'registry'] },
-
-  // Projects / Stories / Workflows.
-  // Stories points to its own top-level route (`/stories`) as of Step
-  // 44 — no longer nested under Project Intelligence. Projects and
-  // Stories are independent peers in the IA.
   { href: '/project-intelligence', label: 'Projects', iconName: 'Layers', group: 'centers', keywords: ['epic', 'brief', 'draft prd'] },
   { href: '/stories', label: 'Stories', iconName: 'FileText', group: 'centers', keywords: ['story', 'kanban', 'backlog'] },
   { href: '/workflows', label: 'Workflows', iconName: 'Workflow', group: 'centers' },
-
-  // Knowledge & Artifacts
   { href: '/knowledge-center', label: 'Knowledge', iconName: 'Library', group: 'centers', keywords: ['kg', 'graph'] },
   { href: '/organization-knowledge', label: 'Artifacts', iconName: 'Database', group: 'centers' },
-
-  // AI-era pages
   { href: '/ideation', label: 'Ideation', iconName: 'Lightbulb', group: 'centers', keywords: ['idea', 'prd', 'roadmap'] },
   { href: '/architecture', label: 'Architecture', iconName: 'Network', group: 'centers', keywords: ['adr', 'arch'] },
   { href: '/connector-center', label: 'Connectors', iconName: 'PlugZap', group: 'centers', keywords: ['integration', 'mcp'] },
@@ -208,22 +130,18 @@ export const NAV: ReadonlyArray<NavItem> = [
   { href: '/forge-terminal', label: 'Terminal', iconName: 'TerminalSquare', group: 'lifecycle', legacy: true },
   { href: '/runs', label: 'Runs', iconName: 'Activity', group: 'lifecycle', legacy: true },
   { href: '/forge-command-center', label: 'Command', iconName: 'Compass', group: 'lifecycle', legacy: true, keywords: ['catalog', 'dispatch'] },
-
-  // Settings (footer)
   { href: '/admin', label: 'Settings', iconName: 'Settings', group: 'lifecycle' },
 ];
 
 /** Display labels for each group, in render order. */
 export const GROUP_LABELS: Record<NavGroup, string> = {
-  outcomes: 'Outcomes',
   workspace: 'Workspace',
   centers: 'Capabilities',
   lifecycle: 'Lifecycle',
 };
 
-/** Group order. Outcomes first (Rec #3, Rec #8). */
+/** Group order. */
 const GROUP_ORDER: ReadonlyArray<NavGroup> = [
-  'outcomes',
   'workspace',
   'centers',
   'lifecycle',
@@ -234,52 +152,25 @@ export interface GroupedNav {
   readonly items: ReadonlyArray<NavItem>;
 }
 
-/**
- * Return the NAV array grouped + ordered, ready to render.
- */
+/** Return the NAV array grouped + ordered, ready to render. */
 export function groupedNav(): ReadonlyArray<GroupedNav> {
-  return GROUP_ORDER.map((group) => {
-    // Outcomes render separately (the OUTCOMES array, in order).
-    // Workspace/centers/lifecycle consume the NAV array. This keeps
-    // the existing renderer, CommandPalette, MobileNav unchanged.
-    if (group === 'outcomes') {
-      return { group, items: OUTCOMES };
-    }
-    return { group, items: NAV.filter((n) => n.group === group) };
-  });
+  return GROUP_ORDER.map((group) => ({
+    group,
+    items: NAV.filter((n) => n.group === group),
+  }));
 }
 
-/**
- * Strip `?query` and `#hash` from a href so `isNavMatch` can compare
- * the *route* only, not the deep link.
- */
+/** Strip `?query` and `#hash` from a href so `isNavMatch` can compare
+ *  the *route* only, not the deep link. */
 function stripQuery(href: string): string {
   const queryIdx = href.indexOf('?');
   if (queryIdx === -1) return href;
   return href.slice(0, queryIdx);
 }
 
-/**
- * Does `pathname` match `item.href`? True when:
- *   - the href (sans query) is an exact prefix of the pathname AND
- *   - the next char in pathname (if any) is `/` or the pathname is
- *     exactly the href.
- *
- * This lets `/stories/abc` highlight the `Stories` row, and
- * `/project-intelligence/epics/abc` highlight the `Projects` row.
- *
- * Step 38 fix: a sibling item whose href is a `?tab=` deep link to a
- * base route no longer matches the bare base pathname — the two
- * adjacent nav entries (`Projects` and `Stories`) must highlight one
- * at a time, never both. A `?tab=` item now only highlights when the
- * live pathname actually carries that tab query.
- */
+/** Does `pathname` match `item.href`? True when the href (sans query)
+ *  is an exact prefix of the pathname. */
 export function isNavMatch(pathname: string, item: NavItem): boolean {
-  // Deep-link item (?tab=…): only match when the live pathname carries
-  // the exact ?key=value pair from the nav entry. The bare base
-  // pathname must not match (otherwise two adjacent nav entries — e.g.
-  // Projects and the legacy Stories deep-link — would both highlight
-  // at once).
   if (item.href.includes('?')) {
     const [base, query] = item.href.split('?');
     if (base !== undefined && query !== undefined && query.includes('=')) {
@@ -296,10 +187,7 @@ export function isNavMatch(pathname: string, item: NavItem): boolean {
   return false;
 }
 
-/**
- * Case-insensitive substring match over `label` + `keywords`.
- * Returns at most `limit` items.
- */
+/** Case-insensitive substring match over `label` + `keywords`. */
 export function searchNav(
   query: string,
   limit = 25,
@@ -307,19 +195,11 @@ export function searchNav(
   const q = query.trim().toLowerCase();
   if (!q) return [];
   const matches: NavItem[] = [];
-  // M15-4 — search must include OUTCOMES so ⌘K finds the new outcome
-  // actions. Outcomes surface first (prefer user verbs over subsystem
-  // names in the palette results).
-  for (const item of OUTCOMES) {
-    const haystack = [item.label, ...(item.keywords ?? [])].join(' ').toLowerCase();
-    if (haystack.includes(q)) {
-      matches.push(item);
-      if (matches.length >= limit) break;
-    }
-  }
   for (const item of NAV) {
     if (matches.length >= limit) break;
-    const haystack = [item.label, ...(item.keywords ?? [])].join(' ').toLowerCase();
+    const haystack = [item.label, ...(item.keywords ?? [])]
+      .join(' ')
+      .toLowerCase();
     if (haystack.includes(q)) {
       matches.push(item);
     }
