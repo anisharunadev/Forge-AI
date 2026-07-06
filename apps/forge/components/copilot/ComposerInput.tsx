@@ -61,7 +61,7 @@ import { useSendMessage } from '@/hooks/use-copilot-mutations';
 import {
   COPILOT_ERROR_CODES,
   ForgeApiError,
-} from '@/lib/forge-api';
+} from '@/lib/api';
 import {
   dispatchCopilotGuardrailDenied,
   dispatchCopilotRateLimit,

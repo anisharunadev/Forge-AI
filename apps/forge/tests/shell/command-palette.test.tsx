@@ -29,8 +29,9 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/dashboard',
 }));
 
-// next-themes mock
-vi.mock('next-themes', () => ({
+// Theme provider mock — replaces the prior next-themes mock after the
+// swap to `@/components/theme-provider` (see providers.tsx).
+vi.mock('@/components/theme-provider', () => ({
   useTheme: () => ({
     resolvedTheme: 'dark',
     setTheme: vi.fn(),

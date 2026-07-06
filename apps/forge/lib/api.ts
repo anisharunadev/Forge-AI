@@ -16,6 +16,8 @@ import { DEV_TENANT_UUID, SEED_RUN_UUID, SEED_RUN_ALIAS } from '../config/dev-se
 import { listAllWorkflowRuns } from './workflows/data';
 
 export { FORGE_WS_BASE_URL } from './api/client';
+export { ForgeApiError, COPILOT_ERROR_CODES } from './api/client';
+export type { CopilotErrorCode } from './api/client';
 export type { RunRecord, StageRecord };
 export type { WorkflowRun as WorkflowRunRecord } from './workflows/types';
 

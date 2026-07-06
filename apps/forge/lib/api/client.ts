@@ -91,13 +91,25 @@ export class ApiError extends Error {
   status: number;
   code?: string;
   body: unknown;
+  /** Response headers at the time the error was thrown (for `Retry-After` etc.). */
+  headers?: Headers;
+  /** Alias of `code` so callers can use either name. */
+  errorCode?: string;
 
-  constructor(status: number, detail: string, body: unknown, code?: string) {
+  constructor(
+    status: number,
+    detail: string,
+    body: unknown,
+    code?: string,
+    headers?: Headers,
+  ) {
     super(`${status}: ${detail}`);
     this.name = 'ApiError';
     this.status = status;
     this.code = code;
+    this.errorCode = code;
     this.body = body;
+    this.headers = headers;
   }
 }
 
@@ -237,7 +249,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
       parsed?.detail ??
       parsed?.message ??
       (typeof raw === 'string' && raw ? raw : response.statusText);
-    throw new ApiError(response.status, detail, raw, parsed?.code);
+    throw new ApiError(response.status, detail, raw, parsed?.code, response.headers);
   }
 
   // 200/201/202 with a JSON body.
@@ -287,6 +299,22 @@ export const api = {
 export { FORGE_API_BASE_URL, FORGE_WS_BASE_URL, FORGE_TERMINAL_WS_URL };
 
 // Legacy error-class alias — `forge-api.ts` used to export a class
-// named `ForgeApiError`. Tests still import it via copilot.ts.
+// named `ForgeApiError`. Tests + UI both import it as a type and value.
 // ponytail: shim, delete when no caller imports `ForgeApiError`.
-export const ForgeApiError = ApiError;
+export class ForgeApiError extends ApiError {}
+
+/**
+ * Stable identifiers the copilot surfaces return in `ApiError.code`.
+ * Mirrors the backend's `CopilotErrorCode` enum (M10-G1, M10-G3).
+ * ponytail: hand-rolled enum; switch to `as const` mapped from the
+ * generated OpenAPI client once Step-X lands.
+ */
+export const COPILOT_ERROR_CODES = {
+  RATE_LIMIT_EXCEEDED: 'rate_limit_exceeded',
+  GUARDRAIL_DENIED: 'guardrail_denied',
+  CONTEXT_TOO_LONG: 'context_too_long',
+  MODEL_UNAVAILABLE: 'model_unavailable',
+} as const;
+
+export type CopilotErrorCode =
+  (typeof COPILOT_ERROR_CODES)[keyof typeof COPILOT_ERROR_CODES];
