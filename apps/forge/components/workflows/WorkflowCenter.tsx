@@ -643,7 +643,7 @@ function GridSkeleton() {
   );
 }
 
-function pickLastRun(runs: WorkflowRun[] | undefined, workflowId: string): WorkflowRun | undefined {
+function pickLastRun(runs: ReadonlyArray<WorkflowRun> | undefined, workflowId: string): WorkflowRun | undefined {
   if (!runs) return undefined;
   return runs.find((r) => r.workflow_id === workflowId);
 }

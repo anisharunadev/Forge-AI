@@ -416,6 +416,8 @@ export interface JiraSyncVariables {
 export interface JiraSyncResult {
   readonly target: JiraSyncTarget;
   readonly issue_key: string;
+  /** Alias used by some UI surfaces — same as issue_key. */
+  readonly external_key?: string;
   readonly id: string;
   readonly synced_at: string;
 }

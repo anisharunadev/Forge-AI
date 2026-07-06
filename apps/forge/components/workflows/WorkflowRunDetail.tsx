@@ -283,7 +283,7 @@ function TabButton({
   active: boolean;
   onClick: () => void;
   testId: string;
-  badge: string | null;
+  badge?: string | null;
 }) {
   return (
     <button

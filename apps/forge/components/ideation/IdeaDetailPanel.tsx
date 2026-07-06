@@ -27,7 +27,7 @@ import {
   Loader2, Rocket,
   Send,
   Sparkles,
-  // Trello,
+  Trello,
   XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';

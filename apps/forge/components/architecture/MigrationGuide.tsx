@@ -109,14 +109,14 @@ export function MigrationGuide({ versions }: MigrationGuideProps) {
       return;
     }
     if (from.version === to.version) {
-      toast.warning('Pick two distinct versions');
+      toast.error('Pick two distinct versions');
       return;
     }
     const r = diffVersions(from, to);
     const m = buildMarkdown(from, to, r);
     setRows(r);
     setMd(m);
-    toast.success(`Migration guide generated: ${from.version} → ${to.version}`, {
+    toast.info(`Migration guide generated: ${from.version} → ${to.version}`, {
       description: `${r.length} changes detected`,
     });
   }, [from, to]);
@@ -124,7 +124,7 @@ export function MigrationGuide({ versions }: MigrationGuideProps) {
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(md);
-      toast.success('Copied to clipboard');
+      toast.info('Copied to clipboard');
     } catch {
       toast.error('Copy failed');
     }
@@ -138,7 +138,7 @@ export function MigrationGuide({ versions }: MigrationGuideProps) {
     a.download = `migration-${from?.version ?? 'from'}-to-${to?.version ?? 'to'}.md`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Migration guide downloaded');
+    toast.info('Migration guide downloaded');
   };
 
   return (

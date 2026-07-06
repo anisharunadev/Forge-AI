@@ -78,7 +78,7 @@ export function ConnectorLifecycleActions({
       const result = await testMutation.mutateAsync();
       toast({
         title: 'Connection OK',
-        description: result.detail ?? `Tested in ${result.latency_ms} ms.`,
+        description: result.message ?? `Tested in ${result.latency_ms} ms.`,
         variant: 'default',
       });
       onAfterTest?.();

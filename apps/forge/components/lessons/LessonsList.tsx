@@ -35,7 +35,7 @@ const STATUS_TABS: Array<{ key: LessonStatus | 'all'; label: string }> = [
   { key: 'all', label: 'All' },
 ];
 
-export function LessonsList(): JSX.Element {
+export function LessonsList(): React.JSX.Element {
   const [tab, setTab] = useState<LessonStatus | 'all'>('pending');
   const status = tab === 'all' ? undefined : tab;
   const { data, isLoading, error } = useLessons(status);

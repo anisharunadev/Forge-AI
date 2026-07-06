@@ -23,6 +23,7 @@ const TONE: Record<ConnectorHealthStatus, StatusTone> = {
   stale:       'warn',
   failed:      'danger',
   quarantined: 'review',
+  paused:      'idle',
 };
 
 const GLYPH: Record<ConnectorHealthStatus, StateGlyph> = {
@@ -31,6 +32,7 @@ const GLYPH: Record<ConnectorHealthStatus, StateGlyph> = {
   stale:       '◑',
   failed:      '✕',
   quarantined: '◑',
+  paused:      '‖',
 };
 
 const PULSE: Record<ConnectorHealthStatus, PulseKind> = {
@@ -39,6 +41,7 @@ const PULSE: Record<ConnectorHealthStatus, PulseKind> = {
   stale:       'none',
   failed:      'none',
   quarantined: 'slow',
+  paused:      'none',
 };
 
 const LABEL: Record<ConnectorHealthStatus, string> = {
@@ -47,6 +50,7 @@ const LABEL: Record<ConnectorHealthStatus, string> = {
   stale:       'Stale',
   failed:      'Failed',
   quarantined: 'Quarantined',
+  paused:      'Paused',
 };
 
 export interface HealthBadgeProps {

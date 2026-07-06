@@ -260,6 +260,7 @@ export function MissionControl() {
               <GreetingBar
                 snapshot={snapshot}
                 isMac={isMac}
+                unreadAlerts={unreadAlerts}
                 onCustomize={() => setCustomizeOpen(true)}
                 onBellClick={() => setBellOpen((o) => !o)}
                 onRefresh={handleRefresh}

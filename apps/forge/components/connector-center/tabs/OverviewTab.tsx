@@ -87,6 +87,7 @@ export function OverviewTab() {
     if (paused) return;
     const t = setInterval(() => {
       const c = installed[Math.floor(Math.random() * installed.length)];
+      if (!c) return;
       const verbs = ['pulled', 'pushed', 'synced', 'fetched'];
       const nouns = ['issues', 'PRs', 'metrics', 'tickets', 'docs', 'logs'];
       setExtra({

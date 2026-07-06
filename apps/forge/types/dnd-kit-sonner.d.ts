@@ -7,6 +7,11 @@ declare module '@dnd-kit/core' {
     children: React.ReactNode;
     sensors?: unknown[];
     collisionDetection?: unknown;
+    accessibility?: {
+      announcements?: unknown;
+      screenReaderInstructions?: unknown;
+      restoreFocus?: boolean;
+    };
     onDragEnd?: (e: DragEndEvent) => void;
     onDragOver?: (e: { over: { id: string | number } | null }) => void;
     onDragCancel?: () => void;
@@ -14,6 +19,17 @@ declare module '@dnd-kit/core' {
   export const PointerSensor: unknown;
   export const KeyboardSensor: unknown;
   export const closestCorners: unknown;
+  export const closestCenter: unknown;
+  /** Default announcements — used by IdeaKanban's accessibility config. */
+  export const defaultAnnouncements: unknown;
+  /** Default screen-reader instructions — used by IdeaKanban. */
+  export const defaultScreenReaderInstructions: unknown;
+  /** Hook used by droppable containers in the kanban. */
+  export function useDroppable(opts: { id: string | number }): {
+    setNodeRef: (el: HTMLElement | null) => void;
+    isOver: boolean;
+    active: unknown;
+  };
   export function useSensor(sensor: unknown, opts?: unknown): unknown;
   export function useSensors(...args: unknown[]): unknown[];
 }
@@ -107,6 +123,7 @@ declare module 'framer-motion' {
     option: MotionComponent;
     a: MotionComponent;
     p: MotionComponent;
+    path: MotionComponent;
   };
   // AnimatePresence accepts mode and other AnimatePresenceProps.
   // Type as React.FC<Record<string, unknown>> so consumers can

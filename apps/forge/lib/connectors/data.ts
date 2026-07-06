@@ -261,6 +261,9 @@ export interface Connector {
   readonly id: string;
   /** Tenant id (multi-tenant isolation, R2). */
   readonly tenantId?: string;
+  /** Marketplace slug (e.g. "github", "jira") — used by the
+   * install + marketplace flows. */
+  readonly slug?: string;
   readonly name: string;
   readonly displayName: string;
   readonly publisher: string;
