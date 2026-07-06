@@ -1,0 +1,59 @@
+name: image-policy
+
+# SPRINT 1 (docs/audit/implemenation/goal-1.md) — CI guard for the Next.js
+# images.remotePatterns allow-list in apps/forge/next.config.mjs.
+#
+# This workflow runs scripts/check-image-remote-patterns.sh on every PR and
+# push to main. Wildcard `hostname: '**'` and bare `protocol: 'http'` outside
+# the documented IF_DEV_ONLY block will fail this gate.
+#
+# The check is also enforced locally via `pnpm check:image-policy` and by
+# the vitest regression under apps/forge/tests/security/.
+
+on:
+  pull_request:
+    paths:
+      - 'apps/forge/next.config.mjs'
+      - 'scripts/check-image-remote-patterns.sh'
+      - 'scripts/check_image_remote_patterns.py'
+      - 'apps/forge/tests/security/image-remote-patterns.test.ts'
+      - '.github/workflows/image-policy.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/forge/next.config.mjs'
+      - 'scripts/check-image-remote-patterns.sh'
+      - 'scripts/check_image_remote_patterns.py'
+      - 'apps/forge/tests/security/image-remote-patterns.test.ts'
+      - '.github/workflows/image-policy.yml'
+
+concurrency:
+  group: image-policy-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  image-policy:
+    name: next/image allow-list static check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run scripts/check-image-remote-patterns.sh
+        shell: bash
+        run: bash scripts/check-image-remote-patterns.sh
+
+      - name: Run vitest regression
+        shell: bash
+        run: |
+          cd apps/forge
+          pnpm install --frozen-lockfile
+          pnpm exec vitest run tests/security/image-remote-patterns.test.ts

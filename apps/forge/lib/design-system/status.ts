@@ -31,7 +31,7 @@ export type StatusTone =
 export type PulseKind = 'none' | 'slow' | 'active' | 'fast-to-static'
 
 /** Glyph that pairs with the tone (per curated spec §6). */
-export type StateGlyph = '○' | '◐' | '●' | '◑' | '✓' | '✕'
+export type StateGlyph = '○' | '◐' | '●' | '◑' | '✓' | '✕' | '‖'
 
 /** Map an AgentState to a StatusPill tone. */
 export function agentStateToTone(state: AgentState): StatusTone {

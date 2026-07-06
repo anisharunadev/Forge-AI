@@ -11,21 +11,17 @@
  *   GET /v1/connector-center/sync-history   → SyncRecord[]
  */
 
-export type ConnectorHealthStatus =
-  | 'healthy'
-  | 'syncing'
-  | 'stale'
-  | 'failed'
-  | 'quarantined';
+import { ConnectorCategory, ConnectorHealthStatus } from '../connectors';
 
-export type ConnectorCategory =
-  | 'source-control'
-  | 'project-mgmt'
-  | 'design'
-  | 'comms'
-  | 'cloud'
-  | 'quality'
-  | 'data';
+// Re-export the canonical ConnectorCategory and ConnectorHealthStatus
+// from the connectors data module so consumers in both directories
+// share the same type (the original lib/connector-center enum was
+// missing 'monitoring' and 'paused'/'quarantined', which caused
+// assignability errors in the marketplace + health tabs).
+export type {
+  ConnectorCategory,
+  ConnectorHealthStatus,
+} from '@/lib/connectors/data';
 
 export interface Connector {
   id: string;
