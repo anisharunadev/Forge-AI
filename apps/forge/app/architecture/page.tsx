@@ -94,6 +94,7 @@ import {
   SavedFiltersBar,
   AIAssistantBadge,
   BulkBar,
+  exportData,
 } from '@/components/architecture/architecture-extras';
 
 import { ADRViewer } from '@/components/architecture/ADRViewer';
