@@ -29,7 +29,7 @@
  */
 
 import Link from "next/link";
-import type { McpConnector } from "@/lib/connectors/data";
+import type { Connector as McpConnector, ToolCallStatus } from "@/lib/connectors/data";
 import { ConnectorStatusPill } from "@/components/ConnectorStatusPill";
 import type { AuditEntry } from "@/lib/connectors/audit-feed-types";
 
@@ -229,7 +229,7 @@ export function ConnectorDetailPanel({ connector, auditEntries }: ConnectorDetai
             <p className="font-mono text-xs text-forge-300">{c.id}</p>
           </div>
           <div className="flex items-center gap-3">
-            <ConnectorStatusPill status={c.status} />
+            <ConnectorStatusPill status={(c.status === 'healthy' ? 'success' : c.status === 'syncing' ? 'degraded' : 'error') as ToolCallStatus} />
             <Link
               href={`/audit-center?connectorId=${encodeURIComponent(c.id)}`}
               className="rounded-sm border border-forge-700 bg-forge-800 px-3 py-1 text-xs font-medium text-forge-50 hover:border-forge-500"
@@ -310,17 +310,17 @@ export function ConnectorDetailPanel({ connector, auditEntries }: ConnectorDetai
         <p className="text-xs text-forge-300">
           Role binding:{" "}
           <Link
-            href={`/governance-center?role=${encodeURIComponent(c.scope.roleBinding)}`}
+            href={`/governance-center?role=${encodeURIComponent(c.scopeBinding?.roleBinding ?? c.scope)}`}
             className="rounded-sm border border-forge-700 bg-forge-800 px-2 py-0.5 font-mono text-forge-50 hover:border-forge-500"
             data-testid="connector-role-binding"
-            aria-label={`Open ${c.scope.roleBinding} role binding in Governance Center`}
+            aria-label={`Open ${c.scopeBinding?.roleBinding ?? c.scope} role binding in Governance Center`}
           >
-            {c.scope.roleBinding}
+            {c.scopeBinding?.roleBinding ?? c.scope}
           </Link>
         </p>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="text-forge-300">Granted:</span>
-          {c.scope.grantedScopes.length === 0 ? (
+          {c.scopeBinding?.grantedScopes ?? [].length === 0 ? (
             <span
               className="rounded-sm border border-forge-700 bg-forge-800 px-2 py-0.5 font-mono text-forge-300"
               data-testid="scope-granted-empty"
@@ -328,7 +328,7 @@ export function ConnectorDetailPanel({ connector, auditEntries }: ConnectorDetai
               none
             </span>
           ) : (
-            c.scope.grantedScopes.map((s) => (
+            c.scopeBinding?.grantedScopes ?? [].map((s) => (
               <span
                 key={`g-${s}`}
                 className="rounded-sm border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 font-mono text-emerald-200"
@@ -341,10 +341,10 @@ export function ConnectorDetailPanel({ connector, auditEntries }: ConnectorDetai
             ))
           )}
         </div>
-        {c.scope.deniedScopes && c.scope.deniedScopes.length > 0 && (
+        {(c.scopeBinding?.deniedScopes ?? []).length > 0 && (
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="text-forge-300">Denied:</span>
-            {c.scope.deniedScopes.map((s) => (
+            {c.scopeBinding?.deniedScopes ?? [].map((s) => (
               <span
                 key={`d-${s}`}
                 className="rounded-sm border border-forge-700 bg-forge-900 px-2 py-0.5 font-mono text-forge-300"

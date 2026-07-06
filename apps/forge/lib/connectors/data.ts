@@ -62,6 +62,11 @@ export type ConnectorHealthStatus =
   | 'quarantined'
   | 'paused';
 
+/** Status returned by the per-connector live probe (used by
+ * ConnectorStatusPill). Lives alongside the broader
+ * ConnectorHealthStatus because the probe only knows three states. */
+export type ToolCallStatus = 'success' | 'degraded' | 'error';
+
 export type ConnectorScope = 'org' | 'project';
 
 export type CredentialType = 'api_key' | 'oauth' | 'service_account' | 'webhook_secret';
@@ -219,6 +224,13 @@ export interface ConnectorCredential {
   readonly owner: { name: string; initials: string };
   readonly scopes: ReadonlyArray<string>;
   readonly lengthChars: number;    // raw length (never the value)
+  /** True when the credential is stored as a redacted reference
+   * (never display the raw value). Used by the audit harness. */
+  readonly redacted?: boolean;
+  /** Opaque backend handle that the rotate/reveal APIs accept. */
+  readonly secretRef?: string;
+  /** Legacy alias for `lengthChars` (used by some McpConnector consumers). */
+  readonly valueLen?: number;
 }
 
 export interface ConnectorUsage {
@@ -247,13 +259,24 @@ export interface ConnectorSyncEvent {
 
 export interface Connector {
   readonly id: string;
+  /** Tenant id (multi-tenant isolation, R2). */
+  readonly tenantId?: string;
   readonly name: string;
   readonly displayName: string;
   readonly publisher: string;
   readonly tagline: string;
   readonly description: string;
   readonly category: ConnectorCategory;
+  /** Scope discriminator — string for the simple cases; the legacy
+   * McpConnector shape extends via `scopeBinding` below. */
   readonly scope: ConnectorScope;
+  /** Optional rich scope binding used by the McpConnector-style
+   * cards (granted/denied scope chips). */
+  readonly scopeBinding?: {
+    readonly roleBinding: string;
+    readonly grantedScopes: ReadonlyArray<string>;
+    readonly deniedScopes?: ReadonlyArray<string>;
+  };
   readonly tier: 1 | 2;
   readonly status: ConnectorHealthStatus;
   /** Connected account display — workspace or user. */
@@ -271,6 +294,10 @@ export interface Connector {
     readonly p50Ms: number;
     readonly p95Ms: number;
     readonly errorRate: number; // 0..1
+    /** ISO timestamp of the most recent call (used by ConnectorCard). */
+    readonly lastCallAt?: string;
+    /** Rolling 24h call count (used by ConnectorCard). */
+    readonly callCount24h?: number;
   };
   readonly credential: ConnectorCredential;
   readonly usage: ConnectorUsage;

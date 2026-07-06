@@ -320,7 +320,17 @@ export const SAMPLE_USER_WORKFLOWS: ReadonlyArray<never> = [] as const;
  * Removed in step-56 (Phase 4) — the Run Center now lists real
  * workflow runs from the FastAPI backend via `useWorkflowRuns()`.
  */
-export const SAMPLE_RUNS: ReadonlyArray<never> = [] as const;
+export interface SampleWorkflowRun {
+  readonly id: string;
+  readonly workflowId: string;
+  readonly status: 'idle' | 'pending' | 'running' | 'succeeded' | 'failed' | 'skipped' | 'waiting';
+  readonly startedAt: string;
+  readonly durationMs?: number;
+  readonly stepCount: number;
+  readonly triggeredBy: string;
+}
+
+export const SAMPLE_RUNS: ReadonlyArray<SampleWorkflowRun> = [] as const;
 
 /**
  * Removed in step-56 (Phase 4) — drafts now come from the backend
