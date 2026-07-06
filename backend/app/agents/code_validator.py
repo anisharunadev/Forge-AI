@@ -41,6 +41,7 @@ from langgraph.types import Send
 # attestation stream and the gate decides).  Decorate the public
 # entry points so a validator sub-graph run is gated on a recorded
 # implementation-phase approval.
+from app.agents.approval_gate import require_approval_phase
 from app.agents.code_validator_nodes import (
     aggregate_findings,
     scan_iac,
@@ -274,6 +275,109 @@ async def run_code_validator_with_approval(
     )
 
 
+# ---------------------------------------------------------------------------
+# F-501 sub-graph entry point (plan 01-05 Task 3).
+# ---------------------------------------------------------------------------
+# The supervisor-facing entry point is :func:`run_code_validator`. It is
+# decorated with :func:`require_approval_phase(SDLCPhase.IMPLEMENTATION)`
+# so a direct call without a recorded implementation-phase approval
+# raises :class:`ApprovalRequiredError` (threat model T-01-05-5).
+#
+# The entry delegates to the new top-level
+# ``agents.code_validator.code_validator_graph`` sub-graph (independent
+# of the SDLC supervisor's prompt templates per the locked Phase 1
+# decision).
+# ---------------------------------------------------------------------------
+
+
+def _extract_files(state: Any) -> list[str]:
+    """Extract the list of files to validate from the SDLCState.
+
+    Tries ``state.context["files"]`` first (the standard envelope used
+    by the implementation phase to pass changed-file paths to its
+    tools). Falls back to an empty list so the sub-graph produces a
+    ``pass`` verdict for runs that pre-date the contract.
+    """
+    context = getattr(state, "context", None)
+    if isinstance(context, dict):
+        files = context.get("files")
+        if isinstance(files, list):
+            return [str(f) for f in files]
+    return []
+
+
+@require_approval_phase(SDLCPhase.IMPLEMENTATION)
+async def run_code_validator(
+    state: Any,  # SDLCState
+    *,
+    graph: Any | None = None,
+    checkpointer: Any | None = None,
+    _audit_record: Any | None = None,
+) -> Any:
+    """Run the F-501 Code Validator sub-graph against ``state``.
+
+    Decorated with :func:`require_approval_phase(SDLCPhase.IMPLEMENTATION)`
+    so a direct call without a recorded implementation-phase approval
+    raises :class:`ApprovalRequiredError` (threat model T-01-05-5).
+
+    Returns the SDLCState updated with a ``"validation_report"`` entry
+    in ``state.artifacts`` carrying the typed :class:`ValidationReport`
+    from the sub-graph.
+
+    The ``_audit_record`` parameter is the audit-service record callable;
+    tests inject an ``AsyncMock``. In production the entry point
+    imports the canonical :func:`audit_service.record`.
+    """
+    from agents.code_validator import code_validator_graph as _subgraph_graph
+
+    if _audit_record is None:
+        from app.services.audit_service import audit_service
+
+        _audit_record = audit_service.record
+
+    files = _extract_files(state)
+
+    validator_state = CodeValidatorState(
+        tenant_id=state.tenant_id,
+        project_id=state.project_id,
+        run_id=state.run_id,
+        files=files,
+    )
+
+    compiled = graph or (checkpointer is not None and _subgraph_graph or None)
+    if compiled is None:
+        compiled = _subgraph_graph
+    result_state = await compiled.ainvoke(validator_state)
+
+    # Audit the entry-point invocation (Rule 6).
+    try:
+        await _audit_record(
+            tenant_id=state.tenant_id,
+            project_id=state.project_id,
+            actor_id=getattr(state, "actor_id", None),
+            action="code_validator.run",
+            target_type="artifact",
+            target_id=str(state.run_id),
+            payload={
+                "verdict": getattr(result_state, "verdict", None),
+                "files": files,
+            },
+        )
+    except Exception:
+        # The sub-graph nodes already wrote their own audit rows; the
+        # entry-point row is a bonus correlation row, not a load-bearing
+        # one. Never let audit failure break the run.
+        pass
+
+    # Attach the typed report to the SDLCState.artifacts envelope.
+    new_artifacts = dict(getattr(state, "artifacts", {}) or {})
+    new_artifacts["validation_report"] = {
+        "kind": "ValidationReport",
+        "report": getattr(result_state, "report", None),
+    }
+    return state.model_copy(update={"artifacts": new_artifacts})
+
+
 __all__ = [
     "VALIDATOR_VIRTUAL_KEY_PREFIX",
     "validator_virtual_key_alias",
@@ -281,5 +385,6 @@ __all__ = [
     "load_prompt",
     "make_validator_virtual_key",
     "run_code_validator_with_approval",
+    "run_code_validator",
     "ValidatorRunResult",
 ]
