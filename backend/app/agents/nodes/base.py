@@ -7,6 +7,8 @@ that inherits from :class:`BasePhaseNode`. Nodes are responsible for:
 * Enforcing the per-phase cost and duration guards
 * Emitting the relevant domain events (cost incurred, phase transition, …)
 * Pausing for human approval when ``requires_approval`` is True
+* Writing an audit row on every state mutation via :meth:`mutate`
+  (Rule 6, PITFALL-5 closure — Plan 01-03)
 
 The concrete nodes (``DiscoveryNode``, ``PlanningNode``, …) live in
 the sibling modules and override :meth:`BasePhaseNode.execute`.
@@ -32,6 +34,7 @@ from app.agents.sdlc_state import (
     SDLCPhase,
     SDLCState,
 )
+from app.services import audit_service
 from app.services.event_bus import EventType
 from app.services.event_bus import bus as default_bus
 
@@ -245,6 +248,98 @@ class BasePhaseNode(abc.ABC):
     @abc.abstractmethod
     async def execute(self, state: SDLCState) -> SDLCState:
         """Phase-specific work. Subclasses MUST implement."""
+
+    # ---- Audit-on-mutate helper (Plan 01-03, PITFALL-5 closure) -------
+
+    async def mutate(
+        self,
+        state: SDLCState,
+        *,
+        agent: str,
+        model: str,
+        prompt: str,
+        tool: str,
+        artifact: dict[str, Any],
+        result: dict[str, Any],
+        apply: Callable[[SDLCState], SDLCState] | None = None,
+    ) -> SDLCState:
+        """Apply a mutation to ``state`` and write an audit row (Rule 6).
+
+        This is the default mutation path for every :class:`BasePhaseNode`
+        subclass (PITFALL-5 closure). Subclasses call ``await self.mutate(...)``
+        in place of direct ``state.add_artifact(...)`` / ``state.with_phase(...)``
+        calls so the audit row is written UNCONDITIONALLY — no ``if`` guard,
+        no opt-out flag, no silent skip.
+
+        The audit row is mapped to the canonical :class:`AuditEvent` schema
+        (action / target_type / target_id / payload / occurred_at) so the
+        table itself does not need a migration: ``agent.model`` becomes the
+        ``action`` discriminator, ``prompt`` is folded into the payload
+        alongside the artifact + result, and ``occurred_at`` is stamped
+        with the current UTC timestamp.
+
+        Parameters
+        ----------
+        state:
+            The current SDLC state. Read-only — never mutated in place.
+        agent:
+            Logical agent name (e.g. ``"discovery"``, ``"architecture"``).
+        model:
+            The model identifier the LLM call targeted.
+        prompt:
+            Prompt template name / hash.
+        tool:
+            The tool that was invoked (e.g. ``"kg.read"``).
+        artifact:
+            The typed artifact produced by the mutation; stored under
+            ``payload["artifact"]`` on the audit row.
+        result:
+            Result dict from the tool / LLM call; stored under
+            ``payload["result"]`` on the audit row.
+        apply:
+            Optional callable that produces the new state. If omitted the
+            input state is returned unchanged — the call still records
+            the audit row so ``read-only`` phases (Discovery, Review)
+            leave a trail.
+
+        Returns
+        -------
+        SDLCState
+            The post-mutation state, or the original state if no
+            ``apply`` callable was supplied.
+        """
+        new_state = apply(state) if apply is not None else state
+        cost = await self._estimate_cost(new_state, artifact)
+        await audit_service.record(
+            tenant_id=new_state.tenant_id,
+            project_id=new_state.project_id,
+            actor_id=new_state.actor_id,
+            action=f"{agent}.{model}",
+            target_type=tool,
+            target_id=prompt,
+            payload={
+                "agent": agent,
+                "model": model,
+                "prompt": prompt,
+                "tool": tool,
+                "cost": cost,
+                "artifact": artifact,
+                "result": result,
+                "phase": self.phase_name.value,
+            },
+            occurred_at=datetime.now(UTC),
+        )
+        return new_state
+
+    async def _estimate_cost(self, state: SDLCState, artifact: dict[str, Any]) -> float:
+        """Cost estimator stub. Subclasses may override.
+
+        Returns 0.0 by default. A future :class:`CostRecorder` wiring
+        (Plan 01-05) will replace this with the real estimator — the
+        stub keeps :meth:`mutate` callable today without forcing the
+        full cost-recorder rollout.
+        """
+        return 0.0
 
     # ---- Internal helpers ----------------------------------------------
 

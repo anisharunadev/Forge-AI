@@ -1,0 +1,79 @@
+# Center status — M15-2 source of truth for "what is finished?"
+#
+# Each center page that lives under apps/forge/app/<route>/page.tsx is
+# scored against the M15-2 10-point Definition of Done. The score is the
+# arithmetic mean of the 10 verdicts below.
+#
+# A center is **DONE** when its top-3 routes score 10/10.
+# Until then, no new work on that center (Rec #6 from the audit).
+#
+# Schema per entry:
+#   route:           path under apps/forge/app (no trailing /page.tsx)
+#   center:          Center name — must match the Legacy nav IA
+#   component:       primary component file (NOT verified at runtime)
+#   backend:         primary backend route (file:func) — used for R6 audit check
+#   hook:            primary frontend hook file:line
+#   test:            primary happy-path test
+#
+# The 10 verdicts below are filled in by the gate (`./scripts/check-page-dod.sh`)
+# for the 7 automated checks; for items 5 (RBAC), 8 (a11y), and 9 (responsive)
+# the gate emits `manual: unchecked` and humans flip to `checked` once the
+# PR-level human review signs off.
+#
+# Verdicts:
+#   pass          — automated check sees the required signal
+#   fail          — automated check sees a missing/forbidden signal
+#   unchecked     — manual gate (5/8/9); not yet reviewed
+#   checked       — manual gate signed off by reviewer
+#
+# Last verified: 2026-07-07 (M15-1 hero pages only)
+
+version: 1
+
+centers:
+
+  - center: Ideation
+    top_routes:
+      - route: ideation
+        component: apps/forge/app/ideation/page.tsx
+        backend: backend/app/api/v1/ideation/ideas.py:create_idea
+        hook: apps/forge/lib/hooks/useIdeation.ts:328
+        test: backend/tests/services/test_ideation_e2e_chain.py
+        verdicts:
+          real_api:        pass
+          loading:         pass   # apps/forge/app/ideation/loading.tsx
+          error:           fail   # no error.tsx at apps/forge/app/ideation/error.tsx
+          empty_state:     pass   # <EmptyState> used in tabs
+          permission:      unchecked  # RBAC + tenant scoping — manual
+          audit:           pass   # @audit(action="ideation.idea.create", ...)
+          analytics:       unchecked  # primary CTA tracks? — manual
+          a11y:            unchecked  # Lighthouse + axe — manual
+          responsive:      unchecked  # tablet + mobile — manual
+          coverage:        pass   # backend + e2e exist
+        dod_score: null  # computed by gate
+
+  - center: Architecture
+    top_routes:
+      - route: architecture
+        component: apps/forge/app/architecture/page.tsx
+        backend: backend/app/api/v1/architecture/adrs.py:create_adr
+        hook: apps/forge/lib/hooks/useArchitecture.ts:226
+        test: backend/tests/test_golden_workflow.py
+        verdicts:
+          real_api:        pass   # hero pages wired to real hooks (M15-1 Gaps 1-3)
+          loading:         pass   # apps/forge/app/architecture/loading.tsx
+          error:           fail   # no error.tsx
+          empty_state:     pass   # reviewer panels + task trees have empty states
+          permission:      unchecked
+          audit:           pass   # @audit(action="architecture.approval.*") + R6 fix
+          analytics:       unchecked
+          a11y:            unchecked
+          responsive:      unchecked
+          coverage:        pass   # test_golden_workflow.py + approval tests
+        dod_score: null
+
+# Center-completion rule (Rec #6):
+#   A center is DONE when ≥ 3 of its top_routes score 10/10.
+#   Until then, the gate flags any PR that adds new work to that center.
+#
+# Computed summary: see scripts/check-page-dod.sh report output.

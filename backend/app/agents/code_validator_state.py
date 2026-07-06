@@ -445,4 +445,27 @@ __all__ = [
     "FindingsBuckets",
     "CodeValidatorToolBundle",
     "CodeValidatorState",
+    # F-501 per-scanner finding types — re-exported from the canonical
+    # schema location so legacy callers can keep using the
+    # ``app.agents.code_validator_state`` import surface.
+    "LintFinding",
+    "TypeCheckFinding",
+    "SecurityFinding",
 ]
+
+
+# ---------------------------------------------------------------------------
+# F-501 re-exports (plan 01-05).
+#
+# The new top-level ``agents.code_validator.state`` module is the
+# canonical home of the per-scanner finding models. Re-export them
+# here so the existing import surface (e.g. ``from
+# app.agents.code_validator_state import ValidationReport``) keeps
+# working for every existing F-502 caller.
+# ---------------------------------------------------------------------------
+
+from app.schemas.validation_report import (  # noqa: E402,F401
+    LintFinding,
+    SecurityFinding,
+    TypeCheckFinding,
+)

@@ -22,6 +22,7 @@ from app.services.architecture.approval_workflow import (
     ArchitectureApprovalWorkflow,
     _decode_reviewers,
 )
+from app.services.audit_service import audit_service
 from app.services.event_bus import bus
 from app.services.litellm_client import LiteLLMClient
 
@@ -32,7 +33,15 @@ router = APIRouter(
 
 
 def _workflow() -> ArchitectureApprovalWorkflow:
-    return ArchitectureApprovalWorkflow(litellm_client=LiteLLMClient(), event_bus=bus)
+    # ponytail: pass the module-level audit_service singleton so terminal
+    # approve/deny rows land in audit_events (R6). Per the M15-1 contract
+    # Gap 4 — was previously omitted, leaving grant/deny invisible to the
+    # Audit Center. The singleton is process-local; no DI needed.
+    return ArchitectureApprovalWorkflow(
+        litellm_client=LiteLLMClient(),
+        event_bus=bus,
+        audit_service=audit_service,
+    )
 
 
 @require_approval_phase(SDLCPhase.ARCHITECTURE)

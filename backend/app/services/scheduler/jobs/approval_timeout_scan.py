@@ -35,11 +35,28 @@ logger = get_logger(__name__)
 _DEFAULT_TIMEOUT_HOURS = 24
 
 
-def _resolve_timeout_hours(tenant_id: str) -> int:
-    """Return the per-tenant timeout (hours) for the given tenant."""
+def _resolve_timeout_hours(tenant_id: str, phase: str | None = None) -> int:
+    """Return the timeout (hours) for the given tenant (+ optional phase).
+
+    Resolution order (M2 Plan 01-04):
+      1. ``settings.approval_timeout_overrides[tenant_id]`` — per-tenant
+      2. ``settings.approval_timeout_overrides_per_phase[phase]`` — per-phase
+      3. ``settings.approval_timeout_hours`` — global default
+
+    Tenant wins because a customer with a custom SLA should not be
+    silently re-overridden by a per-phase default. The phase argument
+    is optional so the in-process scan can call this with the
+    ``pending.type`` from the live SDLCState without an extra lookup.
+    """
     overrides = getattr(settings, "approval_timeout_overrides", None) or {}
     if tenant_id in overrides:
         return int(overrides[tenant_id])
+    if phase is not None:
+        phase_overrides = (
+            getattr(settings, "approval_timeout_overrides_per_phase", None) or {}
+        )
+        if phase in phase_overrides:
+            return int(phase_overrides[phase])
     return int(getattr(settings, "approval_timeout_hours", _DEFAULT_TIMEOUT_HOURS))
 
 
@@ -77,7 +94,8 @@ async def _scan_pending_approvals() -> list[dict[str, Any]]:
             if pending is None:
                 continue
             tenant_id = str(getattr(state, "tenant_id", ""))
-            timeout_hours = _resolve_timeout_hours(tenant_id)
+            phase_value = getattr(pending, "type", None)
+            timeout_hours = _resolve_timeout_hours(tenant_id, phase_value)
             requested_at = getattr(pending, "requested_at", None)
             if requested_at is None:
                 continue

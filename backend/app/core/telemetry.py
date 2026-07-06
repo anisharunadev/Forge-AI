@@ -6,6 +6,8 @@ to a no-op provider so tests don't need a collector running.
 
 from __future__ import annotations
 
+import os
+
 from opentelemetry import metrics, trace
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
@@ -22,6 +24,48 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 _initialized = False
+_configured: bool = False
+
+
+def configure_otel(endpoint: str | None = None) -> bool:
+    """Configure the OTLP exporter for the active process.
+
+    Plan 01-03 (PITFALL-5 closure) — the canonical entry point for
+    "is OTel actually wired?". Returns ``True`` when an OTLP endpoint
+    resolves to a non-empty value (the SDK then ships spans + metrics
+    through it); ``False`` when the endpoint is unset, in which case
+    the backend falls back to the no-op exporter and audit / trace
+    data stays in-process.
+
+    The check prefers the ``OTEL_EXPORTER_OTLP_ENDPOINT`` env var
+    (the canonical OpenTelemetry SDK lookup key) and falls back to
+    the ``Settings.otlp_endpoint`` field. The env var wins because
+    the SDK itself reads it via the standard OTEL configuration
+    pipeline at exporter construction time.
+
+    Side effect: sets the module-level ``_configured`` flag so
+    :func:`is_otel_configured` can answer the readiness probe
+    without re-reading settings on every call.
+    """
+    global _configured
+    resolved = (
+        endpoint
+        if endpoint is not None
+        else os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
+        or settings.otlp_endpoint
+    )
+    _configured = bool(resolved and str(resolved).strip())
+    return _configured
+
+
+def is_otel_configured() -> bool:
+    """Return whether :func:`configure_otel` last resolved to a real endpoint.
+
+    Used by the ``/healthz`` ``otel_exporter_configured`` probe (Plan
+    01-03) and by the production-mode 503 gate so operators can detect
+    a misconfigured OTLP exporter before any cutover.
+    """
+    return _configured
 
 
 def init_telemetry() -> None:
@@ -33,6 +77,15 @@ def init_telemetry() -> None:
     if _initialized:
         return
 
+    # Resolve the OTLP endpoint once and cache the boolean for the
+    # /healthz otel_exporter_configured probe. Done up front so the
+    # probe can answer without re-reading env every request.
+    endpoint = (
+        os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
+        or settings.otlp_endpoint
+    )
+    configure_otel(endpoint)
+
     resource = Resource.create(
         {
             ResourceAttributes.SERVICE_NAME: settings.otel_service_name,
@@ -41,13 +94,13 @@ def init_telemetry() -> None:
         }
     )
 
-    if settings.otlp_endpoint:
+    if endpoint:
         span_exporter = OTLPSpanExporter(
-            endpoint=settings.otlp_endpoint,
+            endpoint=endpoint,
             insecure=settings.otel_exporter_otlp_insecure,
         )
         metric_exporter = OTLPMetricExporter(
-            endpoint=settings.otlp_endpoint,
+            endpoint=endpoint,
             insecure=settings.otel_exporter_otlp_insecure,
         )
 
@@ -60,7 +113,7 @@ def init_telemetry() -> None:
             metric_readers=[PeriodicExportingMetricReader(metric_exporter)],
         )
         metrics.set_meter_provider(meter_provider)
-        logger.info("telemetry.otlp_initialized", endpoint=settings.otlp_endpoint)
+        logger.info("telemetry.otlp_initialized", endpoint=endpoint)
     else:
         # No exporter — keep SDK defaults but still tag resources.
         trace.set_tracer_provider(TracerProvider(resource=resource, sampler=_build_sampler()))

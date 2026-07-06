@@ -1,0 +1,101 @@
+name: ci-hygiene-grep
+
+on:
+  pull_request:
+    paths:
+      - 'backend/app/api/v1/**'
+      - 'backend/app/agents/approval_gate.py'
+      - 'backend/app/agents/sdlc_state.py'
+      - 'scripts/check-approval-decorator-coverage.sh'
+      - '.github/workflows/ci-hygiene-grep.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'backend/app/api/v1/**'
+      - 'backend/app/agents/approval_gate.py'
+      - 'backend/app/agents/sdlc_state.py'
+      - 'scripts/check-approval-decorator-coverage.sh'
+      - '.github/workflows/ci-hygiene-grep.yml'
+
+concurrency:
+  group: ci-hygiene-grep-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ----------------------------------------------------------------
+  # Step 1 — Rule 1 baseline (re-check the no-direct-SDK guard is
+  # not regressed by the approval-gate work; no provider SDK imports
+  # are allowed).
+  # ----------------------------------------------------------------
+  rule1-provider-agnostic:
+    name: Step 1 / Rule 1 — Provider-agnostic guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Block forbidden provider SDK imports
+        run: |
+          set +e
+          ! grep -rnE '\b(openai|anthropic|google\.generativeai|langchain_openai|cohere|ollama|cerebras)\b' \
+              backend/app --include='*.py' \
+            | grep -v 'litellm' \
+            | grep -v '__pycache__'
+          rc=$?
+          if [ "$rc" -eq 0 ]; then
+            echo "::error::OPS-01 violation: forbidden provider SDK import detected"
+            exit 1
+          fi
+          echo "OK: no forbidden provider SDK imports"
+
+  # ----------------------------------------------------------------
+  # Step 2 — Tenant-id filter guard (Rule 2 — every record/query
+  # carries tenant_id + project_id).  Spot-check the SDLC state
+  # path stays faithful.
+  # ----------------------------------------------------------------
+  sdlc-state-tenant-keys:
+    name: Step 2 / Rule 2 — SDLCState typed-keys
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify SDLCState exposes tenant_id + project_id
+        run: |
+          python3 - <<'PY'
+          import re, sys
+          src = open('backend/app/agents/sdlc_state.py').read()
+          for needle in ('tenant_id:', 'project_id:', 'actor_id:', 'run_id:'):
+              if not re.search(rf'\b{re.escape(needle)}\b', src):
+                  print(f'::error::OPS-02 violation: missing {needle} in sdlc_state.py')
+                  sys.exit(1)
+          print('OK: SDLCState has tenant_id/project_id/actor_id/run_id keys')
+          PY
+
+  # ----------------------------------------------------------------
+  # Step 3 — Approval decorator coverage (PITFALL-1 closure).
+  # Every @router.{post,put,patch,delete} handler under
+  # backend/app/api/v1/ must carry @require_approval_phase(...)
+  # within 10 lines forward OR 3 lines above the decorator.
+  # Allowlist directive:
+  #     # allowlist: approval-decorator
+  # on the line directly above @router...  (last-resort escape hatch,
+  # must be reviewed in PR).
+  # ----------------------------------------------------------------
+  approval-decorator-coverage:
+    name: Step 3 / OPS-01 — Approval decorator coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check artifact-writing routes carry @require_approval_phase
+        run: |
+          bash scripts/check-approval-decorator-coverage.sh
+          # NOTE: For the M2 Plan 01-01 retrofit this gate surfaces 30
+          # pre-existing v1 routes that lack the decorator.  Each
+          # violation is documented in
+          # `.planning/phases/01-substrate-lock/01-01-SUMMARY.md`
+          # under "Known Stubs / Deferred Retrofit" with a target
+          # phase to close the gap.  The gate is in place to
+          # prevent *new* regressions going forward.

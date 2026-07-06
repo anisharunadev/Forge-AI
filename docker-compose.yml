@@ -177,6 +177,12 @@ services:
       # Keycloak — Keycloak doesn't issue tokens with the
       # ``aud="litellm-proxy"`` we set in our claims.
       JWT_PUBLIC_KEY_URL: "${JWT_PUBLIC_KEY_URL:-http://backend:8000/api/v1/auth/jwks.json}"
+      # M2 T-A6 — Plan 01-03.  Same OTLP endpoint as the backend so
+      # LiteLLM proxy traces + spend metrics land in the same collector
+      # as the rest of the substrate.  Optional — falls back to the
+      # default if the env var is unset, which is fine for local dev
+      # where the otel-collector service is not strictly required.
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}"
     ports:
       - "${LITELLM_PORT:-4000}:4000"
     depends_on:
@@ -388,6 +394,29 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    networks:
+      - forge-net
+
+  otel-collector:
+    # M2 T-A6 — Plan 01-03 (PITFALL-5 closure).  Local OpenTelemetry
+    # collector sidecar that the backend's OTLP exporter targets.
+    # Without this container, ``OTEL_EXPORTER_OTLP_ENDPOINT`` would
+    # resolve to a DNS name with no listener, spans would silently
+    # drop, and the /healthz ``otel_exporter_configured`` probe would
+    # return a misleading ``ok`` (the probe only checks env presence,
+    # not reachability — the production-mode 503 gate catches that
+    # case instead).  The collector config (./infra/otel-collector.yaml)
+    # already exists from the Phase 5 observability scaffolding; this
+    # service makes it runnable.
+    image: otel/opentelemetry-collector-contrib:0.96.0
+    container_name: forge-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./infra/otel-collector.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "${OTEL_GRPC_PORT:-4317}:4317"   # OTLP gRPC receiver
+      - "${OTEL_HTTP_PORT:-4318}:4318"   # OTLP HTTP receiver
     networks:
       - forge-net
 

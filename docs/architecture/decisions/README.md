@@ -14,9 +14,9 @@ This directory contains the locked Architecture Decision Records for the Forge A
 | [ADR-006](0006-terminal-center-xterm-native-pty.md) | Terminal Center via xterm.js + native PTY | Accepted | xterm.js to FastAPI WebSocket to native Python `pty`; workspace isolation + 100% audit capture. |
 | [ADR-007](0007-langgraph-sdlc-agent-orchestrator.md) | LangGraph as SDLC agent orchestrator | Accepted | SDLCState (Pydantic) + supervisor graph; GSD phases as nodes; native HITL and checkpointing. |
 | [ADR-008](0008-append-only-worm-audit-trail.md) | Append-only WORM audit trail | Accepted | Audit table with DB-level INSERT-only triggers + daily hash chain; tamper-evident, queryable, GDPR-compatible. |
-| [ADR-009](0009-cost-ledger-schema.md) | Cost Ledger Schema and Cumulative Cap | Accepted 2026-07-05 | typed cost_ledger rows (projected + actual) with cumulative per-run USD cap enforced by pre_call_admission. |
-| [ADR-010](0010-pilot-vs-mt-conflict-resolution.md) | Pilot-vs-Multi-Tenant Conflict-Resolution Policy | Accepted 2026-07-05 | Deterministic per-conflict decision table (5 categories) with pilot vs MT modes + escalation paths. |
-| [ADR-011](0011-kms.md) | Pilot-vs-Multi-Tenant KMS Topology | Accepted 2026-07-05 | Single forge-shared-pilot CMK until per_tenant_cmk_threshold (default 3); per-tenant CMKs at enrollment thereafter. |
+| [ADR-009](0009-cost-ledger-schema.md) | Cost Ledger Schema and Cumulative Cap | Accepted 2026-06-26 | typed cost_ledger rows (projected + actual) with cumulative per-run USD cap enforced by pre_call_admission. |
+| [ADR-010](0010-pilot-vs-mt-conflict-resolution.md) | Pilot-vs-Multi-Tenant Conflict-Resolution Policy | Accepted 2026-06-26 | Deterministic per-conflict decision table (5 categories) with pilot vs MT modes + escalation paths. |
+| [ADR-011](0011-kms.md) | Pilot-vs-Multi-Tenant KMS Topology | Accepted 2026-06-26 | Single forge-shared-pilot CMK until per_tenant_cmk_threshold (default 3); per-tenant CMKs at enrollment thereafter. |
 
 ## Format
 

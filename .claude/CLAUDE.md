@@ -18,7 +18,10 @@ Before any Next.js work, find and read the relevant doc in `node_modules/next/di
 
 ## Mission
 
-> **Forge is not an AI agent. Forge is the operating system that orchestrates agents, knowledge, governance, and delivery workflows.**
+> **Forge is the AI-native software delivery platform:** take a software
+> idea from requirement to production through governed AI workflows.
+
+> Forge is not an AI agent. Forge is the operating system that orchestrates agents, knowledge, governance, and delivery workflows.
 
 ## Read order
 

@@ -58,6 +58,7 @@ import { useIdeationIngestStatus } from '@/lib/hooks/useIdeationIngestStatus';
 import { useIdeationHotkeys, type HotkeyId } from '@/lib/hooks/useIdeationHotkeys';
 import { useIdeasAdapter, useApprovalsAdapter } from '@/lib/hooks/useIdeationAdapters';
 import { useRoadmaps, useArchPreviews } from '@/lib/hooks/useIdeation';
+import { useGeneratePRD } from '@/lib/api/ideation-hooks';
 import { PageHeader } from '@/components/shell';
 import { toast } from 'sonner';
 import type { Idea } from '@/lib/ideation/data';
@@ -134,6 +135,30 @@ export default function IdeationCenterPage() {
   const handleSelect = (idea: Idea) => {
     setSelected(idea);
     setDetailOpen(true);
+  };
+
+  // M15-1 Gap 1 — wire the PRD generate button to useGeneratePRD.
+  // Falls back to the first idea in the list when no idea is selected;
+  // the IdeationPRDPanel callback signature is parameterless so we
+  // resolve the target idea here at the page level.
+  const generatePRD = useGeneratePRD();
+  const handleGeneratePRD = () => {
+    const target = selected ?? ideas[0] ?? null;
+    if (!target) {
+      toast.error('Capture an idea first — PRDs are generated from approved ideas.');
+      return;
+    }
+    generatePRD.mutate(
+      { idea_id: target.id },
+      {
+        onSuccess: (prd) => {
+          toast.success('PRD generated', { description: prd.title ?? target.title });
+        },
+        onError: (err) => {
+          toast.error('PRD generation failed', { description: err.message });
+        },
+      },
+    );
   };
 
   const handleGeneratePreview = () => {
@@ -378,7 +403,7 @@ export default function IdeationCenterPage() {
                 // eslint-disable-next-line no-console
                 console.info('[ideation] open prd', { id: prd.id });
               }}
-              onGenerate={handleGeneratePreview}
+              onGenerate={handleGeneratePRD}
             />
           </TabsContent>
 
