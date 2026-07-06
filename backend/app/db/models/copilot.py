@@ -24,7 +24,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, Index, Numeric, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import (
@@ -121,6 +121,14 @@ class CopilotMessage(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     tokens_out: Mapped[int] = mapped_column(default=0, nullable=False)
     latency_ms: Mapped[int] = mapped_column(default=0, nullable=False)
     context_tokens: Mapped[int] = mapped_column(default=0, nullable=False)
+    # M10 — typing indicator flag. ``True`` while a streaming assistant
+    # response is in-flight (placeholder row visible to the UI before the
+    # model has finished). The Co-pilot service flips it to ``False`` on
+    # the terminal ``done`` event. Non-streaming ``chat()`` always
+    # persists with the default ``False``.
+    typing_indicator: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
 
     __table_args__ = (
         Index(
