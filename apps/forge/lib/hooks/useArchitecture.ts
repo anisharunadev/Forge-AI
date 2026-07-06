@@ -34,7 +34,7 @@ import {
 } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import { api } from '@/lib/api/client';
+import { api, renderErrorToast } from '@/lib/api/client';
 import {
   createSecurityReport,
   getSecurityPosture,
@@ -228,8 +228,9 @@ export function useCreateADR() {
       toast.success('ADR generated');
     },
     onError: (err) => {
-      const message = err instanceof Error ? err.message : 'Failed to create ADR';
-      toast.error(message);
+      toast.error(renderErrorToast(err, { title: 'Failed to create ADR' }).title, {
+        description: renderErrorToast(err).description,
+      });
     },
   });
 }

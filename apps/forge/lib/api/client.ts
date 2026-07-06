@@ -95,6 +95,20 @@ export class ApiError extends Error {
   headers?: Headers;
   /** Alias of `code` so callers can use either name. */
   errorCode?: string;
+  /**
+   * Sprint 3 (Crash #3): trace id extracted from the `x-request-id`
+   * response header (the backend's RequestIdMiddleware mints a UUID4
+   * per request). Surfaced in toasts so users can quote it to support.
+   * ponytail: optional — old envelopes without the header still work.
+   */
+  traceId?: string;
+  /**
+   * Sprint 3 (Crash #3): hint from the server (or our own heuristic)
+   * that the caller can safely retry the same request. Used by the
+   * ErrorToast to render a Retry button without the consumer having
+   * to pattern-match on `status`.
+   */
+  retryable: boolean;
 
   constructor(
     status: number,
@@ -102,6 +116,7 @@ export class ApiError extends Error {
     body: unknown,
     code?: string,
     headers?: Headers,
+    extras?: { traceId?: string; retryable?: boolean },
   ) {
     super(`${status}: ${detail}`);
     this.name = 'ApiError';
@@ -110,7 +125,20 @@ export class ApiError extends Error {
     this.errorCode = code;
     this.body = body;
     this.headers = headers;
+    this.traceId = extras?.traceId;
+    this.retryable = extras?.retryable ?? defaultRetryable(status);
   }
+}
+
+/**
+ * ponytail: heuristic, not gospel. 5xx and 408/429 are retryable; 4xx
+ * are not (caller error). The server can override via the `retryable`
+ * field in the response envelope; if it does, ApiError prefers that.
+ */
+function defaultRetryable(status: number): boolean {
+  if (status === 0) return true; // network error
+  if (status === 408 || status === 429) return true;
+  return status >= 500 && status < 600;
 }
 
 // ---------------------------------------------------------------------------
@@ -249,7 +277,36 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
       parsed?.detail ??
       parsed?.message ??
       (typeof raw === 'string' && raw ? raw : response.statusText);
-    throw new ApiError(response.status, detail, raw, parsed?.code, response.headers);
+
+    // Sprint 3 (Crash #3): pull the trace id out of the response header
+    // (the backend's RequestIdMiddleware mints one per request). Falls
+    // back to the body if the header is missing — old envelopes sometimes
+    // put trace info under `trace_id` / `request_id`.
+    const headerTrace = response.headers?.get?.('x-request-id') ?? undefined;
+    const bodyTrace =
+      parsed && typeof (parsed as Record<string, unknown>).traceId === 'string'
+        ? ((parsed as Record<string, unknown>).traceId as string)
+        : parsed && typeof (parsed as Record<string, unknown>).trace_id === 'string'
+          ? ((parsed as Record<string, unknown>).trace_id as string)
+          : parsed && typeof (parsed as Record<string, unknown>).request_id === 'string'
+            ? ((parsed as Record<string, unknown>).request_id as string)
+            : undefined;
+    const traceId = headerTrace ?? bodyTrace;
+
+    // Body-driven override: if the server says it's retryable, trust it.
+    const bodyRetry =
+      parsed && typeof (parsed as Record<string, unknown>).retryable === 'boolean'
+        ? ((parsed as Record<string, unknown>).retryable as boolean)
+        : undefined;
+
+    throw new ApiError(
+      response.status,
+      detail,
+      raw,
+      parsed?.code,
+      response.headers,
+      { traceId, retryable: bodyRetry },
+    );
   }
 
   // 200/201/202 with a JSON body.
@@ -318,3 +375,99 @@ export const COPILOT_ERROR_CODES = {
 
 export type CopilotErrorCode =
   (typeof COPILOT_ERROR_CODES)[keyof typeof COPILOT_ERROR_CODES];
+
+
+// ---------------------------------------------------------------------------
+// Sprint 3 (Crash #3): renderErrorToast
+//
+// A tiny helper that turns a thrown value (typically an ApiError) into the
+// {title, description, action} shape that `sonner`'s `toast.error()` consumes.
+// The description renders the stable error code + a short trace id; the
+// action is a Retry button when the error is flagged retryable.
+//
+// This lives in `client.ts` (the same module that produces the ApiError) so
+// any toast caller can pull the structured envelope without re-implementing
+// the parsing —
+//
+//   toast.error(renderErrorToast(err).title, {
+//     description: renderErrorToast(err).description,
+//   });
+//
+// Lives in `client.ts` (not a `.tsx` file) so the 45 existing imports keep
+// working; we use React.createElement instead of JSX so a non-JSX file
+// remains a valid TypeScript module.
+// ---------------------------------------------------------------------------
+
+import * as React from 'react';
+
+export interface RenderedErrorToast {
+  readonly title: string;
+  readonly description: React.ReactNode;
+  readonly action?: React.ReactNode;
+}
+
+export interface RenderErrorToastOptions {
+  readonly title?: string;
+  readonly onRetry?: () => void;
+}
+
+export function renderErrorToast(
+  error: unknown,
+  options: RenderErrorToastOptions = {},
+): RenderedErrorToast {
+  const apiErr = error instanceof ApiError ? error : null;
+  const status = apiErr?.status ?? 0;
+  const code = apiErr?.errorCode ?? apiErr?.code;
+  const traceId = apiErr?.traceId;
+  const retryable = apiErr?.retryable ?? false;
+  const fallbackMessage = error instanceof Error ? error.message : 'Unexpected error';
+  const title = options.title ?? `Request failed (${status || 'network'})`;
+
+  const codeLine = code
+    ? React.createElement(
+        'span',
+        {
+          'data-testid': 'error-toast-code',
+          className: 'font-mono text-xs text-muted-foreground',
+        },
+        code,
+      )
+    : null;
+
+  const traceLine = traceId
+    ? React.createElement(
+        'span',
+        {
+          'data-testid': 'error-toast-trace',
+          className: 'ml-2 font-mono text-xs text-muted-foreground',
+        },
+        `trace: ${traceId.slice(0, 8)}`,
+      )
+    : null;
+
+  const description = React.createElement(
+    'span',
+    null,
+    fallbackMessage,
+    codeLine || traceLine
+      ? React.createElement('span', { className: 'mt-1 block' }, codeLine, traceLine)
+      : null,
+  );
+
+  const action =
+    retryable && options.onRetry
+      ? React.createElement(
+          'button',
+          {
+            type: 'button',
+            onClick: () => options.onRetry?.(),
+            className:
+              'rounded-md border bg-background px-2 py-1 text-xs font-medium hover:bg-accent',
+            'data-testid': 'error-toast-retry',
+          },
+          'Retry',
+        )
+      : undefined;
+
+  return { title, description, action };
+}
