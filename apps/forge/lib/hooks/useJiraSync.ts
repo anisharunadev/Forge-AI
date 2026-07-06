@@ -20,7 +20,7 @@
 
 import { useMutation } from '@tanstack/react-query';
 
-import { syncFromJira, type JiraSyncResult } from '@/lib/connectors/data';
+import { syncFromJira, type JiraSyncResult } from '@/lib/connectors/api';
 
 /** The Jira-backed Project Intelligence row that `Sync from Jira` targets. */
 export type JiraSyncTarget = 'epic' | 'story' | 'prd';

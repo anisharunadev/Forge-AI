@@ -67,6 +67,8 @@ export interface Workflow {
   name: string;
   description?: string | null;
   definition: WorkflowDefinition;
+  status: WorkflowStatus;
+  tags?: ReadonlyArray<string>;
   created_by: string;
   created_at: string;
   updated_at: string;

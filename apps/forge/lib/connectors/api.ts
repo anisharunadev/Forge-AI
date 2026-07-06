@@ -35,6 +35,15 @@ import type {
   WebhookWire,
 } from './types';
 
+// Re-export the wire-format types so consumers can use api.OAuthCallbackResult
+// without reaching into ./types directly.
+export type {
+  OAuthCallbackResult,
+  RevealCredentialResult,
+  WebhookTestResult,
+  WebhookWire,
+};
+
 const ENV_BASE =
   process.env.NEXT_PUBLIC_FORGE_API_URL ?? process.env.FORA_FORGE_API_URL;
 
@@ -348,4 +357,77 @@ export function listWebhookDeliveries(id: string): Promise<WebhookDeliveryWire[]
   return request<WebhookDeliveryWire[]>(
     `/api/v1/webhooks/${encodeURIComponent(id)}/deliveries`,
   );
+}
+
+// ---------------------------------------------------------------------------
+// Lifecycle mutations (Step-55-v2 wire to /api/v1/connectors/* actions)
+// ---------------------------------------------------------------------------
+
+export interface InstallConnectorResult extends ConnectorWire {
+  /** Convenience alias used by some UI surfaces — mirrors `id`. */
+  readonly connector_id?: string;
+}
+
+export interface RotateConnectorResult {
+  readonly connector: ConnectorWire;
+  readonly rotated_at: string;
+}
+
+export interface TestConnectorResult {
+  readonly ok: boolean;
+  readonly latency_ms: number;
+  readonly message?: string;
+}
+
+export function rotateConnector(
+  connectorId: string,
+  input: { new_credentials: Record<string, unknown> },
+): Promise<RotateConnectorResult> {
+  const key = crypto.randomUUID();
+  return request<RotateConnectorResult>(
+    `/api/v1/connectors/${encodeURIComponent(connectorId)}/rotate`,
+    {
+      method: 'POST',
+      idempotencyKey: key,
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export function testConnector(connectorId: string): Promise<TestConnectorResult> {
+  const key = crypto.randomUUID();
+  return request<TestConnectorResult>(
+    `/api/v1/connectors/${encodeURIComponent(connectorId)}/test`,
+    { method: 'POST', idempotencyKey: key },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Jira sync (Step-55-v2 /api/v1/connectors/jira/sync)
+// ---------------------------------------------------------------------------
+
+export type JiraSyncTarget = 'epic' | 'story' | 'prd';
+
+export interface JiraSyncVariables {
+  readonly issue_key: string;
+  readonly idea_id?: string;
+}
+
+export interface JiraSyncResult {
+  readonly target: JiraSyncTarget;
+  readonly issue_key: string;
+  readonly id: string;
+  readonly synced_at: string;
+}
+
+export function syncFromJira(
+  target: JiraSyncTarget,
+  vars: JiraSyncVariables,
+): Promise<JiraSyncResult> {
+  const key = crypto.randomUUID();
+  return request<JiraSyncResult>('/api/v1/connectors/jira/sync', {
+    method: 'POST',
+    idempotencyKey: key,
+    body: JSON.stringify({ target, ...vars }),
+  });
 }

@@ -11,6 +11,7 @@
  */
 
 import type { Connector, ConnectorSyncEvent, ConnectorCredential } from './data';
+export type { Connector, ConnectorSyncEvent, ConnectorCredential } from './data';
 
 /**
  * Status of a connector's connection to the upstream system.
@@ -272,14 +273,15 @@ export function wireToCredential(wire: ConnectorCredentialWire): ConnectorCreden
         : wire.type === 'pat'
           ? 'service_account'
           : wire.type === 'webhook-secret'
-            ? 'webhook'
+            ? 'webhook_secret'
             : 'service_account',
-    scope: wire.scope,
-    preview: wire.preview,
     lengthChars: 32,
     expiresAt: wire.expires_at ?? undefined,
     lastRotatedAt: wire.last_rotated_at,
     rotatedBy: wire.created_by,
+    scopes: [],
+    owner: { name: wire.created_by, initials: wire.created_by.slice(0, 2).toUpperCase() },
+    fingerprint: '',
     status: wire.expires_at && new Date(wire.expires_at).getTime() < Date.now()
       ? 'expired'
       : wire.expires_at && new Date(wire.expires_at).getTime() - Date.now() < 14 * 86_400_000

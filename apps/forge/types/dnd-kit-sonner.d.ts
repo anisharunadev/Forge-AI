@@ -62,16 +62,55 @@ declare module '@axe-core/react' {
   export default axe;
 }
 declare module 'framer-motion' {
+  type MotionComponent = React.FC<Record<string, unknown>>;
+  // Re-declare the structural shape of `motion` so JSX resolution
+  // has a usable type. The real framer-motion types live in
+  // node_modules/framer-motion/dist/index.d.ts but their intersection
+  // type for `motion` collapses to a small subset under TypeScript
+  // 5.9, so we re-declare the elements actually used in apps/forge/.
+  // See docs/architecture/typescript-patterns.md for context.
   export const motion: {
-    span: React.FC<{
-      layoutId?: string;
-      className?: string;
-      transition?: { type?: string; duration?: number; ease?: number[] };
-      children?: React.ReactNode;
-      animate?: Record<string, unknown>;
-      'aria-hidden'?: boolean | string;
-    }>;
-    div: React.FC<Record<string, unknown>>;
+    span: MotionComponent;
+    div: MotionComponent;
+    article: MotionComponent;
+    li: MotionComponent;
+    nav: MotionComponent;
+    section: MotionComponent;
+    aside: MotionComponent;
+    header: MotionComponent;
+    footer: MotionComponent;
+    main: MotionComponent;
+    ul: MotionComponent;
+    ol: MotionComponent;
+    figure: MotionComponent;
+    figcaption: MotionComponent;
+    h1: MotionComponent;
+    h2: MotionComponent;
+    h3: MotionComponent;
+    h4: MotionComponent;
+    h5: MotionComponent;
+    h6: MotionComponent;
+    blockquote: MotionComponent;
+    pre: MotionComponent;
+    table: MotionComponent;
+    thead: MotionComponent;
+    tbody: MotionComponent;
+    tr: MotionComponent;
+    td: MotionComponent;
+    th: MotionComponent;
+    form: MotionComponent;
+    label: MotionComponent;
+    button: MotionComponent;
+    input: MotionComponent;
+    textarea: MotionComponent;
+    select: MotionComponent;
+    option: MotionComponent;
+    a: MotionComponent;
+    p: MotionComponent;
   };
-  export const AnimatePresence: React.FC<{ children: React.ReactNode }>;
+  // AnimatePresence accepts mode and other AnimatePresenceProps.
+  // Type as React.FC<Record<string, unknown>> so consumers can
+  // pass mode="wait", initial={false}, etc., without the
+  // stub rejecting known-good props.
+  export const AnimatePresence: React.FC<Record<string, unknown>>;
 }

@@ -68,17 +68,13 @@ export function useAuditStream(): { status: Status; events: AuditEvent[] } {
             type?: string;
           };
           if (data?.type === 'event' && typeof data.id === 'string') {
-            setEvents((prev) =>
-              [
-                {
-                  id: data.id as string,
-                  type: 'event',
-                  action: String(data.action ?? ''),
-                  ts: String(data.ts ?? ''),
-                },
-                ...prev,
-              ].slice(0, MAX_EVENTS),
-            );
+            const ev: AuditEvent = {
+              id: data.id,
+              type: 'event',
+              action: String(data.action ?? ''),
+              ts: String(data.ts ?? ''),
+            };
+            setEvents((prev) => [ev, ...prev].slice(0, MAX_EVENTS));
           }
         } catch {
           // ponytail: ignore malformed frames; the next reconnect will

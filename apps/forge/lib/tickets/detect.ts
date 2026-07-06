@@ -31,34 +31,34 @@ export function detectTicket(input: string): DetectedTicket | null {
   const jiraUrl = trimmed.match(
     /(https?:\/\/[^\s]+\.atlassian\.net\/browse\/[A-Z][A-Z0-9_]+-\d+)/i,
   );
-  if (jiraUrl) {
+  if (jiraUrl && jiraUrl[1]) {
     const key = jiraUrl[1].split('/').pop()!.toUpperCase();
-    return { source: 'jira', key, url: jiraUrl[1], raw: jiraUrl[0] };
+    return { source: 'jira', key, url: jiraUrl[1], raw: jiraUrl[0] ?? jiraUrl[1] };
   }
   const jiraKey = trimmed.match(/\b([A-Z][A-Z0-9_]+-\d+)\b/);
-  if (jiraKey) {
+  if (jiraKey && jiraKey[1]) {
     return {
       source: 'jira',
       key: jiraKey[1].toUpperCase(),
       url: `https://example.atlassian.net/browse/${jiraKey[1].toUpperCase()}`,
-      raw: jiraKey[0],
+      raw: jiraKey[0] ?? jiraKey[1],
     };
   }
 
   // GitHub — `github.com/org/repo#123` or `org/repo#123`.
   const ghUrl = trimmed.match(/(https?:\/\/github\.com\/[^\s]+\#\d+)/i);
-  if (ghUrl) {
+  if (ghUrl && ghUrl[1]) {
     const m = ghUrl[1].match(/\#(\d+)/);
-    const num = m ? m[1] : '?';
-    return { source: 'github', key: `#${num}`, url: ghUrl[1], raw: ghUrl[0] };
+    const num = m && m[1] ? m[1] : '?';
+    return { source: 'github', key: `#${num}`, url: ghUrl[1], raw: ghUrl[0] ?? ghUrl[1] };
   }
   const ghKey = trimmed.match(/\b([\w.-]+\/[\w.-]+)#(\d+)\b/);
-  if (ghKey) {
+  if (ghKey && ghKey[1] && ghKey[2]) {
     return {
       source: 'github',
       key: `${ghKey[1]}#${ghKey[2]}`,
       url: `https://github.com/${ghKey[1]}/issues/${ghKey[2]}`,
-      raw: ghKey[0],
+      raw: ghKey[0] ?? `${ghKey[1]}#${ghKey[2]}`,
     };
   }
 
@@ -66,9 +66,9 @@ export function detectTicket(input: string): DetectedTicket | null {
   const linUrl = trimmed.match(
     /(https?:\/\/linear\.app\/[^\s]+\/issue\/[A-Z][A-Z0-9]+-\d+)/i,
   );
-  if (linUrl) {
+  if (linUrl && linUrl[1]) {
     const key = linUrl[1].split('/').pop()!.toUpperCase();
-    return { source: 'linear', key, url: linUrl[1], raw: linUrl[0] };
+    return { source: 'linear', key, url: linUrl[1], raw: linUrl[0] ?? linUrl[1] };
   }
 
   return null;

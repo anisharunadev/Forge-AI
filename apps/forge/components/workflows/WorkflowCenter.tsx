@@ -53,10 +53,8 @@ import {
 } from '@/lib/hooks/useWorkflows';
 import { canvasToWire } from '@/lib/workflows/adapter';
 import type { Workflow, WorkflowRun } from '@/lib/workflows/types';
-import {
-  WORKFLOW_TEMPLATES,
-  type WorkflowTemplate,
-} from '@/lib/workflow/templates';
+import { WORKFLOW_TEMPLATES } from '@/lib/workflow/templates';
+import type { WorkflowTemplate } from '@/lib/workflow/types';
 import { useWorkflowStore } from '@/components/workflow/store';
 
 type Tab = 'my' | 'templates' | 'shared' | 'drafts';

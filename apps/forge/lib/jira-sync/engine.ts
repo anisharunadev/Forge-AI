@@ -35,6 +35,7 @@ export const STATUS_MAP: Record<StoryStatus, JiraStatusName> = {
   todo: 'To Do',
   in_progress: 'In Progress',
   in_review: 'In Review',
+  qa: 'QA',
   done: 'Done',
   blocked: 'To Do',
 };

@@ -31,7 +31,7 @@ import {
   type InstallConnectorResult,
   type RotateConnectorResult,
   type TestConnectorResult,
-} from '@/lib/connectors/data';
+} from '@/lib/connectors/api';
 
 /** Stable query keys so the mutation cache survives HMR / route changes. */
 export const connectorLifecycleQueryKeys = {

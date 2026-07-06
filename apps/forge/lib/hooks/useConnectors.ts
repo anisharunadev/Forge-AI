@@ -54,6 +54,7 @@ import {
   type ConnectorSyncEventWire,
   type ConnectorWire,
   type WebhookDeliveryWire,
+  type WebhookWire,
 } from '@/lib/connectors/types';
 import {
   ConnectorApiError,

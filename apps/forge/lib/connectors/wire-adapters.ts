@@ -296,10 +296,12 @@ function computeSuccessRate(success: number, error: number): number {
  * Map a wire `WebhookDeliveryWire` to the legacy delivery row shape.
  */
 function deliveryToRow(d: WebhookDeliveryWire): WebhookDeliveryRow {
+  const status: 'success' | 'pending' | 'failed' =
+    d.status === 'ok' ? 'success' : d.status === 'error' ? 'failed' : 'pending';
   return {
     id: d.id,
     at: d.attempted_at,
-    status: d.status,
+    status,
     code: d.response_code,
     latencyMs: d.duration_ms,
   };
@@ -459,7 +461,7 @@ export function buildFailureTrend(
   }
 
   for (const ev of events) {
-    if (ev.status !== 'error' && ev.status !== 'failed') continue;
+    if (ev.status !== 'error') continue;
     const at = ev.completed_at ?? ev.started_at;
     const day = at.slice(0, 10);
     if (!buckets.has(day)) continue;

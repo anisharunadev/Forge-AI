@@ -92,7 +92,7 @@ export function useCreateWorkflow() {
 
 export function useUpdateWorkflow(id: string) {
   const qc = useQueryClient();
-  return useMutation<Workflow, Error, WorkflowUpdate>({
+  return useMutation<Workflow, Error, WorkflowUpdate, { previous: Workflow | undefined }>({
     mutationFn: (patch) => updateWorkflow(id, patch),
     // Optimistic merge so the canvas reflects the change immediately.
     onMutate: async (patch) => {
@@ -122,7 +122,7 @@ export function useUpdateWorkflow(id: string) {
 
 export function useDeleteWorkflow() {
   const qc = useQueryClient();
-  return useMutation<void, Error, string>({
+  return useMutation<void, Error, string, { previous: Workflow[] | undefined }>({
     mutationFn: (id) => deleteWorkflow(id),
     onMutate: async (id) => {
       await qc.cancelQueries({ queryKey: workflowQueryKeys.all });
@@ -173,7 +173,10 @@ export function useWorkflowRuns(workflowId: string | null | undefined) {
   return useQuery<WorkflowRun[]>({
     queryKey: workflowQueryKeys.runs.list(workflowId ?? undefined),
     enabled: Boolean(workflowId),
-    queryFn: () => listWorkflowRuns(workflowId),
+    queryFn: () => {
+      if (!workflowId) return Promise.resolve([] as WorkflowRun[]);
+      return listWorkflowRuns(workflowId);
+    },
     // Poll while there are active runs so the list self-refreshes.
     refetchInterval: (q) => {
       const data = q.state.data as WorkflowRun[] | undefined;
@@ -276,7 +279,7 @@ export function useRunLiveEvents(runId: string | null): {
       return;
     }
 
-    const token = useAuth.getState().getToken() ?? '';
+    const token = useAuth.getState().token ?? '';
     const url = `${FORGE_API_BASE_URL}/workflows/runs/${encodeURIComponent(
       runId,
     )}/events?token=${encodeURIComponent(token)}`;
