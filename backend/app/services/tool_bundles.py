@@ -317,10 +317,118 @@ class ToolBundleRegistry:
 tool_bundles = ToolBundleRegistry()
 
 
+# ---------------------------------------------------------------------------
+# Plan 01-06 — Per-agent tool bundle registry.
+#
+# Distinct from the stage-keyed ``ToolBundleRegistry`` above: this
+# registry maps ``agent_name → ToolBundle`` so the MCP router's
+# ``enforceToolBundle(agent_name, tool_name)`` hook can answer in O(1)
+# without consulting stage metadata. Same least-privilege intent
+# (default deny), different boundary. The two registries coexist so
+# neither caller's contract breaks.
+# ---------------------------------------------------------------------------
+
+
+from app.schemas.tool_bundle import ToolBundle as _AgentToolBundle
+from app.schemas.tool_bundle import ToolBundlesRegistry as _AgentToolBundlesRegistry
+
+
+_DEFAULT_AGENT_BUNDLES: dict[str, _AgentToolBundle] = {
+    "code_validator": _AgentToolBundle(
+        agent_name="code_validator",
+        allowed_tools=[
+            "read_file",
+            "grep",
+            "run_lint",
+            "run_typecheck",
+            "run_security_scan",
+        ],
+        description="F-501 sub-graph: read + scanner tools only.",
+    ),
+    "merge_gate": _AgentToolBundle(
+        agent_name="merge_gate",
+        allowed_tools=[
+            "read_validation_report",
+            "write_merge_decision",
+            "read_cost_ledger",
+        ],
+        description="F-503 rules-only gate: read + decision write.",
+    ),
+    "refactor_agent": _AgentToolBundle(
+        agent_name="refactor_agent",
+        allowed_tools=[
+            "read_file",
+            "write_file",
+            "run_tests",
+            "run_lint",
+            "run_typecheck",
+        ],
+        description="F-601 refactor agent: read/write + tests + lint/typecheck.",
+    ),
+    "steering_rules": _AgentToolBundle(
+        agent_name="steering_rules",
+        allowed_tools=[
+            "read_steering_policy",
+            "write_steering_decision",
+        ],
+        description="F-504 steering rules engine: policy read + decision write.",
+    ),
+    "workflow_budget": _AgentToolBundle(
+        agent_name="workflow_budget",
+        allowed_tools=[
+            "read_run_budget",
+            "write_run_budget",
+        ],
+        description="Workflow-budget admission control.",
+    ),
+    "day_one_bootstrap": _AgentToolBundle(
+        agent_name="day_one_bootstrap",
+        allowed_tools=[
+            "read_tenant_config",
+            "write_bootstrap_report",
+        ],
+        description="F-507 day-one bootstrap: tenant config read + report write.",
+    ),
+    "sdlc_agent": _AgentToolBundle(
+        agent_name="sdlc_agent",
+        allowed_tools=[
+            "read_file",
+            "write_file",
+            "grep",
+            "run_tests",
+            "run_lint",
+            "run_typecheck",
+            "kg_read",
+            "kg_write",
+            "audit_read",
+        ],
+        description="SDLC supervisor: broadest bundle (per locked decision).",
+    ),
+}
+
+
+default_registry: _AgentToolBundlesRegistry = _AgentToolBundlesRegistry(
+    bundles=_DEFAULT_AGENT_BUNDLES,
+    default_allow=False,
+)
+
+
+def is_tool_allowed(agent_name: str, tool_name: str) -> bool:
+    """Module-level convenience — delegates to ``default_registry``.
+
+    The MCP router calls this from its pre-dispatch hook. Ponytail:
+    one-line wrapper around the Pydantic method so call sites import
+    a function (not a registry object).
+    """
+    return default_registry.is_tool_allowed(agent_name, tool_name)
+
+
 __all__ = [
     "DEFAULT_BUNDLES",
     "ToolBundle",
     "ToolBundleRegistry",
     "ToolBundleViolation",
     "tool_bundles",
+    "default_registry",  # plan 01-06
+    "is_tool_allowed",   # plan 01-06
 ]
