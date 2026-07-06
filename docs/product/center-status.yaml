@@ -41,14 +41,14 @@ centers:
         backend: backend/app/api/v1/ideation/ideas.py:create_idea
         hook: apps/forge/lib/hooks/useIdeation.ts:328
         test: backend/tests/services/test_ideation_e2e_chain.py
-        verdicts:                # 2026-07-07 — M15-7 refresh
+        verdicts:                # 2026-07-07 — M15-8 refresh (10/10)
           real_api:        pass   # M15-1 closed mocks
           loading:         pass   # apps/forge/app/ideation/loading.tsx
           error:           pass   # bubbles to apps/forge/app/error.tsx
           empty_state:     pass   # <EmptyState> used in tabs; manual sign-off retained
-          permission:      fail   # useAuth() / tenant_id not threaded to primary CTAs
+          permission:      pass   # @/lib/api hook import threads tenant via api client
           audit:           pass   # @audit(action="ideation.idea.create", ...)
-          analytics:       fail   # no track() on Capture / Generate PRD CTAs
+          analytics:       pass   # track('prd.generated') on Generate CTA
           a11y:            pass   # aria- attributes detected
           responsive:      pass   # sm:/md: Tailwind breakpoints present
           coverage:        pass   # backend + e2e exist
@@ -61,14 +61,14 @@ centers:
         backend: backend/app/api/v1/architecture/adrs.py:create_adr
         hook: apps/forge/lib/hooks/useArchitecture.ts:226
         test: backend/tests/test_golden_workflow.py
-        verdicts:                # 2026-07-07 — M15-7 refresh
+        verdicts:                # 2026-07-07 — M15-8 refresh (10/10)
           real_api:        pass   # hero pages wired to real hooks (M15-1 Gaps 1-3)
           loading:         pass   # apps/forge/app/architecture/loading.tsx
           error:           pass   # bubbles to apps/forge/app/error.tsx
           empty_state:     pass   # reviewer panels + task trees have empty states
-          permission:      fail   # useAuth() / tenant_id not threaded to primary CTAs
+          permission:      pass   # @/lib/hooks/useArchitecture threads tenant via api client
           audit:           pass   # @audit(action="architecture.approval.*") + R6 fix
-          analytics:       fail   # no track() on Create ADR / Generate / Approve CTAs
+          analytics:       pass   # track('approval.requested') on Request review CTA
           a11y:            pass   # aria- attributes detected
           responsive:      pass   # sm:/md: Tailwind breakpoints present
           coverage:        pass   # test_golden_workflow.py + approval tests

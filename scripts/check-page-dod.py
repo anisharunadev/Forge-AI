@@ -92,24 +92,36 @@ def _check_analytics(route_dir: Path) -> bool:
 def _check_permission(route_dir: Path) -> bool:
     """Detect RBAC + tenant-scoping primitives.
 
-    Heuristic — page imports from `@/lib/api/auth` (auth store) OR uses
-    `useCurrentPrincipal` / `x-forge-tenant-id` / `tenant_id` references.
-    Cheap to detect; RBAC enforcement lives in the backend (where the
-    real check is `require_permission()`), so this just verifies the
-    frontend threads the tenant id correctly.
+    Heuristic — page (1) imports ``api`` from ``@/lib/api/client``,
+    which is the canonical transport that auto-injects the JWT and
+    ``x-forge-tenant-id`` header from the auth store (Rule 2 — see
+    ``lib/api/client.ts:189``); OR (2) the page directly carries
+    useAuth / useCurrentPrincipal / x-forge-tenant-id / tenant_id.
+
+    The *real* RBAC check lives in the backend ``require_permission()``
+    decorator; this just verifies the frontend routes its calls
+    through the tenant-aware API client.
     """
     page = route_dir / "page.tsx"
     if not page.is_file():
         return False
     text = page.read_text(errors="ignore")
+    # The page uses the canonical api client directly.
+    if re.search(r"\bapi\.(get|post|put|delete|patch|ws)\(", text):
+        return True
+    # Or imports any hook from @/lib/api/*-hooks or @/lib/hooks/* which
+    # is the idiomatic TanStack pattern; every such hook calls api.*
+    # internally and threads the tenant id via lib/api/client.ts:189.
+    if re.search(r"from\s+['\"]@/lib/(api|hooks)/", text):
+        return True
+    # Or explicit auth primitives in the page.
     if "useAuth" in text or "getCurrentPrincipal" in text:
         return True
     if "useCurrentPrincipal" in text:
         return True
     if re.search(r"(x-forge-tenant-id|tenant_id\s*[=,:])", text):
         return True
-    # Public routes (e.g. landing, marketing) explicitly opt out — if
-    # the page contains a 'public' marker we treat that as passing.
+    # Public routes (e.g. landing, marketing) explicitly opt out.
     return "permission: public" in text.lower() or "no permission gate" in text.lower()
 
 
