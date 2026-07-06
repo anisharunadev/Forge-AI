@@ -85,6 +85,7 @@ from app.api.ws.ideation import router as ideation_ws_router
 from app.api.ws.runs import router as runs_ws_router
 from app.api.ws.terminal import router as terminal_ws_router
 from app.api.ws.terminal_broadcast import router as terminal_broadcast_ws_router
+from app.observability.metrics import router as metrics_router
 from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
 from app.core.middleware import RequestIdMiddleware, TenantContextMiddleware
@@ -433,6 +434,10 @@ app.include_router(api_router, prefix="/api/v1")
 # it's reachable from any network namespace and stays valid even if
 # the v1 surface is renamed.
 app.include_router(healthz_router)
+# Sprint 3 (Crash #4): Prometheus /metrics endpoint at app level.
+# Intentionally NOT under /api/v1/ so the scrape config stays decoupled
+# from the API versioning scheme (per the Sprint 3 spec — Risks row).
+app.include_router(metrics_router)
 app.include_router(terminal_ws_router)
 app.include_router(terminal_broadcast_ws_router)
 app.include_router(audit_ws_router)

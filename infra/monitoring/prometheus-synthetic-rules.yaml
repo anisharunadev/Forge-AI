@@ -36,3 +36,16 @@ groups:
           team: platform
         annotations:
           summary: "Forge /forge/models failing for 10+ minutes"
+
+# Sprint 3 (Crash #4) — scrape target for the FastAPI app.
+# Add the following to the Prometheus scrape config (NOT this file —
+# this file is alerting rules; the scrape config lives in the
+# Prometheus deployment manifest). The endpoint is mounted at app
+# level, NOT under /api/v1/, so the scrape config stays decoupled from
+# API versioning.
+#
+#   - job_name: forge-backend
+#     metrics_path: /metrics
+#     scrape_interval: 15s
+#     static_configs:
+#       - targets: ['forge-backend:8000']
