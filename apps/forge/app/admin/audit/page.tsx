@@ -64,7 +64,7 @@ export default function AdminAuditPage() {
       {tab === 'history' ? (
         <AuditTimelineVirtualized records={history} />
       ) : (
-        <LivePanel status={status} events={events} />
+        <LivePanel status={status} events={events} reconnect={reconnect} />
       )}
     </div>
   );
@@ -98,18 +98,30 @@ function TabButton({
 function LivePanel({
   status,
   events,
+  reconnect,
 }: {
   status: ReturnType<typeof useAuditStream>['status'];
   events: ReturnType<typeof useAuditStream>['events'];
+  reconnect: () => void;
 }) {
   return (
-    <section aria-label="Live audit feed" data-testid="audit-live-panel">
+    <section aria-label="Live audit feed" data-testid="audit-live-panel" data-status={status}>
       <div className="mb-3 flex items-center gap-2 text-sm" data-testid="audit-live-status">
         <span
           aria-label={`connection-${status}`}
           className={cn('inline-block h-2 w-2 rounded-full', STATUS_DOT[status] ?? 'bg-muted-foreground')}
         />
         <span className="text-muted-foreground">{labelFor(status)}</span>
+        {(status === 'reconnecting' || status === 'closed') && (
+          <button
+            type="button"
+            onClick={reconnect}
+            className="ml-auto rounded-md border bg-background px-2 py-1 text-xs font-medium hover:bg-accent"
+            data-testid="audit-live-retry"
+          >
+            Retry
+          </button>
+        )}
       </div>
 
       {events.length === 0 ? (
@@ -154,7 +166,7 @@ function labelFor(status: string): string {
     case 'reconnecting':
       return 'Reconnecting…';
     case 'closed':
-      return 'Disconnected';
+      return 'Disconnected — retry';
     case 'connecting':
     default:
       return 'Connecting…';

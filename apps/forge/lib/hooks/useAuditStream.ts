@@ -16,7 +16,7 @@
  * `audit_events`).
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useAuth } from '@/lib/api/auth';
 
@@ -31,13 +31,25 @@ type Status = 'connecting' | 'open' | 'reconnecting' | 'closed';
 
 const MAX_EVENTS = 500;
 
-export function useAuditStream(): { status: Status; events: AuditEvent[] } {
+export function useAuditStream(): {
+  status: Status;
+  events: AuditEvent[];
+  /** Sprint 3 (Crash #5): force a reconnect — the audit-live panel
+   *  renders a Retry button when the WS is closed/reconnecting and the
+   *  user wants to skip the exponential backoff. */
+  reconnect: () => void;
+} {
   const [status, setStatus] = useState<Status>('connecting');
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
   const attemptsRef = useRef(0);
   const timerRef = useRef<number | null>(null);
   const cancelledRef = useRef(false);
+  // connectRef lets the `reconnect` callback reach the closure-scoped
+  // `connect` function without forcing the useEffect to re-run on every
+  // render. The ref is set inside the effect (post-mount), so callers
+  // before first render get a no-op.
+  const connectRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     cancelledRef.current = false;
@@ -103,9 +115,11 @@ export function useAuditStream(): { status: Status; events: AuditEvent[] } {
       timerRef.current = window.setTimeout(connect, delay);
     };
 
+    connectRef.current = connect;
     connect();
     return () => {
       cancelledRef.current = true;
+      connectRef.current = null;
       if (timerRef.current !== null) {
         window.clearTimeout(timerRef.current);
         timerRef.current = null;
@@ -115,5 +129,15 @@ export function useAuditStream(): { status: Status; events: AuditEvent[] } {
     };
   }, []);
 
-  return { status, events };
+  const reconnect = useCallback(() => {
+    // Cancel any pending backoff timer and force a fresh attempt.
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    attemptsRef.current = 0;
+    connectRef.current?.();
+  }, []);
+
+  return { status, events, reconnect };
 }
