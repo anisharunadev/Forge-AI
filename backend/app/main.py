@@ -376,6 +376,16 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         _cost_task = cost_aggregate.start(get_session_factory(), LiteLLMBaseClient(), redis=None)
     except Exception as _cost_exc:  # noqa: BLE001
         logger.warning("forge.startup.cost_aggregator_failed", error=str(_cost_exc))
+    # M2 Plan 01-04 (PITFALL-6) — start the in-process scheduler so
+    # the approval-timeout scan + sibling cron jobs run inside the
+    # FastAPI lifespan. ``Scheduler.start()`` is idempotent and
+    # tolerates a missing APScheduler install (logs and continues).
+    try:
+        from app.services.scheduler.service import scheduler as _sched  # noqa: PLC0415
+
+        _sched.start()
+    except Exception as _sched_exc:  # noqa: BLE001
+        logger.warning("forge.startup.scheduler_failed", error=str(_sched_exc))
     logger.info("forge.startup.boot_complete")
     try:
         yield
@@ -385,6 +395,15 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         # a live bus to dispatch on. The monitor's ``stop()`` is
         # idempotent and a noop when never started.
         await health_monitor.stop()
+        # Stop the in-process scheduler before the bus so any
+        # in-flight tick can still publish on shutdown. Mirrors the
+        # health_monitor ordering above.
+        try:
+            from app.services.scheduler.service import scheduler as _sched  # noqa: PLC0415
+
+            _sched.shutdown()
+        except Exception:  # noqa: BLE001
+            pass
         await bus.stop()
         try:
             slo_evaluator.stop(_slo_task)

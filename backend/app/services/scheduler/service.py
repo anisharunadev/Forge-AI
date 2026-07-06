@@ -140,7 +140,7 @@ class Scheduler:
             max_instances=1,
             coalesce=True,
         )
-        # M2 T-A7 — PITFALL-6 closure.  Every 5 minutes the
+        # M2 T-A7 — PITFALL-6 closure.  Every 60 seconds the
         # approval-timeout scan walks the in-process run registry for
         # pending approvals whose ``requested_at + timeout_hours``
         # has passed.  Each stale approval gets
@@ -148,11 +148,14 @@ class Scheduler:
         # audit + WS subscribers can mark the run as failed and the
         # operator dashboard can render the 'Stale approval' badge.
         # Per-tenant timeout overrides land via
-        # :attr:`Settings.approval_timeout_overrides`.
+        # :attr:`Settings.approval_timeout_overrides`; per-phase
+        # overrides via :attr:`Settings.approval_timeout_overrides_per_phase`.
+        # 60s is the Plan 01-04 target — operator sees the badge
+        # within one minute of a stale approval.
         self._scheduler.add_job(
             approval_timeout_scan,
             "interval",
-            minutes=5,
+            seconds=60,
             id="approval_timeout_scan",
             replace_existing=True,
             max_instances=1,

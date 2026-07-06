@@ -22,7 +22,7 @@ from app.db.models.tenant import Tenant
 from app.db.rls import tenant_context
 from app.db.session import get_session_factory
 from app.services.audit_service import audit_service
-from app.services.event_bus import EventType, event_bus
+from app.services.event_bus import EventType, bus
 
 logger = get_logger(__name__)
 
@@ -120,7 +120,7 @@ async def _check_one(tenant_id: str, window_start: datetime, now: datetime) -> N
 
     # Best-effort Pulse event for live dashboards.
     try:
-        await event_bus.publish(
+        await bus.publish(
             EventType.LITELLM_CALL_COMPLETED,
             {"kind": "anomaly_spike", **payload},
             tenant_id=tenant_id,
