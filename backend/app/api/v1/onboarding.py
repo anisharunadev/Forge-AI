@@ -35,6 +35,7 @@ from app.services.project_onboarding.wizard import (
     WizardError,
     onboarding_wizard,
 )
+from app.services.ttfs_service import ttfs_service
 
 logger = get_logger(__name__)
 
@@ -371,6 +372,31 @@ async def provision_status(
             "finished_at": None,
         }
     return job
+# ---------------------------------------------------------------------------
+# M15-3 — Time-to-first-success percentiles (Rec #5)
+# ---------------------------------------------------------------------------
+@router.get("/ttfs")
+@audit(action="onboarding.ttfs.read", target_type="onboarding_session")
+async def ttfs(
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("onboarding:read")),
+    days: int = 30,
+) -> dict[str, Any]:
+    """Time-to-first-success percentiles (M15-3).
+
+    Reads ``onboarding.start`` and ``ideation.idea.create`` /
+    ``ideation.prd.generate`` audit events for the calling tenant
+    over ``days`` window and returns p50/p95 elapsed seconds.
+
+    Empty samples return ``p50_seconds = 0`` so dashboards can render
+    'no data yet' without a special case.
+    """
+    report = await ttfs_service.compute(
+        tenant_id=principal.tenant_id,
+        project_id=None,
+        window_days=min(max(days, 1), 365),
+    )
+    return report.as_dict()
 
 
 __all__ = ["router"]
