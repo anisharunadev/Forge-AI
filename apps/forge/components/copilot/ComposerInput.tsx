@@ -62,7 +62,10 @@ import {
   COPILOT_ERROR_CODES,
   ForgeApiError,
 } from '@/lib/forge-api';
-import { dispatchCopilotRateLimit } from '@/hooks/use-copilot-toasts';
+import {
+  dispatchCopilotGuardrailDenied,
+  dispatchCopilotRateLimit,
+} from '@/hooks/use-copilot-toasts';
 import { useCopilotStore } from '@/lib/store/copilot';
 import { cn } from '@/lib/utils';
 
@@ -227,6 +230,7 @@ export function ComposerInput() {
           const isRateLimit =
             status === 429 ||
             errorCode === COPILOT_ERROR_CODES.RATE_LIMIT_EXCEEDED;
+          const isGuardrail = errorCode === COPILOT_ERROR_CODES.GUARDRAIL_DENIED;
 
           if (isRateLimit) {
             // Retry-After header is the authoritative source per
@@ -241,6 +245,9 @@ export function ComposerInput() {
               ? retryAfter
               : 60;
             dispatchCopilotRateLimit(safeRetry);
+            setError(null);
+          } else if (isGuardrail) {
+            dispatchCopilotGuardrailDenied();
             setError(null);
           } else if (status === 403) {
             setPermissionDenied(true);

@@ -56,7 +56,7 @@ import { ComposerInput } from './ComposerInput';
 import { CopilotHeader } from './CopilotHeader';
 import { DraftReviewModal } from './DraftReviewModal';
 import { EmptyState } from './EmptyState';
-import { ErrorBanner, RateLimitToast } from './ErrorBanner';
+import { ErrorBanner, GuardrailDenialToast, RateLimitToast } from './ErrorBanner';
 import { HistoryPanel } from './HistoryPanel';
 import { MessageList } from './MessageList';
 import { PermissionDeniedBanner } from './PermissionDeniedBanner';
@@ -126,11 +126,11 @@ export function CopilotPanel({ mode = 'panel', backHref = '/dashboard' }: Copilo
   // message list re-renders and suggested-action re-dispatches.
   const [draftAction, setDraftAction] =
     React.useState<CopilotSuggestedAction | null>(null);
-  // M10 Track B — rate-limit toast queue. The composer dispatches
-  // a window event when the API surface returns a 429; we
-  // subscribe here and render it inline so the user gets a
-  // structured action surface (not the generic error banner).
-  const { toasts, dismissRateLimit } = useCopilotToasts();
+  // M10 Track B — rate-limit + guardrail-denial toast queue. The
+  // composer dispatches window events; we subscribe here and render
+  // them inline so the user gets a structured action surface for
+  // these specialized failure modes (not the generic error banner).
+  const { toasts, dismissRateLimit, dismissGuardrail } = useCopilotToasts();
   const [commandAction, setCommandAction] =
     React.useState<CopilotSuggestedAction | null>(null);
   const [draftOpen, setDraftOpen] = React.useState(false);
@@ -215,6 +215,13 @@ export function CopilotPanel({ mode = 'panel', backHref = '/dashboard' }: Copilo
           key={toasts.rateLimit.key}
           retryAfter={toasts.rateLimit.retryAfter}
           onDismiss={dismissRateLimit}
+        />
+      ) : null}
+      {toasts.guardrail ? (
+        <GuardrailDenialToast
+          key={toasts.guardrail.key}
+          inline
+          onDismiss={dismissGuardrail}
         />
       ) : null}
       {loadingStrip}

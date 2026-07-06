@@ -28,7 +28,7 @@
  */
 
 import * as React from 'react';
-import { AlertCircle, Clock, X } from 'lucide-react';
+import { AlertCircle, Clock, ShieldAlert, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -133,7 +133,7 @@ export function ErrorBanner({
 export default ErrorBanner;
 
 // ---------------------------------------------------------------------------
-// M10 Track B — rate-limit toast (T-B1).
+// M10 Track B — specialized toasts.
 // ---------------------------------------------------------------------------
 
 export interface RateLimitToastProps {
@@ -220,6 +220,66 @@ export function RateLimitToast({
         }}
         aria-label="Dismiss rate-limit notice"
         data-testid="rate-limit-toast-dismiss"
+      >
+        <X className="h-3 w-3" aria-hidden="true" />
+      </Button>
+    </div>
+  );
+}
+
+export interface GuardrailDenialToastProps {
+  /** When `true` (default), render inline in the panel. The spec
+   *  explicitly OKs inline rendering when `CopilotPanel` is open. */
+  inline?: boolean;
+  onDismiss?: () => void;
+  className?: string;
+}
+
+/**
+ * Guardrail-denial toast — "I can't help with that — see usage policy."
+ *
+ * Static text — the user dismisses it manually because there is no
+ * retry-after semantics here.
+ */
+export function GuardrailDenialToast({
+  inline = true,
+  onDismiss,
+  className,
+}: GuardrailDenialToastProps): React.JSX.Element | null {
+  const [dismissed, setDismissed] = React.useState(false);
+  if (dismissed) return null;
+
+  return (
+    <div
+      role="alert"
+      aria-live="polite"
+      data-testid="guardrail-denial-toast"
+      className={cn(
+        'flex items-center gap-2 border-b border-[var(--accent-rose)]/40 bg-[var(--accent-rose)]/12 px-3 py-2 text-[var(--text-xs)] text-[var(--fg-secondary)]',
+        inline ? '' : 'shadow-[var(--shadow-md)]',
+        className,
+      )}
+    >
+      <ShieldAlert
+        aria-hidden="true"
+        className="h-3.5 w-3.5 shrink-0 text-[var(--accent-rose)]"
+      />
+      <div className="flex min-w-0 flex-1 items-baseline gap-2">
+        <span className="truncate text-[var(--fg-primary)]">
+          I can&apos;t help with that — see usage policy.
+        </span>
+      </div>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="h-5 w-5 text-[var(--fg-tertiary)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--fg-primary)]"
+        onClick={() => {
+          setDismissed(true);
+          onDismiss?.();
+        }}
+        aria-label="Dismiss guardrail notice"
+        data-testid="guardrail-denial-toast-dismiss"
       >
         <X className="h-3 w-3" aria-hidden="true" />
       </Button>
