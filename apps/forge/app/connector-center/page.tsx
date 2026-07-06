@@ -48,6 +48,7 @@ import { WebhooksTab } from '@/components/connector-center/tabs/WebhooksTab';
 import { ConnectionsTab } from '@/components/connector-center/tabs/ConnectionsTab';
 import { TABS, type TabValue } from '@/components/connector-center/constants';
 import { LiveConnectorDataProvider } from '@/components/connector-center/LiveConnectorDataProvider';
+import { OfflineBanner } from '@/components/connector-center/OfflineBanner';
 
 const TAB_LABEL: Record<TabValue, string> = {
   overview: 'Overview',
@@ -123,6 +124,7 @@ export default function ConnectorCenterPage() {
 
   return (
     <LiveConnectorDataProvider>
+      <OfflineBanner />
       <PageContainer>
         <div className="flex flex-col gap-6" data-testid="connector-center-page">
           <HeroBand
