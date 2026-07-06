@@ -186,24 +186,30 @@ def _probe_otel_exporter() -> tuple[Any, float]:
 
     Reports ``ok`` when the OpenTelemetry exporter is wired to a
     non-empty endpoint (either via the ``OTEL_EXPORTER_OTLP_ENDPOINT``
-    env var or via :attr:`Settings.otlp_endpoint`).  The probe is
-    intentionally synchronous because the check is a single
-    attribute read — the exporter itself is initialized at app
-    startup by :mod:`app.core.telemetry`, not on every /healthz
+    env var, via :attr:`Settings.otlp_endpoint`, or via the
+    :func:`app.core.telemetry.is_otel_configured` cached flag that
+    :func:`app.core.telemetry.configure_otel` sets at startup).
+    The probe is intentionally synchronous because the check is a
+    single attribute read — the exporter itself is initialized at
+    app startup by :mod:`app.core.telemetry`, not on every /healthz
     request.
 
-    The probe returns ``down`` when neither source is set so the
+    The probe returns ``down`` when no endpoint resolves so the
     operator sees a clear signal that audit + trace spans are
     landing in the no-op exporter (M2 spec §2.2 G19).  Note that
     this probe is best-effort — a backend that boots without an
     OTel collector still serves traffic, it just loses the
     distributed-trace surface area.
     """
-    # Prefer the env var (the canonical OpenTelemetry SDK lookup)
-    # over the Settings field so the probe matches what the SDK
-    # itself sees at runtime.
     import os
 
+    # Lazy import keeps the healthz import surface small and lets
+    # tests monkeypatch ``is_otel_configured`` to flip the probe
+    # without touching env vars.
+    from app.core.telemetry import is_otel_configured
+
+    if is_otel_configured():
+        return "ok", 0.0
     endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT") or getattr(
         settings, "otlp_endpoint", None
     )
