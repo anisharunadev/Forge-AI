@@ -5,7 +5,7 @@
  * so terminal panes can subscribe / unsubscribe without leaking listeners.
  */
 
-import { api, FORGE_WS_BASE_URL } from '@/lib/api/client';
+import { FORGE_WS_BASE_URL } from '@/lib/api/client';
 export type ForgeWebSocketState =
   | 'idle'
   | 'connecting'

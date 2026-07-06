@@ -1,0 +1,64 @@
+{
+  "$schema": "https://status.forge-ai.com/schema/v1.json",
+  "page": {
+    "id": "forge-ai-prod",
+    "name": "Forge AI",
+    "url": "https://status.forge-ai.com",
+    "time_zone": "UTC",
+    "update_cadence_minutes": 5
+  },
+  "components": [
+    {
+      "id": "forge_console",
+      "name": "Forge Console (apps/forge)",
+      "description": "The Next.js UI shell at https://forge.example.com",
+      "status": "operational"
+    },
+    {
+      "id": "forge_api",
+      "name": "Forge Backend API",
+      "description": "FastAPI orchestrator at https://forge.example.com/api/v1",
+      "status": "operational"
+    },
+    {
+      "id": "forge_chat",
+      "name": "Forge Chat (LLM completions)",
+      "description": "POST /forge/chat — LLM-routed chat completions",
+      "status": "operational"
+    },
+    {
+      "id": "forge_ideation",
+      "name": "Ideation Center",
+      "description": "Idea intake, scoring, and approval workflow",
+      "status": "operational"
+    },
+    {
+      "id": "forge_kg",
+      "name": "Knowledge Graph",
+      "description": "Build-time KG construction + backlink queries",
+      "status": "operational"
+    },
+    {
+      "id": "forge_audit",
+      "name": "Audit Center",
+      "description": "Tamper-evident audit chain + admin viewer",
+      "status": "operational"
+    }
+  ],
+  "incidents": [],
+  "scheduled_maintenances": [],
+  "sla": {
+    "availability_target_pct": 99.9,
+    "5xx_budget_per_month": 43,
+    "response_p50_ms": 800,
+    "response_p95_ms": 2000
+  },
+  "incident_procedure": {
+    "ack_minutes": 5,
+    "communications_owner": "platform-oncall",
+    "comms_cadence_minutes": 30,
+    "postmortem_owner": "engineering-lead",
+    "postmortem_due_days": 5,
+    "external_status_url": "https://status.forge-ai.com"
+  }
+}

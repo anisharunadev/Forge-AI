@@ -85,6 +85,7 @@ from app.api.ws.terminal import router as terminal_ws_router
 from app.api.ws.terminal_broadcast import router as terminal_broadcast_ws_router
 from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
+from app.core.middleware import RequestIdMiddleware, TenantContextMiddleware
 from app.core.phase4_errors import register_phase4_exception_handlers
 from app.core.telemetry import init_telemetry
 from app.integrations.litellm.health_monitor import health_monitor
@@ -362,6 +363,19 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         logger.warning(
             "forge.startup.chain_reload_failed", error=str(_chain_exc)
         )
+        # Phase 5 -- Observability: SLO evaluator + cost aggregator.
+    # Best-effort: failure to start logs and lets the process boot.
+    from app.services.scheduler.jobs import cost_aggregate, slo_evaluator  # noqa: PLC0415
+
+    _slo_task = slo_evaluator.start()
+    _cost_task = None
+    try:
+        from app.db.session import get_session_factory  # noqa: PLC0415
+        from app.integrations.litellm.litellm_base_client import LiteLLMBaseClient  # noqa: PLC0415
+
+        _cost_task = cost_aggregate.start(get_session_factory(), LiteLLMBaseClient(), redis=None)
+    except Exception as _cost_exc:  # noqa: BLE001
+        logger.warning("forge.startup.cost_aggregator_failed", error=str(_cost_exc))
     logger.info("forge.startup.boot_complete")
     try:
         yield
@@ -372,6 +386,15 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         # idempotent and a noop when never started.
         await health_monitor.stop()
         await bus.stop()
+        try:
+            slo_evaluator.stop(_slo_task)
+        except Exception:  # noqa: BLE001
+            pass
+        if _cost_task is not None:
+            try:
+                cost_aggregate.stop(_cost_task)
+            except Exception:  # noqa: BLE001
+                pass
         logger.info("forge.shutdown")
 
 

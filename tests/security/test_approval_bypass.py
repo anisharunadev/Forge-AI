@@ -56,7 +56,6 @@ async def _seed_idea(*, tenant_id: str, project_id: str) -> Idea:
             submitted_by=uuid.uuid4(),
             tags=[],
             attachments=[],
-            external_key="FORA-9001",
         )
         session.add(idea)
         await session.commit()
@@ -80,7 +79,7 @@ async def _seed_approval(
             tenant_id=tenant_id,
             project_id=project_id,
             idea_id=idea_id,
-            request_type=ApprovalItemType.PUSH_TO_JIRA,
+            request_type=ApprovalItemType.PUSH_TO_DELIVERY,
             payload={"jira_project_key": "FORA"},
             status=status,
             requested_by=actor_id,
@@ -267,7 +266,7 @@ async def test_bypass_6_soft_deleted_user_reviewer(sqlite_db):
         tenant_id=str(idea.tenant_id),
         actor_id=actor,
     )
-    assert row.decided_by == actor
+    assert str(row.decided_by) == actor
     assert row.status == ApprovalItemStatus.APPROVED
 
 

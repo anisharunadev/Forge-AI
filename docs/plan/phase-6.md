@@ -8,8 +8,8 @@
 - #15
 
 
-**Status:** PENDING
-**Owner:** TBA
+**Status:** IMPLEMENTED (uncommitted; tests green)
+**Owner:** Phase 6 implementation (9 PRs; see docs/plan/phase-6-detailed.md)
 **Depends on:** Phase 1, Phase 5 (observability for measuring)
 **Blocks:** Phase 8
 
@@ -145,15 +145,31 @@ Budgets fail closed. Rate limits degrade gracefully. 1000 concurrent chat comple
 ## Phase Close-out (filled at the end)
 
 ```
-Implementation date: 2026-07-05 (Phase 3 — Documentation as Code)
-PR(s): phase-3/* (8 PRs; see docs/plan/phase-3-detailed.md)
+Implementation date: 2026-07-06 (Phase 6 — Cost, Budgets & Rate Limits)
+PR(s): uncommitted; 9-PR plan from phase-6-detailed.md
 
-api-catalog.md: regenerated, was 305 routes claimed, code has 635 (2.1× undercount)
-db-schema.md:   regenerated, was 43 files / ~150 tables claimed, code has 61 files / 112 classes
-goal docs with Status header: 78 / 78 primary
-step-69.md: in-progress (4 endpoints shipped via Phase 2 PR-2.6; /ideation/ingest/status is optional per the doc itself)
-lychee broken links fixed: (collected via continue-on-error in CI; not yet blocking)
-Phase doc cross-links: 22/22 bidirectional
-Workflow docs.yml: created, required check: pending (warn-only in PR-3.3; gate flip in PR-3.8)
+Tenant budget guard (SC-6.1): implemented — TenantBudgetGuard + 429 mapping + /forge/observability/budget/{tenant_id} endpoint + TenantBudgetRead schema
+Rate limit (SC-6.2 / SC-6.3): implemented — core/rate_limit.py + Redis sliding window + enforce_rate_limit dep, wired into /forge/chat/stream
+Degradation queue (SC-6.4): implemented — llm_degradation_queue.py + 503/202 mapping on LiteLLM down, _maybe_enqueue_on_failure hook
+Load test (SC-6.5): implemented — scripts/loadtest/chat_1000.py; not yet run against staging
+Cost dashboard (SC-6.6): implemented — /admin/cost page (TanStack Query, 5s poll, R15 empty state) + /forge/observability/cost/realtime endpoint
+Guardrail audit (SC-6.7): implemented — scripts/audit-guardrail-callsites.py + runbook; legacy LiteLLMClient importers remain (audit reports them)
+Streaming cost (SC-6.8): implemented — _record_spend split into record_projected (per chunk) + record_actual (partial on disconnect); cost_ledger.final flag deferred (migration PR separate)
+Reconciler (SC-6.8 reconciler half): implemented — _finalize_cost_ledger helper, no-op until final column lands
+Cost leak audit (SC-6.9): implemented — scripts/audit-cost-leaks.py; clean exit today
+
+Tests added (19, all passing):
+  tests/test_budget_guard.py        6
+  tests/test_rate_limit.py          5
+  tests/test_chaos_litellm.py       3
+  tests/test_guardrail_pre_call.py  2
+  tests/test_streaming_cost.py      3
+
+Docs added:
+  docs/runbooks/guardrails.md
+  docs/runbooks/loadtesting.md
+  docs/standards/rate-limiting.md
+  docs/runbooks/budget-exhausted.md (Phase 6 v2 section appended)
+
 Follow-up tickets opened: none
 ```

@@ -18,6 +18,11 @@
 
 - [budget-exhausted.md](./budget-exhausted.md) — tenant LLM budget exhausted (M6)
 - [litellm-downtime.md](./litellm-downtime.md) — LiteLLM Proxy outage (M5)
+- [guardrails.md](./guardrails.md) — pre-call guardrails (Phase 6 SC-6.7)
+- [loadtesting.md](./loadtesting.md) — load testing the chat surface (Phase 6 SC-6.5)
+- [slo-degradation.md](./slo-degradation.md) — SLO breach response
+- [observability.md](./observability.md) — observability triage
+- [gdpr.md](./gdpr.md) — GDPR Article 17 tenant deletion cascade (Phase 8 SC-8.3)
 - [incident-response.md](./incident-response.md) — security incident canonical (thin)
 - [../operations/incident-response.md](../operations/incident-response.md) — full security incident response
 - [../operations/seed-data.md](../operations/seed-data.md) — seed data refresh

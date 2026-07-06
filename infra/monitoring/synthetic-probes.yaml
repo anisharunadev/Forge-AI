@@ -1,0 +1,51 @@
+# Phase 8 SC-8.10 — synthetic probes for the production launch.
+#
+# Consumed by Prometheus blackbox_exporter; the exporter scrapes each
+# target and exports `probe_success` per instance. The companion rules
+# file (`prometheus-synthetic-rules.yaml`) raises an alert on 2
+# consecutive failures.
+#
+# Cadence (enforced by Prometheus scrape_interval):
+#   health:   60s
+#   chat:     300s (5 min)
+#   models:   300s (5 min)
+modules:
+  http_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      preferred_ip_protocol: ip4
+      valid_status_codes: [200, 503]  # /healthz returns 503 when degraded
+      method: GET
+
+probes:
+  - name: forge_health
+    target: https://forge.example.com/healthz
+    module: http_2xx
+    interval: 60s
+    labels:
+      service: forge
+      surface: health
+
+  - name: forge_chat
+    target: https://forge.example.com/api/v1/forge/chat
+    module: http_2xx
+    interval: 300s
+    labels:
+      service: forge
+      surface: chat
+    settings:
+      # Synthetic chat probe uses POST with a fixed prompt.
+      method: POST
+      body: '{"message": "synthetic probe — please ignore"}'
+      headers:
+        Content-Type: application/json
+        Authorization: Bearer ${SYNTHETIC_JWT}
+
+  - name: forge_models
+    target: https://forge.example.com/api/v1/forge/models
+    module: http_2xx
+    interval: 300s
+    labels:
+      service: forge
+      surface: models

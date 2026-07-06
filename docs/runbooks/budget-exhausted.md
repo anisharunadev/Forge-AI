@@ -196,3 +196,29 @@ Within 24 hours of resolution:
 - [litellm-downtime.md](./litellm-downtime.md) — sibling runbook for proxy outages
 - [pilot/llm-gateway-setup.md](../pilot/llm-gateway-setup.md) — budget defaults during onboarding
 - [backend/app/integrations/litellm/README.md](../../backend/app/integrations/litellm/README.md) — `BudgetSync` developer guide
+---
+
+## Phase 6 — v2: Tenant ceiling
+
+Phase 6 SC-6.1 adds a **tenant-scoped** ceiling on top of the
+per-agent budget already in this runbook.
+
+- Source: `backend/app/services/forge_budget_guard.py::TenantBudgetGuard`
+- Enforcement: `Tenant.settings['budget_enforcement_v2']` (default `True`
+  for new tenants via `settings.tenant_budget_enforcement_v2_default`).
+- Ceiling: `Tenant.settings['tenant_budget_usd']` (default
+  `TenantBudgetGuard.DEFAULT_CEILING_USD = 5000.00`).
+- Window: trailing 30 days.
+- HTTP behavior: pre-call `TenantBudgetExceeded` → FastAPI maps to
+  `HTTP 429` + `Retry-After: 3600`.
+
+### Quick check
+
+```bash
+# Read the tenant's current snapshot
+curl -H "Authorization: Bearer $TOKEN" \
+  https://api.forge.example.com/api/v1/forge/observability/budget/$TENANT_ID
+
+# Disable enforcement per tenant while you investigate
+psql -c "UPDATE tenants SET settings = settings || '{\"budget_enforcement_v2\": false}'::jsonb WHERE id = '$TENANT_ID'"
+```

@@ -90,9 +90,16 @@ if (( ROTATE_JWT )); then
     NEW_JWT="$(openssl rand -base64 48)"
     sed -i.bak \
         -e "s|^JWT_SECRET=.*|JWT_SECRET=${NEW_JWT}|" \
-        -e "s|^JWT_SECRET_PREVIOUS=.*|JWT_SECRET_PREVIOUS=${PREV_JWT_SECRET}|" \
         "$OUT_FILE"
     rm -f "${OUT_FILE}.bak"
+    # Append JWT_SECRET_PREVIOUS if absent (the rotation overlap window
+    # needs this line even when the source env file predates the field).
+    if ! grep -q '^JWT_SECRET_PREVIOUS=' "$OUT_FILE"; then
+        printf '\nJWT_SECRET_PREVIOUS=%s\n' "$PREV_JWT_SECRET" >> "$OUT_FILE"
+    else
+        sed -i.bak "s|^JWT_SECRET_PREVIOUS=.*|JWT_SECRET_PREVIOUS=${PREV_JWT_SECRET}|" "$OUT_FILE"
+        rm -f "${OUT_FILE}.bak"
+    fi
     log "  new JWT_SECRET: ${NEW_JWT:0:8}..."
     log "  JWT_SECRET_PREVIOUS (for overlap): ${PREV_JWT_SECRET:0:8}..."
 fi

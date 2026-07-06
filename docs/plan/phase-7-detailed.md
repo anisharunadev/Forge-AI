@@ -1,7 +1,7 @@
 # Phase 7 — Operational Readiness (Implementation Plan)
 
-**Status:** PLANNED (awaiting implementation start)
-**Owner:** TBA
+**Status:** IMPLEMENTED (PR-7.1 through PR-7.8 merged in working tree)
+**Owner:** Phase 7 implementation
 **Depends on:** Phase 4 green (migrations safe), Phase 6 green (budgets)
 **Blocks:** Phase 8
 
@@ -2054,18 +2054,67 @@ Phase 7 is **DONE** when, in order:
 ## 10. Phase Close-out (filled at the end)
 
 ```
-Implementation date: ___
-PR(s): ___
+Implementation date: 2026-07-06
+PR(s): PR-7.1 .. PR-7.8 (all merged into working tree; branch protection
+       rollout to be confirmed by an admin on main)
 
-Setup: total wall-clock = ___s (target ≤ 900s)
-Restore drill: RPO = ___h, RTO = ___h
-Secrets rotation: rotate-secrets.sh tested in CI; overlap window verified = 300s
-Health endpoint: 4 named probes + git_sha + latency_ms; 503-on-degraded verified
-Image pinning: 2 :latest references removed; check-image-pinning.sh exits 0
-Env completeness: check-env-example.sh exits 0; ~NN Settings fields added
-Runbook index: docs/runbooks/index.md committed; 7 runbooks linked
-On-call canonical: docs/runbooks/oncall.md committed; cross-references docs/operations/oncall-runbook.md
-Incident-response canonical: docs/runbooks/incident-response.md committed; cross-references docs/operations/incident-response.md
-Branch protection updated: confirmed by ___ on ___
-Follow-up tickets opened: ___
+Setup: total wall-clock = TBD on next clean-machine run (target ≤ 900s).
+       scripts/setup-local.sh now records per-step timing into
+       docs/plan/phase-7-fresh-machine-time.md (PR-7.1).
+Restore drill: RPO = TBD, RTO = TBD. Backup/restore scripts (PR-7.3)
+       round-trip verified locally; CI job backup-restore-smoke in
+       operational-readiness.yml gates future regressions.
+Secrets rotation: scripts/rotate-secrets.sh created; JWT overlap window
+       (JWT_SECRET_PREVIOUS) tested end-to-end against a fake dev.env;
+       decode_token falls back to the previous key for HS256/384/512
+       (5 new tests in tests/test_security.py pass).
+Health endpoint: /healthz rewritten (PR-7.5); reports git_sha +
+       latency_ms per probe; returns 503 on degraded. 17 tests pass in
+       tests/test_healthz.py (10 original + 7 new SC-7.5 cases).
+Image pinning: docker-compose.yml pinned 2 :latest references
+       (ghcr.io/berriai/litellm, floci/floci) to real @sha256 digests
+       fetched from the registries. scripts/check-image-pinning.sh
+       exits 0.
+Env completeness: scripts/check-env-example.sh exits 0; 72 Settings
+       fields, 0 missing. 63 new fields added to .env.example grouped
+       by surface area; LITELLM_API_KEY deduped from the existing
+       LiteLLM block.
+Runbook index: docs/runbooks/index.md committed; links to 7 runbooks
+       (existing budget-exhausted, litellm-downtime + new
+       disaster-recovery, oncall, incident-response, backup-restore).
+       All cross-references resolve (link-checker passes).
+On-call canonical: docs/runbooks/oncall.md thin canonical committed;
+       cross-references docs/operations/oncall-runbook.md.
+Incident-response canonical: docs/runbooks/incident-response.md thin
+       canonical committed; cross-references
+       docs/operations/incident-response.md.
+Branch protection updated: pending — admin to confirm on main.
+Follow-up tickets opened: _none yet — capture once branch protection
+       lands_.
 ```
+
+### Files created / modified in this implementation
+
+| Path | Action |
+|---|---|
+| `scripts/setup-local.sh` | extended (timer + /healthz poll + seeds) |
+| `scripts/rotate-secrets.sh` | new |
+| `scripts/backup-postgres.sh` | new |
+| `scripts/restore-postgres.sh` | new |
+| `scripts/check-image-pinning.sh` | new |
+| `scripts/check-env-example.sh` | new |
+| `backend/app/core/config.py` | added `jwt_secret_previous` |
+| `backend/app/core/security.py` | overlap-window fallback in `decode_token` |
+| `backend/app/api/healthz.py` | `git_sha` + `latency_ms` + 503 |
+| `backend/tests/test_healthz.py` | extended (7 new SC-7.5 tests) |
+| `backend/tests/test_security.py` | new (5 overlap-window tests) |
+| `docker-compose.yml` | pinned 2 images by digest |
+| `.env.example` | appended 63 Settings fields |
+| `.github/workflows/operational-readiness.yml` | new (image-pinning, env-example, rotate-secrets, backup-restore-smoke jobs) |
+| `docs/runbooks/disaster-recovery.md` | new (4 scenarios) |
+| `docs/runbooks/oncall.md` | new (thin canonical) |
+| `docs/runbooks/incident-response.md` | new (thin canonical) |
+| `docs/runbooks/backup-restore.md` | new (thin canonical) |
+| `docs/runbooks/index.md` | new (index of 7 runbooks) |
+| `docs/plan/phase-7-fresh-machine-time.md` | new (output of setup-local.sh) |
+| `docs/plan/phase-7-restore-drill.md` | new (drill template) |

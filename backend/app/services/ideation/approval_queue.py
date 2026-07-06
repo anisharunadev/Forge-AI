@@ -194,8 +194,13 @@ class ApprovalQueueService:
 
             now = datetime.now(timezone.utc)
             # Phase 8 SC-8.2 - reject decisions on expired items.
-            if row.expires_at is not None and now > row.expires_at:
-                raise ValueError(f"approval_expired:expires_at={row.expires_at}")
+            # Postgres returns tz-aware datetimes; SQLite strips tz. Compare
+            # both sides as UTC-aware so the test suite (sqlite) and prod
+            # (postgres) agree.
+            if row.expires_at is not None:
+                expires = row.expires_at if row.expires_at.tzinfo else row.expires_at.replace(tzinfo=timezone.utc)
+                if now > expires:
+                    raise ValueError(f"approval_expired:expires_at={row.expires_at}")
             row.decided_by = str(actor_id)
             row.decided_at = now
             row.reason = reason

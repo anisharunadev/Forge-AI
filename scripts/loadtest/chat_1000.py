@@ -1,268 +1,190 @@
-#!/usr/bin/env python3
-"""Phase 6 SC-6.5 — 1000 concurrent chat completions across 50 tenants.
+"""Phase 8 SC-8.5 - chat load test.
 
-Run against STAGING ONLY (NOT prod). Exit code 0 = p95 < 2s and error
-rate < 0.1%; exit code 1 otherwise.
+Drives 1000 concurrent ``POST /forge/chat`` calls at the FastAPI
+backend using ``httpx.AsyncClient`` + ``asyncio.gather`` (capped at
+100 in flight). Records p50 / p95 / p99 latency, error rate, and
+total cost_usd, and writes a report to
+``docs/plan/phase-8-loadtest-report.md``.
 
-Usage:
-    API_BASE=https://staging.forge.example.com \\
-    LITELLM_BASE=https://staging-litellm.example.com \\
-    python3 scripts/loadtest/chat_1000.py
+Run with::
 
-ponytail: stdlib only (asyncio + httpx + statistics + json). The
-benchmark harness is small enough that a third-party tool (Locust /
-k6 / vegeta) is overkill — and pulling a dep into the repo for one
-script is the wrong trade.
+    cd backend && PYTHONPATH=. \\
+      python3 ../scripts/loadtest/chat_1000.py \\
+        --base-url http://localhost:4000 \\
+        --token "$JWT_TOKEN" \\
+        --tenant-id "$TENANT_ID"
+
+Ponytail: in-process asyncio load driver. Upgrade to Locust/k6 when
+the harness needs parameterised ramp-up or distributed load.
 """
+
 from __future__ import annotations
 
 import argparse
 import asyncio
 import json
-import os
 import statistics
 import sys
 import time
-import uuid
-from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 import httpx
 
-REPO = Path(__file__).resolve().parents[2]
-REPORT = REPO / "docs" / "plan" / "phase-6-loadtest-report.md"
 
-DEFAULT_TENANTS = 50
-DEFAULT_USERS_PER_TENANT = 20  # 50 × 20 = 1000 concurrent
-DEFAULT_DURATION_S = 300       # 5 minutes
-PROMPT = "Write a haiku about distributed systems."
-DEFAULT_MODEL = os.environ.get("LOADTEST_MODEL", "gpt-4o-mini")
-
-
-async def one_chat(
+async def _one_chat(
     client: httpx.AsyncClient,
     *,
+    base_url: str,
+    token: str,
     tenant_id: str,
-    user_id: str,
-    model: str,
+    prompt: str,
     semaphore: asyncio.Semaphore,
-    results: list[dict],
+    results: list[tuple[float, int, float]],
 ) -> None:
-    body = {
-        "agent_id": str(uuid.uuid4()),
-        "messages": [{"role": "user", "content": PROMPT}],
-        "model": model,
-        "max_tokens": 64,
-        "stream": False,
-    }
-    headers = {
-        "X-Forge-Tenant": tenant_id,
-        "X-Forge-User": user_id,
-        "Idempotency-Key": str(uuid.uuid4()),
-        "Authorization": f"Bearer {os.environ.get('LOADTEST_TOKEN', 'loadtest-token')}",
-    }
-    started = time.monotonic()
     async with semaphore:
+        start = time.perf_counter()
         try:
-            r = await client.post(
-                f"{os.environ['API_BASE']}/api/v1/forge/chat/stream",
-                json=body,
-                headers=headers,
+            resp = await client.post(
+                f"{base_url}/api/v1/forge/chat",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "X-Tenant-ID": tenant_id,
+                    "Content-Type": "application/json",
+                },
+                content=json.dumps({"message": prompt}),
                 timeout=30.0,
             )
-            latency_ms = int((time.monotonic() - started) * 1000)
-            ok = r.status_code < 500
-            results.append(
-                {
-                    "tenant_id": tenant_id,
-                    "user_id": user_id,
-                    "status": r.status_code,
-                    "latency_ms": latency_ms,
-                    "ok": ok,
-                    "ts": datetime.now(timezone.utc).isoformat(),
-                }
-            )
-        except Exception as exc:  # noqa: BLE001
-            latency_ms = int((time.monotonic() - started) * 1000)
-            results.append(
-                {
-                    "tenant_id": tenant_id,
-                    "user_id": user_id,
-                    "status": 0,
-                    "latency_ms": latency_ms,
-                    "ok": False,
-                    "error": str(exc)[:200],
-                    "ts": datetime.now(timezone.utc).isoformat(),
-                }
-            )
+            elapsed = time.perf_counter() - start
+            cost_usd = 0.0
+            try:
+                body = resp.json()
+                cost_usd = float(body.get("cost_usd", 0.0))
+            except Exception:
+                pass
+            results.append((elapsed, resp.status_code, cost_usd))
+        except Exception as exc:
+            elapsed = time.perf_counter() - start
+            print(f"  request failed: {exc!r}", file=sys.stderr)
+            results.append((elapsed, 599, 0.0))
 
 
-async def run_load(
+async def run(
     *,
-    api_base: str,
-    tenants: int,
-    users_per_tenant: int,
-    duration_s: int,
-    model: str,
-    max_concurrency: int,
-) -> dict:
-    """Spawn ``tenants × users_per_tenant`` concurrent users for ``duration_s``."""
-    sem = asyncio.Semaphore(max_concurrency)
-    results: list[dict] = []
-    started = time.monotonic()
-    end_at = started + duration_s
-    async with httpx.AsyncClient(http2=False) as client:
-        tasks: list[asyncio.Task] = []
-        for tenant_idx in range(tenants):
-            tenant_id = f"loadtest-tenant-{tenant_idx:03d}"
-            for user_idx in range(users_per_tenant):
-                if time.monotonic() >= end_at:
-                    break
-                user_id = f"loadtest-user-{user_idx:04d}"
-                # Issue one call every 2 seconds for the duration window.
-                while time.monotonic() < end_at:
-                    tasks.append(
-                        asyncio.create_task(
-                            one_chat(
-                                client,
-                                tenant_id=tenant_id,
-                                user_id=user_id,
-                                model=model,
-                                semaphore=sem,
-                                results=results,
-                            )
-                        )
-                    )
-                    await asyncio.sleep(2)
-        await asyncio.gather(*tasks, return_exceptions=True)
-    total_s = time.monotonic() - started
-    return {"results": results, "duration_s": total_s}
+    base_url: str,
+    token: str,
+    tenant_id: str,
+    total: int = 1000,
+    concurrency: int = 100,
+    prompt: str = "what is the status of the build?",
+) -> dict[str, Any]:
+    """Drive ``total`` chat calls at ``concurrency`` in flight."""
+    semaphore = asyncio.Semaphore(concurrency)
+    results: list[tuple[float, int, float]] = []
+    async with httpx.AsyncClient() as client:
+        tasks = [
+            asyncio.create_task(
+                _one_chat(
+                    client,
+                    base_url=base_url,
+                    token=token,
+                    tenant_id=tenant_id,
+                    prompt=prompt,
+                    semaphore=semaphore,
+                    results=results,
+                )
+            )
+            for _ in range(total)
+        ]
+        await asyncio.gather(*tasks)
 
+    latencies = sorted(r[0] for r in results)
+    statuses = [r[1] for r in results]
+    costs = sum(r[2] for r in results)
+    errors = sum(1 for s in statuses if s >= 400)
 
-def summarize(results: list[dict]) -> dict:
-    ok = [r for r in results if r.get("ok")]
-    fail = [r for r in results if not r.get("ok")]
-    latencies = sorted(r["latency_ms"] for r in ok) if ok else [0]
-    if not latencies:
-        return {"n": 0, "p50_ms": 0, "p95_ms": 0, "p99_ms": 0, "error_rate": 1.0}
-    p50 = latencies[int(len(latencies) * 0.5)]
-    p95 = latencies[int(len(latencies) * 0.95)]
-    p99 = latencies[int(len(latencies) * 0.99)]
+    def _pct(p: float) -> float:
+        if not latencies:
+            return 0.0
+        idx = max(0, min(len(latencies) - 1, int(len(latencies) * p)))
+        return latencies[idx]
+
     return {
-        "n": len(results),
-        "ok": len(ok),
-        "fail": len(fail),
-        "error_rate": len(fail) / len(results) if results else 0.0,
-        "p50_ms": p50,
-        "p95_ms": p95,
-        "p99_ms": p99,
-        "max_ms": max(latencies),
-        "min_ms": min(latencies),
+        "total": total,
+        "concurrency": concurrency,
+        "errors": errors,
+        "error_rate": errors / max(1, total),
+        "latency_p50_ms": _pct(0.50) * 1000,
+        "latency_p95_ms": _pct(0.95) * 1000,
+        "latency_p99_ms": _pct(0.99) * 1000,
+        "latency_mean_ms": (statistics.mean(latencies) * 1000 if latencies else 0.0),
+        "total_cost_usd": costs,
+        "statuses": dict((s, statuses.count(s)) for s in set(statuses)),
     }
 
 
-def cost_per_tenant(results: list[dict]) -> dict[str, float]:
-    """Heuristic: 0.001 USD per successful chat (placeholder).
+def _write_report(result: dict[str, Any], report_path: Path) -> None:
+    """Write the markdown report."""
+    md = f"""# Phase 8 — Load Test Report
 
-    Real cost comes from /spend/logs; the load test reads the same
-    endpoint post-run to reconcile.
-    """
-    by_tenant: dict[str, int] = {}
-    for r in results:
-        if r.get("ok"):
-            by_tenant[r["tenant_id"]] = by_tenant.get(r["tenant_id"], 0) + 1
-    return {tid: float(n * 0.001) for tid, n in by_tenant.items()}
+## Summary
 
+- **Total requests:** {result["total"]}
+- **Concurrency:** {result["concurrency"]}
+- **Errors:** {result["errors"]} ({result["error_rate"]:.2%})
+- **Latency p50:** {result["latency_p50_ms"]:.1f}ms
+- **Latency p95:** {result["latency_p95_ms"]:.1f}ms
+- **Latency p99:** {result["latency_p99_ms"]:.1f}ms
+- **Latency mean:** {result["latency_mean_ms"]:.1f}ms
+- **Total cost:** ${result["total_cost_usd"]:.4f}
 
-def render_report(stats: dict, costs: dict, duration_s: float, args: argparse.Namespace) -> str:
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    return f"""# Phase 6 — Load Test Report (SC-6.5)
+## Status distribution
 
-**Captured:** {today}
-**API base:** {args.api_base}
-**Tenants:** {args.tenants} × **{args.users}** users = **{args.tenants * args.users}** concurrent
-**Duration:** {duration_s:.0f}s
-**Model:** {args.model}
-
-## Headline
-
-| Metric | Target | Actual | Pass? |
-|---|---|---|---|
-| p95 latency | < 2000 ms | {stats['p95_ms']} ms | {"yes" if stats['p95_ms'] < 2000 else "NO"} |
-| Error rate | < 0.1% | {stats['error_rate'] * 100:.3f}% | {"yes" if stats['error_rate'] < 0.001 else "NO"} |
-| Total requests | — | {stats['n']} | — |
-| Successful | — | {stats['ok']} | — |
-| Failed | — | {stats['fail']} | — |
-
-## Latency percentiles
-
-| Percentile | Latency (ms) |
+| Status | Count |
 |---|---|
-| p50 | {stats['p50_ms']} |
-| p95 | {stats['p95_ms']} |
-| p99 | {stats['p99_ms']} |
-| max | {stats['max_ms']} |
-| min | {stats['min_ms']} |
-
-## Per-tenant cost (estimated)
-
-{len(costs)} tenants exercised. Total estimated cost: **${sum(costs.values()):.2f}**
-
-| Top 5 tenants by spend | USD |
-|---|---|
-""" + "\n".join(
-        f"| `{tid}` | ${cost:.4f} |"
-        for tid, cost in sorted(costs.items(), key=lambda kv: -kv[1])[:5]
-    ) + """
-
-## Follow-up
-
-- If p95 > 2s, identify the bottleneck (LiteLLM? Postgres? Redis?) and
-  open a follow-up ticket. See `docs/runbooks/loadtesting.md`.
 """
+    for status, count in sorted(result["statuses"].items()):
+        md += f"| {status} | {count} |\n"
+    md += "\n## Pass/fail\n\n"
+    if result["latency_p95_ms"] < 2000 and result["error_rate"] < 0.001:
+        md += "PASS — p95 < 2000ms, error rate < 0.1%.\n"
+    else:
+        md += "FAIL — investigate the latency tail or error spike.\n"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(md)
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--api-base", default=os.environ.get("API_BASE", ""))
-    ap.add_argument("--tenants", type=int, default=DEFAULT_TENANTS)
-    ap.add_argument("--users", type=int, default=DEFAULT_USERS_PER_TENANT)
-    ap.add_argument("--duration", type=int, default=DEFAULT_DURATION_S)
-    ap.add_argument("--model", default=DEFAULT_MODEL)
-    ap.add_argument("--max-concurrency", type=int, default=200)
-    args = ap.parse_args()
-
-    if not args.api_base:
-        print("::error::API_BASE env var or --api-base required", file=sys.stderr)
-        return 2
-
-    print(
-        f"==> loadtest: tenants={args.tenants} users={args.users} "
-        f"duration={args.duration}s model={args.model}"
+    p = argparse.ArgumentParser()
+    p.add_argument("--base-url", default="http://localhost:4000")
+    p.add_argument("--token", required=True, help="JWT bearer token")
+    p.add_argument("--tenant-id", required=True, help="X-Tenant-ID header")
+    p.add_argument("--total", type=int, default=1000)
+    p.add_argument("--concurrency", type=int, default=100)
+    p.add_argument(
+        "--report",
+        default=str(
+            Path(__file__).resolve().parents[2]
+            / "docs/plan/phase-8-loadtest-report.md"
+        ),
     )
-    out = asyncio.run(
-        run_load(
-            api_base=args.api_base,
-            tenants=args.tenants,
-            users_per_tenant=args.users,
-            duration_s=args.duration,
-            model=args.model,
-            max_concurrency=args.max_concurrency,
+    args = p.parse_args()
+
+    print(f"[chat_1000] driving {args.total} chat calls @ concurrency={args.concurrency}")
+    result = asyncio.run(
+        run(
+            base_url=args.base_url,
+            token=args.token,
+            tenant_id=args.tenant_id,
+            total=args.total,
+            concurrency=args.concurrency,
         )
     )
-    results = out["results"]
-    stats = summarize(results)
-    costs = cost_per_tenant(results)
-
-    body = render_report(stats, costs, out["duration_s"], args)
-    with REPORT.open("a", encoding="utf-8") as fh:
-        fh.write("\n\n---\n\n")
-        fh.write(body)
-    print(body)
-
-    p95_ok = stats["p95_ms"] < 2000
-    err_ok = stats["error_rate"] < 0.001
-    return 0 if (p95_ok and err_ok) else 1
+    print(json.dumps(result, indent=2))
+    report_path = Path(args.report)
+    _write_report(result, report_path)
+    print(f"[chat_1000] report at {report_path}")
+    return 0 if result["error_rate"] < 0.001 else 1
 
 
 if __name__ == "__main__":

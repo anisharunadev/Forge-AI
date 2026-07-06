@@ -551,39 +551,51 @@ class ObservabilityService:
             rag_queries=[],
         )
 
-    def gdpr_delete_kickoff(
+    async def gdpr_delete_kickoff(
         self,
+        db: AsyncSession,
         *,
         tenant_id: UUID,
         user_id: UUID,
     ) -> GdprDeleteResponse:
-        """GDPR Article 17 deletion kickoff.
+        """GDPR Article 17 deletion executor (Phase 8 SC-8.3).
 
-        Ponytail: in-process job tracker. Upgrade to the scheduler
-        (``app/services/scheduler``) when durable execution is needed.
+        Phase 3 left this as a no-op stub; Phase 8 wires it to
+        ``gdpr_cascade_executor.run()`` and returns the per-table
+        deletion/anonymization counts in ``affected_tables``.
 
-        NOTE: audit_events are NOT touched (legal retention).
+        Audit events are NOT deleted (legal retention) — the executor
+        anonymizes them by nulling PII columns.
+
+        Ponytail: in-process, synchronous. Upgrade to the scheduler
+        when durable execution is needed (operator-hook).
         """
+        from app.services.gdpr_cascade import gdpr_cascade_executor
+
+        result = await gdpr_cascade_executor.run(db, tenant_id=tenant_id)
         job_id = uuid4()
-        eta = datetime.now(timezone.utc) + timedelta(hours=24)
-        _GDPR_DELETE_JOBS[job_id] = eta
-        affected = [
-            "users.pii_columns",
-            "connectors.user_owned",
-            "rag_chunks.authored_by_user",
-            "litellm_call_records.actor_id -> null",
-        ]
-        # NOTE: 'audit_events' is intentionally absent — legal hold.
+        _GDPR_DELETE_JOBS[job_id] = datetime.now(timezone.utc)
+
+        affected = sorted(
+            [f"{t}.deleted={n}" for t, n in result.deleted.items() if n]
+            + [f"{t}.anonymized={n}" for t, n in result.anonymized.items() if n]
+        )
+        if result.embeddings_removed:
+            affected.append(f"embeddings.removed={result.embeddings_removed}")
+        if result.object_files_removed:
+            affected.append(f"object_files.removed={result.object_files_removed}")
+
         logger.info(
-            "observability.gdpr.delete_kicked_off",
+            "observability.gdpr.delete_completed",
             tenant_id=str(tenant_id),
             user_id=str(user_id),
             job_id=str(job_id),
-            affected_tables=affected,
+            affected=affected,
+            errors=result.errors,
         )
         return GdprDeleteResponse(
             user_id=user_id,
-            eta=eta,
+            eta=datetime.now(timezone.utc),
             job_id=job_id,
             affected_tables=affected,
         )

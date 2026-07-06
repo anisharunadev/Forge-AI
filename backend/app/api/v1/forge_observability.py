@@ -301,8 +301,10 @@ async def compliance_gdpr_delete(
             status_code=403,
             detail={"reason": "permission_denied", "required_role": "org_admin"},
         )
-    return observability_service.gdpr_delete_kickoff(
-        tenant_id=_tenant_id(principal), user_id=payload.user_id
+    return await observability_service.gdpr_delete_kickoff(
+        db,
+        tenant_id=_tenant_id(principal),
+        user_id=payload.user_id,
     )
 
 

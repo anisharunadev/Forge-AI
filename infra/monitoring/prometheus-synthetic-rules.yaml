@@ -1,0 +1,38 @@
+# Phase 8 SC-8.10 — Prometheus alerting rules for synthetic probes.
+#
+# Alert on 2 consecutive failures (5 minutes of downtime for the
+# 60s health probe; 10 minutes for the 5-min chat/models probes).
+groups:
+  - name: forge.synthetic
+    interval: 30s
+    rules:
+      - alert: ForgeHealthProbeFailing
+        expr: probe_success{service="forge",surface="health"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Forge /healthz failing for 5+ minutes"
+          description: >
+            Synthetic health probe for {{ $labels.instance }} has been
+            failing for 5+ minutes. Check /healthz directly and the
+            status page at https://status.forge-ai.com.
+
+      - alert: ForgeChatProbeFailing
+        expr: probe_success{service="forge",surface="chat"} == 0
+        for: 10m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Forge /forge/chat failing for 10+ minutes"
+
+      - alert: ForgeModelsProbeFailing
+        expr: probe_success{service="forge",surface="models"} == 0
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Forge /forge/models failing for 10+ minutes"

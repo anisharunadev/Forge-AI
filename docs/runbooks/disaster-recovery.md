@@ -1,98 +1,100 @@
-# Forge AI — Disaster Recovery Runbook
+# Runbook: Disaster Recovery (Postgres + Object Storage)
 
-> **Scope.** Operator-facing playbook for restoring the platform after a
-> regional or data-plane disaster. For day-2 on-call remediation see
-> [`oncall.md`](./oncall.md) and the deeper operations reference at
-> [`../operations/oncall-runbook.md`](../operations/oncall-runbook.md).
+Phase 8 SC-8.4. Covers RTO/RPO targets, backup cadence, restore
+procedure, and the drill harness (`scripts/dr-drill.sh`).
 
-## RTO/RPO Targets (committed)
+## Targets
 
-| Scenario | RTO (recovery time) | RPO (data loss window) |
-|---|---|---|
-| Region failure | ≤ 4 hours | ≤ 24 hours |
-| DB corruption | ≤ 4 hours | ≤ 24 hours (last good backup) |
-| Redis loss | ≤ 30 minutes | 0 (rebuild from Postgres) |
-| LiteLLM down | N/A (queue 503s per Phase 6) | N/A |
+- **RTO (Recovery Time Objective):** 4 hours
+- **RPO (Recovery Point Objective):** 1 hour
+- **Backup cadence:** Postgres snapshot every 1h; object-storage
+  (S3/MinIO) snapshot every 6h.
+- **Backup retention:** 7 daily, 4 weekly, 3 monthly.
 
-## Scenario 1 — Region failure
+## Backup schedule
 
-**Trigger.** AWS region `us-east-1` is unavailable.
+| Source | Tool | Cadence | Retention |
+|---|---|---|---|
+| Postgres (RDS) | `pg_dump` → S3 `forge-backups/postgres/` | hourly | 7d/4w/3mo |
+| Object storage (S3/MinIO) | `aws s3 sync` → S3 `forge-backups/s3/` | every 6h | 7d/4w/3mo |
+| Redis (sessions, audit chain) | AOF + RDB every 6h | 7d/4w/3mo |
 
-**Detection.** `/healthz` returns `degraded` for every probe; AWS
-Health Dashboard shows the region degraded.
+The backup worker lives in `backend/app/services/scheduler/jobs/`
+(separate from the launch-scope plan; Phase 7 ships the runner).
 
-**Mitigation.**
-1. Confirm the failure is region-wide.
-2. Page L3 architect + L4 delegate.
-3. Spin up staging in `us-west-2` from Terraform state.
-4. Restore Postgres from the most recent S3 backup (see
-   [`backup-restore.md`](./backup-restore.md)).
-5. Re-point DNS to the new region's load balancer; wait for TTL.
-6. Verify `/healthz` returns `ok` on all 4 named probes.
+## Restore procedure
 
-**RTO target.** ≤ 4 hours.
-**RPO target.** ≤ 24 hours.
-**Owner.** L3 architect.
+### 1. Verify scope
 
-## Scenario 2 — DB corruption
+Confirm with the on-call channel which tenants are affected and
+the target snapshot timestamp.
 
-**Trigger.** A migration corrupts data (column drop, accidental TRUNCATE).
+### 2. Identify the last-good snapshot
 
-**Detection.** Application logs show constraint violations; `/healthz`
-returns `degraded` on `db_health`.
+```bash
+aws s3 ls forge-backups/postgres/ --recursive | sort | tail -1
+```
 
-**Mitigation.**
-1. **Stop the bleed.** Set `READ_ONLY_MODE=1` in the env file; reload.
-2. Identify the last good backup.
-3. Restore to a NEW database (do NOT drop the corrupted one until
-   verified) using `scripts/restore-postgres.sh`.
-4. Reconcile audit-log gaps from the audit-log S3 mirror.
-5. Swap application traffic.
-6. Open an incident ticket; PIR within 5 business days per
-   [`incident-response.md`](./incident-response.md).
+### 3. Provision a clean DB
 
-**RTO target.** ≤ 4 hours.
-**RPO target.** ≤ 24 hours.
-**Owner.** L2 platform engineer (with L3 review).
+Spin a fresh RDS / Postgres instance.
 
-## Scenario 3 — Redis loss
+### 4. Restore
 
-**Trigger.** ElastiCache / Redis container loses its data.
+```bash
+# Download the snapshot.
+aws s3 cp s3://forge-backups/postgres/<snapshot>.sql.gz /tmp/
 
-**Detection.** `/healthz` returns `degraded` on `redis_health`; WS
-clients see stale data.
+# Restore.
+gunzip -c /tmp/<snapshot>.sql.gz | psql "$DATABASE_URL"
+```
 
-**Mitigation.**
-1. Verify Redis is actually down.
-2. Restart: `docker compose restart redis` (dev) or AWS CLI (prod).
-3. Re-warm caches.
-4. Verify `/healthz` returns `ok` on `redis_health`.
+### 5. Verify
 
-**RTO target.** ≤ 30 minutes.
-**RPO target.** 0.
-**Owner.** L1 on-call.
+```bash
+# Row counts must match the pre-wipe baseline.
+psql "$DATABASE_URL" -c "SELECT count(*) FROM audit_events;"
+psql "$DATABASE_URL" -c "SELECT count(*) FROM cost_entries;"
+psql "$DATABASE_URL" -c "SELECT count(*) FROM kg_nodes;"
 
-## Scenario 4 — LiteLLM down
+# First-login smoke test.
+curl -fsS https://forge.example.com/api/v1/forge/health
+```
 
-**Trigger.** LiteLLM Proxy is unreachable, returning 5xx.
+### 6. Cutover
 
-**Detection.** `/healthz` returns `degraded` on `litellm_health`.
+Update the connection pool DNS / RDS endpoint to the restored
+instance. Restart the backend pods.
 
-**Mitigation.**
-1. Confirm: `curl http://litellm:4000/health/liveliness`.
-2. If hung, restart: `docker compose restart litellm`.
-3. If upstream provider is down, engage provider failover per ADR-005.
-4. **Phase 6 budget guard** — backend serves 503 from its queue
-   rather than admitting unbounded calls.
-5. Escalate to L2 if down >15 min, L3 if down >60 min.
+## Drill
 
-**RTO target.** N/A.
-**RPO target.** N/A.
-**Owner.** L1 on-call → L2 if prolonged.
+`scripts/dr-drill.sh` runs against a staging tenant. Snapshots
+row counts, wipes the DB, restores from the most recent backup,
+and asserts row counts match.
 
-## Cross-References
+```bash
+# Local: simulate against docker compose Postgres.
+bash scripts/dr-drill.sh
 
-- [backup-restore.md](./backup-restore.md)
-- [oncall.md](./oncall.md)
-- [incident-response.md](./incident-response.md)
-- [../operations/oncall-runbook.md](../operations/oncall-runbook.md)
+# Staging:
+TENANT_SLUG=acme-corp bash scripts/dr-drill.sh
+```
+
+The drill exits non-zero if:
+
+- Pre-wipe row counts can't be captured.
+- Restore takes longer than the RTO budget (4h).
+- Any post-restore row count differs from the pre-wipe baseline.
+
+## Files exist
+
+- Runbook: `docs/runbooks/disaster-recovery.md` (this file)
+- Drill harness: `scripts/dr-drill.sh`
+- Drill report: `docs/plan/phase-8-dr-drill.md`
+
+## Known limitations
+
+- Redis state is restored last (sessions); first-login failures
+  before Redis recovery are expected and tolerated.
+- Cross-region restore is not yet automated; manual DNS cutover
+  is required.
