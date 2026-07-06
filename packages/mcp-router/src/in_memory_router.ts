@@ -32,6 +32,7 @@ import {
   resolverUnreachable,
   scopeDenied,
   tenantInvalid,
+  toolBundleViolation,
   toolNotFound,
   unavailable,
   upstreamError,
@@ -82,6 +83,15 @@ interface BreakerState {
   last_failure_at_ms: number | null;
 }
 
+/**
+ * Per-agent tool-bundle guard (plan 01-06 — F-505).
+ *
+ * Returns `true` iff `tool` is allowed for `agent_name`. Defaults to
+ * "allow all" when no hook is installed so existing tests / callers
+ * keep working — the substrate gate is opt-in via constructor.
+ */
+export type ToolBundleGuard = (agent_name: string, tool_name: string) => boolean;
+
 /** Constructor options. */
 export interface InMemoryMcpRouterOptions {
   readonly audit?: McpAuditSink;
@@ -94,6 +104,12 @@ export interface InMemoryMcpRouterOptions {
   readonly breaker_cooldown_ms?: number;
   /** Synthetic latency injected between resolve/invoke and transport — tests use 0. */
   readonly delay_ms?: number;
+  /**
+   * Optional per-agent tool-bundle guard (plan 01-06 — F-505). When
+   * installed, `invoke` consults this hook BEFORE the transport call.
+   * Defaults to "allow all" so existing tests / callers keep working.
+   */
+  readonly tool_bundle_guard?: ToolBundleGuard;
   /**
    * Optional tenant validator (identity-broker adapter). When set, every
    * `resolve` and `invoke` call begins with `validator.validate(ctx.tenant_id)`.
@@ -131,6 +147,7 @@ export class InMemoryMcpRouter implements McpRouter {
   private readonly delay_ms: number;
   private readonly tenant_validator: TenantValidator | null;
   private readonly credential_resolver: CredentialResolver | null;
+  private readonly tool_bundle_guard: ToolBundleGuard;
 
   constructor(opts: InMemoryMcpRouterOptions = {}) {
     this.audit = opts.audit ?? defaultAuditSink();
@@ -151,6 +168,18 @@ export class InMemoryMcpRouter implements McpRouter {
     this.delay_ms = opts.delay_ms ?? 0;
     this.tenant_validator = opts.tenant_validator ?? null;
     this.credential_resolver = opts.credential_resolver ?? null;
+    // Default guard: allow all. Production wires the F-505 registry
+    // via ``app/services/tool_bundles.is_tool_allowed``.
+    this.tool_bundle_guard = opts.tool_bundle_guard ?? (() => true);
+  }
+
+  /**
+   * Plan 01-06 — F-505 per-agent tool-bundle guard exposed as a
+   * standalone method so callers / tests can probe without invoking.
+   * Returns ``true`` iff the bundle permits the tool for this agent.
+   */
+  enforceToolBundle(agent_name: string, tool_name: string): boolean {
+    return this.tool_bundle_guard(agent_name, tool_name);
   }
 
   // ---------- registration ----------
@@ -314,6 +343,18 @@ export class InMemoryMcpRouter implements McpRouter {
         'args must be a plain object',
         toolDesc.input_schema,
       );
+      this.emitAudit(this.errorAudit(ctx, 'mcp.invoke', server, tool, err));
+      return err;
+    }
+
+    // Plan 01-06 — F-505 per-agent tool-bundle guard. Runs BEFORE the
+    // circuit-breaker check so a disallowed tool short-circuits even on
+    // an otherwise healthy server. ``agent_name`` falls back to
+    // ``ctx.agent_type`` so callers that pre-date the F-505 contract
+    // still get a bundle lookup.
+    const agent_name = ctx.agent_type ?? 'unknown';
+    if (!this.tool_bundle_guard(agent_name, tool)) {
+      const err = toolBundleViolation(server, agent_name, tool);
       this.emitAudit(this.errorAudit(ctx, 'mcp.invoke', server, tool, err));
       return err;
     }

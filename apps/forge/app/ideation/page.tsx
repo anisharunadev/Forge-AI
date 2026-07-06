@@ -61,6 +61,7 @@ import { useRoadmaps, useArchPreviews } from '@/lib/hooks/useIdeation';
 import { useGeneratePRD } from '@/lib/api/ideation-hooks';
 import { PageHeader } from '@/components/shell';
 import { toast } from 'sonner';
+import { track } from '@/lib/analytics';
 import type { Idea } from '@/lib/ideation/data';
 
 // ---------------------------------------------------------------------------
@@ -148,6 +149,7 @@ export default function IdeationCenterPage() {
       toast.error('Capture an idea first — PRDs are generated from approved ideas.');
       return;
     }
+    track('prd.generated', { idea_id: target.id });
     generatePRD.mutate(
       { idea_id: target.id },
       {

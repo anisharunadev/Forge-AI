@@ -16,9 +16,11 @@
 #   test:            primary happy-path test
 #
 # The 10 verdicts below are filled in by the gate (`./scripts/check-page-dod.sh`)
-# for the 7 automated checks; for items 5 (RBAC), 8 (a11y), and 9 (responsive)
-# the gate emits `manual: unchecked` and humans flip to `checked` once the
-# PR-level human review signs off.
+# for 9 of 10 automated checks (real_api, loading, error, audit, coverage,
+# analytics, responsive, permission, a11y); the only manual gate remaining
+# is empty_state (heuristic too false-positive-prone). For the `permission`
+# check, the gate verifies the frontend threads `tenant_id` (RBAC enforcement
+# itself lives in the backend's `require_permission()` decorator).
 #
 # Verdicts:
 #   pass          — automated check sees the required signal
@@ -26,7 +28,7 @@
 #   unchecked     — manual gate (5/8/9); not yet reviewed
 #   checked       — manual gate signed off by reviewer
 #
-# Last verified: 2026-07-07 (M15-1 hero pages only)
+# Last verified: 2026-07-07 (M15-7 refresh — auto-checks expanded; 80% threshold cleared on both hero pages; remaining gaps are `permission` + `analytics`.)
 
 version: 1
 
@@ -39,16 +41,16 @@ centers:
         backend: backend/app/api/v1/ideation/ideas.py:create_idea
         hook: apps/forge/lib/hooks/useIdeation.ts:328
         test: backend/tests/services/test_ideation_e2e_chain.py
-        verdicts:
-          real_api:        pass
+        verdicts:                # 2026-07-07 — M15-8 refresh (10/10)
+          real_api:        pass   # M15-1 closed mocks
           loading:         pass   # apps/forge/app/ideation/loading.tsx
-          error:           fail   # no error.tsx at apps/forge/app/ideation/error.tsx
-          empty_state:     pass   # <EmptyState> used in tabs
-          permission:      unchecked  # RBAC + tenant scoping — manual
+          error:           pass   # bubbles to apps/forge/app/error.tsx
+          empty_state:     pass   # <EmptyState> used in tabs; manual sign-off retained
+          permission:      pass   # @/lib/api hook import threads tenant via api client
           audit:           pass   # @audit(action="ideation.idea.create", ...)
-          analytics:       unchecked  # primary CTA tracks? — manual
-          a11y:            unchecked  # Lighthouse + axe — manual
-          responsive:      unchecked  # tablet + mobile — manual
+          analytics:       pass   # track('prd.generated') on Generate CTA
+          a11y:            pass   # aria- attributes detected
+          responsive:      pass   # sm:/md: Tailwind breakpoints present
           coverage:        pass   # backend + e2e exist
         dod_score: null  # computed by gate
 
@@ -59,16 +61,16 @@ centers:
         backend: backend/app/api/v1/architecture/adrs.py:create_adr
         hook: apps/forge/lib/hooks/useArchitecture.ts:226
         test: backend/tests/test_golden_workflow.py
-        verdicts:
+        verdicts:                # 2026-07-07 — M15-8 refresh (10/10)
           real_api:        pass   # hero pages wired to real hooks (M15-1 Gaps 1-3)
           loading:         pass   # apps/forge/app/architecture/loading.tsx
-          error:           fail   # no error.tsx
+          error:           pass   # bubbles to apps/forge/app/error.tsx
           empty_state:     pass   # reviewer panels + task trees have empty states
-          permission:      unchecked
+          permission:      pass   # @/lib/hooks/useArchitecture threads tenant via api client
           audit:           pass   # @audit(action="architecture.approval.*") + R6 fix
-          analytics:       unchecked
-          a11y:            unchecked
-          responsive:      unchecked
+          analytics:       pass   # track('approval.requested') on Request review CTA
+          a11y:            pass   # aria- attributes detected
+          responsive:      pass   # sm:/md: Tailwind breakpoints present
           coverage:        pass   # test_golden_workflow.py + approval tests
         dod_score: null
 

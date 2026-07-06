@@ -23,7 +23,8 @@ export type McpErrorKind =
   | 'tenant_invalid'
   | 'credential_denied'
   | 'validator_unreachable'
-  | 'resolver_unreachable';
+  | 'resolver_unreachable'
+  | 'tool_bundle_violation';
 
 /**
  * Common envelope fields. Every member of the union carries a `kind`, a
@@ -138,6 +139,18 @@ export interface McpCircuitOpenError extends McpErrorBase {
   readonly failure_count: number;
 }
 
+/**
+ * F-505 per-agent tool-bundle violation. Emitted when the
+ * ``tool_bundle_guard`` rejects an (agent, tool) pair. Surfaced as a
+ * data envelope (not an exception) so callers can branch on
+ * ``kind === 'tool_bundle_violation'``.
+ */
+export interface McpToolBundleViolationError extends McpErrorBase {
+  readonly kind: 'tool_bundle_violation';
+  readonly agent_name: string;
+  readonly tool_name: string;
+}
+
 /** The discriminated error envelope. Always returned with `status: 'error'`. */
 export type McpError =
   | McpUnavailableError
@@ -149,7 +162,8 @@ export type McpError =
   | McpToolNotFoundError
   | McpArgsInvalidError
   | McpUpstreamError
-  | McpCircuitOpenError;
+  | McpCircuitOpenError
+  | McpToolBundleViolationError;
 
 /** Envelope returned by the router when an error fires. */
 export interface McpErrorEnvelope {
@@ -364,3 +378,30 @@ export const circuitOpen = (
     at: nowIso(),
   },
 });
+
+/**
+ * F-505 tool-bundle violation envelope (plan 01-06).
+ */
+export const toolBundleViolation = (
+  server: ServerName,
+  agent_name: string,
+  tool_name: string,
+  message = `tool ${tool_name} not permitted for agent ${agent_name}`,
+): McpErrorEnvelope => ({
+  status: 'error',
+  error: {
+    kind: 'tool_bundle_violation',
+    message,
+    server,
+    tool: tool_name as ToolName,
+    agent_name,
+    tool_name,
+    at: nowIso(),
+  },
+});
+
+/** Type-narrow for the F-505 envelope. */
+export const isToolBundleViolation = (
+  e: McpErrorEnvelope,
+): e is McpErrorEnvelope & { error: McpToolBundleViolationError } =>
+  e.status === 'error' && e.error.kind === 'tool_bundle_violation';

@@ -7,8 +7,8 @@ format and the in-process state share one definition.
 
 Independence contract (per locked Phase 1 decision in STATE.md):
 
-* This module is INTENTIONALLY independent of
-  ``backend.app.agents.sdlc_agent`` and ``backend.app.agents.sdlc_state``.
+* This module is INTENTIONALLY independent of the SDLC supervisor
+  package (no shared prompt template, no shared state type).
 * It carries its own ``tenant_id`` / ``project_id`` (Rule 2).
 * It has its own typed findings (no shared enum with the SDLC graph).
 * It does NOT import any LLM SDK.

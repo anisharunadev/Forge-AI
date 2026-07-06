@@ -1,8 +1,22 @@
 """F-503 — Deterministic Security Gate.
 
-This service is the NFR-042 / DL-011 enforcement point: it answers a
-binary ``allowed = True/False`` question for a given commit without
-delegating the decision to an LLM.
+This module hosts TWO co-existing contracts:
+
+1. The pre-existing ``MergeGate`` dataclass-shaped gate
+   (``MergeGateDecision`` with ``allowed`` + ``decision``) — the
+   webhook-facing path used by ``POST /api/v1/webhooks/github/pre-commit``
+   and the F-503 enforcement point.
+
+2. The new rules-only ``MergeGateEngine`` (plan 01-06, locked Phase 1
+   decision in STATE.md) — emits the typed Pydantic v2
+   :class:`app.schemas.merge_gate_decision.MergeGateDecision` with
+   ``verdict: Literal["pass","warn","fail"]`` and a ``blockers`` list.
+   This is the substrate gate the SDLC supervisor calls; it never
+   imports :mod:`app.services.litellm_client`.
+
+Both contracts coexist on this module because they answer different
+questions at different boundaries (binary commit-allow webhook vs.
+typed per-run artifact for the KG).
 
 Flow
 ----
@@ -597,12 +611,246 @@ def merge_gate_default() -> MergeGate:
     return MergeGate()
 
 
+# ---------------------------------------------------------------------------
+# Plan 01-06 — Rules-only MergeGateEngine.
+#
+# Locked Phase 1 decision (STATE.md): the Merge Gate is rules-only —
+# the LLM is excluded from the gate decision. This class is the typed
+# substrate artifact producer: it consumes a ValidationReport from
+# the F-501 Code Validator sub-graph (plan 01-05) and emits a
+# MergeGateDecision with verdict (`pass`/`warn`/`fail`) and a
+# blockers list. It MUST NOT import litellm_client (enforced by
+# ``test_no_llm_call``).
+# ---------------------------------------------------------------------------
+
+
+from collections.abc import Awaitable, Callable  # noqa: E402  — kept above for IDE; re-import safe
+
+
+# Lazy imports to keep the deterministic path free of network deps.
+def _import_merge_gate_decision_schema():
+    from app.schemas.merge_gate_decision import (
+        MergeGateBlocker,
+        MergeGateDecision,
+    )
+
+    return MergeGateBlocker, MergeGateDecision
+
+
+def _import_validation_report():
+    from app.schemas.validation_report import ValidationReport
+
+    return ValidationReport
+
+
+# Type aliases for the rules-only engine collaborators.
+ValidatorRunner = Callable[
+    ["MergeGateEngine", UUID, UUID, UUID, list[str]],
+    Awaitable[Any],
+]
+"""Async ``(self, tenant_id, project_id, run_id, files) -> ValidationReport``."""
+
+
+CostLedgerPort = Any
+"""``CostLedger`` protocol — only ``sum_spent_for_run`` is required."""
+
+
+SettingsPort = Any
+"""Settings object — only ``run_budget_cap_usd`` is read."""
+
+
+class MergeGateEngine:
+    """Rules-only Merge Gate (plan 01-06).
+
+    The engine composes two pre-call checks:
+
+    1. **Validation gate** — invokes the F-501 Code Validator sub-graph
+       on the supplied ``files`` and reads the typed
+       :class:`ValidationReport.verdict`. A ``"fail"`` verdict produces
+       a ``MergeGateBlocker(category="validation", ...)`` and the
+       engine verdict flips to ``"fail"``.
+
+    2. **Cost-cap gate** — reads the run's cumulative spend via
+       ``cost_ledger.sum_spent_for_run(run_id)`` and compares against
+       ``settings.run_budget_cap_usd``. Over-cap produces a
+       ``MergeGateBlocker(category="cost_cap", ...)``.
+
+    Final verdict mapping::
+
+        blockers                  → verdict
+        ─────────────────────────────────────────
+        empty                     → "pass"
+        any with category ≠ high  → "warn"
+        any with category validation / cost_cap / approval_missing / bundle_violation / policy → "fail"
+
+    The class is locked rules-only: no LLM call anywhere. Tests assert
+    this by patching :func:`app.services.litellm_client.completion` and
+    asserting it was never called.
+    """
+
+    def __init__(
+        self,
+        *,
+        code_validator: ValidatorRunner | None = None,
+        cost_ledger: CostLedgerPort | None = None,
+        settings: SettingsPort | None = None,
+    ) -> None:
+        # Lazy defaults keep the constructor import-free for tests.
+        self._code_validator = code_validator or _default_code_validator_runner
+        self._cost_ledger = cost_ledger
+        self._settings = settings
+
+    # ---- Public API ----------------------------------------------------
+
+    async def evaluate(
+        self,
+        *,
+        tenant_id: UUID,
+        project_id: UUID,
+        run_id: UUID,
+        files: list[str],
+    ) -> "MergeGateDecision":  # type: ignore[name-defined]  # noqa: F821
+        """Run the rules-only gate and return a typed decision.
+
+        Parameters
+        ----------
+        tenant_id, project_id, run_id:
+            Required Rule 2 multi-tenancy identity.
+        files:
+            The list of changed file paths to feed into the
+            F-501 Code Validator sub-graph. Empty list is allowed;
+            the validator produces a pass verdict for runs that
+            pre-date the contract.
+
+        Returns
+        -------
+        MergeGateDecision
+            Typed Pydantic v2 artifact with verdict + blockers.
+        """
+        MergeGateBlocker, MergeGateDecision = _import_merge_gate_decision_schema()
+        ValidationReport = _import_validation_report()
+
+        blockers: list[Any] = []
+
+        # 1) Validation gate.
+        report = await self._code_validator(tenant_id, project_id, run_id, files)
+        validation_report_id = _coerce_uuid(getattr(report, "report_id", None))
+
+        verdict_str = str(getattr(report, "verdict", "pass") or "pass").lower()
+        # Coerce legacy F-502 ``decision`` (uppercase) when ``verdict``
+        # is not present.
+        if verdict_str not in ("pass", "warn", "fail"):
+            legacy = str(getattr(report, "decision", "PASS") or "PASS").upper()
+            verdict_str = {"PASS": "pass", "FAIL": "fail"}.get(legacy, "pass")
+
+        if verdict_str == "fail":
+            blockers.append(
+                MergeGateBlocker(
+                    category="validation",
+                    message="ValidationReport failed",
+                    evidence_ref=str(validation_report_id),
+                )
+            )
+
+        # 2) Cost-cap gate (only when a ledger is injected).
+        if self._cost_ledger is not None and self._settings is not None:
+            cap = float(getattr(self._settings, "run_budget_cap_usd", 0.0) or 0.0)
+            spent = float(
+                await self._cost_ledger.sum_spent_for_run(run_id)  # type: ignore[union-attr]
+                or 0.0
+            )
+            if cap > 0.0 and spent > cap:
+                blockers.append(
+                    MergeGateBlocker(
+                        category="cost_cap",
+                        message=(
+                            f"run spend {spent:.4f} USD exceeds cap "
+                            f"{cap:.4f} USD"
+                        ),
+                        evidence_ref=f"run:{run_id}",
+                    )
+                )
+
+        # 3) Verdict mapping. A blocker of any category flips to "fail"
+        # because every BlockerCategory is a hard-stop condition.
+        if blockers:
+            verdict: Any = "fail"
+        elif verdict_str == "warn":
+            verdict = "warn"
+        else:
+            verdict = "pass"
+
+        decision = MergeGateDecision(
+            tenant_id=tenant_id,
+            project_id=project_id,
+            run_id=run_id,
+            validation_report_id=validation_report_id,
+            verdict=verdict,
+            blockers=blockers,
+        )
+
+        # 4) Audit row (Rule 6) — best-effort, never crash the gate.
+        try:
+            await audit_service.record(
+                tenant_id=tenant_id,
+                project_id=project_id,
+                action="merge_gate.evaluate",
+                target_type="merge_gate_decision",
+                target_id=str(run_id),
+                payload={
+                    "verdict": decision.verdict,
+                    "validation_report_id": str(decision.validation_report_id),
+                    "blocker_count": len(decision.blockers),
+                    "categories": sorted({b.category for b in decision.blockers}),
+                },
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.error(
+                "merge_gate_engine.audit_failed",
+                run_id=str(run_id),
+                error=str(exc),
+            )
+
+        return decision
+
+
+# ---------------------------------------------------------------------------
+# Default validator runner — calls the F-501 Code Validator sub-graph.
+# ---------------------------------------------------------------------------
+
+
+async def _default_code_validator_runner(
+    tenant_id: UUID,
+    project_id: UUID,
+    run_id: UUID,
+    files: list[str],
+) -> Any:
+    """Default runner for the F-501 sub-graph.
+
+    Lazy import keeps the deterministic path import-cheap and lets
+    tests inject a stub via ``MergeGateEngine(code_validator=...)``.
+    """
+    from app.agents.code_validator import build_code_validator_graph
+    from app.agents.code_validator_state import CodeValidatorState
+
+    graph = build_code_validator_graph()
+    validator_state = CodeValidatorState(
+        tenant_id=tenant_id,
+        project_id=project_id,
+        run_id=run_id,
+        files=list(files or []),
+    )
+    result_state = await graph.ainvoke(validator_state)
+    return result_state.report
+
+
 __all__ = [
     "DEFAULT_PER_COMMIT_COST_CAP_USD",
     "GateDecision",  # back-compat alias (M2 T-C1)
     "GateFinding",
     "MergeGate",
     "MergeGateDecision",
+    "MergeGateEngine",  # plan 01-06
     "ValidatorFn",
     "CostProjector",
     "lite_llm_cost_projector",

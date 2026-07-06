@@ -46,17 +46,9 @@ import {
   ShieldAlert,
   History,
   Play,
-  FileText,
-  AlertTriangle,
-  GitMerge,
+  FileText, GitMerge,
   Sparkles,
-  Command as CommandIcon,
-  Download,
-  Filter,
-  Calendar,
-  User,
-  Tag,
-  Eye,
+  Command as CommandIcon, Eye,
   MessageSquare,
   History as HistoryAlias,
   ThumbsUp,
@@ -64,21 +56,16 @@ import {
   Layers,
   TrendingUp,
   TrendingDown,
-  Activity,
-  Check,
-  ChevronDown,
-  ChevronUp,
-  LayoutGrid,
+  Activity, LayoutGrid,
   KanbanSquare,
   GanttChartSquare,
   Grid3x3,
-  Type,
-  Shield,
-  Send,
+  Type, Send,
   RefreshCw,
-  Zap,
+  Zap
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { track } from '@/lib/analytics';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { AdminShell } from '@/components/admin/AdminShell';
@@ -107,11 +94,11 @@ import {
   SavedFiltersBar,
   AIAssistantBadge,
   BulkBar,
+  exportData,
 } from '@/components/architecture/architecture-extras';
 
 import { ADRViewer } from '@/components/architecture/ADRViewer';
 import { ApprovalStatusBadge } from '@/components/architecture/ApprovalStatusBadge';
-import { APIContractViewer } from '@/components/architecture/APIContractViewer';
 import { TaskBreakdownTree } from '@/components/architecture/TaskBreakdownTree';
 
 import {
@@ -127,7 +114,6 @@ import {
   useRequestApproval,
   useDecideApproval,
 } from '@/lib/hooks/useArchitecture';
-import { VersionDiff } from '@/components/architecture/VersionDiff';
 import { SecurityReportPanel } from '@/components/architecture/SecurityReportPanel';
 import { useArchitecturePipelineWS } from '@/lib/architecture/use-pipeline-ws';
 
@@ -1232,13 +1218,14 @@ function ADRContentTab({ adr }: { adr: ADRWithMeta }) {
           size="sm"
           variant="outline"
           disabled={requestApproval.isPending}
-          onClick={() =>
+          onClick={() => {
+            track('approval.requested', { artifact_type: 'adr', artifact_id: adr.id });
             requestApproval.mutate({
               project_id: projectId,
               artifact_type: 'adr',
               artifact_id: adr.id,
-            })
-          }
+            });
+          }}
           className="text-xs"
           data-testid="adr-request-review"
         >
