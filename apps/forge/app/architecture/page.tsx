@@ -122,6 +122,10 @@ import {
   useArchitectureVersions,
   useTraceability,
   useArchitectureSecurity,
+  useCreateTaskBreakdown,
+  useApprovals,
+  useRequestApproval,
+  useDecideApproval,
 } from '@/lib/hooks/useArchitecture';
 import { VersionDiff } from '@/components/architecture/VersionDiff';
 import { SecurityReportPanel } from '@/components/architecture/SecurityReportPanel';
@@ -1197,6 +1201,11 @@ function ADREditor({
 }
 
 function ADRContentTab({ adr }: { adr: ADRWithMeta }) {
+  // M15-1 Gap 3 — wire "Request review" to useRequestApproval so the
+  // POST /architecture/approvals call hits the real backend (and
+  // lands in audit_events via the workflow's @audit decorator).
+  const requestApproval = useRequestApproval();
+  const projectId = process.env.NEXT_PUBLIC_FORGE_DEMO_PROJECT_ID ?? '22222222-2222-2222-2222-222222222222';
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_240px]">
       <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-base)] p-4">
@@ -1219,9 +1228,22 @@ function ADRContentTab({ adr }: { adr: ADRWithMeta }) {
         <p className="font-mono text-[10px] text-[var(--fg-tertiary)]">
           Last saved: just now
         </p>
-        <Button size="sm" variant="outline" onClick={() => toast.info('Open review request')} className="text-xs">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={requestApproval.isPending}
+          onClick={() =>
+            requestApproval.mutate({
+              project_id: projectId,
+              artifact_type: 'adr',
+              artifact_id: adr.id,
+            })
+          }
+          className="text-xs"
+          data-testid="adr-request-review"
+        >
           <Send className="mr-1.5 h-3 w-3" aria-hidden="true" />
-          Request review
+          {requestApproval.isPending ? 'Requesting…' : 'Request review'}
         </Button>
       </aside>
     </div>
@@ -1366,41 +1388,79 @@ function ADRVersionsTab({ adr }: { adr: ADRWithMeta }) {
 }
 
 function ADRReviewsTab({ adr }: { adr: ADRWithMeta }) {
-  const reviewers = [
-    { name: 'priya.r', status: 'approved' as const, note: 'Looks solid — approve.' },
-    { name: 'kenji.t', status: 'pending' as const, note: '' },
-    { name: 'dana.s', status: 'changes' as const, note: 'Add fallback path for budget exhaustion.' },
-  ];
+  // M15-1 Gap 3 — read live approvals filtered to this ADR and wire
+  // approve/deny to useDecideApproval. Each decide() lands in
+  // audit_events via the workflow's audit_service.record call (the
+  // R6 fix in Gap 4).
+  const approvalsQuery = useApprovals();
+  const decideApproval = useDecideApproval();
+  const liveRows = (approvalsQuery.data?.items ?? []).filter(
+    (a) => a.artifact_type === 'adr' && a.artifact_id === adr.id,
+  );
+  // Fall back to a single empty-state row when no approvals exist yet
+  // so the UI doesn't go blank — R15 (empty states explain).
+  const rows = liveRows.length > 0
+    ? liveRows
+    : [{ id: 'empty', artifact_type: 'adr' as const, artifact_id: adr.id, status: 'pending' as const }];
   return (
     <div className="flex flex-col gap-2">
-      {reviewers.map((r) => {
+      {rows.map((r) => {
         const tone =
           r.status === 'approved'
             ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-            : r.status === 'changes'
-              ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+            : r.status === 'denied'
+              ? 'border-rose-500/30 bg-rose-500/10 text-rose-300'
               : 'border-slate-500/30 bg-slate-500/10 text-slate-300';
         return (
-          <div key={r.name} className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-inset)] p-3">
+          <div
+            key={r.id}
+            data-testid={`adr-review-row-${r.id}`}
+            className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-inset)] p-3"
+          >
             <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--bg-base)] font-mono text-[10px] text-[var(--fg-primary)]">
-              {r.name[0]?.toUpperCase()}
+              {r.id === 'empty' ? '?' : r.id.slice(0, 2).toUpperCase()}
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-xs">
-                <span className="font-mono text-[var(--fg-secondary)]">@{r.name}</span>
+                <span className="font-mono text-[var(--fg-secondary)]">
+                  {r.id === 'empty' ? 'No review requested yet' : `approval-${r.id.slice(0, 8)}`}
+                </span>
                 <span className={cn('ml-2 rounded border px-1.5 py-0.5 font-mono text-[10px]', tone)}>
                   {r.status}
                 </span>
               </p>
-              {r.note ? <p className="mt-1 text-xs text-[var(--fg-secondary)]">{r.note}</p> : null}
+              {r.id !== 'empty' ? (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={decideApproval.isPending || r.status === 'approved' || r.status === 'denied'}
+                    onClick={() =>
+                      decideApproval.mutate({ id: r.id, decision: 'approve', reason: '' })
+                    }
+                    data-testid={`adr-review-approve-${r.id}`}
+                    className="text-[10px]"
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={decideApproval.isPending || r.status === 'approved' || r.status === 'denied'}
+                    onClick={() =>
+                      decideApproval.mutate({ id: r.id, decision: 'deny', reason: '' })
+                    }
+                    data-testid={`adr-review-deny-${r.id}`}
+                    className="text-[10px]"
+                  >
+                    Deny
+                  </Button>
+                </div>
+              ) : null}
             </div>
           </div>
         );
       })}
-      <Button variant="outline" size="sm" onClick={() => toast.info('Open reviewer picker')} className="self-start text-xs">
-        <Plus className="mr-1.5 h-3 w-3" aria-hidden="true" />
-        Request review from
-      </Button>
     </div>
   );
 }
@@ -1826,10 +1886,19 @@ function TaskBreakdownMasterDetail({
   breakdowns,
   selectedId,
   onSelect,
+  onCreateFromADR,
+  firstAdr,
 }: {
   breakdowns: ReadonlyArray<TaskBreakdown>;
   selectedId: string | undefined;
   onSelect: (b: TaskBreakdown) => void;
+  // M15-1 Gap 2 — handler that fires useCreateTaskBreakdown.mutate
+  // with source_type='adr' for the given ADR id. The page owns the
+  // mutation; the button below passes the ADR id (UUID) up.
+  onCreateFromADR?: (adrId: string) => void;
+  // First ADR (id + display label) so the Generate-from-ADR button
+  // can both name its target AND pass a valid UUID to the mutation.
+  firstAdr?: { id: string; label: string };
 }) {
   const [view, setView] = React.useState<'tree' | 'kanban' | 'timeline' | 'matrix'>('tree');
   const selected = resolveSelected(breakdowns, selectedId);
@@ -1898,7 +1967,18 @@ function TaskBreakdownMasterDetail({
               );
             })}
           </ul>
-          <Button variant="outline" size="sm" onClick={() => toast.info('AI: decompose this story')} className="text-xs">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!onCreateFromADR || !firstAdr}
+            onClick={() => firstAdr && onCreateFromADR?.(firstAdr.id)}
+            className="text-xs"
+            data-testid="tasks-generate-from-adr"
+          >
+            <Sparkles className="mr-1 h-3 w-3" aria-hidden="true" />
+            Generate from {firstAdr?.label ?? 'ADR'}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => toast.info('AI: decompose this story')} className="text-xs">
             <Sparkles className="mr-1 h-3 w-3" aria-hidden="true" />
             AI: decompose story
           </Button>
@@ -2040,6 +2120,16 @@ export default function ArchitectureCenterPage() {
   const contractsQuery = useContracts();
   const breakdownsQuery = useTaskBreakdowns();
   const registersQuery = useRiskRegisters();
+  // M15-1 Gap 2 — wire the Generate-breakdown-from-ADR button.
+  // createTaskBreakdown.mutate({ project_id, source_type: 'adr', source_id })
+  // invalidates breakdownsQuery automatically via the hook's onSuccess.
+  const createTaskBreakdown = useCreateTaskBreakdown();
+  // M15-1 Gap 3 — approvals hooks are called inside ADRContentTab +
+  // ADRReviewsTab themselves (TanStack dedupes by query key). Only
+  // the breakdown mutation needs to live at the page level because
+  // the button is inside TaskBreakdownMasterDetail which receives the
+  // callback via prop.
+  const projectId = process.env.NEXT_PUBLIC_FORGE_DEMO_PROJECT_ID ?? '22222222-2222-2222-2222-222222222222';
   const versionsQuery = useArchitectureVersions();
   const traceabilityQuery = useTraceability();
   // M5-G4 — Security Report hook. The posture query reads the cached
@@ -2384,6 +2474,21 @@ export default function ArchitectureCenterPage() {
                   breakdowns={breakdowns}
                   selectedId={selectedBreakdownId ?? breakdowns[0]?.id}
                   onSelect={handleBreakdownSelect}
+                  onCreateFromADR={(adrId) =>
+                    createTaskBreakdown.mutate({
+                      project_id: projectId,
+                      source_type: 'adr',
+                      source_id: adrId,
+                    })
+                  }
+                  firstAdr={
+                    liveAdrs[0]
+                      ? {
+                          id: liveAdrs[0].id,
+                          label: `ADR-${String(liveAdrs[0].number ?? '001').padStart(3, '0')}`,
+                        }
+                      : undefined
+                  }
                 />
               </div>
             ) : null}
