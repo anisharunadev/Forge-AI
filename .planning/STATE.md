@@ -5,16 +5,16 @@ milestone_name: milestone
 current_phase: 1
 current_phase_name: Substrate Lock
 status: in_progress
-stopped_at: Plan 01-04 complete (PITFALL-6 approval-expiry scheduler + stale-approval badge)
-last_updated: "2026-07-07T01:16:00.000Z"
+stopped_at: Plan 01-02 complete (PITFALL-2 cost admission + RunBudgetBadge)
+last_updated: "2026-07-07T01:25:00.000Z"
 last_activity: 2026-07-07
-last_activity_desc: "Plan 01-04 complete: PITFALL-6 closure via 60-second APPROVAL_EXPIRED scheduler wired into FastAPI lifespan + per-phase/per-tenant approval_timeout_overrides with [1,168] validator + pre-existing M6-G5 StaleApprovalBadge already rendered in RunCenterPage.tsx (drawer). Pre-existing import bug in litellm_anomaly_check.py fixed as Rule 3 blocker. 6/6 pytest cases pass."
+last_activity_desc: "Plan 01-02 complete (PITFALL-2 closure): pre_call_admission wired in LiteLLMClient (chat/embed/chat_with_tools all check cumulative cap BEFORE provider traffic; _record_actual_for_run settles AFTER response). Settings.run_budget_cap_usd (50.0 default, gt=0/le=10000) + per-tenant overrides + _validate_run_budget_caps_positive validator. cost_ledger.record_projected/record_actual/sum_spent_for_run (keyword-only Rule 2). AdmissionDecision + CostCapExceeded exported. pricing YAML has 4 models + default fallback. RunBudgetBadge wired in RunIndexTable (per-row, fed by GET /api/v1/runs/{run_id}/budget) AND RunBudgetBadgeTenantDefault in app/runs/page.tsx header. 7/8 pytest cases pass (1 intentional skip tracked for M12). All work already shipped by Track B; this executor verified state and recorded closure."
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 16
-  completed_plans: 8
-  percent: 25
+  completed_plans: 9
+  percent: 26
 ---
 
 # Project State
@@ -29,14 +29,14 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Current Position
 
-Phase: 1 of 5 (Substrate Lock) — **4/9 plans done** (01-01 PITFALL-1 approval decorator + CI gate, 01-03 PITFALL-5 audit/OTel, 01-04 PITFALL-6 approval-expiry scheduler, 01-09 ADR-009/010/011); 5 plans remaining
+Phase: 1 of 5 (Substrate Lock) — **5/9 plans done** (01-01 PITFALL-1, 01-02 PITFALL-2 cost admission, 01-03 PITFALL-5 audit/OTel, 01-04 PITFALL-6 approval-expiry, 01-09 ADR-009/010/011); 4 plans remaining
 Phase 0 (Pre-Roadmap Hygiene): 4 of 4 plans complete (100%)
 Phase 0.5 (UI Foundation): 5 of 5 plans complete (100%)
 Integration Step: **55 of 13 (Phase 3 — Connectors) — wiring in progress**
-Status: Phase 1 (Substrate Lock) in progress; PITFALL-6 closed; 01-05, 01-06, 01-07, 01-08 still to execute
-Last activity: 2026-07-07 — Plan 01-04 complete: 60-second APPROVAL_EXPIRED scheduler wired into FastAPI lifespan (was never started before); per-phase/per-tenant approval_timeout_overrides with [1,168] validator; pre-existing M6-G5 StaleApprovalBadge already rendered in RunCenterPage drawer; 6/6 pytest cases pass.
+Status: Phase 1 (Substrate Lock) in progress; PITFALL-2 + PITFALL-6 closed; 01-05, 01-06, 01-07, 01-08 still to execute
+Last activity: 2026-07-07 — Plan 01-02 complete: PITFALL-2 cost admission + RunBudgetBadge wired end-to-end; 7/8 pytest cases pass.
 
-Progress: [██████████] 25% overall; Phase 0 closed 4/4; Phase 1 3/9 done (01-01 PITFALL-1 approval-decorator + CI, 01-03 PITFALL-5 audit/OTel, 01-09 ADR-009/010/011); Step 55 (Connector Center → real backend) 4/9 zones done
+Progress: [██████████] 26% overall; Phase 0 closed 4/4; Phase 1 5/9 done (01-01, 01-02, 01-03, 01-04, 01-09); Step 55 (Connector Center → real backend) 4/9 zones done
 
 ### Step 55 — Wire Connector Center to real backend (Phase 3)
 

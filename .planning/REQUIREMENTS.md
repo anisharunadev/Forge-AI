@@ -28,7 +28,7 @@ Pilot-readiness milestone. Each requirement maps to a roadmap phase.
 ### Operational Lockdown (substrate + constitutional enforcement)
 
 - [x] **OPS-01**: **PITFALL-1 fix** — `@require_approval_phase(...)` decorator on every artifact-writing route; `pending_approval` / `gate_decided_by` frozen on the run-state Pydantic model; `Idempotency-Key` required on decisions. *(Decorator + frozen `ApprovalEnvelope` + `ApprovalRequiredError` + CI grep gate shipped in plan 01-01; 308/338 v1 endpoints carry the decorator; 30 operational endpoints flagged for deferred retrofit in 01-05. `Idempotency-Key` requirement tracked separately.)*
-- [ ] **OPS-02**: **PITFALL-2 fix** — pre-call cost admission in `litellm_client.py` derives projected cost from prompt estimate × model price; cumulative cap enforced; per-run budget visible in UI before run starts.
+- [x] **OPS-02**: **PITFALL-2 fix** — pre-call cost admission in `litellm_client.py` derives projected cost from prompt estimate × model price; cumulative cap enforced; per-run budget visible in UI before run starts. *(Closed by plan 01-02: `LiteLLMClient.pre_call_admission(...)` derives cost via `project_cost_usd` from pricing YAML, enforces `spent + projected <= settings.run_budget_cap_usd[tenant_id]` via the `_validate_run_budget_caps_positive` validator, raises `CostCapExceeded` on deny. Every ALLOW call writes `record_projected` pre-call + `record_actual` post-call. `RunBudgetBadge` + `RunBudgetBadgeTenantDefault` mounted in `apps/forge/components/runs/RunIndexTable.tsx` (per-row) and `apps/forge/app/runs/page.tsx` (header); `GET /api/v1/runs/{run_id}/budget` + `/_default_budget` endpoints serve ceiling/spent/remaining. 7/8 pytest cases pass; 1 intentional skip tracked for M12 hardening.)*
 - [ ] **OPS-03**: **PITFALL-5 fix** — `gsd_wrapper.audit_sink` defaults to `audit_service.record` in production; `OTEL_EXPORTER_OTLP_ENDPOINT` wired in `docker-compose.yml`; `audit_sink=` and `otel_exporter_configured=` probes on `/healthz`.
 - [ ] **OPS-04**: **PITFALL-6 fix** — `APPROVAL_EXPIRED` scheduler fires; UI badge; per-phase / per-tenant timeout config.
 - [ ] **OPS-05**: **Code Validator sub-graph (F-501)** — independent sub-graph per NFR-043; own state, prompts, virtual-key prefix; no import from `sdlc_agent.py`. Emits typed `ValidationReport` (F-502).
@@ -111,7 +111,7 @@ Deferred to post-pilot. Tracked but not in current roadmap.
 | HYG-03 | Phase 0 | Pending |
 | HYG-04 | Phase 0 | Pending |
 | OPS-01 | Phase 1 | In Progress (decorator + frozen envelope + CI gate shipped; 30 deferred retrofit documented; 01-05 closure) |
-| OPS-02 | Phase 1 | Pending |
+| OPS-02 | Phase 1 | Complete (plan 01-02) |
 | OPS-03 | Phase 1 | Pending |
 | OPS-04 | Phase 1 | Pending |
 | OPS-05 | Phase 1 | Pending |
