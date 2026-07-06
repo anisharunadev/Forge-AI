@@ -1,13 +1,20 @@
 {
   "ci": {
     "collect": {
-      "startServerCommand": "pnpm --filter forge-dashboard start",
+      "startServerCommand": "pnpm --filter forge start",
       "startServerReadyPattern": "Ready in",
       "startServerReadyTimeout": 60000,
-      "numberOfRuns": 1,
+      "numberOfRuns": 3,
       "url": [
-        "http://localhost:3000/agent-center",
-        "http://localhost:3000/ideation"
+        "http://localhost:3000/connector-center",
+        "http://localhost:3000/ideation",
+        "http://localhost:3000/architecture",
+        "http://localhost:3000/runs",
+        "http://localhost:3000/audit",
+        "http://localhost:3000/knowledge-center",
+        "http://localhost:3000/onboarding",
+        "http://localhost:3000/copilot",
+        "http://localhost:3000/agent-center"
       ],
       "settings": {
         "preset": "desktop",
@@ -17,7 +24,9 @@
     "assert": {
       "assertions": {
         "categories:accessibility": ["error", { "minScore": 0.95 }],
-        "categories:performance": ["error", { "minScore": 0.9 }]
+        "categories:performance": ["error", { "minScore": 0.9 }],
+        "categories:best-practices": ["warn", { "minScore": 0.85 }],
+        "categories:seo": ["warn", { "minScore": 0.8 }]
       }
     },
     "upload": {
