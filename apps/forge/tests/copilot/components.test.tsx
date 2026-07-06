@@ -31,6 +31,7 @@ import { useSubmitFeedback } from '../../hooks/use-copilot-mutations';
 import { useCost } from '../../hooks/use-copilot';
 import { CitationChip } from '../../components/copilot/CitationChip';
 import { FeedbackButtons } from '../../components/copilot/FeedbackButtons';
+import { LessonCitationChip } from '../../components/copilot/LessonCitationChip';
 import { MessageBubble } from '../../components/copilot/MessageBubble';
 import { SuggestedActions } from '../../components/copilot/SuggestedActions';
 import { CostBadge } from '../../components/copilot/CostBadge';
@@ -88,6 +89,48 @@ describe('<CitationChip>', () => {
     expect(link.getAttribute('rel')).toBe('noopener noreferrer');
     expect(link.getAttribute('data-citation-type')).toBe('service');
     expect(link.textContent).toContain('auth-api');
+  });
+});
+
+describe('<LessonCitationChip>', () => {
+  it('renders with data-testid="lesson-citation-{lessonId}"', () => {
+    // M10 Track B T-B3 (M10-G4) — verify the chip carries the
+    // stable test id contract so Playwright E2E (AC-3c) and
+    // Track C can target it without coupling to the title text.
+    render(
+      <LessonCitationChip
+        lessonId="lesson-42"
+        title="Validate tenant header"
+      />,
+      { wrapper: makeWrapper() },
+    );
+
+    const chip = screen.getByTestId('lesson-citation-lesson-42');
+    expect(chip).not.toBeNull();
+    expect(chip.tagName).toBe('A');
+    expect(chip.getAttribute('href')).toBe(
+      '/knowledge-center/lessons?focus=lesson-42',
+    );
+    expect(chip.textContent).toContain('Lesson:');
+    expect(chip.textContent).toContain('Validate tenant header');
+  });
+
+  it('absent when no lessonId — renders nothing', () => {
+    // Same chip mounted with a falsy `lessonId` must NOT surface
+    // a `data-testid="lesson-citation-*"` anywhere in the DOM. This
+    // is the null-safety contract the MessageBubble relies on to
+    // mount the chip unconditionally.
+    const { container } = render(
+      <>
+        <LessonCitationChip lessonId={null} title="phantom lesson" />
+        <LessonCitationChip lessonId={undefined} title="phantom lesson" />
+        <LessonCitationChip lessonId="" title="phantom lesson" />
+      </>,
+      { wrapper: makeWrapper() },
+    );
+
+    expect(container.querySelector('[data-testid^="lesson-citation-"]')).toBeNull();
+    expect(screen.queryByTestId(/^lesson-citation-/)).toBeNull();
   });
 });
 
