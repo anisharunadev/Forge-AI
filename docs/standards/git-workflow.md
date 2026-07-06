@@ -507,7 +507,17 @@ jobs:
 
 ---
 
-## 13. Forbidden patterns
+## 13. Module-discipline gate (Rec #6 — finish one before starting)
+
+**Rule:** A PR that touches any center whose DoD score (per [`docs/product/center-status.md`](../../product/center-status.md)) is below **80%** is **flagged for review** by the module-discipline gate. The gate runs automatically on every PR via `scripts/check-module-discipline.py`; it exits non-zero with a per-center verdict linking to the unfinished work. Brand-new (unscored) centers get a one-time pass — first-touch is free, second touch requires the score.
+
+The bar is **80%** so a center with a couple of pending manual gates can still accept targeted work while one with several stale gates gets a redirect. To unblock a center, finish the manual gates in [`center-status.md`](../../product/center-status.md) (permission, analytics, a11y, responsive) so the score clears the bar.
+
+**Why:** Rec #6 from the audit — Forge was growing modules faster than it was finishing them. A gate that runs at PR time is policy that can't drift; ADRs and docs that say "finish first" eventually get overridden by deadline pressure.
+
+---
+
+## 14. Forbidden patterns
 
 ```bash
 # ❌ Force-push to main
