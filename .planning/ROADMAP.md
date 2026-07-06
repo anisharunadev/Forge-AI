@@ -74,7 +74,7 @@ Plans:
 
 Plans:
 
-- [ ] 01-01: Approval gate decorator + frozen run-state (PITFALL-1)
+- [x] 01-01: Approval gate decorator + frozen run-state (PITFALL-1)
 - [ ] 01-02: Pre-call cost admission in `litellm_client.py` (PITFALL-2)
 - [x] 01-03: Audit/OTel default sink wiring (PITFALL-5)
 - [ ] 01-04: Approval timeout scheduler (PITFALL-6)
@@ -206,7 +206,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 0. Pre-Roadmap Hygiene | 4/4 | Complete | 2026-06-25 (HYG-01..04 closed) |
-| 1. Substrate Lock | 0/9 | Not started | - |
+| 1. Substrate Lock | 3/9 | In Progress | 2026-07-07 (01-01 PITFALL-1, 01-03 PITFALL-5, 01-09 ADR-009/010/011) |
 | 2. Pilot Cutover Hardening | 0/15 | Not started | - |
 | 3. Pilot Volume Scaling | 0/4 | Not started | - |
 | 4. Expansion (Multi-Tenant Verification) | 0/5 | Not started | - |
