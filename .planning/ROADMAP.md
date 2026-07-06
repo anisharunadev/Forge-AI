@@ -76,13 +76,13 @@ Plans:
 
 - [ ] 01-01: Approval gate decorator + frozen run-state (PITFALL-1)
 - [ ] 01-02: Pre-call cost admission in `litellm_client.py` (PITFALL-2)
-- [ ] 01-03: Audit/OTel default sink wiring (PITFALL-5)
+- [x] 01-03: Audit/OTel default sink wiring (PITFALL-5)
 - [ ] 01-04: Approval timeout scheduler (PITFALL-6)
 - [ ] 01-05: Code Validator sub-graph (F-501)
 - [ ] 01-06: Merge Gate (F-503) + Tool Bundles (F-505)
 - [ ] 01-07: Workflow Budget (NFR-044) + Day-One Bootstrap (F-507)
 - [ ] 01-08: Refactor Agent (F-601) + Steering Rules (F-504)
-- [ ] 01-09: ADR-009 cost ledger + ADR-010 conflict schema + ADR-011 KMS
+- [x] 01-09: ADR-009 cost ledger + ADR-010 conflict schema + ADR-011 KMS
 
 ### Phase 2: Pilot Cutover Hardening
 

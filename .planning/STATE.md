@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-current_phase: 0
-current_phase_name: Pre-Roadmap Hygiene
-status: complete
-stopped_at: context exhaustion at 75% (2026-07-02)
-last_updated: "2026-07-02T01:53:31.974Z"
-last_activity: 2026-06-29
-last_activity_desc: "Step 55 underway: seed_connectors.py, LiveConnectorDataProvider merge-logic fix, missing wire fields, backend route alignment (see `docs/goals/step-55-v2.md` for the 9-zone plan)."
+current_phase: 1
+current_phase_name: Substrate Lock
+status: in_progress
+stopped_at: Plan 01-03 complete (PITFALL-5 audit/OTel default sink)
+last_updated: "2026-07-07T00:30:00.000Z"
+last_activity: 2026-07-07
+last_activity_desc: "Plan 01-03 complete: BasePhaseNode.mutate() writes audit by default (Rule 6 / PITFALL-5); configure_otel()/is_otel_configured() canonical OTel accessor; otel-collector sidecar added to docker-compose; /healthz exposes audit_sink + otel_exporter_configured probes with 503-on-degraded. 3 commits, 7 new pytest cases."
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 16
-  completed_plans: 4
-  percent: 17
+  completed_plans: 6
+  percent: 25
 ---
 
 # Project State
@@ -29,13 +29,14 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Current Position
 
-Phase: 0 of 5 (Pre-Roadmap Hygiene) — **closed 4/4 plans (HYG-01..04 all done)**; Phase 1 planning next
+Phase: 1 of 5 (Substrate Lock) — **2/9 plans done** (01-03 PITFALL-5 audit/OTel, 01-09 ADR-009/010/011); 7 plans remaining
+Phase 0 (Pre-Roadmap Hygiene): 4 of 4 plans complete (100%)
 Phase 0.5 (UI Foundation): 5 of 5 plans complete (100%)
 Integration Step: **55 of 13 (Phase 3 — Connectors) — wiring in progress**
-Status: Phase 0 closed; Phase 1 (Substrate Lock) planning next; Step 55 (Connector Center wiring) in flight
-Last activity: 2026-06-29 — Step 55 underway: seed_connectors.py, LiveConnectorDataProvider merge-logic fix, missing wire fields, backend route alignment (see `docs/goals/step-55-v2.md` for the 9-zone plan).
+Status: Phase 1 (Substrate Lock) in progress; PITFALL-5 closed; 01-04 through 01-08 still to execute
+Last activity: 2026-07-07 — Plan 01-03 complete: BasePhaseNode.mutate() writes audit by default; configure_otel() + is_otel_configured() canonical OTel accessor; otel-collector sidecar added; /healthz exposes both probes (PITFALL-5 closure).
 
-Progress: [██████████] 33% overall; Phase 0 closed 4/4 (HYG-01..04); Step 55 (Connector Center → real backend) 4/9 zones done
+Progress: [██████████] 25% overall; Phase 0 closed 4/4; Phase 1 2/9 done (01-03, 01-09); Step 55 (Connector Center → real backend) 4/9 zones done
 
 ### Step 55 — Wire Connector Center to real backend (Phase 3)
 
@@ -82,7 +83,7 @@ Progress: [██████████] 33% overall; Phase 0 closed 4/4 (HYG-
 |-------|-------|-------|----------|
 | 0. Pre-Roadmap Hygiene | 1 | 4 | ~50m |
 | 0.5. UI Foundation | 5 | 5 | <40m |
-| 1. Substrate Lock | 0 | 9 | — |
+| 1. Substrate Lock | 2 | 9 | ~12m |
 | 2. Pilot Cutover Hardening | 0 | 15 | — |
 | 3. Pilot Volume Scaling | 0 | 4 | — |
 | 4. Expansion (Multi-Tenant Verification) | 0 | 5 | — |
@@ -96,8 +97,8 @@ Progress: [██████████] 33% overall; Phase 0 closed 4/4 (HYG-
 
 **Recent Trend:**
 
-- Last 5 plans: Phase 0-01 (Tailwind 3.4.x + post-pilot deferral note in CLAUDE.md + overview.md; HYG-01 closed 2026-06-25 via close-out commit), Phase 0-02 (node-pty + terminal-server.mjs moved to packages/forge-terminal-server workspace package; HYG-02 closed), Phase 0.5-02 (StatusPill + 7 badge migrations + 3 boundaries), Phase 0.5-06 (5 typed React Flow nodes + 4 graph views + virtualized audit/approval timelines + 3 AI-native panels), Phase 0.5-03 (shell: sidebar/topbar/CMD-K palette/breadcrumbs/mobile drawer/page container)
-- Trend: Phase 0 closed 4/4 (HYG-01..04); Phase 1 (Substrate Lock) planning next; Phase 5 (Custom Workflows F-018) plans already drafted (3 plans, independent workstream)
+- Last 5 plans: Phase 0.5-02 (StatusPill + 7 badge migrations + 3 boundaries), Phase 0.5-06 (5 typed React Flow nodes + 4 graph views + virtualized audit/approval timelines + 3 AI-native panels), Phase 0.5-03 (shell: sidebar/topbar/CMD-K palette/breadcrumbs/mobile drawer/page container), Phase 1-09 (ADR-009/010/011 substrate contracts), Phase 1-03 (PITFALL-5: BasePhaseNode.mutate + configure_otel + otel-collector sidecar + /healthz probes)
+- Trend: Phase 1 (Substrate Lock) in progress; 2/9 plans done (01-03, 01-09); 01-04 through 01-08 still to execute. Phase 5 (Custom Workflows F-018) plans already drafted (3 plans, independent workstream)
 
 ## Accumulated Context
 
@@ -127,6 +128,7 @@ Recent decisions affecting current work:
 - Phase 0.5-04: DataTable (TanStack Table v8), Form (react-hook-form + zod), and Chart wrappers (Recharts) are the data primitives 0.5-05/06/07 compose against; 9 missing shadcn primitives (table/pagination/breadcrumb/avatar/accordion/form/radio-group/switch/slider) added so all later phases can compose against a stable surface. Chart series colors read from CSS variables — flipping dark/light re-skins every chart with zero JS changes (PILOT-03/04/05/10 alignment).
 - Phase 0.5-06: 5 typed React Flow node components (Artifact/RepoFile/Service/AgentStep/Approval) read status from `toneClasses` + `agentStates`; 4 graph views compose them via `nodeTypes={forgeNodeTypes}`; AuditTimelineVirtualized handles >1000 records via @tanstack/react-virtual (PILOT-03/04/05/06 alignment). Verified zero direct hex literals via grep; 20/20 tests pass.
 - Phase 0.5 close-out: `AuditTimelineVirtualized` is now wired into `app/audit/page.tsx` (was previously built + tested but not integrated); SUMMARY files generated for 0.5-05 + 0.5-06 so plan metadata matches disk state. UI Foundation phase is now 5/5 plans, 100% complete.
+- Phase 1-03 (PITFALL-5): `BasePhaseNode.mutate(state, *, agent, model, prompt, tool, artifact, result, apply=None)` is the canonical audit-on-mutate path; it calls `audit_service.record` UNCONDITIONALLY (no `if` guard, no opt-out) and maps the kwarg shape onto the canonical `AuditEvent` schema (`action=f"{agent}.{model}"`, `target_type=tool`, `target_id=prompt`, `payload={...Rule 6 fields...}`, `occurred_at=now(UTC)`) so the audit_log table does not need a migration. `configure_otel(endpoint) -> bool` and `is_otel_configured() -> bool` are the canonical OTel accessor pair; `init_telemetry()` calls `configure_otel` once at startup. `/healthz` exposes both `audit_sink` and `otel_exporter_configured` probes (production-mode `down` -> HTTP 503). A new `otel-collector` docker-compose service (otel/opentelemetry-collector-contrib:0.96.0, ports 4317/4318, infra/otel-collector.yaml mount) makes the `OTEL_EXPORTER_OTLP_ENDPOINT` env var resolvable to a real DNS name. The 8 existing phase subclasses in `nodes/*.py` were NOT refactored; they retain their pre-existing event_bus + artifact_registry + cost-ledger audit surface and can migrate to `self.mutate(...)` incrementally (ponytail deviation, documented in 01-03-SUMMARY.md).
 
 ### Pending Todos
 
