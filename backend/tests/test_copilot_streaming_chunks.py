@@ -15,11 +15,11 @@ service wires the LLM call internally.
 from __future__ import annotations
 
 import uuid
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 import pytest
 import pytest_asyncio
-
 
 # ---------------------------------------------------------------------------
 # Stub LiteLLMClient that yields a deterministic 7-token stream
@@ -87,7 +87,7 @@ class _StreamingStubLiteLLMClient:
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.calls: list[dict[str, Any]] = []
 
-    async def __aenter__(self) -> "_StreamingStubLiteLLMClient":
+    async def __aenter__(self) -> _StreamingStubLiteLLMClient:
         return self
 
     async def __aexit__(self, *_exc: Any) -> None:
@@ -171,7 +171,8 @@ def _chat_request(*, message: str = "say something") -> Any:
 
 @pytest.mark.asyncio
 async def test_stream_chat_emits_multiple_sse_chunks(
-    sqlite_db, streaming_litellm_stub,
+    sqlite_db,
+    streaming_litellm_stub,
 ) -> None:
     """``service.stream_chat`` emits ≥2 token chunks for a multi-token
     response and the persisted ``CopilotMessage`` is finalized
@@ -208,9 +209,7 @@ async def test_stream_chat_emits_multiple_sse_chunks(
 
     # ---- Contract: ≥2 token chunks emitted ---------------------------
     token_events = [e for e in events if e.get("event") == "token"]
-    assert len(token_events) >= 2, (
-        f"expected ≥2 token chunks, got {len(token_events)}"
-    )
+    assert len(token_events) >= 2, f"expected ≥2 token chunks, got {len(token_events)}"
     full_text = "".join(str(e["data"]) for e in token_events)
     # Sanity: the stub emitted 7 distinct tokens totalling this string.
     assert full_text == "Sure, here is a 5-token answer"

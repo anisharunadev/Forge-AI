@@ -26,7 +26,6 @@ import sqlalchemy as sa
 
 from alembic import op
 
-
 # revision identifiers, used by Alembic.
 revision: str = "step_92_m10_copilot_typing"
 down_revision: str | None = "step_91_m7_audit_chain_ref"

@@ -28,13 +28,12 @@ from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Numeric, String, Te
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import (
+    GUID,
     JSONB,
     Base,
-    GUID,
     TimestampMixin,
     UUIDPrimaryKeyMixin,
 )
-
 
 # ---------------------------------------------------------------------------
 # Conversation
