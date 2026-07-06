@@ -1,21 +1,21 @@
 /**
- * `/` — first-run entry point (Plan G commit 1).
+ * `/` — workflow-first home page (M16, Sprint 1 revised).
  *
- * Replaces the previous hard redirect to `/dashboard` with a small
- * first-run check:
+ * Previous behavior:
+ *   - first-run browsers redirected to `/welcome`
+ *   - authenticated browsers redirected to `/dashboard`
  *
- *   - If no `forge.persona` cookie is present (a brand-new browser
- *     that has never loaded Forge), redirect to `/welcome`.
- *   - Otherwise, the user is on a known session and we send them
- *     straight to `/dashboard`.
+ * New behavior:
+ *   - first-run browsers still redirect to `/welcome` (preserves the
+ *     existing onboarding funnel)
+ *   - authenticated browsers land on the workflow home (`/workflow`)
+ *     instead of the legacy grid dashboard
  *
- * The persona cookie is set when the user first picks a persona on
- * `/persona`. The cookie name matches `lib/auth.ts:PERSONA_COOKIE_NAME`
- * (`'forge.persona'`). The redirect logic intentionally does NOT
- * depend on the acme-corp seed being applied — the demo banner
- * (Plan G commit 2/3) handles the in-tenant visibility of seed
- * state. `/welcome` itself is the only place that gates on
- * first-run UX (Load Demo vs Start Empty).
+ * Why? The audit repeatedly identified the nine-center grid as the
+ * reason new users could not orient themselves. The workflow shell
+ * collapses nine entry points into one spine + a single "Continue"
+ * CTA. Power users can still reach `/dashboard` via the sidebar
+ * (we do not delete it; we de-emphasize it).
  */
 
 import { redirect } from 'next/navigation';
@@ -26,5 +26,5 @@ import { cookies } from 'next/headers';
 export default async function HomePage(): Promise<never> {
   const cookieStore = await cookies();
   const persona = cookieStore.get(PERSONA_COOKIE_NAME)?.value;
-  redirect(persona ? '/dashboard' : '/welcome');
+  redirect(persona ? '/workflow' : '/welcome');
 }
