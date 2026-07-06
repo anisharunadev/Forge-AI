@@ -57,14 +57,33 @@ class Settings(BaseSettings):
     # M2 T-A7 — PITFALL-6 closure (Plan 01-04).  Per-tenant override
     # for the approval-timeout window.  Keyed by tenant UUID (str);
     # value is the timeout in HOURS.  When a tenant_id is not in the
-    # dict, the scheduler uses ``approval_timeout_hours`` (the
-    # global default below).  Empty dict is the safe default — the
-    # scheduler falls back to the global default for every tenant.
+    # dict, the scheduler falls through to
+    # ``approval_timeout_overrides_per_phase`` (per-phase) and then
+    # ``approval_timeout_hours`` (global default).  Empty dict is
+    # the safe default — the scheduler falls through to the per-phase
+    # / global default for every tenant.
     approval_timeout_overrides: dict[str, int] = Field(
         default_factory=dict,
         description=(
             "APPROVAL_TIMEOUT_OVERRIDES. Per-tenant approval timeout "
             "(hours) keyed by tenant UUID (str)."
+        ),
+    )
+    # M2 T-A7 (Plan 01-04) — per-phase override. Keyed by SDLCPhase
+    # value (e.g. "architecture", "security", "deployment"). The
+    # scheduler's ``_resolve_timeout_hours`` consults this map AFTER
+    # the per-tenant override and BEFORE the global default — so a
+    # tenant override ALWAYS wins, the phase override is the default
+    # for the phase, and ``approval_timeout_hours`` is the final
+    # fallback. Values are bounded [1, 168] by
+    # ``_validate_timeout_overrides_positive`` so a typo cannot
+    # allocate a 0-hour or 1000-hour window.
+    approval_timeout_overrides_per_phase: dict[str, int] = Field(
+        default_factory=dict,
+        description=(
+            "APPROVAL_TIMEOUT_OVERRIDES_PER_PHASE. Per-phase "
+            "approval timeout (hours) keyed by SDLCPhase value "
+            "(e.g. 'architecture', 'security', 'deployment')."
         ),
     )
     # M2 T-A7 — global approval timeout default.  24 hours mirrors
@@ -75,11 +94,12 @@ class Settings(BaseSettings):
     approval_timeout_hours: int = Field(
         default=24,
         ge=1,
-        le=24 * 30,
+        le=168,
         description=(
             "APPROVAL_TIMEOUT_HOURS. Global default for the "
-            "approval-timeout scheduler; per-tenant overrides live in "
-            "approval_timeout_overrides."
+            "approval-timeout scheduler; per-phase and per-tenant "
+            "overrides live in approval_timeout_overrides_per_phase "
+            "and approval_timeout_overrides respectively."
         ),
     )
 
@@ -386,6 +406,36 @@ class Settings(BaseSettings):
                     f"got {ceiling!r}. A non-positive ceiling would silently "
                     f"disable the per-RUN cumulative cap (ADR-009)."
                 )
+        return self
+
+    @model_validator(mode="after")
+    def _validate_timeout_overrides_positive(self) -> "Settings":
+        """Bound every approval-timeout override to [1, 168] hours (M2 T-A7).
+
+        PITFALL-6 / Plan 01-04: a misconfigured override of 0 would
+        mark every approval as expired on the first scheduler tick;
+        an override of 10_000 would silently disable the timeout
+        surface. The valid range mirrors the global default
+        (``approval_timeout_hours``) which itself is bounded to the
+        same window. Validators run at ``Settings()`` instantiation
+        so a misconfigured deployment exits non-zero at import.
+        """
+        for source, mapping in (
+            ("approval_timeout_overrides", self.approval_timeout_overrides),
+            (
+                "approval_timeout_overrides_per_phase",
+                self.approval_timeout_overrides_per_phase,
+            ),
+        ):
+            for key, value in mapping.items():
+                if not isinstance(value, int) or value < 1 or value > 168:
+                    raise ValueError(
+                        f"{source}[{key!r}] must be in [1, 168] hours, "
+                        f"got {value!r}. A 0-hour override would mark "
+                        f"every approval expired on the first tick; a "
+                        f"value > 168 would silently disable the "
+                        f"timeout surface (PITFALL-6 / Plan 01-04)."
+                    )
         return self
 
     @model_validator(mode="after")
