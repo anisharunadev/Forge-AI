@@ -15,7 +15,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.deps import DbSession, Principal, require_permission
+from app.api.deps import DbSession, require_permission
 from app.core.audit import audit
 from app.core.logging import get_logger
 from app.schemas.rag_v2 import (

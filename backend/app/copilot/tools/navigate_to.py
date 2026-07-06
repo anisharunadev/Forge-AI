@@ -14,11 +14,10 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from app.core.logging import get_logger
-from app.core.security import AuthenticatedPrincipal
-from app.copilot.tools.base import Tool
 from app.copilot.tools.exceptions import ToolArgumentInvalid
 from app.copilot.tools.registry import tool_registry
+from app.core.logging import get_logger
+from app.core.security import AuthenticatedPrincipal
 from app.services.rbac import COPILOT_PERMISSION_TOOL_NAVIGATE_TO
 
 logger = get_logger(__name__)

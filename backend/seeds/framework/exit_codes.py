@@ -22,7 +22,6 @@ follows the BSD sysexits.h convention for "software error".
 
 from __future__ import annotations
 
-
 SUCCESS = 0
 INVALID_MANIFEST = 1
 SCHEMA_MISMATCH = 2

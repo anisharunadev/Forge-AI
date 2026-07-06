@@ -29,8 +29,8 @@ fast, deterministic, and catches the regression vector that matters:
 from __future__ import annotations
 
 import ast
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator
 
 import pytest
 
@@ -80,9 +80,7 @@ _AUDIT_ALLOWLIST: frozenset[str] = frozenset(
 # ---------------------------------------------------------------------------
 
 # Router decorator prefixes that mark a mutation endpoint.
-_MUTATION_DECORATORS: frozenset[str] = frozenset(
-    {"post", "put", "patch", "delete"}
-)
+_MUTATION_DECORATORS: frozenset[str] = frozenset({"post", "put", "patch", "delete"})
 # Audit decorator qualified name (the @audit(...) factory).
 _AUDIT_DECORATOR_NAME: str = "audit"
 
@@ -233,9 +231,9 @@ def test_routers_dir_has_at_least_one_mutation_handler() -> None:
 
 def test_no_duplicate_audit_completeness_allowlist_entries() -> None:
     """Allowlist must not contain the same module twice (silent dup = review gap)."""
-    assert len(_AUDIT_ALLOWLIST) == len(
-        {entry.replace(" ", "") for entry in _AUDIT_ALLOWLIST}
-    ), "Duplicate entries in _AUDIT_ALLOWLIST"
+    assert len(_AUDIT_ALLOWLIST) == len({entry.replace(" ", "") for entry in _AUDIT_ALLOWLIST}), (
+        "Duplicate entries in _AUDIT_ALLOWLIST"
+    )
 
 
 def _iter_router_files() -> Iterator[Path]:

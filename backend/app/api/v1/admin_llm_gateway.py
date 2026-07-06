@@ -19,19 +19,22 @@ needed.
 
 from __future__ import annotations
 
+from datetime import UTC
 from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
-from app.core.security import AuthenticatedPrincipal
 from app.core.logging import get_logger
+from app.core.security import AuthenticatedPrincipal
+from app.db.models.litellm_key_audit import LiteLLMKeyAction
 from app.integrations.litellm import (
     GuardrailSync,
-    MCPServerRegistry,
     TenantSync,
     VirtualKeyManager,
     guardrail_sync,
@@ -46,8 +49,6 @@ from app.services.litellm_admin import (
     list_teams,
     update_guardrail,
 )
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -192,7 +193,7 @@ async def _collect_tenant_config(
 async def get_tenant_llm_config(
     tenant_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:read")),
 ) -> TenantLLMConfig:
     """Return the tenant's LLM gateway config (model, budget, guardrails)."""
     tid = str(tenant_id)
@@ -210,7 +211,7 @@ async def get_tenant_llm_config(
 async def list_tenant_keys(
     tenant_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:read")),
 ) -> list[VirtualKeyMetadata]:
     """Return the tenant's Virtual Key metadata.
 
@@ -220,11 +221,11 @@ async def list_tenant_keys(
     returns it (per the F-829 plan, "Critical rules: never display a
     Virtual Key VALUE in any UI surface").
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from sqlalchemy import select
 
-    from app.db.models.litellm_key_audit import LiteLLMKeyAction, LiteLLMKeyAudit
+    from app.db.models.litellm_key_audit import LiteLLMKeyAudit
     from app.db.rls import tenant_context
     from app.db.session import get_session_factory
 
@@ -234,32 +235,31 @@ async def list_tenant_keys(
     # Most recent audit row per alias — yields the alias's current state.
     rows: list[dict[str, Any]] = []
     try:
-        async with factory() as session:
-            async with tenant_context(session, tid):
-                result = await session.scalars(
-                    select(LiteLLMKeyAudit)
-                    .where(LiteLLMKeyAudit.tenant_id == tid)
-                    .order_by(LiteLLMKeyAudit.occurred_at.desc())
+        async with factory() as session, tenant_context(session, tid):
+            result = await session.scalars(
+                select(LiteLLMKeyAudit)
+                .where(LiteLLMKeyAudit.tenant_id == tid)
+                .order_by(LiteLLMKeyAudit.occurred_at.desc())
+            )
+            seen: set[str] = set()
+            for audit_row in result.all():
+                alias = audit_row.litellm_key_alias or ""
+                if alias in seen:
+                    continue
+                seen.add(alias)
+                rows.append(
+                    {
+                        "id": str(audit_row.id),
+                        "tenant_id": tid,
+                        "alias": alias,
+                        "created_at": audit_row.occurred_at.isoformat()
+                        if audit_row.occurred_at
+                        else datetime.now(UTC).isoformat(),
+                        "last_used_at": None,
+                        "status": _derive_status(audit_row.action),
+                        "fingerprint": (audit_row.litellm_key_hash or "")[:12],
+                    }
                 )
-                seen: set[str] = set()
-                for audit_row in result.all():
-                    alias = audit_row.litellm_key_alias or ""
-                    if alias in seen:
-                        continue
-                    seen.add(alias)
-                    rows.append(
-                        {
-                            "id": str(audit_row.id),
-                            "tenant_id": tid,
-                            "alias": alias,
-                            "created_at": audit_row.occurred_at.isoformat()
-                            if audit_row.occurred_at
-                            else datetime.now(timezone.utc).isoformat(),
-                            "last_used_at": None,
-                            "status": _derive_status(audit_row.action),
-                            "fingerprint": (audit_row.litellm_key_hash or "")[:12],
-                        }
-                    )
     except Exception as exc:  # pragma: no cover — DB path
         logger.warning(
             "admin_llm_gateway.keys_list_failed",
@@ -290,9 +290,9 @@ def _derive_status(action: LiteLLMKeyAction | str) -> str:
 class RotateKeyRequest(BaseModel):
     actor_id: str | None = None
     reason: str | None = None
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post(
     "/tenants/{tenant_id}/keys/rotate",
     response_model=VirtualKeyMetadata,
@@ -302,7 +302,7 @@ async def rotate_tenant_key(
     tenant_id: UUID,
     body: RotateKeyRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:write"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:write")),
 ) -> VirtualKeyMetadata:
     """Rotate the tenant's Virtual Key and return the new metadata.
 
@@ -346,9 +346,9 @@ async def rotate_tenant_key(
 class RevokeKeyRequest(BaseModel):
     actor_id: str | None = None
     reason: str = Field(..., min_length=1)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post(
     "/tenants/{tenant_id}/keys/{key_id}/revoke",
     response_model=VirtualKeyMetadata,
@@ -359,7 +359,7 @@ async def revoke_tenant_key(
     key_id: str,
     body: RevokeKeyRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:write"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:write")),
 ) -> VirtualKeyMetadata:
     """Revoke a specific Virtual Key (by audit row id) for a tenant."""
     tid = str(tenant_id)
@@ -396,7 +396,7 @@ async def revoke_tenant_key(
 @audit(action="admin.llm_gateway.mcp.list", target_type="platform")
 async def list_mcp_servers(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:read")),
 ) -> list[MCPBrowserEntry]:
     """List the LiteLLM MCP servers (read-only)."""
     rows = await mcp_server_registry.list_servers()
@@ -407,7 +407,7 @@ async def list_mcp_servers(
 @audit(action="admin.llm_gateway.health", target_type="platform")
 async def get_litellm_health(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:read")),
 ) -> HealthReport:
     """Return the cached LiteLLM health snapshot."""
     try:
@@ -466,7 +466,7 @@ class ModelInfo(BaseModel):
 @audit(action="admin.llm_gateway.spend.teams", target_type="platform")
 async def spend_by_teams(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:read")),
 ) -> list[SpendByTeam]:
     """Per-team spend aggregation (LiteLLM /team/list)."""
     teams = await list_teams()
@@ -485,7 +485,7 @@ async def spend_by_teams(
 @audit(action="admin.llm_gateway.spend.models", target_type="platform")
 async def spend_by_models(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:read")),
 ) -> list[dict]:
     """Per-model spend breakdown — direct passthrough to /spend/models."""
     result = await _request("GET", "/spend/models")
@@ -500,33 +500,33 @@ async def spend_by_models(
 @audit(action="admin.llm_gateway.guardrails.list", target_type="platform")
 async def list_guardrails_endpoint(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:read")),
 ) -> list[dict]:
     """List configured LiteLLM guardrails."""
     result = await list_guardrails()
     return list(result) if isinstance(result, list) else []
+
+
 @require_approval_phase(SDLCPhase.SECURITY)
-
-
 @router.post("/guardrails/{name}/enable", response_model=dict)
 @audit(action="admin.llm_gateway.guardrails.toggle", target_type="guardrail")
 async def enable_guardrail(
     name: str,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:write"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:write")),
 ) -> dict:
     """Enable a LiteLLM guardrail by name."""
     result = await update_guardrail(name, {"enabled": True})
     return result if isinstance(result, dict) else {"enabled": True, "guardrail_name": name}
+
+
 @require_approval_phase(SDLCPhase.SECURITY)
-
-
 @router.post("/guardrails/{name}/disable", response_model=dict)
 @audit(action="admin.llm_gateway.guardrails.toggle", target_type="guardrail")
 async def disable_guardrail(
     name: str,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:write"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:write")),
 ) -> dict:
     """Disable a LiteLLM guardrail by name."""
     result = await update_guardrail(name, {"enabled": False})
@@ -537,7 +537,7 @@ async def disable_guardrail(
 @audit(action="admin.llm_gateway.models.list", target_type="platform")
 async def list_models_endpoint(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("admin:read")),
 ) -> list[ModelInfo]:
     """LiteLLM model catalog with per-million-token pricing."""
     payload = await list_models()

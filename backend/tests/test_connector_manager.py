@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 import pytest
 

@@ -17,8 +17,7 @@ dependency-overridden so the test controls the caller.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock
+from datetime import UTC, datetime
 from uuid import UUID
 
 import pytest
@@ -65,7 +64,7 @@ class _Principal:
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _chunk(event: str, data: dict) -> ChatStreamChunk:
@@ -102,9 +101,7 @@ def stub_service(monkeypatch):
         "run_status": None,
     }
 
-    monkeypatch.setattr(
-        forge_chat_router, "stream_chat", _make_generator
-    )
+    monkeypatch.setattr(forge_chat_router, "stream_chat", _make_generator)
 
     async def _cancel(run_id):
         return service["cancel_response"]
@@ -155,14 +152,14 @@ async def test_stream_returns_sse_content_type(stub_service, wired_client):
         _chunk("finish", {"reason": "stop"}),
     ]
 
-    with TestClient(app) as client:
-        with client.stream(
-            "POST", "/api/v1/forge/chat/stream", json=_stream_body()
-        ) as r:
-            assert r.status_code == 200, r.text
-            ct = r.headers["content-type"]
-            assert ct.startswith("text/event-stream"), ct
-            body = b"".join(r.iter_bytes()).decode("utf-8")
+    with (
+        TestClient(app) as client,
+        client.stream("POST", "/api/v1/forge/chat/stream", json=_stream_body()) as r,
+    ):
+        assert r.status_code == 200, r.text
+        ct = r.headers["content-type"]
+        assert ct.startswith("text/event-stream"), ct
+        body = b"".join(r.iter_bytes()).decode("utf-8")
 
     # Two `event:` lines = two chunk frames.
     event_lines = [ln for ln in body.split("\n") if ln.startswith("event: ")]
@@ -183,12 +180,8 @@ async def test_cancel_returns_200(stub_service, wired_client):
         run_id=RUN_ID, cancelled=True, cancelled_at=cancel_at
     )
 
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as ac:
-        r = await ac.post(
-            "/api/v1/forge/chat/cancel", json={"run_id": str(RUN_ID)}
-        )
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        r = await ac.post("/api/v1/forge/chat/cancel", json={"run_id": str(RUN_ID)})
 
     assert r.status_code == 200, r.text
     payload = r.json()
@@ -203,9 +196,7 @@ async def test_cancel_returns_200(stub_service, wired_client):
 
 
 @pytest.mark.asyncio
-async def test_run_status_returns_200_when_present(
-    stub_service, wired_client
-):
+async def test_run_status_returns_200_when_present(stub_service, wired_client):
     started = _now()
     stub_service["run_status"] = ForgeRunStatus(
         run_id=RUN_ID,
@@ -219,9 +210,7 @@ async def test_run_status_returns_200_when_present(
         model="claude-sonnet-4-6",
     )
 
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         r = await ac.get(f"/api/v1/forge/chat/runs/{RUN_ID}")
 
     assert r.status_code == 200, r.text
@@ -231,14 +220,10 @@ async def test_run_status_returns_200_when_present(
 
 
 @pytest.mark.asyncio
-async def test_run_status_returns_404_when_absent(
-    stub_service, wired_client
-):
+async def test_run_status_returns_404_when_absent(stub_service, wired_client):
     stub_service["run_status"] = None  # service signals "not found"
 
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         r = await ac.get(f"/api/v1/forge/chat/runs/{MISSING_RUN_ID}")
 
     assert r.status_code == 404, r.text
@@ -260,28 +245,24 @@ async def test_typed_error_yields_error_event(monkeypatch, wired_client):
         raise AuthenticationError("bad key")
         yield  # pragma: no cover  -- marker: this is an async generator
 
-    monkeypatch.setattr(
-        forge_chat_router, "stream_chat", _raising_generator
-    )
+    monkeypatch.setattr(forge_chat_router, "stream_chat", _raising_generator)
 
     body_lines: list[str] = []
 
-    with TestClient(app) as client:
-        with client.stream(
-            "POST", "/api/v1/forge/chat/stream", json=_stream_body()
-        ) as r:
-            assert r.status_code == 200, r.text
-            for chunk in r.iter_text():
-                if chunk:
-                    body_lines.append(chunk)
+    with (
+        TestClient(app) as client,
+        client.stream("POST", "/api/v1/forge/chat/stream", json=_stream_body()) as r,
+    ):
+        assert r.status_code == 200, r.text
+        for chunk in r.iter_text():
+            if chunk:
+                body_lines.append(chunk)
 
     raw = "".join(body_lines)
     assert "event: error" in raw, raw
 
     # Pull the first error frame's JSON payload and verify the typed code.
     error_frame = raw.split("event: error", 1)[1].split("\n\n", 1)[0]
-    data_line = next(
-        ln for ln in error_frame.splitlines() if ln.startswith("data: ")
-    )
-    payload = json.loads(data_line[len("data: "):])
+    data_line = next(ln for ln in error_frame.splitlines() if ln.startswith("data: "))
+    payload = json.loads(data_line[len("data: ") :])
     assert payload["code"] == "authentication_error"

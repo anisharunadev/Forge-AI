@@ -35,7 +35,6 @@ from app.services.event_bus import EventBus, EventType
 from app.services.ideation.approval_queue import ApprovalQueueService
 from app.services.ideation.jira_status_subscribers import register as register_subs
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -115,9 +114,7 @@ def fresh_bus():
     return EventBus(use_redis=False)
 
 
-async def test_decide_approve_publishes_approval_granted(
-    sqlite_db, fresh_bus: EventBus
-):
+async def test_decide_approve_publishes_approval_granted(sqlite_db, fresh_bus: EventBus):
     tenant_id = str(uuid.uuid4())
     project_id = str(uuid.uuid4())
     actor_id = str(uuid.uuid4())
@@ -150,9 +147,7 @@ async def test_decide_approve_publishes_approval_granted(
     assert evt.tenant_id == tenant_id
 
 
-async def test_decide_deny_publishes_approval_denied(
-    sqlite_db, fresh_bus: EventBus
-):
+async def test_decide_deny_publishes_approval_denied(sqlite_db, fresh_bus: EventBus):
     tenant_id = str(uuid.uuid4())
     project_id = str(uuid.uuid4())
     actor_id = str(uuid.uuid4())
@@ -181,9 +176,7 @@ async def test_decide_deny_publishes_approval_denied(
     assert len(denied) == 1
 
 
-async def test_decide_request_changes_publishes_artifact_updated(
-    sqlite_db, fresh_bus: EventBus
-):
+async def test_decide_request_changes_publishes_artifact_updated(sqlite_db, fresh_bus: EventBus):
     tenant_id = str(uuid.uuid4())
     project_id = str(uuid.uuid4())
     actor_id = str(uuid.uuid4())
@@ -261,7 +254,8 @@ async def test_subscriber_invokes_jira_commenter_for_approval_granted(
         assert mock_post.await_count >= 1
         # Find the call matching our approval grant.
         matched = [
-            c for c in mock_post.await_args_list
+            c
+            for c in mock_post.await_args_list
             if c.kwargs.get("stage") == "approval" and c.kwargs.get("outcome") == "granted"
         ]
         assert matched, "expected an approval/granted post call"
@@ -309,7 +303,8 @@ async def test_subscriber_invokes_jira_commenter_for_approval_denied(
             await asyncio.sleep(0.05)
 
         matched = [
-            c for c in mock_post.await_args_list
+            c
+            for c in mock_post.await_args_list
             if c.kwargs.get("stage") == "approval" and c.kwargs.get("outcome") == "denied"
         ]
         assert matched, "expected an approval/denied post call"

@@ -13,11 +13,12 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import DateTime, Enum as SAEnum, ForeignKey, Index, String, event
+from sqlalchemy import DateTime, ForeignKey, Index, String, event
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
 from app.core.logging import get_logger
+from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 logger = get_logger(__name__)
 
@@ -59,7 +60,9 @@ class Artifact(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
 
     __table_args__ = (
-        Index("ix_artifacts_tenant_project_type_status", "tenant_id", "project_id", "type", "status"),
+        Index(
+            "ix_artifacts_tenant_project_type_status", "tenant_id", "project_id", "type", "status"
+        ),
         Index("ix_artifacts_tenant_type", "tenant_id", "type"),
     )
 

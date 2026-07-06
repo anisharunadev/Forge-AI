@@ -6,10 +6,11 @@ import enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Boolean, Enum as SAEnum, Index, Integer, String
+from sqlalchemy import Boolean, Index, Integer, String
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class ModelProviderType(str, enum.Enum):
@@ -56,7 +57,7 @@ class ModelProvider(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         ),
     )
 
-
     _audit_skip = ("catalog", "Vendor catalog (model provider). Read-only.")
+
 
 __all__ = ["ModelProvider", "ModelProviderType"]

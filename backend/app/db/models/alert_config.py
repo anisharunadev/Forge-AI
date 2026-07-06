@@ -14,10 +14,9 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import Index, Integer
-from sqlalchemy.dialects.postgresql import JSONB as PG_JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class AlertConfig(Base, UUIDPrimaryKeyMixin, TimestampMixin):
@@ -25,22 +24,14 @@ class AlertConfig(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     __tablename__ = "alert_configs"
 
-    tenant_id: Mapped[UUID] = mapped_column(
-        GUID(), nullable=False, unique=True, index=True
-    )
-    warn_pct: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=80, server_default="80"
-    )
+    tenant_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, unique=True, index=True)
+    warn_pct: Mapped[int] = mapped_column(Integer, nullable=False, default=80, server_default="80")
     exceed_pct: Mapped[int] = mapped_column(
         Integer, nullable=False, default=95, server_default="95"
     )
-    channels: Mapped[dict[str, Any]] = mapped_column(
-        JSONB, nullable=False, default=dict
-    )
+    channels: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
 
-    __table_args__ = (
-        Index("ix_alert_configs_tenant_warn", "tenant_id", "warn_pct"),
-    )
+    __table_args__ = (Index("ix_alert_configs_tenant_warn", "tenant_id", "warn_pct"),)
 
     __mapper_args__ = {"eager_defaults": True}
 

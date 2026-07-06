@@ -2,6 +2,7 @@
 
 Proves that cross-tenant URL access to /runs/{run_id} is rejected.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -40,6 +41,7 @@ def test_cross_tenant_run_id_is_rejected(two_tenants) -> None:
 
     async def dep():
         return _principal(tb.id)
+
     app.dependency_overrides[deps_mod.get_current_principal] = dep
 
     bogus = uuid.uuid4()

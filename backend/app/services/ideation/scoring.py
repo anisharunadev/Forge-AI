@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -26,7 +26,8 @@ from app.db.models.ideation import (
 )
 from app.db.session import get_session_factory
 from app.services.cost_ledger import cost_ledger
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 from app.services.litellm_client import LiteLLMClient
 
 logger = get_logger(__name__)
@@ -235,9 +236,7 @@ class OpportunityScoringService:
         )
         # Mark the idea as scored if not already.
         if idea.status in (IdeaStatus.NEW, IdeaStatus.ANALYZING):
-            await self._transition_idea(
-                idea.id, IdeaStatus.SCORED, tenant_id=tenant_id
-            )
+            await self._transition_idea(idea.id, IdeaStatus.SCORED, tenant_id=tenant_id)
         return score
 
     async def score_batch(
@@ -374,7 +373,7 @@ class OpportunityScoringService:
                 total_score=components.total,
                 scoring_rationale=components.rationale,
                 scored_by=scored_by,
-                scored_at=datetime.now(timezone.utc),
+                scored_at=datetime.now(UTC),
             )
             session.add(row)
             await session.commit()
@@ -403,9 +402,7 @@ class OpportunityScoringService:
     async def _latest_score(self, idea_id: UUID | str) -> OpportunityScore | None:
         factory = get_session_factory()
         async with factory() as session:
-            stmt = select(OpportunityScore).where(
-                OpportunityScore.idea_id == str(idea_id)
-            )
+            stmt = select(OpportunityScore).where(OpportunityScore.idea_id == str(idea_id))
             rows = list((await session.execute(stmt)).scalars().all())
         if not rows:
             return None

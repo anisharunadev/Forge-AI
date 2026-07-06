@@ -25,7 +25,6 @@ Tests cover:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -42,7 +41,7 @@ class _StubSession:
     def __init__(self) -> None:
         self.added: list[Any] = []
 
-    async def __aenter__(self) -> "_StubSession":
+    async def __aenter__(self) -> _StubSession:
         return self
 
     async def __aexit__(self, *args: Any) -> None:
@@ -88,7 +87,6 @@ from app.services.copilot_service import (
     CopilotBudgetBlocked,
     CopilotService,
 )
-
 
 # ---------------------------------------------------------------------------
 # Test fixtures + helpers
@@ -158,9 +156,7 @@ def _tool_response_with_call(
             "cost_usd": cost_usd,
         },
     }
-    calls = [
-        ToolCall(id=call_id, name=tool_name, arguments_json='{"query": "x"}')
-    ]
+    calls = [ToolCall(id=call_id, name=tool_name, arguments_json='{"query": "x"}')]
     results = [
         ToolResult(
             tool_call_id=call_id,
@@ -188,8 +184,10 @@ async def agent_loop_mock():
     async def _no_op_aexit(self, *args):
         return None
 
-    with patch("app.services.litellm_client.LiteLLMClient.__aenter__", _no_op_aenter), \
-         patch("app.services.litellm_client.LiteLLMClient.__aexit__", _no_op_aexit):
+    with (
+        patch("app.services.litellm_client.LiteLLMClient.__aenter__", _no_op_aenter),
+        patch("app.services.litellm_client.LiteLLMClient.__aexit__", _no_op_aexit),
+    ):
         yield
 
 
@@ -225,12 +223,16 @@ async def test_chat_creates_conversation_on_first_call(sqlite_db, agent_loop_moc
         from sqlalchemy import select
 
         rows = (
-            await db.execute(
-                select(CopilotMessage).where(
-                    CopilotMessage.conversation_id == chat_response.conversation_id
+            (
+                await db.execute(
+                    select(CopilotMessage).where(
+                        CopilotMessage.conversation_id == chat_response.conversation_id
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(rows) == 2
         assert rows[0].role == "user"
         assert rows[1].role == "assistant"
@@ -253,9 +255,7 @@ async def test_chat_continues_existing_conversation(sqlite_db, agent_loop_mock):
 
     # Pre-create a conversation with one assistant message in history.
     async with sqlite_db() as db:
-        conv = CopilotConversation(
-            tenant_id=tenant_id, project_id=None, user_id=user_id
-        )
+        conv = CopilotConversation(tenant_id=tenant_id, project_id=None, user_id=user_id)
         db.add(conv)
         await db.flush()
         db.add(
@@ -290,14 +290,10 @@ async def test_chat_continues_existing_conversation(sqlite_db, agent_loop_mock):
 
 
 @pytest.mark.asyncio
-async def test_chat_persists_assistant_message_with_tool_calls(
-    sqlite_db, agent_loop_mock
-):
+async def test_chat_persists_assistant_message_with_tool_calls(sqlite_db, agent_loop_mock):
     tenant_id = uuid.uuid4()
     user_id = uuid.uuid4()
-    principal = _principal(
-        permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id
-    )
+    principal = _principal(permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id)
 
     response, calls, results = _tool_response_with_call()
     async with sqlite_db() as db:
@@ -313,9 +309,7 @@ async def test_chat_persists_assistant_message_with_tool_calls(
 
         row = (
             await db.execute(
-                select(CopilotMessage).where(
-                    CopilotMessage.id == chat_response.message_id
-                )
+                select(CopilotMessage).where(CopilotMessage.id == chat_response.message_id)
             )
         ).scalar_one()
         assert row.role == "assistant"
@@ -333,9 +327,7 @@ async def test_chat_persists_assistant_message_with_tool_calls(
 async def test_chat_records_cost_in_ledger(sqlite_db, agent_loop_mock):
     tenant_id = uuid.uuid4()
     user_id = uuid.uuid4()
-    principal = _principal(
-        permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id
-    )
+    principal = _principal(permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id)
 
     response, calls, results = _tool_response_with_call(
         prompt_tokens=100, completion_tokens=50, cost_usd=0.025
@@ -343,10 +335,13 @@ async def test_chat_records_cost_in_ledger(sqlite_db, agent_loop_mock):
 
     fake_ledger = MagicMock()
     fake_ledger.record = AsyncMock()
-    with patch(
-        "app.services.litellm_client.LiteLLMClient.agent_loop",
-        AsyncMock(return_value=(response, calls, results)),
-    ), patch("app.services.cost_ledger.cost_ledger", fake_ledger):
+    with (
+        patch(
+            "app.services.litellm_client.LiteLLMClient.agent_loop",
+            AsyncMock(return_value=(response, calls, results)),
+        ),
+        patch("app.services.cost_ledger.cost_ledger", fake_ledger),
+    ):
         async with sqlite_db() as db:
             service = CopilotService(db=db, principal=principal)
             await service.chat(_chat_request(message="x"))
@@ -357,11 +352,7 @@ async def test_chat_records_cost_in_ledger(sqlite_db, agent_loop_mock):
     async with sqlite_db() as db:
         from sqlalchemy import select
 
-        rows = (
-            await db.execute(
-                select(CopilotConversation)
-            )
-        ).scalars().all()
+        rows = (await db.execute(select(CopilotConversation))).scalars().all()
         assert len(rows) == 1
         assert float(rows[0].total_cost_usd) > 0
         assert rows[0].total_tokens_in == 100
@@ -377,18 +368,19 @@ async def test_chat_records_cost_in_ledger(sqlite_db, agent_loop_mock):
 async def test_chat_audits_message_recorded(sqlite_db, agent_loop_mock):
     tenant_id = uuid.uuid4()
     user_id = uuid.uuid4()
-    principal = _principal(
-        permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id
-    )
+    principal = _principal(permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id)
 
     fake_audit = MagicMock()
     fake_audit.record = AsyncMock()
 
     response, calls, results = _tool_response_with_call()
-    with patch(
-        "app.services.litellm_client.LiteLLMClient.agent_loop",
-        AsyncMock(return_value=(response, calls, results)),
-    ), patch("app.services.copilot_service.audit_service", fake_audit):
+    with (
+        patch(
+            "app.services.litellm_client.LiteLLMClient.agent_loop",
+            AsyncMock(return_value=(response, calls, results)),
+        ),
+        patch("app.services.copilot_service.audit_service", fake_audit),
+    ):
         async with sqlite_db() as db:
             service = CopilotService(db=db, principal=principal)
             await service.chat(_chat_request(message="x"))
@@ -407,18 +399,19 @@ async def test_chat_audits_message_recorded(sqlite_db, agent_loop_mock):
 async def test_chat_emits_event_bus_message_recorded(sqlite_db, agent_loop_mock):
     tenant_id = uuid.uuid4()
     user_id = uuid.uuid4()
-    principal = _principal(
-        permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id
-    )
+    principal = _principal(permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id)
 
     fake_bus = MagicMock()
     fake_bus.publish = AsyncMock()
 
     response, calls, results = _tool_response_with_call()
-    with patch(
-        "app.services.litellm_client.LiteLLMClient.agent_loop",
-        AsyncMock(return_value=(response, calls, results)),
-    ), patch("app.services.copilot_service.default_bus", fake_bus):
+    with (
+        patch(
+            "app.services.litellm_client.LiteLLMClient.agent_loop",
+            AsyncMock(return_value=(response, calls, results)),
+        ),
+        patch("app.services.copilot_service.default_bus", fake_bus),
+    ):
         async with sqlite_db() as db:
             service = CopilotService(db=db, principal=principal)
             await service.chat(_chat_request(message="x"))
@@ -439,27 +432,23 @@ async def test_chat_emits_event_bus_message_recorded(sqlite_db, agent_loop_mock)
 async def test_chat_blocks_when_budget_exhausted(sqlite_db, agent_loop_mock):
     tenant_id = uuid.uuid4()
     user_id = uuid.uuid4()
-    principal = _principal(
-        permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id
-    )
+    principal = _principal(permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id)
 
     from app.services.workflow_budget import BudgetExceeded
-    from app.services.copilot_service import CopilotBudgetBlocked
 
     fake_audit = MagicMock()
     fake_audit.record = AsyncMock()
     fake_bus = MagicMock()
     fake_bus.publish = AsyncMock()
 
-    with patch(
-        "app.services.litellm_client.LiteLLMClient.agent_loop",
-        AsyncMock(
-            side_effect=BudgetExceeded(
-                workflow_id=uuid.uuid4(), spent=1.0, ceiling=1.0
-            )
+    with (
+        patch(
+            "app.services.litellm_client.LiteLLMClient.agent_loop",
+            AsyncMock(side_effect=BudgetExceeded(workflow_id=uuid.uuid4(), spent=1.0, ceiling=1.0)),
         ),
-    ), patch("app.services.copilot_service.audit_service", fake_audit), \
-         patch("app.services.copilot_service.default_bus", fake_bus):
+        patch("app.services.copilot_service.audit_service", fake_audit),
+        patch("app.services.copilot_service.default_bus", fake_bus),
+    ):
         async with sqlite_db() as db:
             service = CopilotService(db=db, principal=principal)
             with pytest.raises(CopilotBudgetBlocked):
@@ -482,9 +471,7 @@ async def test_chat_blocks_when_budget_exhausted(sqlite_db, agent_loop_mock):
 async def test_chat_returns_tool_loop_exhausted(sqlite_db, agent_loop_mock):
     tenant_id = uuid.uuid4()
     user_id = uuid.uuid4()
-    principal = _principal(
-        permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id
-    )
+    principal = _principal(permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id)
 
     from app.services._litellm_tools import ToolLoopExhausted
 
@@ -512,29 +499,23 @@ async def test_list_conversations_user_isolation(sqlite_db):
     project_id = uuid.uuid4()
 
     async with sqlite_db() as db:
-        db.add_all([
-            CopilotConversation(
-                tenant_id=tenant_id, project_id=project_id, user_id=user_a
-            ),
-            CopilotConversation(
-                tenant_id=tenant_id, project_id=project_id, user_id=user_b
-            ),
-        ])
+        db.add_all(
+            [
+                CopilotConversation(tenant_id=tenant_id, project_id=project_id, user_id=user_a),
+                CopilotConversation(tenant_id=tenant_id, project_id=project_id, user_id=user_b),
+            ]
+        )
         await db.commit()
 
     async with sqlite_db() as db:
-        principal_a = _principal(
-            permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_a
-        )
+        principal_a = _principal(permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_a)
         service = CopilotService(db=db, principal=principal_a)
         rows = await service.list_conversations()
         assert len(rows) == 1
         assert rows[0].user_id == user_a
 
     async with sqlite_db() as db:
-        principal_b = _principal(
-            permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_b
-        )
+        principal_b = _principal(permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_b)
         service = CopilotService(db=db, principal=principal_b)
         rows = await service.list_conversations()
         assert len(rows) == 1
@@ -553,17 +534,13 @@ async def test_get_conversation_404_for_wrong_user(sqlite_db):
     user_b = uuid.uuid4()
 
     async with sqlite_db() as db:
-        conv = CopilotConversation(
-            tenant_id=tenant_id, project_id=None, user_id=user_a
-        )
+        conv = CopilotConversation(tenant_id=tenant_id, project_id=None, user_id=user_a)
         db.add(conv)
         await db.commit()
         conv_id = conv.id
 
     async with sqlite_db() as db:
-        principal_b = _principal(
-            permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_b
-        )
+        principal_b = _principal(permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_b)
         service = CopilotService(db=db, principal=principal_b)
         with pytest.raises(LookupError):
             await service.get_conversation(conv_id)
@@ -579,17 +556,13 @@ async def test_delete_conversation_soft_deletes(sqlite_db):
     tenant_id = uuid.uuid4()
     user_id = uuid.uuid4()
     async with sqlite_db() as db:
-        conv = CopilotConversation(
-            tenant_id=tenant_id, project_id=None, user_id=user_id
-        )
+        conv = CopilotConversation(tenant_id=tenant_id, project_id=None, user_id=user_id)
         db.add(conv)
         await db.commit()
         conv_id = conv.id
 
     async with sqlite_db() as db:
-        principal = _principal(
-            permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id
-        )
+        principal = _principal(permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id)
         service = CopilotService(db=db, principal=principal)
         await service.delete_conversation(conv_id)
 
@@ -597,11 +570,7 @@ async def test_delete_conversation_soft_deletes(sqlite_db):
         from sqlalchemy import select
 
         row = (
-            await db.execute(
-                select(CopilotConversation).where(
-                    CopilotConversation.id == conv_id
-                )
-            )
+            await db.execute(select(CopilotConversation).where(CopilotConversation.id == conv_id))
         ).scalar_one()
         assert row.archived_at is not None
 
@@ -616,9 +585,7 @@ async def test_submit_feedback_updates_message(sqlite_db):
     tenant_id = uuid.uuid4()
     user_id = uuid.uuid4()
     async with sqlite_db() as db:
-        conv = CopilotConversation(
-            tenant_id=tenant_id, project_id=None, user_id=user_id
-        )
+        conv = CopilotConversation(tenant_id=tenant_id, project_id=None, user_id=user_id)
         db.add(conv)
         await db.flush()
         msg = CopilotMessage(
@@ -632,21 +599,15 @@ async def test_submit_feedback_updates_message(sqlite_db):
         msg_id = msg.id
 
     async with sqlite_db() as db:
-        principal = _principal(
-            permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id
-        )
+        principal = _principal(permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id)
         service = CopilotService(db=db, principal=principal)
-        await service.submit_feedback(
-            msg_id, CopilotFeedbackRequest(rating="up", comment="nice")
-        )
+        await service.submit_feedback(msg_id, CopilotFeedbackRequest(rating="up", comment="nice"))
 
     async with sqlite_db() as db:
         from sqlalchemy import select
 
         row = (
-            await db.execute(
-                select(CopilotMessage).where(CopilotMessage.id == msg_id)
-            )
+            await db.execute(select(CopilotMessage).where(CopilotMessage.id == msg_id))
         ).scalar_one()
         assert row.feedback_rating == "up"
         assert row.feedback_comment == "nice"
@@ -704,9 +665,7 @@ async def test_get_conversation_cost_returns_totals(sqlite_db):
         conv_id = conv.id
 
     async with sqlite_db() as db:
-        principal = _principal(
-            permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id
-        )
+        principal = _principal(permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id)
         service = CopilotService(db=db, principal=principal)
         cost = await service.get_conversation_cost(conv_id)
         assert cost.total_cost_usd == Decimal("0.42")

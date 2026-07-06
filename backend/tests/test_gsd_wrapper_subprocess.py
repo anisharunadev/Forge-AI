@@ -16,14 +16,12 @@ real ``@forge-ai/forge-core`` engine. They guard four properties:
 
 from __future__ import annotations
 
-import asyncio
 import inspect
 import json
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -70,7 +68,7 @@ async def test_dispatch_invokes_forge_run_capability_invoke():
     """Dispatch must call forge_run with the capability subcommand and
     pass the opaque ``gsd:*`` identifier verbatim through ``--capability``.
     """
-    from backend.app.agents.tools.gsd_wrapper import _dispatch, _FORGE_CORE_ROOT
+    from backend.app.agents.tools.gsd_wrapper import _FORGE_CORE_ROOT, _dispatch
 
     fake = _fake_proc(returncode=0, stdout=b'{"ok":true}')
 
@@ -246,7 +244,7 @@ async def test_dispatch_preserves_opaque_internal_names():
 
 def test_forge_run_bin_points_into_packages_forge_core():
     """_FORGE_RUN_BIN must resolve to ``packages/forge-core/forge-core/bin/forge_run``."""
-    from backend.app.agents.tools.gsd_wrapper import _FORGE_RUN_BIN, _FORGE_CORE_ROOT
+    from backend.app.agents.tools.gsd_wrapper import _FORGE_CORE_ROOT, _FORGE_RUN_BIN
 
     assert _FORGE_CORE_ROOT.name == "forge-core"
     assert _FORGE_RUN_BIN.name == "forge_run"

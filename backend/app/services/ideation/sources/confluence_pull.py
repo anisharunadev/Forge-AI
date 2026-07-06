@@ -13,7 +13,7 @@ cannot blow up the day's budget.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
@@ -94,7 +94,7 @@ async def _persist_signals(
     if not rows:
         return []
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload: list[dict[str, object]] = []
     ext_ids: list[str] = []
     for r in rows:

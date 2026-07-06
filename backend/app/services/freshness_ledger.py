@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -73,7 +73,7 @@ class FreshnessLedger:
         record = FreshnessRecord(
             node_id=node_id,
             source=source,
-            at=at or datetime.now(timezone.utc),
+            at=at or datetime.now(UTC),
             metadata=metadata or {},
         )
         payload = asdict(record)
@@ -88,9 +88,7 @@ class FreshnessLedger:
         )
         return record
 
-    async def get_freshness(
-        self, node_id: str, *, tenant_id: UUID | str
-    ) -> FreshnessRecord | None:
+    async def get_freshness(self, node_id: str, *, tenant_id: UUID | str) -> FreshnessRecord | None:
         """Return the freshness record for a node, or None if unknown."""
         client = await self._client()
         raw = await client.get(self._key(tenant_id, node_id))
@@ -112,7 +110,7 @@ class FreshnessLedger:
         record = await self.get_freshness(node_id, tenant_id=tenant_id)
         if record is None:
             return True
-        current = now or datetime.now(timezone.utc)
+        current = now or datetime.now(UTC)
         return (current - record.at).total_seconds() > max_age_seconds
 
 

@@ -4,16 +4,17 @@ These tests prove that rows created as tenant A are invisible to
 queries filtered by tenant B at the ORM level. They run entirely
 against the in-memory SQLite engine provided by ``sqlite_db``.
 """
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from sqlalchemy import select
 
-from app.db.models.cost import CostEntry
 from app.db.models.connector import Connector
+from app.db.models.cost import CostEntry
 from app.db.models.repo_ingestion import Repo
 from app.db.models.workflow_budget import WorkflowBudget
 
@@ -33,20 +34,24 @@ async def test_cost_entries_isolation(sqlite_db, two_tenants) -> None:
                 prompt_tokens=10,
                 completion_tokens=20,
                 cost_usd=0.001,
-                recorded_at=datetime.now(timezone.utc),
+                recorded_at=datetime.now(UTC),
             )
         )
         await s.commit()
 
     async with sqlite_db() as s:
         rows = (
-            await s.execute(
-                select(CostEntry).where(
-                    CostEntry.tenant_id == tb.id,
-                    CostEntry.project_id == pa.id,
+            (
+                await s.execute(
+                    select(CostEntry).where(
+                        CostEntry.tenant_id == tb.id,
+                        CostEntry.project_id == pa.id,
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert rows == []
 
 
@@ -70,13 +75,17 @@ async def test_connectors_isolation(sqlite_db, two_tenants) -> None:
 
     async with sqlite_db() as s:
         rows = (
-            await s.execute(
-                select(Connector).where(
-                    Connector.tenant_id == tb.id,
-                    Connector.project_id == pa.id,
+            (
+                await s.execute(
+                    select(Connector).where(
+                        Connector.tenant_id == tb.id,
+                        Connector.project_id == pa.id,
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert rows == []
 
 
@@ -99,13 +108,17 @@ async def test_repos_isolation(sqlite_db, two_tenants) -> None:
 
     async with sqlite_db() as s:
         rows = (
-            await s.execute(
-                select(Repo).where(
-                    Repo.tenant_id == tb.id,
-                    Repo.project_id == pa.id,
+            (
+                await s.execute(
+                    select(Repo).where(
+                        Repo.tenant_id == tb.id,
+                        Repo.project_id == pa.id,
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert rows == []
 
 
@@ -123,20 +136,24 @@ async def test_workflow_budget_isolation(sqlite_db, two_tenants) -> None:
                 ceiling_usd=100.0,
                 spent_usd=10.0,
                 declared_by=uuid.uuid4(),
-                declared_at=datetime.now(timezone.utc),
+                declared_at=datetime.now(UTC),
             )
         )
         await s.commit()
 
     async with sqlite_db() as s:
         rows = (
-            await s.execute(
-                select(WorkflowBudget).where(
-                    WorkflowBudget.tenant_id == tb.id,
-                    WorkflowBudget.project_id == pa.id,
+            (
+                await s.execute(
+                    select(WorkflowBudget).where(
+                        WorkflowBudget.tenant_id == tb.id,
+                        WorkflowBudget.project_id == pa.id,
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert rows == []
 
 
@@ -169,7 +186,7 @@ async def test_cross_tenant_id_returns_none(sqlite_db, two_tenants) -> None:
                 prompt_tokens=10,
                 completion_tokens=20,
                 cost_usd=0.001,
-                recorded_at=datetime.now(timezone.utc),
+                recorded_at=datetime.now(UTC),
             )
         )
         await s.commit()

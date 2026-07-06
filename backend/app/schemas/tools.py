@@ -13,9 +13,8 @@ from uuid import UUID
 
 from pydantic import Field
 
-from app.schemas.common import ForgeBaseModel, TenantScopedModel
-from app.schemas.litellm_common import ToolKind, ToolRef
-
+from app.schemas.common import ForgeBaseModel
+from app.schemas.litellm_common import ToolKind
 
 ToolOverrideDecision = Literal["allowed", "denied", "approval_required", "overridden"]
 

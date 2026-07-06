@@ -12,16 +12,16 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Cookie, Header, HTTPException, Query, status, Depends
+from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.api.deps import Principal, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.persona_memory import PERSONA_KEYS, PERSONA_NAMES
 from app.services.memory.persona_store import PersonaMemoryStore
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/persona/memory", tags=["persona"])
 
@@ -69,9 +69,9 @@ async def read_memory(
     body = store.read(principal.tenant_id, persona, key)
     recent = await store.recent_entries(principal.tenant_id, persona, key)
     return PersonaMemoryRead(body=body, recent_entries=recent)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/{key}", status_code=status.HTTP_201_CREATED)
 @audit(action="persona.memory.append", target_type="persona_file")
 async def append_memory(

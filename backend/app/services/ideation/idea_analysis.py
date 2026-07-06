@@ -18,9 +18,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -28,7 +27,8 @@ from app.core.logging import get_logger
 from app.db.models.ideation import Idea, IdeaAnalysis, IdeaStatus
 from app.db.session import get_session_factory
 from app.services.cost_ledger import cost_ledger
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 from app.services.knowledge_graph import knowledge_graph_service
 from app.services.litellm_client import LiteLLMClient
 
@@ -156,9 +156,7 @@ def _deterministic_analysis(idea: Idea) -> _RawAnalysis:
 # ---------------------------------------------------------------------------
 
 
-async def _gather_kg_context(
-    *, tenant_id: UUID | str, project_id: UUID | str
-) -> str:
+async def _gather_kg_context(*, tenant_id: UUID | str, project_id: UUID | str) -> str:
     """Build a short context block from the knowledge graph for the prompt."""
     try:
         nodes = await knowledge_graph_service.list_nodes(
@@ -211,9 +209,7 @@ class IdeaAnalysisService:
         # Mark idea as analyzing while we work.
         await self._transition_idea(idea.id, IdeaStatus.ANALYZING, tenant_id=tenant_id)
 
-        kg_context = await _gather_kg_context(
-            tenant_id=tenant_id, project_id=effective_project_id
-        )
+        kg_context = await _gather_kg_context(tenant_id=tenant_id, project_id=effective_project_id)
         raw, model_used = await self._call_llm(
             idea=idea,
             kg_context=kg_context,
@@ -236,8 +232,14 @@ class IdeaAnalysisService:
             model_used=model_used,
             cost_usd=cost_usd,
             related_artifacts=[
-                {"kind": "kg_node", "reference": "context", "metadata": {"count": len(kg_context.splitlines())}}
-            ] if kg_context else [],
+                {
+                    "kind": "kg_node",
+                    "reference": "context",
+                    "metadata": {"count": len(kg_context.splitlines())},
+                }
+            ]
+            if kg_context
+            else [],
         )
 
         # Cost ledger + event emission.
@@ -370,15 +372,13 @@ class IdeaAnalysisService:
                 related_artifacts=related_artifacts,
                 model_used=model_used,
                 cost_usd=cost_usd,
-                analyzed_at=datetime.now(timezone.utc),
+                analyzed_at=datetime.now(UTC),
             )
             session.add(row)
             await session.commit()
             return row
 
-    async def _load_idea(
-        self, idea_id: UUID | str, *, tenant_id: UUID | str
-    ) -> Idea:
+    async def _load_idea(self, idea_id: UUID | str, *, tenant_id: UUID | str) -> Idea:
         factory = get_session_factory()
         async with factory() as session:
             idea = await session.get(Idea, str(idea_id))

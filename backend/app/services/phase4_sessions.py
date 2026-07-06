@@ -93,9 +93,12 @@ async def create_session(
         await session.commit()
         await session.refresh(row)
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.SESSION_STARTED.value,
-        target_type="session", target_id=str(row.id),
+        target_type="session",
+        target_id=str(row.id),
         payload={"session_type": session_type, "agent_id": agent_id},
     )
     return _session_to_dict(row)
@@ -137,7 +140,10 @@ async def heartbeat(
 
 
 async def extend_session(
-    session_id: UUID | str, tenant_id: UUID | str, actor_id: UUID | str, *,
+    session_id: UUID | str,
+    tenant_id: UUID | str,
+    actor_id: UUID | str,
+    *,
     project_id: UUID | str,
     additional_seconds: int = 0,
 ) -> dict[str, Any]:
@@ -151,17 +157,22 @@ async def extend_session(
         await session.commit()
         await session.refresh(row)
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.SESSION_RESUMED.value,
-        target_type="session", target_id=str(session_id),
+        target_type="session",
+        target_id=str(session_id),
         payload={"extended_by": additional_seconds},
     )
     return _session_to_dict(row)
 
 
-
 async def cancel_session(
-    session_id: UUID | str, tenant_id: UUID | str, actor_id: UUID | str, *,
+    session_id: UUID | str,
+    tenant_id: UUID | str,
+    actor_id: UUID | str,
+    *,
     project_id: UUID | str,
 ) -> None:
     factory = get_session_factory()
@@ -172,9 +183,12 @@ async def cancel_session(
         row.status = "cancelled"
         await session.commit()
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.SESSION_CANCELLED.value,
-        target_type="session", target_id=str(session_id),
+        target_type="session",
+        target_id=str(session_id),
         payload={},
     )
 
@@ -188,16 +202,21 @@ async def expire_session(session_id: UUID | str, tenant_id: UUID | str) -> None:
         row.status = "expired"
         await session.commit()
     await audit_service.record(
-        tenant_id=tenant_id, project_id=row.project_id if row else "00000000-0000-0000-0000-000000000000",
+        tenant_id=tenant_id,
+        project_id=row.project_id if row else "00000000-0000-0000-0000-000000000000",
         actor_id=None,
         action=Phase4AuditAction.SESSION_EXPIRED.value,
-        target_type="session", target_id=str(session_id),
+        target_type="session",
+        target_id=str(session_id),
         payload={},
     )
 
 
 async def resume_session(
-    session_id: UUID | str, tenant_id: UUID | str, actor_id: UUID | str, *,
+    session_id: UUID | str,
+    tenant_id: UUID | str,
+    actor_id: UUID | str,
+    *,
     project_id: UUID | str,
 ) -> dict[str, Any]:
     factory = get_session_factory()
@@ -217,16 +236,20 @@ async def resume_session(
         await session.commit()
         await session.refresh(row)
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.SESSION_RESUMED.value,
-        target_type="session", target_id=str(session_id),
+        target_type="session",
+        target_id=str(session_id),
         payload={"resumed": True},
     )
     return _session_to_dict(row)
 
 
 async def list_sessions(
-    tenant_id: UUID | str, *,
+    tenant_id: UUID | str,
+    *,
     active_only: bool = True,
     limit: int = 100,
 ) -> list[dict[str, Any]]:
@@ -252,7 +275,10 @@ async def get_session(session_id: UUID | str, tenant_id: UUID | str) -> dict[str
 
 
 async def issue_realtime_client_secret(
-    *, tenant_id: UUID | str, project_id: UUID | str, actor_id: UUID | str,
+    *,
+    tenant_id: UUID | str,
+    project_id: UUID | str,
+    actor_id: UUID | str,
     session_id: UUID | str,
 ) -> dict[str, Any]:
     """Issue a 1h-TTL bearer token for WS auth.
@@ -300,8 +326,13 @@ def a2a_agent_card(base_url: str, *, agent_id: str = "forge-default") -> dict[st
 
 
 async def record_a2a_handshake(
-    tenant_id: UUID | str, project_id: UUID | str, actor_id: UUID | str | None,
-    from_agent_id: str, to_agent_id: str, direction: str, *,
+    tenant_id: UUID | str,
+    project_id: UUID | str,
+    actor_id: UUID | str | None,
+    from_agent_id: str,
+    to_agent_id: str,
+    direction: str,
+    *,
     jwt_jti: str | None = None,
 ) -> str:
     jti = jwt_jti or f"a2a-{secrets.token_hex(8)}"
@@ -323,9 +354,12 @@ async def record_a2a_handshake(
         )
         await session.commit()
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.A2A_HANDSHAKE.value,
-        target_type="a2a_delegation", target_id=jti,
+        target_type="a2a_delegation",
+        target_id=jti,
         payload={"from": from_agent_id, "to": to_agent_id, "direction": direction},
     )
     return jti
@@ -350,8 +384,17 @@ def _session_to_dict(row: Phase4Session) -> dict[str, Any]:
 
 
 __all__ = [
-    "MAX_DURATIONS", "RESUME_GRACE_SECONDS",
-    "create_session", "heartbeat", "extend_session", "cancel_session",
-    "expire_session", "resume_session", "list_sessions", "get_session",
-    "issue_realtime_client_secret", "a2a_agent_card", "record_a2a_handshake",
+    "MAX_DURATIONS",
+    "RESUME_GRACE_SECONDS",
+    "create_session",
+    "heartbeat",
+    "extend_session",
+    "cancel_session",
+    "expire_session",
+    "resume_session",
+    "list_sessions",
+    "get_session",
+    "issue_realtime_client_secret",
+    "a2a_agent_card",
+    "record_a2a_handshake",
 ]

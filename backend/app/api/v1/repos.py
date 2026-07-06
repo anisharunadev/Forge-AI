@@ -1,13 +1,15 @@
 """Repos REST endpoints (F-101, F-102)."""
 
 from __future__ import annotations
-from typing import Annotated
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.repo_ingestion import Repo
@@ -23,19 +25,17 @@ from app.schemas.project_intelligence import (
     RepoUpdate,
 )
 from app.services.project_intelligence.repo_ingestion import repo_ingestion_service
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/repos", tags=["repos"])
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("", response_model=RepoRead, status_code=status.HTTP_201_CREATED)
 @audit(action="repos.create", target_type="repo")
 async def create_repo(
     body: RepoCreate,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:create"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:create")),
 ) -> RepoRead:
     repo = await repo_ingestion_service.create_repo(
         tenant_id=principal.tenant_id,
@@ -54,7 +54,7 @@ async def create_repo(
 async def list_repos(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: str | None = Query(default=None),
-    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:read")),
 ) -> list[RepoRead]:
     rows = await repo_ingestion_service.list_repos(
         tenant_id=principal.tenant_id,
@@ -68,7 +68,7 @@ async def list_repos(
 async def get_repo(
     repo_id: str,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:read")),
 ) -> RepoRead:
     try:
         repo = await repo_ingestion_service.get_repo(repo_id, tenant_id=principal.tenant_id)
@@ -77,16 +77,16 @@ async def get_repo(
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     return RepoRead.model_validate(repo)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.patch("/{repo_id}", response_model=RepoRead)
 @audit(action="repos.update", target_type="repo")
 async def update_repo(
     repo_id: str,
     body: RepoUpdate,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:update"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:update")),
 ) -> RepoRead:
     factory = get_session_factory()
     async with factory() as session:
@@ -102,15 +102,15 @@ async def update_repo(
         await session.commit()
         await session.refresh(repo)
     return RepoRead.model_validate(repo)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/{repo_id}/ingest", response_model=IngestionRunRead)
 @audit(action="repos.ingest", target_type="repo")
 async def trigger_ingestion(
     repo_id: str,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:ingest"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:ingest")),
 ) -> IngestionRunRead:
     try:
         repo = await repo_ingestion_service.get_repo(repo_id, tenant_id=principal.tenant_id)
@@ -125,7 +125,7 @@ async def trigger_ingestion(
     return IngestionRunRead(
         id=summary.run_id,
         repo_id=summary.repo_id,
-        started_at=datetime.now(timezone.utc),
+        started_at=datetime.now(UTC),
         finished_at=None,
         status=summary.status,
         items_processed=0,
@@ -139,7 +139,7 @@ async def trigger_ingestion(
 async def list_ingestions(
     repo_id: str,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:read")),
 ) -> list[IngestionRunRead]:
     runs = await repo_ingestion_service.list_ingestion_runs(
         repo_id=repo_id, tenant_id=principal.tenant_id
@@ -159,15 +159,15 @@ async def list_ingestions(
         )
         for r in runs
     ]
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/discover", response_model=RepoDiscoverResponse)
 @audit(action="repos.discover", target_type="repo")
 async def discover_repos(
     body: RepoDiscoverRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:discover"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:discover")),
 ) -> RepoDiscoverResponse:
     candidates = await repo_ingestion_service.discover_repos(
         tenant_id=principal.tenant_id,
@@ -198,7 +198,7 @@ async def discover_repos(
 async def get_status(
     repo_id: str,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:read")),
 ) -> IngestionStatusRead:
     try:
         repo = await repo_ingestion_service.get_repo(repo_id, tenant_id=principal.tenant_id)
@@ -224,11 +224,13 @@ async def get_status(
             artifacts_produced=active.artifacts_produced or {},
             started_commit_sha=active.started_commit_sha,
             finished_commit_sha=active.finished_commit_sha,
-        ) if active else None,
+        )
+        if active
+        else None,
     )
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.delete(
     "/ingestions/{run_id}",
     response_model=None,
@@ -239,7 +241,7 @@ async def get_status(
 async def cancel_ingestion(
     run_id: str,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:ingest"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("repos:ingest")),
 ):
     try:
         run = await repo_ingestion_service.cancel_ingestion(

@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -30,13 +29,13 @@ async def list_stories(
     db: AsyncSession,
     principal: AuthenticatedPrincipal,
     *,
-    project_id: Optional[UUID] = None,
-    sprint_id: Optional[UUID] = None,
-    status: Optional[str] = None,
-    priority: Optional[str] = None,
-    assignee_id: Optional[UUID] = None,
-    label: Optional[str] = None,
-    search: Optional[str] = None,
+    project_id: UUID | None = None,
+    sprint_id: UUID | None = None,
+    status: str | None = None,
+    priority: str | None = None,
+    assignee_id: UUID | None = None,
+    label: str | None = None,
+    search: str | None = None,
 ) -> list[Story]:
     """List stories for the active tenant. All filters are optional
     and AND-composed. Rule 2 — tenant_id is always enforced."""
@@ -66,7 +65,7 @@ async def get_story(
     db: AsyncSession,
     principal: AuthenticatedPrincipal,
     story_id: UUID,
-) -> Optional[Story]:
+) -> Story | None:
     result = await db.execute(
         select(Story).where(
             Story.id == story_id,
@@ -81,19 +80,19 @@ async def create_story(
     principal: AuthenticatedPrincipal,
     *,
     title: str,
-    description: Optional[str] = None,
+    description: str | None = None,
     status: str = "backlog",
     priority: str = "P2",
     estimate: str = "M",
-    labels: Optional[list[str]] = None,
-    acceptance_criteria: Optional[list[dict]] = None,
-    subtasks: Optional[list[dict]] = None,
-    assignee_id: Optional[UUID] = None,
-    reporter_id: Optional[UUID] = None,
-    epic_id: Optional[UUID] = None,
-    sprint_id: Optional[UUID] = None,
-    linked_items: Optional[list[dict]] = None,
-    project_id: Optional[UUID] = None,
+    labels: list[str] | None = None,
+    acceptance_criteria: list[dict] | None = None,
+    subtasks: list[dict] | None = None,
+    assignee_id: UUID | None = None,
+    reporter_id: UUID | None = None,
+    epic_id: UUID | None = None,
+    sprint_id: UUID | None = None,
+    linked_items: list[dict] | None = None,
+    project_id: UUID | None = None,
 ) -> Story:
     story = Story(
         tenant_id=principal.tenant_id,
@@ -123,11 +122,11 @@ async def update_story(
     principal: AuthenticatedPrincipal,
     story_id: UUID,
     fields: dict,
-) -> Optional[Story]:
+) -> Story | None:
     story = await get_story(db, principal, story_id)
     if not story:
         return None
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     for key, value in fields.items():
         if value is None:
             continue
@@ -191,10 +190,18 @@ async def get_story_linked(
     story = await get_story(db, principal, story_id)
     if not story:
         return {
-            "prds": [], "adrs": [], "ideas": [], "epics": [], "runs": [],
+            "prds": [],
+            "adrs": [],
+            "ideas": [],
+            "epics": [],
+            "runs": [],
         }
     buckets: dict[str, list[dict[str, str]]] = {
-        "prds": [], "adrs": [], "ideas": [], "epics": [], "runs": [],
+        "prds": [],
+        "adrs": [],
+        "ideas": [],
+        "epics": [],
+        "runs": [],
     }
     for item in story.linked_items or []:
         kind = item.get("type")
@@ -214,6 +221,7 @@ async def get_story_linked(
 # ---------------------------------------------------------------------------
 # Comments
 # ---------------------------------------------------------------------------
+
 
 async def list_comments(
     db: AsyncSession,
@@ -236,8 +244,8 @@ async def add_comment(
     principal: AuthenticatedPrincipal,
     story_id: UUID,
     body: str,
-    mentions: Optional[list[UUID]] = None,
-) -> Optional[StoryComment]:
+    mentions: list[UUID] | None = None,
+) -> StoryComment | None:
     story = await get_story(db, principal, story_id)
     if not story:
         return None
@@ -258,12 +266,13 @@ async def add_comment(
 # Jira sync
 # ---------------------------------------------------------------------------
 
+
 async def link_to_jira(
     db: AsyncSession,
     principal: AuthenticatedPrincipal,
     story_id: UUID,
     jira_key: str,
-) -> Optional[Story]:
+) -> Story | None:
     return await update_story(
         db,
         principal,
@@ -280,7 +289,7 @@ async def sync_to_jira(
     db: AsyncSession,
     principal: AuthenticatedPrincipal,
     story_id: UUID,
-) -> Optional[Story]:
+) -> Story | None:
     """Stub — a real implementation would push title/description/status
     to the Jira REST API. We mark the sync as completed so the UI can
     render the green indicator (test: link to Jira → jira_key appears,
@@ -294,7 +303,7 @@ async def sync_to_jira(
         story_id,
         {
             "jira_sync_status": JiraSyncStatus.SYNCED,
-            "jira_synced_at": datetime.now(timezone.utc),
+            "jira_synced_at": datetime.now(UTC),
         },
     )
 
@@ -303,11 +312,12 @@ async def sync_to_jira(
 # Start implementation
 # ---------------------------------------------------------------------------
 
+
 async def start_implementation(
     db: AsyncSession,
     principal: AuthenticatedPrincipal,
     story_id: UUID,
-) -> Optional[dict]:
+) -> dict | None:
     """Flip the story to in_progress and synthesise a new run + session
     id. The actual terminal session is created in the terminal
     service — we return the id so the UI can navigate into the
@@ -350,10 +360,11 @@ async def start_implementation(
 # Sprints
 # ---------------------------------------------------------------------------
 
+
 async def list_sprints(
     db: AsyncSession,
     principal: AuthenticatedPrincipal,
-    project_id: Optional[UUID] = None,
+    project_id: UUID | None = None,
 ) -> list[Sprint]:
     q = select(Sprint).where(Sprint.tenant_id == principal.tenant_id)
     if project_id:
@@ -367,7 +378,7 @@ async def get_current_sprint(
     db: AsyncSession,
     principal: AuthenticatedPrincipal,
     project_id: UUID,
-) -> Optional[Sprint]:
+) -> Sprint | None:
     result = await db.execute(
         select(Sprint)
         .where(
@@ -385,7 +396,7 @@ async def start_sprint(
     db: AsyncSession,
     principal: AuthenticatedPrincipal,
     sprint_id: UUID,
-) -> Optional[Sprint]:
+) -> Sprint | None:
     result = await db.execute(
         select(Sprint).where(
             Sprint.id == sprint_id,
@@ -405,10 +416,11 @@ async def start_sprint(
 # Epics
 # ---------------------------------------------------------------------------
 
+
 async def list_epics(
     db: AsyncSession,
     principal: AuthenticatedPrincipal,
-    project_id: Optional[UUID] = None,
+    project_id: UUID | None = None,
 ) -> list[Epic]:
     q = select(Epic).where(Epic.tenant_id == principal.tenant_id)
     if project_id:

@@ -19,26 +19,26 @@ from __future__ import annotations
 
 import hashlib
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Header, HTTPException, Depends
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.api.deps import DbSession, Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import DbSession, get_current_principal, require_permission
 from app.core.audit import audit
-from app.core.security import AuthenticatedPrincipal
 from app.core.logging import get_logger
+from app.core.security import AuthenticatedPrincipal
 from app.services.event_bus import EventType, bus
 from app.services.forge_commands import (
     UnknownForgeCommand,
     get_forge_command,
     route_to_gsd,
 )
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -60,9 +60,9 @@ class CommandRunResponse(BaseModel):
     tenant_id: UUID
     project_id: UUID
     output: Any
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/{name}/run", response_model=CommandRunResponse)
 @audit(action="command.run", target_type="command")
 async def run_command(
@@ -136,13 +136,9 @@ FORGE_CORE_ROOT = Path(
 def _skill_path(name: str) -> Path:
     """Resolve and validate the SKILL.md path for a forge-* command."""
     if not name.startswith("forge-"):
-        raise HTTPException(
-            status_code=400, detail="command name must start with forge-"
-        )
-    safe = name[len("forge-"):].strip("/")
-    if not safe or "/" in safe or ".." in safe or not all(
-        c.isalnum() or c in "-_" for c in safe
-    ):
+        raise HTTPException(status_code=400, detail="command name must start with forge-")
+    safe = name[len("forge-") :].strip("/")
+    if not safe or "/" in safe or ".." in safe or not all(c.isalnum() or c in "-_" for c in safe):
         raise HTTPException(status_code=400, detail="invalid command name")
     candidate = (FORGE_CORE_ROOT / "skills" / name / "SKILL.md").resolve()
     root = FORGE_CORE_ROOT.resolve()
@@ -168,7 +164,7 @@ class CommandArtifactUpdate(BaseModel):
 async def get_command_artifact(
     name: str,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("commands:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("commands:read")),
 ) -> CommandArtifact:
     """Read the SKILL.md for a forge-* command.
 
@@ -186,14 +182,12 @@ async def get_command_artifact(
         command=name,
         path=str(path.relative_to(FORGE_CORE_ROOT)),
         content=content,
-        lastModified=datetime.fromtimestamp(
-            stat.st_mtime, tz=timezone.utc
-        ).isoformat(),
+        lastModified=datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
         etag=etag,
     )
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.put("/{name}/artifact", response_model=CommandArtifact)
 @audit(action="command.artifact.write", target_type="command")
 async def put_command_artifact(
@@ -201,7 +195,7 @@ async def put_command_artifact(
     body: CommandArtifactUpdate,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     if_match: str | None = Header(default=None, alias="If-Match"),
-    _perm: AuthenticatedPrincipal = Depends(require_permission("commands:write"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("commands:write")),
 ) -> CommandArtifact:
     """Write the SKILL.md for a forge-* command.
 
@@ -236,9 +230,7 @@ async def put_command_artifact(
         command=name,
         path=str(path.relative_to(FORGE_CORE_ROOT)),
         content=body.content,
-        lastModified=datetime.fromtimestamp(
-            stat.st_mtime, tz=timezone.utc
-        ).isoformat(),
+        lastModified=datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
         etag=new_etag,
     )
 
@@ -256,7 +248,7 @@ async def get_command_runs(
     name: str,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     limit: int = 50,
-    _perm: AuthenticatedPrincipal = Depends(require_permission("commands:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("commands:read")),
 ) -> list[dict[str, Any]]:
     """Return recent run records for a single command."""
     try:
@@ -275,8 +267,7 @@ async def get_command_runs(
     records = [
         r
         for r in wrapper.audit_log
-        if r.forge_cmd == name
-        and str(r.tenant_id) == str(principal.tenant_id)
+        if r.forge_cmd == name and str(r.tenant_id) == str(principal.tenant_id)
     ]
     records.sort(key=lambda r: r.timestamp, reverse=True)
     return [

@@ -11,14 +11,17 @@ import json
 import os as _os
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
 
 from app.core.logging import get_logger
-from app.db.models.repo_ingestion import IngestionArtifact, IngestionArtifactType, IngestionRun, Repo
+from app.db.models.repo_ingestion import (
+    IngestionArtifact,
+    IngestionRun,
+)
 from app.db.session import get_session_factory
 from app.services.knowledge_graph import knowledge_graph_service
 
@@ -124,7 +127,7 @@ class CatalogService:
             project_id=project_id,
             endpoints=endpoints,
             sources=sorted(sources) or ["heuristic"],
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
         )
 
     # -- F-106: database map -----------------------------------------------
@@ -158,7 +161,7 @@ class CatalogService:
             project_id=project_id,
             schemas=sorted(schemas) or ["public"],
             tables=tables,
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
         )
 
     # -- F-107: service catalog -------------------------------------------
@@ -206,14 +209,12 @@ class CatalogService:
         return ServiceCatalog(
             project_id=project_id,
             services=services,
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
         )
 
     # -- helpers ----------------------------------------------------------
 
-    async def _load_latest_manifests(
-        self, *, tenant_id: UUID | str
-    ) -> dict[str, dict[str, str]]:
+    async def _load_latest_manifests(self, *, tenant_id: UUID | str) -> dict[str, dict[str, str]]:
         """Return a category-keyed dict of latest manifest paths → content."""
         out: dict[str, dict[str, str]] = {
             "node": {},
@@ -295,9 +296,7 @@ def _extract_python_routes(python_files: dict[str, str]) -> list[APIEndpoint]:
     return out
 
 
-_NODE_ROUTE_RE = re.compile(
-    r"(?:app|router)\.(get|post|put|delete|patch)\(\s*['\"]([^'\"]+)['\"]"
-)
+_NODE_ROUTE_RE = re.compile(r"(?:app|router)\.(get|post|put|delete|patch)\(\s*['\"]([^'\"]+)['\"]")
 
 
 def _extract_node_routes(node_files: dict[str, str]) -> list[APIEndpoint]:
@@ -343,7 +342,11 @@ def _extract_openapi(path: str, content: str) -> list[APIEndpoint]:
                         method=method.upper(),
                         path=route,
                         source="openapi",
-                        summary=(methods[method].get("summary") if isinstance(methods[method], dict) else None),
+                        summary=(
+                            methods[method].get("summary")
+                            if isinstance(methods[method], dict)
+                            else None
+                        ),
                     )
                 )
     return out
@@ -389,7 +392,9 @@ def _extract_prisma_models(content: str) -> list[DatabaseTable]:
             parts = s.split()
             if len(parts) >= 2:
                 columns.append({"name": parts[0], "type": parts[1]})
-        out.append(DatabaseTable(name=name, schema_name="public", columns=columns, relationships=[]))
+        out.append(
+            DatabaseTable(name=name, schema_name="public", columns=columns, relationships=[])
+        )
     return out
 
 

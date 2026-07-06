@@ -4,14 +4,12 @@ from __future__ import annotations
 
 import uuid
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
 
 # Register models BEFORE the sqlite_db fixture creates the schema.
 from app.db.models import architecture  # noqa: F401
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -21,7 +19,7 @@ from app.db.models import architecture  # noqa: F401
 class _StubLLM:
     """Unused for standards tests but kept symmetric with other suites."""
 
-    async def __aenter__(self) -> "_StubLLM":
+    async def __aenter__(self) -> _StubLLM:
         return self
 
     async def __aexit__(self, *_exc: Any) -> None:
@@ -37,9 +35,17 @@ class _StubRegistry:
     def __init__(self) -> None:
         self.rows: list[dict[str, Any]] = []
 
-    async def create(self, *, tenant_id: Any, project_id: Any, type: str,
-                     payload: dict[str, Any], created_by: Any,
-                     actor_id: Any | None = None, **_kw: Any) -> dict[str, Any]:
+    async def create(
+        self,
+        *,
+        tenant_id: Any,
+        project_id: Any,
+        type: str,
+        payload: dict[str, Any],
+        created_by: Any,
+        actor_id: Any | None = None,
+        **_kw: Any,
+    ) -> dict[str, Any]:
         record = {
             "id": str(uuid.uuid4()),
             "tenant_id": str(tenant_id),
@@ -51,8 +57,9 @@ class _StubRegistry:
         self.rows.append(record)
         return record
 
-    async def list(self, *, tenant_id: Any, project_id: Any, type: str,
-                   **_kw: Any) -> list[dict[str, Any]]:
+    async def list(
+        self, *, tenant_id: Any, project_id: Any, type: str, **_kw: Any
+    ) -> list[dict[str, Any]]:
         return [
             row
             for row in self.rows
@@ -61,10 +68,16 @@ class _StubRegistry:
             and row["project_id"] == str(project_id)
         ]
 
-    async def register(self, *, artifact_type: str, artifact_id: Any,
-                       tenant_id: Any, project_id: Any,
-                       payload: dict[str, Any] | None = None,
-                       **_kw: Any) -> dict[str, Any]:
+    async def register(
+        self,
+        *,
+        artifact_type: str,
+        artifact_id: Any,
+        tenant_id: Any,
+        project_id: Any,
+        payload: dict[str, Any] | None = None,
+        **_kw: Any,
+    ) -> dict[str, Any]:
         """T-A6 stub mirror of ArtifactRegistry.register."""
         record = {
             "node_id": str(uuid.uuid4()),
@@ -85,10 +98,18 @@ class _StubAudit:
     def __init__(self) -> None:
         self.events: list[dict[str, Any]] = []
 
-    async def record(self, *, tenant_id: Any, project_id: Any, actor_id: Any,
-                     action: str, target_type: str, target_id: str,
-                     payload: dict[str, Any] | None = None,
-                     occurred_at: Any = None) -> None:
+    async def record(
+        self,
+        *,
+        tenant_id: Any,
+        project_id: Any,
+        actor_id: Any,
+        action: str,
+        target_type: str,
+        target_id: str,
+        payload: dict[str, Any] | None = None,
+        occurred_at: Any = None,
+    ) -> None:
         self.events.append(
             {
                 "tenant_id": str(tenant_id),
@@ -128,17 +149,14 @@ async def event_bus(event_bus):  # type: ignore[no-untyped-def]
 
 
 @pytest.mark.asyncio
-async def test_attest_artifact_appends_to_audit(
-    sqlite_db, event_bus, registry, audit
-):
+async def test_attest_artifact_appends_to_audit(sqlite_db, event_bus, registry, audit):
     """Attesting an ADR with all-required-fields present should pass and emit an audit row."""
-    from app.services.architecture.standards_attestation import (
-        StandardsAttestationService,
-    )
-
     # Seed an ADR row so the policy check passes.
     from app.db.models.architecture import ADR
     from app.db.session import get_session_factory
+    from app.services.architecture.standards_attestation import (
+        StandardsAttestationService,
+    )
 
     tenant_id = uuid.uuid4()
     project_id = uuid.uuid4()
@@ -177,26 +195,20 @@ async def test_attest_artifact_appends_to_audit(
     )
 
     assert payload["status"] in {"attested", "failed"}
-    assert any(
-        e["action"] == "architecture.standards.attest" for e in audit.events
-    ), "expected an audit row for the attestation"
-    assert any(
-        e["target_type"] == "adr" and e["target_id"] == str(adr_id)
-        for e in audit.events
+    assert any(e["action"] == "architecture.standards.attest" for e in audit.events), (
+        "expected an audit row for the attestation"
     )
+    assert any(e["target_type"] == "adr" and e["target_id"] == str(adr_id) for e in audit.events)
 
 
 @pytest.mark.asyncio
-async def test_attest_fails_on_standard_violation(
-    sqlite_db, event_bus, registry, audit
-):
+async def test_attest_fails_on_standard_violation(sqlite_db, event_bus, registry, audit):
     """An artifact missing the required `title` field should fail attestation."""
+    from app.db.models.architecture import ADR
+    from app.db.session import get_session_factory
     from app.services.architecture.standards_attestation import (
         StandardsAttestationService,
     )
-
-    from app.db.models.architecture import ADR
-    from app.db.session import get_session_factory
 
     tenant_id = uuid.uuid4()
     project_id = uuid.uuid4()
@@ -240,16 +252,13 @@ async def test_attest_fails_on_standard_violation(
 
 
 @pytest.mark.asyncio
-async def test_get_standards_for_artifact(
-    sqlite_db, event_bus, registry, audit
-):
+async def test_get_standards_for_artifact(sqlite_db, event_bus, registry, audit):
     """`get_standards_for_artifact` should return applicable checks without writing."""
+    from app.db.models.architecture import ADR
+    from app.db.session import get_session_factory
     from app.services.architecture.standards_attestation import (
         StandardsAttestationService,
     )
-
-    from app.db.models.architecture import ADR
-    from app.db.session import get_session_factory
 
     tenant_id = uuid.uuid4()
     project_id = uuid.uuid4()
@@ -292,16 +301,13 @@ async def test_get_standards_for_artifact(
 
 
 @pytest.mark.asyncio
-async def test_revoke_attestation_creates_audit(
-    sqlite_db, event_bus, registry, audit
-):
+async def test_revoke_attestation_creates_audit(sqlite_db, event_bus, registry, audit):
     """Revoking an attestation writes a fresh audit row and updates the payload."""
+    from app.db.models.architecture import ADR
+    from app.db.session import get_session_factory
     from app.services.architecture.standards_attestation import (
         StandardsAttestationService,
     )
-
-    from app.db.models.architecture import ADR
-    from app.db.session import get_session_factory
 
     tenant_id = uuid.uuid4()
     project_id = uuid.uuid4()
@@ -361,7 +367,5 @@ async def test_revoke_attestation_creates_audit(
     )
     assert revoked["status"] == "revoked"
     assert revoked["revocation_reason"] == "manual revocation"
-    revoke_events = [
-        e for e in audit.events if e["action"].endswith(".revoke")
-    ]
+    revoke_events = [e for e in audit.events if e["action"].endswith(".revoke")]
     assert revoke_events, "expected a revoke audit row"

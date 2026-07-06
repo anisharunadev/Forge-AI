@@ -11,7 +11,7 @@ import hashlib
 import json
 import os
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -110,7 +110,7 @@ class SnapshotService:
         payload = {
             "project_id": str(project_id),
             "tenant_id": str(tenant_id),
-            "captured_at": datetime.now(timezone.utc).isoformat(),
+            "captured_at": datetime.now(UTC).isoformat(),
             "nodes": [
                 {
                     "id": str(n.id),
@@ -139,7 +139,7 @@ class SnapshotService:
         snapshot = Snapshot(
             id=snapshot_id,
             project_id=project_id,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             node_count=len(nodes),
             edge_count=len(edges),
             content_ref=content_ref,
@@ -156,9 +156,7 @@ class SnapshotService:
         )
         return snapshot
 
-    async def list_snapshots(
-        self, project_id: UUID | str
-    ) -> list[Snapshot]:
+    async def list_snapshots(self, project_id: UUID | str) -> list[Snapshot]:
         return list(self._index.get(project_id, []))
 
     async def restore_snapshot(

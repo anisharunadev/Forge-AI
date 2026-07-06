@@ -17,7 +17,7 @@ import asyncio
 import json
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -33,7 +33,8 @@ from app.db.models.ideation import (
     WorkflowStepStatus,
 )
 from app.db.session import get_session_factory
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 from app.services.ideation import (
     agent_selector,
     arch_preview_service,
@@ -163,6 +164,7 @@ class RealtimeWorkflow:
         # not opt out via FORGE_IDEATION_SYNC=1 (used by tests that
         # drive `run_pipeline` synchronously).
         import os
+
         sync_mode = os.environ.get("FORGE_IDEATION_SYNC") == "1"
         if not sync_mode:
             try:
@@ -171,9 +173,7 @@ class RealtimeWorkflow:
                 loop = None
             if loop is not None:
                 loop.create_task(
-                    self._run_pipeline(
-                        row.id, tenant_id=tenant_id, project_id=effective_project_id
-                    )
+                    self._run_pipeline(row.id, tenant_id=tenant_id, project_id=effective_project_id)
                 )
         return row
 
@@ -189,9 +189,7 @@ class RealtimeWorkflow:
         Useful for tests, batch jobs, or callers that prefer to await
         completion rather than listen on a WebSocket.
         """
-        await self._run_pipeline(
-            session_id, tenant_id=tenant_id, project_id=project_id
-        )
+        await self._run_pipeline(session_id, tenant_id=tenant_id, project_id=project_id)
 
     async def get_workflow_state(
         self, session_id: UUID | str, *, tenant_id: UUID | str
@@ -210,7 +208,9 @@ class RealtimeWorkflow:
                         .where(WorkflowStep.session_id == row.id)
                         .order_by(WorkflowStep.position)
                     )
-                ).scalars().all()
+                )
+                .scalars()
+                .all()
             )
         steps = [
             {
@@ -278,12 +278,12 @@ class RealtimeWorkflow:
 
             if action == "cancel":
                 row.status = WorkflowSessionStatus.CANCELLED
-                row.completed_at = datetime.now(timezone.utc)
+                row.completed_at = datetime.now(UTC)
                 state["cancelled_by"] = str(actor_id) if actor_id else None
             elif target is not None:
                 if action == "skip":
                     target.status = WorkflowStepStatus.SKIPPED
-                    target.finished_at = datetime.now(timezone.utc)
+                    target.finished_at = datetime.now(UTC)
                     target.result = {"skipped_by": str(actor_id) if actor_id else None}
                 elif action == "retry":
                     target.status = WorkflowStepStatus.PENDING
@@ -446,7 +446,7 @@ class RealtimeWorkflow:
                 tenant_id=tenant_id,
                 horizon="now",
                 top_n=5,
-                name=f"Auto roadmap {datetime.now(timezone.utc).strftime('%Y%m%d-%H%M')}",
+                name=f"Auto roadmap {datetime.now(UTC).strftime('%Y%m%d-%H%M')}",
                 actor_id=idea.submitted_by,
             )
             # Add the idea into the new roadmap so it isn't orphaned.
@@ -490,9 +490,7 @@ class RealtimeWorkflow:
 
     # -- DB helpers -------------------------------------------------------
 
-    async def _idea_for_session(
-        self, session_id: UUID | str, *, tenant_id: UUID | str
-    ) -> Idea:
+    async def _idea_for_session(self, session_id: UUID | str, *, tenant_id: UUID | str) -> Idea:
         factory = get_session_factory()
         async with factory() as session:
             row = await session.get(WorkflowSession, str(session_id))
@@ -522,11 +520,15 @@ class RealtimeWorkflow:
             row = (await session.execute(stmt)).scalars().first()
             if row is None:
                 return
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             row.status = status
             if status == WorkflowStepStatus.RUNNING and row.started_at is None:
                 row.started_at = now
-            if status in (WorkflowStepStatus.COMPLETED, WorkflowStepStatus.FAILED, WorkflowStepStatus.SKIPPED):
+            if status in (
+                WorkflowStepStatus.COMPLETED,
+                WorkflowStepStatus.FAILED,
+                WorkflowStepStatus.SKIPPED,
+            ):
                 row.finished_at = now
             if error:
                 row.error = error
@@ -590,7 +592,7 @@ class RealtimeWorkflow:
             if row.status in terminal_states:
                 return
             row.status = status
-            row.completed_at = datetime.now(timezone.utc)
+            row.completed_at = datetime.now(UTC)
             row.current_step = None
             # If we completed successfully, transition the idea to SCORED
             # so downstream consumers can react.
@@ -616,9 +618,7 @@ class RealtimeWorkflow:
             project_id=str(row.project_id) if row.project_id else None,
         )
 
-    async def _load_idea(
-        self, idea_id: UUID | str, *, tenant_id: UUID | str
-    ) -> Idea:
+    async def _load_idea(self, idea_id: UUID | str, *, tenant_id: UUID | str) -> Idea:
         factory = get_session_factory()
         async with factory() as session:
             idea = await session.get(Idea, str(idea_id))
@@ -636,7 +636,7 @@ def serialize_event(event_type: str, payload: dict[str, Any]) -> str:
         {
             "type": event_type,
             "payload": payload,
-            "ts": datetime.now(timezone.utc).isoformat(),
+            "ts": datetime.now(UTC).isoformat(),
         }
     )
 

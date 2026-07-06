@@ -12,7 +12,6 @@ from pydantic import Field
 from app.db.models.repo_ingestion import IngestionArtifactType, IngestionStatus
 from app.schemas.common import ForgeBaseModel, TenantScopedModel
 
-
 # ---------------------------------------------------------------------------
 # Enums (mirror model enums so the API stays closed-set)
 # ---------------------------------------------------------------------------

@@ -47,16 +47,18 @@ from uuid import UUID
 
 from sqlalchemy import (
     DateTime,
-    Enum as SAEnum,
     ForeignKey,
     Index,
     String,
     Text,
     UniqueConstraint,
 )
+from sqlalchemy import (
+    Enum as SAEnum,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class WorkflowRunStatus(str, Enum):
@@ -106,7 +108,9 @@ class Workflow(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     __table_args__ = (
         UniqueConstraint(
-            "tenant_id", "project_id", "name",
+            "tenant_id",
+            "project_id",
+            "name",
             name="uq_workflows_tenant_project_name",
         ),
         Index("ix_workflows_tenant_project", "tenant_id", "project_id"),

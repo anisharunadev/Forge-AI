@@ -20,14 +20,13 @@ the reviewer a single-letter verdict in the UI.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Literal
 from uuid import UUID
 
 from pydantic import Field
 
 from app.schemas.common import ForgeBaseModel
-
 
 # ---------------------------------------------------------------------------
 # Q1 — what did you change and why?
@@ -165,9 +164,7 @@ class RunExplainability(ForgeBaseModel):
     confidence: Q4ConfidenceScore
     counterfactual: Q5Counterfactual
     # default_factory=lambda: ... required for Pydantic v2 + datetime.now
-    computed_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    computed_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     schema_version: int = 1
     grade: GradeLiteral = "B"
     grade_rationale: str = ""

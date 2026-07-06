@@ -7,13 +7,14 @@ shared by Approval Engine, RBAC, and the Connector State Machine.
 
 from __future__ import annotations
 
-import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 from uuid import UUID
 
 from app.core.logging import get_logger
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 
 logger = get_logger(__name__)
 
@@ -111,7 +112,9 @@ class PolicyEngine:
             return lambda ctx: bool(_var(ctx))
 
         if op in {"==", "!=", "<", ">", "<=", ">="}:
-            compiled_args = [self._compile(a) if isinstance(a, dict) else (lambda _x, v=a: v) for a in args]
+            compiled_args = [
+                self._compile(a) if isinstance(a, dict) else (lambda _x, v=a: v) for a in args
+            ]
             ops: dict[str, Callable[[Any, Any], bool]] = {
                 "==": lambda a, b: a == b,
                 "!=": lambda a, b: a != b,
@@ -137,8 +140,12 @@ class PolicyEngine:
             inner = self._compile(args if isinstance(args, dict) else {"true": True})
             return lambda ctx, _inner=inner: not _inner(ctx)
         if op == "in":
-            compiled_a = self._compile(args[0]) if isinstance(args[0], dict) else (lambda _x, v=args[0]: v)
-            compiled_b = self._compile(args[1]) if isinstance(args[1], dict) else (lambda _x, v=args[1]: v)
+            compiled_a = (
+                self._compile(args[0]) if isinstance(args[0], dict) else (lambda _x, v=args[0]: v)
+            )
+            compiled_b = (
+                self._compile(args[1]) if isinstance(args[1], dict) else (lambda _x, v=args[1]: v)
+            )
             return lambda ctx, _a=compiled_a, _b=compiled_b: _a(ctx) in _b(ctx)
 
         raise ValueError(f"unsupported policy operator: {op!r}")

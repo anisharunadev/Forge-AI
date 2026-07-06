@@ -34,7 +34,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Protocol
+from typing import Any, Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Types
 # ---------------------------------------------------------------------------
+
 
 class Boto3ClientFactory(Protocol):
     """Protocol for the boto3 client factory.

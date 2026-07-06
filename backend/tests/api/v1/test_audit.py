@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import os
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
 import pytest
@@ -26,7 +26,6 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-
 
 os.environ.setdefault("JWT_SECRET", "test-secret-test-secret-test-secret")
 os.environ.setdefault("JWT_ALGORITHM", "HS256")
@@ -63,9 +62,7 @@ def engine():
 
 @pytest.fixture()
 def session_factory(engine, monkeypatch):
-    factory = sessionmaker(
-        bind=engine, autoflush=False, autocommit=False, expire_on_commit=False
-    )
+    factory = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
     monkeypatch.setattr(get_session_factory, "__call__", lambda: factory)
     monkeypatch.setattr(audit_mod, "get_session_factory", lambda: factory)
     return factory
@@ -76,7 +73,7 @@ def seeded(session_factory):
     """Seed 5 events for tenant A and 2 for tenant B."""
     a_id, b_id = uuid.uuid4(), uuid.uuid4()
     project_id = uuid.uuid4()
-    base = datetime.now(timezone.utc)
+    base = datetime.now(UTC)
     with session_factory() as s:
         for i in range(5):
             s.add(
@@ -143,9 +140,7 @@ def _override(app, principal):
     app.dependency_overrides[deps_mod.get_current_principal] = _dep
 
 
-def test_audit_list_pagination_and_tenant_isolation(
-    client, fastapi_app, seeded
-):
+def test_audit_list_pagination_and_tenant_isolation(client, fastapi_app, seeded):
     _override(
         fastapi_app,
         _principal(seeded.tenant_a, permissions=["audit:read"]),

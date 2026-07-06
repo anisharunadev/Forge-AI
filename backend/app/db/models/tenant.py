@@ -8,7 +8,7 @@ from uuid import UUID
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class Tenant(Base, UUIDPrimaryKeyMixin, TimestampMixin):
@@ -29,7 +29,7 @@ class Tenant(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     def __repr__(self) -> str:  # pragma: no cover — trivial
         return f"<Tenant id={self.id} slug={self.slug!r}>"
 
-
     _audit_root: bool = True
+
 
 __all__ = ["Tenant", "UUID"]

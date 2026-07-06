@@ -57,8 +57,14 @@ Rules:
 class APIContractGenerator:
     """Generate / validate / publish API contracts."""
 
-    def __init__(self, litellm_client: Any, artifact_registry: Any | None = None, event_bus: Any | None = None) -> None:
+    def __init__(
+        self,
+        litellm_client: Any,
+        artifact_registry: Any | None = None,
+        event_bus: Any | None = None,
+    ) -> None:
         from app.services.artifact_registry import artifact_registry as _default_registry
+
         self._llm = litellm_client
         self._registry = artifact_registry if artifact_registry is not None else _default_registry
         self._bus = event_bus
@@ -169,9 +175,7 @@ class APIContractGenerator:
                 raise LookupError("contract_not_found")
             validation = _validate_spec(contract.spec_type, contract.spec_content)
             if not validation["valid"]:
-                raise ValueError(
-                    "cannot publish invalid spec: " + "; ".join(validation["errors"])
-                )
+                raise ValueError("cannot publish invalid spec: " + "; ".join(validation["errors"]))
             contract.status = "published"
             await session.commit()
             await session.refresh(contract)

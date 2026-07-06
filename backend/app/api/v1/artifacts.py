@@ -1,18 +1,19 @@
 """F-010 — Artifacts (typed, append-only)."""
 
 from __future__ import annotations
+
 from typing import Annotated
 
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, Depends, status
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.artifact import ArtifactStatus
 from app.schemas.artifacts import ArtifactCreate, ArtifactRead
 from app.services.artifact_registry import artifact_registry
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/artifacts", tags=["artifacts"])
 
@@ -58,15 +59,15 @@ async def _list_active_all(principal) -> list:
             .order_by(Artifact.type, Artifact.version.desc())
         )
         return list((await session.execute(stmt)).scalars().all())
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("", response_model=ArtifactRead, status_code=status.HTTP_201_CREATED)
 @audit(action="artifacts.create", target_type="artifact")
 async def create_artifact(
     body: ArtifactCreate,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("artifacts:create"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("artifacts:create")),
 ) -> ArtifactRead:
     artifact = await artifact_registry.create(
         tenant_id=principal.tenant_id,

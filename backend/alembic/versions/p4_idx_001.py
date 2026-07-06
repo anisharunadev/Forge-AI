@@ -27,19 +27,18 @@ Create Date: 2026-07-05 23:50:00.000000
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Union
 
 from alembic import op
 
 revision: str = "p4_idx_001"
-down_revision: Union[str, Sequence[str], None] = (
+down_revision: str | Sequence[str] | None = (
     "step_91_m7_audit_chain_ref",
     "step_77_p0_litellm_guardrail_assignments",
     "step_78_f13_rag",
     "step_78_f15_observability",
 )
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 # ponytail: 9 composite indexes. The brief requires tenant_id + project_id as

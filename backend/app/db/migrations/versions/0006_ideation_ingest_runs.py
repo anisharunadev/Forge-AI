@@ -13,6 +13,7 @@ Create Date: 2026-06-22
 from __future__ import annotations
 
 import sqlalchemy as sa
+
 from alembic import op
 
 # revision identifiers, used by Alembic.
@@ -33,12 +34,8 @@ def upgrade() -> None:
         sa.Column("started_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("finished_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("signals_seen", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column(
-            "ideas_created", sa.Integer(), nullable=False, server_default="0"
-        ),
-        sa.Column(
-            "status", sa.String(length=32), nullable=False, server_default="running"
-        ),
+        sa.Column("ideas_created", sa.Integer(), nullable=False, server_default="0"),
+        sa.Column("status", sa.String(length=32), nullable=False, server_default="running"),
         sa.Column("error", sa.Text(), nullable=True),
         sa.Column(
             "degraded_budget",
@@ -77,7 +74,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute("DROP POLICY IF EXISTS ideation_ingest_runs_tenant_isolation ON ideation_ingest_runs;")
+    op.execute(
+        "DROP POLICY IF EXISTS ideation_ingest_runs_tenant_isolation ON ideation_ingest_runs;"
+    )
     op.drop_index("ix_ideation_ingest_runs_tenant_started", table_name="ideation_ingest_runs")
     op.drop_index("ix_ideation_ingest_runs_tenant_id", table_name="ideation_ingest_runs")
     op.drop_table("ideation_ingest_runs")

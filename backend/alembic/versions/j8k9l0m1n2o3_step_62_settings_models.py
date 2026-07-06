@@ -16,18 +16,18 @@ created_by columns and a (tenant_id, slug) unique constraint.
 
 from __future__ import annotations
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects.postgresql import JSONB
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "j8k9l0m1n2o3"
-down_revision: Union[str, None] = "i7j8k9l0m1n2"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "i7j8k9l0m1n2"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -65,12 +65,8 @@ def upgrade() -> None:
             nullable=True,
         ),
     )
-    op.create_unique_constraint(
-        "uq_projects_tenant_slug", "projects", ["tenant_id", "slug"]
-    )
-    op.create_index(
-        "ix_projects_tenant_status", "projects", ["tenant_id", "status"]
-    )
+    op.create_unique_constraint("uq_projects_tenant_slug", "projects", ["tenant_id", "slug"])
+    op.create_index("ix_projects_tenant_status", "projects", ["tenant_id", "status"])
 
     # -----------------------------------------------------------------------
     # project_members
@@ -118,13 +114,9 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.func.now(),
         ),
-        sa.UniqueConstraint(
-            "project_id", "user_id", name="ix_project_members_project_user"
-        ),
+        sa.UniqueConstraint("project_id", "user_id", name="ix_project_members_project_user"),
     )
-    op.create_index(
-        "ix_project_members_status", "project_members", ["status"]
-    )
+    op.create_index("ix_project_members_status", "project_members", ["status"])
 
     # -----------------------------------------------------------------------
     # project_invitations
@@ -176,12 +168,8 @@ def upgrade() -> None:
             server_default=sa.func.now(),
         ),
     )
-    op.create_index(
-        "ix_project_invitations_email", "project_invitations", ["email"]
-    )
-    op.create_index(
-        "ix_project_invitations_status", "project_invitations", ["status"]
-    )
+    op.create_index("ix_project_invitations_email", "project_invitations", ["email"])
+    op.create_index("ix_project_invitations_status", "project_invitations", ["status"])
     op.create_index(
         "ix_project_invitations_project_status",
         "project_invitations",
@@ -243,9 +231,7 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.func.now(),
         ),
-        sa.UniqueConstraint(
-            "project_id", "key", name="ix_env_vars_project_key"
-        ),
+        sa.UniqueConstraint("project_id", "key", name="ix_env_vars_project_key"),
     )
     op.create_index("ix_env_vars_tenant", "env_vars", ["tenant_id"])
 
@@ -319,13 +305,9 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.func.now(),
         ),
-        sa.UniqueConstraint(
-            "project_id", "agent_id", name="ix_agent_configs_project_agent"
-        ),
+        sa.UniqueConstraint("project_id", "agent_id", name="ix_agent_configs_project_agent"),
     )
-    op.create_index(
-        "ix_agent_configs_tenant", "agent_configs", ["tenant_id"]
-    )
+    op.create_index("ix_agent_configs_tenant", "agent_configs", ["tenant_id"])
 
 
 def downgrade() -> None:

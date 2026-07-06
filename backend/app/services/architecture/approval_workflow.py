@@ -86,7 +86,13 @@ class ArchitectureApprovalWorkflow:
                 required = sorted(set(required + [ROLE_SECURITY]))
 
         reviewers = [
-            {"role": role, "status": "pending", "decided_by": None, "decided_at": None, "reason": None}
+            {
+                "role": role,
+                "status": "pending",
+                "decided_by": None,
+                "decided_at": None,
+                "reason": None,
+            }
             for role in required
         ]
 
@@ -201,8 +207,10 @@ class ArchitectureApprovalWorkflow:
             await session.refresh(approval)
 
         event_type = (
-            EventType.APPROVAL_GRANTED if new_status == "approved" else EventType.APPROVAL_DENIED
-        ) if decision == "deny" or new_status == "approved" else EventType.ARTIFACT_UPDATED
+            (EventType.APPROVAL_GRANTED if new_status == "approved" else EventType.APPROVAL_DENIED)
+            if decision == "deny" or new_status == "approved"
+            else EventType.ARTIFACT_UPDATED
+        )
         # Use the canonical approval events for terminal states only.
         if new_status == "approved":
             event_type = EventType.APPROVAL_GRANTED
@@ -344,9 +352,7 @@ class ArchitectureApprovalWorkflow:
     # Queries
     # ------------------------------------------------------------------
 
-    async def get_approval(
-        self, approval_id: UUID | str
-    ) -> ArchitectureApproval | None:
+    async def get_approval(self, approval_id: UUID | str) -> ArchitectureApproval | None:
         factory = get_session_factory()
         async with factory() as session:
             return await session.get(ArchitectureApproval, str(approval_id))
@@ -396,9 +402,7 @@ class ArchitectureApprovalWorkflow:
     # Internals
     # ------------------------------------------------------------------
 
-    async def _contract_is_security_sensitive(
-        self, artifact_id: UUID | str
-    ) -> bool:
+    async def _contract_is_security_sensitive(self, artifact_id: UUID | str) -> bool:
         """True when the API contract name hints at auth/permission."""
         factory = get_session_factory()
         async with factory() as session:

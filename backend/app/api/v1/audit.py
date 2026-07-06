@@ -97,15 +97,11 @@ async def audit_chain_integrity(
     try:
         tenant_uuid = UUID(principal.tenant_id)
     except (TypeError, ValueError) as exc:
-        raise HTTPException(
-            status_code=403, detail="invalid_tenant_claim"
-        ) from exc
+        raise HTTPException(status_code=403, detail="invalid_tenant_claim") from exc
 
     has_any = (
         await db.execute(
-            select(func.count(AuditEvent.id)).where(
-                AuditEvent.tenant_id == tenant_uuid
-            )
+            select(func.count(AuditEvent.id)).where(AuditEvent.tenant_id == tenant_uuid)
         )
     ).scalar_one()
     if not has_any:
@@ -114,9 +110,13 @@ async def audit_chain_integrity(
             detail={"error": "no_audit_events", "tenant_id": str(tenant_uuid)},
         )
 
-    integrity_ok, broken_at_event_id, head_hash, length, last_event_at = (
-        await observability_service.verify_chain_db(db, tenant_id=tenant_uuid)
-    )
+    (
+        integrity_ok,
+        broken_at_event_id,
+        head_hash,
+        length,
+        last_event_at,
+    ) = await observability_service.verify_chain_db(db, tenant_id=tenant_uuid)
 
     return AuditIntegrity(
         tenant_id=tenant_uuid,

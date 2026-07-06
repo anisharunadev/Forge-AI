@@ -18,12 +18,10 @@ import uuid
 from unittest.mock import AsyncMock
 
 import pytest
-import pytest_asyncio
 
 from app.services import forge_budget_guard as guard_mod
 from app.services.forge_budget_guard import (
     AgentBudgetExceeded,
-    BudgetGuard,
     budget_guard,
 )
 
@@ -127,9 +125,7 @@ async def test_pre_call_blocks_when_over_ceiling(
 
     # Strict: zero outbound HTTP. The guard must admit/deny purely from
     # DB spend + ceiling — no LiteLLM call in the path.
-    assert outbound_calls == [], (
-        f"expected zero outbound HTTP calls, got: {outbound_calls}"
-    )
+    assert outbound_calls == [], f"expected zero outbound HTTP calls, got: {outbound_calls}"
 
     # Audit row was attempted for the block event.
     stub_audit.record.assert_awaited_once()
@@ -143,9 +139,7 @@ async def test_pre_call_blocks_when_over_ceiling(
 
 
 @pytest.mark.asyncio
-async def test_pre_call_warns_at_90_percent(
-    stub_spent, stub_ceiling, stub_audit
-) -> None:
+async def test_pre_call_warns_at_90_percent(stub_spent, stub_ceiling, stub_audit) -> None:
     _set_spent, _ = stub_spent
     _set_ceiling, _ = stub_ceiling
     aid = _agent()
@@ -173,9 +167,7 @@ async def test_pre_call_warns_at_90_percent(
 
 
 @pytest.mark.asyncio
-async def test_pre_call_allows_below_threshold(
-    stub_spent, stub_ceiling, stub_audit
-) -> None:
+async def test_pre_call_allows_below_threshold(stub_spent, stub_ceiling, stub_audit) -> None:
     _set_spent, _ = stub_spent
     _set_ceiling, _ = stub_ceiling
     aid = _agent()

@@ -5,6 +5,7 @@ through :func:``slo_alerts.evaluate_all``. Tick failures are logged
 and swallowed so a transient metrics backend blip does not crash
 the scheduler.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -25,7 +26,7 @@ async def _loop(stop: asyncio.Event, interval_seconds: int = 60) -> None:
             log.exception("slo_evaluator_tick_failed")
         try:
             await asyncio.wait_for(stop.wait(), timeout=interval_seconds)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pass
 
 

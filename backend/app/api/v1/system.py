@@ -35,21 +35,11 @@ class SystemFeatures(BaseModel):
     must mirror there.
     """
 
-    COPILOT_ENABLED: bool = Field(
-        ..., description="Master toggle for the Co-pilot surface"
-    )
-    COPILOT_STREAMING: bool = Field(
-        default=False, description="V1.1; always False in V1"
-    )
-    COPILOT_DEFAULT_BUDGET_USD: float = Field(
-        ..., description="Per-conversation budget ceiling"
-    )
-    COPILOT_TOOL_CALL_MAX: int = Field(
-        ..., description="Max tool-call turns per agent loop"
-    )
-    COPILOT_RATE_LIMIT_PER_MIN: int = Field(
-        ..., description="Per-user message cap"
-    )
+    COPILOT_ENABLED: bool = Field(..., description="Master toggle for the Co-pilot surface")
+    COPILOT_STREAMING: bool = Field(default=False, description="V1.1; always False in V1")
+    COPILOT_DEFAULT_BUDGET_USD: float = Field(..., description="Per-conversation budget ceiling")
+    COPILOT_TOOL_CALL_MAX: int = Field(..., description="Max tool-call turns per agent loop")
+    COPILOT_RATE_LIMIT_PER_MIN: int = Field(..., description="Per-user message cap")
 
 
 @router.get("/features", response_model=SystemFeatures)

@@ -7,6 +7,8 @@ from typing import Any
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 from app.api.deps import require_permission
 from app.core.security import AuthenticatedPrincipal
 from app.services.phase4_ops import (
@@ -31,8 +33,6 @@ from app.services.phase4_ops import (
     update_global_settings,
     vault_status,
 )
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/ops", tags=["phase4-ops"])
 
@@ -69,9 +69,9 @@ async def creds_list(
     principal: AuthenticatedPrincipal = Depends(require_permission("tenants:manage")),
 ) -> dict[str, Any]:
     return {"credentials": await list_credentials(principal.tenant_id)}
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/credentials")
 async def creds_add(
     body: CredentialIn,
@@ -95,9 +95,9 @@ async def creds_get(
 ) -> dict[str, Any]:
     # Spec: never return the value — refuse with CredentialValueWriteOnly.
     return await get_credential(principal.tenant_id, name)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.delete("/credentials/{name}")
 async def creds_delete(
     name: str,
@@ -120,9 +120,9 @@ async def vault_status_ep(
     principal: AuthenticatedPrincipal = Depends(require_permission("tenants:manage")),
 ) -> dict[str, Any]:
     return await vault_status(principal.tenant_id)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/vault/configure")
 async def vault_configure(
     body: VaultConfigIn,
@@ -138,9 +138,9 @@ async def vault_configure(
         namespace=body.namespace,
         kv_engine_mount=body.kv_engine_mount,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/vault/test")
 async def vault_test(
     principal: AuthenticatedPrincipal = Depends(require_permission("tenants:manage")),
@@ -159,9 +159,9 @@ async def finops_settings_ep(
     if destination not in {"cloudzero", "vantage"}:
         return {"configured": False}
     return await finops_settings(principal.tenant_id, destination) or {"configured": False}
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/finops/{destination}/init")
 async def finops_init_ep(
     destination: str,
@@ -179,9 +179,9 @@ async def finops_init_ep(
         account_mapping=body.account_mapping,
         schedule_cron=body.schedule_cron,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/finops/{destination}/dry-run")
 async def finops_dry_run_ep(
     destination: str,
@@ -196,9 +196,9 @@ async def finops_dry_run_ep(
         destination=destination,
         dry_run=True,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/finops/{destination}/export")
 async def finops_export_ep(
     destination: str,
@@ -213,9 +213,9 @@ async def finops_export_ep(
         destination=destination,
         dry_run=False,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.delete("/finops/{destination}")
 async def finops_delete_ep(
     destination: str,
@@ -240,9 +240,9 @@ async def settings_get(
     principal: AuthenticatedPrincipal = Depends(require_permission("forge:read")),
 ) -> dict[str, Any]:
     return await get_global_settings()
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/settings")
 async def settings_patch(
     body: dict[str, Any],
@@ -254,9 +254,9 @@ async def settings_patch(
         actor_id=principal.user_id,
         body=body,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/branding/theme")
 async def branding_theme(
     body: dict[str, Any],
@@ -275,9 +275,9 @@ async def email_get(
     principal: AuthenticatedPrincipal = Depends(require_permission("tenants:manage")),
 ) -> dict[str, Any]:
     return await get_email_settings()
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/email/settings")
 async def email_patch(
     body: dict[str, Any],
@@ -289,9 +289,9 @@ async def email_patch(
         actor_id=principal.user_id,
         body=body,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/email/settings/reset")
 async def email_reset(
     principal: AuthenticatedPrincipal = Depends(require_permission("tenants:manage")),
@@ -315,9 +315,9 @@ async def cost_get(
     principal: AuthenticatedPrincipal = Depends(require_permission("forge:read")),
 ) -> dict[str, Any]:
     return await get_cost_config()
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/cost/config")
 async def cost_patch(
     body: dict[str, Any],

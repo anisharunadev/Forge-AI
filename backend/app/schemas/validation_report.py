@@ -24,7 +24,6 @@ from pydantic import Field, field_validator
 
 from app.schemas.common import ForgeBaseModel
 
-
 SCHEMA_VERSION: str = "1.0.0"
 
 VALIDATION_DECISIONS = ("PASS", "FAIL")
@@ -117,9 +116,7 @@ class ValidationReport(ForgeBaseModel):
         # For v1 we only accept the literal current version; future
         # migrations will widen this set.
         if v != SCHEMA_VERSION:
-            raise ValueError(
-                f"unsupported schema_version {v!r}; expected {SCHEMA_VERSION!r}"
-            )
+            raise ValueError(f"unsupported schema_version {v!r}; expected {SCHEMA_VERSION!r}")
         return v
 
 

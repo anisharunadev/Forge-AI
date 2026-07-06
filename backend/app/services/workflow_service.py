@@ -11,8 +11,7 @@ structural validation lives in the service).
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
@@ -58,25 +57,20 @@ class WorkflowService:
         ids = [n.id for n in definition.nodes]
         if len(set(ids)) != len(ids):
             duplicates = {i for i in ids if ids.count(i) > 1}
-            raise WorkflowValidationError(
-                f"duplicate node ids: {sorted(duplicates)}"
-            )
+            raise WorkflowValidationError(f"duplicate node ids: {sorted(duplicates)}")
 
         # 3. Edge endpoints reference existing nodes.
         id_set = set(ids)
         for e in definition.edges:
             if e.source not in id_set or e.target not in id_set:
                 raise WorkflowValidationError(
-                    f"edge {e.id} references unknown node "
-                    f"(source={e.source}, target={e.target})"
+                    f"edge {e.id} references unknown node (source={e.source}, target={e.target})"
                 )
 
         # 4. No self-loops.
         for e in definition.edges:
             if e.source == e.target:
-                raise WorkflowValidationError(
-                    f"edge {e.id} is a self-loop on node {e.source}"
-                )
+                raise WorkflowValidationError(f"edge {e.id} is a self-loop on node {e.source}")
 
         # 5. Cycle detection via DFS on the adjacency map.
         adj: dict[str, list[str]] = {n.id: [] for n in definition.nodes}
@@ -95,9 +89,7 @@ class WorkflowService:
                     stack[-1] = (node, idx + 1)
                     nxt = children[idx]
                     if color[nxt] == GRAY:
-                        raise WorkflowValidationError(
-                            f"cycle detected involving node {nxt}"
-                        )
+                        raise WorkflowValidationError(f"cycle detected involving node {nxt}")
                     if color[nxt] == WHITE:
                         color[nxt] = GRAY
                         stack.append((nxt, 0))
@@ -202,9 +194,7 @@ class WorkflowService:
         workflow_id: UUID,
         body: WorkflowUpdate,
     ) -> Workflow:
-        wf = await self.get_workflow(
-            db, tenant_id=tenant_id, workflow_id=workflow_id
-        )
+        wf = await self.get_workflow(db, tenant_id=tenant_id, workflow_id=workflow_id)
         if body.definition is not None:
             self.validate_definition(body.definition)
             wf.definition = body.definition.model_dump(mode="json")
@@ -234,10 +224,8 @@ class WorkflowService:
         actor_id: UUID,
         workflow_id: UUID,
     ) -> None:
-        wf = await self.get_workflow(
-            db, tenant_id=tenant_id, workflow_id=workflow_id
-        )
-        wf.deleted_at = datetime.now(timezone.utc)
+        wf = await self.get_workflow(db, tenant_id=tenant_id, workflow_id=workflow_id)
+        wf.deleted_at = datetime.now(UTC)
         await db.commit()
 
         await bus.publish(
@@ -259,9 +247,7 @@ class WorkflowService:
         triggered_by: UUID,
         workflow_id: UUID,
     ) -> WorkflowRun:
-        wf = await self.get_workflow(
-            db, tenant_id=tenant_id, workflow_id=workflow_id
-        )
+        wf = await self.get_workflow(db, tenant_id=tenant_id, workflow_id=workflow_id)
         run = WorkflowRun(
             id=uuid4(),
             workflow_id=wf.id,
@@ -351,9 +337,7 @@ class WorkflowService:
         actor_id: UUID,
         run_id: UUID,
     ) -> WorkflowRun:
-        run = await self.get_run(
-            db, tenant_id=tenant_id, run_id=run_id
-        )
+        run = await self.get_run(db, tenant_id=tenant_id, run_id=run_id)
         if run.status in (
             WorkflowRunStatus.SUCCEEDED,
             WorkflowRunStatus.FAILED,
@@ -363,7 +347,7 @@ class WorkflowService:
                 f"run {run_id} is terminal ({run.status.value}); cannot cancel"
             )
         run.status = WorkflowRunStatus.CANCELLED
-        run.finished_at = datetime.now(timezone.utc)
+        run.finished_at = datetime.now(UTC)
         await db.commit()
         await db.refresh(run)
         await bus.publish(

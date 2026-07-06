@@ -21,7 +21,6 @@ from uuid import UUID
 
 from sqlalchemy import (
     DateTime,
-    Enum as SAEnum,
     Float,
     ForeignKey,
     Index,
@@ -29,10 +28,12 @@ from sqlalchemy import (
     String,
     Text,
 )
+from sqlalchemy import (
+    Enum as SAEnum,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
-
+from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -192,9 +193,7 @@ class Idea(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         default=IdeaStatus.NEW,
     )
     tags: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)
-    attachments: Mapped[list[dict[str, Any]]] = mapped_column(
-        JSONB, nullable=False, default=list
-    )
+    attachments: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
 
     __table_args__ = (
         Index("ix_ideas_tenant_project_status", "tenant_id", "project_id", "status"),
@@ -219,12 +218,8 @@ class IdeaAnalysis(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     summary: Mapped[str] = mapped_column(Text, nullable=False)
     problem_statement: Mapped[str] = mapped_column(Text, nullable=False, default="")
-    target_users: Mapped[list[str]] = mapped_column(
-        JSONB, nullable=False, default=list
-    )
-    success_metrics: Mapped[list[str]] = mapped_column(
-        JSONB, nullable=False, default=list
-    )
+    target_users: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)
+    success_metrics: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)
     assumptions: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)
     risks: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)
     related_artifacts: Mapped[list[dict[str, Any]]] = mapped_column(
@@ -232,9 +227,7 @@ class IdeaAnalysis(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     model_used: Mapped[str | None] = mapped_column(String(120), nullable=True)
     cost_usd: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    analyzed_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    analyzed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (
         Index("ix_idea_analyses_idea", "idea_id"),
@@ -268,9 +261,7 @@ class OpportunityScore(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         nullable=False,
         default=ScoreSource.AI,
     )
-    scored_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    scored_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (
         Index("ix_opportunity_scores_idea", "idea_id"),
@@ -307,9 +298,7 @@ class Roadmap(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         nullable=False,
         default=RoadmapStatus.DRAFT,
     )
-    items: Mapped[list[dict[str, Any]]] = mapped_column(
-        JSONB, nullable=False, default=list
-    )
+    items: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
     generated_by: Mapped[UUID] = mapped_column(GUID(), nullable=False)
     approved_by: Mapped[UUID | None] = mapped_column(GUID(), nullable=True)
 
@@ -375,18 +364,10 @@ class ArchitecturePreview(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         GUID(), ForeignKey("ideas.id", ondelete="CASCADE"), nullable=False, index=True
     )
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
-    components: Mapped[list[dict[str, Any]]] = mapped_column(
-        JSONB, nullable=False, default=list
-    )
-    integrations: Mapped[list[dict[str, Any]]] = mapped_column(
-        JSONB, nullable=False, default=list
-    )
-    data_flows: Mapped[list[dict[str, Any]]] = mapped_column(
-        JSONB, nullable=False, default=list
-    )
-    risks: Mapped[list[dict[str, Any]]] = mapped_column(
-        JSONB, nullable=False, default=list
-    )
+    components: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
+    integrations: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
+    data_flows: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
+    risks: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
     generated_by: Mapped[UUID] = mapped_column(GUID(), nullable=False)
     superseded_by_id: Mapped[UUID | None] = mapped_column(GUID(), nullable=True)
 
@@ -414,7 +395,8 @@ class OutputBundle(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     bundle: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     storage_ref: Mapped[str | None] = mapped_column(String(512), nullable=True)
 
-    __table_args__ = (        Index("ix_output_bundles_tenant_project", "tenant_id", "project_id"),
+    __table_args__ = (
+        Index("ix_output_bundles_tenant_project", "tenant_id", "project_id"),
         Index("ix_output_bundles_idea", "idea_id"),
     )
 
@@ -437,11 +419,10 @@ class WorkflowSession(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     state: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     current_step: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    __table_args__ = (        Index("ix_workflow_sessions_tenant_project", "tenant_id", "project_id"),
+    __table_args__ = (
+        Index("ix_workflow_sessions_tenant_project", "tenant_id", "project_id"),
         Index("ix_workflow_sessions_tenant_status", "tenant_id", "status"),
         Index("ix_workflow_sessions_idea", "idea_id"),
     )
@@ -466,18 +447,12 @@ class WorkflowStep(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         nullable=False,
         default=WorkflowStepStatus.PENDING,
     )
-    started_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    finished_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     result: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    __table_args__ = (
-        Index("ix_workflow_steps_session_position", "session_id", "position"),
-    )
+    __table_args__ = (Index("ix_workflow_steps_session_position", "session_id", "position"),)
 
 
 # ---------------------------------------------------------------------------
@@ -509,16 +484,12 @@ class ApprovalItem(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     requested_by: Mapped[UUID] = mapped_column(GUID(), nullable=False)
     reviewer_id: Mapped[UUID | None] = mapped_column(GUID(), nullable=True)
     decided_by: Mapped[UUID | None] = mapped_column(GUID(), nullable=True)
-    decided_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Phase 8 SC-8.2 - SLA window. NULL means "no expiry" until a
     # per-tenant default SLA is configured. The approval service
     # rejects decisions on items past this timestamp.
-    expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
         Index(

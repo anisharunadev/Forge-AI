@@ -58,9 +58,7 @@ def test_non_nullable_columns_have_not_null_constraint() -> None:
     """The NOT-NULL ADR-009 + business columns enforce the constraint."""
     from app.db.models.cost import CostEntry
 
-    not_nullable = {
-        c.name for c in CostEntry.__table__.columns if not c.nullable
-    }
+    not_nullable = {c.name for c in CostEntry.__table__.columns if not c.nullable}
     expected = {
         "id",
         "tenant_id",

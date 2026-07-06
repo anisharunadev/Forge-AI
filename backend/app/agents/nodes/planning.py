@@ -17,7 +17,6 @@ from app.agents.sdlc_state import ArtifactRef, SDLCPhase, SDLCState
 from app.agents.tools.gsd_wrapper import GSDWrapper, build_default_wrapper
 from app.services.artifact_registry import ArtifactRegistry
 
-
 ARTIFACT_TYPE_ROADMAP = "roadmap"
 ARTIFACT_TYPE_TASKS = "task_breakdown"
 
@@ -57,9 +56,7 @@ class PlanningNode(BasePhaseNode):
             user_id=user_id,
         )
         if not brainstorm.ok:
-            raise RuntimeError(
-                f"forge-ideate-brainstorm failed: {brainstorm.error}"
-            )
+            raise RuntimeError(f"forge-ideate-brainstorm failed: {brainstorm.error}")
         refine = self._gsd.execute(
             "forge-ideate-refine",
             {"context": state.context},
@@ -68,9 +65,7 @@ class PlanningNode(BasePhaseNode):
             user_id=user_id,
         )
         if not refine.ok:
-            raise RuntimeError(
-                f"forge-ideate-refine failed: {refine.error}"
-            )
+            raise RuntimeError(f"forge-ideate-refine failed: {refine.error}")
 
         # 2. Compose roadmap + task breakdown payloads.
         roadmap_payload = {
@@ -121,11 +116,7 @@ class PlanningNode(BasePhaseNode):
                     "id": f"task-{i + 1:02d}",
                     "phase": entry["name"],
                     "objective": entry["objective"],
-                    "depends_on": (
-                        [roadmap_payload["phases"][i - 1]["name"]]
-                        if i > 0
-                        else []
-                    ),
+                    "depends_on": ([roadmap_payload["phases"][i - 1]["name"]] if i > 0 else []),
                 }
                 for i, entry in enumerate(roadmap_payload["phases"])
             ],

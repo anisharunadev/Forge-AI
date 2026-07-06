@@ -17,13 +17,14 @@ Hook points exposed
 
 from __future__ import annotations
 
-from typing import Any
 from uuid import UUID
 
-from app.agents.nodes.base import HookFn, PhaseHooks
+from app.agents.nodes.base import PhaseHooks
 from app.agents.sdlc_state import SDLCState
 from app.services.hook_orchestrator import (
     HookOrchestrator,
+)
+from app.services.hook_orchestrator import (
     hook_orchestrator as default_orchestrator,
 )
 
@@ -79,7 +80,7 @@ class HookIntegration:
             await self._orchestrator.fire(
                 tenant_id=tenant_id,
                 project_id=project_id,
-                event_type=f"sdlc.pre_phase",
+                event_type="sdlc.pre_phase",
                 phase=_PHASE_PRE,
                 context={
                     "run_id": str(state.run_id),
@@ -93,7 +94,7 @@ class HookIntegration:
             await self._orchestrator.fire(
                 tenant_id=tenant_id,
                 project_id=project_id,
-                event_type=f"sdlc.post_phase",
+                event_type="sdlc.post_phase",
                 phase=_PHASE_POST,
                 context={
                     "run_id": str(state.run_id),

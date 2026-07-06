@@ -12,7 +12,6 @@ import pytest_asyncio
 # Register models BEFORE the sqlite_db fixture creates the schema.
 from app.db.models import architecture  # noqa: F401
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -22,7 +21,7 @@ class _FakeLLM:
     def __init__(self, payload: dict[str, Any] | str) -> None:
         self._payload = payload
 
-    async def __aenter__(self) -> "_FakeLLM":
+    async def __aenter__(self) -> _FakeLLM:
         return self
 
     async def __aexit__(self, *_exc: Any) -> None:
@@ -48,9 +47,17 @@ class _StubRegistry:
         self.rows: list[dict[str, Any]] = []
         self._by_payload_id: dict[str, dict[str, Any]] = {}
 
-    async def create(self, *, tenant_id: Any, project_id: Any, type: str,
-                     payload: dict[str, Any], created_by: Any,
-                     actor_id: Any | None = None, **_kw: Any) -> dict[str, Any]:
+    async def create(
+        self,
+        *,
+        tenant_id: Any,
+        project_id: Any,
+        type: str,
+        payload: dict[str, Any],
+        created_by: Any,
+        actor_id: Any | None = None,
+        **_kw: Any,
+    ) -> dict[str, Any]:
         record = {
             "id": str(uuid.uuid4()),
             "tenant_id": str(tenant_id),
@@ -62,9 +69,17 @@ class _StubRegistry:
         self._by_payload_id[str(payload.get("id") or "")] = record
         return record
 
-    async def upsert(self, *, tenant_id: Any, project_id: Any, type: str,
-                     key: str, payload: dict[str, Any],
-                     created_by: Any, **_kw: Any) -> dict[str, Any]:
+    async def upsert(
+        self,
+        *,
+        tenant_id: Any,
+        project_id: Any,
+        type: str,
+        key: str,
+        payload: dict[str, Any],
+        created_by: Any,
+        **_kw: Any,
+    ) -> dict[str, Any]:
         existing = self._by_payload_id.get(key)
         if existing is not None:
             existing["payload"] = payload
@@ -79,8 +94,9 @@ class _StubRegistry:
             created_by=created_by,
         )
 
-    async def list(self, *, tenant_id: Any, project_id: Any, type: str,
-                   **_kw: Any) -> list[dict[str, Any]]:
+    async def list(
+        self, *, tenant_id: Any, project_id: Any, type: str, **_kw: Any
+    ) -> list[dict[str, Any]]:
         if str(tenant_id) == "00000000-0000-0000-0000-000000000000":
             return [r for r in self.rows if r["type"] == type]
         return [
@@ -91,10 +107,16 @@ class _StubRegistry:
             and r["project_id"] == str(project_id)
         ]
 
-    async def register(self, *, artifact_type: str, artifact_id: Any,
-                       tenant_id: Any, project_id: Any,
-                       payload: dict[str, Any] | None = None,
-                       **_kw: Any) -> dict[str, Any]:
+    async def register(
+        self,
+        *,
+        artifact_type: str,
+        artifact_id: Any,
+        tenant_id: Any,
+        project_id: Any,
+        payload: dict[str, Any] | None = None,
+        **_kw: Any,
+    ) -> dict[str, Any]:
         """T-A6 stub mirror of ArtifactRegistry.register."""
         record = {
             "node_id": str(uuid.uuid4()),

@@ -63,6 +63,7 @@ class RiskRegisterService:
         idea_service: Any | None = None,
     ) -> None:
         from app.services.artifact_registry import artifact_registry as _default_registry
+
         self._llm = litellm_client
         self._registry = artifact_registry if artifact_registry is not None else _default_registry
         self._bus = event_bus
@@ -177,9 +178,7 @@ class RiskRegisterService:
             "tags": getattr(idea, "tags", []) or [],
         }
 
-        risks, name, strategy = await self._ask_llm(
-            source_payload, tenant_id, project_id, actor_id
-        )
+        risks, name, strategy = await self._ask_llm(source_payload, tenant_id, project_id, actor_id)
 
         return await self._persist(
             tenant_id=str(tenant_id),
@@ -196,9 +195,7 @@ class RiskRegisterService:
     # Fetch / mutate
     # ------------------------------------------------------------------
 
-    async def get_register(
-        self, register_id: UUID | str
-    ) -> RiskRegister | None:
+    async def get_register(self, register_id: UUID | str) -> RiskRegister | None:
         factory = get_session_factory()
         async with factory() as session:
             return await session.get(RiskRegister, str(register_id))

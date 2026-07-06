@@ -20,7 +20,6 @@ supplied session factory which is created by the request-scoped
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any, Literal
 from uuid import UUID
@@ -38,14 +37,12 @@ from app.schemas.seeds import (
     SeedStatusRead,
 )
 from app.services.audit_service import AuditService
-
 from seeds.framework.exceptions import SeedNotFoundError
 from seeds.framework.seed_runner import (
     SEEDS_ROOT,
     SeedDiff,
     SeedRun,
     SeedRunner,
-    SeedStatus,
     SeedSummary,
 )
 
@@ -187,7 +184,7 @@ class SeedService:
         runner = self._build_runner()
         st = await runner.status(name)
         # Augment with drift info from diff if the seed is applied.
-        drift: SeedStatusRead.model_fields["drift"].default = "unknown"  # type: ignore[attr-defined]
+        drift: SeedStatusRead.model_fields[drift].default = "unknown"  # type: ignore[attr-defined]
         row_counts: dict[str, int] = {}
         production_safe = False
         checksum_match = False
@@ -301,7 +298,9 @@ def _summary_to_dto(summary: SeedSummary) -> SeedManifestSummary:
     return SeedManifestSummary(
         name=summary.name,
         version=1,  # SeedSummary doesn't expose version; get_seed() is the rich path
-        tenant_type=summary.tenant_type if summary.tenant_type in {"demo", "reference", "production"} else "reference",
+        tenant_type=summary.tenant_type
+        if summary.tenant_type in {"demo", "reference", "production"}
+        else "reference",
         description=summary.description,
         depends_on=[],
     )
@@ -336,7 +335,9 @@ def _run_to_dto(run: SeedRun, *, tenant_id: UUID | None = None) -> SeedRunRead:
         seed_name=run.seed_name,
         manifest_version=run.manifest_version,
         operation=run.operation if run.operation in {"apply", "reset", "rollback"} else "apply",
-        status=run.status if run.status in {"running", "completed", "failed", "rolled_back"} else "completed",
+        status=run.status
+        if run.status in {"running", "completed", "failed", "rolled_back"}
+        else "completed",
         env="unknown",  # SeedRun doesn't carry env; populated from ORM via runs()
         triggered_by="api",
         actor_id=run.run_id,  # placeholder; populated from ORM via runs()
@@ -361,7 +362,9 @@ def _orm_run_to_dto(row: Any) -> SeedRunRead:
         seed_name=row.seed_name,
         manifest_version=row.manifest_version,
         operation=op_value if op_value in {"apply", "reset", "rollback"} else "apply",
-        status=status_value if status_value in {"running", "completed", "failed", "rolled_back"} else "completed",
+        status=status_value
+        if status_value in {"running", "completed", "failed", "rolled_back"}
+        else "completed",
         env=str(env_value),
         triggered_by=row.triggered_by or "unknown",
         actor_id=row.actor_id,
@@ -376,7 +379,9 @@ def _orm_run_to_dto(row: Any) -> SeedRunRead:
     )
 
 
-def _drift_label(stored: str | None, match: bool, row_counts: dict[str, int]) -> Literal["none", "checksum", "row_count", "unknown"]:
+def _drift_label(
+    stored: str | None, match: bool, row_counts: dict[str, int]
+) -> Literal["none", "checksum", "row_count", "unknown"]:
     """Classify drift for the status DTO."""
     if stored is None:
         return "unknown"

@@ -29,8 +29,9 @@ import hashlib
 import json
 import time
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
-from typing import Any, Iterable
+from collections.abc import Iterable
+from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import and_, func, select
@@ -114,10 +115,14 @@ def _audit_event_to_read(row: AuditEvent) -> AuditEventRead:
         event_type=row.action,
         payload_summary=_summarize_payload(payload),
         status=row.payload.get("status", "success") if isinstance(row.payload, dict) else "success",
-        duration_ms=int((row.payload or {}).get("duration_ms", 0)) if isinstance(row.payload, dict) else 0,
+        duration_ms=int((row.payload or {}).get("duration_ms", 0))
+        if isinstance(row.payload, dict)
+        else 0,
         ip=(row.payload or {}).get("ip") if isinstance(row.payload, dict) else None,
         user_agent=(row.payload or {}).get("user_agent") if isinstance(row.payload, dict) else None,
-        hash_chain_ref=(row.payload or {}).get("hash_chain_ref") if isinstance(row.payload, dict) else None,
+        hash_chain_ref=(row.payload or {}).get("hash_chain_ref")
+        if isinstance(row.payload, dict)
+        else None,
     )
 
 
@@ -137,8 +142,8 @@ def _retention_cutoff(event_type: str) -> datetime:
     compliance/audit events: 7 years; operational: 90 days.
     """
     if event_type.startswith("forge.compliance.") or event_type.startswith("forge.rbac."):
-        return datetime.now(timezone.utc) - timedelta(days=7 * 365)
-    return datetime.now(timezone.utc) - timedelta(days=90)
+        return datetime.now(UTC) - timedelta(days=7 * 365)
+    return datetime.now(UTC) - timedelta(days=90)
 
 
 class ObservabilityService:
@@ -165,7 +170,7 @@ class ObservabilityService:
     ) -> tuple[list[AuditEventRead], int]:
         """Paginated audit query with retention-policy + access-control filter."""
         cutoff = since or _retention_cutoff(event_type or "")
-        upper = until or datetime.now(timezone.utc)
+        upper = until or datetime.now(UTC)
 
         clauses = [
             AuditEvent.tenant_id == tenant_id,
@@ -179,9 +184,7 @@ class ObservabilityService:
         if status:
             # status is folded into payload.status in the wire shape.
             # SQLA JSONB containment: payload ->> 'status' = status
-            clauses.append(
-                AuditEvent.payload["status"].astext == status
-            )
+            clauses.append(AuditEvent.payload["status"].astext == status)
 
         # User / agent filter via payload (Forge convention).
         if user_id:
@@ -276,12 +279,16 @@ class ObservabilityService:
         crosses 100k rows.
         """
         rows = (
-            await db.execute(
-                select(AuditEvent)
-                .where(AuditEvent.tenant_id == tenant_id)
-                .order_by(AuditEvent.occurred_at.asc(), AuditEvent.id.asc())
+            (
+                await db.execute(
+                    select(AuditEvent)
+                    .where(AuditEvent.tenant_id == tenant_id)
+                    .order_by(AuditEvent.occurred_at.asc(), AuditEvent.id.asc())
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         prev = ""
         head_hash = ""
@@ -315,12 +322,8 @@ class ObservabilityService:
         Returns the new ``tenant_id -> head_hash`` map for logging.
         """
         # Discover tenants — distinct is cheap with a btree on tenant_id.
-        tenant_rows = (
-            await db.execute(select(AuditEvent.tenant_id).distinct())
-        ).all()
-        tenant_ids: list[UUID] = [
-            r[0] for r in tenant_rows if r[0] is not None
-        ]
+        tenant_rows = (await db.execute(select(AuditEvent.tenant_id).distinct())).all()
+        tenant_ids: list[UUID] = [r[0] for r in tenant_rows if r[0] is not None]
 
         new_heads: dict[UUID, str] = {}
         for tenant_id in tenant_ids:
@@ -328,16 +331,18 @@ class ObservabilityService:
             # Python so we walk the chain forward (avoids a window
             # function for SQLite-async portability).
             desc_rows = (
-                await db.execute(
-                    select(AuditEvent)
-                    .where(AuditEvent.tenant_id == tenant_id)
-                    .order_by(AuditEvent.occurred_at.desc(), AuditEvent.id.desc())
-                    .limit(per_tenant_limit)
+                (
+                    await db.execute(
+                        select(AuditEvent)
+                        .where(AuditEvent.tenant_id == tenant_id)
+                        .order_by(AuditEvent.occurred_at.desc(), AuditEvent.id.desc())
+                        .limit(per_tenant_limit)
+                    )
                 )
-            ).scalars().all()
-            rows = sorted(
-                desc_rows, key=lambda r: (r.occurred_at, str(r.id))
+                .scalars()
+                .all()
             )
+            rows = sorted(desc_rows, key=lambda r: (r.occurred_at, str(r.id)))
 
             prev = ""
             head = ""
@@ -345,13 +350,8 @@ class ObservabilityService:
             for row in rows:
                 payload = row.payload or {}
                 canonical = json.dumps(payload, sort_keys=True, default=str)
-                expected = hashlib.sha256(
-                    (prev + canonical).encode("utf-8")
-                ).hexdigest()
-                if (
-                    row.hash_chain_ref is not None
-                    and row.hash_chain_ref != expected
-                ):
+                expected = hashlib.sha256((prev + canonical).encode("utf-8")).hexdigest()
+                if row.hash_chain_ref is not None and row.hash_chain_ref != expected:
                     # Skipping preserves trust in the next segment if
                     # it exists, which would be rare on a healthy DB.
                     trusted = False
@@ -439,7 +439,7 @@ class ObservabilityService:
                 "compliance_report_in_progress",
                 {"report_id": str(report_id), "status": "generating"},
             )
-        _COMPLIANCE_REPORT_JOBS[report_id] = datetime.now(timezone.utc)
+        _COMPLIANCE_REPORT_JOBS[report_id] = datetime.now(UTC)
 
         # Inventory — distinct models used by this tenant.
         inv_rows = (
@@ -474,7 +474,7 @@ class ObservabilityService:
         _COMPLIANCE_REPORT_JOBS.pop(report_id, None)
         return ComplianceReport(
             report_id=report_id,
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
             tenant_id=tenant_id,
             sections=sections,
             pdf_url=None,
@@ -497,18 +497,22 @@ class ObservabilityService:
         profile = {"user_id": str(user_id), "tenant_id": str(tenant_id)}
 
         audit_rows = (
-            await db.execute(
-                select(AuditEvent)
-                .where(
-                    and_(
-                        AuditEvent.tenant_id == tenant_id,
-                        AuditEvent.actor_id == user_id,
+            (
+                await db.execute(
+                    select(AuditEvent)
+                    .where(
+                        and_(
+                            AuditEvent.tenant_id == tenant_id,
+                            AuditEvent.actor_id == user_id,
+                        )
                     )
+                    .order_by(AuditEvent.occurred_at.desc())
+                    .limit(1000)
                 )
-                .order_by(AuditEvent.occurred_at.desc())
-                .limit(1000)
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         audit_events = [
             {
                 "event_id": str(r.id),
@@ -521,18 +525,22 @@ class ObservabilityService:
         ]
 
         spend_rows = (
-            await db.execute(
-                select(LiteLLMCallRecord)
-                .where(
-                    and_(
-                        LiteLLMCallRecord.tenant_id == tenant_id,
-                        LiteLLMCallRecord.actor_id == user_id,
+            (
+                await db.execute(
+                    select(LiteLLMCallRecord)
+                    .where(
+                        and_(
+                            LiteLLMCallRecord.tenant_id == tenant_id,
+                            LiteLLMCallRecord.actor_id == user_id,
+                        )
                     )
+                    .order_by(LiteLLMCallRecord.occurred_at.desc())
+                    .limit(1000)
                 )
-                .order_by(LiteLLMCallRecord.occurred_at.desc())
-                .limit(1000)
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         spend_records = [
             {
                 "call_id": str(r.id),
@@ -574,7 +582,7 @@ class ObservabilityService:
 
         result = await gdpr_cascade_executor.run(db, tenant_id=tenant_id)
         job_id = uuid4()
-        _GDPR_DELETE_JOBS[job_id] = datetime.now(timezone.utc)
+        _GDPR_DELETE_JOBS[job_id] = datetime.now(UTC)
 
         affected = sorted(
             [f"{t}.deleted={n}" for t, n in result.deleted.items() if n]
@@ -595,7 +603,7 @@ class ObservabilityService:
         )
         return GdprDeleteResponse(
             user_id=user_id,
-            eta=datetime.now(timezone.utc),
+            eta=datetime.now(UTC),
             job_id=job_id,
             affected_tables=affected,
         )
@@ -615,9 +623,7 @@ class ObservabilityService:
     ) -> AlertConfigRead:
         """Idempotent upsert of the per-tenant alert thresholds."""
         row = (
-            await db.execute(
-                select(AlertConfig).where(AlertConfig.tenant_id == tenant_id)
-            )
+            await db.execute(select(AlertConfig).where(AlertConfig.tenant_id == tenant_id))
         ).scalar_one_or_none()
 
         if row is None:
@@ -632,7 +638,7 @@ class ObservabilityService:
             row.warn_pct = warn_pct
             row.exceed_pct = exceed_pct
             row.channels = {"channels": channels}
-            row.updated_at = datetime.now(timezone.utc)
+            row.updated_at = datetime.now(UTC)
 
         await db.commit()
         await db.refresh(row)
@@ -654,9 +660,7 @@ class ObservabilityService:
         tenant_id: UUID,
     ) -> AlertConfigRead | None:
         row = (
-            await db.execute(
-                select(AlertConfig).where(AlertConfig.tenant_id == tenant_id)
-            )
+            await db.execute(select(AlertConfig).where(AlertConfig.tenant_id == tenant_id))
         ).scalar_one_or_none()
         if row is None:
             return None
@@ -685,11 +689,10 @@ class ObservabilityService:
             "exceed_pct": cfg.exceed_pct,
         }
         # ponytail: derive usage from LiteLLMCallRecord sum.
-        since = datetime.now(timezone.utc) - timedelta(days=30)
+        since = datetime.now(UTC) - timedelta(days=30)
         usage_rows = (
             await db.execute(
-                select(func.coalesce(func.sum(LiteLLMCallRecord.cost_usd), 0))
-                .where(
+                select(func.coalesce(func.sum(LiteLLMCallRecord.cost_usd), 0)).where(
                     and_(
                         LiteLLMCallRecord.tenant_id == tenant_id,
                         LiteLLMCallRecord.occurred_at >= since,
@@ -709,7 +712,7 @@ class ObservabilityService:
                     kind="budget_exceeded",
                     tenant_id=tenant_id,
                     message=f"Usage at {pct:.1f}% of budget (>= {cfg_dict['exceed_pct']}%)",
-                    fired_at=datetime.now(timezone.utc),
+                    fired_at=datetime.now(UTC),
                 )
             )
         elif pct >= cfg_dict["warn_pct"]:
@@ -719,7 +722,7 @@ class ObservabilityService:
                     kind="budget_warning",
                     tenant_id=tenant_id,
                     message=f"Usage at {pct:.1f}% of budget (>= {cfg_dict['warn_pct']}%)",
-                    fired_at=datetime.now(timezone.utc),
+                    fired_at=datetime.now(UTC),
                 )
             )
         return out
@@ -736,14 +739,13 @@ class ObservabilityService:
         window_seconds: int = 3600,
     ) -> MetricsResponse:
         """Spend drift + rate limits + latency percentiles."""
-        since = datetime.now(timezone.utc) - timedelta(seconds=window_seconds)
+        since = datetime.now(UTC) - timedelta(seconds=window_seconds)
 
         # Spend drift: Forge DB cost vs LiteLLM spend. We use the DB sum
         # and call the LiteLLM /spend/logs endpoint for the proxy-side sum.
         forge_sum = (
             await db.execute(
-                select(func.coalesce(func.sum(LiteLLMCallRecord.cost_usd), 0))
-                .where(
+                select(func.coalesce(func.sum(LiteLLMCallRecord.cost_usd), 0)).where(
                     and_(
                         LiteLLMCallRecord.tenant_id == tenant_id,
                         LiteLLMCallRecord.occurred_at >= since,

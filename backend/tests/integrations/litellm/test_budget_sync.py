@@ -107,12 +107,16 @@ async def test_set_tenant_budget(
 
         async with sqlite_db() as session:
             rows = (
-                await session.execute(
-                    select(LiteLLMBudgetConfig).where(
-                        LiteLLMBudgetConfig.tenant_id == fake_tenant_id,
+                (
+                    await session.execute(
+                        select(LiteLLMBudgetConfig).where(
+                            LiteLLMBudgetConfig.tenant_id == fake_tenant_id,
+                        )
                     )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
         assert len(rows) >= 1
         assert float(rows[0].max_usd) == 500.0
     except ImportError:

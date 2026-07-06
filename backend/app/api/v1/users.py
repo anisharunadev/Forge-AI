@@ -13,16 +13,16 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 from app.core.logging import get_logger
 from app.core.security import AuthenticatedPrincipal, get_current_principal
 from app.db.models.user import User
 from app.db.session import get_session_factory
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -69,9 +69,9 @@ async def get_notification_prefs(
     """
     prefs = await _load_prefs(principal)
     return NotificationPrefsRead(**prefs)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/notifications", response_model=NotificationPrefsRead)
 async def patch_notification_prefs(
     body: NotificationPrefs,
@@ -111,9 +111,7 @@ async def _load_prefs(principal: AuthenticatedPrincipal) -> dict:
     factory = get_session_factory()
     async with factory() as session:
         rows = (
-            await session.execute(
-                select(User.profile).where(User.id == UUID(principal.user_id))
-            )
+            await session.execute(select(User.profile).where(User.id == UUID(principal.user_id)))
         ).first()
     if rows is None or rows[0] is None:
         return dict(_DEFAULT_PREFS)

@@ -11,46 +11,38 @@ each file under the 250-LOC ceiling the project conventions follow.
 """
 
 from __future__ import annotations
-from datetime import datetime
-from typing import Annotated, Literal, Optional
 
+from datetime import datetime
+from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.connector_activity import ConnectorSyncEventRead
 from app.services.connector_manager import connector_manager
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/connectors", tags=["connectors"])
+
+
 @require_approval_phase(SDLCPhase.REVIEW)
-
-
 @router.get("/activity", response_model=list[ConnectorSyncEventRead])
 @audit(action="connector.activity.list", target_type="connector")
 async def list_connector_activity(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    connector_id: Optional[UUID] = Query(default=None),
-    event_type: Optional[
-        Literal[
-            "sync",
-            "webhook",
-            "test",
-            "install",
-            "disconnect",
-            "error",
-            "reveal",
-            "rotate",
-        ]
-    ] = Query(default=None),
-    since: Optional[datetime] = Query(default=None),
+    connector_id: UUID | None = Query(default=None),
+    event_type: Literal[
+        "sync", "webhook", "test", "install", "disconnect", "error", "reveal", "rotate"
+    ]
+    | None = Query(default=None),
+    since: datetime | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
-    before_id: Optional[UUID] = Query(default=None),
-    _perm: AuthenticatedPrincipal = Depends(require_permission("connector:read"))
+    before_id: UUID | None = Query(default=None),
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connector:read")),
 ) -> list[ConnectorSyncEventRead]:
     """M3-G1 — Activity tab timeline feed.
 

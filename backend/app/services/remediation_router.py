@@ -27,8 +27,9 @@ must not let a routing hiccup flip that decision.
 from __future__ import annotations
 
 import json
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Protocol
+from typing import Any, Protocol
 from uuid import UUID
 
 from app.core.logging import get_logger
@@ -71,8 +72,7 @@ class JiraMCP(Protocol):
         priority: str | None = None,
         assignee_account_id: str | None = None,
         project_key: str | None = None,
-    ) -> dict[str, Any]:
-        ...
+    ) -> dict[str, Any]: ...
 
 
 # Type alias for the seam so callers can pass plain callables too.
@@ -246,9 +246,7 @@ class RemediationRouter:
             file_path = _attr(f, "file_path", "")
             line = _attr(f, "line", 0)
             recommended = _attr(f, "recommended_fix", "") or "(no suggestion)"
-            lines.append(
-                f"- [{severity}] {rule_id} at {file_path}:{line} — fix: {recommended}"
-            )
+            lines.append(f"- [{severity}] {rule_id} at {file_path}:{line} — fix: {recommended}")
         lines.append("")
         lines.append("ValidationReport (JSON):")
         lines.append("```json")

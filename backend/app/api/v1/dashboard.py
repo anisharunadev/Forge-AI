@@ -13,19 +13,22 @@ mirror these schemas.
 """
 
 from __future__ import annotations
-from typing import Annotated
 
 from datetime import datetime
-
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, Query, status
 
-from app.api.deps import DbSession, Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import DbSession, get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.dashboard import (
     AIInsightRead as AIInsightReadSchema,
+)
+from app.schemas.dashboard import (
     AlertRead,
     DashboardKPIs,
     DashboardLayout,
@@ -36,8 +39,6 @@ from app.schemas.dashboard import (
     TopProviderRow,
 )
 from app.services.dashboard import dashboard_service
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -46,11 +47,12 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 # Aggregated KPIs
 # ---------------------------------------------------------------------------
 
+
 @router.get("/kpis", response_model=DashboardKPIs)
 @audit(action="dashboard.kpis", target_type="dashboard")
 async def get_dashboard_kpis(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm = Depends(require_permission("dashboard:read")),
+    _perm=Depends(require_permission("dashboard:read")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> DashboardKPIs:
     return await dashboard_service.compute_kpis(db, tenant_id=principal.tenant_id)
@@ -60,11 +62,12 @@ async def get_dashboard_kpis(
 # Team activity feed
 # ---------------------------------------------------------------------------
 
+
 @router.get("/activity", response_model=list[TeamActivity])
 @audit(action="dashboard.activity", target_type="dashboard")
 async def get_dashboard_activity(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm = Depends(require_permission("dashboard:read")),
+    _perm=Depends(require_permission("dashboard:read")),
     db: DbSession = None,  # type: ignore[assignment]
     since: datetime | None = None,
     actor_id: UUID | None = None,
@@ -83,19 +86,20 @@ async def get_dashboard_activity(
 # Pinned items — CRUD
 # ---------------------------------------------------------------------------
 
+
 @router.get("/pinned", response_model=list[PinnedItemRead])
 @audit(action="dashboard.pinned.list", target_type="dashboard")
 async def list_pinned_items(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm = Depends(require_permission("dashboard:read")),
+    _perm=Depends(require_permission("dashboard:read")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> list[PinnedItemRead]:
     return await dashboard_service.list_pins(
         db, tenant_id=principal.tenant_id, user_id=principal.user_id
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post(
     "/pinned",
     response_model=PinnedItemRead,
@@ -105,7 +109,7 @@ async def list_pinned_items(
 async def create_pinned_item(
     body: PinnedItemCreate,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm = Depends(require_permission("dashboard:write")),
+    _perm=Depends(require_permission("dashboard:write")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> PinnedItemRead:
     return await dashboard_service.create_pin(
@@ -114,9 +118,9 @@ async def create_pinned_item(
         user_id=principal.user_id,
         body=body,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.delete(
     "/pinned/{pin_id}",
     response_model=None,
@@ -125,7 +129,7 @@ async def create_pinned_item(
 async def delete_pinned_item(
     pin_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm = Depends(require_permission("dashboard:write")),
+    _perm=Depends(require_permission("dashboard:write")),
     db: DbSession = None,  # type: ignore[assignment]
 ):
     await dashboard_service.delete_pin(
@@ -134,16 +138,15 @@ async def delete_pinned_item(
         user_id=principal.user_id,
         pin_id=pin_id,
     )
-    return None
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/pinned/reorder")
 @audit(action="dashboard.pinned.reorder", target_type="dashboard")
 async def reorder_pinned_items(
     body: PinnedItemReorder,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm = Depends(require_permission("dashboard:write")),
+    _perm=Depends(require_permission("dashboard:write")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> dict[str, bool]:
     await dashboard_service.reorder_pins(
@@ -159,11 +162,12 @@ async def reorder_pinned_items(
 # AI insights
 # ---------------------------------------------------------------------------
 
+
 @router.get("/insights", response_model=list[AIInsightReadSchema])
 @audit(action="dashboard.insights.list", target_type="dashboard")
 async def list_insights(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm = Depends(require_permission("dashboard:read")),
+    _perm=Depends(require_permission("dashboard:read")),
     db: DbSession = None,  # type: ignore[assignment]
     limit: Annotated[int, Query(ge=1, le=50)] = 10,
 ) -> list[AIInsightReadSchema]:
@@ -173,35 +177,31 @@ async def list_insights(
         user_id=principal.user_id,
         limit=limit,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/insights/{insight_id}/read")
 @audit(action="dashboard.insights.read", target_type="dashboard")
 async def mark_insight_read(
     insight_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm = Depends(require_permission("dashboard:write")),
+    _perm=Depends(require_permission("dashboard:write")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> dict[str, bool]:
-    await dashboard_service.mark_insight_read(
-        db, user_id=principal.user_id, insight_id=insight_id
-    )
+    await dashboard_service.mark_insight_read(db, user_id=principal.user_id, insight_id=insight_id)
     return {"ok": True}
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/insights/{insight_id}/dismiss")
 @audit(action="dashboard.insights.dismiss", target_type="dashboard")
 async def dismiss_insight(
     insight_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm = Depends(require_permission("dashboard:write")),
+    _perm=Depends(require_permission("dashboard:write")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> dict[str, bool]:
-    await dashboard_service.dismiss_insight(
-        db, user_id=principal.user_id, insight_id=insight_id
-    )
+    await dashboard_service.dismiss_insight(db, user_id=principal.user_id, insight_id=insight_id)
     return {"ok": True}
 
 
@@ -209,11 +209,12 @@ async def dismiss_insight(
 # Alerts
 # ---------------------------------------------------------------------------
 
+
 @router.get("/alerts", response_model=list[AlertRead])
 @audit(action="dashboard.alerts.list", target_type="dashboard")
 async def list_alerts(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm = Depends(require_permission("dashboard:read")),
+    _perm=Depends(require_permission("dashboard:read")),
     db: DbSession = None,  # type: ignore[assignment]
     unread_only: bool = False,
     severity: str | None = None,
@@ -226,27 +227,27 @@ async def list_alerts(
         severity=severity,  # type: ignore[arg-type]
         limit=limit,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/alerts/{alert_id}/read")
 @audit(action="dashboard.alerts.read", target_type="dashboard")
 async def mark_alert_read(
     alert_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm = Depends(require_permission("dashboard:write")),
+    _perm=Depends(require_permission("dashboard:write")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> dict[str, bool]:
     await dashboard_service.mark_alert_read(db, alert_id=alert_id)
     return {"ok": True}
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/alerts/read-all")
 @audit(action="dashboard.alerts.read_all", target_type="dashboard")
 async def mark_all_alerts_read(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm = Depends(require_permission("dashboard:write")),
+    _perm=Depends(require_permission("dashboard:write")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> dict[str, bool]:
     await dashboard_service.mark_all_alerts_read(db)
@@ -257,25 +258,26 @@ async def mark_all_alerts_read(
 # Layout
 # ---------------------------------------------------------------------------
 
+
 @router.get("/layout", response_model=DashboardLayout)
 @audit(action="dashboard.layout.get", target_type="dashboard")
 async def get_dashboard_layout(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm = Depends(require_permission("dashboard:read")),
+    _perm=Depends(require_permission("dashboard:read")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> DashboardLayout:
     return await dashboard_service.get_or_create_layout(
         db, tenant_id=principal.tenant_id, user_id=principal.user_id
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.put("/layout", response_model=DashboardLayout)
 @audit(action="dashboard.layout.update", target_type="dashboard")
 async def update_dashboard_layout(
     body: DashboardLayout,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm = Depends(require_permission("dashboard:write")),
+    _perm=Depends(require_permission("dashboard:write")),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> DashboardLayout:
     return await dashboard_service.update_layout(
@@ -302,11 +304,12 @@ async def update_dashboard_layout(
 # caching is handled by TanStack Query's `staleTime` in the matching
 # `useTopProviders` hook.
 
+
 @router.get("/top-providers", response_model=list[TopProviderRow])
 @audit(action="dashboard.top_providers", target_type="dashboard")
 async def get_top_providers(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm = Depends(require_permission("dashboard:read")),
+    _perm=Depends(require_permission("dashboard:read")),
     db: DbSession = None,  # type: ignore[assignment]
     days: Annotated[int, Query(ge=1, le=90)] = 7,
     limit: Annotated[int, Query(ge=1, le=50)] = 10,

@@ -2,18 +2,18 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.services.terminal.broadcast import session_broadcaster
 from app.terminal.session_manager import session_manager
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/terminal", tags=["terminal-broadcast"])
 
@@ -45,7 +45,7 @@ class GrantResponse(BaseModel):
 async def list_broadcasters(
     session_id: str,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:read")),
 ) -> list[BroadcasterResponse]:
     """List current observers / writers for a session."""
     session = await session_manager.get_session(session_id)
@@ -56,9 +56,9 @@ async def list_broadcasters(
         )
     rows = await session_broadcaster.list_broadcasters(session_id)
     return [BroadcasterResponse(**row) for row in rows]
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post(
     "/sessions/{session_id}/broadcast/grant",
     response_model=GrantResponse,
@@ -68,7 +68,7 @@ async def grant_write(
     session_id: str,
     body: GrantRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:admin"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:admin")),
 ) -> GrantResponse:
     """Grant broadcast write capability (RBAC: forge-admin)."""
     session = await session_manager.get_session(session_id)
@@ -79,18 +79,16 @@ async def grant_write(
         )
     target = body.user_id or principal.user_id
     try:
-        grants = await session_broadcaster.grant_write(
-            session_id, actor_user_id=target
-        )
+        grants = await session_broadcaster.grant_write(session_id, actor_user_id=target)
     except LookupError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(exc),
         ) from exc
     return GrantResponse(ok=True, write_grants=grants)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post(
     "/sessions/{session_id}/broadcast/revoke",
     response_model=GrantResponse,
@@ -100,7 +98,7 @@ async def revoke_write(
     session_id: str,
     body: GrantRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:admin"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:admin")),
 ) -> GrantResponse:
     """Revoke broadcast write capability (RBAC: forge-admin)."""
     session = await session_manager.get_session(session_id)
@@ -111,9 +109,7 @@ async def revoke_write(
         )
     target = body.user_id or principal.user_id
     try:
-        grants = await session_broadcaster.revoke_write(
-            session_id, actor_user_id=target
-        )
+        grants = await session_broadcaster.revoke_write(session_id, actor_user_id=target)
     except LookupError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

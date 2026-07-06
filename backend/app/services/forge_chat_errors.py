@@ -126,9 +126,7 @@ _STATUS_TO_EXC: dict[int, type[ForgeChatError]] = {
 }
 
 
-def from_response_status(
-    status_code: int, body: dict[str, Any] | None = None
-) -> ForgeChatError:
+def from_response_status(status_code: int, body: dict[str, Any] | None = None) -> ForgeChatError:
     """Map an HTTP status from LiteLLM to a typed chat exception."""
     body = body or {}
 

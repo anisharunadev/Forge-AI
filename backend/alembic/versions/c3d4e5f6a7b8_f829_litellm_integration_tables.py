@@ -13,26 +13,26 @@ Revision ID: c3d4e5f6a7b8
 Revises: b1c2d3e4f5a6
 Create Date: 2026-06-25 12:00:00.000000
 """
+
 from __future__ import annotations
 
-from typing import Sequence, Union
+import sys
+from collections.abc import Sequence
+from pathlib import Path
 
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-import sys
-from pathlib import Path
+from alembic import op
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from app.db.base import GUID, JSONB  # noqa: E402
-
+from app.db.base import GUID  # noqa: E402
 
 # revision identifiers, used by Alembic.
 revision: str = "c3d4e5f6a7b8"
-down_revision: Union[str, None] = "b1c2d3e4f5a6"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "b1c2d3e4f5a6"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def _enable_rls(table_name: str) -> None:
@@ -246,9 +246,7 @@ def upgrade() -> None:
         sa.Column("model", sa.String(length=256), nullable=False),
         sa.Column("status", sa.String(length=32), nullable=False),
         sa.Column("prompt_tokens", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column(
-            "completion_tokens", sa.Integer(), nullable=False, server_default="0"
-        ),
+        sa.Column("completion_tokens", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("cost_usd", sa.Float(), nullable=False, server_default="0"),
         sa.Column("latency_ms", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("error", sa.Text(), nullable=True),
@@ -301,13 +299,21 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute("DROP POLICY IF EXISTS litellm_call_records_tenant_isolation ON litellm_call_records;")
+    op.execute(
+        "DROP POLICY IF EXISTS litellm_call_records_tenant_isolation ON litellm_call_records;"
+    )
     op.drop_table("litellm_call_records")
-    op.execute("DROP POLICY IF EXISTS litellm_model_assignments_tenant_isolation ON litellm_model_assignments;")
+    op.execute(
+        "DROP POLICY IF EXISTS litellm_model_assignments_tenant_isolation ON litellm_model_assignments;"
+    )
     op.drop_table("litellm_model_assignments")
-    op.execute("DROP POLICY IF EXISTS litellm_budget_configs_tenant_isolation ON litellm_budget_configs;")
+    op.execute(
+        "DROP POLICY IF EXISTS litellm_budget_configs_tenant_isolation ON litellm_budget_configs;"
+    )
     op.drop_table("litellm_budget_configs")
     op.execute("DROP POLICY IF EXISTS litellm_key_audit_tenant_isolation ON litellm_key_audit;")
     op.drop_table("litellm_key_audit")
-    op.execute("DROP POLICY IF EXISTS litellm_team_mappings_tenant_isolation ON litellm_team_mappings;")
+    op.execute(
+        "DROP POLICY IF EXISTS litellm_team_mappings_tenant_isolation ON litellm_team_mappings;"
+    )
     op.drop_table("litellm_team_mappings")

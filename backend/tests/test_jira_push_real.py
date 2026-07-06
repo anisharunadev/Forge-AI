@@ -18,8 +18,6 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-import pytest
-
 from app.agents.tools.mcp_client import MCPClient, MCPResult
 from app.db.models.connector import ConnectorType
 from app.db.models.ideation import (
@@ -47,7 +45,9 @@ async def _fake_jira_create_issue_handler(
     if method == "__catalog__":
         from app.agents.tools.mcp_client import DEFAULT_CATALOG
 
-        return MCPResult(server=server, method=method, ok=True, output=DEFAULT_CATALOG.get(server, []))
+        return MCPResult(
+            server=server, method=method, ok=True, output=DEFAULT_CATALOG.get(server, [])
+        )
     return MCPResult(server=server, method=method, ok=True, output={"echo": params})
 
 
@@ -198,9 +198,7 @@ async def test_push_without_connector_returns_synthetic(sqlite_db):
 
 async def test_mcp_failure_surfaces_error(sqlite_db):
     async def _failing(server, method, params):
-        return MCPResult(
-            server=server, method=method, ok=False, error="http_500:boom"
-        )
+        return MCPResult(server=server, method=method, ok=False, error="http_500:boom")
 
     tenant_id = str(uuid.uuid4())
     project_id = str(uuid.uuid4())

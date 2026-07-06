@@ -77,11 +77,7 @@ async def check_idempotency(
     payload = dict(row.result or {})
     try:
         target_value = payload.get("target")
-        target = (
-            PushTarget(target_value)
-            if isinstance(target_value, str)
-            else row.target
-        )
+        target = PushTarget(target_value) if isinstance(target_value, str) else row.target
         return PushResult(
             target=target,
             success=bool(payload.get("success")),
@@ -363,12 +359,8 @@ async def push_all(
             record_id=r.record_id,
         )
         if idempotency_key:
-            target_value = (
-                r.target.value if hasattr(r.target, "value") else str(r.target)
-            )
-            target_enum = (
-                r.target if isinstance(r.target, PushTarget) else PushTarget(target_value)
-            )
+            target_value = r.target.value if hasattr(r.target, "value") else str(r.target)
+            target_enum = r.target if isinstance(r.target, PushTarget) else PushTarget(target_value)
             await record_attempt(
                 tenant_id=principal.tenant_id,
                 idea_id=idea_id,

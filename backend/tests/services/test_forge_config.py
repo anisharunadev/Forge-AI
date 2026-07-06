@@ -38,7 +38,9 @@ def test_master_key_falls_back_to_admin_key(monkeypatch):
 
 
 def test_master_key_takes_precedence_over_admin_key(monkeypatch):
-    monkeypatch.setattr(forge_config.settings, "litellm_master_key", "sk-master-WINS", raising=False)
+    monkeypatch.setattr(
+        forge_config.settings, "litellm_master_key", "sk-master-WINS", raising=False
+    )
     monkeypatch.setattr(forge_config.settings, "litellm_admin_key", "sk-admin-LOSES", raising=False)
     monkeypatch.setattr(forge_config.settings, "environment", "test", raising=False)
 

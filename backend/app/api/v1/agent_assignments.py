@@ -1,11 +1,14 @@
 from typing import Annotated
+
 """F-013 — Agent Assignment REST endpoints."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.agents import (
@@ -14,19 +17,17 @@ from app.schemas.agents import (
     AgentRead,
 )
 from app.services.agent_assignment import agent_assignment
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/agent-assignments", tags=["agent-assignments"])
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("", response_model=AgentAssignmentRead)
 @audit(action="agent_assignments.create", target_type="agent")
 async def create_assignment(
     body: AgentAssignmentCreate,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("agents:assign"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("agents:assign")),
 ) -> AgentAssignmentRead:
     try:
         agent = await agent_assignment.assign_agent(
@@ -44,7 +45,7 @@ async def create_assignment(
         project_id=body.project_id or principal.project_id,
         strategy=body.strategy,
         agent=AgentRead.model_validate(agent),
-        assigned_at=datetime.now(timezone.utc),
+        assigned_at=datetime.now(UTC),
     )
 
 
@@ -55,7 +56,7 @@ async def peek_assignment(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)] = ...,
     project_id: str | None = Query(default=None),
     strategy: str = Query(default="capability_match"),
-    _perm: AuthenticatedPrincipal = Depends(require_permission("agents:assign"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("agents:assign")),
 ) -> AgentAssignmentRead:
     try:
         agent = await agent_assignment.assign_agent(
@@ -71,7 +72,7 @@ async def peek_assignment(
         project_id=project_id or principal.project_id,
         strategy=strategy,
         agent=AgentRead.model_validate(agent),
-        assigned_at=datetime.now(timezone.utc),
+        assigned_at=datetime.now(UTC),
     )
 
 

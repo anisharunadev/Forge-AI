@@ -17,26 +17,26 @@ Revision ID: e5f6a7b8c9d0
 Revises: d4e5f6a7b8c9
 Create Date: 2026-06-25 13:00:00.000000
 """
+
 from __future__ import annotations
 
-from typing import Sequence, Union
+import sys
+from collections.abc import Sequence
+from pathlib import Path
 
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-import sys
-from pathlib import Path
+from alembic import op
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from app.db.base import GUID, JSONB  # noqa: E402
-
+from app.db.base import GUID  # noqa: E402
 
 # revision identifiers, used by Alembic.
 revision: str = "e5f6a7b8c9d0"
-down_revision: Union[str, None] = "d4e5f6a7b8c9"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "d4e5f6a7b8c9"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def _enable_rls(table_name: str) -> None:
@@ -132,9 +132,7 @@ def upgrade() -> None:
         sa.Column("content", sa.Text(), nullable=False),
         sa.Column("citations", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column("tool_calls", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column(
-            "suggested_actions", postgresql.JSONB(astext_type=sa.Text()), nullable=True
-        ),
+        sa.Column("suggested_actions", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column("confidence", sa.String(length=10), nullable=True),
         sa.Column("feedback_rating", sa.String(length=10), nullable=True),
         sa.Column("feedback_comment", sa.Text(), nullable=True),
@@ -175,13 +173,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute(
-        "DROP POLICY IF EXISTS copilot_messages_tenant_isolation "
-        "ON copilot_messages;"
-    )
+    op.execute("DROP POLICY IF EXISTS copilot_messages_tenant_isolation ON copilot_messages;")
     op.drop_table("copilot_messages")
     op.execute(
-        "DROP POLICY IF EXISTS copilot_conversations_tenant_isolation "
-        "ON copilot_conversations;"
+        "DROP POLICY IF EXISTS copilot_conversations_tenant_isolation ON copilot_conversations;"
     )
     op.drop_table("copilot_conversations")

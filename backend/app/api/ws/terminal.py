@@ -22,7 +22,6 @@ import base64
 import json
 import time
 from typing import Any
-from uuid import UUID
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect, status
 
@@ -35,7 +34,6 @@ from app.terminal.audit import terminal_audit
 from app.terminal.pty_process import PTYProcess
 from app.terminal.session_manager import (
     AgentType,
-    TerminalSession,
     session_manager,
 )
 
@@ -77,7 +75,7 @@ async def terminal_websocket(
                 websocket.receive_text(),
                 timeout=settings.ws_idle_timeout_seconds,
             )
-        except (asyncio.TimeoutError, WebSocketDisconnect):
+        except (TimeoutError, WebSocketDisconnect):
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
             return
         try:

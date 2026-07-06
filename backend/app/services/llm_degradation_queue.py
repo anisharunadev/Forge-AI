@@ -11,6 +11,7 @@ ponytail: a single Redis LIST per tenant is fine up to ~10k items;
 above that, partition by hash bucket. Phase 6 default 100 needs no
 sharding.
 """
+
 from __future__ import annotations
 
 import time
@@ -40,9 +41,7 @@ class QueuedForLater(Exception):
     def __init__(self, request_id: str, tenant_id: UUID) -> None:
         self.request_id = request_id
         self.tenant_id = tenant_id
-        super().__init__(
-            f"queued for later; request_id={request_id} tenant={tenant_id}"
-        )
+        super().__init__(f"queued for later; request_id={request_id} tenant={tenant_id}")
 
 
 @dataclass
@@ -79,9 +78,7 @@ class DegradationQueue:
         factory = get_session_factory()
         async with factory() as session:
             row = (
-                await session.execute(
-                    select(Tenant).where(Tenant.id == tenant_id)
-                )
+                await session.execute(select(Tenant).where(Tenant.id == tenant_id))
             ).scalar_one_or_none()
         if row is None:
             return settings.degradation_queue_max
@@ -122,7 +119,7 @@ class DegradationQueue:
         )
         await redis.lpush(
             f"llm-queue:{tenant_id}",
-            f"{entry.request_id}|{entry.enqueued_at}".encode("utf-8"),
+            f"{entry.request_id}|{entry.enqueued_at}".encode(),
         )
         await redis.expire(
             f"llm-queue:{tenant_id}",

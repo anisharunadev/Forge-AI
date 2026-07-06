@@ -13,19 +13,16 @@ from __future__ import annotations
 
 import asyncio
 import os
-import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from app.core.config import settings
 from app.core.logging import get_logger
 from app.schemas.runtime import RuntimeKind, RuntimeMetrics, RuntimeState
 from app.schemas.tool_bundles import Stage, ToolBundleDecision
 from app.services.tool_bundles import (
-    ToolBundleViolation,
     tool_bundles,
 )
 
@@ -96,7 +93,7 @@ class AgentRuntime:
         else:
             raise ValueError(f"unsupported_runtime_kind:{kind}")
 
-        handle.started_at = datetime.now(timezone.utc)
+        handle.started_at = datetime.now(UTC)
         handle.state = RuntimeState.RUNNING
         self._handles[handle.id] = handle
         self._by_tenant.setdefault(str(tenant_id), set()).add(handle.id)
@@ -116,10 +113,10 @@ class AgentRuntime:
             handle.process.terminate()
             try:
                 await asyncio.wait_for(handle.process.wait(), timeout=5.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 handle.process.kill()
                 await handle.process.wait()
-        handle.stopped_at = datetime.now(timezone.utc)
+        handle.stopped_at = datetime.now(UTC)
         handle.state = RuntimeState.STOPPED
         self._by_tenant.get(handle.tenant_id.hex, set()).discard(handle.id)
         logger.info("runtime.stopped", handle_id=str(handle.id))
@@ -138,7 +135,7 @@ class AgentRuntime:
         tool_calls = 0
         uptime = 0.0
         if handle.started_at is not None:
-            uptime = (datetime.now(timezone.utc) - handle.started_at).total_seconds()
+            uptime = (datetime.now(UTC) - handle.started_at).total_seconds()
         if handle.process is not None and handle.process.returncode is None:
             rss = handle.process.pid and 0  # psutil not added in Phase 2.
             _ = rss
@@ -149,7 +146,7 @@ class AgentRuntime:
             tokens_used=tokens_used,
             tool_calls=tool_calls,
             uptime_seconds=uptime,
-            collected_at=datetime.now(timezone.utc),
+            collected_at=datetime.now(UTC),
         )
 
     # -- F-505 tool-invocation hook -----------------------------------------

@@ -21,13 +21,15 @@ The pre-Phase-2 file was an alias to the guardrails list/update path
 * ``GET    /policies/tool-policy/options``— tool-policy schema
 """
 
-from __future__ import annotations
+from __future__ import annotations  # noqa: B904
 
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
@@ -52,8 +54,6 @@ from app.services.policies_service import (
     ResolveContext,
     policies_service,
 )
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/policies", tags=["policies"])
 
@@ -94,13 +94,26 @@ async def list_policies(
                 priority=int(r.get("priority") or 0),
                 status=r.get("status") or "active",
                 active=bool(r.get("active", True)),
-                metadata={k: v for k, v in r.items() if k not in {"id", "policy_id", "name", "description", "priority", "status", "active"}},
+                metadata={
+                    k: v
+                    for k, v in r.items()
+                    if k
+                    not in {
+                        "id",
+                        "policy_id",
+                        "name",
+                        "description",
+                        "priority",
+                        "status",
+                        "active",
+                    }
+                },
             )
         )
     return Page(items=items, total=len(items))
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("", response_model=PolicyReadV2, status_code=status.HTTP_201_CREATED)
 @audit(action="policies.create", target_type="litellm_policy")
 async def create_policy(
@@ -116,7 +129,7 @@ async def create_policy(
             actor_id=getattr(principal, "user_id", None),
         )
     except PolicyResolutionError as exc:
-        raise HTTPException(
+        raise HTTPException(  # noqa: B904
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=PolicyResolutionErrorEnvelope(missing_fields=exc.missing_fields).model_dump(),
         )
@@ -140,7 +153,7 @@ async def get_policy(
 ) -> PolicyReadV2:
     info = await policies_service.info(policy_id)
     if info is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="policy not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="policy not found")  # noqa: B904
     return PolicyReadV2(
         id=str(info.get("id") or info.get("policy_id") or policy_id),
         name=info.get("name") or info.get("id") or policy_id,
@@ -148,11 +161,15 @@ async def get_policy(
         priority=int(info.get("priority") or 0),
         status=info.get("status") or "active",
         active=bool(info.get("active", True)),
-        metadata={k: v for k, v in info.items() if k not in {"id", "policy_id", "name", "description", "priority", "status", "active"}},
+        metadata={
+            k: v
+            for k, v in info.items()
+            if k not in {"id", "policy_id", "name", "description", "priority", "status", "active"}
+        },
     )
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.patch("/{policy_id}", response_model=PolicyReadV2)
 @audit(action="policies.update", target_type="litellm_policy")
 async def update_policy(
@@ -171,14 +188,14 @@ async def update_policy(
             actor_id=getattr(principal, "user_id", None),
         )
     except PolicyResolutionError as exc:
-        raise HTTPException(
+        raise HTTPException(  # noqa: B904
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=PolicyResolutionErrorEnvelope(missing_fields=exc.missing_fields).model_dump(),
         )
     return PolicyReadV2(id=policy_id, name=policy_id, status=body.status or "active", active=True)
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/{policy_id}/archive", response_model=PolicyReadV2)
 @audit(action="policies.archive", target_type="litellm_policy")
 async def archive_policy(
@@ -194,9 +211,9 @@ async def archive_policy(
         actor_id=getattr(principal, "user_id", None),
     )
     return PolicyReadV2(id=policy_id, name=policy_id, status="archived", active=False)
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/{policy_id}/test", response_model=PolicyTestPipelineResult)
 @audit(action="policies.test", target_type="litellm_policy")
 async def test_policy_pipeline(
@@ -212,9 +229,9 @@ async def test_policy_pipeline(
         modified_text=raw.get("modified_text"),
         decisions=list(raw.get("decisions") or []),
     )
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/resolve", response_model=ResolveResult)
 @audit(action="policies.resolve", target_type="litellm_policy")
 async def resolve_policies(
@@ -231,7 +248,7 @@ async def resolve_policies(
             actor_id=getattr(principal, "user_id", None),
         )
     except PolicyResolutionError as exc:
-        raise HTTPException(
+        raise HTTPException(  # noqa: B904
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=PolicyResolutionErrorEnvelope(missing_fields=exc.missing_fields).model_dump(),
         )
@@ -242,9 +259,9 @@ async def resolve_policies(
         effective_guardrails=list(effective.effective_guardrails),
         tool_policy=PolicyToolPolicy(**(effective.tool_policy or {})),
     )
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/compare", response_model=CompareResult)
 @audit(action="policies.compare", target_type="litellm_policy")
 async def compare_policies(
@@ -264,7 +281,11 @@ async def compare_policies(
         removals=list(raw.get("removals") or []),
         modifications=list(raw.get("modifications") or []),
         conflict_warnings=list(raw.get("conflict_warnings") or []),
-        raw={k: v for k, v in raw.items() if k not in {"additions", "removals", "modifications", "conflict_warnings"}},
+        raw={
+            k: v
+            for k, v in raw.items()
+            if k not in {"additions", "removals", "modifications", "conflict_warnings"}
+        },
     )
 
 
@@ -285,10 +306,14 @@ async def list_templates(
         )
         for r in rows
     ]
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
-@router.post("/templates/{template_id}/clone", response_model=PolicyReadV2, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/templates/{template_id}/clone",
+    response_model=PolicyReadV2,
+    status_code=status.HTTP_201_CREATED,
+)
 @audit(action="policies.templates.clone", target_type="litellm_policy")
 async def clone_template(
     template_id: str,
@@ -303,7 +328,7 @@ async def clone_template(
             actor_id=getattr(principal, "user_id", None),
         )
     except PolicyResolutionError as exc:
-        raise HTTPException(
+        raise HTTPException(  # noqa: B904
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=PolicyResolutionErrorEnvelope(missing_fields=exc.missing_fields).model_dump(),
         )
@@ -338,9 +363,9 @@ async def list_attachments(
             )
         )
     return out
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/attachments", response_model=PolicyAttachment, status_code=status.HTTP_201_CREATED)
 @audit(action="policies.attachments.create", target_type="litellm_policy")
 async def create_attachment(

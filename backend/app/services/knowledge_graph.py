@@ -14,7 +14,7 @@ import enum
 import json
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -22,9 +22,10 @@ from sqlalchemy import Index, String, select, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.logging import get_logger
-from app.db.base import ARRAY, Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import ARRAY, GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 from app.db.session import get_session_factory
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 from app.services.freshness_ledger import FreshnessRecord, freshness_ledger
 
 logger = get_logger(__name__)
@@ -108,14 +109,18 @@ class Node:
     updated_at: datetime
 
     @classmethod
-    def from_orm(cls, row: KGNode) -> "Node":
+    def from_orm(cls, row: KGNode) -> Node:
         return cls(
             id=row.id,
             node_type=row.node_type,
             name=row.name,
             properties=dict(row.properties or {}),
-            tenant_id=row.tenant_id if isinstance(row.tenant_id, UUID) else UUID(str(row.tenant_id)),
-            project_id=row.project_id if isinstance(row.project_id, UUID) else UUID(str(row.project_id)),
+            tenant_id=row.tenant_id
+            if isinstance(row.tenant_id, UUID)
+            else UUID(str(row.tenant_id)),
+            project_id=row.project_id
+            if isinstance(row.project_id, UUID)
+            else UUID(str(row.project_id)),
             repo_id=row.repo_id,
             freshness_at=row.freshness_at,
             freshness_source=row.freshness_source,
@@ -137,7 +142,7 @@ class Edge:
     updated_at: datetime
 
     @classmethod
-    def from_orm(cls, row: KGEdge) -> "Edge":
+    def from_orm(cls, row: KGEdge) -> Edge:
         return cls(
             id=row.id,
             from_node_id=row.from_node_id,
@@ -198,7 +203,7 @@ class KnowledgeGraphService:
         """Persist a node and stamp its freshness (Rule: freshness ledger)."""
         self._ensure_tenant_isolation(tenant_id)
         resolved_name = name or str(properties.get("name") or properties.get("id") or uuid4())
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         factory = get_session_factory()
         async with factory() as session:
             row = KGNode(
@@ -365,17 +370,10 @@ class KnowledgeGraphService:
                 .where(KGNode.tenant_id == str(tenant_id))
                 .where(KGNode.id.in_(ordered_source_ids))
             )
-            rows = {
-                str(r.id): r
-                for r in list((await session.execute(node_stmt)).scalars().all())
-            }
+            rows = {str(r.id): r for r in list((await session.execute(node_stmt)).scalars().all())}
 
         # Re-order the resolved rows to match the edge-recency ordering.
-        return [
-            Node.from_orm(rows[src_id])
-            for src_id in ordered_source_ids
-            if src_id in rows
-        ]
+        return [Node.from_orm(rows[src_id]) for src_id in ordered_source_ids if src_id in rows]
 
     async def list_edges(
         self,
@@ -420,9 +418,7 @@ class KnowledgeGraphService:
             # Real AGE path would use `cypher` from agtype — not available,
             # so we surface a structured error rather than silently losing
             # data. Callers should rely on hybrid_query / SQL for now.
-            raise NotImplementedError(
-                "Apache AGE not available — use query_sql or hybrid_query"
-            )
+            raise NotImplementedError("Apache AGE not available — use query_sql or hybrid_query")
 
     async def query_sql(self, sql: str, params: dict[str, Any]) -> list[dict[str, Any]]:
         factory = get_session_factory()
@@ -525,7 +521,7 @@ class KnowledgeGraphService:
                 freshness_source=node.freshness_source,
                 age_seconds=None,
             )
-        age = (datetime.now(timezone.utc) - record.at).total_seconds()
+        age = (datetime.now(UTC) - record.at).total_seconds()
         return FreshnessInfo(
             node_id=node.id,
             status=GraphStatus.OK,
@@ -547,8 +543,8 @@ class KnowledgeGraphService:
         expires via Redis TTL) so the read path stays consistent.
         """
         factory = get_session_factory()
-        cutoff = datetime.now(timezone.utc).timestamp() - max_age_seconds
-        cutoff_dt = datetime.fromtimestamp(cutoff, tz=timezone.utc)
+        cutoff = datetime.now(UTC).timestamp() - max_age_seconds
+        cutoff_dt = datetime.fromtimestamp(cutoff, tz=UTC)
         async with factory() as session:
             stmt = (
                 select(KGNode)
@@ -582,14 +578,8 @@ class KnowledgeGraphService:
     ) -> GraphStats:
         factory = get_session_factory()
         async with factory() as session:
-            node_q = (
-                select(KGNode.node_type, KGNode.id)
-                .where(KGNode.tenant_id == str(tenant_id))
-            )
-            edge_q = (
-                select(KGEdge.edge_type, KGEdge.id)
-                .where(KGEdge.tenant_id == str(tenant_id))
-            )
+            node_q = select(KGNode.node_type, KGNode.id).where(KGNode.tenant_id == str(tenant_id))
+            edge_q = select(KGEdge.edge_type, KGEdge.id).where(KGEdge.tenant_id == str(tenant_id))
             if project_id is not None:
                 node_q = node_q.where(KGNode.project_id == str(project_id))
                 edge_q = edge_q.where(KGEdge.project_id == str(project_id))
@@ -635,14 +625,9 @@ class KnowledgeGraphService:
         # via :label; ``cols`` is restricted to either '*' or a quoted
         # identifier (whitelisted by the regex above).
         cols = "*" if ret == "*" else f'"{ret}".*'
-        sql = (
-            "SELECT {cols} FROM kg_nodes "
-            "WHERE node_type = :label "
-            "LIMIT 500"
-        ).format(cols=cols)
+        sql = f"SELECT {cols} FROM kg_nodes WHERE node_type = :label LIMIT 500"
         # Caller passes the outer params dict; we add ``label`` here.
         return sql, label
-
 
     async def _execute_sql(
         self,
@@ -684,7 +669,7 @@ def _cosine(a: list[float], b: list[float]) -> float:
         dot += x * y
     if da == 0 or db == 0:
         return 0.0
-    return dot / ((da ** 0.5) * (db ** 0.5))
+    return dot / ((da**0.5) * (db**0.5))
 
 
 def _jsonify(value: Any) -> Any:

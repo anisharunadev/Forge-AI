@@ -28,9 +28,7 @@ from app.services.artifact_registry import artifact_registry
 from app.services.event_bus import bus
 from app.services.litellm_client import LiteLLMClient
 
-router = APIRouter(
-    prefix="/architecture", tags=["architecture:acceptance"]
-)
+router = APIRouter(prefix="/architecture", tags=["architecture:acceptance"])
 
 
 def _acceptance_service() -> AcceptanceCriteriaService:
@@ -50,9 +48,9 @@ def _context_generator() -> ContextAwareGenerator:
         project_intelligence=None,
         event_bus=bus,
     )
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post(
     "/acceptance/generate",
     response_model=AcceptanceCriteriaResponse,
@@ -62,7 +60,7 @@ def _context_generator() -> ContextAwareGenerator:
 async def generate_criteria(
     body: AcceptanceCriteriaGenerateRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:acceptance:create"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:acceptance:create")),
 ) -> AcceptanceCriteriaResponse:
     """Produce Given/When/Then criteria from an ADR, contract, or breakdown."""
     try:
@@ -83,15 +81,15 @@ async def generate_criteria(
 async def get_criteria(
     criteria_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:acceptance:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:acceptance:read")),
 ) -> AcceptanceCriteriaResponse:
     record = await _acceptance_service()._load_record(criteria_id)
     if record is None or record["tenant_id"] != str(principal.tenant_id):
         raise HTTPException(status_code=404, detail="acceptance_criteria_not_found")
     return AcceptanceCriteriaResponse.model_validate(record)
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post(
     "/acceptance/{criteria_id}/link-test",
     response_model=AcceptanceCriteriaResponse,
@@ -101,7 +99,7 @@ async def link_test(
     criteria_id: UUID,
     body: AcceptanceLinkTestRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:acceptance:update"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:acceptance:update")),
 ) -> AcceptanceCriteriaResponse:
     try:
         record = await _acceptance_service().link_to_test(
@@ -119,16 +117,16 @@ async def link_test(
 async def coverage(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: UUID = Query(...),
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:acceptance:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:acceptance:read")),
 ) -> CoverageReportResponse:
     report = await _acceptance_service().get_coverage(
         tenant_id=principal.tenant_id,
         project_id=project_id,
     )
     return CoverageReportResponse.model_validate(report)
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post(
     "/acceptance/{criteria_id}/validate",
     response_model=ValidationResultResponse,
@@ -138,7 +136,7 @@ async def validate_against_code(
     criteria_id: UUID,
     code_artifact_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:acceptance:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:acceptance:read")),
 ) -> ValidationResultResponse:
     try:
         result = await _acceptance_service().validate_against_code(
@@ -160,7 +158,9 @@ async def validate_against_code(
 async def get_context_usage(
     artifact_id: UUID,
     artifact_type: str = Query(...),
-    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)] = require_permission("architecture:context:read"),
+    principal: Annotated[
+        AuthenticatedPrincipal, Depends(get_current_principal)
+    ] = require_permission("architecture:context:read"),
 ) -> ContextUsageResponse:
     refs = await _context_generator().get_context_usage(artifact_id)
     return ContextUsageResponse(

@@ -6,11 +6,11 @@ across all migrations.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, JSON, MetaData, String, Text
+from sqlalchemy import JSON, DateTime, MetaData, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
 from sqlalchemy.dialects.postgresql import JSONB as PG_JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
@@ -102,7 +102,7 @@ class ARRAY(TypeDecorator):
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 NAMING_CONVENTION = {

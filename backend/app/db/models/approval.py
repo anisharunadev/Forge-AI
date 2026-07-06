@@ -7,10 +7,11 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import DateTime, Enum as SAEnum, ForeignKey, Index, String, Text
+from sqlalchemy import DateTime, ForeignKey, Index, String, Text
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class ApprovalStatus(str, Enum):

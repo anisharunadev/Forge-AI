@@ -68,6 +68,7 @@ router = APIRouter(prefix="/runs", tags=["sdlc-runs"])
 # Dependency wiring
 # ---------------------------------------------------------------------------
 
+
 def get_run_manager(request: Request) -> SDLCRunManager:
     """Return the manager singleton — kept on ``app.state`` if set."""
 
@@ -84,6 +85,7 @@ RunManagerDep = Depends(get_run_manager)
 # ---------------------------------------------------------------------------
 # Request DTO → internal state helpers
 # ---------------------------------------------------------------------------
+
 
 def _state_to_response(state: SDLCState) -> SDLCRunStateResponse:
     """Translate :class:`SDLCState` into the wire-format response."""
@@ -152,6 +154,7 @@ def _cost_to_response(summary: CostSummary) -> CostSummaryResponse:
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
 
 @require_approval_phase(SDLCPhase.PLANNING)
 @router.post(
@@ -341,9 +344,7 @@ async def get_default_run_budget(
 
     tenant_key = str(principal.tenant_id)
     ceiling_usd = float(
-        settings.run_budget_cap_overrides.get(
-            tenant_key, settings.run_budget_cap_usd
-        )
+        settings.run_budget_cap_overrides.get(tenant_key, settings.run_budget_cap_usd)
     )
     return {
         "tenant_id": tenant_key,
@@ -408,9 +409,7 @@ async def get_run_budget(
 
     tenant_key = str(principal.tenant_id)
     ceiling_usd = float(
-        settings.run_budget_cap_overrides.get(
-            tenant_key, settings.run_budget_cap_usd
-        )
+        settings.run_budget_cap_overrides.get(tenant_key, settings.run_budget_cap_usd)
     )
     spent_usd = await cost_ledger.sum_spent_for_run(run_id)
     remaining_usd = max(0.0, ceiling_usd - float(spent_usd))

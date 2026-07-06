@@ -16,19 +16,36 @@ from __future__ import annotations
 import asyncio
 import time
 from dataclasses import dataclass, field
+from datetime import UTC
 from typing import Any
 from uuid import UUID
 
 from app.core.logging import get_logger
 from app.integrations.litellm.tools_apply import (
     archive_tool as _archive_tool,
+)
+from app.integrations.litellm.tools_apply import (
     get_overrides as _get_overrides,
+)
+from app.integrations.litellm.tools_apply import (
     get_tool_detail as _get_tool_detail,
+)
+from app.integrations.litellm.tools_apply import (
     list_logs as _list_logs,
+)
+from app.integrations.litellm.tools_apply import (
     list_search_tools as _list_search_tools,
+)
+from app.integrations.litellm.tools_apply import (
     list_search_tools_ui as _list_search_tools_ui,
+)
+from app.integrations.litellm.tools_apply import (
     list_tools as _list_tools,
+)
+from app.integrations.litellm.tools_apply import (
     put_overrides as _put_overrides,
+)
+from app.integrations.litellm.tools_apply import (
     test_search_tool as _test_search_tool,
 )
 from app.schemas.tools_v2 import (
@@ -80,9 +97,7 @@ class ToolsService:
         cache_key = str(tenant_id) if tenant_id else "__global__"
         async with self._lock:
             entry = self._catalog_cache.get(cache_key)
-            if entry is not None and (
-                time.monotonic() - entry.fetched_at
-            ) < _CATALOG_TTL_SECONDS:
+            if entry is not None and (time.monotonic() - entry.fetched_at) < _CATALOG_TTL_SECONDS:
                 rows = list(entry.rows)
             else:
                 rows = None
@@ -175,7 +190,8 @@ class ToolsService:
 
     async def logs(self, *, name: str, since_hours: int = 24) -> list[ToolLogRead]:
         rows = await _list_logs(name=name, since_hours=since_hours)
-        from datetime import datetime, timezone
+        from datetime import datetime
+
         out: list[ToolLogRead] = []
         for r in rows:
             if not isinstance(r, dict):
@@ -183,12 +199,10 @@ class ToolsService:
             try:
                 ts_raw = r.get("ts") or r.get("occurred_at") or r.get("created_at")
                 ts = (
-                    datetime.fromisoformat(ts_raw)
-                    if isinstance(ts_raw, str)
-                    else datetime.now(timezone.utc)
+                    datetime.fromisoformat(ts_raw) if isinstance(ts_raw, str) else datetime.now(UTC)
                 )
             except (TypeError, ValueError):
-                ts = datetime.now(timezone.utc)
+                ts = datetime.now(UTC)
             out.append(
                 ToolLogRead(
                     ts=ts,
@@ -220,9 +234,7 @@ class ToolsService:
         tenant_id: UUID | str,
         actor_id: UUID | str | None = None,
     ) -> ToolOverrides | None:
-        raw = await _put_overrides(
-            name=name, overrides=overrides.model_dump(exclude_none=True)
-        )
+        raw = await _put_overrides(name=name, overrides=overrides.model_dump(exclude_none=True))
         self.invalidate(tenant_id)
         await self._emit_audit(
             action="forge.tools.overridden",
@@ -340,9 +352,7 @@ class ToolsService:
     async def test_search_tool(self, *, tool_id: str) -> SearchToolTestResult:
         raw = await _test_search_tool(tool_id=tool_id)
         if raw is None:
-            return SearchToolTestResult(
-                tool_id=tool_id, reachable=False, error="no_response"
-            )
+            return SearchToolTestResult(tool_id=tool_id, reachable=False, error="no_response")
         return SearchToolTestResult(
             tool_id=tool_id,
             reachable=bool(raw.get("reachable", False)),

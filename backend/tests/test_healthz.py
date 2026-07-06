@@ -152,7 +152,6 @@ async def test_healthz_happy_path_all_probes_green(app, phase4_flag_on):
         def connect(self):
             return _fake_connect()
 
-
     with (
         patch("app.api.healthz.get_engine", return_value=_FakeEngine()),
         patch("app.api.healthz.aioredis.from_url") as redis_from_url,
@@ -302,7 +301,6 @@ async def test_healthz_degraded_when_redis_down(app, phase4_flag_on):
         def connect(self):
             return _fake_connect()
 
-
     with (
         patch("app.api.healthz.get_engine", return_value=_FakeEngine()),
         # Redis client that throws on ping
@@ -362,7 +360,6 @@ async def test_healthz_degraded_when_keycloak_down(app, phase4_flag_on):
         def connect(self):
             return _fake_connect()
 
-
     with (
         patch("app.api.healthz.get_engine", return_value=_FakeEngine()),
         patch("app.api.healthz.aioredis.from_url") as redis_from_url,
@@ -420,7 +417,6 @@ async def test_healthz_degraded_when_litellm_down(app, phase4_flag_on):
     class _FakeEngine:
         def connect(self):
             return _fake_connect()
-
 
     with (
         patch("app.api.healthz.get_engine", return_value=_FakeEngine()),
@@ -488,7 +484,6 @@ async def test_healthz_degraded_when_otel_uninitialized(app, phase4_flag_on):
         def connect(self):
             return _fake_connect()
 
-
     with (
         patch("app.api.healthz.get_engine", return_value=_FakeEngine()),
         patch("app.api.healthz.aioredis.from_url") as redis_from_url,
@@ -548,7 +543,6 @@ async def test_healthz_degraded_when_floci_down(app, phase4_flag_on):
         def connect(self):
             return _fake_connect()
 
-
     with (
         patch("app.api.healthz.get_engine", return_value=_FakeEngine()),
         patch("app.api.healthz.aioredis.from_url") as redis_from_url,
@@ -605,7 +599,6 @@ async def test_healthz_degraded_when_phase4_not_mounted(app, phase4_flag_off):
     class _FakeEngine:
         def connect(self):
             return _fake_connect()
-
 
     with (
         patch("app.api.healthz.get_engine", return_value=_FakeEngine()),
@@ -687,7 +680,6 @@ async def test_healthz_version_field_present(app, phase4_flag_on):
         def connect(self):
             return _fake_connect()
 
-
     with (
         patch("app.api.healthz.get_engine", return_value=_FakeEngine()),
         patch("app.api.healthz.aioredis.from_url") as redis_from_url,
@@ -740,6 +732,7 @@ async def test_healthz_includes_git_sha(app, phase4_flag_on, monkeypatch):
     monkeypatch.setenv("GIT_SHA", "abc1234")
     # Reload the module-level cache so the env is read.
     import app.api.healthz as h
+
     h._GIT_SHA = "abc1234"
 
     with (
@@ -764,6 +757,7 @@ async def test_healthz_includes_git_sha(app, phase4_flag_on, monkeypatch):
         litellm_instance.__aexit__ = AsyncMock(return_value=None)
         litellm_cls.return_value = litellm_instance
         from unittest.mock import MagicMock
+
         floci_resp = MagicMock()
         floci_resp.status = 200
         floci_resp_cm = MagicMock()
@@ -803,6 +797,7 @@ async def test_healthz_probe_shape_includes_latency(app, phase4_flag_on):
         litellm_instance.__aexit__ = AsyncMock(return_value=None)
         litellm_cls.return_value = litellm_instance
         from unittest.mock import MagicMock
+
         floci_resp = MagicMock()
         floci_resp.status = 200
         floci_resp_cm = MagicMock()
@@ -812,9 +807,15 @@ async def test_healthz_probe_shape_includes_latency(app, phase4_flag_on):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
             r = await ac.get("/healthz")
     body = r.json()
-    for name in ("db_health", "redis_health", "keycloak_reachable",
-                 "litellm_health", "floci_health",
-                 "otel_exporter_configured", "forge_phase4_mounted"):
+    for name in (
+        "db_health",
+        "redis_health",
+        "keycloak_reachable",
+        "litellm_health",
+        "floci_health",
+        "otel_exporter_configured",
+        "forge_phase4_mounted",
+    ):
         probe = body["probes"][name]
         assert "latency_ms" in probe, name
         assert isinstance(probe["latency_ms"], (int, float)), name
@@ -892,6 +893,7 @@ async def test_healthz_returns_200_when_all_ok(app, phase4_flag_on, monkeypatch)
 
     monkeypatch.setenv("GIT_SHA", "deadbeef")
     import app.api.healthz as h
+
     h._GIT_SHA = "deadbeef"
 
     with (
@@ -916,6 +918,7 @@ async def test_healthz_returns_200_when_all_ok(app, phase4_flag_on, monkeypatch)
         litellm_instance.__aexit__ = AsyncMock(return_value=None)
         litellm_cls.return_value = litellm_instance
         from unittest.mock import MagicMock
+
         floci_resp = MagicMock()
         floci_resp.status = 200
         floci_resp_cm = MagicMock()

@@ -38,9 +38,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import (
     ARRAY,
+    GUID,
     JSONB,
     Base,
-    GUID,
     TimestampMixin,
     UUIDPrimaryKeyMixin,
 )
@@ -97,21 +97,15 @@ class SeedRun(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         GUID(), ForeignKey("tenants.id", ondelete="SET NULL"), nullable=True
     )
     project_id: Mapped[UUID | None] = mapped_column(GUID(), nullable=True)
-    applied_versions: Mapped[list[str]] = mapped_column(
-        ARRAY(String), nullable=False, default=list
-    )
+    applied_versions: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
     row_counts: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     dropped_rows: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     checksum_before: Mapped[str | None] = mapped_column(String(64), nullable=True)
     checksum_after: Mapped[str | None] = mapped_column(String(64), nullable=True)
     drift_summary: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     error: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
-    started_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
@@ -138,18 +132,14 @@ class SeedMigration(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     seed_name: Mapped[str] = mapped_column(String(100), nullable=False)
     manifest_version: Mapped[int] = mapped_column(Integer, nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    applied_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    applied_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     applied_by: Mapped[UUID] = mapped_column(GUID(), nullable=False)
     checksum: Mapped[str] = mapped_column(String(64), nullable=False)
     row_counts: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     success: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    __table_args__ = (
-        Index("ix_seed_migrations_seed_name_applied", "seed_name", "applied_at"),
-    )
+    __table_args__ = (Index("ix_seed_migrations_seed_name_applied", "seed_name", "applied_at"),)
 
 
 __all__ = [

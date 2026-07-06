@@ -191,9 +191,13 @@ class SecretsManagerClient:
                 # Boto3 raises ClientError with a specific error code
                 # for missing secrets; we don't import the type to
                 # avoid a hard boto3 dependency.
-                code = getattr(getattr(exc, "response", None), "get", lambda *_: None)(
-                    "Error", {}
-                ).get("Code") if hasattr(exc, "response") else None
+                code = (
+                    getattr(getattr(exc, "response", None), "get", lambda *_: None)(
+                        "Error", {}
+                    ).get("Code")
+                    if hasattr(exc, "response")
+                    else None
+                )
                 if code == "ResourceNotFoundException":
                     raise LookupError(f"secret not found: {ref.full_name()}") from exc
                 logger.warning(
@@ -229,9 +233,7 @@ class SecretsManagerClient:
         import asyncio
 
         ref = SecretRef(name=name)
-        effective_kms = (
-            kms_key_id if kms_key_id is not None else self._kms_key_id
-        )
+        effective_kms = kms_key_id if kms_key_id is not None else self._kms_key_id
         span_cm = _tracer.start_as_current_span("secrets_manager.put") if _tracer else _null_cm()
         async with span_cm as span:
             if span is not None:
@@ -294,9 +296,13 @@ class SecretsManagerClient:
                     RecoveryWindowInDays=30,
                 )
             except Exception as exc:  # noqa: BLE001
-                code = getattr(getattr(exc, "response", None), "get", lambda *_: None)(
-                    "Error", {}
-                ).get("Code") if hasattr(exc, "response") else None
+                code = (
+                    getattr(getattr(exc, "response", None), "get", lambda *_: None)(
+                        "Error", {}
+                    ).get("Code")
+                    if hasattr(exc, "response")
+                    else None
+                )
                 if code == "ResourceNotFoundException":
                     logger.debug(
                         "secrets_manager.delete.missing",
@@ -328,7 +334,7 @@ def get_default_client() -> SecretsManagerClient:
     return _default_client
 
 
-def _null_cm() -> "_NullCM":
+def _null_cm() -> _NullCM:
     return _NullCM()
 
 

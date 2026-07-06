@@ -21,17 +21,17 @@ Create Date: 2026-07-04 12:00:00.000000
 
 from __future__ import annotations
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "step_78_f11_prompts"
-down_revision: Union[str, None] = "step_78_f12_rbac_hierarchy"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "step_78_f12_rbac_hierarchy"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -43,11 +43,25 @@ def upgrade() -> None:
         sa.Column("category", sa.String(32), nullable=False, server_default="custom"),
         sa.Column("status", sa.String(32), nullable=False, server_default="active"),
         sa.Column("current_version", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("tags", sa.dialects.postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'[]'::jsonb")),
-        sa.Column("metadata", sa.dialects.postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
+        sa.Column(
+            "tags",
+            sa.dialects.postgresql.JSONB(astext_type=sa.Text()),
+            nullable=False,
+            server_default=sa.text("'[]'::jsonb"),
+        ),
+        sa.Column(
+            "metadata",
+            sa.dialects.postgresql.JSONB(astext_type=sa.Text()),
+            nullable=False,
+            server_default=sa.text("'{}'::jsonb"),
+        ),
         sa.Column("created_by", sa.dialects.postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["created_by"], ["users.id"], ondelete="SET NULL"),
         sa.UniqueConstraint("tenant_id", "name", name="uq_prompts_tenant_name"),
@@ -62,17 +76,33 @@ def upgrade() -> None:
         sa.Column("prompt_id", sa.dialects.postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("version_number", sa.Integer(), nullable=False),
         sa.Column("template", sa.Text(), nullable=False),
-        sa.Column("model_defaults", sa.dialects.postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
-        sa.Column("variables", sa.dialects.postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'[]'::jsonb")),
+        sa.Column(
+            "model_defaults",
+            sa.dialects.postgresql.JSONB(astext_type=sa.Text()),
+            nullable=False,
+            server_default=sa.text("'{}'::jsonb"),
+        ),
+        sa.Column(
+            "variables",
+            sa.dialects.postgresql.JSONB(astext_type=sa.Text()),
+            nullable=False,
+            server_default=sa.text("'[]'::jsonb"),
+        ),
         sa.Column("status", sa.String(32), nullable=False, server_default="active"),
         sa.Column("source", sa.String(32), nullable=False, server_default="manual"),
         sa.Column("created_by", sa.dialects.postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["prompt_id"], ["prompts.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["created_by"], ["users.id"], ondelete="SET NULL"),
-        sa.UniqueConstraint("prompt_id", "version_number", name="uq_prompt_versions_prompt_version"),
+        sa.UniqueConstraint(
+            "prompt_id", "version_number", name="uq_prompt_versions_prompt_version"
+        ),
     )
     op.create_index(
         "ix_prompt_versions_prompt_status",

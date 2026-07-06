@@ -12,7 +12,6 @@ import asyncio
 import base64
 import json
 from typing import Any
-from uuid import UUID
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect, status
 
@@ -62,7 +61,7 @@ async def terminal_broadcast_websocket(
                 websocket.receive_text(),
                 timeout=settings.ws_idle_timeout_seconds,
             )
-        except (asyncio.TimeoutError, WebSocketDisconnect):
+        except (TimeoutError, WebSocketDisconnect):
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
             return
         try:
@@ -126,9 +125,7 @@ async def terminal_broadcast_websocket(
                 payload = base64.b64decode(msg.get("data", "") or b"")
                 # Forward to the broadcaster — subscribed write streams
                 # will receive it under msg_type='i'.
-                await session_broadcaster.broadcast(
-                    session_id, b"IN:" + payload
-                )
+                await session_broadcaster.broadcast(session_id, b"IN:" + payload)
             elif kind == "input":
                 await _send(
                     websocket,

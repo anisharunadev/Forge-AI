@@ -7,19 +7,19 @@ owns the event-shape contract; this router is the HTTP layer only.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, status
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 from app.services.connector_ingestion.bus_bridge import (
     ConnectorEventEnvelope,
     publish_connector_event,
 )
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/connector-events", tags=["connector_events"])
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/observed", status_code=status.HTTP_202_ACCEPTED)
 async def observe_connector_event(envelope: ConnectorEventEnvelope) -> dict[str, object]:
     """Receive one TS-side connector event and re-publish on the Python bus."""

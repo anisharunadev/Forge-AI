@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import sys
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -44,7 +44,7 @@ class _FakeFreshnessLedger:
         self.records: dict[str, dict] = {}
 
     async def mark_fresh(self, *, node_id, source, at=None, tenant_id, metadata=None):
-        at = at or datetime.now(timezone.utc)
+        at = at or datetime.now(UTC)
         self.records[node_id] = {"source": source, "at": at}
         return SimpleNamespace(node_id=node_id, source=source, at=at, metadata=metadata or {})
 
@@ -165,11 +165,15 @@ async def test_repo_ingestion_full_flow(sqlite_db):
     )
     assert summary.repo_id == repo.id
     assert summary.status.value in {
-        "cloning", "extracting", "graphifying", "mapping", "persisting", "success", "failed"
+        "cloning",
+        "extracting",
+        "graphifying",
+        "mapping",
+        "persisting",
+        "success",
+        "failed",
     }
-    runs = await repo_ingestion_service.list_ingestion_runs(
-        repo.id, tenant_id=TENANT_ID
-    )
+    runs = await repo_ingestion_service.list_ingestion_runs(repo.id, tenant_id=TENANT_ID)
     assert any(r.id == summary.run_id for r in runs)
 
 
@@ -205,10 +209,12 @@ async def test_architecture_discovery_detects_services(sqlite_db):
     with patch.object(
         architecture_discovery_service,
         "_load_repo_tree",
-        AsyncMock(return_value={
-            "billing/package.json": '{"name": "billing"}',
-            "billing/requirements.txt": "fastapi",
-        }),
+        AsyncMock(
+            return_value={
+                "billing/package.json": '{"name": "billing"}',
+                "billing/requirements.txt": "fastapi",
+            }
+        ),
     ):
         arch = await architecture_discovery_service.discover_architecture(
             repo.id,
@@ -244,8 +250,9 @@ async def test_qa_answer_uses_rag(sqlite_db):
             "model": "stub",
         }
 
-    with patch.object(qa_mod.LiteLLMClient, "chat", _fake_chat), patch.object(
-        qa_mod.LiteLLMClient, "embed", AsyncMock(return_value=[[0.1, 0.2, 0.3, 0.4]])
+    with (
+        patch.object(qa_mod.LiteLLMClient, "chat", _fake_chat),
+        patch.object(qa_mod.LiteLLMClient, "embed", AsyncMock(return_value=[[0.1, 0.2, 0.3, 0.4]])),
     ):
         answer = await qa_service.answer_question(
             tenant_id=TENANT_ID,
@@ -285,7 +292,10 @@ async def test_impact_analysis_traces_dependencies(sqlite_db):
         name="b",
     )
     await knowledge_graph_service.add_edge(
-        a.id, b.id, "calls", {},
+        a.id,
+        b.id,
+        "calls",
+        {},
         tenant_id=TENANT_ID,
         project_id=PROJECT_ID,
     )
@@ -316,22 +326,26 @@ async def test_incremental_sync_detects_conflicts(sqlite_db):
         actor_id=ACTOR_ID,
     )
     with patch.object(
-        incremental_sync_service, "_detect_changes",
+        incremental_sync_service,
+        "_detect_changes",
         AsyncMock(return_value=["src/billing.py", "src/checkout.py"]),
     ):
         result = await incremental_sync_service.sync_changes(
-            repo.id, "deadbeef",
+            repo.id,
+            "deadbeef",
             tenant_id=TENANT_ID,
             project_id=PROJECT_ID,
         )
     assert result.processed_files == 2
 
     with patch.object(
-        incremental_sync_service, "_detect_changes",
+        incremental_sync_service,
+        "_detect_changes",
         AsyncMock(return_value=["src/billing.py", "src/checkout.py", "src/billing.py"]),
     ):
         result = await incremental_sync_service.sync_changes(
-            repo.id, "deadbeef",
+            repo.id,
+            "deadbeef",
             tenant_id=TENANT_ID,
             project_id=PROJECT_ID,
         )
@@ -350,14 +364,12 @@ async def test_conflict_resolution_steward_priority(sqlite_db):
         project_id=PROJECT_ID,
         entity_ref="file:src/billing.py",
         sources=["github", "gitlab"],
-        detected_at=datetime.now(timezone.utc),
+        detected_at=datetime.now(UTC),
         resolution=None,
         status="pending",
     )
     incremental_sync_service._conflicts.setdefault(PROJECT_ID, []).append(conflict)
-    await incremental_sync_service.resolve_conflict(
-        conflict.id, resolution={"winner": "manual"}
-    )
+    await incremental_sync_service.resolve_conflict(conflict.id, resolution={"winner": "manual"})
     assert conflict.status == "resolved"
     assert conflict.resolution == {"winner": "manual"}
 
@@ -378,14 +390,10 @@ async def test_snapshot_create_and_restore(sqlite_db):
         project_id=PROJECT_ID,
         name="checkout",
     )
-    snap = await snapshot_service.create_snapshot(
-        PROJECT_ID, tenant_id=TENANT_ID, label="v1"
-    )
+    snap = await snapshot_service.create_snapshot(PROJECT_ID, tenant_id=TENANT_ID, label="v1")
     assert snap.node_count >= 1
     assert snap.content_hash
-    result = await snapshot_service.restore_snapshot(
-        snap.id, tenant_id=TENANT_ID
-    )
+    result = await snapshot_service.restore_snapshot(snap.id, tenant_id=TENANT_ID)
     assert result.restored_node_count >= 1
     assert isinstance(result.conflicts, list)
 
@@ -415,13 +423,11 @@ async def test_comm_ingestion_slack(sqlite_db):
         tenant_id=TENANT_ID,
         project_id=PROJECT_ID,
         channel_id="C12345",
-        since=datetime.now(timezone.utc),
+        since=datetime.now(UTC),
     )
     assert ingested
     assert ingested[0].source == "slack"
-    detections = comm_ingestion_service.detect(
-        "We decided to ship @alice the API changes."
-    )
+    detections = comm_ingestion_service.detect("We decided to ship @alice the API changes.")
     assert "decisions" in detections
     assert detections["actions"]
 

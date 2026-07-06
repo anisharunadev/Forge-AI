@@ -12,15 +12,13 @@ import hashlib
 import json
 from decimal import Decimal
 from typing import Any
-from uuid import UUID, uuid4
 
 from app.agents.nodes.base import BasePhaseNode
 from app.agents.sdlc_state import ArtifactRef, SDLCPhase, SDLCState
 from app.agents.tools.gsd_wrapper import GSDWrapper, build_default_wrapper
 from app.agents.tools.repomix_wrapper import RepomixTool, build_default_repomix_tool
 from app.services.artifact_registry import ArtifactRegistry
-from app.services.event_bus import EventType, bus as default_bus
-
+from app.services.event_bus import EventType
 
 ARTIFACT_TYPE_DISCOVERY = "discovery_report"
 
@@ -69,13 +67,9 @@ class DiscoveryNode(BasePhaseNode):
             user_id=user_id,
         )
         if not summarize.ok:
-            raise RuntimeError(
-                f"forge-intel-summarize failed: {summarize.error}"
-            )
+            raise RuntimeError(f"forge-intel-summarize failed: {summarize.error}")
         if not discover.ok:
-            raise RuntimeError(
-                f"forge-intel-scan-repo failed: {discover.error}"
-            )
+            raise RuntimeError(f"forge-intel-scan-repo failed: {discover.error}")
 
         # 2. Pack the repo with repomix (read-only) for LLM context.
         repo_pack = await self._repomix.pack_repo_async(repo_path, "xml")

@@ -4,12 +4,13 @@ Bandit is the canonical Python AST-based scanner for security issues.
 We pass the same file list used by ``scan_secrets`` but mark findings
 with ``scanner="vulns"`` so they aggregate into the correct bucket.
 """
+
 from __future__ import annotations
 
 import logging
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Protocol
 
 from app.agents.code_validator_state import (
@@ -46,7 +47,7 @@ async def scan_vulns(
 ) -> dict[str, Any]:
     started = time.perf_counter()
     scanner = scanner or BanditScanner()
-    started_at = datetime.now(timezone.utc)
+    started_at = datetime.now(UTC)
 
     try:
         findings = await scanner.scan(state.target.files)
@@ -56,7 +57,7 @@ async def scan_vulns(
             scanner="vulns",
             findings=[],
             started_at=started_at,
-            finished_at=datetime.now(timezone.utc),
+            finished_at=datetime.now(UTC),
             duration_ms=int((time.perf_counter() - started) * 1000),
             error=str(exc),
         )
@@ -66,15 +67,12 @@ async def scan_vulns(
             "errors": [*state.errors, f"scan_vulns:{type(exc).__name__}"],
         }
 
-    tagged = [
-        f.model_copy(update={"scanner": "vulns"}) if not f.scanner else f
-        for f in findings
-    ]
+    tagged = [f.model_copy(update={"scanner": "vulns"}) if not f.scanner else f for f in findings]
     envelope = ScannerEnvelope(
         scanner="vulns",
         findings=tagged,
         started_at=started_at,
-        finished_at=datetime.now(timezone.utc),
+        finished_at=datetime.now(UTC),
         duration_ms=int((time.perf_counter() - started) * 1000),
     )
     return {

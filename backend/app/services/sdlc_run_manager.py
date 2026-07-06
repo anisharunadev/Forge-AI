@@ -48,6 +48,7 @@ logger = logging.getLogger(__name__)
 # Cost summary DTO
 # ---------------------------------------------------------------------------
 
+
 @dataclass(slots=True)
 class CostSummary:
     run_id: UUID
@@ -71,6 +72,7 @@ class CostSummary:
 # ---------------------------------------------------------------------------
 # In-process broker — fans state updates out to WS / SSE consumers
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class _Subscriber:
@@ -113,6 +115,7 @@ class RunStateBroker:
 # ---------------------------------------------------------------------------
 # Run manager
 # ---------------------------------------------------------------------------
+
 
 class SDLCRunManager:
     """Lifecycle and orchestration for SDLC runs.
@@ -221,9 +224,7 @@ class SDLCRunManager:
         if run_id in self._tasks and not self._tasks[run_id].done():
             # Already driving — the new state will be picked up next tick.
             return state
-        self._tasks[run_id] = asyncio.create_task(
-            self._drive(state), name=f"sdlc-run-{run_id}"
-        )
+        self._tasks[run_id] = asyncio.create_task(self._drive(state), name=f"sdlc-run-{run_id}")
         return state
 
     async def cancel_run(self, run_id: UUID, *, reason: str = "") -> SDLCState:
@@ -294,12 +295,11 @@ class SDLCRunManager:
         # source-run snapshot — operator sees the same ceiling.
         try:
             from app.core.config import get_settings  # noqa: PLC0415 — lazy to avoid cycle
+
             settings = get_settings()
             tenant_key = str(source.tenant_id)
             budget_cap_usd = float(
-                settings.run_budget_cap_overrides.get(
-                    tenant_key, settings.run_budget_cap_usd
-                )
+                settings.run_budget_cap_overrides.get(tenant_key, settings.run_budget_cap_usd)
             )
         except Exception:  # noqa: BLE001 — settings may not be wired in tests
             budget_cap_usd = 50.0
@@ -430,6 +430,7 @@ class SDLCRunManager:
             logger.exception("sdlc_run.failed", run_id=str(initial_state.run_id))
             state = self._states.get(initial_state.run_id) or initial_state
             from app.agents.sdlc_state import ErrorRecord
+
             state = state.add_error(
                 ErrorRecord(
                     phase=state.current_phase,

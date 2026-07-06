@@ -20,16 +20,17 @@ while the registry supplies queryability.
 """
 
 from __future__ import annotations
+
+from datetime import UTC, datetime
 from typing import Annotated
-
-from datetime import datetime, timezone
-
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 
-from app.api.deps import DbSession, Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import DbSession, get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.artifact import Artifact, ArtifactStatus
@@ -41,10 +42,8 @@ from app.schemas.validation_report import (
 )
 from app.services.artifact_registry import artifact_registry
 from app.services.audit_service import audit_service
-from app.services.event_bus import EventType, bus as default_bus
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
-
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 
 router = APIRouter(prefix="/validation-reports", tags=["validation-reports"])
 
@@ -70,9 +69,9 @@ def _dict_to_report(payload: dict) -> ValidationReport:
     """
     raw = {k: v for k, v in payload.items() if k != "commit_sha"}
     return ValidationReport.model_validate(raw)
+
+
 @require_approval_phase(SDLCPhase.SECURITY)
-
-
 @router.post(
     "",
     response_model=ValidationReport,
@@ -153,7 +152,7 @@ async def get_validation_report(
     report_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession = None,  # type: ignore[assignment]
-    _perm: AuthenticatedPrincipal = Depends(require_permission("validation_reports:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("validation_reports:read")),
 ) -> ValidationReport:
     """Retrieve a single ValidationReport by its internal artifact id."""
     stmt = select(Artifact).where(
@@ -204,9 +203,7 @@ async def list_validation_reports(
         Artifact.type == VALIDATION_REPORT_TYPE,
     )
     if commit_sha is not None:
-        total_stmt = total_stmt.where(
-            Artifact.payload["commit_sha"].as_string() == commit_sha
-        )
+        total_stmt = total_stmt.where(Artifact.payload["commit_sha"].as_string() == commit_sha)
 
     total = len(list((await db.execute(total_stmt)).scalars().all()))
 
@@ -243,7 +240,7 @@ async def record_validation_report(
     Returns (artifact_id, content_hash) so callers (e.g. F-503) can
     refer to the exact stored version.
     """
-    occurred_at = occurred_at or datetime.now(timezone.utc)
+    occurred_at = occurred_at or datetime.now(UTC)
     artifact = await artifact_registry.create(
         tenant_id=tenant_id,
         project_id=project_id,
@@ -311,7 +308,7 @@ def new_report(
     return ValidationReport(
         report_id=report_id or uuid4(),
         run_id=run_id,
-        timestamp=timestamp or datetime.now(timezone.utc),
+        timestamp=timestamp or datetime.now(UTC),
         validator_version=validator_version,
         decision=decision,  # type: ignore[arg-type]
         findings=findings or [],

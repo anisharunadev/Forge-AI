@@ -13,11 +13,10 @@ from uuid import UUID
 
 from sqlalchemy import or_, select
 
-from app.core.logging import get_logger
-from app.core.security import AuthenticatedPrincipal
-from app.copilot.tools.base import Tool
 from app.copilot.tools.exceptions import ToolArgumentInvalid
 from app.copilot.tools.registry import tool_registry
+from app.core.logging import get_logger
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.architecture_services import Service
 from app.db.session import get_session_factory
 from app.services.knowledge_graph import KGEdge
@@ -99,14 +98,12 @@ class GetServiceTool:
             "service_key": row.service_key,
             "description": row.description or "",
             "owner_team": row.owner_team,
-            "lifecycle": str(row.lifecycle.value if hasattr(row.lifecycle, "value") else row.lifecycle),
+            "lifecycle": str(
+                row.lifecycle.value if hasattr(row.lifecycle, "value") else row.lifecycle
+            ),
             "tier": row.tier,
             "tags": list(row.tags or []),
-            "repo_url": (
-                f"/architecture/services/{row.id}"
-                if row.id
-                else None
-            ),
+            "repo_url": (f"/architecture/services/{row.id}" if row.id else None),
             "dependencies": dependencies,
         }
 

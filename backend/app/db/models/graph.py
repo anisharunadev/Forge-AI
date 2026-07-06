@@ -12,15 +12,15 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy import Enum as SAEnum
+from sqlalchemy import ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import (
     ARRAY,
+    GUID,
     JSONB,
     Base,
-    GUID,
     TenantScopedMixin,
     TimestampMixin,
     UUIDPrimaryKeyMixin,

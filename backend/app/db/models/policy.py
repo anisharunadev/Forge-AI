@@ -6,10 +6,11 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Boolean, Enum as SAEnum, Index, String
+from sqlalchemy import Boolean, Index, String
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class PolicySeverity(str, Enum):
@@ -40,9 +41,7 @@ class Policy(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
-    __table_args__ = (
-        Index("ix_policies_tenant_enabled", "tenant_id", "enabled"),
-    )
+    __table_args__ = (Index("ix_policies_tenant_enabled", "tenant_id", "enabled"),)
 
 
 __all__ = ["Policy", "PolicySeverity"]

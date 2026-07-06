@@ -12,7 +12,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.deps import DbSession, Principal, require_permission
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import DbSession, require_permission
 from app.core.audit import audit
 from app.core.logging import get_logger
 from app.schemas.common import Page
@@ -32,8 +34,6 @@ from app.schemas.prompt import (
     PromptVersionRead,
 )
 from app.services.prompt_service import PromptError, prompt_service
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/forge/prompts", tags=["forge.prompts"])
 logger = get_logger(__name__)
@@ -90,9 +90,9 @@ async def list_prompts(
         page=page,
         page_size=page_size,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("", response_model=PromptRead, status_code=status.HTTP_201_CREATED)
 @audit(action="forge.prompts.created", target_type="prompt")
 async def create_prompt(
@@ -104,7 +104,9 @@ async def create_prompt(
         db,
         tenant_id=_tenant_id(principal),
         payload=payload,
-        created_by=UUID(getattr(principal, "user_id", "")) if getattr(principal, "user_id", None) else None,
+        created_by=UUID(getattr(principal, "user_id", ""))
+        if getattr(principal, "user_id", None)
+        else None,
     )
 
 
@@ -122,9 +124,9 @@ async def get_prompt(
     if item is None:
         raise HTTPException(status_code=404, detail="prompt_not_found")
     return item
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/{prompt_id}", response_model=PromptRead)
 @audit(action="forge.prompts.updated", target_type="prompt")
 async def update_prompt(
@@ -139,16 +141,18 @@ async def update_prompt(
             tenant_id=_tenant_id(principal),
             prompt_id=prompt_id,
             payload=payload,
-            created_by=UUID(getattr(principal, "user_id", "")) if getattr(principal, "user_id", None) else None,
+            created_by=UUID(getattr(principal, "user_id", ""))
+            if getattr(principal, "user_id", None)
+            else None,
         )
     except PromptError as exc:
         raise _prompt_error_to_http(exc) from exc
     if item is None:
         raise HTTPException(status_code=404, detail="prompt_not_found")
     return item
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/{prompt_id}/archive", response_model=PromptRead)
 @audit(action="forge.prompts.archived", target_type="prompt")
 async def archive_prompt(
@@ -212,8 +216,6 @@ async def diff_versions(
 # Render / test / count
 # ---------------------------------------------------------------------------
 @require_approval_phase(SDLCPhase.REVIEW)
-
-
 @router.post("/{prompt_id}/preview", response_model=PromptRenderResponse)
 @audit(action="forge.prompts.rendered", target_type="prompt")
 async def render_preview(
@@ -233,9 +235,9 @@ async def render_preview(
         )
     except PromptError as exc:
         raise _prompt_error_to_http(exc) from exc
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/{prompt_id}/test", response_model=PromptTestResponse)
 @audit(action="forge.prompts.tested", target_type="prompt")
 async def test_prompt(
@@ -255,9 +257,9 @@ async def test_prompt(
         )
     except PromptError as exc:
         raise _prompt_error_to_http(exc) from exc
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/{prompt_id}/count", response_model=PromptCountResponse)
 @audit(action="forge.prompts.counted", target_type="prompt")
 async def count_tokens(
@@ -283,8 +285,6 @@ async def count_tokens(
 # Dotprompt import (acceptance #5)
 # ---------------------------------------------------------------------------
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post(
     "/import-dotprompt",
     response_model=DotpromptImportResponse,
@@ -300,5 +300,7 @@ async def import_dotprompt(
         db,
         tenant_id=_tenant_id(principal),
         payload=payload,
-        created_by=UUID(getattr(principal, "user_id", "")) if getattr(principal, "user_id", None) else None,
+        created_by=UUID(getattr(principal, "user_id", ""))
+        if getattr(principal, "user_id", None)
+        else None,
     )

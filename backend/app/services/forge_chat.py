@@ -14,10 +14,11 @@ Plaintext virtual keys never leave this module: they are decrypted from
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import AsyncIterator, TypedDict
+from datetime import UTC, datetime
+from typing import TypedDict
 from uuid import UUID, uuid4
 
 import httpx
@@ -35,9 +36,9 @@ from app.schemas.forge_chat import (
     UsageDelta,
 )
 from app.services.audit_service import audit_service
-from app.services.forge_budget_guard import budget_guard
 from app.services.cost_ledger import cost_ledger
-from app.services.forge_spend import SpendRecord, spend_service
+from app.services.forge_budget_guard import budget_guard
+from app.services.forge_spend import SpendRecord
 
 logger = get_logger(__name__)
 
@@ -171,7 +172,7 @@ async def stream_chat(
     yielded chunk is ``event=token`` (or ``error`` if resolution fails).
     """
     run_id = uuid4()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # Step 1 — resolve virtual key + open the LiteLLM chat session.
     # The plaintext key never escapes this `async with` block.
@@ -207,7 +208,7 @@ async def stream_chat(
             run_id=run_id,
             agent_id=agent_id,
             model=request.model,
-            ts=datetime.now(timezone.utc),
+            ts=datetime.now(UTC),
         )
         await _emit(
             "forge.chat.failed",
@@ -265,9 +266,8 @@ async def stream_chat(
             json=body,
         )
         response = await chat.send(req, stream=True)  # type: ignore[attr-defined]
-        ctx.response_id = (
-            response.headers.get("x-litellm-response-id")
-            or response.headers.get("openai-response-id")
+        ctx.response_id = response.headers.get("x-litellm-response-id") or response.headers.get(
+            "openai-response-id"
         )
         response.raise_for_status()
 
@@ -336,7 +336,7 @@ async def stream_chat(
             run_id=run_id,
             agent_id=agent_id,
             model=request.model,
-            ts=datetime.now(timezone.utc),
+            ts=datetime.now(UTC),
         )
         return
     except Exception as exc:  # noqa: BLE001 — translate any LiteLLM failure
@@ -353,7 +353,7 @@ async def stream_chat(
             run_id=run_id,
             agent_id=agent_id,
             model=request.model,
-            ts=datetime.now(timezone.utc),
+            ts=datetime.now(UTC),
         )
         return
     finally:
@@ -369,9 +369,7 @@ async def cancel_run(run_id: UUID) -> ChatCancelResponse:
     """Signal the in-flight stream for ``run_id`` to abort."""
     ctx = _active_streams.get(run_id)
     if ctx is None:
-        return ChatCancelResponse(
-            run_id=run_id, cancelled=False, cancelled_at=datetime.now(timezone.utc)
-        )
+        return ChatCancelResponse(run_id=run_id, cancelled=False, cancelled_at=datetime.now(UTC))
     ctx.cancel_event.set()
     await _cancel_upstream(ctx, reason="user_request")
     await _emit(
@@ -380,9 +378,7 @@ async def cancel_run(run_id: UUID) -> ChatCancelResponse:
         agent_id=ctx.agent_id,
         payload={"model": ctx.model, "trigger": "cancel_run"},
     )
-    return ChatCancelResponse(
-        run_id=run_id, cancelled=True, cancelled_at=datetime.now(timezone.utc)
-    )
+    return ChatCancelResponse(run_id=run_id, cancelled=True, cancelled_at=datetime.now(UTC))
 
 
 async def get_run_status(run_id: UUID) -> ForgeRunStatus | None:
@@ -426,7 +422,7 @@ async def _translate_chunk(
     model: str,
 ) -> AsyncIterator[ChatStreamChunk]:
     """Convert one LiteLLM SSE chunk into zero-or-more Forge envelopes."""
-    ts = datetime.now(timezone.utc)
+    ts = datetime.now(UTC)
     for choice in chunk_json.get("choices") or []:
         delta = choice.get("delta") or {}
 

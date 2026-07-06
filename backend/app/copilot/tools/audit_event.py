@@ -14,15 +14,14 @@ goes through the typed tool layer, which audits itself).
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
-from app.core.logging import get_logger
-from app.core.security import AuthenticatedPrincipal
-from app.copilot.tools.base import Tool
 from app.copilot.tools.exceptions import ToolArgumentInvalid
 from app.copilot.tools.registry import tool_registry
+from app.core.logging import get_logger
+from app.core.security import AuthenticatedPrincipal
 from app.services.audit_service import audit_service
 from app.services.rbac import COPILOT_PERMISSION_TOOL_AUDIT_EVENT
 
@@ -71,11 +70,9 @@ class AuditEventTool:
             )
         payload = args.get("payload") or {}
         if not isinstance(payload, dict):
-            raise ToolArgumentInvalid(
-                self.name, "payload must be an object", field="payload"
-            )
+            raise ToolArgumentInvalid(self.name, "payload must be an object", field="payload")
 
-        emitted_at = datetime.now(timezone.utc)
+        emitted_at = datetime.now(UTC)
         await audit_service.record(
             tenant_id=tenant_id,
             project_id=project_id,

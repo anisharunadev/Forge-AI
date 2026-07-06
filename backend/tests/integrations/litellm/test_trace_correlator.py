@@ -56,18 +56,21 @@ async def test_record_call_with_trace_id(
     # source module hasn't introduced it yet the assertion is still
     # valuable at the API level.
     try:
-        from sqlalchemy import select
-
         from app.db.models.litellm_call_records import LiteLLMCallRecord  # type: ignore
+        from sqlalchemy import select
 
         async with sqlite_db() as session:
             rows = (
-                await session.execute(
-                    select(LiteLLMCallRecord).where(
-                        LiteLLMCallRecord.forge_trace_id == forge_trace_id,
+                (
+                    await session.execute(
+                        select(LiteLLMCallRecord).where(
+                            LiteLLMCallRecord.forge_trace_id == forge_trace_id,
+                        )
                     )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
         assert len(rows) == 1
         assert rows[0].litellm_call_id == litellm_call_id
         assert rows[0].tenant_id == fake_tenant_id

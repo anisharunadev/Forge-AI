@@ -29,7 +29,7 @@ proxy_token=...)``.  Both paths coexist during the rollout window.
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -44,6 +44,8 @@ from app.integrations.litellm.litellm_base_client import LiteLLMBaseClient
 from app.integrations.litellm.secrets_manager_client import (
     SecretsManagerClient,
     SecretsManagerUnavailable,
+)
+from app.integrations.litellm.secrets_manager_client import (
     get_default_client as get_default_secrets_client,
 )
 
@@ -123,9 +125,7 @@ class VirtualKeyManager:
         response = await self._admin_post("/key/generate", json_body=body)
         key_value = self._extract_key_value(response)
         if not key_value:
-            raise RuntimeError(
-                f"LiteLLM /key/generate returned no key value for tenant {tid}"
-            )
+            raise RuntimeError(f"LiteLLM /key/generate returned no key value for tenant {tid}")
 
         secret_name = self._secret_name(tid)
         await self._secrets.put_secret(secret_name, key_value)
@@ -211,15 +211,13 @@ class VirtualKeyManager:
             raise LookupError(f"no LiteLLM Team mapping for tenant {tid}")
 
         old_key = await self.get_key(tid)
-        new_alias = f"forge-{tid}-{int(datetime.now(timezone.utc).timestamp())}"
+        new_alias = f"forge-{tid}-{int(datetime.now(UTC).timestamp())}"
 
         body = {"team_id": mapping_team_id, "key_alias": new_alias}
         response = await self._admin_post("/key/generate", json_body=body)
         new_key_value = self._extract_key_value(response)
         if not new_key_value:
-            raise RuntimeError(
-                f"LiteLLM /key/generate returned no key value for tenant {tid}"
-            )
+            raise RuntimeError(f"LiteLLM /key/generate returned no key value for tenant {tid}")
 
         await self._secrets.put_secret(self._secret_name(tid), new_key_value)
         await self._cache_put(tid, new_key_value)
@@ -314,7 +312,9 @@ class VirtualKeyManager:
     # ------------------------------------------------------------------
     # HTTP helpers
     # ------------------------------------------------------------------
-    async def _admin_post(self, path: str, *, json_body: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def _admin_post(
+        self, path: str, *, json_body: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         if self._base_client_factory is not None:
             async with self._base_client_factory() as client:
                 response = await client.admin_client.post(path, json=json_body or {})
@@ -332,19 +332,19 @@ class VirtualKeyManager:
         if entry is None:
             return None
         value, expires_at = entry
-        if expires_at <= datetime.now(timezone.utc):
+        if expires_at <= datetime.now(UTC):
             self._cache.pop(tenant_id, None)
             return None
         return value
 
     async def _cache_put(self, tenant_id: str, value: str) -> None:
         ttl = int(getattr(settings, "litellm_key_cache_ttl_seconds", 300))
-        expires_at = datetime.now(timezone.utc).timestamp() + ttl
+        expires_at = datetime.now(UTC).timestamp() + ttl
         from datetime import datetime as _dt
 
         self._cache[tenant_id] = (
             value,
-            _dt.fromtimestamp(expires_at, tz=timezone.utc),
+            _dt.fromtimestamp(expires_at, tz=UTC),
         )
 
     async def _cache_evict(self, tenant_id: str) -> None:
@@ -366,52 +366,45 @@ class VirtualKeyManager:
     ) -> None:
         key_hash = _fingerprint(key_value) if key_value else ""
         factory = get_session_factory()
-        async with factory() as session:
-            async with tenant_context(session, tenant_id, project_id):
-                session.add(
-                    LiteLLMKeyAudit(
-                        tenant_id=tenant_id,
-                        project_id=project_id or "00000000-0000-0000-0000-000000000000",
-                        litellm_team_id=litellm_team_id,
-                        litellm_key_alias=litellm_key_alias,
-                        litellm_key_hash=key_hash,
-                        action=action.value,
-                        actor_id=str(actor_id) if actor_id else None,
-                        reason=reason,
-                        occurred_at=datetime.now(timezone.utc),
-                    )
+        async with factory() as session, tenant_context(session, tenant_id, project_id):
+            session.add(
+                LiteLLMKeyAudit(
+                    tenant_id=tenant_id,
+                    project_id=project_id or "00000000-0000-0000-0000-000000000000",
+                    litellm_team_id=litellm_team_id,
+                    litellm_key_alias=litellm_key_alias,
+                    litellm_key_hash=key_hash,
+                    action=action.value,
+                    actor_id=str(actor_id) if actor_id else None,
+                    reason=reason,
+                    occurred_at=datetime.now(UTC),
                 )
-                await session.commit()
+            )
+            await session.commit()
 
     async def _team_id_for_tenant(self, tenant_id: str) -> str | None:
         from app.db.models.litellm_team_mapping import LiteLLMTeamMapping
 
         factory = get_session_factory()
-        async with factory() as session:
-            async with tenant_context(session, tenant_id):
-                row = await session.scalar(
-                    select(LiteLLMTeamMapping).where(
-                        LiteLLMTeamMapping.tenant_id == tenant_id
-                    )
-                )
-                if row is None:
-                    return None
-                return row.litellm_team_id
+        async with factory() as session, tenant_context(session, tenant_id):
+            row = await session.scalar(
+                select(LiteLLMTeamMapping).where(LiteLLMTeamMapping.tenant_id == tenant_id)
+            )
+            if row is None:
+                return None
+            return row.litellm_team_id
 
     async def _project_id_for_tenant(self, tenant_id: str) -> str | None:
         from app.db.models.litellm_team_mapping import LiteLLMTeamMapping
 
         factory = get_session_factory()
-        async with factory() as session:
-            async with tenant_context(session, tenant_id):
-                row = await session.scalar(
-                    select(LiteLLMTeamMapping).where(
-                        LiteLLMTeamMapping.tenant_id == tenant_id
-                    )
-                )
-                if row is None:
-                    return None
-                return str(row.project_id)
+        async with factory() as session, tenant_context(session, tenant_id):
+            row = await session.scalar(
+                select(LiteLLMTeamMapping).where(LiteLLMTeamMapping.tenant_id == tenant_id)
+            )
+            if row is None:
+                return None
+            return str(row.project_id)
 
     # ------------------------------------------------------------------
     # Static helpers

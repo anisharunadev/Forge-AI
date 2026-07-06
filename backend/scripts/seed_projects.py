@@ -9,21 +9,21 @@ have data to render against the real backend.
 Run with:
     docker compose exec backend python -m scripts.seed_projects
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import select
 
-from app.db.models.tenant import Tenant
 from app.db.models.project import Project
 from app.db.models.story import Epic, EpicStatus, Sprint, SprintStatus
+from app.db.models.tenant import Tenant
 from app.db.session import get_session_factory
-
 from scripts._seed_helpers import ACME_TENANT_ID
 
 logger = logging.getLogger("seed_projects")
@@ -133,7 +133,7 @@ SEED_EPICS: list[dict[str, Any]] = [
 
 
 def _sprint_window(start_offset_days: int, end_offset_days: int) -> tuple[datetime, datetime]:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return (
         now + timedelta(days=start_offset_days),
         now + timedelta(days=end_offset_days),
@@ -226,9 +226,7 @@ async def seed() -> None:
                 logger.info("  ↻ epic exists: %s", row["title"])
                 continue
             epics_created += 1
-            logger.info(
-                "  ✓ epic created: %s (%s)", row["title"], row["status"].value
-            )
+            logger.info("  ✓ epic created: %s (%s)", row["title"], row["status"].value)
             session.add(Epic(tenant_id=tenant.id, **row))
 
         # -----------------------------------------------------------------
@@ -247,9 +245,7 @@ async def seed() -> None:
             if existing is not None:
                 logger.info("  ↻ sprint exists: %s", row["name"])
                 continue
-            start, end = _sprint_window(
-                row.pop("start_offset_days"), row.pop("end_offset_days")
-            )
+            start, end = _sprint_window(row.pop("start_offset_days"), row.pop("end_offset_days"))
             session.add(
                 Sprint(
                     tenant_id=tenant.id,
@@ -259,9 +255,7 @@ async def seed() -> None:
                 )
             )
             sprints_created += 1
-            logger.info(
-                "  ✓ sprint created: %s (%s)", row["name"], row["status"].value
-            )
+            logger.info("  ✓ sprint created: %s (%s)", row["name"], row["status"].value)
 
         await session.commit()
 

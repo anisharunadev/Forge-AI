@@ -9,11 +9,9 @@ proxy (each service falls back to deterministic mode).
 
 from __future__ import annotations
 
-import asyncio
 import json
-import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from typing import Any
 
@@ -21,6 +19,7 @@ import pytest
 
 from app.db.models.agent import Agent, AgentStatus, AgentType
 from app.db.models.ideation import (
+    PRD,
     ApprovalDecision,
     ApprovalItem,
     ApprovalItemStatus,
@@ -30,12 +29,8 @@ from app.db.models.ideation import (
     IdeaAnalysis,
     IdeaSource,
     IdeaStatus,
-    OpportunityScore,
     OutputBundle,
-    PRD,
     PRDStatus,
-    PushRecord,
-    PushStatus,
     PushTarget,
     Roadmap,
     RoadmapStatus,
@@ -58,7 +53,6 @@ from app.services.ideation import (
     realtime_workflow,
     roadmap_generator,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -148,7 +142,7 @@ class _FakeFreshnessLedger:
         self.records: dict[str, dict] = {}
 
     async def mark_fresh(self, *, node_id, source, at=None, tenant_id, metadata=None):
-        at = at or datetime.now(timezone.utc)
+        at = at or datetime.now(UTC)
         self.records[node_id] = {"source": source, "at": at}
         return SimpleNamespace(node_id=node_id, source=source, at=at, metadata=metadata or {})
 
@@ -177,16 +171,35 @@ def _patch_internals(monkeypatch):
     monkeypatch.setattr(event_bus_mod, "bus", fake_bus)
     monkeypatch.setattr(freshness_mod, "freshness_ledger", fake_freshness)
     # Ideation services hold direct imports of default_bus; patch those too.
-    from app.services.ideation import agent_selector, approval_queue, arch_preview
-    from app.services.ideation import idea_analysis, idea_intake, impact_graph
-    from app.services.ideation import kg_integration, output_bundle, prd_generator
-    from app.services.ideation import push_to_delivery, realtime_workflow
-    from app.services.ideation import roadmap_generator, scoring
+    from app.services.ideation import (
+        agent_selector,
+        approval_queue,
+        arch_preview,
+        idea_analysis,
+        idea_intake,
+        impact_graph,
+        kg_integration,
+        output_bundle,
+        prd_generator,
+        push_to_delivery,
+        realtime_workflow,
+        roadmap_generator,
+        scoring,
+    )
 
     for module in (
-        agent_selector, approval_queue, arch_preview, idea_analysis,
-        idea_intake, impact_graph, kg_integration, output_bundle,
-        prd_generator, push_to_delivery, realtime_workflow, roadmap_generator,
+        agent_selector,
+        approval_queue,
+        arch_preview,
+        idea_analysis,
+        idea_intake,
+        impact_graph,
+        kg_integration,
+        output_bundle,
+        prd_generator,
+        push_to_delivery,
+        realtime_workflow,
+        roadmap_generator,
         scoring,
     ):
         if hasattr(module, "default_bus"):
@@ -220,9 +233,7 @@ async def test_analyze_idea_uses_litellm(sqlite_db):
     tenant_id = str(uuid.uuid4())
     project_id = str(uuid.uuid4())
     actor_id = str(uuid.uuid4())
-    idea = await _seed_idea(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id
-    )
+    idea = await _seed_idea(tenant_id=tenant_id, project_id=project_id, actor_id=actor_id)
     analysis = await idea_analysis_service.analyze_idea(
         idea.id, tenant_id=tenant_id, actor_id=actor_id
     )
@@ -232,16 +243,12 @@ async def test_analyze_idea_uses_litellm(sqlite_db):
     assert analysis.summary
     assert analysis.problem_statement or analysis.summary
     # The service should record a re-fetchable analysis.
-    again = await idea_analysis_service.get_analysis(
-        idea.id, tenant_id=tenant_id
-    )
+    again = await idea_analysis_service.get_analysis(idea.id, tenant_id=tenant_id)
     assert again is not None
     assert again.id == analysis.id
 
     # Re-analyze forced path.
-    new = await idea_analysis_service.reanalyze(
-        idea.id, tenant_id=tenant_id, actor_id=actor_id
-    )
+    new = await idea_analysis_service.reanalyze(idea.id, tenant_id=tenant_id, actor_id=actor_id)
     assert new.id != analysis.id or new.analyzed_at >= analysis.analyzed_at
 
 
@@ -302,9 +309,7 @@ async def test_opportunity_scoring_ai_vs_human(sqlite_db):
     tenant_id = str(uuid.uuid4())
     project_id = str(uuid.uuid4())
     actor_id = str(uuid.uuid4())
-    idea = await _seed_idea(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id
-    )
+    idea = await _seed_idea(tenant_id=tenant_id, project_id=project_id, actor_id=actor_id)
     ai_score = await opportunity_scoring_service.score_idea(
         idea.id,
         tenant_id=tenant_id,
@@ -418,9 +423,7 @@ async def test_prd_generator_bmad_template(sqlite_db):
     tenant_id = str(uuid.uuid4())
     project_id = str(uuid.uuid4())
     actor_id = str(uuid.uuid4())
-    idea = await _seed_idea(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id
-    )
+    idea = await _seed_idea(tenant_id=tenant_id, project_id=project_id, actor_id=actor_id)
     prd = await prd_generator.generate_prd(
         idea.id,
         tenant_id=tenant_id,
@@ -430,8 +433,16 @@ async def test_prd_generator_bmad_template(sqlite_db):
     assert isinstance(prd, PRD)
     assert prd.status == PRDStatus.DRAFT
     # All BMad sections must be present.
-    for section in ("problem", "goals", "non_goals", "user_stories",
-                    "requirements", "success_metrics", "open_questions", "risks"):
+    for section in (
+        "problem",
+        "goals",
+        "non_goals",
+        "user_stories",
+        "requirements",
+        "success_metrics",
+        "open_questions",
+        "risks",
+    ):
         assert section in (prd.content or {})
 
     # Section edit + submit + approve flow.
@@ -449,9 +460,7 @@ async def test_prd_generator_bmad_template(sqlite_db):
         prd.id, tenant_id=tenant_id, actor_id=actor_id
     )
     assert submitted.status == PRDStatus.REVIEW
-    approved = await prd_generator.approve_prd(
-        prd.id, tenant_id=tenant_id, actor_id=actor_id
-    )
+    approved = await prd_generator.approve_prd(prd.id, tenant_id=tenant_id, actor_id=actor_id)
     assert approved.status == PRDStatus.APPROVED
 
 
@@ -464,9 +473,7 @@ async def test_arch_preview_generates_components(sqlite_db):
     tenant_id = str(uuid.uuid4())
     project_id = str(uuid.uuid4())
     actor_id = str(uuid.uuid4())
-    idea = await _seed_idea(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id
-    )
+    idea = await _seed_idea(tenant_id=tenant_id, project_id=project_id, actor_id=actor_id)
     preview = await arch_preview_service.generate_preview(
         idea.id, tenant_id=tenant_id, actor_id=actor_id
     )
@@ -492,16 +499,18 @@ async def test_agent_selector_picks_per_phase(sqlite_db):
     actor_id = str(uuid.uuid4())
 
     await _seed_agent(
-        tenant_id, project_id, "alpha",
+        tenant_id,
+        project_id,
+        "alpha",
         capabilities={"languages": ["python", "typescript"], "tools": ["shell", "analysis"]},
     )
     await _seed_agent(
-        tenant_id, project_id, "beta",
+        tenant_id,
+        project_id,
+        "beta",
         capabilities={"languages": ["go"], "tools": ["architecture"]},
     )
-    idea = await _seed_idea(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id
-    )
+    idea = await _seed_idea(tenant_id=tenant_id, project_id=project_id, actor_id=actor_id)
     plan = await agent_selector.select_agents_for_idea(
         idea.id, tenant_id=tenant_id, project_id=project_id
     )
@@ -520,9 +529,7 @@ async def test_realtime_workflow_streams_progress(sqlite_db):
     tenant_id = str(uuid.uuid4())
     project_id = str(uuid.uuid4())
     actor_id = str(uuid.uuid4())
-    idea = await _seed_idea(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id
-    )
+    idea = await _seed_idea(tenant_id=tenant_id, project_id=project_id, actor_id=actor_id)
 
     session = await realtime_workflow.start_workflow(
         idea.id,
@@ -535,13 +542,9 @@ async def test_realtime_workflow_streams_progress(sqlite_db):
 
     # Synchronously drive the pipeline (test does not rely on the
     # background task that production schedules).
-    await realtime_workflow.run_pipeline(
-        session.id, tenant_id=tenant_id, project_id=project_id
-    )
+    await realtime_workflow.run_pipeline(session.id, tenant_id=tenant_id, project_id=project_id)
 
-    final_state = await realtime_workflow.get_workflow_state(
-        session.id, tenant_id=tenant_id
-    )
+    final_state = await realtime_workflow.get_workflow_state(session.id, tenant_id=tenant_id)
     assert final_state.status == WorkflowSessionStatus.COMPLETED
     # Each pipeline step should have a result populated.
     for step in final_state.steps:
@@ -552,9 +555,7 @@ async def test_realtime_workflow_user_intervention(sqlite_db):
     tenant_id = str(uuid.uuid4())
     project_id = str(uuid.uuid4())
     actor_id = str(uuid.uuid4())
-    idea = await _seed_idea(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id
-    )
+    idea = await _seed_idea(tenant_id=tenant_id, project_id=project_id, actor_id=actor_id)
     session = await realtime_workflow.start_workflow(
         idea.id,
         actor_id,
@@ -594,22 +595,14 @@ async def test_output_bundle_packages_all_components(sqlite_db):
     tenant_id = str(uuid.uuid4())
     project_id = str(uuid.uuid4())
     actor_id = str(uuid.uuid4())
-    idea = await _seed_idea(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id
-    )
+    idea = await _seed_idea(tenant_id=tenant_id, project_id=project_id, actor_id=actor_id)
     # Drive every dependency the bundle expects.
-    await idea_analysis_service.analyze_idea(
-        idea.id, tenant_id=tenant_id, actor_id=actor_id
-    )
+    await idea_analysis_service.analyze_idea(idea.id, tenant_id=tenant_id, actor_id=actor_id)
     await opportunity_scoring_service.score_idea(
         idea.id, tenant_id=tenant_id, project_id=project_id, scoring_strategy="deterministic"
     )
-    await prd_generator.generate_prd(
-        idea.id, tenant_id=tenant_id, actor_id=actor_id
-    )
-    await arch_preview_service.generate_preview(
-        idea.id, tenant_id=tenant_id, actor_id=actor_id
-    )
+    await prd_generator.generate_prd(idea.id, tenant_id=tenant_id, actor_id=actor_id)
+    await arch_preview_service.generate_preview(idea.id, tenant_id=tenant_id, actor_id=actor_id)
 
     bundle = await idea_output_bundle_service.create_bundle(
         idea.id,
@@ -619,13 +612,11 @@ async def test_output_bundle_packages_all_components(sqlite_db):
     )
     assert isinstance(bundle, OutputBundle)
     sections = {s["name"] for s in bundle.bundle.get("sections", [])}
-    for expected in {"idea", "analysis", "score", "prd", "arch_preview", "agent_plan"}:
+    for expected in ("idea", "analysis", "score", "prd", "arch_preview", "agent_plan"):
         assert expected in sections
 
     # JSON export returns a string body.
-    body = await idea_output_bundle_service.export_bundle(
-        bundle.id, "json", tenant_id=tenant_id
-    )
+    body = await idea_output_bundle_service.export_bundle(bundle.id, "json", tenant_id=tenant_id)
     assert isinstance(body, bytes)
     parsed = json.loads(body.decode("utf-8"))
     assert "sections" in parsed
@@ -641,9 +632,7 @@ async def test_approval_queue_enqueue_and_decide(sqlite_db):
     project_id = str(uuid.uuid4())
     actor_id = str(uuid.uuid4())
     reviewer_id = str(uuid.uuid4())
-    idea = await _seed_idea(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id
-    )
+    idea = await _seed_idea(tenant_id=tenant_id, project_id=project_id, actor_id=actor_id)
     item = await approval_queue_service.enqueue(
         idea.id,
         ApprovalItemType.ROADMAP,
@@ -656,9 +645,7 @@ async def test_approval_queue_enqueue_and_decide(sqlite_db):
     assert isinstance(item, ApprovalItem)
     assert item.status == ApprovalItemStatus.PENDING
 
-    queue = await approval_queue_service.get_queue(
-        tenant_id=tenant_id, user_id=reviewer_id
-    )
+    queue = await approval_queue_service.get_queue(tenant_id=tenant_id, user_id=reviewer_id)
     assert any(q.id == item.id for q in queue)
 
     # Assign and then decide.
@@ -687,9 +674,7 @@ async def test_push_to_jira_creates_epic(sqlite_db):
     tenant_id = str(uuid.uuid4())
     project_id = str(uuid.uuid4())
     actor_id = str(uuid.uuid4())
-    idea = await _seed_idea(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id
-    )
+    idea = await _seed_idea(tenant_id=tenant_id, project_id=project_id, actor_id=actor_id)
     result = await idea_push_to_delivery_service.push_to_jira(
         idea.id,
         "FORGE",
@@ -701,9 +686,7 @@ async def test_push_to_jira_creates_epic(sqlite_db):
     assert result.external_ref is not None
     assert result.external_ref.startswith("JIRA/")
 
-    history = await idea_push_to_delivery_service.push_history(
-        idea.id, tenant_id=tenant_id
-    )
+    history = await idea_push_to_delivery_service.push_history(idea.id, tenant_id=tenant_id)
     assert len(history) >= 1
     assert any(r.target == PushTarget.JIRA for r in history)
 
@@ -712,9 +695,7 @@ async def test_push_to_confluence_creates_page(sqlite_db):
     tenant_id = str(uuid.uuid4())
     project_id = str(uuid.uuid4())
     actor_id = str(uuid.uuid4())
-    idea = await _seed_idea(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id
-    )
+    idea = await _seed_idea(tenant_id=tenant_id, project_id=project_id, actor_id=actor_id)
     result = await idea_push_to_delivery_service.push_to_confluence(
         idea.id,
         "ENG",
@@ -753,9 +734,5 @@ async def test_idea_kg_integration(sqlite_db):
     # Either 0 or N matches — depending on the deterministic embedding
     # similarity — but the call must not raise.
     assert isinstance(related, list)
-    graph = await idea_knowledge_graph_service.get_idea_graph(
-        project_id, tenant_id=tenant_id
-    )
-    assert any(
-        n.metadata.get("kg_node_id") == str(node.id) for n in graph.nodes
-    )
+    graph = await idea_knowledge_graph_service.get_idea_graph(project_id, tenant_id=tenant_id)
+    assert any(n.metadata.get("kg_node_id") == str(node.id) for n in graph.nodes)

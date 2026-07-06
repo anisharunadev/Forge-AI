@@ -18,14 +18,16 @@ Errors raised by the runner are mapped to HTTP responses by
 """
 
 from __future__ import annotations
-from typing import Annotated
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from app.api.deps import DbSession, Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import DbSession, get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.seeds import (
@@ -39,7 +41,6 @@ from app.schemas.seeds import (
 )
 from app.services.audit_service import AuditService
 from app.services.seed_service import SeedService
-
 from seeds.framework.exceptions import (
     ApplyRolledBackError,
     BrokenReferenceError,
@@ -50,8 +51,6 @@ from seeds.framework.exceptions import (
     SeedError,
     SeedNotFoundError,
 )
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/seeds", tags=["seeds"])
 
@@ -67,7 +66,10 @@ _SEED_ERROR_MAP: dict[type[SeedError], tuple[int, str]] = {
     BrokenReferenceError: (status.HTTP_400_BAD_REQUEST, "broken_reference"),
     ProductionSeedBlockedError: (status.HTTP_403_FORBIDDEN, "production_blocked"),
     ApplyRolledBackError: (status.HTTP_500_INTERNAL_SERVER_ERROR, "apply_error"),
-    DependencyNotSatisfiedError: (status.HTTP_422_UNPROCESSABLE_CONTENT, "dependency_not_satisfied"),
+    DependencyNotSatisfiedError: (
+        status.HTTP_422_UNPROCESSABLE_CONTENT,
+        "dependency_not_satisfied",
+    ),
     SeedNotFoundError: (status.HTTP_404_NOT_FOUND, "seed_not_found"),
 }
 
@@ -173,8 +175,6 @@ async def list_seed_runs(
 # POST endpoints
 # ---------------------------------------------------------------------------
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/{name}/apply", response_model=SeedRunRead)
 @audit(action="seeds.apply", target_type="seed")
 async def apply_seed(
@@ -202,9 +202,9 @@ async def apply_seed(
         )
     except SeedError as exc:
         raise _seed_error_to_http(exc) from exc
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/{name}/reset", response_model=SeedRunRead)
 @audit(action="seeds.reset", target_type="seed")
 async def reset_seed(
@@ -241,9 +241,9 @@ async def reset_seed(
         )
     except SeedError as exc:
         raise _seed_error_to_http(exc) from exc
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/{name}/rollback", response_model=SeedRunRead)
 @audit(action="seeds.rollback", target_type="seed")
 async def rollback_seed(

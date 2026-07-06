@@ -34,36 +34,19 @@ from __future__ import annotations
 
 from app.integrations.litellm.budget_sync import BudgetSync, budget_sync
 from app.integrations.litellm.guardrail_sync import GuardrailSync, guardrail_sync
+
+# F-829l LiteLLMHealthMonitor — added by health_monitor agent
+from app.integrations.litellm.health_monitor import (
+    LiteLLMHealthMonitor,
+    health_monitor,
+)
 from app.integrations.litellm.key_manager import VirtualKeyManager, virtual_key_manager
 from app.integrations.litellm.litellm_base_client import LiteLLMBaseClient
-from app.integrations.litellm.mcp_server_registry import MCPServerRegistry, mcp_server_registry
-from app.integrations.litellm.model_assignment import (
-    ModelAssignmentResolver,
-    model_assignment_resolver,
-)
-from app.integrations.litellm.secrets_manager_client import (
-    Boto3ClientFactory,
-    SecretRef,
-    SecretsManagerClient,
-    SecretsManagerUnavailable,
-)
-# F-829f SkillSync — added by skill_sync agent (Phase D)
-from app.integrations.litellm.skill_sync import SkillSync, skill_sync
-from app.integrations.litellm.tenant_sync import TenantSync, tenant_sync
-from app.integrations.litellm.usage_query import (
-    ModelUsageBucket,
-    TenantUsageSnapshot,
-    UsageQuery,
-    UserUsageBucket,
-    WorkflowUsageBucket,
-    usage_query,
-)
 
 # Placeholder re-exports — populated by sibling agents as they land
 # their modules. These are intentionally not imported yet (the files
 # do not exist); they are listed here so the public surface is
 # visible in one place and reviewers can see what is coming.
-
 # F-829a TenantSync          — added by tenant_sync agent
 # F-829b VirtualKeyManager   — added by key_manager agent
 # F-829c BudgetSync          — added by budget_sync agent
@@ -79,17 +62,35 @@ from app.integrations.litellm.llm_client import (
     LLMUnavailableError,
     forge_llm_client,
 )
+from app.integrations.litellm.mcp_server_registry import MCPServerRegistry, mcp_server_registry
+from app.integrations.litellm.model_assignment import (
+    ModelAssignmentResolver,
+    model_assignment_resolver,
+)
+from app.integrations.litellm.secrets_manager_client import (
+    Boto3ClientFactory,
+    SecretRef,
+    SecretsManagerClient,
+    SecretsManagerUnavailable,
+)
+
+# F-829f SkillSync — added by skill_sync agent (Phase D)
+from app.integrations.litellm.skill_sync import SkillSync, skill_sync
+from app.integrations.litellm.tenant_sync import TenantSync, tenant_sync
+
 # F-829k TraceCorrelator     — added by trace_correlator agent
 from app.integrations.litellm.trace_correlator import (
     TraceCorrelator,
     trace_correlator,
 )
-# F-829l LiteLLMHealthMonitor — added by health_monitor agent
-from app.integrations.litellm.health_monitor import (
-    LiteLLMHealthMonitor,
-    health_monitor,
+from app.integrations.litellm.usage_query import (
+    ModelUsageBucket,
+    TenantUsageSnapshot,
+    UsageQuery,
+    UserUsageBucket,
+    WorkflowUsageBucket,
+    usage_query,
 )
-
 
 __all__ = [
     # Foundation (shipped in this PR)

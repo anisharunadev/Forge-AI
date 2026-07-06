@@ -13,6 +13,7 @@ so the Connector Center can render the Credentials tab against real
 data; swapping the cipher later is a one-method change in
 :class:`app.services.credentials.CredentialVault`.
 """
+
 from __future__ import annotations
 
 import enum
@@ -20,10 +21,11 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import DateTime, Enum as SAEnum, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class CredentialType(str, enum.Enum):
@@ -76,15 +78,9 @@ class ConnectorCredential(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     # ponytail: project JSONB degrades to JSON on SQLite so test schema
     # builds; renders as PG_JSONB on Postgres so prod on-disk shape is
     # unchanged.
-    expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    last_rotated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    last_used_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_rotated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     rotation_reminder_days: Mapped[int] = mapped_column(Integer, nullable=False, default=90)
     created_by: Mapped[UUID] = mapped_column(GUID(), nullable=False)
 

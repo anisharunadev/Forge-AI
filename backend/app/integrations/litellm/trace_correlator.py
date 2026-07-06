@@ -14,7 +14,7 @@ write so the new ``litellm_call_records`` RLS policy filters correctly.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -113,27 +113,26 @@ class TraceCorrelator:
         tid = str(tenant_id)
         pid = str(project_id) if project_id else "00000000-0000-0000-0000-000000000000"
         factory = get_session_factory()
-        async with factory() as session:
-            async with tenant_context(session, tid, pid):
-                row = LiteLLMCallRecord(
-                    tenant_id=tid,
-                    project_id=pid,
-                    workflow_id=str(workflow_id) if workflow_id else None,
-                    actor_id=str(actor_id) if actor_id else None,
-                    forge_trace_id=forge_trace_id,
-                    litellm_call_id=litellm_call_id,
-                    model=model,
-                    status=status,
-                    prompt_tokens=int(prompt_tokens or 0),
-                    completion_tokens=int(completion_tokens or 0),
-                    cost_usd=float(cost_usd or 0.0),
-                    latency_ms=int(latency_ms or 0),
-                    error=error,
-                    metadata_={},
-                    occurred_at=datetime.now(timezone.utc),
-                )
-                session.add(row)
-                await session.commit()
+        async with factory() as session, tenant_context(session, tid, pid):
+            row = LiteLLMCallRecord(
+                tenant_id=tid,
+                project_id=pid,
+                workflow_id=str(workflow_id) if workflow_id else None,
+                actor_id=str(actor_id) if actor_id else None,
+                forge_trace_id=forge_trace_id,
+                litellm_call_id=litellm_call_id,
+                model=model,
+                status=status,
+                prompt_tokens=int(prompt_tokens or 0),
+                completion_tokens=int(completion_tokens or 0),
+                cost_usd=float(cost_usd or 0.0),
+                latency_ms=int(latency_ms or 0),
+                error=error,
+                metadata_={},
+                occurred_at=datetime.now(UTC),
+            )
+            session.add(row)
+            await session.commit()
         logger.info(
             "litellm.call_recorded",
             tenant_id=tid,

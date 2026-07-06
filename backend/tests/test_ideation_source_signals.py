@@ -89,18 +89,14 @@ async def test_unique_constraint_blocks_duplicate_signals(sqlite_db, signals_set
     async with factory() as session:
         # First insert succeeds.
         stmt = pg_insert(IdeaSourceSignal).values(payload)
-        stmt = stmt.on_conflict_do_nothing(
-            index_elements=["tenant_id", "source", "external_id"]
-        )
+        stmt = stmt.on_conflict_do_nothing(index_elements=["tenant_id", "source", "external_id"])
         await session.execute(stmt)
         await session.commit()
 
         # Re-inserting the same external_id is a no-op.
         payload["id"] = uuid.uuid4()
         stmt = pg_insert(IdeaSourceSignal).values(payload)
-        stmt = stmt.on_conflict_do_nothing(
-            index_elements=["tenant_id", "source", "external_id"]
-        )
+        stmt = stmt.on_conflict_do_nothing(index_elements=["tenant_id", "source", "external_id"])
         await session.execute(stmt)
         await session.commit()
 

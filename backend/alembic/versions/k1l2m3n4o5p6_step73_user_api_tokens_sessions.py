@@ -20,15 +20,16 @@ Create Date: 2026-07-01 09:00:00.000000
 
 from __future__ import annotations
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "k1l2m3n4o5p6"
-down_revision: Union[str, None] = "j8k9l0m1n2o3"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "j8k9l0m1n2o3"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -67,9 +68,7 @@ def upgrade() -> None:
         sa.Index("ix_user_api_tokens_tenant_id", "tenant_id"),
         sa.Index("ix_user_api_tokens_user_id", "user_id"),
     )
-    op.create_index(
-        "ix_user_api_tokens_user_active", "user_api_tokens", ["user_id", "revoked_at"]
-    )
+    op.create_index("ix_user_api_tokens_user_active", "user_api_tokens", ["user_id", "revoked_at"])
     op.create_index(
         "ix_user_api_tokens_tenant_active",
         "user_api_tokens",
@@ -110,9 +109,7 @@ def upgrade() -> None:
         sa.Index("ix_user_sessions_tenant_id", "tenant_id"),
         sa.Index("ix_user_sessions_user_id", "user_id"),
     )
-    op.create_index(
-        "ix_user_sessions_user_active", "user_sessions", ["user_id", "revoked_at"]
-    )
+    op.create_index("ix_user_sessions_user_active", "user_sessions", ["user_id", "revoked_at"])
 
 
 def downgrade() -> None:

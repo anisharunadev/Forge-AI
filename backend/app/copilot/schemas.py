@@ -12,7 +12,6 @@ The model sees these schemas inline in the LiteLLM ``tools`` array.
 
 from __future__ import annotations
 
-
 SEARCH_KNOWLEDGE_SCHEMA: dict = {
     "type": "object",
     "properties": {
@@ -156,7 +155,11 @@ CHECK_BUDGET_SCHEMA: dict = {
 AUDIT_EVENT_SCHEMA: dict = {
     "type": "object",
     "properties": {
-        "action": {"type": "string", "minLength": 1, "description": "e.g. copilot.tool.search_knowledge"},
+        "action": {
+            "type": "string",
+            "minLength": 1,
+            "description": "e.g. copilot.tool.search_knowledge",
+        },
         "target_type": {"type": "string", "minLength": 1},
         "target_id": {"type": "string", "minLength": 1},
         "payload": {"type": "object", "additionalProperties": True, "default": {}},

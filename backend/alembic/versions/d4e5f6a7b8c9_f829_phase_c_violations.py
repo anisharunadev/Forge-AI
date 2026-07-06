@@ -7,26 +7,25 @@ Revision ID: d4e5f6a7b8c9
 Revises: c3d4e5f6a7b8
 Create Date: 2026-06-25 12:30:00.000000
 """
+
 from __future__ import annotations
 
-from typing import Sequence, Union
+import sys
+from collections.abc import Sequence
+from pathlib import Path
+
+import sqlalchemy as sa
 
 from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
-
-import sys
-from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.db.base import GUID  # noqa: E402
 
-
 # revision identifiers, used by Alembic.
 revision: str = "d4e5f6a7b8c9"
-down_revision: Union[str, None] = "c3d4e5f6a7b8"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "c3d4e5f6a7b8"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def _enable_rls(table_name: str) -> None:
@@ -71,9 +70,7 @@ def upgrade() -> None:
         ),
         sa.Column("occurred_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("id", GUID(), nullable=False),
-        sa.PrimaryKeyConstraint(
-            "id", name=op.f("pk_litellm_guardrail_violations")
-        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_litellm_guardrail_violations")),
     )
     op.create_index(
         op.f("ix_litellm_guardrail_violations_tenant_id"),

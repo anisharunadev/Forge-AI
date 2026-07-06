@@ -10,8 +10,8 @@ Runs at ``*/5 * * * *`` — registered in :mod:`app.services.scheduler.service`.
 from __future__ import annotations
 
 import os
-from datetime import datetime, timedelta, timezone
-from typing import Iterable
+from collections.abc import Iterable
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 
@@ -22,9 +22,7 @@ from app.services.audit_service import audit_service
 
 logger = get_logger(__name__)
 
-_RECONCILE_LOOKBACK_MINUTES: int = int(
-    os.environ.get("FORGE_SPEND_RECONCILE_LOOKBACK_MIN", "5")
-)
+_RECONCILE_LOOKBACK_MINUTES: int = int(os.environ.get("FORGE_SPEND_RECONCILE_LOOKBACK_MIN", "5"))
 
 
 async def run(tenant_id: str | None = None) -> None:
@@ -33,7 +31,7 @@ async def run(tenant_id: str | None = None) -> None:
     If ``tenant_id`` is provided, reconciles only that tenant. Otherwise
     iterates all known tenants. Failures on one tenant do not stop the loop.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     last_sync = now - timedelta(minutes=_RECONCILE_LOOKBACK_MINUTES)
 
     # ponytail: lazy import avoids scheduler -> spend_service -> scheduler cycles
@@ -127,23 +125,26 @@ async def _finalize_cost_ledger(*, last_sync: datetime) -> int:
     factory = get_session_factory()
     async with factory() as session:
         rows = (
-            await session.execute(
-                sa.select(CostEntry).where(
-                    CostEntry.final.is_(False),
-                    CostEntry.recorded_at >= last_sync,
-                ).limit(500)
+            (
+                await session.execute(
+                    sa.select(CostEntry)
+                    .where(
+                        CostEntry.final.is_(False),
+                        CostEntry.recorded_at >= last_sync,
+                    )
+                    .limit(500)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         partial_ids = [
-            r.id for r in rows
-            if (getattr(r, "metadata_", None) or {}).get("partial") is True
+            r.id for r in rows if (getattr(r, "metadata_", None) or {}).get("partial") is True
         ]
         if not partial_ids:
             return 0
         await session.execute(
-            sa.update(CostEntry)
-            .where(CostEntry.id.in_(partial_ids))
-            .values(final=True)
+            sa.update(CostEntry).where(CostEntry.id.in_(partial_ids)).values(final=True)
         )
         await session.commit()
     logger.info("forge_spend_reconcile.cost_ledger_finalized", n=len(partial_ids))

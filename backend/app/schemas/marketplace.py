@@ -7,7 +7,7 @@ from uuid import UUID
 
 from pydantic import Field
 
-from app.schemas.common import ForgeBaseModel, TenantScopedModel
+from app.schemas.common import ForgeBaseModel
 
 
 class MarketplaceConnectorRead(ForgeBaseModel):
@@ -70,4 +70,3 @@ class MCPCategoryRead(ForgeBaseModel):
 
     value: str
     name: str
-

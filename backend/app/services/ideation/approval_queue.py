@@ -12,7 +12,7 @@ keep the existing approvals API untouched.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -27,7 +27,8 @@ from app.db.models.ideation import (
     Idea,
 )
 from app.db.session import get_session_factory
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 
 logger = get_logger(__name__)
 
@@ -125,9 +126,7 @@ class ApprovalQueueService:
                     pass
             if request_type is not None:
                 try:
-                    stmt = stmt.where(
-                        ApprovalItem.request_type == ApprovalItemType(request_type)
-                    )
+                    stmt = stmt.where(ApprovalItem.request_type == ApprovalItemType(request_type))
                 except ValueError:
                     pass
             stmt = stmt.order_by(ApprovalItem.created_at.desc()).limit(max(1, min(limit, 500)))
@@ -192,13 +191,15 @@ class ApprovalQueueService:
             if row.status not in (ApprovalItemStatus.PENDING, ApprovalItemStatus.REQUEST_CHANGES):
                 raise ValueError(f"cannot_decide_in_status:{row.status}")
 
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             # Phase 8 SC-8.2 - reject decisions on expired items.
             # Postgres returns tz-aware datetimes; SQLite strips tz. Compare
             # both sides as UTC-aware so the test suite (sqlite) and prod
             # (postgres) agree.
             if row.expires_at is not None:
-                expires = row.expires_at if row.expires_at.tzinfo else row.expires_at.replace(tzinfo=timezone.utc)
+                expires = (
+                    row.expires_at if row.expires_at.tzinfo else row.expires_at.replace(tzinfo=UTC)
+                )
                 if now > expires:
                     raise ValueError(f"approval_expired:expires_at={row.expires_at}")
             row.decided_by = str(actor_id)
@@ -269,9 +270,7 @@ class ApprovalQueueService:
 
     # -- internals --------------------------------------------------------
 
-    async def _load_idea(
-        self, idea_id: UUID | str, *, tenant_id: UUID | str
-    ) -> Idea:
+    async def _load_idea(self, idea_id: UUID | str, *, tenant_id: UUID | str) -> Idea:
         factory = get_session_factory()
         async with factory() as session:
             idea = await session.get(Idea, str(idea_id))

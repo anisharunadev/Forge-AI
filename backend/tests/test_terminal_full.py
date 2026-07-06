@@ -9,18 +9,16 @@ from __future__ import annotations
 
 import asyncio
 import json
-import time
-import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # F-411 — Command integration
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_command_integration_launch_creates_session() -> None:
@@ -34,19 +32,22 @@ async def test_command_integration_launch_creates_session() -> None:
         user_id="u1",
         agent_type=AgentType.CLAUDE_CODE,
         workspace_path="/var/forge/workspaces/p1",
-        created_at=datetime.now(timezone.utc),
-        last_activity_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
+        last_activity_at=datetime.now(UTC),
         status="active",
         metadata={"forge_cmd": "forge-dev-new-feature"},
     )
-    with patch.object(
-        ci_mod.session_manager,
-        "create_session",
-        AsyncMock(return_value=fake_session),
-    ), patch.object(
-        ci_mod.terminal_audit,
-        "record_session_lifecycle",
-        AsyncMock(),
+    with (
+        patch.object(
+            ci_mod.session_manager,
+            "create_session",
+            AsyncMock(return_value=fake_session),
+        ),
+        patch.object(
+            ci_mod.terminal_audit,
+            "record_session_lifecycle",
+            AsyncMock(),
+        ),
     ):
         session = await ci_mod.command_integration.launch_session_for_command(
             forge_cmd="forge-dev-implement",
@@ -71,19 +72,22 @@ async def test_command_integration_inject_runs_command() -> None:
         user_id="u1",
         agent_type=AgentType.CLAUDE_CODE,
         workspace_path="/var/forge/workspaces/p1",
-        created_at=datetime.now(timezone.utc),
-        last_activity_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
+        last_activity_at=datetime.now(UTC),
         status=SessionStatus.ACTIVE,
         metadata={},
     )
-    with patch.object(
-        ci_mod.session_manager,
-        "get_session",
-        AsyncMock(return_value=fake_session),
-    ), patch.object(
-        ci_mod.terminal_audit,
-        "record_command",
-        AsyncMock(),
+    with (
+        patch.object(
+            ci_mod.session_manager,
+            "get_session",
+            AsyncMock(return_value=fake_session),
+        ),
+        patch.object(
+            ci_mod.terminal_audit,
+            "record_command",
+            AsyncMock(),
+        ),
     ):
         await ci_mod.command_integration.inject_command("sess-2", "ls -la")
         chunks, cursor = await ci_mod.command_integration.get_command_output(
@@ -98,6 +102,7 @@ async def test_command_integration_inject_runs_command() -> None:
 # ---------------------------------------------------------------------------
 # F-412 — Cost tracker
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_cost_tracker_records_usage_correctly() -> None:
@@ -164,6 +169,7 @@ async def test_cost_tracker_burn_rate_calculation() -> None:
 # ---------------------------------------------------------------------------
 # F-413 — Broadcast
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_broadcast_subscribe_and_receive() -> None:
@@ -240,6 +246,7 @@ async def test_broadcast_read_only_by_default() -> None:
 # F-414 — Knowledge context
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_knowledge_context_returns_relevant_items() -> None:
     """Without a backing DB we exercise the cosine path with stubbed
@@ -269,12 +276,13 @@ async def test_knowledge_context_returns_relevant_items() -> None:
         ),
     ]
 
-    with patch.object(
-        kc_mod.knowledge_context,
-        "_gather_candidates",
-        AsyncMock(return_value=fake_items),
-    ), patch.object(
-        kc_mod, "_embed", AsyncMock(return_value=[1.0] + [0.0] * 7)
+    with (
+        patch.object(
+            kc_mod.knowledge_context,
+            "_gather_candidates",
+            AsyncMock(return_value=fake_items),
+        ),
+        patch.object(kc_mod, "_embed", AsyncMock(return_value=[1.0] + [0.0] * 7)),
     ):
         items = await kc_mod.knowledge_context._rank(
             query_text="postgres decision",
@@ -291,6 +299,7 @@ async def test_knowledge_context_returns_relevant_items() -> None:
 # F-415 — Export
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_export_session_markdown() -> None:
     from app.services.terminal import exporter as ex_mod
@@ -303,14 +312,14 @@ async def test_export_session_markdown() -> None:
             "output": b"file1\nfile2\n",
             "output_hash": "abc",
             "duration_ms": 12,
-            "occurred_at": datetime.now(timezone.utc),
+            "occurred_at": datetime.now(UTC),
         },
         {
             "command": "cat file1",
             "output": b"hello\n",
             "output_hash": "def",
             "duration_ms": 8,
-            "occurred_at": datetime.now(timezone.utc) + timedelta(seconds=1),
+            "occurred_at": datetime.now(UTC) + timedelta(seconds=1),
         },
     ]
     validate_audit_chain(records, require_output=False)
@@ -322,16 +331,17 @@ async def test_export_session_markdown() -> None:
         user_id="u1",
         agent_type=AgentType.CLAUDE_CODE,
         workspace_path="/var/forge/workspaces/p1",
-        created_at=datetime.now(timezone.utc),
-        last_activity_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
+        last_activity_at=datetime.now(UTC),
         status=SessionStatus.ACTIVE,
         metadata={"forge_cmd": "forge-dev-implement"},
     )
 
-    with patch.object(
-        ex_mod.session_manager, "get_session", AsyncMock(return_value=fake_session)
-    ), patch.object(
-        ex_mod.SessionExporter, "_collect_audit_records", AsyncMock(return_value=records)
+    with (
+        patch.object(ex_mod.session_manager, "get_session", AsyncMock(return_value=fake_session)),
+        patch.object(
+            ex_mod.SessionExporter, "_collect_audit_records", AsyncMock(return_value=records)
+        ),
     ):
         rendered = await ex_mod.session_exporter.export_session("sess-md", format="md")
 
@@ -353,7 +363,7 @@ async def test_export_session_asciinema_cast() -> None:
             "output": b"hi\n",
             "output_hash": "h1",
             "duration_ms": 1,
-            "occurred_at": datetime.now(timezone.utc),
+            "occurred_at": datetime.now(UTC),
         }
     ]
     fake_session = SimpleNamespace(
@@ -363,15 +373,16 @@ async def test_export_session_asciinema_cast() -> None:
         user_id="u1",
         agent_type=AgentType.CLAUDE_CODE,
         workspace_path="/var/forge/workspaces/p1",
-        created_at=datetime.now(timezone.utc),
-        last_activity_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
+        last_activity_at=datetime.now(UTC),
         status=SessionStatus.ACTIVE,
         metadata={},
     )
-    with patch.object(
-        ex_mod.session_manager, "get_session", AsyncMock(return_value=fake_session)
-    ), patch.object(
-        ex_mod.SessionExporter, "_collect_audit_records", AsyncMock(return_value=records)
+    with (
+        patch.object(ex_mod.session_manager, "get_session", AsyncMock(return_value=fake_session)),
+        patch.object(
+            ex_mod.SessionExporter, "_collect_audit_records", AsyncMock(return_value=records)
+        ),
     ):
         rendered = await ex_mod.session_exporter.export_session("sess-cast", format="cast")
 

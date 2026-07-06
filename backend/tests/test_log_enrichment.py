@@ -4,6 +4,7 @@ Asserts that ``_inject_context`` binds all four required keys
 (tenant_id, project_id, actor_id, request_id) when the contextvars
 are set.
 """
+
 from __future__ import annotations
 
 from app.core.logging import (

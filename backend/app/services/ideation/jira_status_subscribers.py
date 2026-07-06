@@ -39,7 +39,8 @@ from app.core.logging import get_logger
 from app.db.models.ideation import Idea
 from app.db.session import get_session_factory
 from app.services.connector_ingestion.jira_commenter import JiraCommenter
-from app.services.event_bus import Event, EventBus, EventType, bus as default_bus
+from app.services.event_bus import Event, EventBus, EventType
+from app.services.event_bus import bus as default_bus
 
 logger = get_logger(__name__)
 
@@ -77,9 +78,7 @@ async def _resolve_issue_key(
     if external_key:
         return str(external_key)
     if idea_id is None and approval_id is not None:
-        idea_id = await _resolve_idea_id_from_approval(
-            tenant_id=tenant_id, approval_id=approval_id
-        )
+        idea_id = await _resolve_idea_id_from_approval(tenant_id=tenant_id, approval_id=approval_id)
     if idea_id is None:
         return None
     factory = get_session_factory()

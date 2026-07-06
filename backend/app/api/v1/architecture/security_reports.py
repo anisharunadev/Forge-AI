@@ -55,17 +55,11 @@ def _service() -> SecurityReportService:
 
 
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
-@router.post(
-    "", response_model=SecurityReportRead, status_code=status.HTTP_201_CREATED
-)
+@router.post("", response_model=SecurityReportRead, status_code=status.HTTP_201_CREATED)
 @audit(action="architecture.security_report.create", target_type="security_report")
 async def create_security_report(
     body: SecurityReportCreateRequest,
-    principal: Annotated[
-        AuthenticatedPrincipal, Depends(get_current_principal)
-    ],
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     _perm: AuthenticatedPrincipal = Depends(
         require_permission("architecture:security_report:write")
     ),
@@ -87,14 +81,10 @@ async def create_security_report(
     return SecurityReportRead.model_validate(row)
 
 
-@router.get(
-    "", response_model=SecurityReportListResponse
-)
+@router.get("", response_model=SecurityReportListResponse)
 @audit(action="architecture.security_report.list", target_type="security_report")
 async def list_security_reports(
-    principal: Annotated[
-        AuthenticatedPrincipal, Depends(get_current_principal)
-    ],
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     _perm: AuthenticatedPrincipal = Depends(
         require_permission("architecture:security_report:read")
     ),
@@ -120,14 +110,10 @@ async def list_security_reports(
     )
 
 
-@router.get(
-    "/posture", response_model=SecurityReportDeploymentPosture
-)
+@router.get("/posture", response_model=SecurityReportDeploymentPosture)
 @audit(action="architecture.security_report.posture", target_type="security_report")
 async def deployment_posture(
-    principal: Annotated[
-        AuthenticatedPrincipal, Depends(get_current_principal)
-    ],
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     _perm: AuthenticatedPrincipal = Depends(
         require_permission("architecture:security_report:read")
     ),
@@ -141,23 +127,17 @@ async def deployment_posture(
     return SecurityReportDeploymentPosture.model_validate(posture)
 
 
-@router.get(
-    "/{report_id}", response_model=SecurityReportRead
-)
+@router.get("/{report_id}", response_model=SecurityReportRead)
 @audit(action="architecture.security_report.get", target_type="security_report")
 async def get_security_report(
     report_id: UUID,
-    principal: Annotated[
-        AuthenticatedPrincipal, Depends(get_current_principal)
-    ],
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     _perm: AuthenticatedPrincipal = Depends(
         require_permission("architecture:security_report:read")
     ),
 ) -> SecurityReportRead:
     svc = _service()
-    row = await svc.get_report(
-        tenant_id=principal.tenant_id, report_id=report_id
-    )
+    row = await svc.get_report(tenant_id=principal.tenant_id, report_id=report_id)
     if row is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="security_report_not_found"
@@ -166,18 +146,12 @@ async def get_security_report(
 
 
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
-@router.patch(
-    "/{report_id}/status", response_model=SecurityReportRead
-)
+@router.patch("/{report_id}/status", response_model=SecurityReportRead)
 @audit(action="architecture.security_report.status", target_type="security_report")
 async def update_security_report_status(
     report_id: UUID,
     body: SecurityReportStatusUpdateRequest,
-    principal: Annotated[
-        AuthenticatedPrincipal, Depends(get_current_principal)
-    ],
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     _perm: AuthenticatedPrincipal = Depends(
         require_permission("architecture:security_report:write")
     ),
@@ -193,13 +167,9 @@ async def update_security_report_status(
             actor_id=principal.user_id,
         )
     except LookupError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     return SecurityReportRead.model_validate(row)
 
 

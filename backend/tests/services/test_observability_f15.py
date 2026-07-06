@@ -7,32 +7,23 @@ Acceptance coverage for Phase 3 Feature 15 (Audit / Health / Compliance
 
 from __future__ import annotations
 
-import json
 import re
 import uuid
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock
+from datetime import UTC, datetime
 
 from app.schemas.observability_v2 import (
     ActiveAlert,
     AlertConfig,
-    AuditEventRead,
-    AuditPage,
     AuditQueryParams,
     ComplianceReport,
-    ForgeHealthDetail,
-    GdprDeleteRequest,
-    GdprDeleteResponse,
     GdprExportResponse,
     HealthServicesResponse,
     MetricsResponse,
 )
 from app.services.observability_service import (
-    ObservabilityError,
     ObservabilityService,
     observability_service,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -60,7 +51,10 @@ def test_a_observability_client_group_methods_present():
     import importlib.util
     import pathlib
 
-    path = pathlib.Path(__file__).resolve().parents[2] / "app/integrations/litellm/observability_client.py"
+    path = (
+        pathlib.Path(__file__).resolve().parents[2]
+        / "app/integrations/litellm/observability_client.py"
+    )
     spec = importlib.util.spec_from_file_location("_obs_client_isolated", path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -94,13 +88,15 @@ def test_b_base_client_exposes_observability_property():
     # ponytail: parse the source file to confirm the property exists
     # without importing the package (which eagerly creates an engine).
     import pathlib
-    import re
 
-    path = pathlib.Path(__file__).resolve().parents[2] / "app/integrations/litellm/litellm_base_client.py"
-    src = path.read_text(encoding="utf-8")
-    assert re.search(r"def\s+observability\s*\(\s*self\s*\)\s*->\s*ObservabilityClientGroup", src), (
-        "LiteLLMBaseClient.observability property not found in source"
+    path = (
+        pathlib.Path(__file__).resolve().parents[2]
+        / "app/integrations/litellm/litellm_base_client.py"
     )
+    src = path.read_text(encoding="utf-8")
+    assert re.search(
+        r"def\s+observability\s*\(\s*self\s*\)\s*->\s*ObservabilityClientGroup", src
+    ), "LiteLLMBaseClient.observability property not found in source"
 
 
 def test_c_forge_health_endpoint_returns_forge_field():
@@ -124,7 +120,6 @@ def test_d_router_exposes_16_routes():
     # ponytail: parse the route decorators directly from the source —
     # avoids the litellm package-init chain.
     import pathlib
-    import re
 
     path = pathlib.Path(__file__).resolve().parents[2] / "app/api/v1/forge_observability.py"
     src = path.read_text(encoding="utf-8")
@@ -155,8 +150,8 @@ def test_d_router_exposes_16_routes():
 
 def test_e_audit_query_params_accepts_since_datetime():
     p = AuditQueryParams(
-        since=datetime.now(timezone.utc),
-        until=datetime.now(timezone.utc),
+        since=datetime.now(UTC),
+        until=datetime.now(UTC),
         event_type="forge.prompts.created",
     )
     assert p.event_type == "forge.prompts.created"
@@ -208,9 +203,7 @@ def test_h_gdpr_delete_kickoff_does_not_touch_audit_events():
     """Spec line 699 + anti-pattern #8 — audit must not be deleted."""
     tenant_id = uuid.uuid4()
     user_id = uuid.uuid4()
-    resp = observability_service.gdpr_delete_kickoff(
-        tenant_id=tenant_id, user_id=user_id
-    )
+    resp = observability_service.gdpr_delete_kickoff(tenant_id=tenant_id, user_id=user_id)
     # The kickoff explicitly enumerates affected tables; ensure audit_events is absent.
     joined = " ".join(resp.affected_tables).lower()
     assert "audit_event" not in joined, "audit_events must NOT be in the deletion set"
@@ -230,8 +223,9 @@ def test_j_rate_limit_record_and_count():
     for _ in range(5):
         svc.record_rate_limit(tenant_id=tenant_id, count=1)
     # Internal counter incremented 5x in the last 60s.
-    from app.services.observability_service import _RATE_LIMIT_BUCKETS
     from time import time
+
+    from app.services.observability_service import _RATE_LIMIT_BUCKETS
 
     bucket = _RATE_LIMIT_BUCKETS.get(tenant_id, [])
     active = sum(c for ts, c in bucket if time() - ts < 60)
@@ -252,7 +246,7 @@ def test_l_health_services_response_shape():
 def test_m_compliance_report_shape():
     rep = ComplianceReport(
         report_id=uuid.uuid4(),
-        generated_at=datetime.now(timezone.utc),
+        generated_at=datetime.now(UTC),
         tenant_id=uuid.uuid4(),
         sections={"inventory": [], "oversight": {}},
     )
@@ -274,7 +268,7 @@ def test_n_active_alert_kinds():
             kind=kind,
             tenant_id=uuid.uuid4(),
             message="test",
-            fired_at=datetime.now(timezone.utc),
+            fired_at=datetime.now(UTC),
         )
         assert a.kind == kind
 
@@ -311,8 +305,8 @@ def test_o_query_audit_does_not_instantiate_engine():
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":  # pragma: no cover
-    import sys
     import asyncio
+    import sys
 
     failed = 0
     for name, fn in list(globals().items()):

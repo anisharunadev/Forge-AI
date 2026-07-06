@@ -55,6 +55,7 @@ class AcceptanceCriteriaService:
         event_bus: Any | None = None,
     ) -> None:
         from app.services.artifact_registry import artifact_registry as _default_registry
+
         self._llm = litellm_client
         self._registry = artifact_registry if artifact_registry is not None else _default_registry
         self._tests = test_service
@@ -402,9 +403,7 @@ def _artifact_to_prompt(artifact_type: str, artifact: dict[str, Any]) -> str:
         )
     # task_breakdown
     tasks = artifact.get("tasks") or []
-    summary = "\n".join(
-        f"- {t.get('id', '?')}: {t.get('title', '')}" for t in tasks[:30]
-    )
+    summary = "\n".join(f"- {t.get('id', '?')}: {t.get('title', '')}" for t in tasks[:30])
     return f"Task Breakdown: {artifact.get('title') or 'untitled'}\n\nTasks:\n{summary}"
 
 

@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -62,7 +62,7 @@ class CostTrackerHandle:
     completion_tokens: int = 0
     cost_usd: float = 0.0
     command_count: int = 0
-    last_activity_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    last_activity_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     _lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
 
@@ -154,7 +154,7 @@ class CostTracker:
                 tenant_id=str(tenant_id),
                 project_id=str(project_id),
                 model=model,
-                started_at=datetime.now(timezone.utc),
+                started_at=datetime.now(UTC),
             )
             self._handles[session_id] = handle
             return handle
@@ -180,7 +180,7 @@ class CostTracker:
             handle.prompt_tokens += int(prompt_tokens)
             handle.completion_tokens += int(completion_tokens)
             handle.command_count += 1
-            handle.last_activity_at = datetime.now(timezone.utc)
+            handle.last_activity_at = datetime.now(UTC)
             cost = cost_for(model, prompt_tokens, completion_tokens)
             handle.cost_usd += cost
             await self._record_ledger_row(
@@ -215,7 +215,7 @@ class CostTracker:
             handle.completion_tokens += completion_tokens
             handle.cost_usd += cost
             handle.command_count += command_count_delta
-            handle.last_activity_at = datetime.now(timezone.utc)
+            handle.last_activity_at = datetime.now(UTC)
         await self._record_ledger_row(
             handle=handle,
             model=handle.model,
@@ -312,25 +312,17 @@ class CostTracker:
                 started_at = min(r.recorded_at for r in rows)
                 last_activity = max(r.recorded_at for r in rows)
             else:
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 started_at = now
                 last_activity = now
             is_active = False
 
-        tenant_id = (
-            str(rows[0].tenant_id)
-            if rows
-            else (handle.tenant_id if handle else "")
-        )
-        project_id = (
-            str(rows[0].project_id)
-            if rows
-            else (handle.project_id if handle else "")
-        )
+        tenant_id = str(rows[0].tenant_id) if rows else (handle.tenant_id if handle else "")
+        project_id = str(rows[0].project_id) if rows else (handle.project_id if handle else "")
         burn_rate = await self._compute_burn_rate(
             session_id=session_id,
             tenant_id=tenant_id,
-            now=datetime.now(timezone.utc),
+            now=datetime.now(UTC),
         )
         return CostSummary(
             session_id=session_id,
@@ -347,14 +339,10 @@ class CostTracker:
             is_active=is_active,
         )
 
-    async def get_active_session_costs(
-        self, tenant_id: UUID | str
-    ) -> list[CostSummary]:
+    async def get_active_session_costs(self, tenant_id: UUID | str) -> list[CostSummary]:
         """Cost summaries for every active handle in a tenant."""
         async with self._lock:
-            matching = [
-                h for h in self._handles.values() if h.tenant_id == str(tenant_id)
-            ]
+            matching = [h for h in self._handles.values() if h.tenant_id == str(tenant_id)]
         out: list[CostSummary] = []
         for h in matching:
             out.append(await self.get_session_cost(h.session_id))
@@ -365,7 +353,7 @@ class CostTracker:
         return await self._compute_burn_rate(
             session_id=None,
             tenant_id=str(tenant_id),
-            now=datetime.now(timezone.utc),
+            now=datetime.now(UTC),
         )
 
     # -- internal helpers -------------------------------------------------
@@ -397,9 +385,7 @@ class CostTracker:
         """Insert one rollup row per (session, model) on stop."""
         factory = get_session_factory()
         async with factory() as session:
-            duration = (
-                datetime.now(timezone.utc) - handle.started_at
-            ).total_seconds()
+            duration = (datetime.now(UTC) - handle.started_at).total_seconds()
             row = TerminalSessionCost(
                 session_id=handle.session_id,
                 tenant_id=UUID(handle.tenant_id),
@@ -408,7 +394,7 @@ class CostTracker:
                 prompt_tokens=handle.prompt_tokens,
                 completion_tokens=handle.completion_tokens,
                 cost_usd=handle.cost_usd,
-                recorded_at=datetime.now(timezone.utc),
+                recorded_at=datetime.now(UTC),
                 command_count=handle.command_count,
                 duration_seconds=duration,
             )
@@ -438,9 +424,7 @@ class CostTracker:
                 CostEntry.source.like("terminal.%"),
             )
             if session_id is not None:
-                stmt = stmt.where(
-                    CostEntry.metadata_["session_id"].astext == session_id
-                )
+                stmt = stmt.where(CostEntry.metadata_["session_id"].astext == session_id)
             result = await session.scalar(stmt)
         cost_in_window = float(result or 0)
         # Project the window's cost to a 1-hour rate.

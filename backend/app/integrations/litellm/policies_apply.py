@@ -33,9 +33,7 @@ Rules respected:
 
 from __future__ import annotations
 
-import time
 from typing import Any
-from uuid import UUID
 
 from app.core.logging import get_logger
 from app.integrations.litellm.litellm_base_client import LiteLLMBaseClient
@@ -88,8 +86,7 @@ async def _safe_post(
     response = await client.admin_client.post(path, json=body)
     if response.status_code >= 400:
         raise RuntimeError(
-            f"policies POST {path} returned "
-            f"{response.status_code}: {response.text[:200]}"
+            f"policies POST {path} returned {response.status_code}: {response.text[:200]}"
         )
     return response.json() or {}
 
@@ -104,6 +101,7 @@ async def list_policies(
     base_client: LiteLLMBaseClient | None = None,
 ) -> list[dict[str, Any]]:
     """``GET /policies/list``."""
+
     async def _call(client: LiteLLMBaseClient) -> list[dict[str, Any]]:
         result = await _safe_get(client, "/policies/list")
         if result is None:
@@ -122,6 +120,7 @@ async def get_policy_info(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any] | None:
     """``GET /policies/info?policy_id=…``."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
         return await _safe_get(client, "/policies/info", params={"policy_id": policy_id})
 
@@ -136,6 +135,7 @@ async def policy_status(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any]:
     """``GET /policies/status`` — aggregate status counts across policies."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any]:
         return (await _safe_get(client, "/policies/status")) or {}
 
@@ -150,6 +150,7 @@ async def policy_usage(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any]:
     """``GET /policies/usage`` — usage counters for the policies registry."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any]:
         return (await _safe_get(client, "/policies/usage")) or {}
 
@@ -175,6 +176,7 @@ async def resolve_policies(
     derives the effective guardrail list + tool policy from this.
     Failures raise — the caller short-circuits the chat.
     """
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any]:
         return await _safe_post(client, "/policies/resolve", {"context": context})
 
@@ -191,6 +193,7 @@ async def compare_policies(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any]:
     """``POST /policies/compare``."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any]:
         return await _safe_post(
             client,
@@ -210,10 +213,9 @@ async def resolved_guardrails(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any]:
     """``POST /policies/resolved-guardrails`` — convenience proxy."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any]:
-        return await _safe_post(
-            client, "/policies/resolved-guardrails", {"context": context}
-        )
+        return await _safe_post(client, "/policies/resolved-guardrails", {"context": context})
 
     if base_client is not None:
         return await _call(base_client)
@@ -233,6 +235,7 @@ async def test_policy_pipeline(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any]:
     """``POST /policies/test-pipeline`` — dry-run a full pipeline offline."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any]:
         return await _safe_post(
             client,
@@ -253,6 +256,7 @@ async def test_policy(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any]:
     """``POST /policies/test`` — single-rule dry-run."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any]:
         return await _safe_post(
             client,
@@ -272,6 +276,7 @@ async def validate_policy(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any]:
     """``POST /policy/validate`` — schema validation only."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any]:
         return await _safe_post(client, "/policy/validate", {"policy": policy})
 
@@ -288,6 +293,7 @@ async def test_policies_and_guardrails(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any]:
     """``POST /utils/test_policies_and_guardrails`` — paired validation on save."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any]:
         return await _safe_post(
             client,
@@ -311,6 +317,7 @@ async def list_attachments(
     base_client: LiteLLMBaseClient | None = None,
 ) -> list[dict[str, Any]]:
     """``GET /policies/attachments/list``."""
+
     async def _call(client: LiteLLMBaseClient) -> list[dict[str, Any]]:
         result = await _safe_get(client, "/policies/attachments/list")
         if result is None:
@@ -333,6 +340,7 @@ async def list_templates(
     base_client: LiteLLMBaseClient | None = None,
 ) -> list[dict[str, Any]]:
     """``GET /policy/templates/list`` — starter templates shipped by Forge."""
+
     async def _call(client: LiteLLMBaseClient) -> list[dict[str, Any]]:
         result = await _safe_get(client, "/policy/templates/list")
         if result is None:
@@ -347,6 +355,7 @@ async def list_templates(
 
 # Ponytail: tool-policy shape + options proxied under ``/v1/tool/policy*``
 # are read-only metadata. Used by the UI rule-builder; no audit cost.
+
 
 async def get_tool_policy(
     *,

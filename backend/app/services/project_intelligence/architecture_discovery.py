@@ -9,20 +9,23 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
-import tempfile
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
 
 from app.core.logging import get_logger
-from app.db.models.repo_ingestion import IngestionArtifact, IngestionArtifactType, IngestionRun, Repo
+from app.db.models.repo_ingestion import (
+    IngestionArtifact,
+    IngestionArtifactType,
+    IngestionRun,
+    Repo,
+)
 from app.db.session import get_session_factory
+from app.services.event_bus import bus as default_bus
 from app.services.knowledge_graph import knowledge_graph_service
-from app.services.event_bus import EventType, bus as default_bus
 
 logger = get_logger(__name__)
 
@@ -108,17 +111,14 @@ class ArchitectureDiscoveryService:
                 freshness_source="architecture_discovery",
             )
 
-        summary = (
-            f"{len(services)} services, {len(modules)} modules, "
-            f"{len(components)} components"
-        )
+        summary = f"{len(services)} services, {len(modules)} modules, {len(components)} components"
 
         return ArchitectureMap(
             project_id=project_id,
             services=services,
             modules=modules,
             components=components,
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
             summary=summary,
         )
 
@@ -147,7 +147,7 @@ class ArchitectureDiscoveryService:
             services=services,
             modules=[],
             components=[],
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
             summary=f"{len(services)} services (read from KG)",
         )
 
@@ -189,7 +189,7 @@ class ArchitectureDiscoveryService:
             nodes=nodes,
             edges=edges,
             ecosystems=sorted(ecosystems),
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
         )
 
     async def get_dependency_graph_for_project(
@@ -230,10 +230,8 @@ class ArchitectureDiscoveryService:
                 }
                 for e in edges
             ],
-            ecosystems=sorted(
-                {str(n.properties.get("ecosystem") or "unknown") for n in nodes}
-            ),
-            generated_at=datetime.now(timezone.utc),
+            ecosystems=sorted({str(n.properties.get("ecosystem") or "unknown") for n in nodes}),
+            generated_at=datetime.now(UTC),
         )
 
     # -- helpers ----------------------------------------------------------
@@ -413,11 +411,18 @@ def _parse_requirements(content: str) -> list[DependencyNode]:
         if "==" in line:
             name, version = line.split("==", 1)
             deps.append(
-                DependencyNode(name=name.strip(), version=version.strip(), ecosystem="python", is_direct=True)
+                DependencyNode(
+                    name=name.strip(), version=version.strip(), ecosystem="python", is_direct=True
+                )
             )
         else:
             deps.append(
-                DependencyNode(name=line.split(";")[0].strip(), version=None, ecosystem="python", is_direct=True)
+                DependencyNode(
+                    name=line.split(";")[0].strip(),
+                    version=None,
+                    ecosystem="python",
+                    is_direct=True,
+                )
             )
     return deps
 
@@ -457,7 +462,12 @@ def _parse_cargo_toml(content: str) -> list[DependencyNode]:
         if in_deps and "=" in s:
             name, version = s.split("=", 1)
             deps.append(
-                DependencyNode(name=name.strip(), version=version.strip().strip('"'), ecosystem="rust", is_direct=True)
+                DependencyNode(
+                    name=name.strip(),
+                    version=version.strip().strip('"'),
+                    ecosystem="rust",
+                    is_direct=True,
+                )
             )
     return deps
 
@@ -465,7 +475,10 @@ def _parse_cargo_toml(content: str) -> list[DependencyNode]:
 def _parse_pom_xml(content: str) -> list[DependencyNode]:
     import re as _re
 
-    pattern = _re.compile(r"<dependency>\s*<groupId>([^<]+)</groupId>\s*<artifactId>([^<]+)</artifactId>\s*<version>([^<]+)</version>", _re.DOTALL)
+    pattern = _re.compile(
+        r"<dependency>\s*<groupId>([^<]+)</groupId>\s*<artifactId>([^<]+)</artifactId>\s*<version>([^<]+)</version>",
+        _re.DOTALL,
+    )
     deps: list[DependencyNode] = []
     for m in pattern.finditer(content):
         deps.append(

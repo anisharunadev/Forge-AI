@@ -6,8 +6,6 @@ from app.db.models.alert_config import AlertConfig
 from app.db.models.approval import ApprovalRequest
 from app.db.models.artifact import Artifact
 from app.db.models.audit import AuditEvent
-# M5 T-A3 — SecurityReport model (architecture_security_reports table).
-from app.db.models.security_report import SecurityReport
 from app.db.models.board_confirmation import BoardConfirmation, BoardConfirmationOutcome
 from app.db.models.connector import Connector, ConnectorSyncHistory
 from app.db.models.connector_activity import ConnectorActivity
@@ -19,9 +17,6 @@ from app.db.models.connector_credential import (
 from app.db.models.cost import CostEntry
 from app.db.models.cost_rollup import CostMinuteRollup
 from app.db.models.customer import Customer
-from app.db.models.organization import Organization
-from app.db.models.team import Team
-from app.db.models.team_member import TeamMember
 from app.db.models.dashboard import (
     AIInsight,
     AIInsightRead,
@@ -60,27 +55,8 @@ from app.db.models.lesson import LessonCandidate, LessonSource, LessonStatus
 from app.db.models.marketplace import MarketplaceConnector
 from app.db.models.model_provider import ModelProvider
 from app.db.models.onboarding import OnboardingSession, OnboardingStep
-from app.db.models.policy import Policy
-from app.db.models.project import Project
-from app.db.models.prompt import Prompt, PromptVersion
-from app.db.models.project_invitation import ProjectInvitation
-from app.db.models.rag import RagChunk, VectorStore
-from app.db.models.project_member import ProjectMember
-from app.db.models.repo_ingestion import (
-    IngestionArtifact,
-    IngestionArtifactType,
-    IngestionRun,
-    IngestionStatus,
-    Repo,
-)
-from app.db.models.role import Role
-from app.db.models.standard import Standard
-from app.db.models.steering_rule import SteeringRule
-from app.db.models.template import Template
-from app.db.models.tenant import Tenant
-from app.db.models.tenant_settings import TenantSettings
-from app.db.models.terminal_cost import TerminalSessionCost
-from app.db.models.user import User
+from app.db.models.organization import Organization
+
 # step-80 — Phase 4 (cache, sessions, identity, credentials, finops).
 from app.db.models.phase4 import (
     Phase4A2ADelegation,
@@ -97,6 +73,32 @@ from app.db.models.phase4 import (
     Phase4SsoConfig,
     Phase4VaultConfig,
 )
+from app.db.models.policy import Policy
+from app.db.models.project import Project
+from app.db.models.project_invitation import ProjectInvitation
+from app.db.models.project_member import ProjectMember
+from app.db.models.prompt import Prompt, PromptVersion
+from app.db.models.rag import RagChunk, VectorStore
+from app.db.models.repo_ingestion import (
+    IngestionArtifact,
+    IngestionArtifactType,
+    IngestionRun,
+    IngestionStatus,
+    Repo,
+)
+from app.db.models.role import Role
+
+# M5 T-A3 — SecurityReport model (architecture_security_reports table).
+from app.db.models.security_report import SecurityReport
+from app.db.models.standard import Standard
+from app.db.models.steering_rule import SteeringRule
+from app.db.models.team import Team
+from app.db.models.team_member import TeamMember
+from app.db.models.template import Template
+from app.db.models.tenant import Tenant
+from app.db.models.tenant_settings import TenantSettings
+from app.db.models.terminal_cost import TerminalSessionCost
+from app.db.models.user import User
 from app.db.models.user_session import UserApiToken, UserSession
 from app.db.models.webhook import (
     Webhook,

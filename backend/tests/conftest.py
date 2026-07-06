@@ -25,7 +25,6 @@ os.environ.setdefault("ENVIRONMENT", "test")
 import pytest
 import pytest_asyncio
 
-
 # ---------------------------------------------------------------------------
 # M5 Architecture Center (T-A1) — Grant architecture-approval fixture
 # ---------------------------------------------------------------------------
@@ -72,12 +71,16 @@ def grant_architecture_approval():
             expires_at=datetime.now(UTC) + timedelta(hours=1),
         )
         # Build a baseline state with the pending approval pinned.
-        state = SDLCState(
-            tenant_id=tenant_id,
-            project_id=project_id,
-            actor_id=actor_id,
-            context={"repo_path": "/tmp", "workspace_path": "/tmp/ws"},
-        ).set_pending_approval(pending).with_phase(SDLCPhase.BLOCKED_APPROVAL)
+        state = (
+            SDLCState(
+                tenant_id=tenant_id,
+                project_id=project_id,
+                actor_id=actor_id,
+                context={"repo_path": "/tmp", "workspace_path": "/tmp/ws"},
+            )
+            .set_pending_approval(pending)
+            .with_phase(SDLCPhase.BLOCKED_APPROVAL)
+        )
 
         decision_key = f"approval:{SDLCPhase.ARCHITECTURE.value}:decision"
         base_metadata = {
@@ -89,9 +92,7 @@ def grant_architecture_approval():
                 "decided_at": datetime.now(UTC).isoformat(),
             },
         }
-        state = state.model_copy(
-            update={"metadata": base_metadata}, deep=True
-        )
+        state = state.model_copy(update={"metadata": base_metadata}, deep=True)
 
         # If the caller wants the canonical envelope (e.g. for the
         # audit/audit-row end of T-A4), build + stamp it.
@@ -154,11 +155,10 @@ async def sqlite_db(monkeypatch: pytest.MonkeyPatch):
     M1 models (which point at `projects.id`) don't error during
     metadata.create_all.
     """
-    from sqlalchemy import Column, MetaData, String, Table
+    from sqlalchemy import Column, String, Table
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
     from app.db import base as base_mod
-    from app.db.session import get_session_factory as _prod_get_session_factory  # noqa: F401
 
     # Ensure all model modules are imported so metadata is populated.
     # Imports must happen BEFORE the projects stub check below, otherwise
@@ -172,8 +172,8 @@ async def sqlite_db(monkeypatch: pytest.MonkeyPatch):
         artifact,
         audit,
         command_run,
-        connector,
         conflict,
+        connector,
         copilot,
         cost,
         graph,
@@ -195,8 +195,8 @@ async def sqlite_db(monkeypatch: pytest.MonkeyPatch):
         project,
         repo_ingestion,
         role,
-        seed,
         security_report,
+        seed,
         standard,
         steering_rule,
         template,
@@ -207,6 +207,7 @@ async def sqlite_db(monkeypatch: pytest.MonkeyPatch):
         workflow,
         workflow_budget,
     )
+    from app.db.session import get_session_factory as _prod_get_session_factory  # noqa: F401
 
     # Legacy fallback: only stub ``projects`` if no real model owns the
     # table. As of Plan 0 (project schema anchor), ``app.db.models.project.Project``
@@ -240,9 +241,10 @@ async def sqlite_db(monkeypatch: pytest.MonkeyPatch):
     try:
         async with engine.begin() as conn:
             await conn.run_sync(base_mod.metadata.create_all)
-    except Exception as exc:  # noqa: BLE001 — any sqlite compile failure
+    except Exception:  # noqa: BLE001 — any sqlite compile failure
         # Identify the offending tables by retrying each one in isolation.
         from sqlalchemy import create_engine as _ce
+
         sync_url = "sqlite:///:memory:"
         sync_engine = _ce(sync_url)
         for table in list(base_mod.metadata.tables.values()):
@@ -272,7 +274,10 @@ async def sqlite_db(monkeypatch: pytest.MonkeyPatch):
     # Drop the stub to avoid contaminating other tests' metadata.
     # Only drop when we created the stub ourselves (real Project model
     # must NOT be removed from shared metadata).
-    if "projects" in base_mod.metadata.tables and base_mod.metadata.tables["projects"].schema is None:
+    if (
+        "projects" in base_mod.metadata.tables
+        and base_mod.metadata.tables["projects"].schema is None
+    ):
         # Heuristic: stub was Table(..., base_mod.metadata, ...) with no schema;
         # real Project registers via DeclarativeBase which also has no schema,
         # so we additionally guard on the absence of the Tenant FK the real
@@ -305,8 +310,8 @@ async def two_tenants_factory(sqlite_db):
             ta, tb, pa = await two_tenants_factory()
             ...
     """
-    from app.db.models.tenant import Tenant
     from app.db.models.project import Project
+    from app.db.models.tenant import Tenant
 
     session_factory = sqlite_db
 
@@ -316,9 +321,7 @@ async def two_tenants_factory(sqlite_db):
             tb = Tenant(slug=f"tb-{uuid.uuid4().hex[:8]}", name="TenantB")
             s.add_all([ta, tb])
             await s.flush()
-            pa = Project(
-                tenant_id=ta.id, slug="p-a", name="ProjectA", created_by=None
-            )
+            pa = Project(tenant_id=ta.id, slug="p-a", name="ProjectA", created_by=None)
             s.add(pa)
             await s.commit()
             s.expunge_all()

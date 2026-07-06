@@ -9,7 +9,7 @@ New error? Add it here and re-run ``scripts/generate_phase4_docs.py``.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -32,7 +32,7 @@ class Phase4Error(Exception):
             "error": self.code,
             "message": self.message,
             "details": self.details,
-            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "occurred_at": datetime.now(UTC).isoformat(),
         }
 
 
@@ -137,6 +137,34 @@ def register_phase4_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(status_code=exc.status_code, content=exc.to_envelope())
 
     app.add_exception_handler(Phase4Error, _handler)
+
+    async def _fallback(_request: Request, exc: Exception) -> JSONResponse:
+        """M14: catch-all handler for unhandled exceptions.
+
+        Without this, FastAPI returns a generic 500 with a raw stack
+        trace in debug mode — a real user-facing crash. The handler
+        renders a stable envelope so the UI gets a typed error code
+        it can render instead of swallowing the response.
+        """
+        from app.core.logging import get_logger
+
+        logger = get_logger(__name__)
+        logger.exception(
+            "phase4_errors.unhandled_exception",
+            error_type=type(exc).__name__,
+            error_message=str(exc),
+        )
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "internal_error",
+                "code": "INTERNAL_ERROR",
+                "details": {"type": type(exc).__name__, "message": str(exc)[:500]},
+                "occurred_at": datetime.now(UTC).isoformat(),
+            },
+        )
+
+    app.add_exception_handler(Exception, _fallback)
 
 
 __all__ = [

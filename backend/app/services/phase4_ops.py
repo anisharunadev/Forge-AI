@@ -46,13 +46,17 @@ async def list_credentials(tenant_id: UUID | str) -> list[dict[str, Any]]:
     factory = get_session_factory()
     async with factory() as session:
         rows = (
-            await session.execute(
-                select(Phase4Credential).where(
-                    Phase4Credential.tenant_id == str(tenant_id),
-                    Phase4Credential.deleted_at.is_(None),
+            (
+                await session.execute(
+                    select(Phase4Credential).where(
+                        Phase4Credential.tenant_id == str(tenant_id),
+                        Phase4Credential.deleted_at.is_(None),
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
     return [
         {
             "credential_name": r.credential_name,
@@ -118,9 +122,12 @@ async def add_credential(
             raise CredentialNotFound(credential_name)
 
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.CREDENTIAL_ADDED.value,
-        target_type="credential", target_id=credential_name,
+        target_type="credential",
+        target_id=credential_name,
         payload={"provider": provider, "vault_backed": is_vault},
     )
     return {"credential_name": credential_name, "provider": provider, "vault_backed": is_vault}
@@ -160,13 +167,14 @@ async def delete_credential(
         row.deleted_at = datetime.now(UTC)
         await session.commit()
     async with LiteLLMBaseClient() as client:
-        await client.admin_client.delete(
-            "/credentials/by_name", params={"credential_name": name}
-        )
+        await client.admin_client.delete("/credentials/by_name", params={"credential_name": name})
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.CREDENTIAL_DELETED.value,
-        target_type="credential", target_id=name,
+        target_type="credential",
+        target_id=name,
         payload={},
     )
 
@@ -227,9 +235,12 @@ async def configure_vault(
             row.last_checked_at = datetime.now(UTC)
         await session.commit()
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.VAULT_CONFIGURED.value,
-        target_type="vault_config", target_id=str(tenant_id),
+        target_type="vault_config",
+        target_id=str(tenant_id),
         payload={"vault_url": vault_url},
     )
     return {"configured": True, "vault_url": vault_url}
@@ -249,9 +260,7 @@ async def test_vault(tenant_id: UUID | str) -> dict[str, Any]:
 # ── FinOps ───────────────────────────────────────────────────────────
 
 
-async def finops_settings(
-    tenant_id: UUID | str, destination: str
-) -> dict[str, Any] | None:
+async def finops_settings(tenant_id: UUID | str, destination: str) -> dict[str, Any] | None:
     factory = get_session_factory()
     async with factory() as session:
         row = (
@@ -315,8 +324,12 @@ async def finops_init(
         else Phase4AuditAction.VANTAGE_INIT.value
     )
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
-        action=action, target_type="finops_settings", target_id=destination,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
+        action=action,
+        target_type="finops_settings",
+        target_id=destination,
         payload={"has_schedule": bool(schedule_cron)},
     )
     return {"destination": destination, "configured": True}
@@ -349,9 +362,7 @@ async def finops_export(
         session.add(export)
         await session.commit()
 
-    endpoint = (
-        f"/{destination}/{'dry-run' if dry_run else 'export'}"
-    )
+    endpoint = f"/{destination}/{'dry-run' if dry_run else 'export'}"
     try:
         async with LiteLLMBaseClient() as client:
             resp = await client.admin_client.post(endpoint, json={"tenant_id": str(tenant_id)})
@@ -384,8 +395,12 @@ async def finops_export(
         )
     )
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
-        action=action, target_type="finops_export", target_id=run_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
+        action=action,
+        target_type="finops_export",
+        target_id=run_id,
         payload={"destination": destination, "dry_run": dry_run, "records": row.record_count},
     )
     return {"run_id": run_id, "status": "success", "dry_run": dry_run}
@@ -397,13 +412,17 @@ async def finops_delete(
     factory = get_session_factory()
     async with factory() as session:
         rows = (
-            await session.execute(
-                select(Phase4FinopsSettings).where(
-                    Phase4FinopsSettings.tenant_id == str(tenant_id),
-                    Phase4FinopsSettings.destination == destination,
+            (
+                await session.execute(
+                    select(Phase4FinopsSettings).where(
+                        Phase4FinopsSettings.tenant_id == str(tenant_id),
+                        Phase4FinopsSettings.destination == destination,
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         for r in rows:
             await session.delete(r)
         await session.commit()
@@ -415,8 +434,12 @@ async def finops_delete(
         else Phase4AuditAction.VANTAGE_DELETED.value
     )
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
-        action=action, target_type="finops_settings", target_id=destination,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
+        action=action,
+        target_type="finops_settings",
+        target_id=destination,
         payload={},
     )
 
@@ -440,9 +463,12 @@ async def update_global_settings(
         resp.raise_for_status()
         after = resp.json()
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.SETTINGS_UPDATED.value,
-        target_type="global_settings", target_id="*",
+        target_type="global_settings",
+        target_id="*",
         payload={"before": before, "after": after},
     )
     return after
@@ -455,9 +481,12 @@ async def update_branding(
         resp = await client.admin_client.post("/update/ui_theme_settings", json=theme)
         resp.raise_for_status()
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.BRANDING_UPDATED.value,
-        target_type="branding", target_id=str(tenant_id),
+        target_type="branding",
+        target_id=str(tenant_id),
         payload=theme,
     )
     return {"updated": True}
@@ -477,9 +506,12 @@ async def update_email_settings(
         resp = await client.admin_client.post("/email/event_settings", json=body)
         resp.raise_for_status()
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.EMAIL_SETTINGS_UPDATED.value,
-        target_type="email_settings", target_id="*",
+        target_type="email_settings",
+        target_id="*",
         payload=body,
     )
     return body
@@ -492,9 +524,12 @@ async def reset_email_settings(
         resp = await client.admin_client.post("/email/event_settings/reset")
         resp.raise_for_status()
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.EMAIL_SETTINGS_UPDATED.value,
-        target_type="email_settings", target_id="*",
+        target_type="email_settings",
+        target_id="*",
         payload={"reset": True},
     )
     return {"reset": True}
@@ -523,19 +558,36 @@ async def update_cost_config(
         if "margin" in body:
             await client.admin_client.post("/config/cost_margin_config", json=body["margin"])
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.COST_CONFIG_UPDATED.value,
-        target_type="cost_config", target_id="*",
+        target_type="cost_config",
+        target_id="*",
         payload=body,
     )
     return {"updated": True}
 
 
 __all__ = [
-    "list_credentials", "add_credential", "get_credential", "delete_credential",
-    "vault_status", "configure_vault", "test_vault",
-    "finops_settings", "finops_init", "finops_export", "finops_delete",
-    "get_global_settings", "update_global_settings",
-    "update_branding", "get_email_settings", "update_email_settings", "reset_email_settings",
-    "list_active_callbacks", "get_cost_config", "update_cost_config",
+    "list_credentials",
+    "add_credential",
+    "get_credential",
+    "delete_credential",
+    "vault_status",
+    "configure_vault",
+    "test_vault",
+    "finops_settings",
+    "finops_init",
+    "finops_export",
+    "finops_delete",
+    "get_global_settings",
+    "update_global_settings",
+    "update_branding",
+    "get_email_settings",
+    "update_email_settings",
+    "reset_email_settings",
+    "list_active_callbacks",
+    "get_cost_config",
+    "update_cost_config",
 ]

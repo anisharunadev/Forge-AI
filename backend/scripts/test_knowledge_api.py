@@ -25,6 +25,7 @@ Environment overrides::
     FORGE_CLIENT_ID  (default forge-backend)
     FORGE_REALM      (default forge)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -165,7 +166,9 @@ async def main() -> int:
         if isinstance(idea_items, list) and len(idea_items) >= 5:
             print(f"  (returned {len(idea_items)} ideas)")
         elif ok:
-            print(f"  ✗ expected >= 5 ideas, got {len(idea_items) if isinstance(idea_items, list) else 0}")
+            print(
+                f"  ✗ expected >= 5 ideas, got {len(idea_items) if isinstance(idea_items, list) else 0}"
+            )
             failed += 1
             passed -= 1
 
@@ -230,9 +233,7 @@ async def main() -> int:
         count(ok)
         approvals_payload = body if isinstance(body, dict) else {}
         approval_items = (
-            approvals_payload.get("items")
-            if isinstance(approvals_payload, dict)
-            else None
+            approvals_payload.get("items") if isinstance(approvals_payload, dict) else None
         )
 
         ok, _ = await _call("get", "/ideation/arch-previews", token)

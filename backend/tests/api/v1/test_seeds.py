@@ -22,13 +22,12 @@ from __future__ import annotations
 import asyncio
 import json
 import uuid
+from datetime import UTC
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-import pytest_asyncio
-
 
 # ---------------------------------------------------------------------------
 # Auth helpers
@@ -290,9 +289,7 @@ class _SeedServiceStub:
         tenant_id: Any = None,
         project_id: Any = None,
     ) -> Any:
-        self.reset_calls.append(
-            {"name": name, "actor_id": str(actor_id), "scope": scope}
-        )
+        self.reset_calls.append({"name": name, "actor_id": str(actor_id), "scope": scope})
         if self.raise_reset:
             raise self.raise_reset
         from app.schemas.seeds import SeedRunRead
@@ -388,9 +385,9 @@ class _SeedServiceStub:
 
 
 def _now():
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 # ---------------------------------------------------------------------------
@@ -651,28 +648,20 @@ def test_apply_production_blocked(client, seed_service_stub):
     """``ProductionSeedBlockedError`` → HTTP 403 with ``production_blocked``."""
     from backend.seeds.framework.exceptions import ProductionSeedBlockedError
 
-    seed_service_stub.raise_apply = ProductionSeedBlockedError(
-        "demo seed blocked in production"
-    )
-    resp = client.post(
-        "/api/v1/seeds/acme-corp/apply", json={"allow_in_prod": False}
-    )
+    seed_service_stub.raise_apply = ProductionSeedBlockedError("demo seed blocked in production")
+    resp = client.post("/api/v1/seeds/acme-corp/apply", json={"allow_in_prod": False})
     assert resp.status_code == 403
     body = resp.json()
     assert body["detail"]["error"] == "production_blocked"
 
 
-def test_apply_with_allow_in_prod_succeeds_and_audits(
-    client, seed_service_stub, audit_capture
-):
+def test_apply_with_allow_in_prod_succeeds_and_audits(client, seed_service_stub, audit_capture):
     """``allow_in_prod=true`` is forwarded to the service and audited."""
     with patch(
         "app.services.audit_service.AuditService.record",
         AsyncMock(side_effect=lambda **kw: audit_capture["events"].append(kw)),
     ):
-        resp = client.post(
-            "/api/v1/seeds/acme-corp/apply", json={"allow_in_prod": True}
-        )
+        resp = client.post("/api/v1/seeds/acme-corp/apply", json={"allow_in_prod": True})
 
     assert resp.status_code == 200, resp.text
     assert seed_service_stub.apply_calls[0]["allow_in_prod"] is True

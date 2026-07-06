@@ -19,7 +19,6 @@ from app.db.models.policy import PolicySeverity  # noqa: F401 — preserved for 
 from app.schemas.common import ForgeBaseModel, TenantScopedModel
 from app.schemas.litellm_common import PolicyScope
 
-
 # ---------------------------------------------------------------------
 # Legacy F-003 shapes — preserved for backward compatibility.
 # ---------------------------------------------------------------------
@@ -54,7 +53,9 @@ class PolicyGuardrailRef(ForgeBaseModel):
     """One entry in ``Policy.guardrails[]``."""
 
     name: str = Field(min_length=1, max_length=128)
-    kind: Literal["pre_call_input", "pre_call_llm", "post_call_output", "during_call"] = "pre_call_input"
+    kind: Literal["pre_call_input", "pre_call_llm", "post_call_output", "during_call"] = (
+        "pre_call_input"
+    )
     order: int = 0
 
 

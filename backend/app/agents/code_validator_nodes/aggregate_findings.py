@@ -16,6 +16,7 @@ Determinism (NFR-042):
 The aggregator does NOT import any scanner implementation; it works
 purely off the typed state contract.
 """
+
 from __future__ import annotations
 
 import logging
@@ -40,12 +41,14 @@ async def aggregate_findings(state: CodeValidatorState) -> dict[str, Any]:
     )
     findings = merged.all()
     envelopes = [
-        e for e in (
+        e
+        for e in (
             state.secrets_envelope,
             state.iac_envelope,
             state.vulns_envelope,
             state.standards_envelope,
-        ) if e is not None
+        )
+        if e is not None
     ]
     report = ValidationReport.finalize(findings=findings, run_id=state.run_id)
     logger.info(

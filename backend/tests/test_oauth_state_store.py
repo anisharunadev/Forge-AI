@@ -21,7 +21,7 @@ the full pytest run).
 from __future__ import annotations
 
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
@@ -133,7 +133,7 @@ def test_purge_expired_sweeps_stale_entries() -> None:
 
     # Backdate the expired entries' expires_at to force staleness
     # without sleeping. The store's lock guards dict mutation.
-    past = datetime.now(timezone.utc) - timedelta(seconds=60)
+    past = datetime.now(UTC) - timedelta(seconds=60)
     with store._lock:  # noqa: SLF001 — intentional test seam
         for tok in (expired_a, expired_b):
             state_for, _ = store._states[tok]  # noqa: SLF001

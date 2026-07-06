@@ -43,15 +43,16 @@ scheduling the sub-graph, NOT inside it.
 from __future__ import annotations
 
 import json
-import logging
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import UTC
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from langgraph.graph import END, START, StateGraph
 
-from app.agents.refactor_agent_state import REFACTOR_PHASES, RefactorAgentState
+from app.agents.refactor_agent_state import RefactorAgentState
 from app.core.logging import get_logger
 from app.schemas.migration_plan import (
     EffortEstimate,
@@ -62,7 +63,8 @@ from app.schemas.migration_plan import (
     TargetArchitecture,
 )
 from app.services.aws_transform_client import AWSTransformClient, get_default_client
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 
 logger = get_logger(__name__)
 
@@ -312,8 +314,7 @@ def _heuristic_phased_plan(state: RefactorAgentState) -> list[dict[str, Any]]:
             "order": 2,
             "name": "Phase 3 — Cutover & decommission",
             "description": (
-                "Migrate the remaining slices, run the cutover, and "
-                "decommission the legacy system."
+                "Migrate the remaining slices, run the cutover, and decommission the legacy system."
             ),
             "strategy": "parallel",
             "scope_files": [],
@@ -369,20 +370,14 @@ async def generate_phases_node(
             phase = MigrationPhase(
                 order=int(raw.get("order", len(typed_phases))),
                 name=str(raw.get("name", f"Phase {len(typed_phases)}"))[:200],
-                description=str(
-                    raw.get("description", "Phase scope TBD.")
-                )[:10_000],
+                description=str(raw.get("description", "Phase scope TBD."))[:10_000],
                 strategy=str(raw.get("strategy", "strangler")),
                 scope_files=list(raw.get("scope_files", []) or []),
                 scope_services=list(raw.get("scope_services", []) or []),
-                estimated_effort_days=float(
-                    raw.get("estimated_effort_days", 0.0)
-                ),
+                estimated_effort_days=float(raw.get("estimated_effort_days", 0.0)),
                 estimated_cost_usd=float(raw.get("estimated_cost_usd", 0.0)),
                 prerequisites=list(raw.get("prerequisites", []) or []),
-                acceptance_criteria=list(
-                    raw.get("acceptance_criteria", []) or []
-                ),
+                acceptance_criteria=list(raw.get("acceptance_criteria", []) or []),
             )
         typed_phases.append(phase.model_dump(mode="json"))
 
@@ -445,8 +440,7 @@ def _heuristic_risk_register(state: RefactorAgentState) -> list[dict[str, Any]]:
         {
             "title": "Data loss during cutover",
             "description": (
-                "In-flight writes may be lost if the cutover is not "
-                "carefully sequenced."
+                "In-flight writes may be lost if the cutover is not carefully sequenced."
             ),
             "likelihood": 0.3,
             "impact": 0.9,
@@ -457,10 +451,7 @@ def _heuristic_risk_register(state: RefactorAgentState) -> list[dict[str, Any]]:
         },
         {
             "title": "Latency regression on legacy endpoints",
-            "description": (
-                "Adding a router hop can introduce latency that "
-                "exceeds SLO."
-            ),
+            "description": ("Adding a router hop can introduce latency that exceeds SLO."),
             "likelihood": 0.5,
             "impact": 0.4,
             "severity": 0.20,
@@ -470,10 +461,7 @@ def _heuristic_risk_register(state: RefactorAgentState) -> list[dict[str, Any]]:
         },
         {
             "title": "Skill gap on target framework",
-            "description": (
-                "Team may not yet have deep expertise in the target "
-                "framework."
-            ),
+            "description": ("Team may not yet have deep expertise in the target framework."),
             "likelihood": 0.7,
             "impact": 0.5,
             "severity": 0.35,
@@ -522,8 +510,7 @@ async def risk_register_node(
                 severity=float(
                     raw.get(
                         "severity",
-                        float(raw.get("likelihood", 0.5))
-                        * float(raw.get("impact", 0.5)),
+                        float(raw.get("likelihood", 0.5)) * float(raw.get("impact", 0.5)),
                     )
                 ),
                 mitigation=str(raw.get("mitigation", "")),
@@ -621,13 +608,17 @@ async def push_to_jira_node(
                 extra={"error": f"{type(exc).__name__}: {exc}"},
             )
             outcome = _PushOutcome(
-                success=False, external_ref=None,
-                error=f"{type(exc).__name__}: {exc}", record_id=None,
+                success=False,
+                external_ref=None,
+                error=f"{type(exc).__name__}: {exc}",
+                record_id=None,
             )
     else:
         outcome = _PushOutcome(
-            success=False, external_ref=None,
-            error="push_to_delivery_service_unavailable", record_id=None,
+            success=False,
+            external_ref=None,
+            error="push_to_delivery_service_unavailable",
+            record_id=None,
         )
 
     return {
@@ -654,8 +645,7 @@ def _build_migration_plan(state: RefactorAgentState) -> MigrationPlan:
     tenant_id = _coerce_uuid(state.get("tenant_id"))
     project_id = _coerce_uuid(state.get("project_id"))
     source_inv = SourceInventory.model_validate(
-        state.get("source_inventory")
-        or {"language": state.get("source_language", "java")}
+        state.get("source_inventory") or {"language": state.get("source_language", "java")}
     )
     target_arch = TargetArchitecture.model_validate(
         state.get("target_architecture")
@@ -786,9 +776,9 @@ def _coerce_uuid(value: Any) -> uuid.UUID:
 
 
 def _utcnow_iso() -> str:
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 __all__ = [

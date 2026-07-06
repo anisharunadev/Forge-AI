@@ -20,7 +20,6 @@ in Phase 2 per the Pillar 1 plan.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
 from typing import Any
 from uuid import UUID
 
@@ -30,7 +29,8 @@ from app.core.logging import get_logger
 from app.db.models.ideation import Idea, IdeaSource, IdeaStatus
 from app.db.session import get_session_factory
 from app.services.audit_service import audit_service
-from app.services.event_bus import Event, EventBus, EventType, bus as default_bus
+from app.services.event_bus import Event, EventBus, EventType
+from app.services.event_bus import bus as default_bus
 
 logger = get_logger(__name__)
 
@@ -75,11 +75,16 @@ class JiraIngestionService:
             await self._handle_transition(event, payload)
             return
         # default: treat as an issue.observed upsert
-        await self._handle_issue_observed(event, payload)
+        await self._handle_issue_observed(event, payload, kind=kind)
 
     # ---- per-event handlers -------------------------------------------
 
-    async def _handle_issue_observed(self, event: Event, payload: dict[str, Any]) -> None:
+    async def _handle_issue_observed(
+        self,
+        event: Event,
+        payload: dict[str, Any],
+        kind: str | None = None,
+    ) -> None:
         issue = payload.get("issue") or {}
         key = issue.get("key")
         if not key:

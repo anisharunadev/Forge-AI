@@ -13,17 +13,18 @@ Why a synthetic row?
 - We mint a deterministic ``workflow_id`` from the conversation_id (UUIDv5
   in the Co-pilot namespace) so the row is idempotent on retry.
 """
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.logging import get_logger
 from app.core.config import settings
+from app.core.logging import get_logger
 from app.db.models.copilot import CopilotConversation
 from app.db.models.workflow_budget import (
     WorkflowBudget,
@@ -106,7 +107,7 @@ async def ensure_conversation_budget(
         spent_usd=Decimal("0"),
         status=WorkflowBudgetStatus.ACTIVE,
         declared_by=conversation.user_id,
-        declared_at=datetime.now(timezone.utc),
+        declared_at=datetime.now(UTC),
         metadata_={
             "source": "copilot",
             "reason": reason,

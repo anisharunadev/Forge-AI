@@ -1,6 +1,9 @@
 """Tests for F-306 (Traceability) and F-307 (Versioning)."""
-import pytest
+
 from uuid import uuid4
+
+import pytest
+
 from backend.app.services.architecture.traceability import TraceabilityService
 from backend.app.services.architecture.versioning import ArchitectureVersioningService
 

@@ -35,18 +35,15 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-import pytest_asyncio
 
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.copilot import CopilotConversation, CopilotMessage
 from app.services.copilot_rate_limit import (
     CoPilotRateLimiter,
     RateLimitExceeded,
-    copilot_rate_limiter,
 )
 from app.services.copilot_service import CopilotService
 from app.services.workflow_budget import BudgetExceeded
-
 
 # ---------------------------------------------------------------------------
 # Test fixtures + helpers
@@ -107,17 +104,13 @@ async def test_cross_user_conversation_read_returns_404(sqlite_db):
     user_b = uuid.uuid4()
 
     async with sqlite_db() as db:
-        conv = _seed_conv(
-            db, tenant_id=tenant_id, user_id=user_a, title="A private thread"
-        )
+        conv = _seed_conv(db, tenant_id=tenant_id, user_id=user_a, title="A private thread")
         await db.flush()
         await db.commit()
         conv_id = conv.id
 
     async with sqlite_db() as db:
-        principal_b = _principal(
-            permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_b
-        )
+        principal_b = _principal(permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_b)
         service = CopilotService(db=db, principal=principal_b)
         with pytest.raises(LookupError):
             await service.get_conversation(conv_id)
@@ -136,17 +129,13 @@ async def test_cross_user_conversation_delete_returns_404(sqlite_db):
     user_b = uuid.uuid4()
 
     async with sqlite_db() as db:
-        conv = _seed_conv(
-            db, tenant_id=tenant_id, user_id=user_a, title="A's thread"
-        )
+        conv = _seed_conv(db, tenant_id=tenant_id, user_id=user_a, title="A's thread")
         await db.flush()
         await db.commit()
         conv_id = conv.id
 
     async with sqlite_db() as db:
-        principal_b = _principal(
-            permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_b
-        )
+        principal_b = _principal(permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_b)
         service = CopilotService(db=db, principal=principal_b)
         with pytest.raises(LookupError):
             await service.delete_conversation(conv_id)
@@ -156,11 +145,7 @@ async def test_cross_user_conversation_delete_returns_404(sqlite_db):
         from sqlalchemy import select
 
         row = (
-            await db.execute(
-                select(CopilotConversation).where(
-                    CopilotConversation.id == conv_id
-                )
-            )
+            await db.execute(select(CopilotConversation).where(CopilotConversation.id == conv_id))
         ).scalar_one()
         assert row.archived_at is None
 
@@ -199,23 +184,17 @@ async def test_cross_user_feedback_returns_404(sqlite_db):
         msg_id = msg.id
 
     async with sqlite_db() as db:
-        principal_b = _principal(
-            permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_b
-        )
+        principal_b = _principal(permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_b)
         service = CopilotService(db=db, principal=principal_b)
         with pytest.raises(LookupError):
-            await service.submit_feedback(
-                msg_id, CopilotFeedbackRequest(rating="up", comment="hi")
-            )
+            await service.submit_feedback(msg_id, CopilotFeedbackRequest(rating="up", comment="hi"))
 
     # Verify the message's feedback fields are still unset.
     async with sqlite_db() as db:
         from sqlalchemy import select
 
         row = (
-            await db.execute(
-                select(CopilotMessage).where(CopilotMessage.id == msg_id)
-            )
+            await db.execute(select(CopilotMessage).where(CopilotMessage.id == msg_id))
         ).scalar_one()
         assert row.feedback_rating is None
         assert row.feedback_comment is None
@@ -234,26 +213,24 @@ async def test_cross_tenant_conversation_listing_returns_only_own(sqlite_db):
     user_id = uuid.uuid4()
 
     async with sqlite_db() as db:
-        db.add_all([
-            CopilotConversation(tenant_id=tenant_a, project_id=None, user_id=user_id),
-            CopilotConversation(tenant_id=tenant_b, project_id=None, user_id=user_id),
-        ])
+        db.add_all(
+            [
+                CopilotConversation(tenant_id=tenant_a, project_id=None, user_id=user_id),
+                CopilotConversation(tenant_id=tenant_b, project_id=None, user_id=user_id),
+            ]
+        )
         await db.flush()
         await db.commit()
 
     async with sqlite_db() as db:
-        principal_a = _principal(
-            permissions=["copilot:use"], tenant_id=tenant_a, user_id=user_id
-        )
+        principal_a = _principal(permissions=["copilot:use"], tenant_id=tenant_a, user_id=user_id)
         service = CopilotService(db=db, principal=principal_a)
         rows = await service.list_conversations()
         assert len(rows) == 1
         assert str(rows[0].tenant_id) == str(tenant_a)
 
     async with sqlite_db() as db:
-        principal_b = _principal(
-            permissions=["copilot:use"], tenant_id=tenant_b, user_id=user_id
-        )
+        principal_b = _principal(permissions=["copilot:use"], tenant_id=tenant_b, user_id=user_id)
         service = CopilotService(db=db, principal=principal_b)
         rows = await service.list_conversations()
         assert len(rows) == 1
@@ -278,13 +255,10 @@ async def test_tool_invocation_writes_audit_row(sqlite_db):
     invocations.
     """
     from app.services._litellm_tools import ToolCall
-    from app.services.copilot_service import default_bus
 
     tenant_id = uuid.uuid4()
     user_id = uuid.uuid4()
-    principal = _principal(
-        permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id
-    )
+    principal = _principal(permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id)
 
     async with sqlite_db() as db:
         conv = _seed_conv(db, tenant_id=tenant_id, user_id=user_id)
@@ -305,13 +279,14 @@ async def test_tool_invocation_writes_audit_row(sqlite_db):
 
     async with sqlite_db() as db:
         service = CopilotService(db=db, principal=principal)
-        with patch(
-            "app.services.copilot_service.audit_service", fake_audit
-        ), patch("app.services.copilot_service.default_bus", fake_bus), \
-             patch(
-                 "app.services.copilot_service.tool_registry.dispatch",
-                 AsyncMock(return_value={"nodes": []}),
-             ):
+        with (
+            patch("app.services.copilot_service.audit_service", fake_audit),
+            patch("app.services.copilot_service.default_bus", fake_bus),
+            patch(
+                "app.services.copilot_service.tool_registry.dispatch",
+                AsyncMock(return_value={"nodes": []}),
+            ),
+        ):
             result = await service._execute_tool(call, conv)
 
     assert result.is_error is False
@@ -320,7 +295,8 @@ async def test_tool_invocation_writes_audit_row(sqlite_db):
 
     # The tool_call_id must appear in the audit payload for that action.
     tool_executed_calls = [
-        c for c in fake_audit.record.call_args_list
+        c
+        for c in fake_audit.record.call_args_list
         if c.kwargs.get("action") == "copilot.tool.executed"
     ]
     assert tool_executed_calls, "expected at least one copilot.tool.executed audit row"
@@ -349,9 +325,7 @@ async def test_conversation_budget_blocks_after_ceiling(sqlite_db):
 
     tenant_id = uuid.uuid4()
     user_id = uuid.uuid4()
-    principal = _principal(
-        permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id
-    )
+    principal = _principal(permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_id)
 
     fake_audit = MagicMock()
     fake_audit.record = AsyncMock()
@@ -366,21 +340,15 @@ async def test_conversation_budget_blocks_after_ceiling(sqlite_db):
     async def _no_op_aexit(self, *args: Any) -> None:
         return None
 
-    with patch(
-        "app.services.litellm_client.LiteLLMClient.__aenter__", _no_op_aenter
-    ), patch(
-        "app.services.litellm_client.LiteLLMClient.__aexit__", _no_op_aexit
-    ), patch(
-        "app.services.litellm_client.LiteLLMClient.agent_loop",
-        AsyncMock(
-            side_effect=BudgetExceeded(
-                workflow_id=workflow_id, spent=1.0, ceiling=1.0
-            )
+    with (
+        patch("app.services.litellm_client.LiteLLMClient.__aenter__", _no_op_aenter),
+        patch("app.services.litellm_client.LiteLLMClient.__aexit__", _no_op_aexit),
+        patch(
+            "app.services.litellm_client.LiteLLMClient.agent_loop",
+            AsyncMock(side_effect=BudgetExceeded(workflow_id=workflow_id, spent=1.0, ceiling=1.0)),
         ),
-    ), patch(
-        "app.services.copilot_service.audit_service", fake_audit
-    ), patch(
-        "app.services.copilot_service.default_bus", fake_bus
+        patch("app.services.copilot_service.audit_service", fake_audit),
+        patch("app.services.copilot_service.default_bus", fake_bus),
     ):
         from app.schemas.copilot import CopilotChatRequest, CopilotPageContext
 
@@ -426,26 +394,24 @@ async def test_service_layer_applies_user_filter(sqlite_db):
     user_b = uuid.uuid4()
 
     async with sqlite_db() as db:
-        db.add_all([
-            CopilotConversation(tenant_id=tenant_id, project_id=None, user_id=user_a),
-            CopilotConversation(tenant_id=tenant_id, project_id=None, user_id=user_b),
-        ])
+        db.add_all(
+            [
+                CopilotConversation(tenant_id=tenant_id, project_id=None, user_id=user_a),
+                CopilotConversation(tenant_id=tenant_id, project_id=None, user_id=user_b),
+            ]
+        )
         await db.flush()
         await db.commit()
 
         # Naive query (no user filter) — this is the leak the service
         # layer must close. SQLite in test mode does not run RLS
         # policies, so the leak is real here.
-        naive = (
-            await db.execute(select(CopilotConversation))
-        ).scalars().all()
+        naive = (await db.execute(select(CopilotConversation))).scalars().all()
         assert len(naive) == 2
 
     # The service's filter closes the leak: A sees only A's row.
     async with sqlite_db() as db:
-        principal_a = _principal(
-            permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_a
-        )
+        principal_a = _principal(permissions=["copilot:use"], tenant_id=tenant_id, user_id=user_a)
         service = CopilotService(db=db, principal=principal_a)
         rows = await service.list_conversations()
         assert len(rows) == 1
@@ -555,9 +521,7 @@ async def test_rate_limiter_recovers_after_window(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_api_returns_429_with_retry_after_when_rate_limited(
-    sqlite_db, monkeypatch
-):
+async def test_api_returns_429_with_retry_after_when_rate_limited(sqlite_db, monkeypatch):
     """``POST /copilot/conversations`` returns 429 + Retry-After when the
     rate limit is exceeded, and the body matches the spec.
     """
@@ -621,18 +585,18 @@ async def test_api_returns_429_with_retry_after_when_rate_limited(
         },
     }
 
-    with patch(
-        "app.services.litellm_client.LiteLLMClient.__aenter__", _no_op_aenter
-    ), patch(
-        "app.services.litellm_client.LiteLLMClient.__aexit__", _no_op_aexit
-    ), patch(
-        "app.services.litellm_client.LiteLLMClient.agent_loop",
-        AsyncMock(return_value=(response_shape, [], [])),
-    ), patch(
-        "app.services.copilot_service.audit_service", MagicMock(record=AsyncMock())
-    ), patch(
-        "app.services.copilot_service.default_bus",
-        MagicMock(publish=AsyncMock()),
+    with (
+        patch("app.services.litellm_client.LiteLLMClient.__aenter__", _no_op_aenter),
+        patch("app.services.litellm_client.LiteLLMClient.__aexit__", _no_op_aexit),
+        patch(
+            "app.services.litellm_client.LiteLLMClient.agent_loop",
+            AsyncMock(return_value=(response_shape, [], [])),
+        ),
+        patch("app.services.copilot_service.audit_service", MagicMock(record=AsyncMock())),
+        patch(
+            "app.services.copilot_service.default_bus",
+            MagicMock(publish=AsyncMock()),
+        ),
     ):
         # First call consumes the rate-limit bucket.
         first = client.post("/api/v1/copilot/conversations", json=body)
@@ -721,15 +685,14 @@ async def test_api_audits_rate_limit_block(sqlite_db, monkeypatch):
         },
     }
 
-    with patch(
-        "app.services.litellm_client.LiteLLMClient.__aenter__", _no_op_aenter
-    ), patch(
-        "app.services.litellm_client.LiteLLMClient.__aexit__", _no_op_aexit
-    ), patch(
-        "app.services.litellm_client.LiteLLMClient.agent_loop",
-        AsyncMock(return_value=(response_shape, [], [])),
-    ), patch(
-        "app.api.v1.copilot.audit_service", fake_audit
+    with (
+        patch("app.services.litellm_client.LiteLLMClient.__aenter__", _no_op_aenter),
+        patch("app.services.litellm_client.LiteLLMClient.__aexit__", _no_op_aexit),
+        patch(
+            "app.services.litellm_client.LiteLLMClient.agent_loop",
+            AsyncMock(return_value=(response_shape, [], [])),
+        ),
+        patch("app.api.v1.copilot.audit_service", fake_audit),
     ):
         # First call consumes the bucket.
         client.post("/api/v1/copilot/conversations", json=body)

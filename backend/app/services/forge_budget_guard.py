@@ -15,8 +15,8 @@ missing schema.
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime, timedelta
 import time
+from datetime import UTC, datetime, timedelta
 from functools import lru_cache
 from uuid import UUID
 
@@ -72,9 +72,7 @@ class AgentBudgetWarning(Exception):
         self.ceiling_usd = ceiling_usd
         self.pct = pct
         self.code = "agent_budget_warning"
-        super().__init__(
-            f"agent {agent_id} budget warning: {pct:.1%} of ceiling used"
-        )
+        super().__init__(f"agent {agent_id} budget warning: {pct:.1%} of ceiling used")
 
 
 # ponytail: 60s lru is fine for one-minute freshness; switch to Redis when
@@ -115,8 +113,7 @@ def _cached_ceiling(agent_id: str) -> float:
     try:
         with factory() as session:  # type: ignore[call-arg]
             stmt = text(
-                "SELECT max_budget_usd FROM agent_virtual_key "
-                "WHERE agent_id = :aid LIMIT 1"
+                "SELECT max_budget_usd FROM agent_virtual_key WHERE agent_id = :aid LIMIT 1"
             )
             result = session.execute(stmt, {"aid": str(aid)})
             row = result.scalar_one_or_none()
@@ -172,12 +169,8 @@ class BudgetGuard:
                     },
                 )
             except Exception:  # noqa: BLE001
-                logger.exception(
-                    "forge_budget_guard.audit_failed", agent_id=str(agent_id)
-                )
-            raise AgentBudgetExceeded(
-                agent_id, spent_usd=spent_usd, ceiling_usd=ceiling_usd
-            )
+                logger.exception("forge_budget_guard.audit_failed", agent_id=str(agent_id))
+            raise AgentBudgetExceeded(agent_id, spent_usd=spent_usd, ceiling_usd=ceiling_usd)
 
         warn = pct > WARN_THRESHOLD_PCT
         if warn:
@@ -196,9 +189,7 @@ class BudgetGuard:
                     },
                 )
             except Exception:  # noqa: BLE001
-                logger.exception(
-                    "forge_budget_guard.audit_failed", agent_id=str(agent_id)
-                )
+                logger.exception("forge_budget_guard.audit_failed", agent_id=str(agent_id))
 
         return {
             "allow": True,
@@ -229,8 +220,7 @@ class TenantBudgetExceeded(Exception):
         self.retry_after_seconds = retry_after_seconds
         self.code = "tenant_budget_exceeded"
         super().__init__(
-            f"tenant {tenant_id} budget exhausted: "
-            f"spent={spent_usd} ceiling={ceiling_usd}"
+            f"tenant {tenant_id} budget exhausted: spent={spent_usd} ceiling={ceiling_usd}"
         )
 
 
@@ -253,9 +243,7 @@ class TenantBudgetGuard:
         self._cache: dict[str, tuple[float, dict]] = {}
         self._cache_lock = asyncio.Lock()
 
-    async def _load_tenant(
-        self, tenant_id: UUID
-    ) -> tuple[dict | None, float]:
+    async def _load_tenant(self, tenant_id: UUID) -> tuple[dict | None, float]:
         """Return (settings_dict, ceiling_usd) for a tenant; default when missing."""
         now = time.monotonic()
         async with self._cache_lock:
@@ -272,9 +260,7 @@ class TenantBudgetGuard:
                 await session.execute(select(Tenant).where(Tenant.id == tenant_id))
             ).scalar_one_or_none()
         tenant_settings = (getattr(row, "settings", {}) or {}) if row else {}
-        ceiling = float(
-            tenant_settings.get("tenant_budget_usd") or self.DEFAULT_CEILING_USD
-        )
+        ceiling = float(tenant_settings.get("tenant_budget_usd") or self.DEFAULT_CEILING_USD)
         async with self._cache_lock:
             self._cache[str(tenant_id)] = (
                 now,

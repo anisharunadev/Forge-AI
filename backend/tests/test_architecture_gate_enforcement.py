@@ -58,9 +58,7 @@ def _make_state(
         required_role="forge-architect",
         expires_at=datetime.now(UTC) + timedelta(hours=1),
     )
-    state = state.set_pending_approval(pending).with_phase(
-        SDLCPhase.BLOCKED_APPROVAL
-    )
+    state = state.set_pending_approval(pending).with_phase(SDLCPhase.BLOCKED_APPROVAL)
     if granted is not None:
         state = state.model_copy(
             update={
@@ -154,9 +152,7 @@ async def test_super_approval_persists_decision_recorded_in_metadata(
 
     @require_approval_phase(SDLCPhase.ARCHITECTURE)
     async def check_decision(state: SDLCState) -> dict:
-        decision_key = (
-            f"approval:{SDLCPhase.ARCHITECTURE.value}:decision"
-        )
+        decision_key = f"approval:{SDLCPhase.ARCHITECTURE.value}:decision"
         return dict(state.metadata[decision_key])
 
     state, envelope = grant_architecture_approval()

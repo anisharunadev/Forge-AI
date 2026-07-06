@@ -18,8 +18,6 @@ Sections produced:
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
-from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
@@ -27,14 +25,15 @@ from sqlalchemy import select
 
 from app.core.logging import get_logger
 from app.db.models.ideation import (
+    PRD,
     Idea,
     IdeaAnalysis,
-    PRD,
     PRDStatus,
 )
 from app.db.session import get_session_factory
 from app.services.cost_ledger import cost_ledger
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 from app.services.litellm_client import LiteLLMClient
 
 logger = get_logger(__name__)
@@ -58,9 +57,7 @@ BMAD_SECTIONS: tuple[str, ...] = (
 
 _BMAD_SYSTEM = (
     "You are a product manager writing a BMad-style PRD. "
-    "Produce JSON with these exact keys: "
-    + ", ".join(s for s in BMAD_SECTIONS)
-    + ". "
+    "Produce JSON with these exact keys: " + ", ".join(s for s in BMAD_SECTIONS) + ". "
     "Values should be strings for 'problem' and arrays of concise strings for the rest. "
     "Keep each array between 2 and 6 items. "
     "Reply with JSON only — no commentary."
@@ -143,7 +140,9 @@ def _deterministic_prd(idea: Idea, analysis: IdeaAnalysis | None) -> dict[str, A
     user_stories = []
     if analysis and analysis.target_users:
         for user in analysis.target_users[:4]:
-            user_stories.append(f"As a {user}, I want to use {title.lower()} so that I can be more effective.")
+            user_stories.append(
+                f"As a {user}, I want to use {title.lower()} so that I can be more effective."
+            )
     if not user_stories:
         user_stories = [f"As a user, I want to use {title.lower()} so that I can solve my problem."]
     requirements = ["Functional MVP", "Telemetry / metrics", "Basic auth"]
@@ -251,9 +250,7 @@ class PRDGenerator:
         )
         return prd
 
-    async def get_prd(
-        self, idea_id: UUID | str, *, tenant_id: UUID | str
-    ) -> PRD | None:
+    async def get_prd(self, idea_id: UUID | str, *, tenant_id: UUID | str) -> PRD | None:
         await self._load_idea(idea_id, tenant_id=tenant_id)
         return await self._latest_prd(idea_id)
 
@@ -417,9 +414,7 @@ class PRDGenerator:
             await session.commit()
             return row
 
-    async def _load_idea(
-        self, idea_id: UUID | str, *, tenant_id: UUID | str
-    ) -> Idea:
+    async def _load_idea(self, idea_id: UUID | str, *, tenant_id: UUID | str) -> Idea:
         factory = get_session_factory()
         async with factory() as session:
             idea = await session.get(Idea, str(idea_id))

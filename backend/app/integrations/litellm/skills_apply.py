@@ -53,8 +53,7 @@ async def _call_post(
     response = await client.admin_client.post(path, json=body)
     if response.status_code >= 400:
         raise RuntimeError(
-            f"skills POST {path} returned "
-            f"{response.status_code}: {response.text[:200]}"
+            f"skills POST {path} returned {response.status_code}: {response.text[:200]}"
         )
     return response.json() or {}
 
@@ -124,6 +123,7 @@ async def create_or_update_skill(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any]:
     """``POST /v1/skills`` — idempotent on (tenant_id, name, version)."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any]:
         return await _call_post(client, "/v1/skills", skill)
 
@@ -157,6 +157,7 @@ async def public_hub(
     base_client: LiteLLMBaseClient | None = None,
 ) -> list[dict[str, Any]]:
     """``GET /public/agent_hub`` — no auth, rate-limited at the Forge layer."""
+
     async def _call(client: LiteLLMBaseClient) -> list[dict[str, Any]]:
         try:
             response = await client.admin_client.get("/public/agent_hub")
@@ -179,10 +180,9 @@ async def dotprompt_to_json(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any]:
     """``POST /utils/dotprompt_json_converter``."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any]:
-        return await _call_post(
-            client, "/utils/dotprompt_json_converter", {"dotprompt": dotprompt}
-        )
+        return await _call_post(client, "/utils/dotprompt_json_converter", {"dotprompt": dotprompt})
 
     if base_client is not None:
         return await _call(base_client)
@@ -197,6 +197,7 @@ async def transform_request(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any]:
     """``POST /utils/transform_request`` — merge a skill into a chat request."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any]:
         return await _call_post(
             client,

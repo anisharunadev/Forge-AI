@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -26,7 +26,8 @@ from app.db.models.ideation import (
     RoadmapStatus,
 )
 from app.db.session import get_session_factory
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 
 logger = get_logger(__name__)
 
@@ -68,7 +69,9 @@ _THEME_KEYWORDS: dict[str, tuple[str, ...]] = {
 def _infer_theme(idea: Idea, analysis: IdeaAnalysis | None) -> str:
     haystack = ((idea.title or "") + " " + (idea.description or "")).lower()
     if analysis is not None:
-        haystack += " " + " ".join(analysis.tags_as_text() if hasattr(analysis, "tags_as_text") else [])  # noqa: E501
+        haystack += " " + " ".join(
+            analysis.tags_as_text() if hasattr(analysis, "tags_as_text") else []
+        )  # noqa: E501
         haystack += " " + (analysis.summary or "").lower()
     best_theme = "general"
     best_score = 0
@@ -135,7 +138,7 @@ class RoadmapGenerator:
 
         # Default name if not provided.
         if not name:
-            stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M")
+            stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M")
             name = f"Roadmap {horizon_enum.value} {stamp}"
 
         factory = get_session_factory()
@@ -377,9 +380,7 @@ class RoadmapGenerator:
             stmt = stmt.order_by(Roadmap.created_at.desc()).limit(max(1, min(limit, 500)))
             return list((await session.execute(stmt)).scalars().all())
 
-    async def get_roadmap(
-        self, roadmap_id: UUID | str, *, tenant_id: UUID | str
-    ) -> Roadmap:
+    async def get_roadmap(self, roadmap_id: UUID | str, *, tenant_id: UUID | str) -> Roadmap:
         return await self._load_roadmap(roadmap_id, tenant_id=tenant_id)
 
     async def update_roadmap(
@@ -443,7 +444,7 @@ class RoadmapGenerator:
 
         # Order by total_score desc; ideas without scores get 0.
         scored.sort(
-            key=lambda t: (t[1].total_score if t[1] else 0.0),
+            key=lambda t: t[1].total_score if t[1] else 0.0,
             reverse=True,
         )
 
@@ -460,9 +461,7 @@ class RoadmapGenerator:
             )
         return drafts
 
-    async def _load_roadmap(
-        self, roadmap_id: UUID | str, *, tenant_id: UUID | str
-    ) -> Roadmap:
+    async def _load_roadmap(self, roadmap_id: UUID | str, *, tenant_id: UUID | str) -> Roadmap:
         factory = get_session_factory()
         async with factory() as session:
             row = await session.get(Roadmap, str(roadmap_id))
@@ -485,9 +484,7 @@ class RoadmapGenerator:
     async def _latest_score(self, idea_id: UUID | str) -> OpportunityScore | None:
         factory = get_session_factory()
         async with factory() as session:
-            stmt = select(OpportunityScore).where(
-                OpportunityScore.idea_id == str(idea_id)
-            )
+            stmt = select(OpportunityScore).where(OpportunityScore.idea_id == str(idea_id))
             rows = list((await session.execute(stmt)).scalars().all())
         if not rows:
             return None
@@ -504,9 +501,7 @@ class RoadmapGenerator:
         rows.sort(key=lambda r: r.analyzed_at, reverse=True)
         return rows[0]
 
-    async def _mark_ideas_in_roadmap(
-        self, *, idea_ids: list[UUID], tenant_id: UUID | str
-    ) -> None:
+    async def _mark_ideas_in_roadmap(self, *, idea_ids: list[UUID], tenant_id: UUID | str) -> None:
         if not idea_ids:
             return
         factory = get_session_factory()

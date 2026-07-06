@@ -18,17 +18,17 @@ Create Date: 2026-07-02 13:00:00.000000
 
 from __future__ import annotations
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "step_78_f12_rbac_hierarchy"
-down_revision: Union[str, None] = "step_75_p4_agent_virtual_key_001"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "step_75_p4_agent_virtual_key_001"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -38,10 +38,19 @@ def upgrade() -> None:
         sa.Column("id", sa.dialects.postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column("tenant_id", sa.dialects.postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("name", sa.String(200), nullable=False),
-        sa.Column("brand", sa.dialects.postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
+        sa.Column(
+            "brand",
+            sa.dialects.postgresql.JSONB(astext_type=sa.Text()),
+            nullable=False,
+            server_default=sa.text("'{}'::jsonb"),
+        ),
         sa.Column("billing_ref", sa.String(255), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], ondelete="CASCADE"),
     )
     op.create_index("ix_organizations_tenant", "organizations", ["tenant_id"])
@@ -55,11 +64,25 @@ def upgrade() -> None:
         sa.Column("org_id", sa.dialects.postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("name", sa.String(200), nullable=False),
         sa.Column("description", sa.String(500), nullable=True),
-        sa.Column("model_allowlist", sa.dialects.postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'[]'::jsonb")),
-        sa.Column("default_agent_config", sa.dialects.postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
+        sa.Column(
+            "model_allowlist",
+            sa.dialects.postgresql.JSONB(astext_type=sa.Text()),
+            nullable=False,
+            server_default=sa.text("'[]'::jsonb"),
+        ),
+        sa.Column(
+            "default_agent_config",
+            sa.dialects.postgresql.JSONB(astext_type=sa.Text()),
+            nullable=False,
+            server_default=sa.text("'{}'::jsonb"),
+        ),
         sa.Column("blocked", sa.Boolean(), nullable=False, server_default=sa.text("false")),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["org_id"], ["organizations.id"], ondelete="CASCADE"),
     )
@@ -74,8 +97,12 @@ def upgrade() -> None:
         sa.Column("user_id", sa.dialects.postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("role", sa.String(32), nullable=False),
         sa.Column("status", sa.String(32), nullable=False, server_default="active"),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["team_id"], ["teams.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
@@ -93,8 +120,12 @@ def upgrade() -> None:
         sa.Column("description", sa.String(500), nullable=True),
         sa.Column("blocked", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("billing_ref", sa.String(255), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["org_id"], ["organizations.id"], ondelete="CASCADE"),
     )

@@ -13,9 +13,8 @@ and creates an ``ivfflat`` / ``hnsw`` ANN index — see
 
 from __future__ import annotations
 
-from datetime import datetime
-
 import sqlalchemy as sa
+
 from alembic import op
 
 # revision identifiers, used by Alembic.
@@ -43,8 +42,18 @@ def upgrade() -> None:
         sa.Column("name", sa.String(length=255), nullable=True),
         sa.Column("status", sa.String(length=32), nullable=False, server_default="active"),
         sa.Column("archived_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("metadata", sa.dialects.postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'")),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
+        sa.Column(
+            "metadata",
+            sa.dialects.postgresql.JSONB(astext_type=sa.Text()),
+            nullable=False,
+            server_default=sa.text("'{}'"),
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+        ),
     )
     op.create_index(
         "ix_vector_stores_tenant_project",
@@ -96,7 +105,12 @@ def upgrade() -> None:
         # once the extension is provisioned in the target environment.
         sa.Column("embedding", sa.dialects.postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column("chunk_index", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+        ),
     )
     op.create_index(
         "ix_rag_chunks_tenant_project",

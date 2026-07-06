@@ -25,10 +25,10 @@ from uuid import UUID, uuid4
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, ConfigDict, Field
 
-
 # ---------------------------------------------------------------------------
 # Domain types
 # ---------------------------------------------------------------------------
+
 
 @dataclass(slots=True)
 class KGNode:
@@ -56,9 +56,7 @@ class KGQueryResult:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "nodes": [
-                {**asdict(n), "id": str(n.id)} for n in self.nodes
-            ],
+            "nodes": [{**asdict(n), "id": str(n.id)} for n in self.nodes],
             "edges": [
                 {
                     **asdict(e),
@@ -74,6 +72,7 @@ class KGQueryResult:
 # Backend protocol — the M2 substrate (when published) implements this.
 # Tests can substitute an in-memory backend.
 # ---------------------------------------------------------------------------
+
 
 class KnowledgeGraphBackend(abc.ABC):
     """Storage abstraction so the tool can run against a real backend
@@ -126,6 +125,7 @@ class InMemoryKGBackend(KnowledgeGraphBackend):
 # LangChain tool schema + tool class
 # ---------------------------------------------------------------------------
 
+
 class KGQueryInput(BaseModel):
     """Input schema for :class:`KnowledgeGraphTool`."""
 
@@ -133,7 +133,7 @@ class KGQueryInput(BaseModel):
         ...,
         description=(
             "Cypher-like query string. May be a JSON doc like "
-            "'{\"match\": \"Component\"}' or a label name."
+            '\'{"match": "Component"}\' or a label name.'
         ),
     )
     params: dict[str, Any] = Field(
@@ -165,7 +165,7 @@ class KnowledgeGraphTool(BaseTool):
     name: str = "knowledge_graph_query"
     description: str = (
         "Query the project knowledge graph. Accepts a Cypher-like query or "
-        "a JSON object like '{\"match\": \"Component\"}' to filter by label."
+        'a JSON object like \'{"match": "Component"}\' to filter by label.'
     )
     args_schema: type[BaseModel] = KGQueryInput
     backend: Any = Field(default_factory=InMemoryKGBackend)

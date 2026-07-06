@@ -12,11 +12,10 @@ from uuid import UUID
 
 from sqlalchemy import select
 
-from app.core.logging import get_logger
-from app.core.security import AuthenticatedPrincipal
-from app.copilot.tools.base import Tool
 from app.copilot.tools.exceptions import ToolArgumentInvalid
 from app.copilot.tools.registry import tool_registry
+from app.core.logging import get_logger
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.template import Template
 from app.db.session import get_session_factory
 from app.services.rbac import COPILOT_PERMISSION_TOOL_GET_TEMPLATE
@@ -54,9 +53,7 @@ class GetTemplateTool:
     ) -> dict[str, Any]:
         key = args.get("template_key")
         if not isinstance(key, str) or not key.strip():
-            raise ToolArgumentInvalid(
-                self.name, "template_key is required", field="template_key"
-            )
+            raise ToolArgumentInvalid(self.name, "template_key is required", field="template_key")
         template_key = key.strip()
         factory = get_session_factory()
         async with factory() as session:

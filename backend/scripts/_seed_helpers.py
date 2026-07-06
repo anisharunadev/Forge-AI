@@ -11,6 +11,7 @@ load-bearing for the developer who's debugging a missing row.
 Centralising the constants is the safe, small win; the rest stays
 per-script.
 """
+
 from __future__ import annotations
 
 import uuid

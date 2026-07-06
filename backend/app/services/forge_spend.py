@@ -12,7 +12,7 @@ portable across SQLite (tests) and Postgres (prod).
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
@@ -25,7 +25,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.logging import get_logger
-from app.db.base import Base, GUID, UUIDPrimaryKeyMixin
+from app.db.base import GUID, Base, UUIDPrimaryKeyMixin
 from app.db.session import get_session_factory
 from app.integrations.litellm.litellm_base_client import LiteLLMBaseClient
 from app.services.audit_service import audit_service
@@ -61,12 +61,8 @@ class SpendRecord(Base, UUIDPrimaryKeyMixin):
     cost_usd: Mapped[Decimal] = mapped_column(Numeric(12, 6), nullable=False)
     # unique=True mirrors alembic step_75_p3_spend_records_001's UNIQUE
     # constraint so metadata.create_all (used in tests) emits it too.
-    litellm_request_id: Mapped[str] = mapped_column(
-        String(256), nullable=False, unique=True
-    )
-    reconciled_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    litellm_request_id: Mapped[str] = mapped_column(String(256), nullable=False, unique=True)
+    reconciled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -101,7 +97,7 @@ class SpendRecordOut(BaseModel):
     created_at: datetime
 
     @classmethod
-    def from_row(cls, row: SpendRecord) -> "SpendRecordOut":
+    def from_row(cls, row: SpendRecord) -> SpendRecordOut:
         return cls(
             id=row.id,
             tenant_id=row.tenant_id,
@@ -246,9 +242,7 @@ class SpendService:
         factory = get_session_factory()
         async with factory() as session:
             existing = await session.scalar(
-                select(SpendRecord).where(
-                    SpendRecord.litellm_request_id == litellm_request_id
-                )
+                select(SpendRecord).where(SpendRecord.litellm_request_id == litellm_request_id)
             )
             if existing is not None:
                 return SpendRecordOut.from_row(existing)
@@ -274,9 +268,7 @@ class SpendService:
                 )
                 # ponytail: ON CONFLICT is Postgres-only; SQLite test path
                 # handles the rare race via the post-insert SELECT below.
-                stmt = stmt.on_conflict_do_nothing(
-                    index_elements=["litellm_request_id"]
-                )
+                stmt = stmt.on_conflict_do_nothing(index_elements=["litellm_request_id"])
                 await session.execute(stmt)
                 await session.commit()
             except Exception:  # pragma: no cover — SQLite test path
@@ -284,9 +276,7 @@ class SpendService:
                 # fall through to SELECT
 
             row = await session.scalar(
-                select(SpendRecord).where(
-                    SpendRecord.litellm_request_id == litellm_request_id
-                )
+                select(SpendRecord).where(SpendRecord.litellm_request_id == litellm_request_id)
             )
             if row is None:  # pragma: no cover — race condition
                 raise RuntimeError(
@@ -347,19 +337,15 @@ class SpendService:
                 if not req_id:
                     continue
                 existing = await session.scalar(
-                    select(SpendRecord).where(
-                        SpendRecord.litellm_request_id == req_id
-                    )
+                    select(SpendRecord).where(SpendRecord.litellm_request_id == req_id)
                 )
                 litellm_cost = float(entry.get("spend") or entry.get("cost") or 0.0)
                 if existing is None:
                     tenant_id = _uuid(
-                        entry.get("tenant_id")
-                        or "00000000-0000-0000-0000-000000000000"
+                        entry.get("tenant_id") or "00000000-0000-0000-0000-000000000000"
                     )
                     project_id = _uuid(
-                        entry.get("project_id")
-                        or "00000000-0000-0000-0000-000000000000"
+                        entry.get("project_id") or "00000000-0000-0000-0000-000000000000"
                     )
                     session.add(
                         SpendRecord(
@@ -367,12 +353,10 @@ class SpendService:
                             tenant_id=tenant_id,
                             project_id=project_id,
                             agent_id=_uuid(
-                                entry.get("agent_id")
-                                or "00000000-0000-0000-0000-000000000000"
+                                entry.get("agent_id") or "00000000-0000-0000-0000-000000000000"
                             ),
                             user_id=_uuid(
-                                entry.get("user_id")
-                                or "00000000-0000-0000-0000-000000000000"
+                                entry.get("user_id") or "00000000-0000-0000-0000-000000000000"
                             ),
                             team_id=_uuid(entry["team_id"]) if entry.get("team_id") else None,
                             model=str(entry.get("model") or "unknown"),
@@ -387,7 +371,7 @@ class SpendService:
                             ),
                             cost_usd=Decimal(str(litellm_cost)),
                             litellm_request_id=req_id,
-                            reconciled_at=datetime.now(timezone.utc),
+                            reconciled_at=datetime.now(UTC),
                         )
                     )
                     rows_inserted += 1
@@ -422,7 +406,7 @@ class SpendService:
                     if litellm_cost > 0 and abs(litellm_cost - forge_cost) > 0.0:
                         existing.cost_usd = Decimal(str(litellm_cost))
                         rows_upserted += 1
-                    existing.reconciled_at = datetime.now(timezone.utc)
+                    existing.reconciled_at = datetime.now(UTC)
             await session.commit()
 
         return {
@@ -534,9 +518,7 @@ class SpendService:
         rid = _uuid(run_id)
         factory = get_session_factory()
         async with factory() as session:
-            row = await session.scalar(
-                select(SpendRecord).where(SpendRecord.id == rid)
-            )
+            row = await session.scalar(select(SpendRecord).where(SpendRecord.id == rid))
             if row is None:
                 return None
             return CostMeterEntry(
@@ -557,9 +539,7 @@ class SpendService:
     # Backfill
     # ------------------------------------------------------------------
 
-    async def backfill(
-        self, since: datetime, dry_run: bool = False
-    ) -> BackfillResponse:
+    async def backfill(self, since: datetime, dry_run: bool = False) -> BackfillResponse:
         """Admin-only re-reconciliation over an explicit window.
 
         Mirrors :meth:`reconcile` but accepts a since-cutoff. ``dry_run``

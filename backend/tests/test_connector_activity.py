@@ -24,24 +24,20 @@ ARRAY``. The fixture below is the same approach
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-import pytest
 import pytest_asyncio
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.db.base import Base
 from app.db.models.connector import (
     Connector,
-    ConnectorStatus,
     ConnectorType,
 )
 from app.db.models.connector_activity import ConnectorActivity
 from app.services.connector_manager import ConnectorManager
-
 
 # ---------------------------------------------------------------------------
 # Schema fixture — focused tables, sqlite-friendly.
@@ -56,12 +52,8 @@ async def activity_db(monkeypatch) -> AsyncIterator[ConnectorManager]:
     PG-only ``ARRAY`` columns in phase4_sso_configs etc. Returns a
     ``ConnectorManager`` bound to the in-process bus.
     """
-    engine = create_async_engine(
-        "sqlite+aiosqlite:///:memory:", future=True
-    )
-    factory = async_sessionmaker(
-        bind=engine, expire_on_commit=False, autoflush=False
-    )
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
+    factory = async_sessionmaker(bind=engine, expire_on_commit=False, autoflush=False)
     async with engine.begin() as conn:
         await conn.run_sync(
             lambda sync_conn: Base.metadata.create_all(
@@ -137,7 +129,7 @@ async def test_list_activity_pagination(activity_db) -> None:
     connector_id = ids["connector_id"]
 
     # Seed 5 rows; one insert per second so started_at is unique.
-    base = datetime.now(timezone.utc) - timedelta(minutes=10)
+    base = datetime.now(UTC) - timedelta(minutes=10)
     for i in range(5):
         await activity_db.record_activity(
             tenant_id=tenant_id,
@@ -160,9 +152,7 @@ async def test_list_activity_pagination(activity_db) -> None:
 
     # Cursor: pass page1[-1].id as before_id — must return
     # the strict-less-than set (page1[-2], page1[-3], ...).
-    page2 = await activity_db.list_activity(
-        tenant_id, limit=2, before_id=page1[-1].id
-    )
+    page2 = await activity_db.list_activity(tenant_id, limit=2, before_id=page1[-1].id)
     assert len(page2) == 2
     assert page2[0].records_affected == 2
     assert page2[1].records_affected == 1
@@ -198,7 +188,7 @@ async def test_list_activity_filter_by_connector_id(activity_db) -> None:
             connector_id=primary_id,
             event_type="sync",
             status="success",
-            started_at=datetime.now(timezone.utc) + timedelta(seconds=i),
+            started_at=datetime.now(UTC) + timedelta(seconds=i),
             records_affected=i,
         )
     await activity_db.record_activity(
@@ -207,19 +197,15 @@ async def test_list_activity_filter_by_connector_id(activity_db) -> None:
         connector_id=other_id,
         event_type="sync",
         status="success",
-        started_at=datetime.now(timezone.utc),
+        started_at=datetime.now(UTC),
         records_affected=99,
     )
 
-    primary_rows = await activity_db.list_activity(
-        tenant_id, connector_id=primary_id
-    )
+    primary_rows = await activity_db.list_activity(tenant_id, connector_id=primary_id)
     assert len(primary_rows) == 3
     assert {str(r.connector_id) for r in primary_rows} == {str(primary_id)}
 
-    other_rows = await activity_db.list_activity(
-        tenant_id, connector_id=other_id
-    )
+    other_rows = await activity_db.list_activity(tenant_id, connector_id=other_id)
     assert len(other_rows) == 1
     assert str(other_rows[0].connector_id) == str(other_id)
 
@@ -237,31 +223,49 @@ async def test_list_activity_filter_by_event_type_and_since(activity_db) -> None
 
     # Two events at T = now-60min (old) and two at now (fresh).
     # One old + one fresh are 'sync', the other two are 'webhook'.
-    old = datetime.now(timezone.utc) - timedelta(minutes=60)
-    fresh = datetime.now(timezone.utc)
+    old = datetime.now(UTC) - timedelta(minutes=60)
+    fresh = datetime.now(UTC)
     await activity_db.record_activity(
-        tenant_id=tenant_id, project_id=project_id, connector_id=connector_id,
-        event_type="sync", status="success", started_at=old, records_affected=1,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        connector_id=connector_id,
+        event_type="sync",
+        status="success",
+        started_at=old,
+        records_affected=1,
     )
     await activity_db.record_activity(
-        tenant_id=tenant_id, project_id=project_id, connector_id=connector_id,
-        event_type="webhook", status="success", started_at=old, records_affected=2,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        connector_id=connector_id,
+        event_type="webhook",
+        status="success",
+        started_at=old,
+        records_affected=2,
     )
     await activity_db.record_activity(
-        tenant_id=tenant_id, project_id=project_id, connector_id=connector_id,
-        event_type="sync", status="success", started_at=fresh, records_affected=3,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        connector_id=connector_id,
+        event_type="sync",
+        status="success",
+        started_at=fresh,
+        records_affected=3,
     )
     await activity_db.record_activity(
-        tenant_id=tenant_id, project_id=project_id, connector_id=connector_id,
-        event_type="webhook", status="success", started_at=fresh, records_affected=4,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        connector_id=connector_id,
+        event_type="webhook",
+        status="success",
+        started_at=fresh,
+        records_affected=4,
     )
 
     # Filter event_type=sync + since=now-30min: exactly ONE match
     # (the fresh sync row), neither the old sync nor any webhook.
-    cutoff = datetime.now(timezone.utc) - timedelta(minutes=30)
-    rows = await activity_db.list_activity(
-        tenant_id, event_type="sync", since=cutoff
-    )
+    cutoff = datetime.now(UTC) - timedelta(minutes=30)
+    rows = await activity_db.list_activity(tenant_id, event_type="sync", since=cutoff)
     assert len(rows) == 1
     assert rows[0].records_affected == 3
     assert rows[0].event_type == "sync"

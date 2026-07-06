@@ -7,23 +7,23 @@ Terminal WebSocket route. Lifespan handles bus + telemetry startup.
 from __future__ import annotations
 
 import asyncio
-import os
-import sys
-from contextlib import asynccontextmanager
-from pathlib import Path
-from typing import AsyncIterator
-
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from app.core.security_headers import SecurityHeadersMiddleware
-from fastapi.responses import JSONResponse
 
 # ponytail: FastAPI's get_typed_signature uses call.__globals__ to eval string
 # annotations (PEP 563). When an endpoint is wrapped by @audit, the wrapper's
 # __globals__ is audit.py's module dict — which doesn't have get_current_principal
 # or Depends. Unwrap first so resolution uses the wrapped function's own globals.
 import inspect as _inspect
+import os
+import sys
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+from fastapi import FastAPI
 from fastapi.dependencies import utils as _fdep_utils
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.core.security_headers import SecurityHeadersMiddleware
 
 _orig_get_typed_signature = _fdep_utils.get_typed_signature
 
@@ -44,7 +44,9 @@ _fdep_utils.get_typed_signature = _patched_get_typed_signature
 # wrapper is annotated ``-> Any``) ends up with ``response_model=Any``
 # on a 204 route and trips the assertion. Mirror the same unwrap
 # ponytail for the return-annotation resolver.
-from fastapi import routing as _fapi_routing  # noqa: E402 — after the audit-safe sys-path tweak above
+from fastapi import (
+    routing as _fapi_routing,  # noqa: E402 — after the audit-safe sys-path tweak above
+)
 
 _orig_get_typed_return_annotation = _fdep_utils.get_typed_return_annotation
 
@@ -360,9 +362,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         async with get_session_factory()() as _boot_session:
             await observability_service.reload_chain_heads(_boot_session)
     except Exception as _chain_exc:  # noqa: BLE001 — boot must not block
-        logger.warning(
-            "forge.startup.chain_reload_failed", error=str(_chain_exc)
-        )
+        logger.warning("forge.startup.chain_reload_failed", error=str(_chain_exc))
         # Phase 5 -- Observability: SLO evaluator + cost aggregator.
     # Best-effort: failure to start logs and lets the process boot.
     from app.services.scheduler.jobs import cost_aggregate, slo_evaluator  # noqa: PLC0415

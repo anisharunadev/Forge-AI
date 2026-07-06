@@ -37,20 +37,37 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable
+from typing import Any
 from uuid import UUID
 
 from app.core.logging import get_logger
 from app.integrations.litellm.guardrail_apply import (
     apply_guardrail as _apply_guardrail,
+)
+from app.integrations.litellm.guardrail_apply import (
     get_guardrail_info as _get_guardrail_info,
-    list_guardrails as _list_guardrails,
-    list_submissions as _list_submissions,
-    list_ui_rules as _list_ui_rules,
-    save_ui_rule as _save_ui_rule,
+)
+from app.integrations.litellm.guardrail_apply import (
     get_ui_rule as _get_ui_rule,
+)
+from app.integrations.litellm.guardrail_apply import (
+    list_guardrails as _list_guardrails,
+)
+from app.integrations.litellm.guardrail_apply import (
+    list_submissions as _list_submissions,
+)
+from app.integrations.litellm.guardrail_apply import (
+    list_ui_rules as _list_ui_rules,
+)
+from app.integrations.litellm.guardrail_apply import (
     register_guardrail as _register_guardrail,
+)
+from app.integrations.litellm.guardrail_apply import (
+    save_ui_rule as _save_ui_rule,
+)
+from app.integrations.litellm.guardrail_apply import (
     test_custom_code as _test_custom_code,
 )
 from app.integrations.litellm.guardrail_sync import guardrail_sync
@@ -93,9 +110,7 @@ class GuardrailViolation(RuntimeError):
         self.reason = reason
         self.kind = kind
         self.policy_id = policy_id
-        super().__init__(
-            f"{guardrail_name} ({decision}): {reason or 'no reason'}"
-        )
+        super().__init__(f"{guardrail_name} ({decision}): {reason or 'no reason'}")
 
 
 # ---------------------------------------------------------------------
@@ -165,9 +180,7 @@ class GuardrailsService:
     # Configuration
     # ------------------------------------------------------------------
 
-    def set_effective_resolver(
-        self, resolver: Callable[..., Awaitable[list[str]]] | None
-    ) -> None:
+    def set_effective_resolver(self, resolver: Callable[..., Awaitable[list[str]]] | None) -> None:
         """Inject the policy-resolver (Slice 2 wiring point).
 
         ``None`` restores the default (per-tenant assignment).
@@ -178,9 +191,7 @@ class GuardrailsService:
     # Catalog
     # ------------------------------------------------------------------
 
-    async def list_catalog(
-        self, *, tenant_id: str | None = None
-    ) -> list[dict[str, Any]]:
+    async def list_catalog(self, *, tenant_id: str | None = None) -> list[dict[str, Any]]:
         """Return the LiteLLM guardrail catalog (cached 60s per tenant).
 
         The cache key includes ``tenant_id`` so per-tenant catalog
@@ -191,9 +202,7 @@ class GuardrailsService:
         cache_key = tenant_id or "__global__"
         async with self._catalog_lock:
             entry = self._catalog_cache.get(cache_key)
-            if entry is not None and (
-                time.monotonic() - entry.fetched_at
-            ) < _CATALOG_TTL_SECONDS:
+            if entry is not None and (time.monotonic() - entry.fetched_at) < _CATALOG_TTL_SECONDS:
                 return list(entry.rows)
 
         rows = await _list_guardrails()
@@ -408,8 +417,7 @@ class GuardrailsService:
                     guardrail_name=guardrail_name,
                     decision="block",
                     reason=(
-                        f"custom-code validation failed: "
-                        f"{test_outcome.get('error') or 'invalid'}"
+                        f"custom-code validation failed: {test_outcome.get('error') or 'invalid'}"
                     ),
                     kind="pre_call_input",
                 )
@@ -473,16 +481,12 @@ class GuardrailsService:
         guardrail_name: str | None = None,
     ) -> list[dict[str, Any]]:
         """AC #6 — every row has ``latency_ms``."""
-        return await _list_submissions(
-            since_hours=since_hours, guardrail_name=guardrail_name
-        )
+        return await _list_submissions(since_hours=since_hours, guardrail_name=guardrail_name)
 
     async def ui_list(self) -> list[dict[str, Any]]:
         return await _list_ui_rules()
 
-    async def ui_save(
-        self, rule: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def ui_save(self, rule: dict[str, Any]) -> dict[str, Any]:
         result = await _save_ui_rule(rule)
         self.invalidate_catalog()
         return result

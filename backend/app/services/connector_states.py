@@ -9,11 +9,13 @@ from __future__ import annotations
 
 import enum
 from dataclasses import dataclass
+from datetime import UTC
 from typing import Any
 from uuid import UUID
 
 from app.core.logging import get_logger
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 
 logger = get_logger(__name__)
 
@@ -86,14 +88,14 @@ class ConnectorStateMachine:
             raise InvalidTransitionError(
                 f"connector {connector_id}: {from_state.value} -> {to_state.value} is not allowed"
             )
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         transition = ConnectorTransition(
             connector_id=connector_id,
             from_state=from_state,
             to_state=to_state,
             reason=reason,
-            occurred_at=datetime.now(timezone.utc).isoformat(),
+            occurred_at=datetime.now(UTC).isoformat(),
         )
         event_type = _EVENT_FOR_STATE.get(to_state)
         if event_type is not None:

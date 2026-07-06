@@ -298,7 +298,5 @@ async def test_sample_data_loaded_on_completion(sqlite_db):
     )
     assert summary2["skipped"] == SAMPLE_KINDS
     async with factory() as session:
-        conn_count2 = (
-            await session.execute(select(func.count()).select_from(Connector))
-        ).scalar()
+        conn_count2 = (await session.execute(select(func.count()).select_from(Connector))).scalar()
     assert conn_count2 == 1

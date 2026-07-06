@@ -1,4 +1,5 @@
 """Phase 5 -- SLO alert sustained-breach + cooldown tests."""
+
 from __future__ import annotations
 
 import time
@@ -6,7 +7,7 @@ import time
 import pytest
 
 from app.services.observability.alerts import alert_manager
-from app.services.observability.slo_alerts import SLOAlert, _BreachWindow, evaluate_all
+from app.services.observability.slo_alerts import SLOAlert, _BreachWindow
 
 
 @pytest.fixture(autouse=True)

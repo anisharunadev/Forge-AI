@@ -10,8 +10,9 @@ from __future__ import annotations
 
 import functools
 import inspect
-from datetime import datetime, timezone
-from typing import Any, Awaitable, Callable
+from collections.abc import Awaitable, Callable
+from datetime import UTC, datetime
+from typing import Any
 
 from app.core.logging import get_logger
 from app.core.security import AuthenticatedPrincipal
@@ -20,7 +21,7 @@ logger = get_logger(__name__)
 
 
 def _utcnow_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def audit(
@@ -44,7 +45,7 @@ def audit(
             bound.apply_defaults()
             target_id = str(bound.arguments.get("target_id") or bound.arguments.get("id") or "*")
 
-            start = datetime.now(timezone.utc)
+            start = datetime.now(UTC)
             try:
                 result = await func(*args, **kwargs)
                 outcome = "success"
@@ -55,7 +56,7 @@ def audit(
                 err = type(exc).__name__ + ": " + str(exc)
                 raise
             finally:
-                duration_ms = (datetime.now(timezone.utc) - start).total_seconds() * 1000
+                duration_ms = (datetime.now(UTC) - start).total_seconds() * 1000
                 logger.info(
                     "audit.event",
                     action=action,

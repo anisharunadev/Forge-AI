@@ -30,8 +30,9 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any, Iterable
+from typing import Any
 from uuid import UUID
 
 from app.core.logging import get_logger
@@ -52,7 +53,6 @@ from app.integrations.litellm.policies_apply import (
     test_policy_pipeline,
     validate_policy,
 )
-from app.schemas.litellm_common import PolicyScope
 from app.services.audit_service import audit_service
 from app.services.event_bus import EventType, bus
 
@@ -198,9 +198,7 @@ class PoliciesService:
             ]
         )
 
-    def invalidate_resolve_cache(
-        self, tenant_id: UUID | str | None = None
-    ) -> None:
+    def invalidate_resolve_cache(self, tenant_id: UUID | str | None = None) -> None:
         """Bust the resolve cache (called on archive + status change).
 
         AC #7 — archiving a policy must not survive the next resolve
@@ -378,9 +376,7 @@ class PoliciesService:
         sample_chat: dict[str, Any],
     ) -> dict[str, Any]:
         """``POST /utils/test_policies_and_guardrails`` — paired validation."""
-        return await test_policies_and_guardrails(
-            policy_id=policy_id, sample_chat=sample_chat
-        )
+        return await test_policies_and_guardrails(policy_id=policy_id, sample_chat=sample_chat)
 
     # ------------------------------------------------------------------
     # Resolve — the load-bearing method
@@ -423,13 +419,7 @@ class PoliciesService:
             )
 
         # Step 1: missing-fields guard. Spec AC #4: never a 500.
-        missing = [
-            name
-            for name, value in (
-                ("tenant_id", ctx.tenant_id),
-            )
-            if value in (None, "")
-        ]
+        missing = [name for name, value in (("tenant_id", ctx.tenant_id),) if value in (None, "")]
         if missing:
             await self._emit_audit(
                 action="forge.policies.resolved",
@@ -515,7 +505,10 @@ class PoliciesService:
         if body is None:
             raise PolicyResolutionError(missing_fields=[f"template:{template_id}"])
         # Clone: deep-copy and stamp a fresh id.
-        cloned: dict[str, Any] = {**body, "id": str(UUID(int=hash(template_id) & 0xFFFFFFFFFFFFFFFFFFFFFFFF))}
+        cloned: dict[str, Any] = {
+            **body,
+            "id": str(UUID(int=hash(template_id) & 0xFFFFFFFFFFFFFFFFFFFFFFFF)),
+        }
         cloned.pop("category", None)
         await self._emit_audit(
             action="forge.policies.created",
@@ -602,9 +595,7 @@ class PoliciesService:
                 payload={**payload, "ok": ok},
             )
         except Exception:  # noqa: BLE001 — audit must not break the call
-            logger.exception(
-                "policies_service.audit_failed", action=action, target_id=target_id
-            )
+            logger.exception("policies_service.audit_failed", action=action, target_id=target_id)
 
 
 # ---------------------------------------------------------------------
@@ -612,9 +603,7 @@ class PoliciesService:
 # ---------------------------------------------------------------------
 
 
-def _derive_effective(
-    proxy_payload: dict[str, Any], *, kind: str | None = None
-) -> dict[str, Any]:
+def _derive_effective(proxy_payload: dict[str, Any], *, kind: str | None = None) -> dict[str, Any]:
     """Fold a ``/policies/resolve`` response into the effective envelope.
 
     Composition rules (spec §"Composition rules"):
@@ -627,7 +616,9 @@ def _derive_effective(
     list. We don't try to be clever about scope ordering — if the proxy
     returned priority-ordered rows (it does), we just dedup + filter.
     """
-    raw_policies: Iterable[dict[str, Any]] = proxy_payload.get("policies") or proxy_payload.get("items") or []
+    raw_policies: Iterable[dict[str, Any]] = (
+        proxy_payload.get("policies") or proxy_payload.get("items") or []
+    )
     if isinstance(raw_policies, dict):
         raw_policies = [raw_policies]
 

@@ -17,7 +17,7 @@ capability_match, least_loaded, manual_pin).
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -79,7 +79,7 @@ class AgentAssignmentStep:
 class AgentAssignmentPlan:
     idea_id: UUID
     steps: list[AgentAssignmentStep] = field(default_factory=list)
-    generated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    generated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -167,7 +167,7 @@ class AgentSelector:
     ) -> list[AgentAssignmentPlan]:
         roadmap = await self._load_roadmap(roadmap_id, tenant_id=tenant_id)
         plans: list[AgentAssignmentPlan] = []
-        for entry in (roadmap.items or []):
+        for entry in roadmap.items or []:
             idea_id = entry.get("idea_id")
             if not idea_id:
                 continue
@@ -214,16 +214,16 @@ class AgentSelector:
         analysis: IdeaAnalysis | None,
         score: OpportunityScore | None,
     ) -> str:
-        bits = [f"Picked {agent.name} ({agent.type.value if hasattr(agent.type, 'value') else agent.type}) for phase {phase}"]
+        bits = [
+            f"Picked {agent.name} ({agent.type.value if hasattr(agent.type, 'value') else agent.type}) for phase {phase}"
+        ]
         if analysis is not None and analysis.target_users:
             bits.append(f"target users: {', '.join(analysis.target_users[:2])}")
         if score is not None:
             bits.append(f"score={score.total_score}")
         return "; ".join(bits)
 
-    async def _load_idea(
-        self, idea_id: UUID | str, *, tenant_id: UUID | str
-    ) -> Idea:
+    async def _load_idea(self, idea_id: UUID | str, *, tenant_id: UUID | str) -> Idea:
         factory = get_session_factory()
         async with factory() as session:
             idea = await session.get(Idea, str(idea_id))
@@ -233,9 +233,7 @@ class AgentSelector:
                 raise PermissionError("idea_not_in_tenant")
             return idea
 
-    async def _load_roadmap(
-        self, roadmap_id: UUID | str, *, tenant_id: UUID | str
-    ) -> Roadmap:
+    async def _load_roadmap(self, roadmap_id: UUID | str, *, tenant_id: UUID | str) -> Roadmap:
         factory = get_session_factory()
         async with factory() as session:
             row = await session.get(Roadmap, str(roadmap_id))
@@ -258,9 +256,7 @@ class AgentSelector:
     async def _latest_score(self, idea_id: UUID | str) -> OpportunityScore | None:
         factory = get_session_factory()
         async with factory() as session:
-            stmt = select(OpportunityScore).where(
-                OpportunityScore.idea_id == str(idea_id)
-            )
+            stmt = select(OpportunityScore).where(OpportunityScore.idea_id == str(idea_id))
             rows = list((await session.execute(stmt)).scalars().all())
         if not rows:
             return None

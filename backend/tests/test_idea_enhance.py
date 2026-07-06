@@ -13,8 +13,7 @@ Covers:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -29,10 +28,8 @@ from app.db.models.ideation import (
 from app.db.session import get_session_factory
 from app.services.ideation.idea_analysis import idea_analysis_service
 from app.services.ideation.idea_enhance import (
-    IdeaEnhanceService,
     idea_enhance_service,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -84,7 +81,7 @@ async def _seed_analysis(
             related_artifacts=[],
             model_used="test-model",
             cost_usd=0.0,
-            analyzed_at=datetime.now(timezone.utc),
+            analyzed_at=datetime.now(UTC),
             editor_note=editor_note,
         )
         session.add(analysis)
@@ -129,7 +126,7 @@ async def test_enhance_writes_editor_note_to_latest_analysis(sqlite_db):
         related_artifacts=[],
         model_used="gpt-4o",
         cost_usd=0.001,
-        analyzed_at=datetime.now(timezone.utc),
+        analyzed_at=datetime.now(UTC),
         editor_note="Please add risk about scope creep",
     )
 
@@ -173,12 +170,10 @@ async def test_enhance_creates_fresh_analysis_if_none_exists(sqlite_db):
         related_artifacts=[],
         model_used=None,
         cost_usd=0.0,
-        analyzed_at=datetime.now(timezone.utc),
+        analyzed_at=datetime.now(UTC),
     )
 
-    with patch.object(
-        idea_analysis_service, "analyze_idea", AsyncMock(return_value=fake_analysis)
-    ):
+    with patch.object(idea_analysis_service, "analyze_idea", AsyncMock(return_value=fake_analysis)):
         result = await idea_enhance_service.enhance(
             idea_id=idea.id,
             tenant_id=tenant_id,
@@ -210,11 +205,9 @@ async def test_enhance_sets_idea_status_to_analyzing(sqlite_db):
         related_artifacts=[],
         model_used="m",
         cost_usd=0.0,
-        analyzed_at=datetime.now(timezone.utc),
+        analyzed_at=datetime.now(UTC),
     )
-    with patch.object(
-        idea_analysis_service, "analyze_idea", AsyncMock(return_value=fake_analysis)
-    ):
+    with patch.object(idea_analysis_service, "analyze_idea", AsyncMock(return_value=fake_analysis)):
         await idea_enhance_service.enhance(
             idea_id=idea.id,
             tenant_id=tenant_id,
@@ -253,11 +246,9 @@ async def test_enhance_records_audit_event(sqlite_db):
         related_artifacts=[],
         model_used="gpt-4o-mini",
         cost_usd=0.0004,
-        analyzed_at=datetime.now(timezone.utc),
+        analyzed_at=datetime.now(UTC),
     )
-    with patch.object(
-        idea_analysis_service, "analyze_idea", AsyncMock(return_value=fake_analysis)
-    ):
+    with patch.object(idea_analysis_service, "analyze_idea", AsyncMock(return_value=fake_analysis)):
         await idea_enhance_service.enhance(
             idea_id=idea.id,
             tenant_id=tenant_id,
@@ -328,10 +319,10 @@ async def test_enhance_endpoint_returns_403_without_permission(sqlite_db):
        the factory + RBAC wiring by stubbing the RBAC service.
     """
     import inspect
-    from unittest.mock import AsyncMock, Mock, patch
+    from unittest.mock import Mock, patch
 
-    from app.api.v1.ideation import enhance as enhance_module
     from app.api.deps import require_permission
+    from app.api.v1.ideation import enhance as enhance_module
 
     # 1. The handler signature must include the permission dep string.
     src = inspect.getsource(enhance_module.enhance_idea)

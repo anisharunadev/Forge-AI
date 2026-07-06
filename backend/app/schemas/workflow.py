@@ -27,7 +27,6 @@ from pydantic import ConfigDict, Field
 from app.db.models.workflow import WorkflowRunStatus, WorkflowStepStatus
 from app.schemas.common import ForgeBaseModel, TenantScopedModel
 
-
 # ---- Node data shapes --------------------------------------------------------
 
 NodeType = Literal["trigger", "command", "approval", "script"]
@@ -99,6 +98,7 @@ class WorkflowDefinition(ForgeBaseModel):
 
 # ---- Envelopes ---------------------------------------------------------------
 
+
 class WorkflowCreate(ForgeBaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=2_000)
@@ -125,6 +125,7 @@ class WorkflowRead(TenantScopedModel):
 
 
 # ---- Run envelopes -----------------------------------------------------------
+
 
 class WorkflowStepResultRead(ForgeBaseModel):
     """One per-node result inside a run's ``state.stepResults``."""

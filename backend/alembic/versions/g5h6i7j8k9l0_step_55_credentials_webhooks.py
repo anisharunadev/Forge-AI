@@ -13,24 +13,24 @@ Revision ID: g5h6i7j8k9l0
 Revises: f021a8b9c0d1
 Create Date: 2026-06-29 09:00:00.000000
 """
+
 from __future__ import annotations
 
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence, Union
+
+import sqlalchemy as sa
 
 from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.db.base import GUID, JSONB  # noqa: E402
 
-
 revision: str = "g5h6i7j8k9l0"
-down_revision: Union[str, None] = "f021a8b9c0d1"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "f021a8b9c0d1"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def _enable_rls(table_name: str) -> None:

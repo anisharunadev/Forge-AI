@@ -16,7 +16,6 @@ tenant-scoped because a single run covers all projects in the tenant.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
 from uuid import UUID
 
 from sqlalchemy import (
@@ -30,8 +29,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, TimestampMixin, UUIDPrimaryKeyMixin
-
+from app.db.base import GUID, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 # ---------------------------------------------------------------------------
 # Enums (string-backed; the closed-set is mirrored by the migration's
@@ -71,12 +69,8 @@ class IdeaSourceSignal(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     external_id: Mapped[str] = mapped_column(String(128), nullable=False)
     title: Mapped[str] = mapped_column(String(512), nullable=False, default="")
     body: Mapped[str] = mapped_column(Text, nullable=False, default="")
-    occurred_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    ingested_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     idea_id: Mapped[UUID | None] = mapped_column(
         GUID(),
         ForeignKey("ideas.id", ondelete="SET NULL"),
@@ -111,25 +105,13 @@ class IdeationIngestRun(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "ideation_ingest_runs"
 
     tenant_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, index=True)
-    started_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    finished_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    signals_seen: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0
-    )
-    ideas_created: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0
-    )
-    status: Mapped[str] = mapped_column(
-        String(32), nullable=False, default="running"
-    )
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    signals_seen: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    ideas_created: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="running")
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
-    degraded_budget: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False
-    )
+    degraded_budget: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     __table_args__ = (
         Index(

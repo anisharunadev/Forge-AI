@@ -20,12 +20,10 @@ On macOS the seccomp install is a no-op; the network-blocked case is
 from __future__ import annotations
 
 import platform
-import sys
 
 import pytest
 
 from app.services.script_sandbox import ScriptSandbox, ScriptSandboxResult
-
 
 _IS_DARWIN = platform.system() == "Darwin"
 _IS_LINUX = platform.system() == "Linux"
@@ -62,12 +60,7 @@ def test_sandbox_enforces_timeout() -> None:
     ``exit_code == -1`` with a typed timeout marker in stderr."""
     sandbox = ScriptSandbox(cpu_seconds=2, memory_bytes=128 * 1024 * 1024)
     # Busy-wait in a tight Python loop — RLIMIT_CPU should fire first.
-    src = (
-        "import time\n"
-        "end = time.monotonic() + 30\n"
-        "while time.monotonic() < end:\n"
-        "    pass\n"
-    )
+    src = "import time\nend = time.monotonic() + 30\nwhile time.monotonic() < end:\n    pass\n"
     result = sandbox.run("python", src, timeout_s=2)
     # subprocess.TimeoutExpired or RLIMIT_CPUBlow — either way, exit_code != 0
     # and the sandbox reports the deadline. We accept any non-zero signal/exit.
@@ -151,11 +144,7 @@ def test_sandbox_blocks_af_inet_socket_on_linux() -> None:
 def test_sandbox_does_not_leak_environment() -> None:
     """The sandbox is launched with ``env={}`` — no inherited env vars."""
     sandbox = ScriptSandbox(cpu_seconds=5)
-    src = (
-        "import os\n"
-        "keys = sorted(os.environ.keys())\n"
-        "print(','.join(keys))\n"
-    )
+    src = "import os\nkeys = sorted(os.environ.keys())\nprint(','.join(keys))\n"
     result = sandbox.run("python", src)
     assert result.exit_code == 0
     # PATH is set by the sandbox wrapper so the interpreter is findable;

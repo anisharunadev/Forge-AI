@@ -12,7 +12,6 @@ from uuid import UUID
 
 from app.agents.tools.mcp_client import MCPClient
 from app.core.logging import get_logger
-
 from app.services.ideation.sources.confluence_pull import (
     MAX_SIGNALS_PER_PULL,
     _persist_signals,

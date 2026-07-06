@@ -8,6 +8,7 @@ tenant via ``Tenant.settings['rate_limit_overrides'][surface]``.
 Redis-backed (ZSET sliding window); falls back to the in-process deque
 when Redis is unreachable (single-worker / test mode).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -39,9 +40,7 @@ class RateLimitExceeded(Exception):
     def __init__(self, retry_after_seconds: int, limit: int) -> None:
         self.retry_after_seconds = retry_after_seconds
         self.limit = limit
-        super().__init__(
-            f"rate limit exceeded ({limit}/min); retry in {retry_after_seconds}s"
-        )
+        super().__init__(f"rate limit exceeded ({limit}/min); retry in {retry_after_seconds}s")
 
 
 class TenantRateLimiter:
@@ -126,9 +125,7 @@ class TenantRateLimiter:
             )
             raise RateLimitExceeded(retry_after_seconds=retry_after, limit=limit)
 
-        return RateLimitResult(
-            allowed=True, count=count, limit=limit, retry_after_seconds=0
-        )
+        return RateLimitResult(allowed=True, count=count, limit=limit, retry_after_seconds=0)
 
     async def _check_redis(
         self,
@@ -197,7 +194,8 @@ async def enforce_rate_limit(
             limit_per_minute=limit_per_minute,
         )
     except RateLimitExceeded as exc:
-        from fastapi import HTTPException, status as _status
+        from fastapi import HTTPException
+        from fastapi import status as _status
 
         raise HTTPException(
             status_code=_status.HTTP_429_TOO_MANY_REQUESTS,

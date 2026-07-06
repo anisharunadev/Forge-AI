@@ -31,7 +31,7 @@ from __future__ import annotations
 import os
 import tempfile
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -48,7 +48,6 @@ from app.db.models.persona_memory import (
 from app.db.session import get_session_factory
 from app.services.audit_service import audit_service
 from app.services.tenant_directory import (
-    _reset_cache,
     get_tenant_slug,
     get_tenant_slug_sync,
 )
@@ -58,9 +57,7 @@ logger = get_logger(__name__)
 
 # Default on-disk root for the per-tenant memory stable files. Mirrors
 # the existing layout under ``tenants/<slug>/workspace/memory/``.
-DEFAULT_TENANTS_ROOT = (
-    "/home/arunachalam.v@knackforge.com/forge-ai/tenants"
-)
+DEFAULT_TENANTS_ROOT = "/home/arunachalam.v@knackforge.com/forge-ai/tenants"
 
 
 def _tenants_root() -> Path:
@@ -70,13 +67,7 @@ def _tenants_root() -> Path:
 
 def _stable_path(tenant_slug: str, persona: str, key: str) -> Path:
     return (
-        _tenants_root()
-        / tenant_slug
-        / "workspace"
-        / "memory"
-        / "personas"
-        / persona
-        / f"{key}.md"
+        _tenants_root() / tenant_slug / "workspace" / "memory" / "personas" / persona / f"{key}.md"
     )
 
 
@@ -88,9 +79,7 @@ class PersonaMemoryStore:
 
     # ---- Read ------------------------------------------------------
 
-    def read(
-        self, tenant_id: UUID | str, persona: str, key: str
-    ) -> str:
+    def read(self, tenant_id: UUID | str, persona: str, key: str) -> str:
         """Return the current stable file body, or ``""`` when absent."""
         if persona not in PERSONA_NAMES or key not in PERSONA_KEYS:
             return ""
@@ -98,14 +87,18 @@ class PersonaMemoryStore:
         if not slug:
             return ""
         path = (
-            self._root_override
-            / slug
-            / "workspace"
-            / "memory"
-            / "personas"
-            / persona
-            / f"{key}.md"
-        ) if self._root_override else _stable_path(slug, persona, key)
+            (
+                self._root_override
+                / slug
+                / "workspace"
+                / "memory"
+                / "personas"
+                / persona
+                / f"{key}.md"
+            )
+            if self._root_override
+            else _stable_path(slug, persona, key)
+        )
         try:
             return path.read_text(encoding="utf-8")
         except FileNotFoundError:
@@ -173,7 +166,7 @@ class PersonaMemoryStore:
             raise ValueError(f"invalid persona/key: {persona}/{key}")
 
         slug = await get_tenant_slug(tenant_id)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         factory = get_session_factory()
         async with factory() as session:
             row = PersonaMemoryHistory(
@@ -194,14 +187,18 @@ class PersonaMemoryStore:
         # for the audit chain; the stable file is the fast read path.
         if slug:
             path = (
-                self._root_override
-                / slug
-                / "workspace"
-                / "memory"
-                / "personas"
-                / persona
-                / f"{key}.md"
-            ) if self._root_override else _stable_path(slug, persona, key)
+                (
+                    self._root_override
+                    / slug
+                    / "workspace"
+                    / "memory"
+                    / "personas"
+                    / persona
+                    / f"{key}.md"
+                )
+                if self._root_override
+                else _stable_path(slug, persona, key)
+            )
             try:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 existing = path.read_text(encoding="utf-8") if path.exists() else ""
@@ -209,9 +206,7 @@ class PersonaMemoryStore:
                 body = f"{existing.rstrip()}\n\n{header}\n{entry_md.strip()}\n"
                 # Atomic write so two PMs editing at the same minute
                 # can't corrupt the file (the table preserves both).
-                fd, tmp_path = tempfile.mkstemp(
-                    prefix=".persona_memory.", dir=str(path.parent)
-                )
+                fd, tmp_path = tempfile.mkstemp(prefix=".persona_memory.", dir=str(path.parent))
                 try:
                     with os.fdopen(fd, "w", encoding="utf-8") as fh:
                         fh.write(body)
@@ -257,7 +252,7 @@ class PersonaMemoryStore:
         slug = await get_tenant_slug(tenant_id)
         if not slug:
             return 0
-        cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+        cutoff = datetime.now(UTC) - timedelta(hours=24)
         factory = get_session_factory()
         async with factory() as session:
             stmt = (
@@ -277,23 +272,27 @@ class PersonaMemoryStore:
         touched = 0
         for (persona, key), bucket in buckets.items():
             path = (
-                self._root_override
-                / slug
-                / "workspace"
-                / "memory"
-                / "personas"
-                / persona
-                / f"{key}.md"
-            ) if self._root_override else _stable_path(slug, persona, key)
+                (
+                    self._root_override
+                    / slug
+                    / "workspace"
+                    / "memory"
+                    / "personas"
+                    / persona
+                    / f"{key}.md"
+                )
+                if self._root_override
+                else _stable_path(slug, persona, key)
+            )
             try:
                 existing = path.read_text(encoding="utf-8") if path.exists() else ""
             except OSError:
                 existing = ""
             day_buckets: dict[str, list[str]] = {}
             for r in bucket:
-                day_buckets.setdefault(
-                    r.written_at.date().isoformat(), []
-                ).append(r.entry_md.strip())
+                day_buckets.setdefault(r.written_at.date().isoformat(), []).append(
+                    r.entry_md.strip()
+                )
             additions: list[str] = []
             for day, entries in day_buckets.items():
                 additions.append(f"## {day}")

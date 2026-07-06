@@ -337,9 +337,7 @@ class WorkflowBudgetService:
                 row.spent_usd = float(row.ceiling_usd)
                 row.status = WorkflowBudgetStatus.EXHAUSTED
                 await session.commit()
-                raise BudgetExceeded(
-                    wf_uuid, spent=new_spent, ceiling=float(row.ceiling_usd)
-                )
+                raise BudgetExceeded(wf_uuid, spent=new_spent, ceiling=float(row.ceiling_usd))
             row.spent_usd = new_spent
             if new_spent >= float(row.ceiling_usd):
                 row.status = WorkflowBudgetStatus.EXHAUSTED
@@ -379,9 +377,7 @@ class WorkflowBudgetService:
                 "headroom_pct": None,
             }
         if snapshot.ceiling_usd > 0:
-            headroom_pct = round(
-                (snapshot.remaining_usd / snapshot.ceiling_usd) * 100, 2
-            )
+            headroom_pct = round((snapshot.remaining_usd / snapshot.ceiling_usd) * 100, 2)
         else:
             headroom_pct = 0.0
         return {
@@ -504,8 +500,12 @@ class WorkflowBudgetService:
         async with factory() as session:
             session.add(
                 WorkflowBudgetDecisionRow(
-                    tenant_id=str(tenant_id) if tenant_id else "00000000-0000-0000-0000-000000000000",
-                    project_id=str(project_id) if project_id else "00000000-0000-0000-0000-000000000000",
+                    tenant_id=str(tenant_id)
+                    if tenant_id
+                    else "00000000-0000-0000-0000-000000000000",
+                    project_id=str(project_id)
+                    if project_id
+                    else "00000000-0000-0000-0000-000000000000",
                     workflow_id=str(workflow_id),
                     decision=check.decision.value,
                     projected_cost_usd=check.projected_cost_usd,
@@ -575,7 +575,9 @@ class WorkflowBudgetService:
                 actor_id=actor_id,
             )
         except Exception:  # noqa: BLE001
-            logger.exception("workflow_budget.publish_failed", workflow_id=str(snapshot.workflow_id))
+            logger.exception(
+                "workflow_budget.publish_failed", workflow_id=str(snapshot.workflow_id)
+            )
 
 
 # Module-level singleton for convenience (DI-friendly).
@@ -598,9 +600,9 @@ try:
     from app.agents.approval_gate import require_approval_phase
     from app.agents.sdlc_state import SDLCPhase
 
-    WorkflowBudgetService.declare_budget = require_approval_phase(
-        SDLCPhase.IMPLEMENTATION
-    )(WorkflowBudgetService.declare_budget)
+    WorkflowBudgetService.declare_budget = require_approval_phase(SDLCPhase.IMPLEMENTATION)(
+        WorkflowBudgetService.declare_budget
+    )
 except ImportError:  # pragma: no cover — partial-init guard
     # If approval_gate cannot resolve workflow_budget_service at this
     # exact moment (e.g. a parent loader pulled both modules in

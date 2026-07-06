@@ -2,27 +2,23 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Annotated, Any
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
-from app.api.deps import DbSession, Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
-from app.db.models.connector import ConnectorStatus, ConnectorType
 from app.schemas.connectors import (
     ConnectorCreate,
     ConnectorRead,
     ConnectorSyncHistoryRead,
-    ConnectorTestResult,
     ConnectorUpdate,
 )
 from app.services.connector_manager import connector_manager
-from app.services.event_bus import EventType, bus
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/connectors", tags=["connectors"])
 
@@ -32,7 +28,7 @@ router = APIRouter(prefix="/connectors", tags=["connectors"])
 async def list_connectors(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: UUID | None = Query(default=None),
-    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:read")),
 ) -> list[ConnectorRead]:
     rows = await connector_manager.list_connectors(
         principal.tenant_id,
@@ -46,7 +42,7 @@ async def list_connectors(
 async def get_connector(
     connector_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:read")),
 ) -> ConnectorRead:
     try:
         connector = await connector_manager.get_connector(
@@ -55,15 +51,15 @@ async def get_connector(
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return ConnectorRead.model_validate(connector)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("", response_model=ConnectorRead, status_code=status.HTTP_201_CREATED)
 @audit(action="connectors.create", target_type="connector")
 async def create_connector(
     body: ConnectorCreate,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:create"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:create")),
 ) -> ConnectorRead:
     connector = await connector_manager.create_connector(
         tenant_id=principal.tenant_id,
@@ -74,16 +70,16 @@ async def create_connector(
         actor_id=principal.user_id,
     )
     return ConnectorRead.model_validate(connector)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.patch("/{connector_id}", response_model=ConnectorRead)
 @audit(action="connectors.update", target_type="connector")
 async def update_connector(
     connector_id: UUID,
     body: ConnectorUpdate,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:update"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:update")),
 ) -> ConnectorRead:
     try:
         connector = await connector_manager.get_connector(
@@ -99,9 +95,9 @@ async def update_connector(
         actor_id=principal.user_id,
     )
     return ConnectorRead.model_validate(updated)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.delete(
     "/{connector_id}",
     response_model=None,
@@ -112,7 +108,7 @@ async def update_connector(
 async def delete_connector(
     connector_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:delete"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:delete")),
 ):
     try:
         existing = await connector_manager.get_connector(
@@ -120,19 +116,17 @@ async def delete_connector(
         )
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    quarantined = await connector_manager.delete_connector(
-        connector_id, actor_id=principal.user_id
-    )
+    quarantined = await connector_manager.delete_connector(connector_id, actor_id=principal.user_id)
     return ConnectorRead.model_validate(quarantined)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/{connector_id}/sync", response_model=ConnectorSyncHistoryRead)
 @audit(action="connectors.sync", target_type="connector")
 async def trigger_sync(
     connector_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:sync"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:sync")),
 ) -> ConnectorSyncHistoryRead:
     try:
         existing = await connector_manager.get_connector(
@@ -140,9 +134,7 @@ async def trigger_sync(
         )
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    history = await connector_manager.trigger_sync(
-        connector_id, actor_id=principal.user_id
-    )
+    history = await connector_manager.trigger_sync(connector_id, actor_id=principal.user_id)
     return ConnectorSyncHistoryRead.model_validate(history)
 
 
@@ -152,7 +144,7 @@ async def get_history(
     connector_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     limit: int = Query(default=50, ge=1, le=500),
-    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:read")),
 ) -> list[ConnectorSyncHistoryRead]:
     try:
         existing = await connector_manager.get_connector(
@@ -163,9 +155,7 @@ async def get_history(
     history = await connector_manager.get_sync_history(connector_id, limit=limit)
     return [ConnectorSyncHistoryRead.model_validate(h) for h in history]
 
+
 # NOTE: POST /connectors/{connector_id}/test is owned by
 # `connector_lifecycle.router` (it persists a ConnectorHealthHistory row).
 # Registering it here too would raise a duplicate-route error at startup.
-
-
-

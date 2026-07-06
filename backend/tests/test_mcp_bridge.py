@@ -126,12 +126,15 @@ async def test_unknown_event_type_rejected(sqlite_db):
 async def test_closed_set_matches_plan():
     # Snapshot check: if a new TS event is added, this test catches the
     # bridge falling out of sync.
-    assert ALLOWED_EVENT_TYPES == frozenset(
-        {
-            "jira.issue.observed",
-            "jira.transition.applied",
-            "jira.issue.ingested",
-        }
+    assert (
+        frozenset(
+            {
+                "jira.issue.observed",
+                "jira.transition.applied",
+                "jira.issue.ingested",
+            }
+        )
+        == ALLOWED_EVENT_TYPES
     )
 
 

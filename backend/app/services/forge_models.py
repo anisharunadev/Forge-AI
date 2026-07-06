@@ -58,9 +58,9 @@ class Principal(TypedDict, total=False):
 # Cache TTLs (seconds)
 # ---------------------------------------------------------------------------
 
-_TTL_V1_MODELS: int = 5 * 60         # 5 minutes — caller-key listing
-_TTL_MODEL_INFO: int = 60 * 60       # 1 hour  — master registry
-_TTL_COST_MAP: int = 24 * 60 * 60    # 24 hours — public pricing
+_TTL_V1_MODELS: int = 5 * 60  # 5 minutes — caller-key listing
+_TTL_MODEL_INFO: int = 60 * 60  # 1 hour  — master registry
+_TTL_COST_MAP: int = 24 * 60 * 60  # 24 hours — public pricing
 
 _V1_MODELS_PATH: str = "/v1/models"
 _MODEL_INFO_PATH: str = "/model/info"
@@ -241,7 +241,10 @@ class ModelsService:
                 if not mid:
                     continue
                 info = entry.get("model_info") if isinstance(entry.get("model_info"), dict) else {}
-                registry[str(mid)] = {"owned_by": info.get("owned_by") or entry.get("litellm_params", {}).get("custom_llm_provider")}
+                registry[str(mid)] = {
+                    "owned_by": info.get("owned_by")
+                    or entry.get("litellm_params", {}).get("custom_llm_provider")
+                }
             _bucket_put("info", _TTL_MODEL_INFO, registry)
             return registry
 
@@ -268,7 +271,7 @@ class ModelsService:
                 return {}
             body = resp.json()
             costs: dict[str, tuple[float | None, float | None]] = {}
-            for k, v in (body.items() if isinstance(body, dict) else []):
+            for k, v in body.items() if isinstance(body, dict) else []:
                 if not isinstance(v, dict):
                     continue
                 costs[str(k)] = (v.get("input_cost_per_token"), v.get("output_cost_per_token"))

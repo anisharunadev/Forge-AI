@@ -23,7 +23,7 @@ import hmac
 import json
 import uuid
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 import pytest_asyncio
@@ -32,17 +32,12 @@ from httpx import ASGITransport, AsyncClient
 
 from app.core.config import settings
 from app.services.merge_gate import (
-    DEFAULT_PER_COMMIT_COST_CAP_USD,
     GateDecision,
-    GateFinding,
     MergeGate,
 )
 from app.services.remediation_router import (
-    RemediationResult,
     RemediationRouter,
-    RemediationTicket,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fake ValidationReport — duck-types the schema created by F-501.
@@ -277,15 +272,12 @@ async def test_llm_is_not_called_during_gate_decision(
         remediation=remediation_router,
     )
 
-    with patch(
-        "app.services.merge_gate.LiteLLMClient", autospec=True
-    ) as litellm_cls, patch(
-        "app.services.litellm_client.LiteLLMClient.chat", autospec=True
-    ) as litellm_chat, patch(
-        "app.services.litellm_client.LiteLLMClient.embed", autospec=True
-    ) as litellm_embed, patch(
-        "app.services.merge_gate.lite_llm_cost_projector"
-    ) as cost_projector_factory:
+    with (
+        patch("app.services.merge_gate.LiteLLMClient", autospec=True) as litellm_cls,
+        patch("app.services.litellm_client.LiteLLMClient.chat", autospec=True) as litellm_chat,
+        patch("app.services.litellm_client.LiteLLMClient.embed", autospec=True) as litellm_embed,
+        patch("app.services.merge_gate.lite_llm_cost_projector") as cost_projector_factory,
+    ):
         decision = await gate.enforce_security_gate(
             commit_sha="feedbeef0001",
             project_id=project_id,
@@ -495,7 +487,8 @@ async def test_pre_call_admission_allows_when_under_cap(
 @pytest.fixture
 def webhook_app(pass_validator, remediation_router) -> FastAPI:
     """Stand up a tiny FastAPI app wired to the webhook router."""
-    from app.api.v1.webhooks import get_gate, router as webhooks_router
+    from app.api.v1.webhooks import get_gate
+    from app.api.v1.webhooks import router as webhooks_router
 
     gate = MergeGate(
         validator=pass_validator,
@@ -532,13 +525,9 @@ def _gh_payload(
     return json.dumps(body).encode("utf-8")
 
 
-async def test_webhook_returns_200_on_pass(
-    sqlite_db, webhook_client, project_id, pass_validator
-):
+async def test_webhook_returns_200_on_pass(sqlite_db, webhook_client, project_id, pass_validator):
     payload = _gh_payload(commit_sha="good1234567890", project_id=str(project_id))
-    response = await webhook_client.post(
-        "/webhooks/github/pre-commit", content=payload
-    )
+    response = await webhook_client.post("/webhooks/github/pre-commit", content=payload)
 
     assert response.status_code == 200
     body = response.json()
@@ -554,7 +543,8 @@ async def test_webhook_lock_path_returns_403_on_fail(
 ):
     """The ``/lock`` variant surfaces the block via HTTP status code,
     which is what some GitHub App integrations prefer."""
-    from app.api.v1.webhooks import get_gate, router as webhooks_router
+    from app.api.v1.webhooks import get_gate
+    from app.api.v1.webhooks import router as webhooks_router
 
     gate = MergeGate(
         validator=fail_validator,
@@ -567,9 +557,7 @@ async def test_webhook_lock_path_returns_403_on_fail(
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         payload = _gh_payload(commit_sha="badbadbad1234", project_id=str(project_id))
-        response = await client.post(
-            "/webhooks/github/pre-commit/lock", content=payload
-        )
+        response = await client.post("/webhooks/github/pre-commit/lock", content=payload)
 
     assert response.status_code == 403
     body = response.json()["detail"]
@@ -588,9 +576,7 @@ async def test_webhook_signature_verification_when_secret_set(
     transport = ASGITransport(app=webhook_app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         payload = _gh_payload(commit_sha="signed12345678", project_id=str(project_id))
-        response = await client.post(
-            "/webhooks/github/pre-commit", content=payload
-        )
+        response = await client.post("/webhooks/github/pre-commit", content=payload)
 
     assert response.status_code == 401
     pass_validator.assert_not_called()
@@ -695,13 +681,17 @@ async def test_audit_row_persisted_on_pass_and_fail(
 
     async with factory() as session:
         rows = (
-            await session.execute(
-                select(AuditEvent).where(
-                    AuditEvent.action == "merge_gate.evaluate",
-                    AuditEvent.target_type == "commit",
+            (
+                await session.execute(
+                    select(AuditEvent).where(
+                        AuditEvent.action == "merge_gate.evaluate",
+                        AuditEvent.target_type == "commit",
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
     target_ids = {r.target_id for r in rows}
     assert "auditpass0001" in target_ids

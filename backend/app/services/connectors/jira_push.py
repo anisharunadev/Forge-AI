@@ -30,7 +30,7 @@ from sqlalchemy import select
 from app.agents.tools.mcp_client import MCPClient
 from app.core.logging import get_logger
 from app.db.models.connector import Connector, ConnectorType
-from app.db.models.ideation import Idea, PRD, PushRecord
+from app.db.models.ideation import PRD, Idea, PushRecord
 from app.db.session import get_session_factory
 from app.services.audit_service import audit_service
 from app.services.connector_manager import connector_manager

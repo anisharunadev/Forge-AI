@@ -9,6 +9,7 @@ Templates are intentionally not imported by node modules at module
 load time — they are loaded lazily by the sub-graph entry point so the
 template path can be overridden in tests.
 """
+
 from __future__ import annotations
 
 import os

@@ -16,8 +16,9 @@ not block either the Forge command catalog or the LiteLLM gateway.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any
 
 from app.core.logging import get_logger
 from app.integrations.litellm.litellm_base_client import LiteLLMBaseClient
@@ -60,9 +61,7 @@ class SkillSync:
     # ------------------------------------------------------------------
     # push (Forge -> LiteLLM)
     # ------------------------------------------------------------------
-    async def push_to_litellm(
-        self, forge_commands: Iterable[Any]
-    ) -> int:
+    async def push_to_litellm(self, forge_commands: Iterable[Any]) -> int:
         """Register each Forge command as a LiteLLM Skill.
 
         ``forge_commands`` is an iterable of objects with attributes
@@ -148,6 +147,7 @@ class SkillSync:
                 # Tolerate JSON-string metadata (LiteLLM sometimes returns str)
                 try:
                     import json
+
                     metadata = json.loads(metadata)
                 except (TypeError, ValueError):
                     metadata = {}

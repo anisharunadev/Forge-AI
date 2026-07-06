@@ -21,7 +21,7 @@ keeps the loop alive across GC and survives shutdown via
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from app.core.config import settings
@@ -64,7 +64,7 @@ class LiteLLMHealthMonitor:
     * ``_last_state_change_at`` — when ``_is_healthy`` last flipped.
     """
 
-    def __init__(self, *, base_client: "LiteLLMBaseClient | None" = None) -> None:
+    def __init__(self, *, base_client: LiteLLMBaseClient | None = None) -> None:
         self._base_client = base_client
         self._task: asyncio.Task[None] | None = None
         self._stop_event: asyncio.Event | None = None
@@ -105,13 +105,9 @@ class LiteLLMHealthMonitor:
         return {
             "is_healthy": self._is_healthy,
             "consecutive_failures": self._consecutive_failures,
-            "last_check_at": (
-                self._last_check_at.isoformat() if self._last_check_at else None
-            ),
+            "last_check_at": (self._last_check_at.isoformat() if self._last_check_at else None),
             "last_state_change_at": (
-                self._last_state_change_at.isoformat()
-                if self._last_state_change_at
-                else None
+                self._last_state_change_at.isoformat() if self._last_state_change_at else None
             ),
         }
 
@@ -155,10 +151,8 @@ class LiteLLMHealthMonitor:
                     logger.exception("health_monitor.loop_error")
                 # Sleep with cancellation honored mid-sleep.
                 try:
-                    await asyncio.wait_for(
-                        self._stop_event.wait(), timeout=interval
-                    )
-                except asyncio.TimeoutError:
+                    await asyncio.wait_for(self._stop_event.wait(), timeout=interval)
+                except TimeoutError:
                     continue
             logger.info("health_monitor.stopped")
 
@@ -185,7 +179,7 @@ class LiteLLMHealthMonitor:
     async def _check_once(self) -> None:
         """Single probe; updates state + emits audit on transition."""
         healthy = await self._probe()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         self._last_check_at = now
 
         if healthy:
@@ -257,9 +251,7 @@ class LiteLLMHealthMonitor:
                 if consecutive_failures is not None
                 else self._consecutive_failures
             ),
-            "last_check_at": (
-                self._last_check_at.isoformat() if self._last_check_at else None
-            ),
+            "last_check_at": (self._last_check_at.isoformat() if self._last_check_at else None),
             "occurred_at": occurred_at.isoformat(),
         }
         try:

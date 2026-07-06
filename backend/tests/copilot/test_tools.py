@@ -20,13 +20,13 @@ import uuid
 from unittest.mock import AsyncMock, patch
 
 import pytest
-import pytest_asyncio
+
+from app.db.models.architecture import ADR as _ADR  # noqa: F401
+from app.db.models.architecture_services import Service as _Service  # noqa: F401
 
 # Importing the modules so their SQLAlchemy tables register on the
 # global metadata BEFORE ``sqlite_db`` calls ``metadata.create_all``.
 from app.db.models.artifact import Artifact as _Artifact  # noqa: F401
-from app.db.models.architecture import ADR as _ADR  # noqa: F401
-from app.db.models.architecture_services import Service as _Service  # noqa: F401
 from app.db.models.audit import AuditEvent as _AuditEvent  # noqa: F401
 from app.db.models.copilot import CopilotConversation as _Conv  # noqa: F401
 from app.db.models.standard import Standard as _Standard  # noqa: F401
@@ -60,8 +60,9 @@ def _restore_real_session_factory(monkeypatch, request):
         """
         sf = session_mod._session_factory
         if sf is None:
-            from app.db.session import get_engine  # noqa: WPS433 (lazy)
             from sqlalchemy.ext.asyncio import async_sessionmaker
+
+            from app.db.session import get_engine  # noqa: WPS433 (lazy)
 
             sf = async_sessionmaker(
                 bind=get_engine(),
@@ -97,7 +98,6 @@ def _restore_real_session_factory(monkeypatch, request):
         monkeypatch.setattr(mod, "get_session_factory", delegating_get_session_factory)
         captured_count += 1
     yield
-    return
 
 
 # ---------------------------------------------------------------------------
@@ -145,9 +145,7 @@ async def test_search_knowledge_tool_allowed(sqlite_db):
         )
         await session.commit()
 
-    principal = _principal(
-        permissions=["copilot:tool:search_knowledge"], tenant_id=tenant_id
-    )
+    principal = _principal(permissions=["copilot:tool:search_knowledge"], tenant_id=tenant_id)
     tool = SearchKnowledgeTool()
     result = await tool.execute(
         {"query": "auth"},
@@ -460,9 +458,7 @@ async def test_draft_artifact_tool_saves_as_draft(sqlite_db):
     # Confirm the DB row is actually DRAFT.
     async with sqlite_db() as session:
         row = (
-            await session.execute(
-                select(Artifact).where(Artifact.id == result["artifact_id"])
-            )
+            await session.execute(select(Artifact).where(Artifact.id == result["artifact_id"]))
         ).scalar_one()
         assert row.status == ArtifactStatus.DRAFT
         assert row.type == "adr"
@@ -497,9 +493,7 @@ async def test_draft_artifact_tool_never_active(sqlite_db):
     assert result["status"] == "draft"
     async with sqlite_db() as session:
         row = (
-            await session.execute(
-                select(Artifact).where(Artifact.id == result["artifact_id"])
-            )
+            await session.execute(select(Artifact).where(Artifact.id == result["artifact_id"]))
         ).scalar_one()
         assert row.status == ArtifactStatus.DRAFT
 
@@ -524,9 +518,7 @@ async def test_run_command_tool_requires_confirmation(sqlite_db):
     )
 
     # Spy on route_to_gsd to prove it is NEVER called from this tool.
-    with patch(
-        "app.services.forge_commands.route_to_gsd", new_callable=AsyncMock
-    ) as route_mock:
+    with patch("app.services.forge_commands.route_to_gsd", new_callable=AsyncMock) as route_mock:
         result = await tool.execute(
             {
                 "command_id": "forge-arch-adr",
@@ -574,9 +566,7 @@ async def test_run_command_tool_validates_command_id(sqlite_db):
 
     tenant_id = uuid.uuid4()
     tool = RunCommandTool()
-    principal = _principal(
-        permissions=["forge:run:forge-not-real"], tenant_id=tenant_id
-    )
+    principal = _principal(permissions=["forge:run:forge-not-real"], tenant_id=tenant_id)
     with pytest.raises(ToolArgumentInvalid) as excinfo:
         await tool.execute(
             {"command_id": "forge-not-real"},
@@ -649,7 +639,9 @@ async def test_audit_event_tool(sqlite_db):
                 await session.execute(
                     select(AuditEvent).where(AuditEvent.tenant_id == str(tenant_id))
                 )
-            ).scalars().all()
+            )
+            .scalars()
+            .all()
         )
     assert len(events) == 1
     assert events[0].action == "copilot.tool.search_knowledge"

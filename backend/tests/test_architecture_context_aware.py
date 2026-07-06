@@ -5,14 +5,13 @@ from __future__ import annotations
 import json
 import uuid
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 import pytest_asyncio
 
 # Register models BEFORE the sqlite_db fixture creates the schema.
 from app.db.models import architecture  # noqa: F401
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -26,7 +25,7 @@ class _FakeLLM:
         self._payload = payload
         self.calls: list[list[dict[str, Any]]] = []
 
-    async def __aenter__(self) -> "_FakeLLM":
+    async def __aenter__(self) -> _FakeLLM:
         return self
 
     async def __aexit__(self, *_exc: Any) -> None:
@@ -62,9 +61,7 @@ async def event_bus(event_bus):  # type: ignore[no-untyped-def]
 
 
 @pytest.mark.asyncio
-async def test_gather_context_pulls_standards(
-    sqlite_db, event_bus
-):
+async def test_gather_context_pulls_standards(sqlite_db, event_bus):
     """gather_context should populate `standards` when standard rows exist."""
     from app.db.models.standard import Standard
     from app.db.session import get_session_factory
@@ -105,15 +102,11 @@ async def test_gather_context_pulls_standards(
     )
     assert "standards" in ctx
     assert isinstance(ctx["standards"], list)
-    assert any(
-        s.get("name") == "Required ADR sections" for s in ctx["standards"]
-    ), ctx["standards"]
+    assert any(s.get("name") == "Required ADR sections" for s in ctx["standards"]), ctx["standards"]
 
 
 @pytest.mark.asyncio
-async def test_gather_context_pulls_templates(
-    sqlite_db, event_bus
-):
+async def test_gather_context_pulls_templates(sqlite_db, event_bus):
     """gather_context should pull Template rows matching the artifact_type."""
     from app.db.models.template import Template
     from app.db.session import get_session_factory
@@ -154,9 +147,7 @@ async def test_gather_context_pulls_templates(
 
 
 @pytest.mark.asyncio
-async def test_gather_context_pulls_prior_adrs(
-    sqlite_db, event_bus
-):
+async def test_gather_context_pulls_prior_adrs(sqlite_db, event_bus):
     """gather_context should pull prior ADRs for the (tenant, project)."""
     from app.db.models.architecture import ADR
     from app.db.session import get_session_factory
@@ -201,9 +192,7 @@ async def test_gather_context_pulls_prior_adrs(
 
 
 @pytest.mark.asyncio
-async def test_generate_with_context_tracks_usage(
-    sqlite_db, event_bus
-):
+async def test_generate_with_context_tracks_usage(sqlite_db, event_bus):
     """generate_with_context records which context items were used."""
     from app.services.architecture.context_aware import ContextAwareGenerator
 
@@ -255,9 +244,7 @@ async def test_generate_with_context_tracks_usage(
 
 
 @pytest.mark.asyncio
-async def test_get_context_usage_returns_list(
-    sqlite_db, event_bus
-):
+async def test_get_context_usage_returns_list(sqlite_db, event_bus):
     """get_context_usage returns the recorded references for an artifact."""
     from app.services.architecture.context_aware import ContextAwareGenerator
 
@@ -282,9 +269,7 @@ async def test_get_context_usage_returns_list(
         artifact_type="adr",
         prompt="x",
         context={
-            "standards": [
-                {"id": "std-1", "name": "S1", "content": "c", "applies_to": ["adr"]}
-            ],
+            "standards": [{"id": "std-1", "name": "S1", "content": "c", "applies_to": ["adr"]}],
             "templates": [],
             "prior_adrs": [],
             "project_context": {},

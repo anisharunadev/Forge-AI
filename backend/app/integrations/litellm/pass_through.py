@@ -25,8 +25,6 @@ from __future__ import annotations
 from collections.abc import AsyncIterator, Mapping
 from typing import Any
 
-import httpx
-
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -92,7 +90,7 @@ class PassThroughClient:
                 ...
     """
 
-    def __init__(self, base: "LiteLLMBaseClient") -> None:  # noqa: F821
+    def __init__(self, base: LiteLLMBaseClient) -> None:  # noqa: F821
         self._base = base
 
     # ------------------------------------------------------------------

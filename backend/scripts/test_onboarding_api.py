@@ -10,6 +10,7 @@ Step-61 Zone 11 — exercises every endpoint added in this step:
 
 Run: ``python -m scripts.test_onboarding_api`` (against the dev stack).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -109,11 +110,7 @@ async def main() -> int:
                 f"/tenants/{created['id']}/switch",
                 token,
             )
-            record(
-                ok
-                and switched is not None
-                and "access_token" in (switched or {})
-            )
+            record(ok and switched is not None and "access_token" in (switched or {}))
 
         # Duplicate slug → 409
         ok, _ = await call(
@@ -127,37 +124,24 @@ async def main() -> int:
         record(ok)
 
         print("\n" + "=" * 70 + "\nONBOARDING PROVISION\n" + "=" * 70)
-        ok, prov = await call(
-            client, "post", "/onboarding/provision", token, expected=202
-        )
+        ok, prov = await call(client, "post", "/onboarding/provision", token, expected=202)
         record(ok and prov is not None and "job_id" in (prov or {}))
 
         # Poll until done / failed (cap at ~10s)
         status_body = None
         for _ in range(15):
-            ok, status_body = await call(
-                client, "get", "/onboarding/provision/status", token
-            )
+            ok, status_body = await call(client, "get", "/onboarding/provision/status", token)
             if status_body and status_body.get("status") in ("done", "failed"):
                 break
             await asyncio.sleep(0.5)
-        record(
-            ok
-            and status_body is not None
-            and status_body.get("status") == "done"
-        )
+        record(ok and status_body is not None and status_body.get("status") == "done")
         if status_body:
             print(
                 f"  Final provision status: {status_body.get('status')}\n"
                 f"  Completed stages: {status_body.get('completed_stages')}"
             )
 
-    print(
-        "\n"
-        + "=" * 70
-        + f"\nRESULTS: {passed} passed, {failed} failed\n"
-        + "=" * 70
-    )
+    print("\n" + "=" * 70 + f"\nRESULTS: {passed} passed, {failed} failed\n" + "=" * 70)
     return 0 if failed == 0 else 1
 
 

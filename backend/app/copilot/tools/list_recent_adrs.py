@@ -10,10 +10,9 @@ from uuid import UUID
 
 from sqlalchemy import select
 
+from app.copilot.tools.registry import tool_registry
 from app.core.logging import get_logger
 from app.core.security import AuthenticatedPrincipal
-from app.copilot.tools.base import Tool
-from app.copilot.tools.registry import tool_registry
 from app.db.models.architecture import ADR
 from app.db.session import get_session_factory
 from app.services.rbac import COPILOT_PERMISSION_TOOL_LIST_RECENT_ADRS

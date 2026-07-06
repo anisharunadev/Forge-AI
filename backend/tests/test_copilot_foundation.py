@@ -19,15 +19,12 @@ service-layer privacy filter is what the tests below prove.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
 
 import pytest
-import pytest_asyncio
 
 # Import the model module so its tables register on the global metadata
 # BEFORE ``sqlite_db`` calls ``metadata.create_all``.
 from app.db.models import copilot as _copilot_models  # noqa: F401
-
 
 # ---------------------------------------------------------------------------
 # 1. Model CRUD
@@ -68,9 +65,7 @@ async def test_copilot_conversation_crud(sqlite_db):
 
         # Re-read.
         result = await session.execute(
-            select(CopilotConversation).where(
-                CopilotConversation.id == conv.id
-            )
+            select(CopilotConversation).where(CopilotConversation.id == conv.id)
         )
         loaded = result.scalar_one()
         assert loaded.title == "Auth API dependencies"
@@ -192,31 +187,33 @@ async def test_user_isolation_filter_blocks_cross_user_reads(sqlite_db):
 
         # A naive query (no user filter) returns BOTH — this is the
         # leak the service layer must close.
-        all_rows = (
-            await session.execute(select(CopilotConversation))
-        ).scalars().all()
+        all_rows = (await session.execute(select(CopilotConversation))).scalars().all()
         assert len(all_rows) == 2
 
         # The correct, service-layer query for User A's view:
         user_a_rows = (
-            await session.execute(
-                select(CopilotConversation).where(
-                    CopilotConversation.user_id == user_a
+            (
+                await session.execute(
+                    select(CopilotConversation).where(CopilotConversation.user_id == user_a)
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(user_a_rows) == 1
         assert user_a_rows[0].id == conv_a.id
         assert user_a_rows[0].title == "A's private thread"
 
         # And User B's view:
         user_b_rows = (
-            await session.execute(
-                select(CopilotConversation).where(
-                    CopilotConversation.user_id == user_b
+            (
+                await session.execute(
+                    select(CopilotConversation).where(CopilotConversation.user_id == user_b)
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(user_b_rows) == 1
         assert user_b_rows[0].id == conv_b.id
         assert user_b_rows[0].title == "B's private thread"
@@ -246,31 +243,39 @@ async def test_tenant_isolation_via_explicit_filter(sqlite_db):
 
     async with sqlite_db() as session:
         conv_a = CopilotConversation(
-            tenant_id=tenant_a, project_id=project_id, user_id=user_id,
+            tenant_id=tenant_a,
+            project_id=project_id,
+            user_id=user_id,
         )
         conv_b = CopilotConversation(
-            tenant_id=tenant_b, project_id=project_id, user_id=user_id,
+            tenant_id=tenant_b,
+            project_id=project_id,
+            user_id=user_id,
         )
         session.add_all([conv_a, conv_b])
         await session.commit()
 
         a_rows = (
-            await session.execute(
-                select(CopilotConversation).where(
-                    CopilotConversation.tenant_id == tenant_a
+            (
+                await session.execute(
+                    select(CopilotConversation).where(CopilotConversation.tenant_id == tenant_a)
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(a_rows) == 1
         assert a_rows[0].id == conv_a.id
 
         b_rows = (
-            await session.execute(
-                select(CopilotConversation).where(
-                    CopilotConversation.tenant_id == tenant_b
+            (
+                await session.execute(
+                    select(CopilotConversation).where(CopilotConversation.tenant_id == tenant_b)
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(b_rows) == 1
         assert b_rows[0].id == conv_b.id
 

@@ -11,8 +11,7 @@ import base64
 import hashlib
 import os
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -62,7 +61,7 @@ class AssetIngestionService:
                 "file_key": file_key,
                 "connector_id": str(connector.id) if connector else None,
                 "placeholder": connector is None,
-                "fetched_at": datetime.now(timezone.utc).isoformat(),
+                "fetched_at": datetime.now(UTC).isoformat(),
             },
             tenant_id=tenant_id,
             project_id=project_id,
@@ -129,7 +128,7 @@ class AssetIngestionService:
                     "path": path,
                     "size_bytes": size,
                     "description": description,
-                    "fetched_at": datetime.now(timezone.utc).isoformat(),
+                    "fetched_at": datetime.now(UTC).isoformat(),
                 },
                 tenant_id=tenant_id,
                 project_id=project_id,

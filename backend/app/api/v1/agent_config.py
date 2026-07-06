@@ -2,21 +2,21 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Annotated, Optional
+from datetime import UTC, datetime
+from typing import Annotated
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from app.api.deps import DbSession, Principal, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import DbSession, get_current_principal
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.agent import Agent
 from app.db.models.agent_config import AgentConfig
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/projects/{project_id}/agent-config", tags=["agent-config"])
 
@@ -27,7 +27,7 @@ class AgentConfigRead(BaseModel):
     agent_id: UUID
     agent_name: str
     enabled: bool
-    default_model: Optional[str] = None
+    default_model: str | None = None
     temperature: float
     max_tokens: int
     allowed_tools: list[str]
@@ -37,12 +37,12 @@ class AgentConfigRead(BaseModel):
 
 
 class AgentConfigUpdate(BaseModel):
-    enabled: Optional[bool] = None
-    default_model: Optional[str] = None
-    temperature: Optional[float] = Field(default=None, ge=0, le=2)
-    max_tokens: Optional[int] = Field(default=None, gt=0, le=200000)
-    allowed_tools: Optional[list[str]] = None
-    config: Optional[dict] = None
+    enabled: bool | None = None
+    default_model: str | None = None
+    temperature: float | None = Field(default=None, ge=0, le=2)
+    max_tokens: int | None = Field(default=None, gt=0, le=200000)
+    allowed_tools: list[str] | None = None
+    config: dict | None = None
 
 
 def _to_read(cfg: AgentConfig, agent: Agent) -> AgentConfigRead:
@@ -106,9 +106,9 @@ async def get_agent_config(
         raise HTTPException(status_code=404, detail="agent_config_not_found")
     cfg, agent = result
     return _to_read(cfg, agent)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/{agent_id}", response_model=AgentConfigRead)
 @audit(action="agent_config.update", target_type="project")
 async def update_agent_config(
@@ -119,9 +119,7 @@ async def update_agent_config(
     db: DbSession,
 ) -> AgentConfigRead:
     """Upsert the project config for one agent."""
-    agent = (
-        await db.execute(select(Agent).where(Agent.id == agent_id))
-    ).scalar_one_or_none()
+    agent = (await db.execute(select(Agent).where(Agent.id == agent_id))).scalar_one_or_none()
     if agent is None:
         raise HTTPException(status_code=404, detail="agent_not_found")
 
@@ -135,7 +133,7 @@ async def update_agent_config(
         )
     ).scalar_one_or_none()
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if cfg is None:
         cfg = AgentConfig(
             id=uuid4(),

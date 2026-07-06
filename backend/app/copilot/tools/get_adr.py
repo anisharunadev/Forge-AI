@@ -11,11 +11,10 @@ from uuid import UUID
 
 from sqlalchemy import select
 
-from app.core.logging import get_logger
-from app.core.security import AuthenticatedPrincipal
-from app.copilot.tools.base import Tool
 from app.copilot.tools.exceptions import ToolArgumentInvalid
 from app.copilot.tools.registry import tool_registry
+from app.core.logging import get_logger
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.architecture import ADR
 from app.db.session import get_session_factory
 from app.services.rbac import COPILOT_PERMISSION_TOOL_GET_ADR
@@ -51,9 +50,7 @@ class GetAdrTool:
     ) -> dict:
         raw = args.get("adr_id")
         if not isinstance(raw, str) or not raw.strip():
-            raise ToolArgumentInvalid(
-                self.name, "adr_id is required", field="adr_id"
-            )
+            raise ToolArgumentInvalid(self.name, "adr_id is required", field="adr_id")
         adr_id = raw.strip()
         factory = get_session_factory()
         async with factory() as session:

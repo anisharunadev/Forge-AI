@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import difflib
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import jinja2
 from jinja2 import meta
@@ -30,12 +30,12 @@ from app.schemas.prompt import (
     PromptCountRequest,
     PromptCountResponse,
     PromptCreate,
+    PromptRead,
     PromptRenderRequest,
     PromptRenderResponse,
+    PromptUpdate,
     PromptVersionRead,
     PromptVersionStatus,
-    PromptRead,
-    PromptUpdate,
     VariableSpec,
 )
 
@@ -212,7 +212,9 @@ class PromptService:
             tenant_id=tenant_id,
             prompt_id=prompt_id,
             version_number=new_version_number,
-            template=new_template if new_template is not None else (current.template if current else ""),
+            template=new_template
+            if new_template is not None
+            else (current.template if current else ""),
             variables=(
                 [v.model_dump() for v in new_variables]
                 if new_variables is not None
@@ -237,16 +239,20 @@ class PromptService:
         if count and count > MAX_VERSIONS_PER_PROMPT:
             # Archive the oldest non-active versions, keep the latest.
             oldest = (
-                await db.execute(
-                    select(PromptVersion)
-                    .where(
-                        PromptVersion.prompt_id == prompt_id,
-                        PromptVersion.status == PromptVersionStatus.ARCHIVED.value,
+                (
+                    await db.execute(
+                        select(PromptVersion)
+                        .where(
+                            PromptVersion.prompt_id == prompt_id,
+                            PromptVersion.status == PromptVersionStatus.ARCHIVED.value,
+                        )
+                        .order_by(PromptVersion.version_number.asc())
+                        .limit(count - MAX_VERSIONS_PER_PROMPT)
                     )
-                    .order_by(PromptVersion.version_number.asc())
-                    .limit(count - MAX_VERSIONS_PER_PROMPT)
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             # We don't delete them — "archived" is the soft state — but
             # we mark an explicit archive flag via metadata for cleanliness.
             for ov in oldest:
@@ -478,9 +484,7 @@ class PromptService:
     ) -> Prompt | None:
         return (
             await db.execute(
-                select(Prompt).where(
-                    Prompt.tenant_id == tenant_id, Prompt.id == prompt_id
-                )
+                select(Prompt).where(Prompt.tenant_id == tenant_id, Prompt.id == prompt_id)
             )
         ).scalar_one_or_none()
 
@@ -545,9 +549,7 @@ class PromptService:
             updated_at=prompt.updated_at,
             created_by=prompt.created_by,
             active_template=version.template,
-            active_variables=[
-                VariableSpec(**v) for v in (version.variables or [])
-            ],
+            active_variables=[VariableSpec(**v) for v in (version.variables or [])],
             active_model_defaults=version.model_defaults or {},
         )
 
@@ -564,7 +566,7 @@ def _render_template(template: str, variables: dict[str, Any]) -> str:
         # Surface a typed undeclared-variable error before render-time
         # so the UI gets a stable 422 shape.
         declared = set(meta.find_undeclared_variables(ast))
-        undeclared = [k for k in variables.keys() if k not in declared]
+        undeclared = [k for k in variables if k not in declared]
         # Note: declared here is "variables Jinja would have to look up";
         # variables that are only used inside if/for blocks won't show
         # up here but will resolve as undefined → StrictUndefined → render error.
@@ -611,7 +613,9 @@ def _parse_dotprompt(
     if "---" not in body:
         return (override_name or "imported-prompt", body.strip(), {}, [])
     fm, _, template = body.partition("---")
-    fm_lines = [l.strip() for l in fm.strip().splitlines() if l.strip() and not l.strip().startswith("#")]
+    fm_lines = [
+        l.strip() for l in fm.strip().splitlines() if l.strip() and not l.strip().startswith("#")
+    ]
     name = override_name or "imported-prompt"
     model_defaults: dict[str, Any] = {}
     variables: list[dict[str, Any]] = []

@@ -36,7 +36,7 @@ import logging
 from dataclasses import dataclass, field
 from uuid import UUID
 
-from sqlalchemy import delete, text, update
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
@@ -63,7 +63,11 @@ _TABLE_INVENTORY: list[tuple[str, str, str]] = [
     ("delete", "connector_credentials", "tenant_id = :tenant_id"),
     ("delete", "rag_chunks", "tenant_id = :tenant_id"),
     ("delete", "kg_nodes", "tenant_id = :tenant_id"),
-    ("delete", "kg_edges", "tenant_id IN (SELECT source_tenant_id FROM kg_nodes WHERE tenant_id = :tenant_id)"),
+    (
+        "delete",
+        "kg_edges",
+        "tenant_id IN (SELECT source_tenant_id FROM kg_nodes WHERE tenant_id = :tenant_id)",
+    ),
     ("delete", "ideation_ideas", "tenant_id = :tenant_id"),
     ("delete", "ideation_approval_items", "tenant_id = :tenant_id"),
     ("delete", "ideation_push_records", "tenant_id = :tenant_id"),
@@ -137,10 +141,7 @@ class GdprCascadeExecutor:
                         continue
                     set_clause = ", ".join(f"{col} = {val}" for col, val in sets.items())
                     rows = await db.execute(
-                        text(
-                            f"UPDATE {table} SET {set_clause} "
-                            f"WHERE {where}"
-                        ),
+                        text(f"UPDATE {table} SET {set_clause} WHERE {where}"),
                         params,
                     )
                     result.anonymized[table] = rows.rowcount or 0

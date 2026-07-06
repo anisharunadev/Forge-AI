@@ -13,15 +13,15 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, Index, String, Text
+from sqlalchemy import DateTime, Index, String, Text
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import (
     ARRAY,
+    GUID,
     JSONB,
     Base,
-    GUID,
     TenantScopedMixin,
     TimestampMixin,
     UUIDPrimaryKeyMixin,
@@ -60,14 +60,12 @@ class Conflict(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMixin):
         nullable=False,
         default=ConflictStatus.OPEN,
     )
-    sources: Mapped[list[dict[str, Any]]] = mapped_column(
-        JSONB, nullable=False, default=list
-    )
+    sources: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
     resolution_path: Mapped[list[dict[str, Any]]] = mapped_column(
         JSONB, nullable=False, default=list
     )
     resolved_by: Mapped[UUID | None] = mapped_column(GUID(), nullable=True)
-    resolved_at: Mapped["__import__('datetime').datetime | None"] = mapped_column(
+    resolved_at: Mapped[__import__("datetime").datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
     tags: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False, default=list)

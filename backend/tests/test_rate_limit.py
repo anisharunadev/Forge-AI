@@ -1,8 +1,8 @@
 """Phase 6 SC-6.2 + SC-6.3 — per-tenant rate limit defaults + Retry-After."""
+
 from __future__ import annotations
 
 import uuid
-from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import HTTPException
@@ -39,9 +39,7 @@ async def test_tenant_override_lowers_cap(two_tenants) -> None:
     ta, _tb, _pa = two_tenants
     factory = get_session_factory()
     async with factory() as s:
-        row = (
-            await s.execute(sa.select(Tenant).where(Tenant.id == ta.id))
-        ).scalar_one()
+        row = (await s.execute(sa.select(Tenant).where(Tenant.id == ta.id))).scalar_one()
         row.settings = {"rate_limit_overrides": {"chat": 5}}
         await s.commit()
 

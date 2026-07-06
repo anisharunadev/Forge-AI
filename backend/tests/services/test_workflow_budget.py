@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 import pytest_asyncio
@@ -23,6 +23,7 @@ from app.db.models import workflow_budget as _workflow_budget_models  # noqa: F4
 @pytest_asyncio.fixture
 async def sqlite_db(sqlite_db):  # type: ignore[no-untyped-def]
     from app.db.models import workflow_budget  # noqa: F401
+
     return sqlite_db
 
 
@@ -163,12 +164,16 @@ async def test_audit_row_written_on_blocked(service, sqlite_db):
     factory = sqlite_db
     async with factory() as session:
         rows = (
-            await session.execute(
-                select(WorkflowBudgetDecision).where(
-                    WorkflowBudgetDecision.workflow_id == str(ids["workflow_id"])
+            (
+                await session.execute(
+                    select(WorkflowBudgetDecision).where(
+                        WorkflowBudgetDecision.workflow_id == str(ids["workflow_id"])
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
     assert any(r.decision == "blocked" for r in rows)
     blocked = next(r for r in rows if r.decision == "blocked")
@@ -201,7 +206,7 @@ async def test_gate_metadata_includes_budget_state(service, sqlite_db, event_bus
     )
 
     gate = ApprovalGateNode(event_bus=event_bus, budget_service=service)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     pending = ApprovalRequest(
         approval_id=uuid.uuid4(),
         type="architecture",

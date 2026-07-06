@@ -265,8 +265,7 @@ class Settings(BaseSettings):
     degradation_queue_ttl_seconds: int = Field(
         default=300,
         description=(
-            "DEGRADATION_QUEUE_TTL_SECONDS. TTL on each queue list; stale "
-            "requests auto-expire."
+            "DEGRADATION_QUEUE_TTL_SECONDS. TTL on each queue list; stale requests auto-expire."
         ),
     )
     # Phase 6 SC-6.2 — per-tenant rate limit.
@@ -280,9 +279,7 @@ class Settings(BaseSettings):
     )
     rate_limit_redis_url: str | None = Field(
         default=None,
-        description=(
-            "RATE_LIMIT_REDIS_URL. Falls back to REDIS_URL when unset."
-        ),
+        description=("RATE_LIMIT_REDIS_URL. Falls back to REDIS_URL when unset."),
     )
     # Phase 6 SC-6.1 — TenantBudgetGuard v2 ceiling default.
     tenant_budget_enforcement_v2_default: bool = Field(

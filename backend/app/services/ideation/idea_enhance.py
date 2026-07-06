@@ -25,8 +25,7 @@ in ``jira_status_subscribers.py`` (wired in ``app.main.lifespan``).
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 from uuid import UUID
 
 from app.core.logging import get_logger
@@ -76,9 +75,7 @@ class IdeaEnhanceService:
         # Mark the idea as ANALYZING immediately so the UI shows
         # in-progress state. We persist this BEFORE re-running the LLM
         # so a slow re-analysis doesn't leave the row in its old status.
-        await self._transition_idea_status(
-            idea.id, IdeaStatus.ANALYZING, tenant_id=tenant_id
-        )
+        await self._transition_idea_status(idea.id, IdeaStatus.ANALYZING, tenant_id=tenant_id)
 
         # ``analyze_idea(force=True)`` creates a fresh row when one
         # doesn't exist, and re-runs when it does. We pass the
@@ -106,7 +103,7 @@ class IdeaEnhanceService:
                 "analysis_id": str(analysis.id),
                 "cost_usd": analysis.cost_usd,
             },
-            occurred_at=datetime.now(timezone.utc),
+            occurred_at=datetime.now(UTC),
         )
 
         logger.info(
@@ -120,9 +117,7 @@ class IdeaEnhanceService:
 
     # -- internals --------------------------------------------------------
 
-    async def _load_idea(
-        self, idea_id: UUID | str, *, tenant_id: UUID | str
-    ) -> Idea:
+    async def _load_idea(self, idea_id: UUID | str, *, tenant_id: UUID | str) -> Idea:
         factory = get_session_factory()
         async with factory() as session:
             idea = await session.get(Idea, str(idea_id))

@@ -18,7 +18,7 @@ from uuid import UUID
 from sqlalchemy import DateTime, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import ARRAY, Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import ARRAY, GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class SteeringRule(Base, UUIDPrimaryKeyMixin, TimestampMixin):
@@ -42,9 +42,7 @@ class SteeringRule(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     rule_id: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
     file_path: Mapped[str] = mapped_column(Text, nullable=False)
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
-    indexed_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    indexed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False, default="")
     scope: Mapped[str] = mapped_column(String(64), nullable=False, default="project")
     applies_to_stages: Mapped[list[str]] = mapped_column(

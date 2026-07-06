@@ -9,6 +9,7 @@ a pass/fail summary.
 Run:
     docker compose exec backend python -m scripts.test_agents_api
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -67,7 +68,11 @@ async def main() -> int:
 
         # ---- LIST with status filter -----------------------------------
         ok, _, _ = await expect(
-            client, "GET", "/agents?status=enabled", headers, 200,
+            client,
+            "GET",
+            "/agents?status=enabled",
+            headers,
+            200,
             label="GET  /agents?status=enabled",
         )
         if ok:
@@ -88,10 +93,14 @@ async def main() -> int:
             "version": "0.0.1",
         }
         res = await client.post(
-            f"{BASE_URL}/agents", headers=headers, json=create_payload,
+            f"{BASE_URL}/agents",
+            headers=headers,
+            json=create_payload,
         )
-        print(f"  {'✓' if res.status_code == 201 else '✗'} "
-              f"POST /agents                                 → {res.status_code} (expected 201)")
+        print(
+            f"  {'✓' if res.status_code == 201 else '✗'} "
+            f"POST /agents                                 → {res.status_code} (expected 201)"
+        )
         if res.status_code != 201:
             print(f"      body: {res.text[:200]}")
             failed += 1
@@ -110,12 +119,18 @@ async def main() -> int:
         # ---- PATCH -----------------------------------------------------
         patch_payload = {"name": f"Test agent patched {int(time.time())}"}
         res = await client.patch(
-            f"{BASE_URL}/agents/{new_id}", headers=headers, json=patch_payload,
+            f"{BASE_URL}/agents/{new_id}",
+            headers=headers,
+            json=patch_payload,
         )
-        body = res.json() if res.headers.get("content-type", "").startswith("application/json") else {}
+        body = (
+            res.json() if res.headers.get("content-type", "").startswith("application/json") else {}
+        )
         ok = res.status_code == 200 and body.get("name", "").startswith("Test agent patched")
-        print(f"  {'✓' if ok else '✗'} "
-              f"PATCH /agents/{new_id[:8]}...                  → {res.status_code}")
+        print(
+            f"  {'✓' if ok else '✗'} "
+            f"PATCH /agents/{new_id[:8]}...                  → {res.status_code}"
+        )
         if ok:
             passed += 1
         else:
@@ -124,7 +139,11 @@ async def main() -> int:
 
         # ---- TEST endpoint --------------------------------------------
         ok, _, body = await expect(
-            client, "POST", f"/agents/{new_id}/test", headers, 200,
+            client,
+            "POST",
+            f"/agents/{new_id}/test",
+            headers,
+            200,
             label=f"POST /agents/{new_id[:8]}.../test",
         )
         if ok:
@@ -140,8 +159,10 @@ async def main() -> int:
         # ---- DELETE ----------------------------------------------------
         res = await client.delete(f"{BASE_URL}/agents/{new_id}", headers=headers)
         ok = res.status_code == 204
-        print(f"  {'✓' if ok else '✗'} "
-              f"DELETE /agents/{new_id[:8]}...                → {res.status_code} (expected 204)")
+        print(
+            f"  {'✓' if ok else '✗'} "
+            f"DELETE /agents/{new_id[:8]}...                → {res.status_code} (expected 204)"
+        )
         if ok:
             passed += 1
         else:
@@ -150,7 +171,11 @@ async def main() -> int:
 
         # ---- VERIFY soft-deleted (still readable, status=deprecated) ---
         ok, _, body = await expect(
-            client, "GET", f"/agents/{new_id}", headers, 200,
+            client,
+            "GET",
+            f"/agents/{new_id}",
+            headers,
+            200,
             label=f"GET  /agents/{new_id[:8]}... (post-delete)",
         )
         if ok:
@@ -180,8 +205,12 @@ async def main() -> int:
 
         # ---- GET provider by id ---------------------------------------
         ok, _, _ = await expect(
-            client, "GET", "/model-providers/11111111-1111-4111-8111-111111111111",
-            headers, 200, label="GET   /model-providers/<anthropic>",
+            client,
+            "GET",
+            "/model-providers/11111111-1111-4111-8111-111111111111",
+            headers,
+            200,
+            label="GET   /model-providers/<anthropic>",
         )
         if ok:
             passed += 1
@@ -190,9 +219,12 @@ async def main() -> int:
 
         # ---- RESOLVE provider by litellm alias -------------------------
         ok, _, body = await expect(
-            client, "GET",
+            client,
+            "GET",
             "/model-providers/resolve/anthropic/claude-sonnet-4.5",
-            headers, 200, label="GET   /model-providers/resolve/<alias>",
+            headers,
+            200,
+            label="GET   /model-providers/resolve/<alias>",
         )
         if ok:
             payload = __import__("json").loads(body)
@@ -210,7 +242,9 @@ async def main() -> int:
             headers=headers,
         )
         ok = res.status_code == 200
-        print(f"  {'✓' if ok else '✗'} POST  /model-providers/<anthropic>/test    → {res.status_code}")
+        print(
+            f"  {'✓' if ok else '✗'} POST  /model-providers/<anthropic>/test    → {res.status_code}"
+        )
         if ok:
             passed += 1
         else:
@@ -228,20 +262,27 @@ async def main() -> int:
             "rate_limit_tpm": 1000,
         }
         res = await client.post(
-            f"{BASE_URL}/model-providers", headers=headers, json=provider_payload,
+            f"{BASE_URL}/model-providers",
+            headers=headers,
+            json=provider_payload,
         )
         ok = res.status_code == 201
-        print(f"  {'✓' if ok else '✗'} POST  /model-providers                     → {res.status_code} (expected 201)")
+        print(
+            f"  {'✓' if ok else '✗'} POST  /model-providers                     → {res.status_code} (expected 201)"
+        )
         if ok:
             passed += 1
             new_provider_id = res.json()["id"]
             # ---- PATCH provider ---------------------------------------
             patch_res = await client.patch(
                 f"{BASE_URL}/model-providers/{new_provider_id}",
-                headers=headers, json={"rate_limit_rpm": 99},
+                headers=headers,
+                json={"rate_limit_rpm": 99},
             )
             ok = patch_res.status_code == 200 and patch_res.json().get("rate_limit_rpm") == 99
-            print(f"  {'✓' if ok else '✗'} PATCH /model-providers/{new_provider_id[:8]}...    → {patch_res.status_code}")
+            print(
+                f"  {'✓' if ok else '✗'} PATCH /model-providers/{new_provider_id[:8]}...    → {patch_res.status_code}"
+            )
             if ok:
                 passed += 1
             else:
@@ -249,10 +290,13 @@ async def main() -> int:
                 failed += 1
             # ---- DELETE provider -------------------------------------
             del_res = await client.delete(
-                f"{BASE_URL}/model-providers/{new_provider_id}", headers=headers,
+                f"{BASE_URL}/model-providers/{new_provider_id}",
+                headers=headers,
             )
             ok = del_res.status_code == 204
-            print(f"  {'✓' if ok else '✗'} DELETE /model-providers/{new_provider_id[:8]}...  → {del_res.status_code} (expected 204)")
+            print(
+                f"  {'✓' if ok else '✗'} DELETE /model-providers/{new_provider_id[:8]}...  → {del_res.status_code} (expected 204)"
+            )
             if ok:
                 passed += 1
             else:
@@ -280,15 +324,23 @@ async def main() -> int:
                 "kind": "local_subprocess",
             }
             res = await client.post(
-                f"{BASE_URL}/runtimes/start", headers=headers, json=start_payload,
+                f"{BASE_URL}/runtimes/start",
+                headers=headers,
+                json=start_payload,
             )
             ok = res.status_code == 200
-            print(f"  {'✓' if ok else '✗'} POST  /runtimes/start                     → {res.status_code}")
+            print(
+                f"  {'✓' if ok else '✗'} POST  /runtimes/start                     → {res.status_code}"
+            )
             if ok:
                 passed += 1
                 runtime_id = res.json()["id"]
                 ok, _, _ = await expect(
-                    client, "GET", "/runtimes", headers, 200,
+                    client,
+                    "GET",
+                    "/runtimes",
+                    headers,
+                    200,
                     label="GET   /runtimes",
                 )
                 if ok:
@@ -297,7 +349,11 @@ async def main() -> int:
                     failed += 1
                 # ---- METRICS -------------------------------------------
                 ok, _, _ = await expect(
-                    client, "GET", f"/runtimes/{runtime_id}/metrics", headers, 200,
+                    client,
+                    "GET",
+                    f"/runtimes/{runtime_id}/metrics",
+                    headers,
+                    200,
                     label=f"GET   /runtimes/{runtime_id[:8]}.../metrics",
                 )
                 if ok:
@@ -306,7 +362,11 @@ async def main() -> int:
                     failed += 1
                 # ---- STOP ---------------------------------------------
                 ok, _, _ = await expect(
-                    client, "POST", f"/runtimes/{runtime_id}/stop", headers, 200,
+                    client,
+                    "POST",
+                    f"/runtimes/{runtime_id}/stop",
+                    headers,
+                    200,
                     label=f"POST  /runtimes/{runtime_id[:8]}.../stop",
                 )
                 if ok:
@@ -320,9 +380,12 @@ async def main() -> int:
         # ---- ASSIGNMENTS (peek is a stateless resolver) ---------------
         print("\n--- ASSIGNMENTS ---")
         ok, _, body = await expect(
-            client, "GET",
+            client,
+            "GET",
             "/agent-assignments?task_type=code-review",
-            headers, 200, label="GET   /agent-assignments?task_type=...",
+            headers,
+            200,
+            label="GET   /agent-assignments?task_type=...",
         )
         if ok:
             passed += 1
@@ -330,8 +393,11 @@ async def main() -> int:
             failed += 1
 
         ok, _, body = await expect(
-            client, "POST", "/agent-assignments",
-            headers, 200,
+            client,
+            "POST",
+            "/agent-assignments",
+            headers,
+            200,
             label="POST  /agent-assignments",
             json={"task_type": "refactor", "strategy": "capability_match"},
         )

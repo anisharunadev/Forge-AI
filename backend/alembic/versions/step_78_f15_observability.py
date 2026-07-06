@@ -18,17 +18,17 @@ Create Date: 2026-07-02 13:30:00.000000
 
 from __future__ import annotations
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "step_78_f15_observability"
-down_revision: Union[str, None] = "step_78_f14_async"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "step_78_f14_async"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -38,14 +38,21 @@ def upgrade() -> None:
         sa.Column("tenant_id", sa.dialects.postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("warn_pct", sa.Integer(), nullable=False, server_default="80"),
         sa.Column("exceed_pct", sa.Integer(), nullable=False, server_default="95"),
-        sa.Column("channels", sa.dialects.postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "channels",
+            sa.dialects.postgresql.JSONB(astext_type=sa.Text()),
+            nullable=False,
+            server_default=sa.text("'{}'::jsonb"),
+        ),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
         sa.UniqueConstraint("tenant_id", name="uq_alert_configs_tenant"),
     )
-    op.create_index(
-        "ix_alert_configs_tenant_warn", "alert_configs", ["tenant_id", "warn_pct"]
-    )
+    op.create_index("ix_alert_configs_tenant_warn", "alert_configs", ["tenant_id", "warn_pct"])
 
 
 def downgrade() -> None:

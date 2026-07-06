@@ -19,10 +19,11 @@ respective files: the return shapes differ (some return
 return ``(1|0, body)``), and forcing a single contract would change
 behaviour for callers that depend on the variant.
 """
+
 from __future__ import annotations
 
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from jose import jwt
 
@@ -51,7 +52,7 @@ def mint_dev_token(*, forge_project_id: str | None = None) -> str:
     is what the bulk of the smoke tests want.
     """
     secret = os.environ["JWT_SECRET"]
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     claims = {
         "sub": ACME_USER_ID,
         "email": ACME_USER_EMAIL,

@@ -16,13 +16,10 @@ import uuid
 
 import pytest
 
-from app.db.models.organization import Organization
-from app.db.models.team import Team
 from app.db.models.tenant import Tenant
 from app.db.models.user import User
 from app.schemas.rbac_v2 import RoleEnum, role_grants
 from app.services.rbac_v2_service import rbac_v2_service
-
 
 # ---------------------------------------------------------------------------
 # Role inheritance (pure function — no DB)
@@ -102,14 +99,10 @@ async def test_teams_isolated_by_tenant(db_session) -> None:
     )
 
     # Block + unblock (acceptance #5).
-    blocked = await rbac_v2_service.block_team(
-        db_session, tenant_id=t1.id, team_id=team.id
-    )
+    blocked = await rbac_v2_service.block_team(db_session, tenant_id=t1.id, team_id=team.id)
     assert blocked is not None and blocked.blocked is True
 
-    unblocked = await rbac_v2_service.unblock_team(
-        db_session, tenant_id=t1.id, team_id=team.id
-    )
+    unblocked = await rbac_v2_service.unblock_team(db_session, tenant_id=t1.id, team_id=team.id)
     assert unblocked is not None and unblocked.blocked is False
 
 

@@ -13,15 +13,15 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import DateTime, Float, Index, Integer, String, Text
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import (
     ARRAY,
+    GUID,
     JSONB,
     Base,
-    GUID,
     TenantScopedMixin,
     TimestampMixin,
     UUIDPrimaryKeyMixin,
@@ -51,9 +51,7 @@ class CommandRun(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMixin):
         default=CommandRunStatus.QUEUED,
     )
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cost_usd: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     input: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)

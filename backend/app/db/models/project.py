@@ -16,9 +16,9 @@ from sqlalchemy import ForeignKey, Index, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import (
-    Base,
     GUID,
     JSONB,
+    Base,
     TimestampMixin,
     UUIDPrimaryKeyMixin,
 )
@@ -41,12 +41,8 @@ class Project(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     slug: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    default_branch: Mapped[str] = mapped_column(
-        String(128), nullable=False, default="main"
-    )
-    visibility: Mapped[str] = mapped_column(
-        String(32), nullable=False, default="private"
-    )
+    default_branch: Mapped[str] = mapped_column(String(128), nullable=False, default="main")
+    visibility: Mapped[str] = mapped_column(String(32), nullable=False, default="private")
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
     settings: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     created_by: Mapped[UUID | None] = mapped_column(

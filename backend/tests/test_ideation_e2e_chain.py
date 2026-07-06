@@ -21,12 +21,7 @@ Project: 22222222-2222-2222-2222-222222222222 per 005_projects.json.
 
 from __future__ import annotations
 
-import asyncio
-import uuid
 from typing import Any
-
-import pytest
-
 
 TENANT_ID = "11111111-1111-1111-1111-111111111111"
 PROJECT_ID = "22222222-2222-2222-2222-222222222222"
@@ -82,7 +77,9 @@ async def test_e2e_ingest_signal_to_kg(sqlite_db: Any, client: Any) -> None:
     # -------------------------------------------------------------------
     # Step 5: Generate PRD.
     # -------------------------------------------------------------------
-    prd_resp = await client.post(f"/api/v1/ideation/prds/ideas/{idea_id}", json={"template": "bmad"})
+    prd_resp = await client.post(
+        f"/api/v1/ideation/prds/ideas/{idea_id}", json={"template": "bmad"}
+    )
     assert prd_resp.status_code in (200, 201), prd_resp.text
     prd = prd_resp.json()
     prd_id = prd["id"]
@@ -98,7 +95,10 @@ async def test_e2e_ingest_signal_to_kg(sqlite_db: Any, client: Any) -> None:
     )
     assert push_resp.status_code in (200, 202), push_resp.text
     push_result = push_resp.json()
-    assert push_result.get("epic_key", "").startswith("ACME-") or push_result.get("status") == "success"
+    assert (
+        push_result.get("epic_key", "").startswith("ACME-")
+        or push_result.get("status") == "success"
+    )
 
     # -------------------------------------------------------------------
     # Step 7: Push again with same key → cached result.

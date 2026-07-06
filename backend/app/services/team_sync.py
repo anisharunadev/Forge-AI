@@ -15,8 +15,8 @@ LiteLLM does NOT do multi-tenancy natively. We map:
 
 from app.services.litellm_admin import (
     create_team,
-    list_teams,
     generate_virtual_key,
+    list_teams,
     list_virtual_keys,
 )
 

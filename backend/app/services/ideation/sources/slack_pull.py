@@ -75,6 +75,7 @@ async def pull(
         messages = list((result.output or {}).get("messages") or [])
         if not messages:
             continue
+
         # Convert ts (str like "1719000000.000000") to a usable datetime.
         def _ts_to_dt(m: dict[str, object]) -> datetime | None:
             raw_ts = m.get("ts")
@@ -92,9 +93,7 @@ async def pull(
             source="slack",
             rows=messages[:MAX_SIGNALS_PER_PULL],
             extract_external_id=lambda m: str(m.get("ts") or ""),
-            extract_title=lambda m: (
-                f"[{m.get('channel')}] " + str(m.get("text") or "")[:480]
-            ),
+            extract_title=lambda m: f"[{m.get('channel')}] " + str(m.get("text") or "")[:480],
             extract_body=lambda m: str(m.get("text") or "")[:8000],
             extract_occurred_at=_ts_to_dt,
         )

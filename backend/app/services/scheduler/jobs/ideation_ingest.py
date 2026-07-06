@@ -15,8 +15,7 @@ from __future__ import annotations
 
 import os
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import Any
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import select
@@ -28,9 +27,9 @@ from app.db.models.tenant import Tenant
 from app.db.session import get_session_factory
 from app.services.audit_service import audit_service
 from app.services.ideation.sources.confluence_pull import pull as confluence_pull
+from app.services.ideation.sources.slack_pull import pull as slack_pull
 from app.services.ideation.sources.synthesizer import Synthesizer
 from app.services.ideation.sources.zendesk_pull import pull as zendesk_pull
-from app.services.ideation.sources.slack_pull import pull as slack_pull
 
 logger = get_logger(__name__)
 
@@ -51,7 +50,7 @@ async def _start_run(tenant_id: UUID | str) -> str:
         row = IdeationIngestRun(
             id=uuid.uuid4(),
             tenant_id=str(tenant_id),
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
             status="running",
             signals_seen=0,
             ideas_created=0,
@@ -82,7 +81,7 @@ async def _finish_run(
         row.status = status
         row.error = error
         row.degraded_budget = degraded_budget
-        row.finished_at = datetime.now(timezone.utc)
+        row.finished_at = datetime.now(UTC)
         await session.commit()
 
 
@@ -101,7 +100,7 @@ async def _ingest_for_tenant(tenant: Tenant, *, ceiling_usd: float) -> None:
     """Run one tenant's daily ingest end-to-end."""
     tenant_id = str(tenant.id)
     run_id = await _start_run(tenant_id)
-    since = datetime.now(timezone.utc) - timedelta(days=1)
+    since = datetime.now(UTC) - timedelta(days=1)
     # Use tenant.id as a stand-in project_id so signals land somewhere;
     # the synthesizer keys clusters off signal.project_id anyway.
     project_id = str(tenant.id)
@@ -187,9 +186,7 @@ async def daily_ideation_ingest_for_tenant(tenant_id: UUID | str) -> None:
             return
         await _ingest_for_tenant(
             tenant,
-            ceiling_usd=float(
-                os.environ.get("IDEATION_INGEST_CEILING_USD", DEFAULT_CEILING_USD)
-            ),
+            ceiling_usd=float(os.environ.get("IDEATION_INGEST_CEILING_USD", DEFAULT_CEILING_USD)),
         )
 
 

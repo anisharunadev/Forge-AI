@@ -5,6 +5,7 @@ Single row per tenant. Cached in Redis (TTL 30s) by
 can make a per-tenant sampling decision on every span without hitting
 the DB.
 """
+
 from __future__ import annotations
 
 import uuid

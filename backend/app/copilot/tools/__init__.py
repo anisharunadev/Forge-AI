@@ -23,9 +23,6 @@ Exporting the populated registry::
 
 from __future__ import annotations
 
-from app.copilot.tools.base import Tool
-from app.copilot.tools.registry import ToolRegistry, tool_registry
-
 # Importing the tool modules triggers their ``register()`` call on
 # ``tool_registry``. The order does not matter; the registry is
 # idempotent on duplicate names.
@@ -42,6 +39,7 @@ from app.copilot.tools import (  # noqa: F401  (side-effect import)
     run_command,
     search_knowledge,
 )
-
+from app.copilot.tools.base import Tool
+from app.copilot.tools.registry import ToolRegistry, tool_registry
 
 __all__ = ["Tool", "ToolRegistry", "tool_registry"]

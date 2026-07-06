@@ -24,7 +24,7 @@ from __future__ import annotations
 import json
 from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -84,7 +84,7 @@ def encode_session(
 ) -> str:
     """Serialize an entire session as a .cast string."""
     if timestamp is None:
-        ts = datetime.now(timezone.utc).timestamp()
+        ts = datetime.now(UTC).timestamp()
     else:
         ts = float(timestamp)
     lines = [encode_header(width=width, height=height, title=title, timestamp=ts, env=env)]
@@ -121,9 +121,7 @@ def validate_audit_chain(
         else:
             output_present = bool(output)
         if require_output and not output_present and not cmd.get("output_hash"):
-            raise CastValidationError(
-                f"record {idx}: command {command!r} missing output bytes"
-            )
+            raise CastValidationError(f"record {idx}: command {command!r} missing output bytes")
 
 
 def frames_from_audit(

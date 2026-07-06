@@ -25,7 +25,7 @@ import app.db.session as _session_mod
 
 
 class _StubSession:
-    async def __aenter__(self) -> "_StubSession":
+    async def __aenter__(self) -> _StubSession:
         return self
 
     async def __aexit__(self, *args: Any) -> None:
@@ -43,7 +43,6 @@ class _StubSessionFactory:
 _session_mod.get_session_factory = lambda: _StubSessionFactory()  # type: ignore[assignment]
 
 from app.services.forge_models import ModelsService  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # (a) nested cost populated from per-token values, scaled to per-1k

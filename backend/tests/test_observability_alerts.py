@@ -101,12 +101,15 @@ async def test_check_and_alert_posts_when_webhook_configured(monkeypatch):
 
         async def post(self, url, json):
             captured.append({"url": url, "json": json})
+
             class _Resp:
                 status_code = 200
                 text = ""
+
             return _Resp()
 
     import sys
+
     fake_module = type(sys)("httpx_fake")
     fake_module.AsyncClient = _FakeClient
     monkeypatch.setitem(sys.modules, "httpx", fake_module)
@@ -123,6 +126,7 @@ async def test_check_and_alert_posts_when_webhook_configured(monkeypatch):
     # loop a tick to drain.
     await alerts_mod.alert_manager.check_and_alert(event)
     import asyncio
+
     await asyncio.sleep(0)
 
     assert len(captured) == 1

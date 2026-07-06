@@ -26,6 +26,7 @@ Usage:
   python backend/scripts/verify_seed_counts.py acme-corp   # one package
   python backend/scripts/verify_seed_counts.py --json      # machine-readable
 """
+
 from __future__ import annotations
 
 import argparse
@@ -179,14 +180,18 @@ def render_text(reports: list[dict[str, Any]]) -> str:
         name = report["name"]
         status = "OK " if report["ok"] else "FAIL"
         totals = report["totals"]
-        lines.append(f"[{status}] {name}  (rows actual={totals['actual']}, expected={totals['expected']})")
+        lines.append(
+            f"[{status}] {name}  (rows actual={totals['actual']}, expected={totals['expected']})"
+        )
         if report["error"]:
             lines.append(f"        error: {report['error']}")
         for table in report["tables"]:
             mark = "ok " if table["ok"] else "!! "
             actual = table["actual"]
             expected = table["expected"]
-            line = f"        {mark}{table['table']:<28} {expected:>5} expected, {actual!s:>5} actual"
+            line = (
+                f"        {mark}{table['table']:<28} {expected:>5} expected, {actual!s:>5} actual"
+            )
             if not table["ok"]:
                 if actual is None:
                     line += f"  ({table['error']})"

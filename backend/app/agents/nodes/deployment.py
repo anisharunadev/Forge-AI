@@ -19,7 +19,6 @@ from app.agents.tools.gsd_wrapper import GSDWrapper, build_default_wrapper
 from app.agents.tools.mcp_client import MCPClient, build_default_mcp_client
 from app.services.artifact_registry import ArtifactRegistry
 
-
 ARTIFACT_TYPE_DEPLOYMENT_PLAN = "deployment_plan"
 
 
@@ -52,9 +51,7 @@ class DeploymentNode(BasePhaseNode):
 
         # 1. Inventory cloud resources via MCP.
         aws_inventory = await self._mcp.call_server("mcp_aws", "list_stacks", {})
-        argocd_inventory = await self._mcp.call_server(
-            "mcp_argocd", "list_applications", {}
-        )
+        argocd_inventory = await self._mcp.call_server("mcp_argocd", "list_applications", {})
         k8s_inventory = await self._mcp.call_server(
             "mcp_kubernetes", "list_pods", {"namespace": project_id}
         )
@@ -95,9 +92,7 @@ class DeploymentNode(BasePhaseNode):
                 "k8s": k8s_inventory.ok,
             },
         }
-        canonical = json.dumps(
-            payload, sort_keys=True, separators=(",", ":"), default=str
-        )
+        canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
         content_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
         artifact = await self._registry.create(
             tenant_id=tenant_id,

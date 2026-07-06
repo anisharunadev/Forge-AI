@@ -12,13 +12,11 @@ Wire contract:
   - On disconnect: consumer name is dropped on reconnect (each tab
     gets a fresh consumer name; no shared ACK state across tabs).
 """
+
 from __future__ import annotations
 
 import asyncio
-import json
-import logging
 import os
-from typing import Any
 
 import redis.asyncio as aioredis
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
@@ -67,7 +65,9 @@ async def audit_stream(websocket: WebSocket) -> None:
         # connection, send a one-shot empty frame, and let the client
         # reconnect later when REDIS_URL is configured.
         await websocket.accept()
-        await websocket.send_json({"type": "ready", "backlog_empty": True, "reason": "redis_unconfigured"})
+        await websocket.send_json(
+            {"type": "ready", "backlog_empty": True, "reason": "redis_unconfigured"}
+        )
         await websocket.close()
         return
 
@@ -100,9 +100,7 @@ async def audit_stream(websocket: WebSocket) -> None:
             for _stream, entries in resp:
                 for entry_id, fields in entries:
                     try:
-                        await websocket.send_json(
-                            {"type": "event", "id": entry_id, **fields}
-                        )
+                        await websocket.send_json({"type": "event", "id": entry_id, **fields})
                     except Exception:
                         return
     except WebSocketDisconnect:

@@ -19,16 +19,14 @@ permission/audit wiring, not the SQL/JSONB path.
 from __future__ import annotations
 
 import uuid
+from contextlib import contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-from contextlib import contextmanager
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 
 # ---------------------------------------------------------------------------
 # Stub data — minimal dataclasses mirroring the service-layer Node/Edge/etc.
@@ -46,8 +44,8 @@ class _StubNode:
     repo_id: uuid.UUID | None = None
     freshness_at: datetime | None = None
     freshness_source: str | None = "graphify"
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 @dataclass(slots=True)
@@ -57,15 +55,15 @@ class _StubEdge:
     to_node_id: uuid.UUID = field(default_factory=uuid.uuid4)
     edge_type: str = "depends_on"
     properties: dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 @dataclass(slots=True)
 class _StubFreshness:
     node_id: uuid.UUID = field(default_factory=uuid.uuid4)
     status: str = "fresh"
-    freshness_at: datetime | None = field(default_factory=lambda: datetime.now(timezone.utc))
+    freshness_at: datetime | None = field(default_factory=lambda: datetime.now(UTC))
     freshness_source: str | None = "graphify"
     age_seconds: float | None = 42.0
 
@@ -75,7 +73,9 @@ class _StubStats:
     node_count: int = 12
     edge_count: int = 34
     node_types: dict[str, int] = field(default_factory=lambda: {"service": 5, "doc": 4, "adr": 3})
-    edge_types: dict[str, int] = field(default_factory=lambda: {"depends_on": 14, "documents": 12, "owns": 8})
+    edge_types: dict[str, int] = field(
+        default_factory=lambda: {"depends_on": 14, "documents": 12, "owns": 8}
+    )
 
 
 # ---------------------------------------------------------------------------

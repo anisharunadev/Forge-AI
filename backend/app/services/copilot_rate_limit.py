@@ -38,9 +38,7 @@ class RateLimitExceeded(Exception):
 
     def __init__(self, retry_after_seconds: int) -> None:
         self.retry_after_seconds = retry_after_seconds
-        super().__init__(
-            f"rate limit exceeded; retry after {retry_after_seconds}s"
-        )
+        super().__init__(f"rate limit exceeded; retry after {retry_after_seconds}s")
 
 
 class CoPilotRateLimiter:
@@ -62,9 +60,7 @@ class CoPilotRateLimiter:
     # Public surface
     # ------------------------------------------------------------------
 
-    async def check_and_record(
-        self, user_id: UUID | str, tenant_id: UUID | str
-    ) -> None:
+    async def check_and_record(self, user_id: UUID | str, tenant_id: UUID | str) -> None:
         """Record one event for ``(user_id, tenant_id)``; raise on overflow.
 
         Args:
@@ -89,9 +85,7 @@ class CoPilotRateLimiter:
     # In-process implementation
     # ------------------------------------------------------------------
 
-    def _check_inprocess(
-        self, key: tuple[str, str], now: float, window_start: float
-    ) -> None:
+    def _check_inprocess(self, key: tuple[str, str], now: float, window_start: float) -> None:
         dq = self._fallback[key]
         # Evict entries that fell out of the trailing window.
         while dq and dq[0] < window_start:

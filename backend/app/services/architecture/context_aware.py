@@ -329,9 +329,7 @@ class ContextAwareGenerator:
             "id": str(getattr(artifact, "id", artifact_id)),
             "type": getattr(artifact, "type", None),
             "payload": getattr(artifact, "payload", None),
-            "context_refs": (getattr(artifact, "payload", {}) or {}).get(
-                "context_refs", []
-            ),
+            "context_refs": (getattr(artifact, "payload", {}) or {}).get("context_refs", []),
         }
 
     async def _registry_lookup(self, artifact_id: UUID | str) -> Any:
@@ -361,8 +359,7 @@ def _augment_prompt(
             }
         )
         blocks.append(
-            f"- STANDARD [{standard.get('id')}] {standard.get('name')}: "
-            f"{standard.get('content')}"
+            f"- STANDARD [{standard.get('id')}] {standard.get('name')}: {standard.get('content')}"
         )
 
     for template in context.get("templates", []):
@@ -399,9 +396,7 @@ def _augment_prompt(
                 "label": "project summary",
             }
         )
-        blocks.append(
-            f"- PROJECT CONTEXT: {json.dumps(context['project_context'])[:600]}"
-        )
+        blocks.append(f"- PROJECT CONTEXT: {json.dumps(context['project_context'])[:600]}")
 
     for risk in context.get("risk_register", []):
         sections_used.append(
@@ -411,9 +406,7 @@ def _augment_prompt(
                 "label": str(risk.get("name") or risk.get("title") or "risk"),
             }
         )
-        blocks.append(
-            f"- RISK: {json.dumps(risk)[:400]}"
-        )
+        blocks.append(f"- RISK: {json.dumps(risk)[:400]}")
 
     return "\n".join(blocks)
 

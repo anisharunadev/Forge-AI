@@ -24,11 +24,8 @@ redundant — see M12 spec §2 G3 for the design rationale.
 from __future__ import annotations
 
 import ast
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator
-
-import pytest
-
 
 # ---------------------------------------------------------------------------
 # AST helpers
@@ -124,9 +121,7 @@ def test_canonical_llm_methods_have_admission() -> None:
         if not _method_invokes_llm(method):
             continue
         if not _method_calls_pre_call_admission(method):
-            violations.append(
-                f"{LITELLM_CLIENT_PATH}:{method.lineno}  {method.name}()"
-            )
+            violations.append(f"{LITELLM_CLIENT_PATH}:{method.lineno}  {method.name}()")
 
     assert not violations, (
         "Cost admission invariant FAILED. Public LLM methods missing "
@@ -143,7 +138,10 @@ def test_pre_call_admission_method_is_async() -> None:
     tree = _load_litellm_client_tree()
     found = False
     for node in tree.body:
-        if isinstance(node, (ast.AsyncFunctionDef, ast.FunctionDef)) and node.name == "pre_call_admission":
+        if (
+            isinstance(node, (ast.AsyncFunctionDef, ast.FunctionDef))
+            and node.name == "pre_call_admission"
+        ):
             found = True
             assert isinstance(node, ast.AsyncFunctionDef), (
                 "pre_call_admission must be `async def` (callers use `await`)"
@@ -200,9 +198,7 @@ def test_no_raw_litellm_outside_canonical_client() -> None:
                 continue
             names = _qualified_name(node.func)
             if names and names in triggers:
-                violations.append(
-                    f"{path}:{getattr(node, 'lineno', '?')}  call to `{names}`"
-                )
+                violations.append(f"{path}:{getattr(node, 'lineno', '?')}  call to `{names}`")
 
     assert not violations, (
         "Cost admission bypass detected. Raw LLM calls found outside "

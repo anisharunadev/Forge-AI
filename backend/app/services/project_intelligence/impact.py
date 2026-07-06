@@ -8,14 +8,10 @@ risk score.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
-
 from app.core.logging import get_logger
-from app.db.session import get_session_factory
 from app.services.knowledge_graph import knowledge_graph_service
 
 logger = get_logger(__name__)
@@ -141,7 +137,9 @@ class ImpactAnalysisService:
             elif kind == "file":
                 out.append(f"integration::test_{ref.rsplit('/', 1)[-1].replace('.', '_')}")
             elif kind == "api":
-                out.append(f"contract::test_{ref.replace('/', '_').replace('{', '').replace('}', '')}")
+                out.append(
+                    f"contract::test_{ref.replace('/', '_').replace('{', '').replace('}', '')}"
+                )
             elif kind == "service":
                 out.append(f"smoke::{ref}")
         return sorted(set(out))[:25]

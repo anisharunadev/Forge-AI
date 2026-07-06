@@ -8,18 +8,14 @@ from __future__ import annotations
 
 from app.schemas.rbac_v2 import (
     BulkTeamMemberAddRequest,
-    BulkTeamMemberResult,
     CustomerUpdate,
     DailyRollup,
-    OrganizationCreate,
     ProjectCreate,
     ProjectUpdate,
     RoleEnum,
-    TeamCreate,
+    TeamMemberCreate,
     TeamModelAllowlistRequest,
     TeamPermissionOverride,
-    TeamPermissionsList,
-    TeamMemberCreate,
     role_grants,
 )
 from app.services.rbac_v2_service import RBACv2Service, rbac_v2_service
@@ -43,6 +39,7 @@ def test_bulk_request_shape():
 
 def test_project_create_shape():
     from uuid import uuid4
+
     p = ProjectCreate(name="Demo", slug="demo", team_id=uuid4())
     assert p.visibility == "private"
     assert p.default_branch == "main"
@@ -61,13 +58,13 @@ def test_daily_rollup_defaults():
 
 
 def test_team_model_allowlist():
-    from uuid import uuid4
     req = TeamModelAllowlistRequest(model="claude-sonnet-4-6")
     assert req.model == "claude-sonnet-4-6"
 
 
 def test_permission_override_shape():
     from uuid import uuid4
+
     o = TeamPermissionOverride(user_id=uuid4(), granted=["rbac:foo:bar"], revoked=["rbac:baz"])
     assert o.granted == ["rbac:foo:bar"]
 
@@ -91,8 +88,10 @@ def test_service_has_phase3_methods():
 
 
 def test_role_for_principal():
-    from app.core.security import AuthenticatedPrincipal
     from uuid import uuid4
+
+    from app.core.security import AuthenticatedPrincipal
+
     p = AuthenticatedPrincipal(
         user_id=uuid4(),
         email="a@b.c",
@@ -115,6 +114,7 @@ def test_role_for_principal():
 
 if __name__ == "__main__":  # pragma: no cover
     import sys
+
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
             try:

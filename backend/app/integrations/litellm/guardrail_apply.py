@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import time
 from typing import Any
-from uuid import UUID
 
 from app.core.logging import get_logger
 from app.integrations.litellm.litellm_base_client import LiteLLMBaseClient
@@ -124,9 +123,7 @@ async def apply_guardrail(
 
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any]:
         started = time.monotonic()
-        response = await client.admin_client.post(
-            "/apply_guardrail", json=body
-        )
+        response = await client.admin_client.post("/apply_guardrail", json=body)
         if response.status_code >= 400:
             raise RuntimeError(
                 f"apply_guardrail {guardrail_name!r} returned "
@@ -201,6 +198,7 @@ async def get_guardrail_info(
     Used by the register path to check idempotency: a re-registration
     with the same name is an update, not a new row (AC #7).
     """
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
         response = await client.admin_client.get(
             "/guardrails/info", params={"guardrail_name": guardrail_name}
@@ -240,9 +238,7 @@ async def register_guardrail(
     }
 
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any]:
-        response = await client.admin_client.post(
-            "/guardrails/register", json=body
-        )
+        response = await client.admin_client.post("/guardrails/register", json=body)
         if response.status_code >= 400:
             raise RuntimeError(
                 f"register_guardrail {guardrail_name!r} returned "
@@ -275,9 +271,7 @@ async def test_custom_code(
     body = {"code": code, "text": sample_text}
 
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any]:
-        response = await client.admin_client.post(
-            "/guardrails/test_custom_code", json=body
-        )
+        response = await client.admin_client.post("/guardrails/test_custom_code", json=body)
         raw: dict[str, Any] = (response.json() or {}) if response.status_code < 500 else {}
         if response.status_code >= 400:
             return {"valid": False, "error": raw.get("error") or response.text[:200], "result": raw}
@@ -315,9 +309,7 @@ async def list_submissions(
         params["guardrail_name"] = guardrail_name
 
     async def _call(client: LiteLLMBaseClient) -> list[dict[str, Any]]:
-        response = await client.admin_client.get(
-            "/guardrails/submissions/list", params=params
-        )
+        response = await client.admin_client.get("/guardrails/submissions/list", params=params)
         if response.status_code >= 400:
             return []
         raw = response.json() or {}
@@ -352,6 +344,7 @@ async def list_ui_rules(
     base_client: LiteLLMBaseClient | None = None,
 ) -> list[dict[str, Any]]:
     """Call ``GET /guardrails/ui/list`` (UI rule-builder surface)."""
+
     async def _call(client: LiteLLMBaseClient) -> list[dict[str, Any]]:
         response = await client.admin_client.get("/guardrails/ui/list")
         if response.status_code >= 400:
@@ -375,10 +368,9 @@ async def save_ui_rule(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any]:
     """Call ``POST /guardrails/ui/save`` (persist a rule-builder rule)."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any]:
-        response = await client.admin_client.post(
-            "/guardrails/ui/save", json=rule
-        )
+        response = await client.admin_client.post("/guardrails/ui/save", json=rule)
         if response.status_code >= 400:
             raise RuntimeError(
                 f"save_ui_rule returned {response.status_code}: {response.text[:200]}"
@@ -397,10 +389,9 @@ async def get_ui_rule(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any] | None:
     """Call ``GET /guardrails/ui/get?id=...`` (one rule)."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
-        response = await client.admin_client.get(
-            "/guardrails/ui/get", params={"id": rule_id}
-        )
+        response = await client.admin_client.get("/guardrails/ui/get", params={"id": rule_id})
         if response.status_code == 404:
             return None
         if response.status_code >= 400:

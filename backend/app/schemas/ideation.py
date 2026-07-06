@@ -30,7 +30,6 @@ from app.db.models.ideation import (
 )
 from app.schemas.common import ForgeBaseModel, TenantScopedModel
 
-
 # ---------------------------------------------------------------------------
 # Idea intake
 # ---------------------------------------------------------------------------

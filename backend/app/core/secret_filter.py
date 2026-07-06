@@ -56,8 +56,7 @@ def secret_filter(_logger: Any, _name: str, event_dict: EventDict) -> EventDict:
             event_dict[key] = _redact_string(value, master_key=master)
         elif isinstance(value, list):
             event_dict[key] = [
-                _redact_string(v, master_key=master) if isinstance(v, str) else v
-                for v in value
+                _redact_string(v, master_key=master) if isinstance(v, str) else v for v in value
             ]
         elif isinstance(value, dict):
             for k, v in list(value.items()):

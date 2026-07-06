@@ -11,8 +11,8 @@ from sqlalchemy import ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import (
-    Base,
     GUID,
+    Base,
     TimestampMixin,
     UUIDPrimaryKeyMixin,
 )
@@ -34,9 +34,7 @@ class ProjectMember(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     user_id: Mapped[UUID] = mapped_column(
         GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-    role_id: Mapped[UUID] = mapped_column(
-        GUID(), ForeignKey("roles.id"), nullable=False
-    )
+    role_id: Mapped[UUID] = mapped_column(GUID(), ForeignKey("roles.id"), nullable=False)
     status: Mapped[str] = mapped_column(String(32), default="active", nullable=False)
 
     __table_args__ = (
@@ -49,7 +47,7 @@ class ProjectMember(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         Index("ix_project_members_status", "status"),
     )
 
-
     _audit_scope = "project-only"
+
 
 __all__ = ["ProjectMember"]

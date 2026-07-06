@@ -20,8 +20,7 @@ via ``server_default`` so ORM inserts work without a migration file.
 from __future__ import annotations
 
 import asyncio
-import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import select, text
@@ -30,10 +29,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_session_factory
 
 _session_factory = get_session_factory()
-from app.db.models.workflow import Workflow, WorkflowRun
 from app.db.models.tenant import Tenant
 from app.db.models.user import User
-
+from app.db.models.workflow import Workflow, WorkflowRun
 
 SEED_WORKFLOWS = [
     {
@@ -42,11 +40,44 @@ SEED_WORKFLOWS = [
         "status": "published",
         "definition": {
             "nodes": [
-                {"id": "t1", "position": {"x": 0, "y": 0}, "data": {"type": "trigger", "label": "PR opened"}},
-                {"id": "c1", "position": {"x": 200, "y": 0}, "data": {"type": "command", "command_name": "forge.code-review", "args": {"strictness": "high"}}},
-                {"id": "c2", "position": {"x": 400, "y": 0}, "data": {"type": "command", "command_name": "forge.test-runner"}},
-                {"id": "a1", "position": {"x": 600, "y": 0}, "data": {"type": "approval", "label": "Tech lead review", "approver_role": "tech_lead", "timeout_hours": 24}},
-                {"id": "s1", "position": {"x": 800, "y": 0}, "data": {"type": "script", "language": "python", "source": "print('merge approved')"}},
+                {
+                    "id": "t1",
+                    "position": {"x": 0, "y": 0},
+                    "data": {"type": "trigger", "label": "PR opened"},
+                },
+                {
+                    "id": "c1",
+                    "position": {"x": 200, "y": 0},
+                    "data": {
+                        "type": "command",
+                        "command_name": "forge.code-review",
+                        "args": {"strictness": "high"},
+                    },
+                },
+                {
+                    "id": "c2",
+                    "position": {"x": 400, "y": 0},
+                    "data": {"type": "command", "command_name": "forge.test-runner"},
+                },
+                {
+                    "id": "a1",
+                    "position": {"x": 600, "y": 0},
+                    "data": {
+                        "type": "approval",
+                        "label": "Tech lead review",
+                        "approver_role": "tech_lead",
+                        "timeout_hours": 24,
+                    },
+                },
+                {
+                    "id": "s1",
+                    "position": {"x": 800, "y": 0},
+                    "data": {
+                        "type": "script",
+                        "language": "python",
+                        "source": "print('merge approved')",
+                    },
+                },
             ],
             "edges": [
                 {"id": "e1", "source": "t1", "target": "c1"},
@@ -63,11 +94,31 @@ SEED_WORKFLOWS = [
         "status": "published",
         "definition": {
             "nodes": [
-                {"id": "t1", "position": {"x": 0, "y": 0}, "data": {"type": "trigger", "label": "Idea submitted"}},
-                {"id": "c1", "position": {"x": 200, "y": 0}, "data": {"type": "command", "command_name": "forge.enhance-idea"}},
-                {"id": "a1", "position": {"x": 400, "y": 0}, "data": {"type": "approval", "label": "PM review"}},
-                {"id": "c2", "position": {"x": 600, "y": 0}, "data": {"type": "command", "command_name": "jira.create-story"}},
-                {"id": "c3", "position": {"x": 800, "y": 0}, "data": {"type": "command", "command_name": "slack.notify"}},
+                {
+                    "id": "t1",
+                    "position": {"x": 0, "y": 0},
+                    "data": {"type": "trigger", "label": "Idea submitted"},
+                },
+                {
+                    "id": "c1",
+                    "position": {"x": 200, "y": 0},
+                    "data": {"type": "command", "command_name": "forge.enhance-idea"},
+                },
+                {
+                    "id": "a1",
+                    "position": {"x": 400, "y": 0},
+                    "data": {"type": "approval", "label": "PM review"},
+                },
+                {
+                    "id": "c2",
+                    "position": {"x": 600, "y": 0},
+                    "data": {"type": "command", "command_name": "jira.create-story"},
+                },
+                {
+                    "id": "c3",
+                    "position": {"x": 800, "y": 0},
+                    "data": {"type": "command", "command_name": "slack.notify"},
+                },
             ],
             "edges": [
                 {"id": "e1", "source": "t1", "target": "c1"},
@@ -84,10 +135,30 @@ SEED_WORKFLOWS = [
         "status": "published",
         "definition": {
             "nodes": [
-                {"id": "t1", "position": {"x": 0, "y": 0}, "data": {"type": "trigger", "label": "Cron 02:00 UTC"}},
-                {"id": "c1", "position": {"x": 200, "y": 0}, "data": {"type": "command", "command_name": "forge.security-scan"}},
-                {"id": "a1", "position": {"x": 400, "y": 0}, "data": {"type": "approval", "label": "Security team"}},
-                {"id": "s1", "position": {"x": 600, "y": 0}, "data": {"type": "script", "language": "python", "source": "import json; print(json.dumps(report))"}},
+                {
+                    "id": "t1",
+                    "position": {"x": 0, "y": 0},
+                    "data": {"type": "trigger", "label": "Cron 02:00 UTC"},
+                },
+                {
+                    "id": "c1",
+                    "position": {"x": 200, "y": 0},
+                    "data": {"type": "command", "command_name": "forge.security-scan"},
+                },
+                {
+                    "id": "a1",
+                    "position": {"x": 400, "y": 0},
+                    "data": {"type": "approval", "label": "Security team"},
+                },
+                {
+                    "id": "s1",
+                    "position": {"x": 600, "y": 0},
+                    "data": {
+                        "type": "script",
+                        "language": "python",
+                        "source": "import json; print(json.dumps(report))",
+                    },
+                },
             ],
             "edges": [
                 {"id": "e1", "source": "t1", "target": "c1"},
@@ -103,11 +174,35 @@ SEED_WORKFLOWS = [
         "status": "published",
         "definition": {
             "nodes": [
-                {"id": "t1", "position": {"x": 0, "y": 0}, "data": {"type": "trigger", "label": "Tag pushed"}},
-                {"id": "c1", "position": {"x": 200, "y": 0}, "data": {"type": "command", "command_name": "forge.build"}},
-                {"id": "c2", "position": {"x": 400, "y": 0}, "data": {"type": "command", "command_name": "forge.deploy"}},
-                {"id": "a1", "position": {"x": 600, "y": 0}, "data": {"type": "approval", "label": "SRE sign-off"}},
-                {"id": "s1", "position": {"x": 800, "y": 0}, "data": {"type": "script", "language": "bash", "source": "curl -f $HEALTHCHECK_URL"}},
+                {
+                    "id": "t1",
+                    "position": {"x": 0, "y": 0},
+                    "data": {"type": "trigger", "label": "Tag pushed"},
+                },
+                {
+                    "id": "c1",
+                    "position": {"x": 200, "y": 0},
+                    "data": {"type": "command", "command_name": "forge.build"},
+                },
+                {
+                    "id": "c2",
+                    "position": {"x": 400, "y": 0},
+                    "data": {"type": "command", "command_name": "forge.deploy"},
+                },
+                {
+                    "id": "a1",
+                    "position": {"x": 600, "y": 0},
+                    "data": {"type": "approval", "label": "SRE sign-off"},
+                },
+                {
+                    "id": "s1",
+                    "position": {"x": 800, "y": 0},
+                    "data": {
+                        "type": "script",
+                        "language": "bash",
+                        "source": "curl -f $HEALTHCHECK_URL",
+                    },
+                },
             ],
             "edges": [
                 {"id": "e1", "source": "t1", "target": "c1"},
@@ -124,8 +219,16 @@ SEED_WORKFLOWS = [
         "status": "draft",
         "definition": {
             "nodes": [
-                {"id": "t1", "position": {"x": 0, "y": 0}, "data": {"type": "trigger", "label": "Story added"}},
-                {"id": "c1", "position": {"x": 200, "y": 0}, "data": {"type": "command", "command_name": "forge.refine-story"}},
+                {
+                    "id": "t1",
+                    "position": {"x": 0, "y": 0},
+                    "data": {"type": "trigger", "label": "Story added"},
+                },
+                {
+                    "id": "c1",
+                    "position": {"x": 200, "y": 0},
+                    "data": {"type": "command", "command_name": "forge.refine-story"},
+                },
             ],
             "edges": [
                 {"id": "e1", "source": "t1", "target": "c1"},
@@ -139,9 +242,21 @@ SEED_WORKFLOWS = [
         "status": "draft",
         "definition": {
             "nodes": [
-                {"id": "t1", "position": {"x": 0, "y": 0}, "data": {"type": "trigger", "label": "RFC submitted"}},
-                {"id": "c1", "position": {"x": 200, "y": 0}, "data": {"type": "command", "command_name": "forge.architecture-review"}},
-                {"id": "a1", "position": {"x": 400, "y": 0}, "data": {"type": "approval", "label": "Architect sign-off"}},
+                {
+                    "id": "t1",
+                    "position": {"x": 0, "y": 0},
+                    "data": {"type": "trigger", "label": "RFC submitted"},
+                },
+                {
+                    "id": "c1",
+                    "position": {"x": 200, "y": 0},
+                    "data": {"type": "command", "command_name": "forge.architecture-review"},
+                },
+                {
+                    "id": "a1",
+                    "position": {"x": 400, "y": 0},
+                    "data": {"type": "approval", "label": "Architect sign-off"},
+                },
             ],
             "edges": [
                 {"id": "e1", "source": "t1", "target": "c1"},
@@ -171,9 +286,7 @@ async def _ensure_status_column(session: AsyncSession) -> None:
     if result.first() is not None:
         return
     await session.execute(
-        text(
-            "ALTER TABLE workflows ADD COLUMN status VARCHAR(32) NOT NULL DEFAULT 'draft'"
-        )
+        text("ALTER TABLE workflows ADD COLUMN status VARCHAR(32) NOT NULL DEFAULT 'draft'")
     )
     await session.commit()
     print("✓ Added workflows.status column (in-place migration)")
@@ -184,19 +297,17 @@ async def seed() -> None:
         await _ensure_status_column(session)
 
         tenant = (
-            await session.execute(
-                select(Tenant).where(Tenant.slug == "acme-corp")
-            )
+            await session.execute(select(Tenant).where(Tenant.slug == "acme-corp"))
         ).scalar_one_or_none()
         if not tenant:
             print("✗ Tenant acme-corp not found")
             return
 
         user = (
-            await session.execute(
-                select(User).where(User.email == "arun@acme-corp.com")
-            )
-        ).scalars().first()
+            (await session.execute(select(User).where(User.email == "arun@acme-corp.com")))
+            .scalars()
+            .first()
+        )
         user_id = user.id if user else tenant.id
 
         created = []
@@ -224,8 +335,8 @@ async def seed() -> None:
                 status=spec["status"],
                 definition=spec["definition"],
                 created_by=str(user_id),
-                created_at=datetime.now(timezone.utc),
-                updated_at=datetime.now(timezone.utc),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
             )
             session.add(wf)
             await session.flush()
@@ -236,10 +347,14 @@ async def seed() -> None:
         pr_wf = next((w for w in created if w.name == "PR Review Pipeline"), None)
         if pr_wf:
             existing_runs = (
-                await session.execute(
-                    select(WorkflowRun).where(WorkflowRun.workflow_id == pr_wf.id)
+                (
+                    await session.execute(
+                        select(WorkflowRun).where(WorkflowRun.workflow_id == pr_wf.id)
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
 
             if not existing_runs:
                 for status_value, started_offset_min in [
@@ -247,16 +362,9 @@ async def seed() -> None:
                     ("succeeded", 1440),
                     ("failed", 60),
                 ]:
-                    started = (
-                        datetime.now(timezone.utc).timestamp()
-                        - started_offset_min * 60
-                    )
-                    started_dt = datetime.fromtimestamp(started, tz=timezone.utc)
-                    finished_dt = (
-                        datetime.now(timezone.utc)
-                        if status_value != "running"
-                        else None
-                    )
+                    started = datetime.now(UTC).timestamp() - started_offset_min * 60
+                    started_dt = datetime.fromtimestamp(started, tz=UTC)
+                    finished_dt = datetime.now(UTC) if status_value != "running" else None
                     run = WorkflowRun(
                         id=str(uuid4()),
                         tenant_id=tenant.id,
@@ -271,7 +379,9 @@ async def seed() -> None:
                             "stepResults": {
                                 "t1": {"status": "succeeded", "duration_ms": 120},
                                 "c1": {
-                                    "status": "succeeded" if status_value != "failed" else "running",
+                                    "status": "succeeded"
+                                    if status_value != "failed"
+                                    else "running",
                                     "duration_ms": 2340 if status_value != "failed" else None,
                                 },
                             },

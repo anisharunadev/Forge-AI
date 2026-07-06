@@ -21,17 +21,11 @@ from backend.seeds.framework.exceptions import (
     ProductionSeedBlockedError,
     SeedNotFoundError,
 )
-from backend.seeds.framework.exit_codes import (
-    APPLY_ERROR,
-    INVALID_MANIFEST,
-    PRODUCTION_BLOCKED,
-)
 from backend.seeds.framework.seed_runner import (
     SEEDS_ROOT,
     SeedRunner,
     SeedSummary,
 )
-
 
 SCHEMA_PATH = Path(__file__).resolve().parents[2] / "seeds" / "framework" / "manifest_schema.json"
 

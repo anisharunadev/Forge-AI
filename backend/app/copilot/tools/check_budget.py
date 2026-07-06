@@ -20,11 +20,10 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from app.core.logging import get_logger
-from app.core.security import AuthenticatedPrincipal
-from app.copilot.tools.base import Tool
 from app.copilot.tools.exceptions import ToolArgumentInvalid
 from app.copilot.tools.registry import tool_registry
+from app.core.logging import get_logger
+from app.core.security import AuthenticatedPrincipal
 from app.services.rbac import COPILOT_PERMISSION_TOOL_CHECK_BUDGET
 from app.services.workflow_budget import workflow_budget_service
 
@@ -65,9 +64,7 @@ class CheckBudgetTool:
     ) -> dict[str, Any]:
         scope = args.get("scope") or "tenant"
         if scope not in _SCOPES:
-            raise ToolArgumentInvalid(
-                self.name, f"scope must be one of {_SCOPES}", field="scope"
-            )
+            raise ToolArgumentInvalid(self.name, f"scope must be one of {_SCOPES}", field="scope")
         scope_id = args.get("scope_id")
 
         if scope == "command":
@@ -86,7 +83,6 @@ class CheckBudgetTool:
         # budget row declared at conversation create time. Plan 1.x
         # writes that row; until then we surface the workflow_budget
         # view if any rows exist, else ``no_budget``.
-        from app.services.workflow_budget import WorkflowBudgetStatus
 
         if scope_id:
             # scope_id is treated as a workflow_id for now.

@@ -5,11 +5,9 @@ from __future__ import annotations
 import json
 import uuid
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -23,7 +21,7 @@ class _FakeLLM:
         self._payload = payload
         self.calls: list[list[dict[str, Any]]] = []
 
-    async def __aenter__(self) -> "_FakeLLM":
+    async def __aenter__(self) -> _FakeLLM:
         return self
 
     async def __aexit__(self, *_exc: Any) -> None:
@@ -65,6 +63,7 @@ def _openapi_payload() -> dict[str, Any]:
 async def sqlite_db(sqlite_db):  # type: ignore[no-untyped-def]
     """Reuse the in-memory sqlite fixture from conftest.py."""
     from app.db.models import architecture  # noqa: F401  (register models)
+
     return sqlite_db
 
 
@@ -89,9 +88,7 @@ async def captured_events(event_bus):  # type: ignore[no-untyped-def]
 
 
 @pytest.mark.asyncio
-async def test_adr_generator_creates_with_madr_format(
-    sqlite_db, event_bus, captured_events
-):
+async def test_adr_generator_creates_with_madr_format(sqlite_db, event_bus, captured_events):
     from app.services.architecture.adr_generator import ADRGenerator
 
     llm = _FakeLLM(
@@ -137,9 +134,7 @@ async def test_adr_generator_creates_with_madr_format(
 
 
 @pytest.mark.asyncio
-async def test_adr_generator_numbers_sequentially(
-    sqlite_db, event_bus, captured_events
-):
+async def test_adr_generator_numbers_sequentially(sqlite_db, event_bus, captured_events):
     from app.services.architecture.adr_generator import ADRGenerator
 
     llm = _FakeLLM(
@@ -201,9 +196,8 @@ async def test_adr_generator_numbers_sequentially(
 
 @pytest.mark.asyncio
 async def test_adr_generator_emits_event(sqlite_db, event_bus, captured_events):
-    from app.services.event_bus import EventType
-
     from app.services.architecture.adr_generator import ADRGenerator
+    from app.services.event_bus import EventType
 
     llm = _FakeLLM(
         {
@@ -387,9 +381,7 @@ async def test_task_breakdown_from_adr(sqlite_db, event_bus, captured_events):
         artifact_registry=None,
         event_bus=event_bus,
     )
-    breakdown = await breakdown_gen.generate_from_adr(
-        adr_id=adr.id, actor_id=uuid.uuid4()
-    )
+    breakdown = await breakdown_gen.generate_from_adr(adr_id=adr.id, actor_id=uuid.uuid4())
     assert breakdown.id is not None
     assert breakdown.parent_artifact_type == "adr"
     assert breakdown.parent_artifact_id == adr.id
@@ -441,9 +433,7 @@ async def test_task_breakdown_update_task(sqlite_db, event_bus, captured_events)
         artifact_registry=None,
         event_bus=event_bus,
     )
-    breakdown = await breakdown_gen.generate_from_adr(
-        adr_id=adr.id, actor_id=uuid.uuid4()
-    )
+    breakdown = await breakdown_gen.generate_from_adr(adr_id=adr.id, actor_id=uuid.uuid4())
     updated = await breakdown_gen.update_task(
         breakdown_id=breakdown.id,
         task_id="TASK-1",

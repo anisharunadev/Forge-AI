@@ -6,10 +6,11 @@ import enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Enum as SAEnum, Index, String
+from sqlalchemy import Enum as SAEnum
+from sqlalchemy import Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class AgentType(str, enum.Enum):
@@ -43,9 +44,7 @@ class Agent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     tenant_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, index=True)
     project_id: Mapped[UUID | None] = mapped_column(GUID(), nullable=True, index=True)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
-    type: Mapped[AgentType] = mapped_column(
-        SAEnum(AgentType, name="agent_type"), nullable=False
-    )
+    type: Mapped[AgentType] = mapped_column(SAEnum(AgentType, name="agent_type"), nullable=False)
     capabilities: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     status: Mapped[AgentStatus] = mapped_column(
         SAEnum(AgentStatus, name="agent_status"),

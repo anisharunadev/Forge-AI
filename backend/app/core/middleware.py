@@ -13,6 +13,7 @@ middleware is best-effort: if the header is missing the contextvar is
 left at its default ``None`` and the sampler falls back to 100%
 sampling.
 """
+
 from __future__ import annotations
 
 import uuid

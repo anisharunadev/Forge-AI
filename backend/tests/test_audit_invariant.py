@@ -56,9 +56,7 @@ def _canonical(payload: dict) -> str:
 
 def _expected_digest(prev: str, payload: dict) -> str:
     """sha256(prev + canonical(payload)) — exact write-path formula."""
-    return hashlib.sha256(
-        (prev + _canonical(payload)).encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256((prev + _canonical(payload)).encode("utf-8")).hexdigest()
 
 
 async def _seed_events(
@@ -116,23 +114,29 @@ async def test_chain_verifies_when_intact(sqlite_db) -> None:
         # First sanity check: every row got a non-NULL hash_chain_ref,
         # the column was actually populated by the write path.
         rows = (
-            await session.execute(
-                select(AuditEvent)
-                .where(AuditEvent.tenant_id == tenant_id)
-                .order_by(AuditEvent.occurred_at.asc())
+            (
+                await session.execute(
+                    select(AuditEvent)
+                    .where(AuditEvent.tenant_id == tenant_id)
+                    .order_by(AuditEvent.occurred_at.asc())
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(rows) == 50
         for row in rows:
             assert row.hash_chain_ref is not None
             assert len(row.hash_chain_ref) == 64  # sha256 hex
 
         # AC-3(a): verify_chain_db returns integrity_ok=True with length=50.
-        ok, broken_at, head_hash, length, last_event_at = (
-            await observability_service.verify_chain_db(
-                session, tenant_id=tenant_id
-            )
-        )
+        (
+            ok,
+            broken_at,
+            head_hash,
+            length,
+            last_event_at,
+        ) = await observability_service.verify_chain_db(session, tenant_id=tenant_id)
         assert ok is True
         assert broken_at is None
         assert length == 50
@@ -176,11 +180,7 @@ async def test_chain_fails_on_tampered_payload(sqlite_db) -> None:
         factory = get_session_factory()
         async with factory() as session:
             await session.execute(
-                text(
-                    "UPDATE audit_events "
-                    "SET payload = :tampered "
-                    "WHERE id = :id"
-                ),
+                text("UPDATE audit_events SET payload = :tampered WHERE id = :id"),
                 {
                     "tampered": json.dumps({"tampered": True, "i": 999}),
                     "id": str(corrupted_id),
@@ -193,10 +193,8 @@ async def test_chain_fails_on_tampered_payload(sqlite_db) -> None:
     # Verification: the chain break is the corrupted row.
     factory = get_session_factory()
     async with factory() as session:
-        ok, broken_at, _head, length, _last_at = (
-            await observability_service.verify_chain_db(
-                session, tenant_id=tenant_id
-            )
+        ok, broken_at, _head, length, _last_at = await observability_service.verify_chain_db(
+            session, tenant_id=tenant_id
         )
         assert ok is False
         assert broken_at == corrupted_id
@@ -218,11 +216,7 @@ async def test_chain_fails_on_tampered_payload(sqlite_db) -> None:
     assert post_corruption_id is not None
     async with factory() as session:
         post_row = (
-            await session.execute(
-                select(AuditEvent).where(
-                    AuditEvent.id == post_corruption_id
-                )
-            )
+            await session.execute(select(AuditEvent).where(AuditEvent.id == post_corruption_id))
         ).scalar_one()
         assert post_row.hash_chain_ref is not None
 
@@ -253,11 +247,13 @@ async def test_chain_head_persists_across_session_restart(sqlite_db) -> None:
     factory = get_session_factory()
     async with factory() as session:
         # Capture the persisted head BEFORE the simulated restart.
-        _, _, pre_restart_head, pre_restart_length, pre_restart_last = (
-            await observability_service.verify_chain_db(
-                session, tenant_id=tenant_id
-            )
-        )
+        (
+            _,
+            _,
+            pre_restart_head,
+            pre_restart_length,
+            pre_restart_last,
+        ) = await observability_service.verify_chain_db(session, tenant_id=tenant_id)
     assert pre_restart_length == 5
     assert pre_restart_head != ""
     assert pre_restart_last is not None
@@ -281,11 +277,13 @@ async def test_chain_head_persists_across_session_restart(sqlite_db) -> None:
         assert _HASH_CHAIN.get(tenant_id) == pre_restart_head
 
         # Final re-verify — the chain is still intact.
-        ok, broken_at, head_hash_post, length_post, last_event_post = (
-            await observability_service.verify_chain_db(
-                session, tenant_id=tenant_id
-            )
-        )
+        (
+            ok,
+            broken_at,
+            head_hash_post,
+            length_post,
+            last_event_post,
+        ) = await observability_service.verify_chain_db(session, tenant_id=tenant_id)
         assert ok is True
         assert broken_at is None
         assert head_hash_post == pre_restart_head

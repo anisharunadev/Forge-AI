@@ -16,35 +16,36 @@ from __future__ import annotations
 
 import abc
 import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import Any, Awaitable, Callable, Protocol
+from typing import Any, Protocol
+from uuid import UUID
 
 from langchain_core.tools import BaseTool
 
 from app.agents.sdlc_state import (
     ApprovalRequest,
     ApprovalResponse,
-    ArtifactRef,
     ErrorRecord,
     SDLCPhase,
     SDLCState,
 )
-from app.services.event_bus import EventType, bus as default_bus
-
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 
 # ---------------------------------------------------------------------------
 # Errors raised by the guard rails
 # ---------------------------------------------------------------------------
+
 
 class CostLimitExceeded(RuntimeError):
     """Raised when a phase would exceed its per-phase cost budget."""
 
     def __init__(self, phase: SDLCPhase, spent: Decimal, limit: Decimal) -> None:
         super().__init__(
-            f"phase {phase.value} exceeded cost guard: "
-            f"spent ${spent} > limit ${limit}"
+            f"phase {phase.value} exceeded cost guard: spent ${spent} > limit ${limit}"
         )
         self.phase = phase
         self.spent = spent
@@ -56,8 +57,7 @@ class DurationLimitExceeded(RuntimeError):
 
     def __init__(self, phase: SDLCPhase, elapsed: float, limit: int) -> None:
         super().__init__(
-            f"phase {phase.value} exceeded duration guard: "
-            f"elapsed {elapsed:.1f}s > limit {limit}s"
+            f"phase {phase.value} exceeded duration guard: elapsed {elapsed:.1f}s > limit {limit}s"
         )
         self.phase = phase
         self.elapsed = elapsed
@@ -91,6 +91,7 @@ class PhaseHooks:
 # Cost-tracker protocol (so cost_tracking.py can swap in a richer impl)
 # ---------------------------------------------------------------------------
 
+
 class CostRecorder(abc.ABC):
     """Records a single LLM/tool cost incurrence for a run."""
 
@@ -115,6 +116,7 @@ class CostRecorder(abc.ABC):
 # PhaseNode Protocol
 # ---------------------------------------------------------------------------
 
+
 class PhaseNode(Protocol):
     """The structural type every phase node implements.
 
@@ -130,6 +132,7 @@ class PhaseNode(Protocol):
 # ---------------------------------------------------------------------------
 # BasePhaseNode
 # ---------------------------------------------------------------------------
+
 
 class BasePhaseNode(abc.ABC):
     """Abstract base class for every SDLC phase.
@@ -256,16 +259,14 @@ class BasePhaseNode(abc.ABC):
                 self.execute(state),
                 timeout=self.max_duration_seconds,
             )
-        except asyncio.TimeoutError as exc:
+        except TimeoutError as exc:
             elapsed = time.perf_counter() - start
             raise DurationLimitExceeded(
                 self.phase_name, elapsed, self.max_duration_seconds
             ) from exc
         elapsed = time.perf_counter() - start
         if elapsed > self.max_duration_seconds:
-            raise DurationLimitExceeded(
-                self.phase_name, elapsed, self.max_duration_seconds
-            )
+            raise DurationLimitExceeded(self.phase_name, elapsed, self.max_duration_seconds)
         return result
 
     async def _check_cost(self, state: SDLCState) -> None:
@@ -294,7 +295,7 @@ class BasePhaseNode(abc.ABC):
     ) -> SDLCState:
         """Emit :class:`ApprovalRequest`, persist it, and pause the run."""
 
-        expires_at = datetime.now(timezone.utc) + self._approval_timeout
+        expires_at = datetime.now(UTC) + self._approval_timeout
         request = ApprovalRequest(
             approval_id=__import__("uuid").uuid4(),
             type=_approval_type_for(self.phase_name),
@@ -343,9 +344,7 @@ class BasePhaseNode(abc.ABC):
             **state.metadata,
             f"approval:{self.phase_name.value}": response.model_dump(mode="json"),
         }
-        event_type = (
-            EventType.APPROVAL_GRANTED if response.granted else EventType.APPROVAL_DENIED
-        )
+        event_type = EventType.APPROVAL_GRANTED if response.granted else EventType.APPROVAL_DENIED
         await self._bus.publish(
             event_type,
             {

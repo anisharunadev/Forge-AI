@@ -54,13 +54,9 @@ class CopilotConversation(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     project_id: Mapped[UUID | None] = mapped_column(GUID(), nullable=True, index=True)
     user_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, index=True)
     title: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    archived_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     message_count: Mapped[int] = mapped_column(default=0, nullable=False)
-    total_cost_usd: Mapped[float] = mapped_column(
-        Numeric(18, 8), nullable=False, default=0
-    )
+    total_cost_usd: Mapped[float] = mapped_column(Numeric(18, 8), nullable=False, default=0)
     total_tokens_in: Mapped[int] = mapped_column(default=0, nullable=False)
     total_tokens_out: Mapped[int] = mapped_column(default=0, nullable=False)
 
@@ -109,13 +105,9 @@ class CopilotMessage(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     confidence: Mapped[str | None] = mapped_column(String(10), nullable=True)
     feedback_rating: Mapped[str | None] = mapped_column(String(10), nullable=True)
     feedback_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
-    feedback_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    feedback_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     model: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    cost_usd: Mapped[float] = mapped_column(
-        Numeric(18, 8), nullable=False, default=0
-    )
+    cost_usd: Mapped[float] = mapped_column(Numeric(18, 8), nullable=False, default=0)
     tokens_in: Mapped[int] = mapped_column(default=0, nullable=False)
     tokens_out: Mapped[int] = mapped_column(default=0, nullable=False)
     latency_ms: Mapped[int] = mapped_column(default=0, nullable=False)

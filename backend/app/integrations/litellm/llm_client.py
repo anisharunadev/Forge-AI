@@ -40,20 +40,25 @@ from __future__ import annotations
 
 import contextvars
 import time
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, AsyncIterator
+from collections.abc import AsyncIterator
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.core.telemetry import get_tracer
 from app.db.models.litellm_call_record import LiteLLMCallStatus
-from app.services.cost_ledger import CostLedger, cost_ledger as default_cost_ledger
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.cost_ledger import CostLedger
+from app.services.cost_ledger import cost_ledger as default_cost_ledger
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 from app.services.workflow_budget import (
     BudgetExceeded,
     Decision,
     WorkflowBudgetService,
+)
+from app.services.workflow_budget import (
     workflow_budget_service as default_workflow_budget,
 )
 
@@ -75,12 +80,12 @@ _tracer = get_tracer(__name__)
 # this ContextVar at request scope; ``_enrich_metadata`` reads it to
 # attach forge_* fields to every LiteLLM call so spend logs can
 # reconcile against Forge without each call site repeating itself.
-_current_principal: contextvars.ContextVar["AuthenticatedPrincipal | None"] = contextvars.ContextVar(
+_current_principal: contextvars.ContextVar[AuthenticatedPrincipal | None] = contextvars.ContextVar(
     "forge_current_principal", default=None
 )
 
 
-def set_current_principal(principal: "AuthenticatedPrincipal | None") -> contextvars.Token:
+def set_current_principal(principal: AuthenticatedPrincipal | None) -> contextvars.Token:
     """Populate the request-scoped principal for metadata envelope injection.
 
     Called from a FastAPI dependency; the token is unused by callers but
@@ -93,7 +98,7 @@ def reset_current_principal(token: contextvars.Token) -> None:
     _current_principal.reset(token)
 
 
-def get_current_principal() -> "AuthenticatedPrincipal | None":
+def get_current_principal() -> AuthenticatedPrincipal | None:
     return _current_principal.get()
 
 
@@ -127,12 +132,12 @@ class ForgeLLMClient:
     def __init__(
         self,
         *,
-        base_client: "LiteLLMBaseClient | None" = None,
-        key_manager: "VirtualKeyManager | None" = None,
-        budget_sync: "BudgetSync | None" = None,
-        model_resolver: "ModelAssignmentResolver | None" = None,
-        trace_correlator: "TraceCorrelator | None" = None,
-        health_monitor: "LiteLLMHealthMonitor | None" = None,
+        base_client: LiteLLMBaseClient | None = None,
+        key_manager: VirtualKeyManager | None = None,
+        budget_sync: BudgetSync | None = None,
+        model_resolver: ModelAssignmentResolver | None = None,
+        trace_correlator: TraceCorrelator | None = None,
+        health_monitor: LiteLLMHealthMonitor | None = None,
         cost_ledger: CostLedger | None = None,
         workflow_budget: WorkflowBudgetService | None = None,
     ) -> None:
@@ -153,7 +158,7 @@ class ForgeLLMClient:
     # Lazy collaborator resolution
     # ------------------------------------------------------------------
 
-    def _resolve_base_client(self) -> "LiteLLMBaseClient | None":
+    def _resolve_base_client(self) -> LiteLLMBaseClient | None:
         if self._base_client is not None:
             return self._base_client
         try:
@@ -165,7 +170,7 @@ class ForgeLLMClient:
         except Exception:  # noqa: BLE001 — sibling agent hasn't landed yet
             return None
 
-    def _resolve_key_manager(self) -> "VirtualKeyManager | None":
+    def _resolve_key_manager(self) -> VirtualKeyManager | None:
         if self._key_manager is not None:
             return self._key_manager
         try:
@@ -177,7 +182,7 @@ class ForgeLLMClient:
         except Exception:  # noqa: BLE001
             return None
 
-    def _resolve_model_resolver(self) -> "ModelAssignmentResolver | None":
+    def _resolve_model_resolver(self) -> ModelAssignmentResolver | None:
         if self._model_resolver is not None:
             return self._model_resolver
         try:
@@ -189,7 +194,7 @@ class ForgeLLMClient:
         except Exception:  # noqa: BLE001
             return None
 
-    def _resolve_budget_sync(self) -> "BudgetSync | None":
+    def _resolve_budget_sync(self) -> BudgetSync | None:
         if self._budget_sync is not None:
             return self._budget_sync
         try:
@@ -199,7 +204,7 @@ class ForgeLLMClient:
         except Exception:  # noqa: BLE001
             return None
 
-    def _resolve_trace_correlator(self) -> "TraceCorrelator":
+    def _resolve_trace_correlator(self) -> TraceCorrelator:
         if self._trace_correlator is not None:
             return self._trace_correlator
         # trace_correlator.py is owned by this same agent and is
@@ -239,9 +244,7 @@ class ForgeLLMClient:
         # 1. Per-tenant Virtual Key (cache-first).
         virtual_key = await self._resolve_virtual_key(tenant_id)
         if not virtual_key:
-            raise LLMUnavailableError(
-                f"No LiteLLM Virtual Key provisioned for tenant {tenant_id}"
-            )
+            raise LLMUnavailableError(f"No LiteLLM Virtual Key provisioned for tenant {tenant_id}")
 
         # 2. Resolve concrete model when not provided by the caller.
         resolved_model = model or await self._resolve_model(tenant_id)
@@ -311,7 +314,7 @@ class ForgeLLMClient:
                 stream=False,
                 extra_kwargs=kwargs,
             )
-        except (LLMUnavailableError,):
+        except LLMUnavailableError:
             # Phase 6 SC-6.4 — try to enqueue when LiteLLM is unreachable.
             # If the queue is full, re-raise the original LLMUnavailableError
             # so the HTTP layer can return 503 + Retry-After.
@@ -399,9 +402,7 @@ class ForgeLLMClient:
         forge_trace_id = self._resolve_trace_correlator().mint_trace_id_from_active_span()
         virtual_key = await self._resolve_virtual_key(tenant_id)
         if not virtual_key:
-            raise LLMUnavailableError(
-                f"No LiteLLM Virtual Key provisioned for tenant {tenant_id}"
-            )
+            raise LLMUnavailableError(f"No LiteLLM Virtual Key provisioned for tenant {tenant_id}")
 
         await self._admit_call(
             workflow_id=workflow_id,
@@ -616,7 +617,7 @@ class ForgeLLMClient:
     async def _chat_stream(
         self,
         *,
-        base_client: "LiteLLMBaseClient",
+        base_client: LiteLLMBaseClient,
         messages: list[dict[str, Any]],
         model: str,
         tenant_id: UUID | str,
@@ -724,9 +725,7 @@ class ForgeLLMClient:
                 tenant_id=tenant_id, project_id=project_id
             )
         except Exception:  # noqa: BLE001 — never let resolve mask the call
-            logger.exception(
-                "litellm.guardrail_resolve_failed", tenant_id=str(tenant_id)
-            )
+            logger.exception("litellm.guardrail_resolve_failed", tenant_id=str(tenant_id))
             return messages
         if not effective:
             return messages
@@ -757,14 +756,10 @@ class ForgeLLMClient:
                         f"guardrail {v.guardrail_name} blocked pre_call_input: {v.reason}"
                     ) from v
                 if result.is_masked and result.text != target_text:
-                    masked_messages = self._replace_last_user_text(
-                        masked_messages, result.text
-                    )
+                    masked_messages = self._replace_last_user_text(masked_messages, result.text)
             else:
                 # pre_call_llm: best-effort single apply over the joined history.
-                joined = "\n".join(
-                    str(m.get("content") or "") for m in masked_messages
-                )
+                joined = "\n".join(str(m.get("content") or "") for m in masked_messages)
                 if not joined:
                     continue
                 try:
@@ -865,11 +860,7 @@ class ForgeLLMClient:
                     replaced = False
                     new_parts = []
                     for part in content:
-                        if (
-                            not replaced
-                            and isinstance(part, dict)
-                            and part.get("type") == "text"
-                        ):
+                        if not replaced and isinstance(part, dict) and part.get("type") == "text":
                             new_parts.append({**part, "text": new_text})
                             replaced = True
                         else:
@@ -922,9 +913,7 @@ class ForgeLLMClient:
                 degradation_queue,
             )
 
-            entry = await degradation_queue.enqueue(
-                tenant_id=tenant_id, payload=b""
-            )
+            entry = await degradation_queue.enqueue(tenant_id=tenant_id, payload=b"")
             logger.info(
                 "litellm.degradation_queued",
                 tenant_id=str(tenant_id),
@@ -962,9 +951,7 @@ class ForgeLLMClient:
         completion_tokens = int(usage.get("completion_tokens", 0))
         cost_usd = float(response_body.get("cost_usd") or usage.get("cost_usd") or 0.0)
 
-        litellm_call_id = self._resolve_trace_correlator().extract_litellm_call_id(
-            response_headers
-        )
+        litellm_call_id = self._resolve_trace_correlator().extract_litellm_call_id(response_headers)
 
         # 5a. Cost ledger (canonical spend record).
         if prompt_tokens or completion_tokens or cost_usd:
@@ -1099,9 +1086,7 @@ class ForgeLLMClient:
         except LookupError:
             logger.debug("litellm.no_budget_to_commit", workflow_id=str(workflow_id))
         except Exception:  # noqa: BLE001
-            logger.exception(
-                "litellm.budget_commit_failed", workflow_id=str(workflow_id)
-            )
+            logger.exception("litellm.budget_commit_failed", workflow_id=str(workflow_id))
 
     async def _emit_call_completed(
         self,
@@ -1128,7 +1113,7 @@ class ForgeLLMClient:
             "usage": usage,
             "forge_trace_id": forge_trace_id,
             "latency_ms": latency_ms,
-            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "occurred_at": datetime.now(UTC).isoformat(),
         }
         try:
             event_type = getattr(

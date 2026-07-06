@@ -16,7 +16,7 @@ from uuid import UUID
 from sqlalchemy import DateTime, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class LiteLLMTeamStatus(str, Enum):
@@ -61,9 +61,7 @@ class LiteLLMTeamMapping(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         nullable=False,
         default=LiteLLMTeamStatus.ACTIVE.value,
     )
-    last_synced_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     metadata_: Mapped[dict[str, Any]] = mapped_column(
         "metadata", JSONB, nullable=False, default=dict
     )

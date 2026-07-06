@@ -53,9 +53,7 @@ class IngestSourceRead(TenantScopedModel):
     type: Literal["confluence", "slack", "zendesk", "github", "jira", "notion"]
     config: dict[str, Any] = Field(default_factory=dict)
     last_sync_at: datetime | None = None
-    status: Literal[
-        "pending", "syncing", "healthy", "stale", "quarantined", "failed"
-    ] = "pending"
+    status: Literal["pending", "syncing", "healthy", "stale", "quarantined", "failed"] = "pending"
     scopes: list[str] = Field(default_factory=list, max_length=64)
 
 

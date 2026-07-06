@@ -26,14 +26,12 @@ warning and the SQL path serves a fresh result (slower, but correct).
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.logging import get_logger
@@ -60,10 +58,7 @@ def _cache_key(tenant_id: UUID | str, since: datetime, until: datetime) -> str:
     Format mirrors ``freshness_ledger.py:57``:
     ``forge:<domain>:<tenant_id>:<entity_id>``.
     """
-    return (
-        f"forge:litellm:usage:{tenant_id}:"
-        f"{int(since.timestamp())}:{int(until.timestamp())}"
-    )
+    return f"forge:litellm:usage:{tenant_id}:{int(since.timestamp())}:{int(until.timestamp())}"
 
 
 async def _cache_get(key: str) -> dict[str, Any] | None:
@@ -161,7 +156,7 @@ class TenantUsageSnapshot:
         }
 
     @classmethod
-    def from_dict(cls, payload: dict[str, Any]) -> "TenantUsageSnapshot":
+    def from_dict(cls, payload: dict[str, Any]) -> TenantUsageSnapshot:
         """Inverse of :meth:`to_dict` — used by Redis cache hits."""
         return cls(
             total_cost_usd=float(payload.get("total_cost_usd", 0.0)),
@@ -184,16 +179,8 @@ class TenantUsageSnapshot:
                 )
                 for u in payload.get("by_user", [])
             ],
-            since=(
-                datetime.fromisoformat(payload["since"])
-                if payload.get("since")
-                else None
-            ),
-            until=(
-                datetime.fromisoformat(payload["until"])
-                if payload.get("until")
-                else None
-            ),
+            since=(datetime.fromisoformat(payload["since"]) if payload.get("since") else None),
+            until=(datetime.fromisoformat(payload["until"]) if payload.get("until") else None),
             cached=True,
         )
 
@@ -248,71 +235,66 @@ class UsageQuery:
     ) -> TenantUsageSnapshot:
         """Run the SQL aggregate under RLS. All output in the snapshot's dict."""
         factory = self._session_factory
-        async with factory() as session:
-            async with tenant_context(session, tenant_id=tenant_id):
-                # ----- Totals -----
-                totals_row = (
-                    await session.execute(
-                        select(
-                            func.coalesce(
-                                func.sum(LiteLLMCallRecord.cost_usd), 0.0
-                            ).label("total_cost_usd"),
-                            func.coalesce(
-                                func.sum(LiteLLMCallRecord.prompt_tokens), 0
-                            ).label("prompt_tokens"),
-                            func.coalesce(
-                                func.sum(LiteLLMCallRecord.completion_tokens), 0
-                            ).label("completion_tokens"),
-                            func.count(LiteLLMCallRecord.id).label("calls"),
-                        ).where(
-                            LiteLLMCallRecord.tenant_id == tenant_id,
-                            LiteLLMCallRecord.occurred_at >= since,
-                            LiteLLMCallRecord.occurred_at < until,
-                        )
+        async with factory() as session, tenant_context(session, tenant_id=tenant_id):
+            # ----- Totals -----
+            totals_row = (
+                await session.execute(
+                    select(
+                        func.coalesce(func.sum(LiteLLMCallRecord.cost_usd), 0.0).label(
+                            "total_cost_usd"
+                        ),
+                        func.coalesce(func.sum(LiteLLMCallRecord.prompt_tokens), 0).label(
+                            "prompt_tokens"
+                        ),
+                        func.coalesce(func.sum(LiteLLMCallRecord.completion_tokens), 0).label(
+                            "completion_tokens"
+                        ),
+                        func.count(LiteLLMCallRecord.id).label("calls"),
+                    ).where(
+                        LiteLLMCallRecord.tenant_id == tenant_id,
+                        LiteLLMCallRecord.occurred_at >= since,
+                        LiteLLMCallRecord.occurred_at < until,
                     )
-                ).one()
+                )
+            ).one()
 
-                # ----- By model -----
-                by_model_rows = (
-                    await session.execute(
-                        select(
-                            LiteLLMCallRecord.model.label("model"),
-                            func.coalesce(
-                                func.sum(LiteLLMCallRecord.cost_usd), 0.0
-                            ).label("cost_usd"),
-                            func.count(LiteLLMCallRecord.id).label("calls"),
-                        )
-                        .where(
-                            LiteLLMCallRecord.tenant_id == tenant_id,
-                            LiteLLMCallRecord.occurred_at >= since,
-                            LiteLLMCallRecord.occurred_at < until,
-                        )
-                        .group_by(LiteLLMCallRecord.model)
-                        .order_by(func.sum(LiteLLMCallRecord.cost_usd).desc())
+            # ----- By model -----
+            by_model_rows = (
+                await session.execute(
+                    select(
+                        LiteLLMCallRecord.model.label("model"),
+                        func.coalesce(func.sum(LiteLLMCallRecord.cost_usd), 0.0).label("cost_usd"),
+                        func.count(LiteLLMCallRecord.id).label("calls"),
                     )
-                ).all()
+                    .where(
+                        LiteLLMCallRecord.tenant_id == tenant_id,
+                        LiteLLMCallRecord.occurred_at >= since,
+                        LiteLLMCallRecord.occurred_at < until,
+                    )
+                    .group_by(LiteLLMCallRecord.model)
+                    .order_by(func.sum(LiteLLMCallRecord.cost_usd).desc())
+                )
+            ).all()
 
-                # ----- By user (actor) -----
-                by_user_rows = (
-                    await session.execute(
-                        select(
-                            LiteLLMCallRecord.actor_id.label("actor_id"),
-                            func.coalesce(
-                                func.sum(LiteLLMCallRecord.cost_usd), 0.0
-                            ).label("cost_usd"),
-                            func.count(LiteLLMCallRecord.id).label("calls"),
-                        )
-                        .where(
-                            LiteLLMCallRecord.tenant_id == tenant_id,
-                            LiteLLMCallRecord.actor_id.is_not(None),
-                            LiteLLMCallRecord.occurred_at >= since,
-                            LiteLLMCallRecord.occurred_at < until,
-                        )
-                        .group_by(LiteLLMCallRecord.actor_id)
-                        .order_by(func.sum(LiteLLMCallRecord.cost_usd).desc())
-                        .limit(10)
+            # ----- By user (actor) -----
+            by_user_rows = (
+                await session.execute(
+                    select(
+                        LiteLLMCallRecord.actor_id.label("actor_id"),
+                        func.coalesce(func.sum(LiteLLMCallRecord.cost_usd), 0.0).label("cost_usd"),
+                        func.count(LiteLLMCallRecord.id).label("calls"),
                     )
-                ).all()
+                    .where(
+                        LiteLLMCallRecord.tenant_id == tenant_id,
+                        LiteLLMCallRecord.actor_id.is_not(None),
+                        LiteLLMCallRecord.occurred_at >= since,
+                        LiteLLMCallRecord.occurred_at < until,
+                    )
+                    .group_by(LiteLLMCallRecord.actor_id)
+                    .order_by(func.sum(LiteLLMCallRecord.cost_usd).desc())
+                    .limit(10)
+                )
+            ).all()
 
         return TenantUsageSnapshot(
             total_cost_usd=float(totals_row.total_cost_usd or 0.0),
@@ -352,21 +334,18 @@ class UsageQuery:
         """Per-workflow spend snapshot for ``/analytics/usage/workflow/[id]``."""
         tid = str(workflow_id)
         factory = self._session_factory
-        async with factory() as session:
-            async with tenant_context(session, tenant_id=tid):
-                row = (
-                    await session.execute(
-                        select(
-                            func.coalesce(
-                                func.sum(LiteLLMCallRecord.cost_usd), 0.0
-                            ).label("cost_usd"),
-                            func.count(LiteLLMCallRecord.id).label("calls"),
-                        ).where(
-                            LiteLLMCallRecord.tenant_id == tenant_id,
-                            LiteLLMCallRecord.workflow_id == workflow_id,
-                        )
+        async with factory() as session, tenant_context(session, tenant_id=tid):
+            row = (
+                await session.execute(
+                    select(
+                        func.coalesce(func.sum(LiteLLMCallRecord.cost_usd), 0.0).label("cost_usd"),
+                        func.count(LiteLLMCallRecord.id).label("calls"),
+                    ).where(
+                        LiteLLMCallRecord.tenant_id == tenant_id,
+                        LiteLLMCallRecord.workflow_id == workflow_id,
                     )
-                ).one()
+                )
+            ).one()
         return WorkflowUsageBucket(
             workflow_id=str(workflow_id),
             cost_usd=float(row.cost_usd or 0.0),

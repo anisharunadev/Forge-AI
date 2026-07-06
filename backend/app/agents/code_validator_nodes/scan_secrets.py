@@ -9,18 +9,18 @@ The node is a thin LangGraph adapter over the underlying scanner. It:
 
 The scanner is fully injectable so tests can pass a stub.
 """
+
 from __future__ import annotations
 
 import logging
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Protocol
 
 from app.agents.code_validator_state import (
     CodeValidatorState,
     ScannerEnvelope,
-    Severity,
     ValidationFinding,
 )
 
@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Scanner protocol — lets tests inject a deterministic stand-in.
 # ---------------------------------------------------------------------------
+
 
 class SecretScanner(Protocol):
     """Minimal contract for the secrets scanner."""
@@ -64,6 +65,7 @@ class TruffleHogScanner:
 # LangGraph node
 # ---------------------------------------------------------------------------
 
+
 async def scan_secrets(
     state: CodeValidatorState,
     *,
@@ -72,7 +74,7 @@ async def scan_secrets(
     """LangGraph node — scan for secrets with trufflehog."""
     started = time.perf_counter()
     scanner = scanner or TruffleHogScanner()
-    started_at = datetime.now(timezone.utc)
+    started_at = datetime.now(UTC)
 
     try:
         findings = await scanner.scan(state.target.files)
@@ -83,7 +85,7 @@ async def scan_secrets(
             scanner="secrets",
             findings=[],
             started_at=started_at,
-            finished_at=datetime.now(timezone.utc),
+            finished_at=datetime.now(UTC),
             duration_ms=int((time.perf_counter() - started) * 1000),
             error=str(exc),
         )
@@ -105,7 +107,7 @@ async def scan_secrets(
         scanner="secrets",
         findings=tagged,
         started_at=started_at,
-        finished_at=datetime.now(timezone.utc),
+        finished_at=datetime.now(UTC),
         duration_ms=int((time.perf_counter() - started) * 1000),
     )
     return {

@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID
 
 from sqlalchemy import Float, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class MarketplaceConnector(Base, UUIDPrimaryKeyMixin, TimestampMixin):
@@ -32,11 +31,9 @@ class MarketplaceConnector(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     downloads: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     rating: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
 
-    __table_args__ = (
-        Index("ix_marketplace_type", "type"),
-    )
-
+    __table_args__ = (Index("ix_marketplace_type", "type"),)
 
     _audit_skip = ("catalog", "Vendor catalog (marketplace). Read-only.")
+
 
 __all__ = ["MarketplaceConnector"]

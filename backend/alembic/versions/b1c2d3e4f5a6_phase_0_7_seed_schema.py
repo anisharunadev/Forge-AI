@@ -15,16 +15,17 @@ head`` applies it once; subsequent runs are no-ops.
 
 from __future__ import annotations
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
+
 revision: str = "b1c2d3e4f5a6"
-down_revision: Union[str, None] = "a795c2f979da"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "a795c2f979da"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 # Tenant-scoped tables that already exist in the baseline migration.
@@ -175,9 +176,7 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
     )
-    op.create_index(
-        "ix_seed_runs_seed_name_started", "seed_runs", ["seed_name", "started_at"]
-    )
+    op.create_index("ix_seed_runs_seed_name_started", "seed_runs", ["seed_name", "started_at"])
     op.create_index("ix_seed_runs_status", "seed_runs", ["status"])
     op.create_index("ix_seed_runs_actor", "seed_runs", ["actor_id"])
     op.create_index("ix_seed_runs_env_status", "seed_runs", ["env", "status"])
@@ -191,9 +190,7 @@ def upgrade() -> None:
         sa.Column("manifest_version", sa.Integer(), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("applied_at", sa.DateTime(timezone=True), nullable=False),
-        sa.Column(
-            "applied_by", postgresql.UUID(as_uuid=True), nullable=False
-        ),
+        sa.Column("applied_by", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("checksum", sa.String(64), nullable=False),
         sa.Column(
             "row_counts",
@@ -266,9 +263,7 @@ def upgrade() -> None:
         "uq_graph_nodes_tenant_key", "graph_nodes", ["tenant_id", "node_key"], unique=True
     )
     op.create_index("ix_graph_nodes_tenant_kind", "graph_nodes", ["tenant_id", "kind"])
-    op.create_index(
-        "ix_graph_nodes_source", "graph_nodes", ["source_table", "source_id"]
-    )
+    op.create_index("ix_graph_nodes_source", "graph_nodes", ["source_table", "source_id"])
 
     # 5. graph_edges.
     op.create_table(
@@ -334,17 +329,13 @@ def upgrade() -> None:
         sa.Column("description", sa.Text(), nullable=False, server_default=""),
         sa.Column(
             "severity",
-            sa.Enum(
-                "low", "medium", "high", "critical", name="conflict_severity"
-            ),
+            sa.Enum("low", "medium", "high", "critical", name="conflict_severity"),
             nullable=False,
             server_default="medium",
         ),
         sa.Column(
             "status",
-            sa.Enum(
-                "open", "resolved", "deferred", "wont_fix", name="conflict_status"
-            ),
+            sa.Enum("open", "resolved", "deferred", "wont_fix", name="conflict_status"),
             nullable=False,
             server_default="open",
         ),
@@ -384,12 +375,8 @@ def upgrade() -> None:
         ["tenant_id", "conflict_key"],
         unique=True,
     )
-    op.create_index(
-        "ix_conflicts_tenant_status", "conflicts", ["tenant_id", "status"]
-    )
-    op.create_index(
-        "ix_conflicts_tenant_severity", "conflicts", ["tenant_id", "severity"]
-    )
+    op.create_index("ix_conflicts_tenant_status", "conflicts", ["tenant_id", "status"])
+    op.create_index("ix_conflicts_tenant_severity", "conflicts", ["tenant_id", "severity"])
 
     # 7. pulse_events.
     op.create_table(
@@ -531,15 +518,9 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
     )
-    op.create_index(
-        "uq_services_tenant_key", "services", ["tenant_id", "service_key"], unique=True
-    )
-    op.create_index(
-        "ix_services_tenant_owner", "services", ["tenant_id", "owner_team"]
-    )
-    op.create_index(
-        "ix_services_tenant_lifecycle", "services", ["tenant_id", "lifecycle"]
-    )
+    op.create_index("uq_services_tenant_key", "services", ["tenant_id", "service_key"], unique=True)
+    op.create_index("ix_services_tenant_owner", "services", ["tenant_id", "owner_team"])
+    op.create_index("ix_services_tenant_lifecycle", "services", ["tenant_id", "lifecycle"])
 
     # 10. api_catalog.
     op.create_table(
@@ -557,9 +538,7 @@ def upgrade() -> None:
         sa.Column("name", sa.String(200), nullable=False),
         sa.Column(
             "surface",
-            sa.Enum(
-                "rest", "graphql", "grpc", "event", "internal", name="api_surface"
-            ),
+            sa.Enum("rest", "graphql", "grpc", "event", "internal", name="api_surface"),
             nullable=False,
         ),
         sa.Column("path", sa.String(500), nullable=False, server_default=""),
@@ -589,9 +568,7 @@ def upgrade() -> None:
         ["tenant_id", "api_key"],
         unique=True,
     )
-    op.create_index(
-        "ix_api_catalog_tenant_service", "api_catalog", ["tenant_id", "service_id"]
-    )
+    op.create_index("ix_api_catalog_tenant_service", "api_catalog", ["tenant_id", "service_id"])
 
     # 11. database_map.
     op.create_table(
@@ -641,9 +618,7 @@ def upgrade() -> None:
         ["tenant_id", "db_key"],
         unique=True,
     )
-    op.create_index(
-        "ix_database_map_tenant_engine", "database_map", ["tenant_id", "engine"]
-    )
+    op.create_index("ix_database_map_tenant_engine", "database_map", ["tenant_id", "engine"])
 
     # 12. command_runs.
     op.create_table(
@@ -762,9 +737,7 @@ def upgrade() -> None:
         ["tenant_id", "bundle_key"],
         unique=True,
     )
-    op.create_index(
-        "ix_tool_bundles_tenant_tier", "tool_bundles", ["tenant_id", "tier"]
-    )
+    op.create_index("ix_tool_bundles_tenant_tier", "tool_bundles", ["tenant_id", "tier"])
 
     # 14. RLS predicate update: extend tenant-scoped policies to allow
     #     demo rows through when app.include_demo='on'. We do this by
@@ -845,20 +818,12 @@ def downgrade() -> None:
     op.drop_index("uq_services_tenant_key", table_name="services")
     op.drop_table("services")
 
-    op.drop_index(
-        "ix_metric_snapshots_tenant_metric", table_name="metric_snapshots"
-    )
-    op.drop_index(
-        "uq_metric_snapshots_tenant_metric_time", table_name="metric_snapshots"
-    )
+    op.drop_index("ix_metric_snapshots_tenant_metric", table_name="metric_snapshots")
+    op.drop_index("uq_metric_snapshots_tenant_metric_time", table_name="metric_snapshots")
     op.drop_table("metric_snapshots")
 
-    op.drop_index(
-        "ix_pulse_events_tenant_target", table_name="pulse_events"
-    )
-    op.drop_index(
-        "ix_pulse_events_tenant_kind_occurred", table_name="pulse_events"
-    )
+    op.drop_index("ix_pulse_events_tenant_target", table_name="pulse_events")
+    op.drop_index("ix_pulse_events_tenant_kind_occurred", table_name="pulse_events")
     op.drop_index("uq_pulse_events_tenant_key", table_name="pulse_events")
     op.drop_table("pulse_events")
 
@@ -878,9 +843,7 @@ def downgrade() -> None:
     op.drop_index("uq_graph_nodes_tenant_key", table_name="graph_nodes")
     op.drop_table("graph_nodes")
 
-    op.drop_index(
-        "ix_seed_migrations_seed_name_applied", table_name="seed_migrations"
-    )
+    op.drop_index("ix_seed_migrations_seed_name_applied", table_name="seed_migrations")
     op.drop_table("seed_migrations")
 
     op.drop_index("ix_seed_runs_env_status", table_name="seed_runs")

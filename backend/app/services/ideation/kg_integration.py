@@ -11,11 +11,9 @@ from __future__ import annotations
 import hashlib
 import math
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
-
-from sqlalchemy import select
 
 from app.core.logging import get_logger
 from app.db.models.ideation import Idea
@@ -86,14 +84,10 @@ def _deterministic_vector(text: str, dim: int = 64) -> list[float]:
     return [x / norm for x in out]
 
 
-async def _embed(
-    text: str, *, tenant_id: UUID | str, project_id: UUID | str
-) -> list[float]:
+async def _embed(text: str, *, tenant_id: UUID | str, project_id: UUID | str) -> list[float]:
     try:
         async with LiteLLMClient() as client:
-            vectors = await client.embed(
-                [text], tenant_id=tenant_id, project_id=project_id
-            )
+            vectors = await client.embed([text], tenant_id=tenant_id, project_id=project_id)
             if vectors:
                 return vectors[0]
     except Exception as exc:  # noqa: BLE001
@@ -114,7 +108,7 @@ def _cosine(a: list[float], b: list[float]) -> float:
         dot += x * y
     if da == 0 or db == 0:
         return 0.0
-    return dot / ((da ** 0.5) * (db ** 0.5))
+    return dot / ((da**0.5) * (db**0.5))
 
 
 # ---------------------------------------------------------------------------
@@ -235,7 +229,7 @@ class IdeationKGService:
             project_id=UUID(str(project_id)),
             nodes=graph_nodes,
             edges=graph_edges,
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
         )
 
     async def link_idea_to_component(
@@ -247,9 +241,7 @@ class IdeationKGService:
         project_id: UUID | str,
         relationship: str = "relates_to",
     ) -> None:
-        idea_node = await self.add_idea_to_kg(
-            idea_id, tenant_id=tenant_id, project_id=project_id
-        )
+        idea_node = await self.add_idea_to_kg(idea_id, tenant_id=tenant_id, project_id=project_id)
         await self._kg.add_edge(
             from_node_id=idea_node.id,
             to_node_id=component_node_id,
@@ -261,9 +253,7 @@ class IdeationKGService:
 
     # -- internals --------------------------------------------------------
 
-    async def _load_idea(
-        self, idea_id: UUID | str, *, tenant_id: UUID | str
-    ) -> Idea:
+    async def _load_idea(self, idea_id: UUID | str, *, tenant_id: UUID | str) -> Idea:
         factory = get_session_factory()
         async with factory() as session:
             idea = await session.get(Idea, str(idea_id))

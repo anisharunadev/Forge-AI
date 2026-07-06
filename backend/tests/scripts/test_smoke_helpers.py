@@ -5,6 +5,7 @@ refactor of the helper doesn't silently change which user the tests
 authenticate as. We mock ``jose.jwt.encode`` so the assertions check
 the claim dict rather than the signature.
 """
+
 from __future__ import annotations
 
 import os

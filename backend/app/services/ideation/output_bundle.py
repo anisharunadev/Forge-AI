@@ -16,24 +16,18 @@ import tarfile
 import tempfile
 import zipfile
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import select
-
-from app.core.config import settings
 from app.core.logging import get_logger
 from app.db.models.ideation import (
-    ArchitecturePreview,
     Idea,
-    IdeaAnalysis,
-    OpportunityScore,
     OutputBundle,
-    PRD,
 )
 from app.db.session import get_session_factory
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 from app.services.ideation import (
     agent_selector,
     arch_preview_service,
@@ -99,8 +93,12 @@ class OutputBundleService:
                     "id": str(idea.id),
                     "title": idea.title,
                     "description": idea.description,
-                    "source": idea.source.value if hasattr(idea.source, "value") else str(idea.source),
-                    "status": idea.status.value if hasattr(idea.status, "value") else str(idea.status),
+                    "source": idea.source.value
+                    if hasattr(idea.source, "value")
+                    else str(idea.source),
+                    "status": idea.status.value
+                    if hasattr(idea.status, "value")
+                    else str(idea.status),
                     "tags": list(idea.tags or []),
                     "submitted_by": str(idea.submitted_by),
                     "created_at": idea.created_at.isoformat() if idea.created_at else None,
@@ -169,7 +167,9 @@ class OutputBundleService:
                         "reach_score": score.reach_score,
                         "total_score": score.total_score,
                         "scoring_rationale": score.scoring_rationale,
-                        "scored_by": score.scored_by.value if hasattr(score.scored_by, "value") else str(score.scored_by),
+                        "scored_by": score.scored_by.value
+                        if hasattr(score.scored_by, "value")
+                        else str(score.scored_by),
                     },
                 )
             )
@@ -187,7 +187,9 @@ class OutputBundleService:
                     {
                         "id": str(prd.id),
                         "version": prd.version,
-                        "status": prd.status.value if hasattr(prd.status, "value") else str(prd.status),
+                        "status": prd.status.value
+                        if hasattr(prd.status, "value")
+                        else str(prd.status),
                         "content": dict(prd.content or {}),
                     },
                 )
@@ -232,7 +234,7 @@ class OutputBundleService:
 
         bundle_dict = {
             "schema_version": 1,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "idea_id": str(idea.id),
             "tenant_id": str(idea.tenant_id),
             "project_id": str(idea.project_id),
@@ -241,7 +243,9 @@ class OutputBundleService:
         bundle_json = json.dumps(bundle_dict, default=str)
 
         # Persist to local object store (S3 in prod).
-        object_key = f"tenants/{idea.tenant_id}/projects/{idea.project_id}/ideas/{idea.id}/{uuid4()}.json"
+        object_key = (
+            f"tenants/{idea.tenant_id}/projects/{idea.project_id}/ideas/{idea.id}/{uuid4()}.json"
+        )
         local_path = os.path.join(self._local_root, os.path.basename(object_key))
         try:
             with open(local_path, "w", encoding="utf-8") as fh:
@@ -320,7 +324,7 @@ class OutputBundleService:
                 data = bundle_json.encode("utf-8")
                 info = tarfile.TarInfo(name="bundle.json")
                 info.size = len(data)
-                info.mtime = int(datetime.now(timezone.utc).timestamp())
+                info.mtime = int(datetime.now(UTC).timestamp())
                 tf.addfile(info, io.BytesIO(data))
             return buf.getvalue()
         if fmt == "pdf":
@@ -338,9 +342,7 @@ class OutputBundleService:
 
     # -- helpers ----------------------------------------------------------
 
-    async def _load_idea(
-        self, idea_id: UUID | str, *, tenant_id: UUID | str
-    ) -> Idea:
+    async def _load_idea(self, idea_id: UUID | str, *, tenant_id: UUID | str) -> Idea:
         factory = get_session_factory()
         async with factory() as session:
             idea = await session.get(Idea, str(idea_id))

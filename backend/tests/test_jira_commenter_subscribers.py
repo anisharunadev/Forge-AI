@@ -17,14 +17,10 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from typing import Any
 from unittest.mock import AsyncMock, patch
-
-import pytest
 
 from app.services.event_bus import EventBus, EventType
 from app.services.ideation.jira_status_subscribers import register as register_subs
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -84,9 +80,9 @@ async def test_approval_granted_subscriber_posts_approval_granted():
         await _drain()
 
     matched = [
-        c for c in mock_post.await_args_list
-        if c.kwargs.get("stage") == "approval"
-        and c.kwargs.get("outcome") == "granted"
+        c
+        for c in mock_post.await_args_list
+        if c.kwargs.get("stage") == "approval" and c.kwargs.get("outcome") == "granted"
     ]
     assert matched, "expected approval/granted post"
     call = matched[0]
@@ -119,7 +115,8 @@ async def test_approval_denied_subscriber_posts_approval_denied():
         await _drain()
 
     matched = [
-        c for c in mock_post.await_args_list
+        c
+        for c in mock_post.await_args_list
         if c.kwargs.get("stage") == "approval" and c.kwargs.get("outcome") == "denied"
     ]
     assert matched, "expected approval/denied post"
@@ -155,7 +152,8 @@ async def test_agent_run_completed_done_posts_sdlc_done():
         await _drain()
 
     matched = [
-        c for c in mock_post.await_args_list
+        c
+        for c in mock_post.await_args_list
         if c.kwargs.get("stage") == "sdlc" and c.kwargs.get("outcome") == "done"
     ]
     assert matched, "expected sdlc/done post"
@@ -186,9 +184,7 @@ async def test_agent_run_completed_failed_does_not_post():
         )
         await _drain()
 
-    sdlc_calls = [
-        c for c in mock_post.await_args_list if c.kwargs.get("stage") == "sdlc"
-    ]
+    sdlc_calls = [c for c in mock_post.await_args_list if c.kwargs.get("stage") == "sdlc"]
     assert sdlc_calls == []
 
 
@@ -220,7 +216,8 @@ async def test_artifact_updated_validator_pass_posts_validator_pass():
         await _drain()
 
     matched = [
-        c for c in mock_post.await_args_list
+        c
+        for c in mock_post.await_args_list
         if c.kwargs.get("stage") == "validator" and c.kwargs.get("outcome") == "pass"
     ]
     assert matched, "expected validator/pass post"
@@ -249,7 +246,8 @@ async def test_artifact_updated_validator_fail_posts_validator_fail():
         await _drain()
 
     matched = [
-        c for c in mock_post.await_args_list
+        c
+        for c in mock_post.await_args_list
         if c.kwargs.get("stage") == "validator" and c.kwargs.get("outcome") == "fail"
     ]
     assert matched, "expected validator/fail post"
@@ -278,7 +276,5 @@ async def test_artifact_updated_unrelated_outcome_is_ignored():
         await _drain()
 
     # The unrelated ARTIFACT_UPDATED should not produce a validator post.
-    validator_calls = [
-        c for c in mock_post.await_args_list if c.kwargs.get("stage") == "validator"
-    ]
+    validator_calls = [c for c in mock_post.await_args_list if c.kwargs.get("stage") == "validator"]
     assert validator_calls == []

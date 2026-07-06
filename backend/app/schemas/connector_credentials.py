@@ -1,4 +1,5 @@
 """Schemas for F-007 Connector Credential vault (Step 55)."""
+
 from __future__ import annotations
 
 from datetime import datetime

@@ -34,7 +34,7 @@ from __future__ import annotations
 import asyncio
 import time
 from collections import defaultdict, deque
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -55,7 +55,6 @@ from app.schemas.workflow import (
     ScriptNodeData,
     TriggerNodeData,
     WorkflowDefinition,
-    WorkflowNodeData,
 )
 from app.services.event_bus import EventType, bus
 from app.services.forge_commands import route_to_gsd
@@ -76,9 +75,7 @@ class WorkflowApprovalResumeRequired(WorkflowExecutorError):
     """The run is paused awaiting an approval decision."""
 
     def __init__(self, run_id: UUID, approval_id: UUID, step_id: str) -> None:
-        super().__init__(
-            f"run {run_id} paused awaiting approval {approval_id} on step {step_id}"
-        )
+        super().__init__(f"run {run_id} paused awaiting approval {approval_id} on step {step_id}")
         self.run_id = run_id
         self.approval_id = approval_id
         self.step_id = step_id
@@ -88,7 +85,7 @@ class WorkflowApprovalResumeRequired(WorkflowExecutorError):
 _executor = None
 
 
-def get_executor() -> "WorkflowExecutor":
+def get_executor() -> WorkflowExecutor:
     global _executor
     if _executor is None:
         _executor = WorkflowExecutor()
@@ -131,7 +128,7 @@ class WorkflowExecutor:
         await db.refresh(run, with_for_update=True)
 
         run.status = WorkflowRunStatus.RUNNING
-        run.started_at = run.started_at or datetime.now(timezone.utc)
+        run.started_at = run.started_at or datetime.now(UTC)
         run.error = None
         await db.commit()
 
@@ -150,19 +147,25 @@ class WorkflowExecutor:
                 continue
             # Skip steps downstream of a failed command.
             if self._has_downstream_failure(definition, step_id, step_results):
-                step_results[step_id] = self._skipped_result(
-                    reason="upstream_failed"
-                )
+                step_results[step_id] = self._skipped_result(reason="upstream_failed")
                 await self._publish_step(
-                    db, run, node, step_results[step_id],
-                    tenant_id=tenant_id, project_id=project_id,
+                    db,
+                    run,
+                    node,
+                    step_results[step_id],
+                    tenant_id=tenant_id,
+                    project_id=project_id,
                     actor_id=run.triggered_by,
                 )
                 continue
 
             step_results[step_id] = await self._run_step(
-                db, run, node, definition,
-                tenant_id=tenant_id, project_id=project_id,
+                db,
+                run,
+                node,
+                definition,
+                tenant_id=tenant_id,
+                project_id=project_id,
             )
             # Persist the latest state JSON each step. We use
             # ``expire_on_commit=False`` on the session so that the
@@ -200,7 +203,7 @@ class WorkflowExecutor:
             if status == WorkflowStepStatus.FAILED.value:
                 run.status = WorkflowRunStatus.FAILED
                 run.error = step_results[step_id].get("error") or "step_failed"
-                run.finished_at = datetime.now(timezone.utc)
+                run.finished_at = datetime.now(UTC)
                 await db.commit()
                 await bus.publish(
                     EventType.WORKFLOW_RUN_FAILED,
@@ -217,7 +220,7 @@ class WorkflowExecutor:
                 return run
 
         run.status = WorkflowRunStatus.SUCCEEDED
-        run.finished_at = datetime.now(timezone.utc)
+        run.finished_at = datetime.now(UTC)
         run.current_step_id = None
         await db.commit()
         await bus.publish(
@@ -244,26 +247,18 @@ class WorkflowExecutor:
             return run
         step_results: dict[str, dict[str, Any]] = dict(run.state.get("stepResults", {}))
         approval_step_id = next(
-            (
-                sid
-                for sid, r in step_results.items()
-                if r.get("approval_id") == str(approval_id)
-            ),
+            (sid for sid, r in step_results.items() if r.get("approval_id") == str(approval_id)),
             None,
         )
         if approval_step_id is None:
-            raise WorkflowDefinitionMismatch(
-                f"approval {approval_id} not found on run {run_id}"
-            )
+            raise WorkflowDefinitionMismatch(f"approval {approval_id} not found on run {run_id}")
 
         step_results[approval_step_id]["status"] = (
             WorkflowStepStatus.SUCCEEDED.value
             if decision == "granted"
             else WorkflowStepStatus.FAILED.value
         )
-        step_results[approval_step_id]["finished_at"] = datetime.now(
-            timezone.utc
-        ).isoformat()
+        step_results[approval_step_id]["finished_at"] = datetime.now(UTC).isoformat()
         if decision == "denied":
             step_results[approval_step_id]["error"] = "approval_denied"
         run.state = {**run.state, "stepResults": step_results}
@@ -281,9 +276,7 @@ class WorkflowExecutor:
             project_id=run.project_id,
             actor_id=run.triggered_by,
         )
-        return await self.execute(
-            db, tenant_id=tenant_id, project_id=run.project_id, run_id=run_id
-        )
+        return await self.execute(db, tenant_id=tenant_id, project_id=run.project_id, run_id=run_id)
 
     async def cancel(
         self,
@@ -301,7 +294,7 @@ class WorkflowExecutor:
         ):
             return run
         run.status = WorkflowRunStatus.CANCELLED
-        run.finished_at = datetime.now(timezone.utc)
+        run.finished_at = datetime.now(UTC)
         await db.commit()
         await bus.publish(
             EventType.WORKFLOW_RUN_CANCELLED,
@@ -324,7 +317,7 @@ class WorkflowExecutor:
         tenant_id: UUID,
         project_id: UUID,
     ) -> dict[str, Any]:
-        started_at = datetime.now(timezone.utc)
+        started_at = datetime.now(UTC)
         step_id = node.id
         started_perf = time.monotonic()
 
@@ -351,25 +344,30 @@ class WorkflowExecutor:
                 envelope["status"] = WorkflowStepStatus.SUCCEEDED.value
             elif isinstance(data, CommandNodeData):
                 envelope = await self._dispatch_command(
-                    envelope, data, tenant_id=tenant_id, project_id=project_id,
+                    envelope,
+                    data,
+                    tenant_id=tenant_id,
+                    project_id=project_id,
                 )
             elif isinstance(data, ApprovalNodeData):
                 envelope = await self._dispatch_approval(
-                    db, envelope, data, run,
-                    tenant_id=tenant_id, project_id=project_id,
+                    db,
+                    envelope,
+                    data,
+                    run,
+                    tenant_id=tenant_id,
+                    project_id=project_id,
                 )
             elif isinstance(data, ScriptNodeData):
                 envelope = await self._dispatch_script(envelope, data)
             else:
                 # Discriminated union exhaustiveness — fail loud.
-                raise WorkflowExecutorError(
-                    f"unhandled node type: {type(data).__name__}"
-                )
+                raise WorkflowExecutorError(f"unhandled node type: {type(data).__name__}")
         except BaseException as exc:
             envelope["status"] = WorkflowStepStatus.FAILED.value
             envelope["error"] = str(exc)
 
-        envelope["finished_at"] = datetime.now(timezone.utc).isoformat()
+        envelope["finished_at"] = datetime.now(UTC).isoformat()
         envelope["duration_ms"] = int((time.monotonic() - started_perf) * 1000)
         if "step_id" not in envelope:
             envelope["step_id"] = step_id
@@ -439,6 +437,7 @@ class WorkflowExecutor:
         # endpoint reads `payload.kind == "workflow"` and calls
         # ``WorkflowExecutor.resume`` — see api/v1/approvals.py.
         from app.db.models.approval import ApprovalRequest, ApprovalStatus
+
         approval_id = uuid4()
         payload = {
             "kind": "workflow",
@@ -494,16 +493,13 @@ class WorkflowExecutor:
         envelope["output"] = result.to_dict()
         if result.exit_code != 0:
             envelope["error"] = (
-                f"script exited with code {result.exit_code}: "
-                f"{(result.stderr or '').strip()[:500]}"
+                f"script exited with code {result.exit_code}: {(result.stderr or '').strip()[:500]}"
             )
         return envelope
 
     # ---- Helpers ---------------------------------------------------------
 
-    async def _load_run(
-        self, db: AsyncSession, *, tenant_id: UUID, run_id: UUID
-    ) -> WorkflowRun:
+    async def _load_run(self, db: AsyncSession, *, tenant_id: UUID, run_id: UUID) -> WorkflowRun:
         run = (
             await db.execute(
                 select(WorkflowRun).where(
@@ -545,9 +541,7 @@ class WorkflowExecutor:
         for e in definition.edges:
             adj[e.source].append(e.target)
             in_degree[e.target] += 1
-        queue: deque[str] = deque(
-            nid for nid, deg in in_degree.items() if deg == 0
-        )
+        queue: deque[str] = deque(nid for nid, deg in in_degree.items() if deg == 0)
         order: list[str] = []
         while queue:
             nid = queue.popleft()
@@ -586,7 +580,7 @@ class WorkflowExecutor:
 
     @staticmethod
     def _skipped_result(*, reason: str) -> dict[str, Any]:
-        ts = datetime.now(timezone.utc).isoformat()
+        ts = datetime.now(UTC).isoformat()
         return {
             "step_id": None,
             "status": WorkflowStepStatus.SKIPPED.value,

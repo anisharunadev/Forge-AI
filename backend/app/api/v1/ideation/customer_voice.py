@@ -89,9 +89,10 @@ def _cluster_signals(
 
     for i in range(len(signals)):
         for j in range(i + 1, len(signals)):
-            if _keyword_overlap(
-                signals[i].title or "", signals[j].title or ""
-            ) >= _KEYWORD_OVERLAP_MIN:
+            if (
+                _keyword_overlap(signals[i].title or "", signals[j].title or "")
+                >= _KEYWORD_OVERLAP_MIN
+            ):
                 union(i, j)
 
     groups: dict[int, list[IdeaSourceSignal]] = defaultdict(list)
@@ -112,8 +113,20 @@ def _cluster_signals(
             for word in (s.title or "").lower().split():
                 w = word.strip(".,;:!?\"'()[]{}<>*&^%$#@`~")
                 if len(w) > 3 and w not in {
-                    "the", "and", "for", "with", "this", "that", "from",
-                    "into", "have", "are", "was", "were", "but", "not",
+                    "the",
+                    "and",
+                    "for",
+                    "with",
+                    "this",
+                    "that",
+                    "from",
+                    "into",
+                    "have",
+                    "are",
+                    "was",
+                    "were",
+                    "but",
+                    "not",
                 }:
                     word_counts[w] += 1
         if word_counts:

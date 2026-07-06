@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import uuid
 
-import pytest
 from sqlalchemy import select
 
 from app.db.models.audit import AuditEvent
@@ -133,9 +132,7 @@ async def test_customer_overlay_applied(sqlite_db):
     )
 
     # Override is in place, source tagged 'overlay'.
-    overridden = next(
-        s for s in result.standards if s.name == "KFG-STD-002: Test Coverage"
-    )
+    overridden = next(s for s in result.standards if s.name == "KFG-STD-002: Test Coverage")
     assert overridden.source == "overlay"
     assert "90%" in overridden.content
     assert overridden.version == 2
@@ -282,15 +279,16 @@ async def test_project_not_active_until_bootstrap_completes(sqlite_db):
     user_id = str(uuid.uuid4())
 
     # Before bootstrap: status = not_started, ready = False.
-    pre_status = await day_one_bootstrap.status_read(
-        project_id=project_id, tenant_id=tenant_id
-    )
+    pre_status = await day_one_bootstrap.status_read(project_id=project_id, tenant_id=tenant_id)
     assert pre_status.status == BootstrapStatus.NOT_STARTED
     assert pre_status.run_id is None
     assert pre_status.completed_at is None
-    assert await day_one_bootstrap.is_project_bootstrap_ready(
-        project_id=project_id, tenant_id=tenant_id
-    ) is False
+    assert (
+        await day_one_bootstrap.is_project_bootstrap_ready(
+            project_id=project_id, tenant_id=tenant_id
+        )
+        is False
+    )
 
     # Wizard needs the project to be bootstrapped before completion can
     # take effect: walk the wizard to the review step (the final one)
@@ -316,13 +314,14 @@ async def test_project_not_active_until_bootstrap_completes(sqlite_db):
     assert state.status.value == "completed"
 
     # After bootstrap: status = completed, ready = True.
-    post_status = await day_one_bootstrap.status_read(
-        project_id=project_id, tenant_id=tenant_id
-    )
+    post_status = await day_one_bootstrap.status_read(project_id=project_id, tenant_id=tenant_id)
     assert post_status.status == BootstrapStatus.COMPLETED
     assert post_status.run_id is not None
     assert post_status.completed_at is not None
     assert post_status.counts.get("standards", 0) >= 4
-    assert await day_one_bootstrap.is_project_bootstrap_ready(
-        project_id=project_id, tenant_id=tenant_id
-    ) is True
+    assert (
+        await day_one_bootstrap.is_project_bootstrap_ready(
+            project_id=project_id, tenant_id=tenant_id
+        )
+        is True
+    )

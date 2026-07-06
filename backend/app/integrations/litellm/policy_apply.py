@@ -29,7 +29,6 @@ that may choose fail-open vs fail-closed.
 
 from __future__ import annotations
 
-import time
 from typing import Any
 
 from app.core.logging import get_logger
@@ -54,10 +53,9 @@ async def resolve_policies(
     tool_policy, conflict_warnings}`` shape. We pass it through and let
     the service layer reshape. ``None`` on transport failure.
     """
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
-        response = await client.admin_client.post(
-            "/policies/resolve", json=context
-        )
+        response = await client.admin_client.post("/policies/resolve", json=context)
         if response.status_code == 404:
             # Proxy version doesn't expose resolve yet — service falls
             # back to its in-process resolver.
@@ -88,10 +86,9 @@ async def compare_policies(
     diff envelope; we pass it through.
     """
     body = {"left": left, "right": right}
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
-        response = await client.admin_client.post(
-            "/policies/compare", json=body
-        )
+        response = await client.admin_client.post("/policies/compare", json=body)
         if response.status_code >= 400:
             return None
         return response.json() or {}
@@ -112,6 +109,7 @@ async def list_policies(
     base_client: LiteLLMBaseClient | None = None,
 ) -> list[dict[str, Any]]:
     """``GET /policies/list``. Returns a bare list of policy dicts."""
+
     async def _call(client: LiteLLMBaseClient) -> list[dict[str, Any]]:
         response = await client.admin_client.get("/policies/list")
         if response.status_code >= 400:
@@ -137,10 +135,9 @@ async def get_policy_info(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any] | None:
     """``GET /policies/info?policy_id=...``."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
-        response = await client.admin_client.get(
-            "/policies/info", params={"policy_id": policy_id}
-        )
+        response = await client.admin_client.get("/policies/info", params={"policy_id": policy_id})
         if response.status_code == 404:
             return None
         if response.status_code >= 400:
@@ -158,6 +155,7 @@ async def get_policy_status(
     base_client: LiteLLMBaseClient | None = None,
 ) -> list[dict[str, Any]]:
     """``GET /policies/status`` — one row per policy with its lifecycle status."""
+
     async def _call(client: LiteLLMBaseClient) -> list[dict[str, Any]]:
         response = await client.admin_client.get("/policies/status")
         if response.status_code >= 400:
@@ -180,6 +178,7 @@ async def get_policy_usage(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any] | None:
     """``GET /policies/usage`` — usage rollup per policy."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
         response = await client.admin_client.get("/policies/usage")
         if response.status_code >= 400:
@@ -202,6 +201,7 @@ async def list_attachments(
     base_client: LiteLLMBaseClient | None = None,
 ) -> list[dict[str, Any]]:
     """``GET /policies/attachments/list``."""
+
     async def _call(client: LiteLLMBaseClient) -> list[dict[str, Any]]:
         response = await client.admin_client.get("/policies/attachments/list")
         if response.status_code >= 400:
@@ -236,10 +236,9 @@ async def test_pipeline(
     expects: ``{blocked_by, modified_text, decisions[]}``.
     """
     body = {"policy_ids": policy_ids, "text": sample_text}
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
-        response = await client.admin_client.post(
-            "/policies/test-pipeline", json=body
-        )
+        response = await client.admin_client.post("/policies/test-pipeline", json=body)
         if response.status_code >= 400:
             return None
         return response.json() or {}
@@ -261,10 +260,9 @@ async def test_policies_and_guardrails(
     Called on every policy save (spec §"Policy utils").
     """
     body = {"policies": policies, "guardrails": guardrails}
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
-        response = await client.admin_client.post(
-            "/utils/test_policies_and_guardrails", json=body
-        )
+        response = await client.admin_client.post("/utils/test_policies_and_guardrails", json=body)
         if response.status_code >= 400:
             return {"valid": False, "errors": [response.text[:200]]}
         return response.json() or {}
@@ -285,6 +283,7 @@ async def list_templates(
     base_client: LiteLLMBaseClient | None = None,
 ) -> list[dict[str, Any]]:
     """``GET /policy/templates/list``."""
+
     async def _call(client: LiteLLMBaseClient) -> list[dict[str, Any]]:
         response = await client.admin_client.get("/policy/templates/list")
         if response.status_code >= 400:
@@ -312,6 +311,7 @@ async def get_tool_policy(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any] | None:
     """``GET /v1/tool/policy`` — current per-tool policy schema."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
         response = await client.admin_client.get("/v1/tool/policy")
         if response.status_code >= 400:
@@ -329,6 +329,7 @@ async def get_tool_policy_options(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any] | None:
     """``GET /v1/tool/policy/options`` — authoring schema for the UI."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
         response = await client.admin_client.get("/v1/tool/policy/options")
         if response.status_code >= 400:

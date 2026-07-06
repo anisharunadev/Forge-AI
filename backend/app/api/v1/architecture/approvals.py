@@ -33,17 +33,15 @@ router = APIRouter(
 
 def _workflow() -> ArchitectureApprovalWorkflow:
     return ArchitectureApprovalWorkflow(litellm_client=LiteLLMClient(), event_bus=bus)
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
-@router.post(
-    "", response_model=ArchitectureApprovalResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("", response_model=ArchitectureApprovalResponse, status_code=status.HTTP_201_CREATED)
 @audit(action="architecture.approval.request", target_type="approval")
 async def request_approval(
     body: ArchitectureApprovalRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:approval:request"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:approval:request")),
 ) -> ArchitectureApprovalResponse:
     """Open a new approval request for an artifact."""
     project_id = body.project_id or principal.project_id
@@ -88,22 +86,22 @@ async def list_approvals(
 async def get_approval(
     approval_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:approval:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:approval:read")),
 ) -> ArchitectureApprovalResponse:
     approval = await _workflow().get_approval(approval_id)
     if approval is None or str(approval.tenant_id) != str(principal.tenant_id):
         raise HTTPException(status_code=404, detail="approval_not_found")
     return _serialize(approval)
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/{approval_id}/decide", response_model=ArchitectureApprovalResponse)
 @audit(action="architecture.approval.decide", target_type="approval")
 async def decide_approval(
     approval_id: UUID,
     body: ArchitectureApprovalDecisionRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:approval:decide"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:approval:decide")),
 ) -> ArchitectureApprovalResponse:
     try:
         approval = await _workflow().decide(
@@ -119,16 +117,16 @@ async def decide_approval(
     if str(approval.tenant_id) != str(principal.tenant_id):
         raise HTTPException(status_code=404, detail="approval_not_found")
     return _serialize(approval)
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/{approval_id}/cancel", response_model=ArchitectureApprovalResponse)
 @audit(action="architecture.approval.cancel", target_type="approval")
 async def cancel_approval(
     approval_id: UUID,
     body: ArchitectureApprovalDecisionRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:approval:cancel"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:approval:cancel")),
 ) -> ArchitectureApprovalResponse:
     try:
         approval = await _workflow().cancel(

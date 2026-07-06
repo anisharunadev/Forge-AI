@@ -13,10 +13,11 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import DateTime, Enum as SAEnum, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class IngestionStatus(str, enum.Enum):
@@ -102,7 +103,8 @@ class IngestionRun(Base, UUIDPrimaryKeyMixin):
     started_commit_sha: Mapped[str | None] = mapped_column(String(64), nullable=True)
     finished_commit_sha: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
-    __table_args__ = (        Index("ix_ingestion_runs_tenant_project", "tenant_id", "project_id"),
+    __table_args__ = (
+        Index("ix_ingestion_runs_tenant_project", "tenant_id", "project_id"),
         Index("ix_ingestion_runs_repo_started", "repo_id", "started_at"),
         Index("ix_ingestion_runs_status", "status"),
     )
@@ -129,7 +131,8 @@ class IngestionArtifact(Base, UUIDPrimaryKeyMixin):
     size_bytes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    __table_args__ = (        Index("ix_ingestion_artifacts_tenant_project", "tenant_id", "project_id"),
+    __table_args__ = (
+        Index("ix_ingestion_artifacts_tenant_project", "tenant_id", "project_id"),
         Index("ix_ingestion_artifacts_run_type", "ingestion_run_id", "type"),
     )
 

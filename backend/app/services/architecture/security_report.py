@@ -87,9 +87,7 @@ def _validate_status_transition(current: str, target: str) -> str:
         "closed": {"mitigating", "accepted"},
     }
     if target not in allowed.get(current, set()):
-        raise ValueError(
-            f"invalid_status_transition:{current}→{target}"
-        )
+        raise ValueError(f"invalid_status_transition:{current}→{target}")
     return target
 
 
@@ -358,8 +356,7 @@ class SecurityReportService:
         # Score: 100 minus weighted open penalties, plus closed bonus,
         # normalised so it floors at 0 and caps at 100.
         penalty = sum(
-            _SEVERITY_PENALTY.get(sev, 0) * count
-            for sev, count in severity_counts.items()
+            _SEVERITY_PENALTY.get(sev, 0) * count for sev, count in severity_counts.items()
         )
         closed_bonus = status_counts.get("closed", 0) * _CLOSED_BONUS
         raw_score = max(0, min(100, 100 - penalty + closed_bonus))
@@ -367,10 +364,8 @@ class SecurityReportService:
         return {
             "tenant_id": str(tenant_id),
             "project_id": str(project_id) if project_id else None,
-            "total_open": status_counts.get("open", 0)
-            + status_counts.get("mitigating", 0),
-            "total_closed": status_counts.get("closed", 0)
-            + status_counts.get("accepted", 0),
+            "total_open": status_counts.get("open", 0) + status_counts.get("mitigating", 0),
+            "total_closed": status_counts.get("closed", 0) + status_counts.get("accepted", 0),
             "critical_open": severity_counts.get("critical", 0),
             "high_open": severity_counts.get("high", 0),
             "medium_open": severity_counts.get("medium", 0),

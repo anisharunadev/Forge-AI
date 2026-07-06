@@ -15,7 +15,7 @@ from __future__ import annotations
 import asyncio
 import os
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -167,7 +167,7 @@ class HookOrchestrator:
         return results
 
     async def _run_one(self, hook: Hook, context: dict[str, Any]) -> HookResult:
-        started_at = datetime.now(timezone.utc)
+        started_at = datetime.now(UTC)
         started_perf = time.perf_counter()
         if hook.action != "shell":
             return HookResult(
@@ -191,10 +191,10 @@ class HookOrchestrator:
                 stdout_b, stderr_b = await asyncio.wait_for(
                     proc.communicate(), timeout=max(1, hook.timeout_seconds)
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 proc.kill()
                 await proc.wait()
-                finished_at = datetime.now(timezone.utc)
+                finished_at = datetime.now(UTC)
                 return HookResult(
                     hook_id=hook.id,
                     name=hook.name,
@@ -205,7 +205,7 @@ class HookOrchestrator:
                     duration_ms=round((time.perf_counter() - started_perf) * 1000.0, 2),
                     error="hook_timeout",
                 )
-            finished_at = datetime.now(timezone.utc)
+            finished_at = datetime.now(UTC)
             duration_ms = round((time.perf_counter() - started_perf) * 1000.0, 2)
             ok = proc.returncode == 0
             return HookResult(
@@ -220,7 +220,7 @@ class HookOrchestrator:
                 error=None if ok else (stderr_b or b"").decode("utf-8", errors="replace") or None,
             )
         except Exception as exc:  # noqa: BLE001
-            finished_at = datetime.now(timezone.utc)
+            finished_at = datetime.now(UTC)
             return HookResult(
                 hook_id=hook.id,
                 name=hook.name,
@@ -249,7 +249,7 @@ def _parse_mutate_marker(output: str) -> dict[str, Any] | None:
     for line in output.splitlines():
         line = line.strip()
         if line.startswith("__forge_mutate__:"):
-            payload = line[len("__forge_mutate__:"):]
+            payload = line[len("__forge_mutate__:") :]
             try:
                 data = json.loads(payload)
             except json.JSONDecodeError:

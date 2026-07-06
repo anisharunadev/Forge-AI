@@ -1,8 +1,8 @@
 """Phase 6 SC-6.8 — streaming cost ledger updates within 1s."""
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock
 
 import pytest
 import sqlalchemy as sa
@@ -50,12 +50,16 @@ async def test_aborted_stream_writes_partial(two_tenants) -> None:
     factory = get_session_factory()
     async with factory() as s:
         rows = (
-            await s.execute(
-                sa.select(CostEntry).where(
-                    CostEntry.run_id == "00000000-0000-0000-0000-000000000002"
+            (
+                await s.execute(
+                    sa.select(CostEntry).where(
+                        CostEntry.run_id == "00000000-0000-0000-0000-000000000002"
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
     assert len(rows) == 1
     assert float(rows[0].cost_usd) == pytest.approx(0.0005, rel=0.01)
     assert rows[0].projected is False
@@ -78,11 +82,15 @@ async def test_malformed_chunk_does_not_crash(two_tenants) -> None:
     factory = get_session_factory()
     async with factory() as s:
         rows = (
-            await s.execute(
-                sa.select(CostEntry).where(
-                    CostEntry.run_id == "00000000-0000-0000-0000-000000000003"
+            (
+                await s.execute(
+                    sa.select(CostEntry).where(
+                        CostEntry.run_id == "00000000-0000-0000-0000-000000000003"
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
     assert len(rows) == 1
     assert rows[0].projected is True

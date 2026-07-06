@@ -35,7 +35,7 @@ from __future__ import annotations
 
 import hashlib
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -125,7 +125,7 @@ def issue_proxy_token(
     ``infra/litellm/config.yaml`` can govern model access.
     """
     priv_pem, _pub_pem = _load_or_generate()
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     # Coarse-grained proxy-role mapping.  A user with any admin-style
     # Forge role becomes ``proxy_admin``; everyone else is
     # ``internal_user``.  Specific model permissions stay on the

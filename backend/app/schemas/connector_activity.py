@@ -20,7 +20,6 @@ from uuid import UUID
 
 from app.schemas.common import ForgeBaseModel
 
-
 ConnectorActivityEventType = Literal[
     "sync",
     "webhook",

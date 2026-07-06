@@ -19,7 +19,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
 from jsonschema import Draft202012Validator
 
 # ---------------------------------------------------------------------------
@@ -56,9 +55,8 @@ def test_manifest_validates_against_schema() -> None:
     schema = json.loads(SCHEMA_PATH.read_text())
     validator = Draft202012Validator(schema)
     errors = sorted(validator.iter_errors(manifest), key=lambda e: e.path)
-    assert not errors, (
-        f"kn-base manifest failed schema validation: "
-        + "; ".join(f"{'/'.join(map(str, e.path))}: {e.message}" for e in errors)
+    assert not errors, "kn-base manifest failed schema validation: " + "; ".join(
+        f"{'/'.join(map(str, e.path))}: {e.message}" for e in errors
     )
 
 
@@ -103,9 +101,7 @@ def test_all_rows_have_natural_key() -> None:
         rows = _load_data_file(df["file"])
         for i, row in enumerate(rows):
             for col in df["idempotency_key"]:
-                assert col in row, (
-                    f"Row {i} of {df['file']!r} missing natural-key column {col!r}"
-                )
+                assert col in row, f"Row {i} of {df['file']!r} missing natural-key column {col!r}"
                 assert row[col] is not None, (
                     f"Row {i} of {df['file']!r} has null natural-key column {col!r}"
                 )
@@ -137,9 +133,7 @@ def test_no_duplicate_natural_keys_within_file() -> None:
         seen: set[tuple] = set()
         for i, row in enumerate(rows):
             key = tuple(row.get(c) for c in df["idempotency_key"])
-            assert key not in seen, (
-                f"Duplicate natural key {key!r} in {df['file']!r} at row {i}"
-            )
+            assert key not in seen, f"Duplicate natural key {key!r} in {df['file']!r} at row {i}"
             seen.add(key)
 
 
@@ -200,12 +194,8 @@ def test_standards_have_valid_status() -> None:
 def test_standards_have_non_empty_content() -> None:
     rows = _load_data_file("001_standards.json")
     for r in rows:
-        assert isinstance(r["content"], str), (
-            f"Standard {r['name']!r} content must be a string"
-        )
-        assert r["content"].strip(), (
-            f"Standard {r['name']!r} content must not be empty"
-        )
+        assert isinstance(r["content"], str), f"Standard {r['name']!r} content must be a string"
+        assert r["content"].strip(), f"Standard {r['name']!r} content must not be empty"
 
 
 def test_templates_have_unique_type_name_version() -> None:
@@ -221,9 +211,7 @@ def test_templates_have_content_and_variables() -> None:
         assert isinstance(r["content"], dict), (
             f"Template {r['name']!r} content must be a JSON object"
         )
-        assert isinstance(r["variables"], list), (
-            f"Template {r['name']!r} variables must be a list"
-        )
+        assert isinstance(r["variables"], list), f"Template {r['name']!r} variables must be a list"
 
 
 _POLICY_SEVERITIES = {"info", "warn", "block"}
@@ -278,9 +266,7 @@ def test_tool_bundles_have_unique_keys() -> None:
 def test_tool_bundles_have_tools_list() -> None:
     rows = _load_data_file("004_tool_bundles.json")
     for r in rows:
-        assert isinstance(r["tools"], list), (
-            f"Bundle {r['bundle_key']!r} tools must be a list"
-        )
+        assert isinstance(r["tools"], list), f"Bundle {r['bundle_key']!r} tools must be a list"
         assert r["tools"], f"Bundle {r['bundle_key']!r} tools must not be empty"
         for t in r["tools"]:
             assert "name" in t, f"Tool entry in {r['bundle_key']!r} missing name"

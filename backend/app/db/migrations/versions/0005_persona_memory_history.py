@@ -17,6 +17,7 @@ Create Date: 2026-06-22
 from __future__ import annotations
 
 import sqlalchemy as sa
+
 from alembic import op
 
 # revision identifiers, used by Alembic.
@@ -81,8 +82,14 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute("DROP POLICY IF EXISTS persona_memory_history_tenant_isolation ON persona_memory_history;")
-    op.drop_index("ix_persona_memory_history_tenant_written_at", table_name="persona_memory_history")
-    op.drop_index("ix_persona_memory_history_tenant_persona_key", table_name="persona_memory_history")
+    op.execute(
+        "DROP POLICY IF EXISTS persona_memory_history_tenant_isolation ON persona_memory_history;"
+    )
+    op.drop_index(
+        "ix_persona_memory_history_tenant_written_at", table_name="persona_memory_history"
+    )
+    op.drop_index(
+        "ix_persona_memory_history_tenant_persona_key", table_name="persona_memory_history"
+    )
     op.drop_index("ix_persona_memory_history_tenant_id", table_name="persona_memory_history")
     op.drop_table("persona_memory_history")

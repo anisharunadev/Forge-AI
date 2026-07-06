@@ -11,7 +11,6 @@ ModelsService is monkeypatched at module level so no LiteLLM calls fire.
 
 from __future__ import annotations
 
-import importlib
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -33,7 +32,6 @@ from app.schemas.forge_models import (
     ModelsListResponse,
     RefreshResponse,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

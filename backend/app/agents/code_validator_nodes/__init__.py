@@ -16,6 +16,7 @@ emit findings into the appropriate per-scanner bucket.
 NFR-043 (independence): no node imports from ``sdlc_agent.py`` or
 ``sdlc_state.py``.
 """
+
 from __future__ import annotations
 
 from app.agents.code_validator_nodes.aggregate_findings import aggregate_findings

@@ -24,11 +24,10 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID, uuid4
 
-from app.core.logging import get_logger
-from app.core.security import AuthenticatedPrincipal
-from app.copilot.tools.base import Tool
 from app.copilot.tools.exceptions import ToolArgumentInvalid
 from app.copilot.tools.registry import tool_registry
+from app.core.logging import get_logger
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.artifact import ArtifactStatus
 from app.services.artifact_registry import artifact_registry
 from app.services.audit_service import audit_service

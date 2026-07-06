@@ -8,7 +8,7 @@ from uuid import UUID
 from sqlalchemy import ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import ARRAY, Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import ARRAY, GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class Role(Base, UUIDPrimaryKeyMixin, TimestampMixin):

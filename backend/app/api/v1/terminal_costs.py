@@ -18,7 +18,7 @@ introduce a dedicated ``litellm_team_id`` claim on the principal.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -26,7 +26,6 @@ from pydantic import BaseModel, Field
 
 from app.api.deps import Principal
 from app.core.audit import audit
-from app.core.security import AuthenticatedPrincipal
 from app.services.litellm_admin import (
     get_global_spend,
     get_spend_by_team,
@@ -96,13 +95,9 @@ async def get_session_cost(
         team_id=principal.tenant_id,
         limit=1000,
     )
-    session_logs = [
-        l
-        for l in logs
-        if l.get("metadata", {}).get("session_id") == session_id
-    ]
+    session_logs = [l for l in logs if l.get("metadata", {}).get("session_id") == session_id]
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     total_cost = float(sum(l.get("spend", 0) for l in session_logs))
     breakdown: dict[str, float] = {}
     prompt_tokens = 0
@@ -188,7 +183,7 @@ async def list_session_costs(
     limit: int = Query(default=500, le=1000),
 ) -> list[CostSummaryResponse]:
     """Cost entries for the caller's tenant, recent N days."""
-    cutoff = since or (datetime.now(timezone.utc) - timedelta(days=30))
+    cutoff = since or (datetime.now(UTC) - timedelta(days=30))
     logs = await list_spend_logs(
         team_id=principal.tenant_id,
         start_date=cutoff.isoformat(),

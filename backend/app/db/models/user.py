@@ -6,10 +6,9 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import Boolean, ForeignKey, String
-from app.db.base import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import ARRAY, GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):

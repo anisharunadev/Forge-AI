@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 from uuid import UUID
@@ -65,7 +65,7 @@ class TerminalSession:
         return d
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "TerminalSession":
+    def from_dict(cls, data: dict[str, Any]) -> TerminalSession:
         return cls(
             id=data["id"],
             tenant_id=data["tenant_id"],
@@ -117,7 +117,7 @@ class TerminalSessionManager:
         """Register a new terminal session and return it."""
         if not workspace_path or ".." in workspace_path:
             raise ValueError("workspace_path must be a non-traversing absolute path")
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         session = TerminalSession(
             id=str(uuid.uuid4()),
             tenant_id=str(tenant_id),
@@ -181,7 +181,7 @@ class TerminalSessionManager:
         sess = await self.get_session(session_id)
         if sess is None:
             return
-        sess.last_activity_at = datetime.now(timezone.utc)
+        sess.last_activity_at = datetime.now(UTC)
         client = await self._client()
         await client.set(self._key(session_id), json.dumps(sess.to_dict()))
 

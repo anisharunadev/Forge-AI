@@ -51,10 +51,9 @@ async def list_tools(
         params["kind"] = kind
     if server_id:
         params["server_id"] = server_id
+
     async def _call(client: LiteLLMBaseClient) -> list[dict[str, Any]]:
-        response = await client.admin_client.get(
-            "/v1/tool/list", params=params
-        )
+        response = await client.admin_client.get("/v1/tool/list", params=params)
         if response.status_code >= 400:
             return []
         raw = response.json() or {}
@@ -76,10 +75,9 @@ async def get_tool_detail(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any] | None:
     """``GET /v1/tool/{name}/detail``."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
-        response = await client.admin_client.get(
-            f"/v1/tool/{name}/detail"
-        )
+        response = await client.admin_client.get(f"/v1/tool/{name}/detail")
         if response.status_code == 404:
             return None
         if response.status_code >= 400:
@@ -110,10 +108,9 @@ async def list_logs(
     when the proxy omits them.
     """
     params = {"since_hours": since_hours}
+
     async def _call(client: LiteLLMBaseClient) -> list[dict[str, Any]]:
-        response = await client.admin_client.get(
-            f"/v1/tool/{name}/logs", params=params
-        )
+        response = await client.admin_client.get(f"/v1/tool/{name}/logs", params=params)
         if response.status_code >= 400:
             return []
         raw = response.json() or {}
@@ -150,10 +147,9 @@ async def get_overrides(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any] | None:
     """``GET /v1/tool/{name}/overrides``."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
-        response = await client.admin_client.get(
-            f"/v1/tool/{name}/overrides"
-        )
+        response = await client.admin_client.get(f"/v1/tool/{name}/overrides")
         if response.status_code == 404:
             return None
         if response.status_code >= 400:
@@ -173,10 +169,9 @@ async def put_overrides(
     base_client: LiteLLMBaseClient | None = None,
 ) -> dict[str, Any] | None:
     """``PUT /v1/tool/{name}/overrides``."""
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
-        response = await client.admin_client.put(
-            f"/v1/tool/{name}/overrides", json=overrides
-        )
+        response = await client.admin_client.put(f"/v1/tool/{name}/overrides", json=overrides)
         if response.status_code >= 400:
             return None
         return response.json() or {}
@@ -198,10 +193,9 @@ async def archive_tool(
     base_client: LiteLLMBaseClient | None = None,
 ) -> bool:
     """``DELETE /v1/tool/{name}`` — soft-archive (AC #5)."""
+
     async def _call(client: LiteLLMBaseClient) -> bool:
-        response = await client.admin_client.delete(
-            f"/v1/tool/{name}"
-        )
+        response = await client.admin_client.delete(f"/v1/tool/{name}")
         return response.status_code < 400 or response.status_code == 404
 
     if base_client is not None:
@@ -220,6 +214,7 @@ async def list_search_tools(
     base_client: LiteLLMBaseClient | None = None,
 ) -> list[dict[str, Any]]:
     """``GET /search_tools/list`` — search-tool catalog."""
+
     async def _call(client: LiteLLMBaseClient) -> list[dict[str, Any]]:
         response = await client.admin_client.get("/search_tools/list")
         if response.status_code >= 400:
@@ -247,12 +242,11 @@ async def test_search_tool(
     AC #7 — returns ``{reachable: false}`` on unreachable, never a 500.
     """
     body = {"tool_id": tool_id}
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
         started = time.monotonic()
         try:
-            response = await client.admin_client.post(
-                "/search_tools/test_connection", json=body
-            )
+            response = await client.admin_client.post("/search_tools/test_connection", json=body)
         except Exception as exc:  # noqa: BLE001
             return {
                 "reachable": False,
@@ -282,6 +276,7 @@ async def list_search_tools_ui(
     base_client: LiteLLMBaseClient | None = None,
 ) -> list[dict[str, Any]]:
     """``GET /search_tools/ui`` — UI picker metadata."""
+
     async def _call(client: LiteLLMBaseClient) -> list[dict[str, Any]]:
         response = await client.admin_client.get("/search_tools/ui")
         if response.status_code >= 400:

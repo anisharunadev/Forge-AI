@@ -13,6 +13,7 @@ Create Date: 2026-06-22
 from __future__ import annotations
 
 import sqlalchemy as sa
+
 from alembic import op
 
 # revision identifiers, used by Alembic.
@@ -90,7 +91,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute("DROP POLICY IF EXISTS ideation_source_signals_tenant_isolation ON ideation_source_signals;")
+    op.execute(
+        "DROP POLICY IF EXISTS ideation_source_signals_tenant_isolation ON ideation_source_signals;"
+    )
     op.drop_index("ix_ideation_source_signals_tenant_idea_id", table_name="ideation_source_signals")
     op.drop_index("ix_ideation_source_signals_idea_id", table_name="ideation_source_signals")
     op.drop_index("ix_ideation_source_signals_tenant_source", table_name="ideation_source_signals")

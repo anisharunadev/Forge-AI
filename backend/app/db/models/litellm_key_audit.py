@@ -20,7 +20,7 @@ from uuid import UUID
 from sqlalchemy import DateTime, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, Base, UUIDPrimaryKeyMixin
 
 
 class LiteLLMKeyAction(str, Enum):

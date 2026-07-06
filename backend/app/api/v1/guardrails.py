@@ -22,15 +22,16 @@ Endpoints:
 * ``GET    /guardrails/ui/{rule_id}``    — rule-builder get
 """
 
-from __future__ import annotations
+from __future__ import annotations  # noqa: B904
 
-from datetime import datetime, timezone
-from typing import Annotated, Any
-from uuid import UUID
+from datetime import UTC, datetime
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.deps import Principal, get_current_principal, require_permission
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.logging import get_logger
 from app.core.security import AuthenticatedPrincipal
@@ -50,8 +51,6 @@ from app.services.guardrails_service import (
     GuardrailViolation,
     guardrails_service,
 )
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -71,7 +70,7 @@ def _envelope_block(violation: GuardrailViolation) -> HTTPException:
         kind=violation.kind,
         reason=violation.reason,
         policy_id=violation.policy_id,
-        occurred_at=datetime.now(timezone.utc),
+        occurred_at=datetime.now(UTC),
     )
     return HTTPException(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -130,8 +129,6 @@ async def get_guardrail_endpoint(
 # Register / update
 # ---------------------------------------------------------------------
 @require_approval_phase(SDLCPhase.SECURITY)
-
-
 @router.post("", response_model=GuardrailRead, status_code=status.HTTP_201_CREATED)
 @audit(action="guardrails.register", target_type="litellm_guardrail")
 async def register_guardrail_endpoint(
@@ -150,7 +147,7 @@ async def register_guardrail_endpoint(
             custom_code=body.custom_code,
         )
     except GuardrailViolation as violation:
-        raise _envelope_block(violation)
+        raise _envelope_block(violation) from violation
 
     return GuardrailRead(
         id=body.guardrail_name,
@@ -160,9 +157,9 @@ async def register_guardrail_endpoint(
         default_params=body.litellm_params.model_dump(exclude_none=True),
         enabled=True,
     )
+
+
 @require_approval_phase(SDLCPhase.SECURITY)
-
-
 @router.patch("/{name}", response_model=GuardrailRead)
 @audit(action="guardrails.update", target_type="litellm_guardrail")
 async def update_guardrail_endpoint(
@@ -181,7 +178,7 @@ async def update_guardrail_endpoint(
             actor_id=getattr(principal, "user_id", None),
         )
     except GuardrailViolation as violation:
-        raise _envelope_block(violation)
+        raise _envelope_block(violation) from violation
 
     return GuardrailRead(
         id=name,
@@ -197,8 +194,6 @@ async def update_guardrail_endpoint(
 # Test
 # ---------------------------------------------------------------------
 @require_approval_phase(SDLCPhase.SECURITY)
-
-
 @router.post("/{name}/test", response_model=GuardrailApplyResult)
 @audit(action="guardrails.test", target_type="litellm_guardrail")
 async def test_guardrail_endpoint(
@@ -221,9 +216,9 @@ async def test_guardrail_endpoint(
         reason=raw.get("reason"),
         latency_ms=int(raw.get("latency_ms", 0)),
     )
+
+
 @require_approval_phase(SDLCPhase.SECURITY)
-
-
 @router.post("/test-custom-code", response_model=GuardrailApplyResult)
 @audit(action="guardrails.test_custom_code", target_type="litellm_guardrail")
 async def test_custom_code_endpoint(
@@ -266,13 +261,9 @@ async def list_submissions_endpoint(
     for r in rows:
         try:
             ts_raw = r.get("ts") or r.get("occurred_at") or r.get("created_at")
-            ts = (
-                datetime.fromisoformat(ts_raw)
-                if isinstance(ts_raw, str)
-                else datetime.now(timezone.utc)
-            )
+            ts = datetime.fromisoformat(ts_raw) if isinstance(ts_raw, str) else datetime.now(UTC)
         except (TypeError, ValueError):
-            ts = datetime.now(timezone.utc)
+            ts = datetime.now(UTC)
         items.append(
             GuardrailSubmissionRead(
                 ts=ts,
@@ -325,13 +316,15 @@ async def list_ui_rules_endpoint(
                 name=r.get("name", ""),
                 description=r.get("description", ""),
                 kind=r.get("kind", "pre_call_input"),
-                definition={k: v for k, v in r.items() if k not in {"id", "name", "description", "kind"}},
+                definition={
+                    k: v for k, v in r.items() if k not in {"id", "name", "description", "kind"}
+                },
             )
         )
     return Page(items=items, total=len(items))
+
+
 @require_approval_phase(SDLCPhase.SECURITY)
-
-
 @router.post("/ui", response_model=GuardrailUIRule, status_code=status.HTTP_201_CREATED)
 @audit(action="guardrails.ui.save", target_type="litellm_guardrail")
 async def save_ui_rule_endpoint(

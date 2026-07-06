@@ -20,7 +20,7 @@ from __future__ import annotations
 import hashlib
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -28,8 +28,8 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
-from app.db.models.rag import RagChunk, VectorStore
 from app.db.models.audit import AuditEvent
+from app.db.models.rag import RagChunk, VectorStore
 from app.integrations.litellm.rag_client import RAGClientGroup
 from app.schemas.rag_v2 import (
     EmbeddingsRequest,
@@ -94,6 +94,7 @@ class _CacheEntry:
 @dataclass
 class _EmbeddingCache:
     """ponytail: in-process cache, upgrade to Redis when cross-replica sharing is needed."""
+
     ttl_seconds: float = 7 * 24 * 3600
     maxsize: int = 1024
     _store: dict[tuple[str, str], _CacheEntry] = field(default_factory=dict)
@@ -226,9 +227,7 @@ class RagService:
             usage=EmbeddingsUsage(),
         )
 
-    async def list_embedding_models(
-        self, *, tenant_id: UUID
-    ) -> dict[str, Any]:
+    async def list_embedding_models(self, *, tenant_id: UUID) -> dict[str, Any]:
         """GET /v1/embeddings/models."""
         return await self._client().embeddings_models()
 
@@ -269,7 +268,7 @@ class RagService:
             name=payload.name,
             status=VectorStoreStatus.ACTIVE.value,
             metadata_=payload.metadata or {},
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
         db.add(row)
         await db.flush()
@@ -336,7 +335,7 @@ class RagService:
                 vs_id=str(vs_id),
             )
         row.status = VectorStoreStatus.ARCHIVED.value
-        row.archived_at = datetime.now(timezone.utc)
+        row.archived_at = datetime.now(UTC)
         await db.flush()
         await _record_audit(
             db,
@@ -548,16 +547,14 @@ class RagService:
     # Search tools
     # ------------------------------------------------------------------
 
-    async def list_search_tools(
-        self, *, tenant_id: UUID
-    ) -> SearchToolListResponse:
+    async def list_search_tools(self, *, tenant_id: UUID) -> SearchToolListResponse:
         """GET /search_tools/list — typed list of providers."""
         upstream = await self._client().search_tools_list()
         rows = upstream.get("tools") if isinstance(upstream, dict) else []
         if rows is None and isinstance(upstream, list):
             rows = upstream
         tools: list[SearchToolInfo] = []
-        for r in (rows or []):
+        for r in rows or []:
             tools.append(
                 SearchToolInfo(
                     id=str(r.get("id") or r.get("tool_id") or ""),
@@ -622,9 +619,7 @@ class RagService:
         ``@audit`` decorator measured on the router.
         """
         chunk_count = (
-            await db.execute(
-                select(func.count(RagChunk.id)).where(RagChunk.tenant_id == tenant_id)
-            )
+            await db.execute(select(func.count(RagChunk.id)).where(RagChunk.tenant_id == tenant_id))
         ).scalar_one()
         store_count = (
             await db.execute(
@@ -689,7 +684,7 @@ async def _record_audit(
                 target_type="rag",
                 target_id=target_id,
                 payload=payload,
-                occurred_at=datetime.now(timezone.utc),
+                occurred_at=datetime.now(UTC),
             )
         )
         await db.flush()

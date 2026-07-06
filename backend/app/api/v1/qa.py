@@ -1,13 +1,15 @@
 """Q&A REST endpoints (F-108)."""
 
 from __future__ import annotations
-from typing import Annotated
 
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Response, status, Depends
+from fastapi import APIRouter, Depends, Response
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.project_intelligence import (
@@ -18,19 +20,17 @@ from app.schemas.project_intelligence import (
     QASource,
 )
 from app.services.project_intelligence.qa import qa_service
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/qa", tags=["qa"])
+
+
 @require_approval_phase(SDLCPhase.TESTING)
-
-
 @router.post("/ask", response_model=QAAnswer)
 @audit(action="qa.ask", target_type="qa")
 async def ask(
     body: QAAskRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("qa:ask"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("qa:ask")),
 ) -> QAAnswer:
     answer = await qa_service.answer_question(
         tenant_id=principal.tenant_id,
@@ -64,7 +64,7 @@ async def ask(
 async def history(
     session_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("qa:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("qa:read")),
 ) -> QAHistory:
     messages = qa_service.get_conversation_history(session_id)
     return QAHistory(
@@ -90,9 +90,9 @@ async def history(
             for m in messages
         ],
     )
+
+
 @require_approval_phase(SDLCPhase.TESTING)
-
-
 @router.delete(
     "/sessions/{session_id}",
     response_model=None,
@@ -103,7 +103,7 @@ async def history(
 async def clear(
     session_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("qa:write"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("qa:write")),
 ):
     qa_service.clear_conversation(session_id)
 

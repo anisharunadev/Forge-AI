@@ -22,8 +22,6 @@ import json
 from typing import Any
 from uuid import UUID
 
-from app.core.logging import get_logger
-from app.core.security import AuthenticatedPrincipal
 from app.copilot.tools.base import Tool
 from app.copilot.tools.exceptions import (
     ToolArgumentInvalid,
@@ -31,6 +29,8 @@ from app.copilot.tools.exceptions import (
     ToolDownstreamFailed,
     ToolError,
 )
+from app.core.logging import get_logger
+from app.core.security import AuthenticatedPrincipal
 from app.services._litellm_tools import ToolResult
 
 logger = get_logger(__name__)

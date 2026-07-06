@@ -19,20 +19,18 @@ returns an empty list until that table lands.
 Run with:
     docker compose exec backend python -m scripts.seed_architecture
 """
+
 from __future__ import annotations
 
 import asyncio
 import hashlib
 import logging
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import select
 
-from app.db.models.tenant import Tenant
-from app.db.models.project import Project
-from app.db.models.user import User
 from app.db.models.architecture import (
     ADR,
     APIContract,
@@ -41,8 +39,10 @@ from app.db.models.architecture import (
     TaskBreakdown,
 )
 from app.db.models.artifact import Artifact, ArtifactStatus
+from app.db.models.project import Project
+from app.db.models.tenant import Tenant
+from app.db.models.user import User
 from app.db.session import get_session_factory
-
 from scripts._seed_helpers import ACME_TENANT_ID
 
 logger = logging.getLogger("seed_architecture")
@@ -66,7 +66,10 @@ SEED_ADRS: list[dict[str, Any]] = [
         "decision": "Adopt LangGraph as the primary orchestration substrate. It gives us graph-based state, checkpointing, and a Python-native API that matches our backend stack.",
         "consequences": {
             "positive": ["Rich state primitives", "Built-in checkpointing", "Strong typing"],
-            "negative": ["Vendor lock-in (mitigated by graph state isolation)", "Smaller community than Temporal"],
+            "negative": [
+                "Vendor lock-in (mitigated by graph state isolation)",
+                "Smaller community than Temporal",
+            ],
         },
         "alternatives": [
             {"name": "Custom state machine", "rejected": "Too much yak-shaving"},
@@ -157,7 +160,11 @@ SEED_CONTRACTS: list[dict[str, Any]] = [
             "info": {"title": "Agent Registry", "version": "1.0.0"},
             "paths": {
                 "/agents": {"get": {"summary": "List agents"}, "post": {"summary": "Create agent"}},
-                "/agents/{id}": {"get": {"summary": "Get agent"}, "patch": {"summary": "Update agent"}, "delete": {"summary": "Delete agent"}},
+                "/agents/{id}": {
+                    "get": {"summary": "Get agent"},
+                    "patch": {"summary": "Update agent"},
+                    "delete": {"summary": "Delete agent"},
+                },
                 "/agents/{id}/test": {"post": {"summary": "Test agent"}},
             },
         },
@@ -247,16 +254,36 @@ SEED_CONTRACTS: list[dict[str, Any]] = [
 
 
 SEED_RISK_DATA: list[dict[str, Any]] = [
-    {"title": "Multi-tenant data leakage", "level": "high", "category": "security",
-     "mitigation": "Every query MUST filter by tenant_id. Add an integration test suite that exercises cross-tenant access."},
-    {"title": "LiteLLM proxy outage", "level": "high", "category": "availability",
-     "mitigation": "Runbook: detect outage via /health, route to fallback provider, page on-call."},
-    {"title": "Runaway LLM cost", "level": "medium", "category": "cost",
-     "mitigation": "Workflows must declare cost_ceiling_usd. Auto-pause run when exceeded."},
-    {"title": "Knowledge graph stale data", "level": "medium", "category": "data-quality",
-     "mitigation": "Compute freshness_score per node. Highlight nodes > 30 days old."},
-    {"title": "Connector OAuth token rotation", "level": "low", "category": "operational",
-     "mitigation": "Auto-rotation 7 days before expiry. Notify connector owner."},
+    {
+        "title": "Multi-tenant data leakage",
+        "level": "high",
+        "category": "security",
+        "mitigation": "Every query MUST filter by tenant_id. Add an integration test suite that exercises cross-tenant access.",
+    },
+    {
+        "title": "LiteLLM proxy outage",
+        "level": "high",
+        "category": "availability",
+        "mitigation": "Runbook: detect outage via /health, route to fallback provider, page on-call.",
+    },
+    {
+        "title": "Runaway LLM cost",
+        "level": "medium",
+        "category": "cost",
+        "mitigation": "Workflows must declare cost_ceiling_usd. Auto-pause run when exceeded.",
+    },
+    {
+        "title": "Knowledge graph stale data",
+        "level": "medium",
+        "category": "data-quality",
+        "mitigation": "Compute freshness_score per node. Highlight nodes > 30 days old.",
+    },
+    {
+        "title": "Connector OAuth token rotation",
+        "level": "low",
+        "category": "operational",
+        "mitigation": "Auto-rotation 7 days before expiry. Notify connector owner.",
+    },
 ]
 
 
@@ -268,8 +295,16 @@ SEED_TASK_BREAKDOWNS: list[dict[str, Any]] = [
         "parent_artifact_id": uuid.UUID("f0000005-0000-4000-8000-00000000ad05"),
         "tasks": [
             {"title": "Install d3-force package", "estimate_hours": 0.5, "status": "pending"},
-            {"title": "Replace static layout with d3-force simulation", "estimate_hours": 6, "status": "pending"},
-            {"title": "Add keyboard navigation between nodes", "estimate_hours": 4, "status": "pending"},
+            {
+                "title": "Replace static layout with d3-force simulation",
+                "estimate_hours": 6,
+                "status": "pending",
+            },
+            {
+                "title": "Add keyboard navigation between nodes",
+                "estimate_hours": 4,
+                "status": "pending",
+            },
             {"title": "Visual regression tests", "estimate_hours": 2, "status": "pending"},
             {"title": "Documentation", "estimate_hours": 1, "status": "pending"},
         ],
@@ -281,7 +316,9 @@ SEED_TASK_BREAKDOWNS: list[dict[str, Any]] = [
         "id": uuid.UUID("f0000030-0000-4000-8000-00000000b002"),
         "name": "Workflow Versioning Implementation",
         "parent_artifact_type": "feature",
-        "parent_artifact_id": uuid.UUID("44444444-4444-4444-8444-444444444444"),  # workflow-editor-v2 project
+        "parent_artifact_id": uuid.UUID(
+            "44444444-4444-4444-8444-444444444444"
+        ),  # workflow-editor-v2 project
         "tasks": [
             {"title": "Design versioned workflow schema", "estimate_hours": 4, "status": "pending"},
             {"title": "Implement diff algorithm", "estimate_hours": 8, "status": "pending"},
@@ -333,16 +370,37 @@ SEED_APPROVALS: list[dict[str, Any]] = [
 # app/services/architecture/standards_attestation.py). The audit log
 # remains the authoritative history.
 SEED_ATTESTATIONS: list[dict[str, Any]] = [
-    {"standard": "SOC 2 Type II", "attester_email": "arun@acme-corp.com", "status": "attested", "attested_offset_days": -30},
-    {"standard": "GDPR Data Processing", "attester_email": "arun@acme-corp.com", "status": "attested", "attested_offset_days": -25},
-    {"standard": "Internal: PII handling", "attester_email": "ravi@acme-corp.com", "status": "attested", "attested_offset_days": -20},
-    {"standard": "Internal: Tenant isolation", "attester_email": "ravi@acme-corp.com", "status": "pending", "attested_offset_days": None},
+    {
+        "standard": "SOC 2 Type II",
+        "attester_email": "arun@acme-corp.com",
+        "status": "attested",
+        "attested_offset_days": -30,
+    },
+    {
+        "standard": "GDPR Data Processing",
+        "attester_email": "arun@acme-corp.com",
+        "status": "attested",
+        "attested_offset_days": -25,
+    },
+    {
+        "standard": "Internal: PII handling",
+        "attester_email": "ravi@acme-corp.com",
+        "status": "attested",
+        "attested_offset_days": -20,
+    },
+    {
+        "standard": "Internal: Tenant isolation",
+        "attester_email": "ravi@acme-corp.com",
+        "status": "pending",
+        "attested_offset_days": None,
+    },
 ]
 
 
 def _content_hash(payload: dict[str, Any]) -> str:
     """Stable content hash used by the Artifact table."""
     import json
+
     encoded = json.dumps(payload, sort_keys=True, default=str).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 
@@ -374,17 +432,13 @@ async def seed() -> None:
         project_id = project.id if project else ACME_PLATFORM_PROJECT_ID
 
         user = (
-            await session.execute(
-                select(User).where(User.email == "arun@acme-corp.com")
-            )
+            await session.execute(select(User).where(User.email == "arun@acme-corp.com"))
         ).scalar_one_or_none()
         user_id = user.id if user else DEFAULT_USER_ID
 
         # Short-circuit if any ADR already exists for this tenant.
         existing = (
-            await session.execute(
-                select(ADR.id).where(ADR.tenant_id == tenant.id).limit(1)
-            )
+            await session.execute(select(ADR.id).where(ADR.tenant_id == tenant.id).limit(1))
         ).first()
         if existing is not None:
             logger.info("  ↻ architecture already seeded; skipping")
@@ -422,7 +476,9 @@ async def seed() -> None:
             )
             logger.info(
                 "  ✓ Contract: %s v%s (%s)",
-                row["name"], row["version"], row["status"],
+                row["name"],
+                row["version"],
+                row["status"],
             )
 
         # -----------------------------------------------------------------
@@ -482,7 +538,7 @@ async def seed() -> None:
                 artifact_id = risk_register_id
             decided_offset = row.pop("decided_offset_days", None)
             decided_at = (
-                datetime.now(timezone.utc) + timedelta(days=decided_offset)
+                datetime.now(UTC) + timedelta(days=decided_offset)
                 if decided_offset is not None
                 else None
             )
@@ -509,7 +565,7 @@ async def seed() -> None:
         for spec in SEED_ATTESTATIONS:
             attestation_id = uuid.uuid4()
             attested_at = (
-                datetime.now(timezone.utc) + timedelta(days=spec["attested_offset_days"])
+                datetime.now(UTC) + timedelta(days=spec["attested_offset_days"])
                 if spec["attested_offset_days"] is not None
                 else None
             )

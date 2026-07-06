@@ -46,12 +46,11 @@ def _passthrough_factory() -> Any:
 
 _session_mod.get_session_factory = _passthrough_factory  # type: ignore[assignment]
 
+from app.core.crypto import decrypt  # noqa: E402
 from app.services.forge_key_broker import (  # noqa: E402
     AgentVirtualKey,
     ForgeKeyBroker,
 )
-from app.core.crypto import decrypt  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # HTTP transport helper (httpx.MockTransport — same as test_forge_spend)
@@ -79,7 +78,9 @@ def _make_transport(handlers: dict[str, Any], *, call_log: list[httpx.Request] |
     return httpx.MockTransport(handler)
 
 
-def _patch_litellm_base(monkeypatch, handlers: dict[str, Any], *, call_log: list[httpx.Request] | None = None):
+def _patch_litellm_base(
+    monkeypatch, handlers: dict[str, Any], *, call_log: list[httpx.Request] | None = None
+):
     """Swap ``LiteLLMBaseClient`` for a fake that uses an httpx.MockTransport."""
     from app.services import forge_key_broker as broker_mod
 
@@ -91,7 +92,7 @@ def _patch_litellm_base(monkeypatch, handlers: dict[str, Any], *, call_log: list
                 base_url="http://litellm.test", timeout=10.0, transport=transport
             )
 
-        async def __aenter__(self) -> "_FakeBase":
+        async def __aenter__(self) -> _FakeBase:
             return self
 
         async def __aexit__(self, *exc: Any) -> None:
@@ -117,7 +118,7 @@ async def broker(sqlite_db):
 
 async def _insert_agent(session_factory, **overrides: Any):
     """Insert one Agent row in the same tenant/project as overrides."""
-    from app.db.models.agent import Agent, AgentType, AgentStatus
+    from app.db.models.agent import Agent, AgentStatus, AgentType
 
     tenant_id = overrides.pop("tenant_id", uuid4())
     project_id = overrides.pop("project_id", uuid4())
@@ -183,10 +184,14 @@ async def test_issue_calls_key_generate_once(sqlite_db, monkeypatch):
 
     async with factory() as session:
         rows = (
-            await session.execute(
-                select(AgentVirtualKey).where(AgentVirtualKey.agent_id == agent.id)
+            (
+                await session.execute(
+                    select(AgentVirtualKey).where(AgentVirtualKey.agent_id == agent.id)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
     assert len(rows) == 1
     assert rows[0].status == "active"
     assert rows[0].fingerprint == status.fingerprint
@@ -230,9 +235,7 @@ async def test_plaintext_key_never_logged(sqlite_db, monkeypatch):
         root.removeHandler(handler)
 
     joined = "\n".join(captured)
-    assert plaintext not in joined, (
-        f"plaintext leaked into logs:\n{joined}"
-    )
+    assert plaintext not in joined, f"plaintext leaked into logs:\n{joined}"
 
     # Typed response carries no plaintext. ``ForgeKeyStatus`` has no
     # ``key_value`` field — assert via model_dump + attr probe.
@@ -270,9 +273,7 @@ async def test_two_agents_isolated_scopes(sqlite_db, monkeypatch):
     from sqlalchemy import select
 
     async with factory() as session:
-        rows = (
-            await session.execute(select(AgentVirtualKey))
-        ).scalars().all()
+        rows = (await session.execute(select(AgentVirtualKey))).scalars().all()
 
     rows_a = [r for r in rows if r.agent_id == agent_a.id]
     rows_b = [r for r in rows if r.agent_id == agent_b.id]
@@ -311,10 +312,14 @@ async def test_rotate_marks_old_as_rotated(sqlite_db, monkeypatch):
 
     async with factory() as session:
         rows = (
-            await session.execute(
-                select(AgentVirtualKey).where(AgentVirtualKey.agent_id == agent.id)
+            (
+                await session.execute(
+                    select(AgentVirtualKey).where(AgentVirtualKey.agent_id == agent.id)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
     by_status: dict[str, list[AgentVirtualKey]] = {}
     for r in rows:
@@ -431,6 +436,4 @@ async def test_encrypted_key_round_trips(sqlite_db, monkeypatch):
     assert row is not None
 
     recovered = decrypt(row.encrypted_key)
-    assert recovered == plaintext, (
-        f"decrypt mismatch: got {recovered!r}, want {plaintext!r}"
-    )
+    assert recovered == plaintext, f"decrypt mismatch: got {recovered!r}, want {plaintext!r}"

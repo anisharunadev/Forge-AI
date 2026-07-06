@@ -16,6 +16,7 @@ from app.db.models import architecture as _architecture_models  # noqa: F401
 @pytest_asyncio.fixture
 async def sqlite_db(sqlite_db):  # type: ignore[no-untyped-def]
     from app.db.models import architecture  # noqa: F401
+
     return sqlite_db
 
 
@@ -43,15 +44,13 @@ async def test_approval_request_determines_required_reviewers(
     sqlite_db, event_bus, captured_events
 ):
     from app.services.architecture.approval_workflow import (
-        ArchitectureApprovalWorkflow,
         ROLE_ARCHITECT,
         ROLE_SECURITY,
+        ArchitectureApprovalWorkflow,
         _decode_reviewers,
     )
 
-    wf = ArchitectureApprovalWorkflow(
-        litellm_client=MagicMock(), event_bus=event_bus
-    )
+    wf = ArchitectureApprovalWorkflow(litellm_client=MagicMock(), event_bus=event_bus)
     tenant = uuid.uuid4()
     project = uuid.uuid4()
 
@@ -85,9 +84,7 @@ async def test_approval_decide_grants_artifact(sqlite_db, event_bus, captured_ev
         _decode_reviewers,
     )
 
-    wf = ArchitectureApprovalWorkflow(
-        litellm_client=MagicMock(), event_bus=event_bus
-    )
+    wf = ArchitectureApprovalWorkflow(litellm_client=MagicMock(), event_bus=event_bus)
     approval = await wf.request_approval(
         artifact_type="adr",
         artifact_id=uuid.uuid4(),
@@ -109,17 +106,13 @@ async def test_approval_decide_grants_artifact(sqlite_db, event_bus, captured_ev
 
 
 @pytest.mark.asyncio
-async def test_approval_multi_reviewer_requires_all(
-    sqlite_db, event_bus, captured_events
-):
+async def test_approval_multi_reviewer_requires_all(sqlite_db, event_bus, captured_events):
     from app.services.architecture.approval_workflow import (
         ArchitectureApprovalWorkflow,
         _decode_reviewers,
     )
 
-    wf = ArchitectureApprovalWorkflow(
-        litellm_client=MagicMock(), event_bus=event_bus
-    )
+    wf = ArchitectureApprovalWorkflow(litellm_client=MagicMock(), event_bus=event_bus)
     approval = await wf.request_approval(
         artifact_type="risk_register",
         artifact_id=uuid.uuid4(),
@@ -161,9 +154,7 @@ async def test_approval_deny_blocks_artifact(sqlite_db, event_bus, captured_even
         _decode_reviewers,
     )
 
-    wf = ArchitectureApprovalWorkflow(
-        litellm_client=MagicMock(), event_bus=event_bus
-    )
+    wf = ArchitectureApprovalWorkflow(litellm_client=MagicMock(), event_bus=event_bus)
     approval = await wf.request_approval(
         artifact_type="risk_register",
         artifact_id=uuid.uuid4(),
@@ -195,14 +186,10 @@ async def test_approval_deny_blocks_artifact(sqlite_db, event_bus, captured_even
 
 
 @pytest.mark.asyncio
-async def test_approval_get_pending_filters_by_reviewer(
-    sqlite_db, event_bus, captured_events
-):
+async def test_approval_get_pending_filters_by_reviewer(sqlite_db, event_bus, captured_events):
     from app.services.architecture.approval_workflow import ArchitectureApprovalWorkflow
 
-    wf = ArchitectureApprovalWorkflow(
-        litellm_client=MagicMock(), event_bus=event_bus
-    )
+    wf = ArchitectureApprovalWorkflow(litellm_client=MagicMock(), event_bus=event_bus)
     tenant = uuid.uuid4()
 
     a1 = await wf.request_approval(

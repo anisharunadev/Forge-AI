@@ -14,8 +14,7 @@ a marketplace row yet — so the UI can render the full catalog.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
@@ -28,9 +27,17 @@ from app.services.connector_manager import ConnectorManager, connector_manager
 from app.services.mcp_registry import (
     MCPCategory,
     MCPServerDefinition,
+)
+from app.services.mcp_registry import (
     get_server as registry_get_server,
+)
+from app.services.mcp_registry import (
     list_categories as registry_list_categories,
+)
+from app.services.mcp_registry import (
     list_servers as registry_list_servers,
+)
+from app.services.mcp_registry import (
     to_dict as registry_to_dict,
 )
 
@@ -223,7 +230,7 @@ marketplace = MarketplaceService()
 
 
 async def list_available_servers(
-    category: Optional[MCPCategory] = None,
+    category: MCPCategory | None = None,
 ) -> list[dict]:
     """List all available MCP servers from the registry as dicts.
 
@@ -236,7 +243,7 @@ async def list_available_servers(
     return [registry_to_dict(s) for s in servers]
 
 
-async def get_server_details(name: str) -> Optional[dict]:
+async def get_server_details(name: str) -> dict | None:
     """Return registry metadata for a single server, or None if missing."""
     server = registry_get_server(name)
     if server is None:

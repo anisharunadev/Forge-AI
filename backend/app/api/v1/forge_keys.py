@@ -15,13 +15,16 @@ carry only the fingerprint + alias metadata.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.core.auth import CurrentUser
 from app.core.logging import get_logger
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.agent import Agent
@@ -41,9 +44,6 @@ from app.services.forge_key_broker import (
     ForgeKeyBroker,
     forge_key_broker,
 )
-from app.core.auth import CurrentUser
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/forge", tags=["forge.keys"])
 logger = get_logger(__name__)
@@ -79,9 +79,7 @@ async def require_admin(
     return principal
 
 
-async def _load_agent_for_principal(
-    agent_id: UUID, principal: AuthenticatedPrincipal
-) -> Agent:
+async def _load_agent_for_principal(agent_id: UUID, principal: AuthenticatedPrincipal) -> Agent:
     """Fetch the agent and enforce cross-tenant isolation.
 
     Any attempt by a caller to touch an agent belonging to a different
@@ -117,9 +115,9 @@ def _status_to_issue_response(status_obj: ForgeKeyStatus) -> ForgeKeyIssueRespon
         model_scope=list(status_obj.model_scope),
         created_at=status_obj.created_at,
     )
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post(
     "/agents/{agent_id}/key/issue",
     response_model=ForgeKeyIssueResponse,
@@ -181,9 +179,9 @@ async def get_key_status(
             detail="no_active_key",
         )
     return status_obj
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post(
     "/agents/{agent_id}/key/rotate",
     response_model=ForgeKeyRotateResponse,
@@ -207,17 +205,15 @@ async def rotate_key(
         )
 
     try:
-        return await forge_key_broker.rotate(
-            agent_id=agent_id, reason=body.reason
-        )
+        return await forge_key_broker.rotate(agent_id=agent_id, reason=body.reason)
     except LookupError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(exc),
         ) from exc
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post(
     "/agents/{agent_id}/key/revoke",
     response_model=ForgeKeyRevokeResponse,
@@ -239,9 +235,7 @@ async def revoke_key(
         )
 
     try:
-        return await forge_key_broker.revoke(
-            agent_id=agent_id, reason=body.reason
-        )
+        return await forge_key_broker.revoke(agent_id=agent_id, reason=body.reason)
     except LookupError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -304,7 +298,7 @@ async def list_keys(
 
     return ForgeKeyStatusListResponse(
         keys=results,
-        fetched_at=datetime.now(timezone.utc),
+        fetched_at=datetime.now(UTC),
     )
 
 

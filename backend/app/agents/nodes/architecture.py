@@ -27,7 +27,6 @@ from app.agents.tools.mcp_client import (
 from app.services.artifact_registry import ArtifactRegistry
 from app.services.litellm_client import LiteLLMClient
 
-
 ARTIFACT_TYPE_ADR = "architecture_decision_record"
 ARTIFACT_TYPE_API_CONTRACT = "api_contract"
 ARTIFACT_TYPE_RISK_REGISTER = "risk_register"
@@ -92,9 +91,7 @@ class ArchitectureNode(BasePhaseNode):
             user_id=user_id,
         )
         if not contract_result.ok:
-            raise RuntimeError(
-                f"forge-arch-contract-spec failed: {contract_result.error}"
-            )
+            raise RuntimeError(f"forge-arch-contract-spec failed: {contract_result.error}")
 
         # 3. Compose the three typed artifacts.
         adr_payload = {
@@ -164,9 +161,7 @@ class ArchitectureNode(BasePhaseNode):
         *,
         target: ArtifactRef | None = None,
     ) -> ArtifactRef:
-        canonical = json.dumps(
-            payload, sort_keys=True, separators=(",", ":"), default=str
-        )
+        canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
         content_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
         artifact = await self._registry.create(
             tenant_id=tenant_id,

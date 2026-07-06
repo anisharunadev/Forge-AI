@@ -6,7 +6,8 @@ endpoints stay terse and RLS is impossible to forget.
 
 from __future__ import annotations
 
-from typing import Annotated, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status

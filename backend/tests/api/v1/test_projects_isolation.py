@@ -3,6 +3,7 @@
 Uses the main app + dependency override (the canonical pattern in
 tests/api/test_forge_chat_router.py).
 """
+
 from __future__ import annotations
 
 import uuid
@@ -47,6 +48,7 @@ def test_cross_tenant_project_id_is_rejected(two_tenants) -> None:
 
     async def dep():
         return _principal(tb.id)
+
     app.dependency_overrides[deps_mod.get_current_principal] = dep
 
     client = TestClient(app)
@@ -65,12 +67,11 @@ def test_own_tenant_project_id_returns_404_when_missing(two_tenants) -> None:
 
     async def dep():
         return _principal(ta.id)
+
     app.dependency_overrides[deps_mod.get_current_principal] = dep
 
     bogus = uuid.uuid4()
     client = TestClient(app)
     r = client.get(f"/api/v1/projects/{bogus}")
     # 404 (not found) is the canonical response.
-    assert r.status_code in (404, 422), (
-        f"Expected 404 for missing project; got {r.status_code}"
-    )
+    assert r.status_code in (404, 422), f"Expected 404 for missing project; got {r.status_code}"

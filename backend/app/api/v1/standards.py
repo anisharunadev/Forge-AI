@@ -34,13 +34,13 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 
-from app.api.deps import DbSession, Principal, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import DbSession, get_current_principal
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.standard import Standard
 from app.services.litellm_admin import list_guardrails
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/standards", tags=["standards"])
 
@@ -158,9 +158,9 @@ async def list_standards(
     manual_standards = [_standard_row_to_attestation(r) for r in rows]
 
     return llm_standards + manual_standards
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("", response_model=StandardRead, status_code=201)
 @audit(action="standards.create", target_type="standard")
 async def create_standard(
