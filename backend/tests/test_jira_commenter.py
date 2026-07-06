@@ -22,9 +22,7 @@ def _make_capture_handler(captured):
         if method != "__catalog__":
             captured.append((server, method, params))
         if method == "add_comment":
-            return MCPResult(
-                server=server, method=method, ok=True, output={"id": "1", "self": "x"}
-            )
+            return MCPResult(server=server, method=method, ok=True, output={"id": "1", "self": "x"})
         if method == "__catalog__":
             from app.agents.tools.mcp_client import DEFAULT_CATALOG
 

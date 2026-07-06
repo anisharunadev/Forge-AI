@@ -21,7 +21,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Literal
@@ -29,10 +29,10 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-
 # ---------------------------------------------------------------------------
 # Severity — drives the PASS/FAIL decision (NFR-042).
 # ---------------------------------------------------------------------------
+
 
 class Severity(str, Enum):
     """Severity scale used by every scanner.
@@ -49,11 +49,11 @@ class Severity(str, Enum):
     CRITICAL = "critical"
 
     @classmethod
-    def fails_run(cls) -> tuple["Severity", ...]:
+    def fails_run(cls) -> tuple[Severity, ...]:
         """Severities that force a FAIL decision."""
         return (cls.HIGH, cls.CRITICAL)
 
-    def at_or_above(self, threshold: "Severity") -> bool:
+    def at_or_above(self, threshold: Severity) -> bool:
         order = [
             Severity.INFO,
             Severity.LOW,
@@ -72,7 +72,7 @@ VALIDATOR_VERSION = "1.0.0"
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _new_uuid() -> UUID:
@@ -87,6 +87,7 @@ def _new_uuid() -> UUID:
 # shape exactly. The canonical schema (when created) must satisfy the
 # same duck-type contract used here.
 # ---------------------------------------------------------------------------
+
 
 class ValidationFinding(BaseModel):
     """A single finding produced by one of the scanners.
@@ -162,7 +163,7 @@ class ValidationReport(BaseModel):
         *,
         findings: list[ValidationFinding],
         run_id: UUID | None = None,
-    ) -> "ValidationReport":
+    ) -> ValidationReport:
         """Compute the deterministic PASS/FAIL decision.
 
         NFR-042:
@@ -180,9 +181,7 @@ class ValidationReport(BaseModel):
                 highest = f.severity
 
         decision: Literal["PASS", "FAIL"] = "PASS"
-        if any(
-            f.severity.at_or_above(Severity.HIGH) for f in findings
-        ):
+        if any(f.severity.at_or_above(Severity.HIGH) for f in findings):
             decision = "FAIL"
 
         return cls(
@@ -218,6 +217,7 @@ class ValidationReport(BaseModel):
 # Scanner target — what the validators scan.
 # ---------------------------------------------------------------------------
 
+
 class ScanTarget(BaseModel):
     """The artifact under validation.
 
@@ -239,6 +239,7 @@ class ScanTarget(BaseModel):
 # ---------------------------------------------------------------------------
 # Scanner output envelope.
 # ---------------------------------------------------------------------------
+
 
 class ScannerEnvelope(BaseModel):
     """One scanner's contribution to the aggregate.
@@ -262,6 +263,7 @@ class ScannerEnvelope(BaseModel):
 # Per-scanner finding buckets used inside the state.
 # ---------------------------------------------------------------------------
 
+
 class FindingsBuckets(BaseModel):
     """Container that groups per-scanner finding lists."""
 
@@ -275,7 +277,7 @@ class FindingsBuckets(BaseModel):
     def all(self) -> list[ValidationFinding]:
         return [*self.secrets, *self.iac, *self.vulns, *self.standards]
 
-    def merge(self, other: "FindingsBuckets") -> "FindingsBuckets":
+    def merge(self, other: FindingsBuckets) -> FindingsBuckets:
         return FindingsBuckets(
             secrets=[*self.secrets, *other.secrets],
             iac=[*self.iac, *other.iac],
@@ -287,6 +289,7 @@ class FindingsBuckets(BaseModel):
 # ---------------------------------------------------------------------------
 # Tool bundle — explicit allow-list (NFR-043).
 # ---------------------------------------------------------------------------
+
 
 class CodeValidatorToolBundle(BaseModel):
     """The narrow set of read-only scanner tools the validator may use.
@@ -315,13 +318,14 @@ class CodeValidatorToolBundle(BaseModel):
     )
 
     @classmethod
-    def default(cls) -> "CodeValidatorToolBundle":
+    def default(cls) -> CodeValidatorToolBundle:
         return cls()
 
 
 # ---------------------------------------------------------------------------
 # CodeValidatorState — the LangGraph state.
 # ---------------------------------------------------------------------------
+
 
 class CodeValidatorState(BaseModel):
     """The state threaded through the Code Validator sub-graph.
@@ -347,9 +351,7 @@ class CodeValidatorState(BaseModel):
     actor_id: UUID
 
     target: ScanTarget
-    tool_bundle: CodeValidatorToolBundle = Field(
-        default_factory=CodeValidatorToolBundle.default
-    )
+    tool_bundle: CodeValidatorToolBundle = Field(default_factory=CodeValidatorToolBundle.default)
     findings: FindingsBuckets = Field(default_factory=FindingsBuckets)
     # Per-scanner scratch fields — written by the corresponding scanner
     # node, merged into ``findings`` by ``aggregate_findings``. We use
@@ -381,7 +383,7 @@ class CodeValidatorState(BaseModel):
         self,
         scanner: str,
         findings: list[ValidationFinding],
-    ) -> "CodeValidatorState":
+    ) -> CodeValidatorState:
         bucket_map = {
             "secrets": "secrets",
             "iac": "iac",
@@ -401,7 +403,7 @@ class CodeValidatorState(BaseModel):
             }
         )
 
-    def with_envelope(self, envelope: ScannerEnvelope) -> "CodeValidatorState":
+    def with_envelope(self, envelope: ScannerEnvelope) -> CodeValidatorState:
         return self.model_copy(
             update={
                 "scanner_envelopes": [*self.scanner_envelopes, envelope],
@@ -409,17 +411,13 @@ class CodeValidatorState(BaseModel):
             }
         )
 
-    def with_report(self, report: ValidationReport) -> "CodeValidatorState":
-        return self.model_copy(
-            update={"report": report, "updated_at": _utcnow()}
-        )
+    def with_report(self, report: ValidationReport) -> CodeValidatorState:
+        return self.model_copy(update={"report": report, "updated_at": _utcnow()})
 
-    def add_error(self, message: str) -> "CodeValidatorState":
-        return self.model_copy(
-            update={"errors": [*self.errors, message], "updated_at": _utcnow()}
-        )
+    def add_error(self, message: str) -> CodeValidatorState:
+        return self.model_copy(update={"errors": [*self.errors, message], "updated_at": _utcnow()})
 
-    def add_cost(self, cost: Decimal) -> "CodeValidatorState":
+    def add_cost(self, cost: Decimal) -> CodeValidatorState:
         if cost < 0:
             raise ValueError("cost increment must be non-negative")
         return self.model_copy(
@@ -430,7 +428,7 @@ class CodeValidatorState(BaseModel):
         return self.model_dump(mode="json")
 
     @classmethod
-    def from_langgraph_state(cls, payload: dict[str, Any]) -> "CodeValidatorState":
+    def from_langgraph_state(cls, payload: dict[str, Any]) -> CodeValidatorState:
         if "cost_so_far" in payload:
             payload = {**payload, "cost_so_far": Decimal(str(payload["cost_so_far"]))}
         return cls.model_validate(payload)

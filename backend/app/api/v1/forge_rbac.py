@@ -16,9 +16,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import DbSession, Principal, require_permission
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import DbSession, require_permission
 from app.core.audit import audit
 from app.core.logging import get_logger
 from app.db.models.user import User
@@ -26,7 +27,6 @@ from app.schemas.common import Page
 from app.schemas.rbac_v2 import (
     BulkTeamMemberAddRequest,
     BulkTeamMemberAddResponse,
-    BulkTeamMemberResult,
     CustomerCreate,
     CustomerRead,
     CustomerUpdate,
@@ -43,13 +43,11 @@ from app.schemas.rbac_v2 import (
     TeamMemberUpdate,
     TeamModelAllowlistRequest,
     TeamModelAllowlistResponse,
-    TeamPermissionsList,
     TeamPermissionOverride,
+    TeamPermissionsList,
     TeamRead,
 )
 from app.services.rbac_v2_service import rbac_v2_service
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/forge/rbac", tags=["forge.rbac"])
 logger = get_logger(__name__)
@@ -77,9 +75,9 @@ async def list_orgs(
         page=page,
         page_size=page_size,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/orgs", response_model=OrganizationRead, status_code=status.HTTP_201_CREATED)
 @audit(action="forge.rbac.org_created", target_type="organization")
 async def create_org(
@@ -110,9 +108,9 @@ async def get_org(
     if org is None:
         raise HTTPException(status_code=404, detail="org_not_found")
     return OrganizationRead.model_validate(org)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/orgs/{org_id}", response_model=OrganizationRead)
 @audit(action="forge.rbac.org_updated", target_type="organization")
 async def update_org(
@@ -130,9 +128,9 @@ async def update_org(
     if org is None:
         raise HTTPException(status_code=404, detail="org_not_found")
     return OrganizationRead.model_validate(org)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.delete("/orgs/{org_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 @audit(action="forge.rbac.org_deleted", target_type="organization")
 async def delete_org(
@@ -159,18 +157,16 @@ async def list_teams(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
 ) -> Page[TeamRead]:
-    items = await rbac_v2_service.list_teams(
-        db, tenant_id=UUID(principal.tenant_id), org_id=org_id
-    )
+    items = await rbac_v2_service.list_teams(db, tenant_id=UUID(principal.tenant_id), org_id=org_id)
     return Page(
         items=[TeamRead.model_validate(t) for t in items],
         total=len(items),
         page=page,
         page_size=page_size,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/teams", response_model=TeamRead, status_code=status.HTTP_201_CREATED)
 @audit(action="forge.rbac.team_created", target_type="team")
 async def create_team(
@@ -201,9 +197,9 @@ async def get_team(
     if team is None:
         raise HTTPException(status_code=404, detail="team_not_found")
     return TeamRead.model_validate(team)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/teams/{team_id}/block", response_model=TeamRead)
 @audit(action="forge.rbac.team_blocked", target_type="team")
 async def block_team(
@@ -211,13 +207,15 @@ async def block_team(
     db: DbSession,
     principal: Annotated[object, Depends(require_permission("rbac:team:block"))],
 ) -> TeamRead:
-    team = await rbac_v2_service.block_team(db, tenant_id=UUID(principal.tenant_id), team_id=team_id)
+    team = await rbac_v2_service.block_team(
+        db, tenant_id=UUID(principal.tenant_id), team_id=team_id
+    )
     if team is None:
         raise HTTPException(status_code=404, detail="team_not_found")
     return TeamRead.model_validate(team)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/teams/{team_id}/unblock", response_model=TeamRead)
 @audit(action="forge.rbac.team_unblocked", target_type="team")
 async def unblock_team(
@@ -225,7 +223,9 @@ async def unblock_team(
     db: DbSession,
     principal: Annotated[object, Depends(require_permission("rbac:team:unblock"))],
 ) -> TeamRead:
-    team = await rbac_v2_service.unblock_team(db, tenant_id=UUID(principal.tenant_id), team_id=team_id)
+    team = await rbac_v2_service.unblock_team(
+        db, tenant_id=UUID(principal.tenant_id), team_id=team_id
+    )
     if team is None:
         raise HTTPException(status_code=404, detail="team_not_found")
     return TeamRead.model_validate(team)
@@ -267,9 +267,9 @@ async def list_members(
         for m in members
     ]
     return Page(items=items, total=len(items), page=1, page_size=len(items) or 1)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post(
     "/teams/{team_id}/members",
     response_model=TeamMemberRead,
@@ -297,9 +297,9 @@ async def add_member(
         status=member.status,
         created_at=member.created_at,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/teams/{team_id}/members/{user_id}", response_model=TeamMemberRead)
 @audit(action="forge.rbac.member_role_changed", target_type="team_member")
 async def change_member_role(
@@ -326,9 +326,9 @@ async def change_member_role(
         status=member.status,
         created_at=member.created_at,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.delete(
     "/teams/{team_id}/members/{user_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -369,9 +369,9 @@ async def list_customers(
         page=1,
         page_size=len(items) or 1,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/customers", response_model=CustomerRead, status_code=status.HTTP_201_CREATED)
 @audit(action="forge.rbac.customer_created", target_type="customer")
 async def create_customer(
@@ -388,9 +388,9 @@ async def create_customer(
         billing_ref=payload.billing_ref,
     )
     return CustomerRead.model_validate(customer)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/customers/{customer_id}/block", response_model=CustomerRead)
 @audit(action="forge.rbac.customer_blocked", target_type="customer")
 async def block_customer(
@@ -404,9 +404,9 @@ async def block_customer(
     if customer is None:
         raise HTTPException(status_code=404, detail="customer_not_found")
     return CustomerRead.model_validate(customer)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/customers/{customer_id}/unblock", response_model=CustomerRead)
 @audit(action="forge.rbac.customer_unblocked", target_type="customer")
 async def unblock_customer(
@@ -435,9 +435,7 @@ async def list_users(
 ) -> Page[dict]:
     if not getattr(principal, "tenant_id", None):
         raise HTTPException(status_code=403, detail="token_missing_tenant_claim")
-    result = await db.execute(
-        select(User).where(User.tenant_id == UUID(principal.tenant_id))
-    )
+    result = await db.execute(select(User).where(User.tenant_id == UUID(principal.tenant_id)))
     users = result.scalars().all()
     items = [
         {
@@ -464,8 +462,6 @@ async def users_available(
 # Admin: bootstrap tenant (super-admin only)
 # ---------------------------------------------------------------------------
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/admin/bootstrap-tenant", status_code=status.HTTP_201_CREATED)
 @audit(action="forge.rbac.tenant_bootstrapped", target_type="tenant")
 async def bootstrap_tenant(
@@ -509,9 +505,9 @@ async def list_projects(
         page=page,
         page_size=page_size,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/projects", response_model=ProjectRead, status_code=status.HTTP_201_CREATED)
 @audit(action="forge.rbac.project_created", target_type="project")
 async def create_project(
@@ -546,9 +542,9 @@ async def get_project(
     if project is None:
         raise HTTPException(status_code=404, detail="project_not_found")
     return ProjectRead.model_validate(project)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/projects/{project_id}", response_model=ProjectRead)
 @audit(action="forge.rbac.project_updated", target_type="project")
 async def update_project(
@@ -566,10 +562,12 @@ async def update_project(
     if project is None:
         raise HTTPException(status_code=404, detail="project_not_found")
     return ProjectRead.model_validate(project)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
-@router.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
+@router.delete(
+    "/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None
+)
 @audit(action="forge.rbac.project_deleted", target_type="project")
 async def delete_project(
     project_id: UUID,
@@ -587,8 +585,6 @@ async def delete_project(
 # Bulk member add (step-78 F12 acceptance #3)
 # ---------------------------------------------------------------------------
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post(
     "/teams/{team_id}/members/bulk",
     response_model=BulkTeamMemberAddResponse,
@@ -621,8 +617,6 @@ async def add_members_bulk(
 # Customer update + delete (step-78 F12 §"Forge-side CRUD")
 # ---------------------------------------------------------------------------
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/customers/{customer_id}", response_model=CustomerRead)
 @audit(action="forge.rbac.customer_updated", target_type="customer")
 async def update_customer(
@@ -640,10 +634,12 @@ async def update_customer(
     if customer is None:
         raise HTTPException(status_code=404, detail="customer_not_found")
     return CustomerRead.model_validate(customer)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
-@router.delete("/customers/{customer_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
+@router.delete(
+    "/customers/{customer_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None
+)
 @audit(action="forge.rbac.customer_deleted", target_type="customer")
 async def delete_customer(
     customer_id: UUID,
@@ -661,8 +657,6 @@ async def delete_customer(
 # Team model allowlist (step-78 F12 §"Tag-based access")
 # ---------------------------------------------------------------------------
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post(
     "/teams/{team_id}/model/add",
     response_model=TeamModelAllowlistResponse,
@@ -680,9 +674,9 @@ async def add_team_model(
     if team is None:
         raise HTTPException(status_code=404, detail="team_not_found")
     return TeamModelAllowlistResponse(team_id=team.id, model_allowlist=team.model_allowlist)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post(
     "/teams/{team_id}/model/delete",
     response_model=TeamModelAllowlistResponse,
@@ -719,9 +713,7 @@ async def list_team_permissions(
     db: DbSession,
     principal: Annotated[object, Depends(require_permission("rbac:team:read"))],
 ) -> TeamPermissionsList:
-    team = await rbac_v2_service.get_team(
-        db, tenant_id=UUID(principal.tenant_id), team_id=team_id
-    )
+    team = await rbac_v2_service.get_team(db, tenant_id=UUID(principal.tenant_id), team_id=team_id)
     if team is None:
         raise HTTPException(status_code=404, detail="team_not_found")
     overrides = [
@@ -742,9 +734,9 @@ async def list_team_permissions(
         ),
         overrides=overrides,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/teams/{team_id}/permissions_update", response_model=TeamPermissionsList)
 @audit(action="forge.rbac.permission_granted", target_type="team")
 async def update_team_permissions(
@@ -753,9 +745,7 @@ async def update_team_permissions(
     db: DbSession,
     principal: Annotated[object, Depends(require_permission("rbac:team:update"))],
 ) -> TeamPermissionsList:
-    team = await rbac_v2_service.get_team(
-        db, tenant_id=UUID(principal.tenant_id), team_id=team_id
-    )
+    team = await rbac_v2_service.get_team(db, tenant_id=UUID(principal.tenant_id), team_id=team_id)
     if team is None:
         raise HTTPException(status_code=404, detail="team_not_found")
     bucket = _PERMISSION_OVERRIDES.setdefault(team_id, {})

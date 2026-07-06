@@ -9,8 +9,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -113,7 +112,7 @@ class DocIngestionService:
                 "target_id": target_id,
                 "connector_id": str(connector.id) if connector else None,
                 "placeholder": connector is None,
-                "fetched_at": datetime.now(timezone.utc).isoformat(),
+                "fetched_at": datetime.now(UTC).isoformat(),
             },
             tenant_id=tenant_id,
             project_id=project_id,

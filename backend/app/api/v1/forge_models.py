@@ -6,10 +6,12 @@ merging, caching, and audit fires inside the service.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, status
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 from app.core.auth import CurrentUser
 from app.core.logging import get_logger
 from app.schemas.forge_models import (
@@ -19,8 +21,6 @@ from app.schemas.forge_models import (
     RefreshResponse,
 )
 from app.services.forge_models import ModelsService
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/forge", tags=["forge.models"])
 logger = get_logger(__name__)
@@ -49,7 +49,7 @@ async def list_models(
         return ModelsListResponse(
             models=[],
             groups=[],
-            fetched_at=datetime.now(timezone.utc),
+            fetched_at=datetime.now(UTC),
         )
 
     service = ModelsService()
@@ -65,7 +65,7 @@ async def list_models(
     return ModelsListResponse(
         models=descriptors,
         groups=groups,
-        fetched_at=datetime.now(timezone.utc),
+        fetched_at=datetime.now(UTC),
     )
 
 
@@ -82,7 +82,7 @@ async def list_groups(
     groups = await service.groups()
     return ModelsGroupedResponse(
         groups=groups,
-        fetched_at=datetime.now(timezone.utc),
+        fetched_at=datetime.now(UTC),
     )
 
 
@@ -105,9 +105,9 @@ async def get_model(
             detail="model_not_found",
         )
     return descriptor
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post(
     "/models/refresh",
     response_model=RefreshResponse,
@@ -136,7 +136,7 @@ async def refresh_models(
     await service.refresh_cache(principal=service_principal)
     return RefreshResponse(
         refreshed=["v1_models", "model_info", "cost_map"],
-        fetched_at=datetime.now(timezone.utc),
+        fetched_at=datetime.now(UTC),
     )
 
 

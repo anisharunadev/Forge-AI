@@ -20,7 +20,6 @@ from app.agents.tools.mcp_client import MCPClient, build_default_mcp_client
 from app.services.artifact_registry import ArtifactRegistry
 from app.services.litellm_client import LiteLLMClient
 
-
 ARTIFACT_TYPE_REVIEW_REPORT = "review_report"
 
 
@@ -111,9 +110,9 @@ class ReviewNode(BasePhaseNode):
                         workflow_id=state.run_id,
                         actor_id=user_id,
                     )
-                    llm_summary = response.get("choices", [{}])[0].get(
-                        "message", {}
-                    ).get("content", "")
+                    llm_summary = (
+                        response.get("choices", [{}])[0].get("message", {}).get("content", "")
+                    )
             except Exception:  # noqa: BLE001
                 llm_summary = None
 
@@ -123,9 +122,7 @@ class ReviewNode(BasePhaseNode):
             "mcp_context": diff_ctx.output if diff_ctx.ok else None,
             "llm_summary": llm_summary,
         }
-        canonical = json.dumps(
-            payload, sort_keys=True, separators=(",", ":"), default=str
-        )
+        canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
         content_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
         artifact = await self._registry.create(
             tenant_id=tenant_id,

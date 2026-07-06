@@ -26,9 +26,7 @@ def _resolve_key() -> bytes:
     raw = os.environ.get("ENV_VAR_ENCRYPTION_KEY")
     if raw:
         return raw.encode() if isinstance(raw, str) else raw
-    fallback = os.environ.get(
-        "JWT_SECRET", "dev-jwt-secret-change-in-prod"
-    )
+    fallback = os.environ.get("JWT_SECRET", "dev-jwt-secret-change-in-prod")
     derived = hashlib.sha256(fallback.encode()).digest()
     return base64.urlsafe_b64encode(derived)
 

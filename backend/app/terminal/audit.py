@@ -8,9 +8,8 @@ of the generic AuditEvent stream.
 from __future__ import annotations
 
 import hashlib
-import json
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -54,13 +53,15 @@ class TerminalAudit:
     ) -> TerminalAuditRecord:
         """Persist one command + a SHA-256 of its output for forensic replay."""
         output_hash = self._hash_output(output)
-        occurred = datetime.now(timezone.utc)
+        occurred = datetime.now(UTC)
         factory = get_session_factory()
         async with factory() as session:
             session.add(
                 AuditEvent(
                     tenant_id=str(tenant_id),
-                    project_id=str(project_id) if project_id else "00000000-0000-0000-0000-000000000000",
+                    project_id=str(project_id)
+                    if project_id
+                    else "00000000-0000-0000-0000-000000000000",
                     actor_id=str(actor_id) if actor_id else None,
                     action="terminal.command",
                     target_type="terminal_session",
@@ -113,13 +114,15 @@ class TerminalAudit:
             session.add(
                 AuditEvent(
                     tenant_id=str(tenant_id),
-                    project_id=str(project_id) if project_id else "00000000-0000-0000-0000-000000000000",
+                    project_id=str(project_id)
+                    if project_id
+                    else "00000000-0000-0000-0000-000000000000",
                     actor_id=str(actor_id) if actor_id else None,
                     action=f"terminal.session.{event}",
                     target_type="terminal_session",
                     target_id=session_id,
                     payload=payload or {},
-                    occurred_at=datetime.now(timezone.utc),
+                    occurred_at=datetime.now(UTC),
                 )
             )
             await session.commit()

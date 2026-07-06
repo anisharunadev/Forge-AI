@@ -7,13 +7,15 @@ No business logic — aggregation lives in the service.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 from app.core.auth import CurrentUser
 from app.core.logging import get_logger
 from app.core.security import AuthenticatedPrincipal
@@ -25,8 +27,6 @@ from app.services.forge_spend import (
     SpendSummary,
     spend_service,
 )
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/forge", tags=["forge.spend"])
 logger = get_logger(__name__)
@@ -47,7 +47,7 @@ def _parse_since(raw: str) -> datetime:
     """
     key = raw.strip().lower()
     if key in _SINCE_ALIASES:
-        return datetime.now(timezone.utc) - _SINCE_ALIASES[key]
+        return datetime.now(UTC) - _SINCE_ALIASES[key]
     # ISO-8601 fallback. fromisoformat handles ``...Z`` only on 3.11+ via
     # the ``Z`` suffix; be liberal.
     cleaned = key.replace("z", "+00:00")
@@ -171,9 +171,9 @@ class BackfillRequest(BaseModel):
 
     since: datetime = Field(..., description="ISO-8601 lower bound")
     dry_run: bool = Field(default=False)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post(
     "/spend/backfill",
     response_model=BackfillResponse,

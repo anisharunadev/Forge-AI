@@ -44,15 +44,15 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import DbSession, Principal, require_permission, get_current_principal
-from app.core.audit import audit
-from app.core.security import AuthenticatedPrincipal
-from app.core.config import settings
-from app.core.logging import get_logger
-from app.db.models.tenant import Tenant
-from app.db.models.user import User
 from app.agents.approval_gate import require_approval_phase
 from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import DbSession, get_current_principal, require_permission
+from app.core.audit import audit
+from app.core.config import settings
+from app.core.logging import get_logger
+from app.core.security import AuthenticatedPrincipal
+from app.db.models.tenant import Tenant
+from app.db.models.user import User
 
 logger = get_logger(__name__)
 
@@ -188,15 +188,13 @@ async def _mirror_user_into_tenant(
 # Endpoints
 # ---------------------------------------------------------------------------
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("", response_model=TenantRead, status_code=status.HTTP_201_CREATED)
 @audit(action="tenants.create", target_type="tenant")
 async def create_tenant(
     body: TenantCreate,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     db: DbSession,
-    _perm: AuthenticatedPrincipal = Depends(require_permission("tenants:write"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("tenants:write")),
 ) -> TenantRead:
     """Create a new workspace and mirror the caller into it as owner.
 
@@ -243,9 +241,7 @@ async def create_tenant(
     ).scalar_one_or_none()
     if creator is not None:
         try:
-            await _mirror_user_into_tenant(
-                db, source_user=creator, target_tenant_id=tenant.id
-            )
+            await _mirror_user_into_tenant(db, source_user=creator, target_tenant_id=tenant.id)
         except Exception as exc:  # noqa: BLE001 — best-effort mirror
             logger.warning(
                 "tenants.create.user_mirror_failed",
@@ -283,9 +279,9 @@ async def create_tenant(
     )
 
     return _tenant_to_read(tenant, role="owner", is_current=False)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post(
     "/{tenant_id}/switch",
     response_model=SwitchTenantResponse,
@@ -435,9 +431,9 @@ async def get_branding(
     settings = dict(tenant.settings or {})
     branding = dict(_BRANDING_DEFAULTS, **(settings.get("branding") or {}))
     return BrandingRead(**branding)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/{tenant_id}/branding", response_model=BrandingRead)
 @audit(action="tenants.branding.update", target_type="tenant")
 async def patch_branding(

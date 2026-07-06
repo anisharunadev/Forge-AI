@@ -19,9 +19,9 @@ from uuid import UUID
 from app.agents.nodes.base import BasePhaseNode
 from app.agents.sdlc_state import ArtifactRef, SDLCPhase, SDLCState
 from app.agents.tools.gsd_wrapper import GSDWrapper, build_default_wrapper
-from app.services.agent_runtime import AgentRuntime, agent_runtime as default_runtime
+from app.services.agent_runtime import AgentRuntime
+from app.services.agent_runtime import agent_runtime as default_runtime
 from app.services.artifact_registry import ArtifactRegistry
-
 
 ARTIFACT_TYPE_CODE_CHANGES = "code_changes"
 
@@ -94,9 +94,7 @@ class ImplementationNode(BasePhaseNode):
             "runtime_handle_id": str(handle.id),
             "workspace_path": workspace_path,
         }
-        canonical = json.dumps(
-            payload, sort_keys=True, separators=(",", ":"), default=str
-        )
+        canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
         content_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
         artifact = await self._registry.create(
             tenant_id=tenant_id,

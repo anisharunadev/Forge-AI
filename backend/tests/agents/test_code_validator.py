@@ -10,22 +10,22 @@ Six unit tests, matching the ticket contract:
 6. Independence: code_validator cannot import from sdlc_agent
    (asserted at module-load time).
 """
+
 from __future__ import annotations
 
 import asyncio
-import os
 import sys
 import uuid
 from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _ensure_pythonpath() -> None:
     """Make sure ``backend`` is on sys.path so absolute imports resolve.
@@ -87,12 +87,13 @@ def _finding(severity: str, **kwargs: Any):
 # 1. Empty scan returns PASS
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_empty_scan_returns_pass():
-    from app.agents.code_validator_state import ValidationReport
     from app.agents.code_validator_nodes.aggregate_findings import (
         aggregate_findings,
     )
+    from app.agents.code_validator_state import ValidationReport
 
     state = _state()
     result = await aggregate_findings(state)
@@ -108,6 +109,7 @@ async def test_empty_scan_returns_pass():
 # ---------------------------------------------------------------------------
 # 2. High-severity finding returns FAIL
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_high_severity_finding_returns_fail():
@@ -153,6 +155,7 @@ async def test_low_severity_findings_pass():
 # ---------------------------------------------------------------------------
 # 3. Scanner fan-out executes all 4 scanners in parallel (mock)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_scanner_fan_out_invokes_all_four_scanners():
@@ -244,6 +247,7 @@ def _make_stub_node(node_fn, scanner):
 # 4. State isolation: CodeValidatorState does not import SDLCState
 # ---------------------------------------------------------------------------
 
+
 def test_code_validator_state_does_not_import_sdlc_state():
     """Assert at module-load time that SDLCState is not imported."""
     import app.agents.code_validator_state as cv_state
@@ -259,9 +263,7 @@ def test_code_validator_state_does_not_import_sdlc_state():
         "import sdlc_state",
     )
     for needle in forbidden_substrings:
-        assert needle not in src_path, (
-            f"code_validator_state must not import SDLC state: {needle}"
-        )
+        assert needle not in src_path, f"code_validator_state must not import SDLC state: {needle}"
 
 
 def test_code_validator_state_carries_tenant_and_project():
@@ -275,6 +277,7 @@ def test_code_validator_state_carries_tenant_and_project():
 # ---------------------------------------------------------------------------
 # 5. Prompt template loads correctly
 # ---------------------------------------------------------------------------
+
 
 def test_prompt_template_loads():
     from app.agents.code_validator import load_prompt
@@ -305,6 +308,7 @@ def test_prompt_template_renders_validator_version():
 # 6. Independence: code_validator cannot import from sdlc_agent
 # ---------------------------------------------------------------------------
 
+
 def test_code_validator_does_not_import_sdlc_agent():
     import app.agents.code_validator as cv
 
@@ -328,15 +332,13 @@ def test_code_validator_does_not_import_sdlc_agent():
         "import sdlc_agent",
     )
     for needle in forbidden_substrings:
-        assert needle not in src_path, (
-            f"code_validator must not import sdlc_agent: {needle}"
-        )
+        assert needle not in src_path, f"code_validator must not import sdlc_agent: {needle}"
 
 
 def test_code_validator_nodes_do_not_import_sdlc_agent():
     """Each scanner node file must be free of sdlc_agent imports."""
+
     import app.agents.code_validator_nodes as nodes_pkg
-    import inspect
 
     module_files = [
         nodes_pkg.__file__,
@@ -355,14 +357,13 @@ def test_code_validator_nodes_do_not_import_sdlc_agent():
             continue
         src = Path(f).read_text(encoding="utf-8")
         for needle in forbidden_substrings:
-            assert needle not in src, (
-                f"{f} must not import sdlc_agent: {needle}"
-            )
+            assert needle not in src, f"{f} must not import sdlc_agent: {needle}"
 
 
 # ---------------------------------------------------------------------------
 # Bonus: virtual-key alias contract (NFR-043)
 # ---------------------------------------------------------------------------
+
 
 def test_validator_virtual_key_alias_format():
     from app.agents.code_validator import (
@@ -381,6 +382,7 @@ def test_validator_virtual_key_alias_format():
 # ---------------------------------------------------------------------------
 # Bonus: state helpers (mutators)
 # ---------------------------------------------------------------------------
+
 
 def test_state_with_bucket_appends_findings():
     state = _state()

@@ -40,9 +40,7 @@ async def event_bus(event_bus):  # type: ignore[no-untyped-def]
 
 
 @pytest.mark.asyncio
-async def test_create_security_report_writes_row_and_kg_node(
-    sqlite_db, event_bus
-):
+async def test_create_security_report_writes_row_and_kg_node(sqlite_db, event_bus):
     from sqlalchemy import func, select
 
     from app.db.models.security_report import SecurityReport
@@ -50,9 +48,7 @@ async def test_create_security_report_writes_row_and_kg_node(
     from app.services.architecture.security_report import SecurityReportService
     from app.services.knowledge_graph import KGNode
 
-    svc = SecurityReportService(
-        artifact_registry_instance=None, event_bus=event_bus
-    )
+    svc = SecurityReportService(artifact_registry_instance=None, event_bus=event_bus)
     tenant_id = uuid.uuid4()
     project_id = uuid.uuid4()
     row = await svc.create_report(
@@ -98,14 +94,10 @@ async def test_create_security_report_writes_row_and_kg_node(
 
 
 @pytest.mark.asyncio
-async def test_list_security_reports_filters_by_severity(
-    sqlite_db, event_bus
-):
+async def test_list_security_reports_filters_by_severity(sqlite_db, event_bus):
     from app.services.architecture.security_report import SecurityReportService
 
-    svc = SecurityReportService(
-        artifact_registry_instance=None, event_bus=event_bus
-    )
+    svc = SecurityReportService(artifact_registry_instance=None, event_bus=event_bus)
     tenant_id = uuid.uuid4()
     project_id = uuid.uuid4()
     # Create one critical and one medium finding.
@@ -159,14 +151,10 @@ async def test_list_security_reports_filters_by_severity(
 
 
 @pytest.mark.asyncio
-async def test_compute_deployment_posture_aggregates_correctly(
-    sqlite_db, event_bus
-):
+async def test_compute_deployment_posture_aggregates_correctly(sqlite_db, event_bus):
     from app.services.architecture.security_report import SecurityReportService
 
-    svc = SecurityReportService(
-        artifact_registry_instance=None, event_bus=event_bus
-    )
+    svc = SecurityReportService(artifact_registry_instance=None, event_bus=event_bus)
     tenant_id = uuid.uuid4()
     project_id = uuid.uuid4()
     # Seed: 1 critical open + 1 high open + 1 medium open + 1 low closed.
@@ -217,9 +205,7 @@ async def test_compute_deployment_posture_aggregates_correctly(
         target_status="closed",
     )
 
-    posture = await svc.compute_deployment_posture(
-        tenant_id=tenant_id, project_id=project_id
-    )
+    posture = await svc.compute_deployment_posture(tenant_id=tenant_id, project_id=project_id)
     assert posture["critical_open"] == 1
     assert posture["high_open"] == 1
     assert posture["medium_open"] == 1
@@ -242,14 +228,10 @@ async def test_compute_deployment_posture_aggregates_correctly(
 
 
 @pytest.mark.asyncio
-async def test_update_status_invalidates_status_transition(
-    sqlite_db, event_bus
-):
+async def test_update_status_invalidates_status_transition(sqlite_db, event_bus):
     from app.services.architecture.security_report import SecurityReportService
 
-    svc = SecurityReportService(
-        artifact_registry_instance=None, event_bus=event_bus
-    )
+    svc = SecurityReportService(artifact_registry_instance=None, event_bus=event_bus)
     tenant_id = uuid.uuid4()
     project_id = uuid.uuid4()
     row = await svc.create_report(

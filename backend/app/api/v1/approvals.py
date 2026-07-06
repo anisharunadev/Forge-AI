@@ -1,24 +1,27 @@
 """F-006 — Approvals (Rule 3 — human gates)."""
 
 from __future__ import annotations
-from typing import Annotated
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 
-from app.api.deps import DbSession, Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import DbSession, get_current_principal, require_permission
 from app.core.audit import audit
+from app.core.logging import get_logger
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.approval import ApprovalRequest, ApprovalStatus
 from app.schemas.approvals import ApprovalCreate, ApprovalDecision, ApprovalRead
 from app.services.event_bus import EventType, bus
-from sqlalchemy import select
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/approvals", tags=["approvals"])
+
+logger = get_logger(__name__)
 
 
 @router.get("", response_model=list[ApprovalRead])
@@ -31,9 +34,9 @@ async def list_approvals(
     stmt = select(ApprovalRequest).where(ApprovalRequest.tenant_id == principal.tenant_id)
     rows = (await db.execute(stmt)).scalars().all()
     return [ApprovalRead.model_validate(r) for r in rows]
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("", response_model=ApprovalRead, status_code=status.HTTP_201_CREATED)
 @audit(action="approvals.request", target_type="approval")
 async def request_approval(
@@ -62,9 +65,9 @@ async def request_approval(
         actor_id=principal.user_id,
     )
     return ApprovalRead.model_validate(approval)
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/{approval_id}/decide", response_model=ApprovalRead)
 @audit(action="approvals.decide", target_type="approval")
 async def decide_approval(
@@ -82,7 +85,7 @@ async def decide_approval(
 
     approval.status = body.status
     approval.decided_by = principal.user_id
-    approval.decided_at = datetime.now(timezone.utc)
+    approval.decided_at = datetime.now(UTC)
     approval.reason = body.reason
     await db.commit()
     await db.refresh(approval)

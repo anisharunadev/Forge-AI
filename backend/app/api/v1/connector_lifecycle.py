@@ -17,30 +17,30 @@ distinct path so the Phase 1 surface is preserved.
 """
 
 from __future__ import annotations
-from typing import Annotated
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.connectors import ConnectorRead, ConnectorTestResult
 from app.services.connectors.lifecycle import connector_lifecycle
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/connectors", tags=["connectors"])
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/install", response_model=ConnectorRead, status_code=201)
 @audit(action="connector.install", target_type="connector")
 async def install_connector(
     body: dict,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("connector:install"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connector:install")),
 ) -> ConnectorRead:
     """Install a new connector and immediately probe it.
 
@@ -102,16 +102,16 @@ async def install_connector(
         actor_id=principal.user_id,
     )
     return ConnectorRead.model_validate(connector)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/{connector_id}/rotate", response_model=ConnectorRead)
 @audit(action="connector.rotate", target_type="connector")
 async def rotate_connector(
     connector_id: UUID,
     body: dict,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("connector:rotate"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connector:rotate")),
 ) -> ConnectorRead:
     """Rotate credentials on an existing connector."""
     new_credentials = dict(body.get("new_credentials") or {})
@@ -129,15 +129,15 @@ async def rotate_connector(
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     return ConnectorRead.model_validate(connector)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/{connector_id}/test", response_model=ConnectorTestResult)
 @audit(action="connector.test", target_type="connector")
 async def test_connector(
     connector_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("connector:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connector:read")),
 ) -> ConnectorTestResult:
     """Probe a connector's reachability + record a health-history row."""
     try:
@@ -157,15 +157,15 @@ async def test_connector(
         detail=result.detail,
         checked_at=result.checked_at,
     )
+
+
 @require_approval_phase(SDLCPhase.REVIEW)
-
-
 @router.post("/{connector_id}/disconnect", response_model=ConnectorRead)
 @audit(action="connector.disconnect", target_type="connector")
 async def disconnect_connector(
     connector_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("connector:update"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connector:update")),
 ) -> ConnectorRead:
     """M3-G2 — soft-delete a connector (idempotent).
 
@@ -196,4 +196,5 @@ def _unused_get_session_factory():
     the OAuth-callback path which uses get_session_factory directly.
     """
     from app.db.session import get_session_factory  # noqa: F401
+
     return get_session_factory

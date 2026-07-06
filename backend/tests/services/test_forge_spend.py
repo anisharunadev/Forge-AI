@@ -21,7 +21,7 @@ same outbound requests and assertions look identical.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
@@ -58,9 +58,6 @@ from app.services.forge_spend import (  # noqa: E402  — must follow the stub a
     SpendRecord,
     SpendService,
 )
-
-from app.db import base as base_mod
-
 
 # ---------------------------------------------------------------------------
 # Per-test: clean audit call log so assertions see only this test's calls
@@ -247,7 +244,7 @@ async def test_reconcile_upserts_on_cost_drift(sqlite_db, monkeypatch, _patch_au
                 base_url="http://litellm.test", timeout=10.0, transport=transport
             )
 
-        async def __aenter__(self) -> "_FakeBase":
+        async def __aenter__(self) -> _FakeBase:
             return self
 
         async def __aexit__(self, *exc: Any) -> None:
@@ -259,7 +256,7 @@ async def test_reconcile_upserts_on_cost_drift(sqlite_db, monkeypatch, _patch_au
 
     monkeypatch.setattr(forge_spend_mod, "LiteLLMBaseClient", _FakeBase)
 
-    result = await svc.reconcile(last_sync=datetime.now(timezone.utc))
+    result = await svc.reconcile(last_sync=datetime.now(UTC))
 
     assert result["drift_count"] == 1
     assert result["rows_upserted"] >= 1
@@ -293,7 +290,7 @@ async def test_summary_returns_aggregated(sqlite_db, _patch_audit):
     project_id = uuid4()
     # Use a 1h backstop so sub-microsecond clock skew between the insert
     # and the summary() call cannot filter rows out.
-    since = datetime.now(timezone.utc) - timedelta(hours=1)
+    since = datetime.now(UTC) - timedelta(hours=1)
 
     factory = _session_mod.get_session_factory()
     async with factory() as session:
@@ -346,9 +343,7 @@ async def test_summary_returns_aggregated(sqlite_db, _patch_audit):
             session.add(r)
         await session.commit()
 
-    summary = await svc.summary(
-        tenant_id=tenant_id, project_id=project_id, since=since
-    )
+    summary = await svc.summary(tenant_id=tenant_id, project_id=project_id, since=since)
 
     assert summary.tenant_id == tenant_id
     assert summary.project_id == project_id

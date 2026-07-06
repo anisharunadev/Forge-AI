@@ -33,14 +33,14 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any, Iterable
+from typing import Any
 from uuid import UUID
 
 from app.core.logging import get_logger
 from app.integrations.litellm.skills_apply import (
     create_or_update_skill,
-    delete_skill,
     dotprompt_to_json,
     get_skill,
     list_skills,
@@ -53,6 +53,7 @@ from app.schemas.skills import (
     SkillCreate,
     SkillMetadata,
     SkillRead,
+    SkillUpdate,
 )
 from app.services.audit_service import audit_service
 from app.services.event_bus import EventType, bus
@@ -224,7 +225,7 @@ class SkillsService:
         self,
         *,
         skill_id: str,
-        body: "SkillUpdate",
+        body: SkillUpdate,
         tenant_id: UUID | str,
         project_id: UUID | str | None,
         actor_id: UUID | str | None,
@@ -239,9 +240,7 @@ class SkillsService:
         for key in ("name", "description", "prompt_template", "tools", "config", "metadata"):
             value = getattr(body, key)
             if value is not None:
-                if isinstance(value, SkillMetadata):
-                    merged[key] = value.model_dump(exclude_none=True)
-                elif isinstance(value, SkillConfig):
+                if isinstance(value, SkillMetadata) or isinstance(value, SkillConfig):
                     merged[key] = value.model_dump(exclude_none=True)
                 elif isinstance(value, list):
                     merged[key] = [v.model_dump() if isinstance(v, ToolRef) else v for v in value]
@@ -454,9 +453,7 @@ class SkillsService:
                 payload=payload,
             )
         except Exception:  # noqa: BLE001
-            logger.exception(
-                "skills_service.audit_failed", action=action, target_id=target_id
-            )
+            logger.exception("skills_service.audit_failed", action=action, target_id=target_id)
 
 
 # ---------------------------------------------------------------------
@@ -483,7 +480,13 @@ def render_template(
     try:
         env = Environment(undefined=StrictUndefined, autoescape=False)
         ast = env.parse(template)
-        used = sorted({n.value for n in ast.find_all(__import__("jinja2").nodes.Name) if isinstance(n, __import__("jinja2").nodes.Name)})
+        used = sorted(
+            {
+                n.value
+                for n in ast.find_all(__import__("jinja2").nodes.Name)
+                if isinstance(n, __import__("jinja2").nodes.Name)
+            }
+        )
         missing = [v for v in used if v not in variables]
         if missing:
             raise SkillRenderError(
@@ -494,9 +497,7 @@ def render_template(
     except SkillRenderError:
         raise
     except Exception as exc:  # noqa: BLE001 — render errors → typed
-        raise SkillRenderError(
-            skill_id=skill_id, message=f"{type(exc).__name__}: {exc}"
-        ) from exc
+        raise SkillRenderError(skill_id=skill_id, message=f"{type(exc).__name__}: {exc}") from exc
 
 
 def _brace_substitute(template: str, variables: dict[str, Any], *, skill_id: str | None) -> str:
@@ -509,9 +510,7 @@ def _brace_substitute(template: str, variables: dict[str, Any], *, skill_id: str
         name = match.group(1)
         used.add(name)
         if name not in variables:
-            raise SkillRenderError(
-                skill_id=skill_id, message=f"missing variable: {name}"
-            )
+            raise SkillRenderError(skill_id=skill_id, message=f"missing variable: {name}")
         return str(variables[name])
 
     return pattern.sub(_replace, template)
@@ -560,7 +559,23 @@ def _row_to_read(row: dict[str, Any]) -> SkillRead:
             **{k: v for k, v in metadata.items() if k in SkillMetadata.model_fields}
         ),
         active=bool(row.get("active", (row.get("status") or "active") == "active")),
-        extra={k: v for k, v in row.items() if k not in {"id", "name", "description", "version", "status", "prompt_template", "tools", "config", "metadata", "active"}},
+        extra={
+            k: v
+            for k, v in row.items()
+            if k
+            not in {
+                "id",
+                "name",
+                "description",
+                "version",
+                "status",
+                "prompt_template",
+                "tools",
+                "config",
+                "metadata",
+                "active",
+            }
+        },
     )
 
 

@@ -39,7 +39,8 @@ from typing import Any
 from uuid import UUID
 
 from app.core.logging import get_logger
-from app.services.event_bus import Event, EventBus, EventType, bus as default_bus
+from app.services.event_bus import Event, EventBus, EventType
+from app.services.event_bus import bus as default_bus
 
 logger = get_logger(__name__)
 

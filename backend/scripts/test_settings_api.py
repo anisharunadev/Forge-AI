@@ -49,9 +49,7 @@ async def call(
         **kwargs,
     )
     ok = "✓" if res.status_code == expected else "✗"
-    print(
-        f"{ok} {method.upper():6s} {path:60s} → {res.status_code} (expected {expected})"
-    )
+    print(f"{ok} {method.upper():6s} {path:60s} → {res.status_code} (expected {expected})")
     if res.status_code != expected:
         print(f"  Body: {res.text[:200]}")
     try:
@@ -79,9 +77,7 @@ async def main() -> int:
 
         pid = projects[0]["id"] if projects else None
         if pid is not None:
-            count(
-                await call(client, "get", f"/projects/{pid}", token) is not None
-            )
+            count(await call(client, "get", f"/projects/{pid}", token) is not None)
             count(
                 await call(
                     client,
@@ -116,9 +112,7 @@ async def main() -> int:
         # ----- ENV VARS ----------------------------------------------------
         print("\n" + "=" * 64 + "\nENV VARS\n" + "=" * 64)
         if pid is not None:
-            env_vars = await call(
-                client, "get", f"/projects/{pid}/env-vars", token
-            )
+            env_vars = await call(client, "get", f"/projects/{pid}/env-vars", token)
             count(env_vars is not None and len(env_vars) >= 5)
 
             new_key = f"TEST_VAR_{uuid.uuid4().hex[:6]}"
@@ -144,10 +138,7 @@ async def main() -> int:
                     f"/projects/{pid}/env-vars/{new_var['id']}/reveal",
                     token,
                 )
-                count(
-                    revealed is not None
-                    and revealed.get("value") == "test-secret-value"
-                )
+                count(revealed is not None and revealed.get("value") == "test-secret-value")
                 count(
                     await call(
                         client,
@@ -163,22 +154,16 @@ async def main() -> int:
         # ----- AGENT CONFIG -----------------------------------------------
         print("\n" + "=" * 64 + "\nAGENT CONFIG\n" + "=" * 64)
         if pid is not None:
-            configs = await call(
-                client, "get", f"/projects/{pid}/agent-config", token
-            )
+            configs = await call(client, "get", f"/projects/{pid}/agent-config", token)
             count(configs is not None and len(configs) >= 1)
 
         # ----- AUDIT -------------------------------------------------------
         print("\n" + "=" * 64 + "\nAUDIT\n" + "=" * 64)
         if pid is not None:
-            audit = await call(
-                client, "get", f"/audit/settings/{pid}", token
-            )
+            audit = await call(client, "get", f"/audit/settings/{pid}", token)
             count(audit is not None)
 
-    print(
-        f"\n{'=' * 64}\nRESULTS: {passed} passed, {failed} failed\n{'=' * 64}"
-    )
+    print(f"\n{'=' * 64}\nRESULTS: {passed} passed, {failed} failed\n{'=' * 64}")
     return 0 if failed == 0 else 1
 
 

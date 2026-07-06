@@ -16,12 +16,15 @@ write + dispatch surface from spec §Feature 8:
 * ``POST   /mcp/call``                    — internal dispatch
 """
 
-from __future__ import annotations
+from __future__ import annotations  # noqa: B904
 
+from datetime import UTC
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
@@ -45,14 +48,12 @@ from app.services.marketplace import (
     list_all_categories,
     list_available_servers,
 )
+from app.services.mcp_registry import MCPCategory
 from app.services.mcp_service import (
     MCPAuthExpired,
     MCPToolTimeout,
     mcp_service,
 )
-from app.services.mcp_registry import MCPCategory
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/mcp", tags=["mcp"])
 
@@ -82,7 +83,7 @@ async def get_server(
 ) -> MCPServerRead:
     details = await get_server_details(name)
     if details is None:
-        raise HTTPException(status_code=404, detail=f"mcp_server {name!r} not found")
+        raise HTTPException(status_code=404, detail=f"mcp_server {name!r} not found")  # noqa: B904
     return MCPServerRead(**details)
 
 
@@ -99,8 +100,6 @@ async def list_categories(
 # Registration (Phase 2 — admin write)
 # ---------------------------------------------------------------------
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post(
     "/servers",
     response_model=MCPServerRead,
@@ -135,9 +134,9 @@ async def register_server(
             capabilities=[],
         )
     return MCPServerRead(**details)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.delete("/servers/{name}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 @audit(action="mcp.servers.unregister", target_type="mcp_server")
 async def unregister_server(
@@ -156,8 +155,6 @@ async def unregister_server(
 # Connection test (AC #7)
 # ---------------------------------------------------------------------
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/servers/{name}/test", response_model=MCPServerTestResult)
 @audit(action="mcp.servers.test", target_type="mcp_server")
 async def test_server(
@@ -196,22 +193,21 @@ async def auth_status(
     _perm: AuthenticatedPrincipal = Depends(require_permission("marketplace:read")),
 ) -> MCPServerAuthStatus:
     try:
-        return await mcp_service.auth_status(
-            server_id=name, tenant_id=principal.tenant_id
-        )
+        return await mcp_service.auth_status(server_id=name, tenant_id=principal.tenant_id)
     except MCPAuthExpired as exc:
-        from datetime import datetime, timezone
-        raise HTTPException(
+        from datetime import datetime
+
+        raise HTTPException(  # noqa: B904
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=MCPAuthExpiredError(
                 server_id=exc.server_id,
                 reauth_url=exc.reauth_url,
-                occurred_at=datetime.now(timezone.utc),
+                occurred_at=datetime.now(UTC),
             ).model_dump(),
         )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/servers/{name}/auth/refresh", response_model=dict[str, Any])
 @audit(action="mcp.auth.refresh", target_type="mcp_server")
 async def auth_refresh(
@@ -245,8 +241,6 @@ async def public_hub(
 # Internal dispatch (used by the chat loop)
 # ---------------------------------------------------------------------
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/call", response_model=MCPToolCallResult)
 @audit(action="mcp.call", target_type="mcp_tool")
 async def dispatch_tool_call(
@@ -261,16 +255,17 @@ async def dispatch_tool_call(
             actor_id=getattr(principal, "user_id", None),
         )
     except MCPToolTimeout as exc:
-        from datetime import datetime, timezone
-        raise HTTPException(
+        from datetime import datetime
+
+        raise HTTPException(  # noqa: B904
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             detail=MCPToolTimeoutError(
                 server_id=exc.server_id,
                 tool_name=exc.tool_name,
                 duration_ms=exc.duration_ms,
-                occurred_at=datetime.now(timezone.utc),
+                occurred_at=datetime.now(UTC),
             ).model_dump(),
-        )
+        ) from exc
 
 
 __all__ = ["router"]

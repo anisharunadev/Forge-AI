@@ -17,7 +17,6 @@ import importlib.util
 import os
 import sys
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -38,7 +37,7 @@ def _load(name: str, relpath: str):  # type: ignore[no-untyped-def]
 
 def _routes_for(relpath: str):  # type: ignore[no-untyped-def]
     """Return ``{(method, path)}`` from a FastAPI router source file via AST."""
-    src = open(os.path.join(_BACKEND, relpath), "r", encoding="utf-8").read()
+    src = open(os.path.join(_BACKEND, relpath), encoding="utf-8").read()
     tree = ast.parse(src)
 
     prefix = ""
@@ -118,10 +117,8 @@ def test_a_rag_client_group_methods_present():
 
 def test_b_base_client_exposes_rag_property():
     """b) LiteLLMBaseClient has `rag` property — AST check (env-independent)."""
-    src_path = os.path.join(
-        _BACKEND, "app", "integrations", "litellm", "litellm_base_client.py"
-    )
-    tree = ast.parse(open(src_path, "r", encoding="utf-8").read())
+    src_path = os.path.join(_BACKEND, "app", "integrations", "litellm", "litellm_base_client.py")
+    tree = ast.parse(open(src_path, encoding="utf-8").read())
 
     found = False
     for node in ast.walk(tree):
@@ -200,13 +197,14 @@ def test_f_ocr_short_circuits_on_text_mime():
     # ponytail: load the service source and execute the OCR path with a
     # mocked-out RAGClientGroup so we can assert no network call was made.
     service_src = open(
-        os.path.join(_BACKEND, "app/services/rag_service.py"), "r", encoding="utf-8"
+        os.path.join(_BACKEND, "app/services/rag_service.py"), encoding="utf-8"
     ).read()
     rag_client_src = open(
-        os.path.join(_BACKEND, "app/integrations/litellm/rag_client.py"), "r", encoding="utf-8"
+        os.path.join(_BACKEND, "app/integrations/litellm/rag_client.py"), encoding="utf-8"
     ).read()
 
     namespace: dict = {}
+
     # Build a minimal in-memory stand-in for AsyncSession (RagService.ocr_file
     # only calls ``_record_audit`` which is best-effort and tolerates failure).
     class _FakeSession:
@@ -242,6 +240,7 @@ def test_f_ocr_short_circuits_on_text_mime():
     mod_tree = ast.parse(service_src)
 
     captured: dict = {}
+
     class _V(ast.NodeVisitor):
         def visit_ClassDef(self, node):  # noqa: D401
             if node.name == "RagService":
@@ -298,6 +297,7 @@ def test_f_ocr_short_circuits_on_text_mime():
     # RagService.ocr_file body can resolve its `return OCRResponse(...)`.
     from app.schemas.rag_v2 import OCRRequest, OCRResponse
     from app.services.rag_service import RagError
+
     ns["OCRResponse"] = OCRResponse
     ns["OCRRequest"] = OCRRequest
     ns["RagError"] = RagError
@@ -329,10 +329,9 @@ def test_f_ocr_short_circuits_on_text_mime():
 
 def test_g_stats_signature_accepts_db_and_tenant():
     """g) stats signature: (self, *, db, tenant_id)."""
-    import inspect
 
     service_src = open(
-        os.path.join(_BACKEND, "app/services/rag_service.py"), "r", encoding="utf-8"
+        os.path.join(_BACKEND, "app/services/rag_service.py"), encoding="utf-8"
     ).read()
     tree = ast.parse(service_src)
 
@@ -345,7 +344,11 @@ def test_g_stats_signature_accepts_db_and_tenant():
             assert "tenant_id" in kwonly, f"stats missing kw-only `tenant_id` (got {kwonly})"
             # Verify the annotation looks like AsyncSession (best-effort)
             for a in args.kwonlyargs:
-                ann = ast.unparse(args.kwonly_annotations[kwonly.index(a)]) if hasattr(args, "kwonly_annotations") else None
+                ann = (
+                    ast.unparse(args.kwonly_annotations[kwonly.index(a)])
+                    if hasattr(args, "kwonly_annotations")
+                    else None
+                )
                 # We don't fail on annotation parsing — the kwonly arg check is enough.
             found = True
     assert found, "RagService.stats not found"
@@ -353,12 +356,11 @@ def test_g_stats_signature_accepts_db_and_tenant():
 
 def test_h_error_codes_in_service_exceptions():
     """h) Service exceptions expose ChunkingFailed + OCRFailed."""
-    src = open(
-        os.path.join(_BACKEND, "app/services/rag_service.py"), "r", encoding="utf-8"
-    ).read()
+    src = open(os.path.join(_BACKEND, "app/services/rag_service.py"), encoding="utf-8").read()
     tree = ast.parse(src)
 
     captured: dict = {}
+
     class _V(ast.NodeVisitor):
         def visit_ClassDef(self, node):  # noqa: D401
             if node.name == "RagError":
@@ -371,7 +373,9 @@ def test_h_error_codes_in_service_exceptions():
             self.generic_visit(node)
 
     _V().visit(tree)
-    assert "RagError" in captured and "ERROR_CODES" in captured, "service source missing RagError/ERROR_CODES"
+    assert "RagError" in captured and "ERROR_CODES" in captured, (
+        "service source missing RagError/ERROR_CODES"
+    )
     ns: dict = {}
     exec(compile(captured["RagError"], "rag_service.RagError", "exec"), ns)  # noqa: S102
     exec(compile(captured["ERROR_CODES"], "rag_service.ERROR_CODES", "exec"), ns)  # noqa: S102

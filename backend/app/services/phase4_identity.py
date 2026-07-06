@@ -107,9 +107,12 @@ async def configure_sso(
         await session.commit()
 
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.SSO_CONFIGURED.value,
-        target_type="sso_config", target_id=str(tenant_id),
+        target_type="sso_config",
+        target_id=str(tenant_id),
         payload={"provider": provider, "enabled": enabled},
     )
     return {"provider": provider, "enabled": enabled}
@@ -165,10 +168,14 @@ async def rotate_scim_token(
     async with factory() as session:
         # Revoke all prior tokens for this tenant.
         existing = (
-            await session.execute(
-                select(Phase4ScimToken).where(Phase4ScimToken.tenant_id == str(tenant_id))
+            (
+                await session.execute(
+                    select(Phase4ScimToken).where(Phase4ScimToken.tenant_id == str(tenant_id))
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         for row in existing:
             await session.delete(row)
         session.add(
@@ -183,9 +190,12 @@ async def rotate_scim_token(
         )
         await session.commit()
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.JWT_KEY_ROTATED.value,
-        target_type="scim_token", target_id=str(tenant_id),
+        target_type="scim_token",
+        target_id=str(tenant_id),
         payload={"rotated": True},
     )
     return {"token": raw, "tenant_id": str(tenant_id)}
@@ -236,10 +246,14 @@ async def list_oauth_clients(tenant_id: UUID | str) -> list[dict[str, Any]]:
     factory = get_session_factory()
     async with factory() as session:
         rows = (
-            await session.execute(
-                select(Phase4OAuthClient).where(Phase4OAuthClient.tenant_id == str(tenant_id))
+            (
+                await session.execute(
+                    select(Phase4OAuthClient).where(Phase4OAuthClient.tenant_id == str(tenant_id))
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
     return [
         {
             "id": str(r.id),
@@ -282,9 +296,12 @@ async def register_oauth_client(
         await session.commit()
         await session.refresh(row)
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.OAUTH_CLIENT_REGISTERED.value,
-        target_type="oauth_client", target_id=client_id,
+        target_type="oauth_client",
+        target_id=client_id,
         payload={"name": name, "scopes": scopes},
     )
     return {
@@ -308,9 +325,12 @@ async def revoke_oauth_client(
         row.revoked_at = datetime.now(UTC)
         await session.commit()
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.OAUTH_CLIENT_REGISTERED.value,  # reuse enum slot
-        target_type="oauth_client", target_id=str(client_db_id),
+        target_type="oauth_client",
+        target_id=str(client_db_id),
         payload={"revoked": True},
     )
 
@@ -349,10 +369,14 @@ async def list_jwt_keys() -> list[dict[str, Any]]:
     factory = get_session_factory()
     async with factory() as session:
         rows = (
-            await session.execute(
-                select(Phase4JwtSigningKey).order_by(Phase4JwtSigningKey.created_at.desc())
+            (
+                await session.execute(
+                    select(Phase4JwtSigningKey).order_by(Phase4JwtSigningKey.created_at.desc())
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
     return [
         {
             "id": str(r.id),
@@ -385,9 +409,12 @@ async def create_jwt_key(
         session.add(row)
         await session.commit()
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.JWT_KEY_ROTATED.value,
-        target_type="jwt_signing_key", target_id=kid,
+        target_type="jwt_signing_key",
+        target_id=kid,
         payload={"created": True},
     )
     return {"kid": kid, "algorithm": "RS256", "status": "active"}
@@ -401,10 +428,14 @@ async def rotate_jwt_key(
     factory = get_session_factory()
     async with factory() as session:
         others = (
-            await session.execute(
-                select(Phase4JwtSigningKey).where(Phase4JwtSigningKey.kid != new_key["kid"])
+            (
+                await session.execute(
+                    select(Phase4JwtSigningKey).where(Phase4JwtSigningKey.kid != new_key["kid"])
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         for r in others:
             if r.status == "active":
                 r.status = "retired"
@@ -420,10 +451,14 @@ async def jwks() -> dict[str, Any]:
     factory = get_session_factory()
     async with factory() as session:
         rows = (
-            await session.execute(
-                select(Phase4JwtSigningKey).where(Phase4JwtSigningKey.status == "active")
+            (
+                await session.execute(
+                    select(Phase4JwtSigningKey).where(Phase4JwtSigningKey.status == "active")
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
     return {"keys": [r.public_jwk for r in rows]}
 
 
@@ -439,9 +474,12 @@ async def delete_jwt_key(
         row.retired_at = datetime.now(UTC)
         await session.commit()
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.JWT_KEY_ROTATED.value,
-        target_type="jwt_signing_key", target_id=str(key_id),
+        target_type="jwt_signing_key",
+        target_id=str(key_id),
         payload={"retired": True},
     )
 
@@ -493,8 +531,12 @@ async def scim_user_provision(
         else Phase4AuditAction.SCIM_USER_UPDATED.value
     )
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
-        action=action, target_type="user", target_id=user_name,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
+        action=action,
+        target_type="user",
+        target_id=user_name,
         payload={"email": email, "active": active},
     )
 
@@ -503,18 +545,34 @@ async def scim_user_deprovision(
     tenant_id: UUID | str, project_id: UUID | str, actor_id: UUID | str | None, user_name: str
 ) -> None:
     await audit_service.record(
-        tenant_id=tenant_id, project_id=project_id, actor_id=actor_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        actor_id=actor_id,
         action=Phase4AuditAction.SCIM_USER_DEPROVISIONED.value,
-        target_type="user", target_id=user_name,
+        target_type="user",
+        target_id=user_name,
         payload={"soft_deleted": True},
     )
 
 
 __all__ = [
-    "get_sso_config", "configure_sso", "sso_readiness", "sso_test_connection",
-    "rotate_scim_token", "verify_scim_token", "scim_status",
-    "list_oauth_clients", "register_oauth_client", "revoke_oauth_client",
-    "list_jwt_keys", "create_jwt_key", "rotate_jwt_key", "delete_jwt_key", "jwks",
-    "openid_configuration", "oauth_authorization_server_metadata",
-    "scim_user_provision", "scim_user_deprovision",
+    "get_sso_config",
+    "configure_sso",
+    "sso_readiness",
+    "sso_test_connection",
+    "rotate_scim_token",
+    "verify_scim_token",
+    "scim_status",
+    "list_oauth_clients",
+    "register_oauth_client",
+    "revoke_oauth_client",
+    "list_jwt_keys",
+    "create_jwt_key",
+    "rotate_jwt_key",
+    "delete_jwt_key",
+    "jwks",
+    "openid_configuration",
+    "oauth_authorization_server_metadata",
+    "scim_user_provision",
+    "scim_user_deprovision",
 ]

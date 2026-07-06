@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import logging
 import uuid
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -80,7 +79,9 @@ async def test_provision_key_stores_in_secrets_manager(
     assert "/key/generate" in str(mint_call.args[0])
     # Body must scope the key to this tenant (LiteLLM key_alias).
     body = mint_call.kwargs.get("json") or mint_call.args[1]
-    assert fake_tenant_id in str(body.get("key_alias", "")) or fake_tenant_id in str(body.get("metadata", {}))
+    assert fake_tenant_id in str(body.get("key_alias", "")) or fake_tenant_id in str(
+        body.get("metadata", {})
+    )
 
     # Secrets Manager put_secret_value called with the right prefix.
     mock_boto3_secrets.put_secret_value.assert_called_once()
@@ -225,7 +226,11 @@ async def test_key_value_never_returned_in_api(
         ("get_key_metadata", lambda: manager.get_key_metadata(tenant_id=fake_tenant_id)),
         ("list_keys", lambda: manager.list_keys(tenant_id=fake_tenant_id)),
     ]
-    safe_methods = [(n, c) for n, c in safe_methods if hasattr(manager, n.split("_")[0]) and callable(getattr(manager, n, None))]
+    safe_methods = [
+        (n, c)
+        for n, c in safe_methods
+        if hasattr(manager, n.split("_")[0]) and callable(getattr(manager, n, None))
+    ]
 
     for method_name, caller in safe_methods:
         out = await caller()

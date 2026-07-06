@@ -17,13 +17,12 @@ Decision flow:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Literal
 from uuid import UUID
 
 from pydantic import Field
 
 from app.schemas.common import ForgeBaseModel
-
 
 LessonStatusWire = Literal["pending", "approved", "rejected"]
 

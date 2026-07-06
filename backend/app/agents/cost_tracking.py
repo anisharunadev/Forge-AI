@@ -27,8 +27,10 @@ from uuid import UUID
 
 from app.agents.nodes.base import CostRecorder
 from app.agents.sdlc_state import SDLCPhase, SDLCState
-from app.services.cost_ledger import CostLedger, cost_ledger as default_ledger
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.cost_ledger import CostLedger
+from app.services.cost_ledger import cost_ledger as default_ledger
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 
 
 @dataclass(slots=True)
@@ -132,9 +134,7 @@ class SDLCPhaseCostTracker(CostRecorder):
         usage = response_body.get("usage") or {}
         prompt_tokens = int(usage.get("prompt_tokens", 0))
         completion_tokens = int(usage.get("completion_tokens", 0))
-        cost_usd = Decimal(
-            str(response_body.get("cost_usd") or usage.get("cost_usd") or 0)
-        )
+        cost_usd = Decimal(str(response_body.get("cost_usd") or usage.get("cost_usd") or 0))
         phase = phase or state.current_phase
         if cost_usd == 0 and prompt_tokens == 0 and completion_tokens == 0:
             return state

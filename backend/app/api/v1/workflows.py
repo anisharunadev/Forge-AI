@@ -27,17 +27,19 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Annotated, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import StreamingResponse
 
-from app.api.deps import DbSession, Principal, get_current_principal
-from app.core.security import AuthenticatedPrincipal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import DbSession, get_current_principal
 from app.core.audit import audit
-from app.core.security import AuthenticatedPrincipal
 from app.core.logging import get_logger
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.workflow import Workflow, WorkflowRunStatus
 from app.schemas.workflow import (
     WorkflowCreate,
@@ -55,8 +57,6 @@ from app.services.workflow_service import (
     WorkflowService,
     WorkflowValidationError,
 )
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -75,9 +75,9 @@ def _snapshot_to_read(snapshot) -> BudgetRead:
         status=snapshot.status,
         headroom_pct=headroom_pct,
     )
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post(
     "/{workflow_id}/budget",
     response_model=BudgetRead,
@@ -91,9 +91,7 @@ async def declare_budget(
     db: DbSession = None,  # type: ignore[assignment]
 ) -> BudgetRead:
     if body.workflow_id != workflow_id:
-        raise HTTPException(
-            status_code=400, detail="workflow_id_mismatch_with_path"
-        )
+        raise HTTPException(status_code=400, detail="workflow_id_mismatch_with_path")
     snapshot = await workflow_budget_service.declare_budget(
         tenant_id=principal.tenant_id,
         project_id=principal.project_id or workflow_id,
@@ -166,9 +164,9 @@ async def list_workflows(
         include_deleted=include_deleted,
     )
     return [_workflow_to_read(r) for r in rows]
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("", response_model=WorkflowRead, status_code=status.HTTP_201_CREATED)
 @audit(action="workflows.create", target_type="workflow")
 async def create_workflow(
@@ -189,9 +187,9 @@ async def create_workflow(
     except WorkflowConflictError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return _workflow_to_read(wf)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/{workflow_id}/publish", response_model=WorkflowRead)
 @audit(action="workflows.publish", target_type="workflow")
 async def publish_workflow(
@@ -213,10 +211,12 @@ async def publish_workflow(
     except WorkflowConflictError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return _workflow_to_read(wf)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
-@router.post("/{workflow_id}/duplicate", response_model=WorkflowRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{workflow_id}/duplicate", response_model=WorkflowRead, status_code=status.HTTP_201_CREATED
+)
 @audit(action="workflows.duplicate", target_type="workflow")
 async def duplicate_workflow(
     workflow_id: UUID,
@@ -255,15 +255,13 @@ async def get_workflow_run(
     db: DbSession = None,  # type: ignore[assignment]
 ) -> WorkflowRunRead:
     try:
-        run = await _workflow_service.get_run(
-            db, tenant_id=principal.tenant_id, run_id=run_id
-        )
+        run = await _workflow_service.get_run(db, tenant_id=principal.tenant_id, run_id=run_id)
     except WorkflowNotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return WorkflowRunRead.model_validate(run)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/runs/{run_id}/cancel", response_model=WorkflowRunRead)
 @audit(action="workflows.runs.cancel", target_type="workflow_run")
 async def cancel_workflow_run(
@@ -299,9 +297,9 @@ async def get_workflow(
     except WorkflowNotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return _workflow_to_read(wf)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.patch("/{workflow_id}", response_model=WorkflowRead)
 @audit(action="workflows.update", target_type="workflow")
 async def update_workflow(
@@ -325,9 +323,9 @@ async def update_workflow(
     except WorkflowConflictError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return _workflow_to_read(wf)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.delete(
     "/{workflow_id}",
     response_model=None,
@@ -376,9 +374,9 @@ async def list_workflow_runs(
         db, tenant_id=principal.tenant_id, workflow_id=workflow_id
     )
     return [WorkflowRunRead.model_validate(r) for r in rows]
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post(
     "/{workflow_id}/runs",
     response_model=WorkflowRunRead,
@@ -431,9 +429,7 @@ async def start_workflow_run(
         run.error = str(exc)
         await db.commit()
         await db.refresh(run)
-        logger.warning(
-            "workflow.executor_error", run_id=str(run.id), error=str(exc)
-        )
+        logger.warning("workflow.executor_error", run_id=str(run.id), error=str(exc))
     except Exception as exc:  # noqa: BLE001 — surface typed failure
         logger.error("workflow.executor_unexpected", run_id=str(run.id), error=str(exc))
         run.status = WorkflowRunStatus.FAILED
@@ -456,7 +452,7 @@ async def start_workflow_run(
 
 def _sse_format(payload: dict) -> bytes:
     """Format a single ``data:`` line for the SSE stream."""
-    return f"data: {json.dumps(payload, default=str)}\n\n".encode("utf-8")
+    return f"data: {json.dumps(payload, default=str)}\n\n".encode()
 
 
 # Events that flow through the SSE stream for a single run.
@@ -476,7 +472,9 @@ _RUN_SCOPED_EVENTS: tuple[EventType, ...] = (
 async def stream_run_events(
     run_id: UUID,
     principal: Annotated[AuthenticatedPrincipal | None, Depends(get_current_principal)] = None,
-    token: str | None = Query(default=None, description="SSE auth fallback (EventSource can't set headers)"),
+    token: str | None = Query(
+        default=None, description="SSE auth fallback (EventSource can't set headers)"
+    ),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> StreamingResponse:
     """SSE stream: emit one ``data:`` line per workflow event for this run.
@@ -491,6 +489,7 @@ async def stream_run_events(
     # fall through to the header-derived principal injected by FastAPI.
     if principal is None and token:
         from app.core.security import principal_from_token
+
         principal = principal_from_token(token)  # type: ignore[assignment]
         if principal is None:
             raise HTTPException(status_code=401, detail="invalid_query_token")
@@ -498,9 +497,7 @@ async def stream_run_events(
         raise HTTPException(status_code=401, detail="missing_principal")
 
     try:
-        run = await _workflow_service.get_run(
-            db, tenant_id=principal.tenant_id, run_id=run_id
-        )
+        run = await _workflow_service.get_run(db, tenant_id=principal.tenant_id, run_id=run_id)
     except WorkflowNotFound as exc:
         raise HTTPException(status_code=404, detail="run_not_found") from exc
 
@@ -557,7 +554,7 @@ async def stream_run_events(
                     return
                 try:
                     event = await asyncio.wait_for(queue.get(), timeout=15.0)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     yield b": keep-alive\n\n"
                     continue
                 yield _sse_format(
@@ -571,9 +568,9 @@ async def stream_run_events(
                 bus._typed_handlers[et].remove(_handler)  # noqa: SLF001
 
     return StreamingResponse(_gen(), media_type="text/event-stream")
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/runs/{run_id}/resume", response_model=WorkflowRunRead)
 @audit(action="workflows.runs.resume", target_type="workflow_run")
 async def resume_workflow_run(
@@ -589,9 +586,7 @@ async def resume_workflow_run(
     edge case where a run is paused with no live approval row (e.g. a
     legacy row, or a manual operator override).
     """
-    run = await _workflow_service.get_run(
-        db, tenant_id=principal.tenant_id, run_id=run_id
-    )
+    run = await _workflow_service.get_run(db, tenant_id=principal.tenant_id, run_id=run_id)
     if run.status != WorkflowRunStatus.WAITING_APPROVAL:
         raise HTTPException(
             status_code=409,
@@ -607,11 +602,7 @@ async def resume_workflow_run(
     # Find the approval_id the run is waiting on (last WAITING_APPROVAL step).
     step_results = (run.state or {}).get("stepResults", {})
     approval_step = next(
-        (
-            (sid, r)
-            for sid, r in step_results.items()
-            if r.get("status") == "waiting_approval"
-        ),
+        ((sid, r) for sid, r in step_results.items() if r.get("status") == "waiting_approval"),
         None,
     )
     if approval_step is None:
@@ -636,15 +627,10 @@ async def resume_workflow_run(
         # Re-paused on a subsequent approval — leave it that way.
         pass
     except WorkflowExecutorError as exc:
-        logger.warning(
-            "workflow.resume_failed", run_id=str(run_id), error=str(exc)
-        )
+        logger.warning("workflow.resume_failed", run_id=str(run_id), error=str(exc))
 
-    refreshed = await _workflow_service.get_run(
-        db, tenant_id=principal.tenant_id, run_id=run_id
-    )
+    refreshed = await _workflow_service.get_run(db, tenant_id=principal.tenant_id, run_id=run_id)
     return WorkflowRunRead.model_validate(refreshed)
-
 
 
 __all__ = ["router"]

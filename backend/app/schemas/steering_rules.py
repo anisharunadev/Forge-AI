@@ -79,7 +79,6 @@ class InjectionResult(ForgeBaseModel):
     )
 
 
-
 # ---------------------------------------------------------------------------
 # M2 Plan 01-07 (T-C2) -- typed evaluation decision.
 # ---------------------------------------------------------------------------
@@ -139,7 +138,6 @@ class SteeringDecision(ForgeBaseModel):
     def is_warn_only(self) -> bool:
         """True when the rule fired but the run may continue with a note."""
         return self.action == "warn"
-
 
 
 __all__ = [

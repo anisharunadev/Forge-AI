@@ -109,9 +109,12 @@ def test_cost_cap_denial_returns_403_with_cost_cap_exceeded_body() -> None:
     async def fake_sum_spent_for_run(*_args: Any, **_kwargs: Any) -> float:
         return 4.5
 
-    with patch.object(
-        cost_ledger, "sum_spent_for_run", AsyncMock(side_effect=fake_sum_spent_for_run)
-    ), patch("app.core.config.get_settings", return_value=fake_settings):
+    with (
+        patch.object(
+            cost_ledger, "sum_spent_for_run", AsyncMock(side_effect=fake_sum_spent_for_run)
+        ),
+        patch("app.core.config.get_settings", return_value=fake_settings),
+    ):
         # Sanity: the patched accessor returns our $5 ceiling.
         ceiling_check = fake_settings.run_budget_cap_overrides.get(
             "tenant-deny-1", fake_settings.run_budget_cap_usd

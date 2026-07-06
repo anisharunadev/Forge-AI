@@ -16,12 +16,11 @@ caller.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID
 
 import pytest
-from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 
 # Pre-stub the lazy engine + session factory (mirrors test_forge_models_router.py).
@@ -77,7 +76,7 @@ def fake_broker(monkeypatch):
     router's serialization is exercised end-to-end.
     """
     broker = MagicMock()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     issue_status = ForgeKeyStatus(
         agent_id=AGENT_ID,
         fingerprint="a" * 16,
@@ -146,6 +145,7 @@ def stub_session(monkeypatch):
 
 def _as_admin():
     """Async dep override factory — returns an admin principal."""
+
     async def _():
         return _AdminPrincipal()
 
@@ -154,6 +154,7 @@ def _as_admin():
 
 def _as_viewer():
     """Async dep override factory — returns a non-admin principal."""
+
     async def _():
         return _ViewerPrincipal()
 
@@ -205,7 +206,9 @@ def viewer_client(fake_broker, stub_session):
     with a minimal mirror of its logic — same name, same 403 detail.
     """
     _install_overrides(admin=False)
-    from fastapi import HTTPException, status as http_status
+    from fastapi import HTTPException
+    from fastapi import status as http_status
+
     from app.api.v1.forge_keys import require_admin
 
     async def _strict_admin():
@@ -252,9 +255,7 @@ async def test_issue_returns_201_no_plaintext(admin_client):
         "max_budget_usd": 100.0,
     }
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        r = await ac.post(
-            f"/api/v1/forge/agents/{AGENT_ID}/key/issue", json=body
-        )
+        r = await ac.post(f"/api/v1/forge/agents/{AGENT_ID}/key/issue", json=body)
 
     assert r.status_code == 201, r.text
     payload = r.json()
@@ -290,9 +291,7 @@ async def test_status_returns_200_with_meta(admin_client):
 async def test_rotate_requires_admin(viewer_client, fake_broker):
     body = {"agent_id": str(AGENT_ID), "reason": "manual"}
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        r = await ac.post(
-            f"/api/v1/forge/agents/{AGENT_ID}/key/rotate", json=body
-        )
+        r = await ac.post(f"/api/v1/forge/agents/{AGENT_ID}/key/rotate", json=body)
 
     assert r.status_code == 403, r.text
     fake_broker.rotate.assert_not_awaited()
@@ -307,9 +306,7 @@ async def test_rotate_requires_admin(viewer_client, fake_broker):
 async def test_revoke_returns_200(admin_client, fake_broker):
     body = {"agent_id": str(AGENT_ID), "reason": "manual"}
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        r = await ac.post(
-            f"/api/v1/forge/agents/{AGENT_ID}/key/revoke", json=body
-        )
+        r = await ac.post(f"/api/v1/forge/agents/{AGENT_ID}/key/revoke", json=body)
 
     assert r.status_code == 200, r.text
     payload = r.json()
@@ -334,7 +331,7 @@ async def test_keys_list_returns_tenant_scoped(monkeypatch, admin_client):
 
     own_tenant = UUID(TENANT_ID)
     foreign_tenant = UUID("99999999-9999-9999-9999-999999999999")
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     def _row(tenant, suffix):
         r = MagicMock(spec=AgentVirtualKey)
@@ -375,7 +372,8 @@ async def test_keys_list_returns_tenant_scoped(monkeypatch, admin_client):
             # Mirror the router's filter: tenant_id == own_tenant AND status=='active'.
             assert isinstance(stmt, type(select(AgentVirtualKey)))
             return _Scalars(
-                r for r in (own_row, foreign_row)
+                r
+                for r in (own_row, foreign_row)
                 if str(r.tenant_id) == TENANT_ID and r.status == "active"
             )
 

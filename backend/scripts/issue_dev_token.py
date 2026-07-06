@@ -20,15 +20,15 @@ step-56 smoke tests can run end-to-end.
 from __future__ import annotations
 
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from jose import jwt
 from sqlalchemy import select
 
 from app.core.config import settings
-from app.db.session import get_session_factory
 from app.db.models.tenant import Tenant
 from app.db.models.user import User
+from app.db.session import get_session_factory
 
 
 def main() -> int:
@@ -40,6 +40,7 @@ def main() -> int:
     # to stderr so the only stdout content is the JWT.
     import logging
     import sys
+
     logging.getLogger("app.db.session").setLevel(logging.WARNING)
     # structlog wraps the stdlib root logger; redirect the root to stderr.
     handler = logging.StreamHandler(sys.stderr)
@@ -49,24 +50,24 @@ def main() -> int:
     async def _run() -> str:
         async with factory() as session:
             tenant = (
-                await session.execute(
-                    select(Tenant).where(Tenant.slug == "acme-corp")
-                )
-            ).scalars().first()
+                (await session.execute(select(Tenant).where(Tenant.slug == "acme-corp")))
+                .scalars()
+                .first()
+            )
             if tenant is None:
                 print("✗ Tenant acme-corp not seeded", file=sys.stderr)
                 return ""
             user = (
-                await session.execute(
-                    select(User).where(User.email == "arun@acme-corp.com")
-                )
-            ).scalars().first()
+                (await session.execute(select(User).where(User.email == "arun@acme-corp.com")))
+                .scalars()
+                .first()
+            )
             if user is None:
                 print("✗ User arun@acme-corp.com not seeded", file=sys.stderr)
                 return ""
 
         project_id = str(tenant.id)  # demo tenant: project == tenant
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         claims = {
             "sub": str(user.id),
             "email": user.email,

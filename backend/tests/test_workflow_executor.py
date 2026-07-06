@@ -39,16 +39,15 @@ from app.db.models.workflow import (
     WorkflowRunStatus,
     WorkflowStepStatus,
 )
-from app.db.session import get_session_factory
 from app.schemas.workflow import (
     ApprovalNodeData,
     CommandNodeData,
+    Position,
     ScriptNodeData,
     TriggerNodeData,
     WorkflowDefinition,
     WorkflowEdge,
     WorkflowNode,
-    Position,
 )
 from app.services.event_bus import EventType
 from app.services.workflow_executor import (
@@ -56,7 +55,6 @@ from app.services.workflow_executor import (
     WorkflowExecutorError,
     get_executor,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -266,9 +264,7 @@ async def test_executor_on_error_continue_lets_downstream_run(sqlite_db, event_b
         results = refreshed.state["stepResults"]
         # c1 "succeeded" via on_error=continue (carries the error in output)
         assert results["c1"]["status"] == WorkflowStepStatus.SUCCEEDED.value
-        assert "simulated downstream failure" in results["c1"]["output"].get(
-            "skipped_reason", ""
-        )
+        assert "simulated downstream failure" in results["c1"]["output"].get("skipped_reason", "")
         # c2 still ran
         assert results["c2"]["status"] == WorkflowStepStatus.SUCCEEDED.value
 

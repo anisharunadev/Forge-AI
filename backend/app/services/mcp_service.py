@@ -44,18 +44,33 @@ from uuid import UUID
 from app.core.logging import get_logger
 from app.integrations.litellm.mcp_apply import (
     authorize_url as _authorize_url,
+)
+from app.integrations.litellm.mcp_apply import (
     call_tool as _call_tool,
+)
+from app.integrations.litellm.mcp_apply import (
     fetch_jwks as _fetch_jwks,
+)
+from app.integrations.litellm.mcp_apply import (
     list_servers as _list_servers,
+)
+from app.integrations.litellm.mcp_apply import (
     list_tools as _list_tools,
+)
+from app.integrations.litellm.mcp_apply import (
     public_hub as _public_hub,
+)
+from app.integrations.litellm.mcp_apply import (
     register_server as _register_server,
+)
+from app.integrations.litellm.mcp_apply import (
     test_connection as _test_connection,
+)
+from app.integrations.litellm.mcp_apply import (
     unregister_server as _unregister_server,
 )
 from app.schemas.mcp_v2 import (
     MCPServerAuthStatus,
-    MCPServerRead,
     MCPServerRegistration,
     MCPServerTestResult,
     MCPToolCallRequest,
@@ -104,9 +119,7 @@ class MCPToolTimeout(RuntimeError):
         self.server_id = server_id
         self.tool_name = tool_name
         self.duration_ms = duration_ms
-        super().__init__(
-            f"mcp tool {tool_name!r} on {server_id!r} timed out after {duration_ms}ms"
-        )
+        super().__init__(f"mcp tool {tool_name!r} on {server_id!r} timed out after {duration_ms}ms")
 
 
 class MCPAuthExpired(RuntimeError):
@@ -155,33 +168,25 @@ class MCPService:
     # Catalog
     # ------------------------------------------------------------------
 
-    async def list_servers(
-        self, *, tenant_id: UUID | str | None = None
-    ) -> list[dict[str, Any]]:
+    async def list_servers(self, *, tenant_id: UUID | str | None = None) -> list[dict[str, Any]]:
         cache_key = str(tenant_id) if tenant_id else "__global__"
         async with self._lock:
             entry = self._server_cache.get(cache_key)
-            if entry is not None and (
-                time.monotonic() - entry.fetched_at
-            ) < _SERVER_TTL_SECONDS:
+            if entry is not None and (time.monotonic() - entry.fetched_at) < _SERVER_TTL_SECONDS:
                 return list(entry.rows)
         rows = await _list_servers()
         async with self._lock:
             self._server_cache[cache_key] = _ServerCacheEntry(rows=list(rows))
         return rows
 
-    def invalidate_servers(
-        self, tenant_id: UUID | str | None = None
-    ) -> None:
+    def invalidate_servers(self, tenant_id: UUID | str | None = None) -> None:
         if tenant_id is None:
             self._server_cache.clear()
         else:
             self._server_cache.pop(str(tenant_id), None)
             self._server_cache.pop("__global__", None)
 
-    async def list_tools(
-        self, *, server_ids: list[str] | None = None
-    ) -> list[MCPToolRead]:
+    async def list_tools(self, *, server_ids: list[str] | None = None) -> list[MCPToolRead]:
         """Enumerate tools across the supplied server ids."""
         rows = await _list_tools(server_ids=server_ids)
         out: list[MCPToolRead] = []
@@ -260,9 +265,7 @@ class MCPService:
     # Connection test
     # ------------------------------------------------------------------
 
-    async def test(
-        self, *, server_id: str, tenant_id: UUID | str
-    ) -> MCPServerTestResult:
+    async def test(self, *, server_id: str, tenant_id: UUID | str) -> MCPServerTestResult:
         raw = await _test_connection(server_id=server_id)
         if raw is None:
             return MCPServerTestResult(

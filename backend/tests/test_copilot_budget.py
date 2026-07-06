@@ -11,6 +11,7 @@ Covers:
 6. WorkflowBudget row carries the conversation's tenant_id, project_id,
    declared_by (so the cost ledger groups correctly).
 """
+
 from __future__ import annotations
 
 import uuid
@@ -48,7 +49,9 @@ async def test_ensure_creates_budget_on_first_call(sqlite_db):
 
     async with sqlite_db() as session:
         conv = CopilotConversation(
-            tenant_id=tenant_id, project_id=project_id, user_id=user_id,
+            tenant_id=tenant_id,
+            project_id=project_id,
+            user_id=user_id,
         )
         session.add(conv)
         await session.flush()
@@ -63,6 +66,7 @@ async def test_ensure_creates_budget_on_first_call(sqlite_db):
         assert row.spent_usd == Decimal("0")
         # Default ceiling comes from settings.copilot_default_budget_usd.
         from app.core.config import settings
+
         assert row.ceiling_usd == Decimal(str(settings.copilot_default_budget_usd))
         # Reason is recorded in metadata_ for self-describing cost ledger entries.
         assert row.metadata_["source"] == "copilot"
@@ -79,7 +83,9 @@ async def test_ensure_is_idempotent(sqlite_db):
 
     async with sqlite_db() as session:
         conv = CopilotConversation(
-            tenant_id=tenant_id, project_id=project_id, user_id=user_id,
+            tenant_id=tenant_id,
+            project_id=project_id,
+            user_id=user_id,
         )
         session.add(conv)
         await session.flush()
@@ -91,12 +97,13 @@ async def test_ensure_is_idempotent(sqlite_db):
         second = await ensure_conversation_budget(session, conv)
         assert second.workflow_id == first.workflow_id
         # No duplicate created.
-        from sqlalchemy import select, func
+        from sqlalchemy import func, select
+
         count = (
             await session.execute(
-                select(func.count()).select_from(WorkflowBudget).where(
-                    WorkflowBudget.workflow_id == first.workflow_id
-                )
+                select(func.count())
+                .select_from(WorkflowBudget)
+                .where(WorkflowBudget.workflow_id == first.workflow_id)
             )
         ).scalar_one()
         assert count == 1
@@ -111,7 +118,9 @@ async def test_ensure_respects_caller_ceiling_override(sqlite_db):
 
     async with sqlite_db() as session:
         conv = CopilotConversation(
-            tenant_id=tenant_id, project_id=project_id, user_id=user_id,
+            tenant_id=tenant_id,
+            project_id=project_id,
+            user_id=user_id,
         )
         session.add(conv)
         await session.flush()

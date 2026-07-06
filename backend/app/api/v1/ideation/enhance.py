@@ -10,31 +10,31 @@ Returns: ``IdeaAnalysisRead``
 """
 
 from __future__ import annotations
-from typing import Annotated
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import IdeaAnalysisRead, IdeaEnhanceRequest
 from app.services.ideation.idea_enhance import idea_enhance_service
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/ideation/ideas", tags=["ideation"])
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/{idea_id}/enhance", response_model=IdeaAnalysisRead)
 @audit(action="ideation.enhance", target_type="idea")
 async def enhance_idea(
     idea_id: UUID,
     body: IdeaEnhanceRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:enhance"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:enhance")),
 ) -> IdeaAnalysisRead:
     try:
         analysis = await idea_enhance_service.enhance(

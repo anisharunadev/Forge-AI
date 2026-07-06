@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -53,21 +53,26 @@ os.environ.setdefault("ENV", "test")
 from app.api import deps as deps_mod  # noqa: E402
 from app.api.v1 import (  # noqa: E402
     analytics_usage,
-    auth as auth_mod,
     auth_sessions,
     auth_tokens,
     feature_flags,
+)
+from app.api.v1 import (
+    auth as auth_mod,
+)
+from app.api.v1 import (
     tenants as tenants_mod,
+)
+from app.api.v1 import (
     users as users_mod,
 )
 from app.core.security import AuthenticatedPrincipal  # noqa: E402
+from app.db.base import Base  # noqa: E402
 from app.db.models.audit import AuditEvent  # noqa: E402
 from app.db.models.tenant import Tenant  # noqa: E402
 from app.db.models.user import User  # noqa: E402
 from app.db.models.user_session import UserApiToken, UserSession  # noqa: E402
-from app.db.base import Base  # noqa: E402
 from app.db.session import get_session_factory  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # In-memory SQLite engine — used by every test
@@ -87,7 +92,7 @@ def engine():
     # so no separate table is needed.
     from app.db.models.tenant import Tenant as TenantModel
     from app.db.models.user import User as UserModel
-    from app.db.models.user_session import UserApiToken, UserSession
+    from app.db.models.user_session import UserSession
 
     Base.metadata.create_all(
         eng,
@@ -293,7 +298,9 @@ def test_api_tokens_requires_auth(client):
     assert client.post("/api/v1/auth/api-tokens", json={"name": "x"}).status_code == 401
 
 
-def test_api_tokens_revoked_excluded_from_active_list(client, fastapi_app, session_factory, tenant_row):
+def test_api_tokens_revoked_excluded_from_active_list(
+    client, fastapi_app, session_factory, tenant_row
+):
     """A revoked row is retained but the UI list endpoint surfaces it with
     ``revoked_at`` populated; the read shape always includes the row."""
     _set_tenant_override(fastapi_app, tenant_row.tenant_id, tenant_row.user_id)
@@ -323,8 +330,8 @@ def test_sessions_list_returns_user_session_rows(client, fastapi_app, session_fa
                 user_agent="Mozilla/5.0",
                 ip="10.0.0.1",
                 is_current=False,
-                created_at=datetime.now(tz=timezone.utc),
-                last_seen_at=datetime.now(tz=timezone.utc),
+                created_at=datetime.now(tz=UTC),
+                last_seen_at=datetime.now(tz=UTC),
             )
         )
         s.commit()
@@ -348,8 +355,8 @@ def test_sessions_revoke_current_returns_409(client, fastapi_app, session_factor
                 user_agent="x",
                 ip="1.2.3.4",
                 is_current=True,
-                created_at=datetime.now(tz=timezone.utc),
-                last_seen_at=datetime.now(tz=timezone.utc),
+                created_at=datetime.now(tz=UTC),
+                last_seen_at=datetime.now(tz=UTC),
             )
         )
         s.commit()
@@ -472,9 +479,7 @@ def test_branding_unknown_tenant_404(client, fastapi_app, tenant_row):
     assert r.status_code == 404
 
 
-def test_branding_patch_writes_audit_row(
-    client, fastapi_app, session_factory, tenant_row
-):
+def test_branding_patch_writes_audit_row(client, fastapi_app, session_factory, tenant_row):
     """The ``@audit(action=...)`` decorator must record the branding update."""
     _set_tenant_override(fastapi_app, tenant_row.tenant_id, tenant_row.user_id)
     client.patch(
@@ -491,9 +496,7 @@ def test_branding_patch_writes_audit_row(
 # ---------------------------------------------------------------------------
 
 
-def test_analytics_quota_returns_plan_limit_and_used(
-    client, fastapi_app, tenant_row
-):
+def test_analytics_quota_returns_plan_limit_and_used(client, fastapi_app, tenant_row):
     _set_tenant_override(fastapi_app, tenant_row.tenant_id, tenant_row.user_id)
     fake_snap = MagicMock()
     fake_snap.to_dict.return_value = {"cost_usd": 12.34}

@@ -30,8 +30,9 @@ import asyncio
 import os
 import time
 import uuid
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any, Mapping
+from typing import Any
 
 from app.services.forge_commands import (
     FORGE_COMMAND_MAP,
@@ -40,10 +41,10 @@ from app.services.forge_commands import (
     get_forge_command,
 )
 
-
 # ---------------------------------------------------------------------------
 # Exceptions
 # ---------------------------------------------------------------------------
+
 
 class UnauthorizedCommandError(PermissionError):
     """Raised when a caller tries to invoke an internal ``gsd-*`` name.
@@ -67,6 +68,7 @@ class GSDWrapperError(RuntimeError):
 # ---------------------------------------------------------------------------
 # Models (Pydantic-style with stdlib dataclasses — keeps imports cheap)
 # ---------------------------------------------------------------------------
+
 
 @dataclass(slots=True)
 class ExecutionResult:
@@ -249,6 +251,7 @@ class GSDWrapper:
 # Dispatch — stub that mirrors @opengsd/gsd-core's executeGsdCommand
 # ---------------------------------------------------------------------------
 
+
 async def _dispatch(
     *,
     tenant_id: str,
@@ -299,6 +302,7 @@ async def _dispatch(
 
 
 # Convenience for tests / REPL.
+
 
 def build_default_wrapper() -> GSDWrapper:
     """Construct a wrapper bound to the process-global command map."""

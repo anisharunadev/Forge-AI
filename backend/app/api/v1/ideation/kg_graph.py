@@ -7,25 +7,25 @@ Exposes:
 """
 
 from __future__ import annotations
-from typing import Annotated
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.deps import Principal, require_permission, get_current_principal
-from app.core.audit import audit
-from app.core.security import AuthenticatedPrincipal
-from app.schemas.project_intelligence import KGNodeRead
-from app.schemas.ideation import IdeaGraphRead
-from app.services.ideation.kg_integration import ideation_kg_service
 from app.agents.approval_gate import require_approval_phase
 from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
+from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
+from app.schemas.ideation import IdeaGraphRead
+from app.schemas.project_intelligence import KGNodeRead
+from app.services.ideation.kg_integration import ideation_kg_service
 
 router = APIRouter(prefix="/ideation", tags=["ideation"])
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post(
     "/ideas/{idea_id}/kg",
     response_model=KGNodeRead,
@@ -35,7 +35,7 @@ router = APIRouter(prefix="/ideation", tags=["ideation"])
 async def add_idea_to_kg(
     idea_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:kg"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:kg")),
 ) -> KGNodeRead:
     try:
         node = await ideation_kg_service.add_idea_to_kg(
@@ -67,27 +67,25 @@ async def add_idea_to_kg(
 async def get_idea_graph(
     project_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read")),
 ) -> IdeaGraphRead:
-    graph = await ideation_kg_service.get_idea_graph(
-        project_id, tenant_id=principal.tenant_id
-    )
+    graph = await ideation_kg_service.get_idea_graph(project_id, tenant_id=principal.tenant_id)
     return IdeaGraphRead(
         project_id=graph.project_id,
         nodes=[n.to_dict() for n in graph.nodes],
         edges=[e.to_dict() for e in graph.edges],
         generated_at=graph.generated_at,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/ideas/{idea_id}/related", response_model=list[KGNodeRead])
 @audit(action="ideation.kg.find_related", target_type="kg_node")
 async def find_related_ideas(
     idea_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     top_k: int = Query(default=5, ge=1, le=50),
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read")),
 ) -> list[KGNodeRead]:
     try:
         nodes = await ideation_kg_service.find_related_ideas(

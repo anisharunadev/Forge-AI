@@ -18,17 +18,19 @@ Idempotent — re-running the script on an already-seeded tenant is a no-op.
 Run with:
     docker compose exec backend python -m scripts.seed_ideation
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
 import random
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
 
 from app.db.models.ideation import (
+    PRD,
     ApprovalItem,
     ApprovalItemStatus,
     ApprovalItemType,
@@ -37,7 +39,6 @@ from app.db.models.ideation import (
     IdeaSource,
     IdeaStatus,
     OpportunityScore,
-    PRD,
     PRDStatus,
     PushRecord,
     PushStatus,
@@ -51,7 +52,6 @@ from app.db.models.project import Project
 from app.db.models.tenant import Tenant
 from app.db.models.user import User
 from app.db.session import get_session_factory
-
 from scripts._seed_helpers import ACME_TENANT_ID
 
 logger = logging.getLogger("seed_ideation")
@@ -126,8 +126,7 @@ SEED_IDEAS: list[dict] = [
     {
         "title": "Voice-driven PR creation",
         "description": (
-            "Speak a PR description, AI generates the title / body / "
-            "diff. Review and commit."
+            "Speak a PR description, AI generates the title / body / diff. Review and commit."
         ),
         "source": IdeaSource.COMMUNITY,
         "status": IdeaStatus.REJECTED,
@@ -195,8 +194,7 @@ SEED_ANALYSES: list[dict] = [
             "the friction of opening the Forge web app."
         ),
         "problem_statement": (
-            "People talk about ideas in Slack but the Forge intake form "
-            "is a separate destination."
+            "People talk about ideas in Slack but the Forge intake form is a separate destination."
         ),
         "target_users": ["product-managers", "engineers", "support-team"],
         "success_metrics": [
@@ -216,12 +214,10 @@ SEED_ANALYSES: list[dict] = [
     },
     {
         "summary": (
-            "Anomaly detection catches cost spikes before they show up "
-            "on the monthly invoice."
+            "Anomaly detection catches cost spikes before they show up on the monthly invoice."
         ),
         "problem_statement": (
-            "Tenants only notice LLM overspend when finance flags the "
-            "invoice at month end."
+            "Tenants only notice LLM overspend when finance flags the invoice at month end."
         ),
         "target_users": ["platform-owners", "finance", "engineering-managers"],
         "success_metrics": [
@@ -411,8 +407,7 @@ SEED_APPROVALS: list[dict] = [
         "subject_kind": "roadmap_item",
         "payload": {
             "summary": (
-                "Promote 'Architecture diagrams' to delivery when the "
-                "Q3 NOW bucket opens."
+                "Promote 'Architecture diagrams' to delivery when the Q3 NOW bucket opens."
             ),
             "horizon": "next",
         },
@@ -423,10 +418,7 @@ SEED_APPROVALS: list[dict] = [
         "idea_index": 3,
         "subject_kind": "arch_preview",
         "payload": {
-            "summary": (
-                "Approve cost-anomaly architecture preview before "
-                "implementation begins."
-            ),
+            "summary": ("Approve cost-anomaly architecture preview before implementation begins."),
             "preview_version": 1,
         },
         "status": ApprovalItemStatus.APPROVED,
@@ -467,16 +459,20 @@ SEED_PUSH_RECORDS: list[dict] = [
 
 def _staggered_created_at() -> datetime:
     """Return a created_at staggered across the last 30 days."""
-    return datetime.now(timezone.utc) - timedelta(days=random.randint(1, 30))
+    return datetime.now(UTC) - timedelta(days=random.randint(1, 30))
 
 
 async def _existing_idea_ids(session, tenant_id: UUID) -> list[UUID]:
     """Return the existing idea IDs for the tenant, in insertion order."""
     rows = (
-        await session.execute(
-            select(Idea).where(Idea.tenant_id == tenant_id).order_by(Idea.created_at)
+        (
+            await session.execute(
+                select(Idea).where(Idea.tenant_id == tenant_id).order_by(Idea.created_at)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [row.id for row in rows]
 
 
@@ -488,18 +484,20 @@ async def _ensure_tenant_user_project(session, tenant: Tenant) -> tuple[UUID, UU
     """
     user = (
         await session.execute(
-            select(User).where(
-                User.tenant_id == tenant.id, User.email == ACME_USER_EMAIL
-            )
+            select(User).where(User.tenant_id == tenant.id, User.email == ACME_USER_EMAIL)
         )
     ).scalar_one_or_none()
     user_id = user.id if user else tenant.id
 
     project = (
-        await session.execute(
-            select(Project).where(Project.tenant_id == tenant.id).order_by(Project.created_at)
+        (
+            await session.execute(
+                select(Project).where(Project.tenant_id == tenant.id).order_by(Project.created_at)
+            )
         )
-    ).scalars().first()
+        .scalars()
+        .first()
+    )
     project_id = project.id if project else tenant.id
 
     return user_id, project_id
@@ -524,15 +522,11 @@ async def seed() -> None:
         # treat the dataset as seeded and exit.
         existing_ids = await _existing_idea_ids(session, tenant.id)
         if existing_ids:
-            logger.info(
-                "  ↻ ideation already seeded (%d ideas) — skipping", len(existing_ids)
-            )
+            logger.info("  ↻ ideation already seeded (%d ideas) — skipping", len(existing_ids))
             return
 
         user_id, project_id = await _ensure_tenant_user_project(session, tenant)
-        logger.info(
-            "actor: user_id=%s project_id=%s", user_id, project_id
-        )
+        logger.info("actor: user_id=%s project_id=%s", user_id, project_id)
 
         # ----- Ideas -----
         idea_ids: list[UUID] = []
@@ -551,7 +545,7 @@ async def seed() -> None:
                     tags=list(spec["tags"]),
                     attachments=[],
                     created_at=_staggered_created_at(),
-                    updated_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(UTC),
                 )
             )
             idea_ids.append(idea_id)
@@ -559,7 +553,7 @@ async def seed() -> None:
 
         # ----- Analyses (4) -----
         for idea_id, spec in zip(idea_ids[:4], SEED_ANALYSES):
-            analyzed_at = datetime.now(timezone.utc) - timedelta(days=1)
+            analyzed_at = datetime.now(UTC) - timedelta(days=1)
             session.add(
                 IdeaAnalysis(
                     id=uuid4(),
@@ -584,7 +578,7 @@ async def seed() -> None:
 
         # ----- Scores (4) -----
         for idea_id, spec in zip(idea_ids[:4], SEED_SCORES):
-            scored_at = datetime.now(timezone.utc) - timedelta(days=1)
+            scored_at = datetime.now(UTC) - timedelta(days=1)
             session.add(
                 OpportunityScore(
                     id=uuid4(),
@@ -630,13 +624,11 @@ async def seed() -> None:
             items=items_json,
             generated_by=user_id,
             approved_by=None,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
         session.add(roadmap)
-        logger.info(
-            "  ✓ roadmap: %s (items: %d)", roadmap.name, len(items_json)
-        )
+        logger.info("  ✓ roadmap: %s (items: %d)", roadmap.name, len(items_json))
 
         # ----- PRDs (2: 1 DRAFT, 1 REVIEW) -----
         for spec in SEED_PRDS:
@@ -653,8 +645,8 @@ async def seed() -> None:
                     generated_by=user_id,
                     reviewed_by=None,
                     superseded_by_id=None,
-                    created_at=datetime.now(timezone.utc),
-                    updated_at=datetime.now(timezone.utc),
+                    created_at=datetime.now(UTC),
+                    updated_at=datetime.now(UTC),
                 )
             )
         logger.info("  ✓ prds: 2")
@@ -663,11 +655,7 @@ async def seed() -> None:
         for spec in SEED_APPROVALS:
             idea_id = idea_ids[spec["idea_index"]]
             is_approved = spec["status"] == ApprovalItemStatus.APPROVED
-            decided_at = (
-                datetime.now(timezone.utc) - timedelta(hours=2)
-                if is_approved
-                else None
-            )
+            decided_at = datetime.now(UTC) - timedelta(hours=2) if is_approved else None
             session.add(
                 ApprovalItem(
                     id=uuid4(),
@@ -688,7 +676,7 @@ async def seed() -> None:
                         else None
                     ),
                     created_at=_staggered_created_at(),
-                    updated_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(UTC),
                 )
             )
         logger.info("  ✓ approvals: 3")
@@ -708,8 +696,8 @@ async def seed() -> None:
                     status=spec["status"],
                     actor_id=user_id,
                     error=None,
-                    created_at=datetime.now(timezone.utc) - timedelta(days=2),
-                    updated_at=datetime.now(timezone.utc) - timedelta(days=2),
+                    created_at=datetime.now(UTC) - timedelta(days=2),
+                    updated_at=datetime.now(UTC) - timedelta(days=2),
                 )
             )
         logger.info("  ✓ push records: 2")

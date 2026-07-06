@@ -204,9 +204,8 @@ def _probe_otel_exporter() -> tuple[Any, float]:
     # itself sees at runtime.
     import os
 
-    endpoint = (
-        os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
-        or getattr(settings, "otlp_endpoint", None)
+    endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT") or getattr(
+        settings, "otlp_endpoint", None
     )
     if endpoint and str(endpoint).strip():
         return "ok", 0.0
@@ -228,9 +227,7 @@ def _probe_floci() -> tuple[Any, float]:
     """
     start = time.perf_counter()
     endpoint = (
-        os.environ.get("AWS_ENDPOINT_URL")
-        or os.environ.get("FLOCI_URL")
-        or "http://localhost:4566"
+        os.environ.get("AWS_ENDPOINT_URL") or os.environ.get("FLOCI_URL") or "http://localhost:4566"
     )
     url = f"{endpoint.rstrip('/')}/_localstack/health"
     try:

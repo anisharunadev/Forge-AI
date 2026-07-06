@@ -6,6 +6,7 @@ silently skipped. Wire a Prometheus client (or read OTel metric
 export) here when the operator dashboard is built. The shape is
 ``{(surface, metric): float}`` and any provider can be plugged in.
 """
+
 from __future__ import annotations
 
 

@@ -68,7 +68,7 @@ async def ideation_workflow_websocket(
                 websocket.receive_text(),
                 timeout=settings.ws_idle_timeout_seconds,
             )
-        except (asyncio.TimeoutError, WebSocketDisconnect):
+        except (TimeoutError, WebSocketDisconnect):
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
             return
         try:
@@ -105,9 +105,7 @@ async def ideation_workflow_websocket(
     await _send(websocket, {"type": "state", "state": state.to_dict()})
 
     # Last-seen step pointer for diffing on subsequent polls.
-    last_step_state: dict[str, str] = {
-        s["name"]: s["status"] for s in state.steps
-    }
+    last_step_state: dict[str, str] = {s["name"]: s["status"] for s in state.steps}
 
     async def push_updates() -> None:
         nonlocal last_step_state
@@ -209,13 +207,9 @@ async def ideation_workflow_websocket(
                         {"type": "error", "message": f"intervention_failed:{exc}"},
                     )
                     continue
-                await _send(
-                    websocket, {"type": "state", "state": new_state.to_dict()}
-                )
+                await _send(websocket, {"type": "state", "state": new_state.to_dict()})
             else:
-                await _send(
-                    websocket, {"type": "error", "message": f"unknown_frame:{kind}"}
-                )
+                await _send(websocket, {"type": "error", "message": f"unknown_frame:{kind}"})
 
     try:
         await asyncio.gather(push_updates(), read_client())

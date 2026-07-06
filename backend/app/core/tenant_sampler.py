@@ -11,6 +11,7 @@ hit is only consulted when the in-process entry expires. The default
 rate is 100% (AlwaysOn behavior preserved for any tenant without a
 ``tenant_settings`` row).
 """
+
 from __future__ import annotations
 
 import json

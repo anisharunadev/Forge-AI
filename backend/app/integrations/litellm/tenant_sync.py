@@ -22,7 +22,7 @@ are logged at WARNING level; the caller (``on_tenant_created``) returns
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -340,17 +340,16 @@ class TenantSync:
 
         try:
             factory = get_session_factory()
-            async with factory() as session:
-                async with tenant_context(session, tid):
-                    row = await session.scalar(
-                        select(LiteLLMTeamMapping).where(
-                            LiteLLMTeamMapping.litellm_team_id == mapping.litellm_team_id
-                        )
+            async with factory() as session, tenant_context(session, tid):
+                row = await session.scalar(
+                    select(LiteLLMTeamMapping).where(
+                        LiteLLMTeamMapping.litellm_team_id == mapping.litellm_team_id
                     )
-                    if row is not None:
-                        row.last_synced_at = datetime.now(timezone.utc)
-                        row.status = LiteLLMTeamStatus.ACTIVE
-                        await session.commit()
+                )
+                if row is not None:
+                    row.last_synced_at = datetime.now(UTC)
+                    row.status = LiteLLMTeamStatus.ACTIVE
+                    await session.commit()
         except Exception as exc:
             logger.warning(
                 "litellm.tenant_sync.reconcile_persist_failed",
@@ -388,7 +387,9 @@ class TenantSync:
     # ------------------------------------------------------------------
     # HTTP helpers — open a LiteLLMBaseClient per call
     # ------------------------------------------------------------------
-    async def _admin_post(self, path: str, *, json_body: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def _admin_post(
+        self, path: str, *, json_body: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """POST against the admin endpoint, returning the parsed JSON dict."""
         if self._base_client_factory is not None:
             async with self._base_client_factory() as client:
@@ -399,7 +400,9 @@ class TenantSync:
             response = await client.admin_client.post(path, json=json_body or {})
             return self._parse(response)
 
-    async def _admin_get(self, path: str, *, params: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def _admin_get(
+        self, path: str, *, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """GET against the admin endpoint, returning the parsed JSON dict."""
         if self._base_client_factory is not None:
             async with self._base_client_factory() as client:
@@ -415,13 +418,10 @@ class TenantSync:
     # ------------------------------------------------------------------
     async def _get_mapping(self, tenant_id: str) -> LiteLLMTeamMapping | None:
         factory = get_session_factory()
-        async with factory() as session:
-            async with tenant_context(session, tenant_id):
-                return await session.scalar(
-                    select(LiteLLMTeamMapping).where(
-                        LiteLLMTeamMapping.tenant_id == tenant_id
-                    )
-                )
+        async with factory() as session, tenant_context(session, tenant_id):
+            return await session.scalar(
+                select(LiteLLMTeamMapping).where(LiteLLMTeamMapping.tenant_id == tenant_id)
+            )
 
     async def _persist_mapping(
         self,
@@ -432,18 +432,17 @@ class TenantSync:
         metadata: dict[str, Any],
     ) -> None:
         factory = get_session_factory()
-        async with factory() as session:
-            async with tenant_context(session, tenant_id, project_id):
-                row = LiteLLMTeamMapping(
-                    tenant_id=tenant_id,
-                    project_id=project_id,
-                    litellm_team_id=litellm_team_id,
-                    status=status.value,
-                    last_synced_at=datetime.now(timezone.utc),
-                    metadata_=metadata,
-                )
-                session.add(row)
-                await session.commit()
+        async with factory() as session, tenant_context(session, tenant_id, project_id):
+            row = LiteLLMTeamMapping(
+                tenant_id=tenant_id,
+                project_id=project_id,
+                litellm_team_id=litellm_team_id,
+                status=status.value,
+                last_synced_at=datetime.now(UTC),
+                metadata_=metadata,
+            )
+            session.add(row)
+            await session.commit()
 
     async def _update_status(
         self,
@@ -452,18 +451,17 @@ class TenantSync:
         status: LiteLLMTeamStatus,
     ) -> None:
         factory = get_session_factory()
-        async with factory() as session:
-            async with tenant_context(session, tenant_id):
-                row = await session.scalar(
-                    select(LiteLLMTeamMapping).where(
-                        LiteLLMTeamMapping.litellm_team_id == litellm_team_id
-                    )
+        async with factory() as session, tenant_context(session, tenant_id):
+            row = await session.scalar(
+                select(LiteLLMTeamMapping).where(
+                    LiteLLMTeamMapping.litellm_team_id == litellm_team_id
                 )
-                if row is None:
-                    return
-                row.status = status.value
-                row.last_synced_at = datetime.now(timezone.utc)
-                await session.commit()
+            )
+            if row is None:
+                return
+            row.status = status.value
+            row.last_synced_at = datetime.now(UTC)
+            await session.commit()
 
     async def _mark_drifted(self, tenant_id: str, litellm_team_id: str) -> None:
         try:

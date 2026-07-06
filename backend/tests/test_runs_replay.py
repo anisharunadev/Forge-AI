@@ -71,9 +71,7 @@ async def test_replay_run_creates_new_run_with_same_goal_and_project_id() -> Non
     assert new_state.tenant_id == tenant_id
     assert new_state.actor_id == actor_id
     # ``goal`` is the seed value we passed via initial_context.
-    assert new_state.context.get("goal") == (
-        "Ship the runs replay endpoint with idempotency"
-    )
+    assert new_state.context.get("goal") == ("Ship the runs replay endpoint with idempotency")
     # Lineage metadata is stamped on the new state so audit + UI
     # can render "Replayed from <src>" badges.
     assert new_state.metadata.get("replay_of") == str(source.run_id)

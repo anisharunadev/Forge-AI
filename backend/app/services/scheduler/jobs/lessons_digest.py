@@ -9,7 +9,7 @@ lives in Sub-step C.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 
@@ -31,20 +31,22 @@ async def monthly_lessons_digest() -> None:
     for tenant in tenants:
         try:
             async with factory() as session:
-                digest = await svc.build_monthly_digest(
-                    session, tenant_id=tenant.id
-                )
+                digest = await svc.build_monthly_digest(session, tenant_id=tenant.id)
             logger.info(
                 "lessons.digest.built",
                 tenant_id=str(tenant.id),
-                pending=digest.pending_count if hasattr(digest, "pending_count") else len(digest.pending),
-                approved=digest.approved_count if hasattr(digest, "approved_count") else len(digest.approved),
-                rejected=digest.rejected_count if hasattr(digest, "rejected_count") else len(digest.rejected),
+                pending=digest.pending_count
+                if hasattr(digest, "pending_count")
+                else len(digest.pending),
+                approved=digest.approved_count
+                if hasattr(digest, "approved_count")
+                else len(digest.approved),
+                rejected=digest.rejected_count
+                if hasattr(digest, "rejected_count")
+                else len(digest.rejected),
                 auto_promote=digest.auto_promotable_skill,
-                payload_preview=json.dumps(
-                    digest.by_source, default=str
-                )[:200],
-                occurred_at=datetime.now(timezone.utc).isoformat(),
+                payload_preview=json.dumps(digest.by_source, default=str)[:200],
+                occurred_at=datetime.now(UTC).isoformat(),
             )
         except Exception as exc:  # noqa: BLE001
             logger.warning(

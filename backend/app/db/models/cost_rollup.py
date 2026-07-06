@@ -5,6 +5,7 @@ logs. Read by ``GET /v1/observability/cost`` for the cost dashboard
 in the admin UI. The unique index on ``(tenant_id, minute)`` makes
 the upsert safe to re-run on a partially-written row.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -19,9 +20,7 @@ from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 class CostMinuteRollup(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "cost_minute_rollup"
-    __table_args__ = (
-        UniqueConstraint("tenant_id", "minute", name="uq_cost_rollup_tenant_id"),
-    )
+    __table_args__ = (UniqueConstraint("tenant_id", "minute", name="uq_cost_rollup_tenant_id"),)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False, index=True)
     minute: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

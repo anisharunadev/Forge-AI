@@ -6,15 +6,17 @@ The settings/counts endpoint drives the SettingsSidebar badges.
 """
 
 from __future__ import annotations
-from typing import Annotated
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+from typing import Annotated
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 
-from app.api.deps import DbSession, Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import DbSession, get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.agent_config import AgentConfig
@@ -27,8 +29,6 @@ from app.db.models.project_member import ProjectMember
 from app.schemas.day_one_bootstrap import BootstrapResult, BootstrapStatusRead
 from app.schemas.project import ProjectCreate, ProjectRead, ProjectUpdate
 from app.services.day_one_bootstrap import day_one_bootstrap
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -67,9 +67,9 @@ async def list_projects(
         .order_by(Project.created_at.desc())
     )
     return [_project_to_read(p) for p in result.scalars().all()]
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("", response_model=ProjectRead, status_code=201)
 @audit(action="projects.create", target_type="project")
 async def create_project(
@@ -100,8 +100,8 @@ async def create_project(
         default_branch=body.default_branch or "main",
         visibility=body.visibility or "private",
         created_by=UUID(principal.user_id) if principal.user_id else None,
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
     db.add(project)
     await db.commit()
@@ -127,9 +127,9 @@ async def get_project(
     if project is None:
         raise HTTPException(status_code=404, detail="project_not_found")
     return _project_to_read(project)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/{project_id}", response_model=ProjectRead)
 @audit(action="projects.update", target_type="project")
 async def update_project(
@@ -172,7 +172,7 @@ async def update_project(
     if body.visibility is not None:
         project.visibility = body.visibility
 
-    project.updated_at = datetime.now(timezone.utc)
+    project.updated_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(project)
     return _project_to_read(project)
@@ -218,11 +218,9 @@ async def settings_counts(
         )
     )
     env_vars_count = await db.scalar(
-        select(func.count())
-        .select_from(EnvVar)
-        .where(EnvVar.project_id == project_id)
+        select(func.count()).select_from(EnvVar).where(EnvVar.project_id == project_id)
     )
-    since = datetime.now(timezone.utc) - timedelta(days=30)
+    since = datetime.now(UTC) - timedelta(days=30)
     audit_count = await db.scalar(
         select(func.count())
         .select_from(AuditEvent)
@@ -233,9 +231,7 @@ async def settings_counts(
         )
     )
     connectors_count = await db.scalar(
-        select(func.count())
-        .select_from(Connector)
-        .where(Connector.tenant_id == tenant_uuid)
+        select(func.count()).select_from(Connector).where(Connector.tenant_id == tenant_uuid)
     )
 
     return {
@@ -256,8 +252,6 @@ async def settings_counts(
 # Day-One Bootstrap (F-021) — preserved from step-52
 # ---------------------------------------------------------------------------
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post(
     "/{project_id}/bootstrap",
     response_model=BootstrapResult,
@@ -267,9 +261,11 @@ async def settings_counts(
 async def trigger_bootstrap(
     project_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("projects:bootstrap"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("projects:bootstrap")),
 ) -> BootstrapResult:
-    project_metadata = (principal.context or {}).get("project_metadata") if hasattr(principal, "context") else None
+    project_metadata = (
+        (principal.context or {}).get("project_metadata") if hasattr(principal, "context") else None
+    )
     return await day_one_bootstrap.load_baseline(
         project_id=project_id,
         tenant_id=principal.tenant_id,
@@ -286,14 +282,12 @@ async def trigger_bootstrap(
 async def bootstrap_status(
     project_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("projects:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("projects:read")),
 ) -> BootstrapStatusRead:
-    return await day_one_bootstrap.status_read(
-        project_id=project_id, tenant_id=principal.tenant_id
-    )
+    return await day_one_bootstrap.status_read(project_id=project_id, tenant_id=principal.tenant_id)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post(
     "/{project_id}/bootstrap/rerun",
     response_model=BootstrapResult,
@@ -303,9 +297,11 @@ async def bootstrap_status(
 async def rerun_bootstrap(
     project_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("projects:bootstrap"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("projects:bootstrap")),
 ) -> BootstrapResult:
-    project_metadata = (principal.context or {}).get("project_metadata") if hasattr(principal, "context") else None
+    project_metadata = (
+        (principal.context or {}).get("project_metadata") if hasattr(principal, "context") else None
+    )
     return await day_one_bootstrap.rerun(
         project_id=project_id,
         tenant_id=principal.tenant_id,
@@ -322,7 +318,7 @@ async def rerun_bootstrap(
 async def get_bootstrap(
     project_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("projects:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("projects:read")),
 ) -> BootstrapResult:
     try:
         return await day_one_bootstrap.get_status(

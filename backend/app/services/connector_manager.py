@@ -11,12 +11,11 @@ import asyncio
 import random
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any, Literal
+from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
 from app.db.models.connector import (
@@ -29,7 +28,8 @@ from app.db.models.connector import (
 from app.db.models.connector_activity import ConnectorActivity
 from app.db.session import get_session_factory
 from app.services.connector_states import ConnectorState, connector_state_machine
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 
 logger = get_logger(__name__)
 
@@ -220,7 +220,7 @@ class ConnectorManager:
                 tenant_id=connector.tenant_id,
                 project_id=connector.project_id,
                 connector_id=connector.id,
-                started_at=datetime.now(timezone.utc),
+                started_at=datetime.now(UTC),
                 status=SyncStatus.STARTED,
             )
             session.add(history)
@@ -244,7 +244,7 @@ class ConnectorManager:
                 items = await self._perform_sync(connector)
                 history.items_synced = items
                 history.status = SyncStatus.SUCCESS
-                history.finished_at = datetime.now(timezone.utc)
+                history.finished_at = datetime.now(UTC)
 
                 # SYNCING -> HEALTHY
                 await connector_state_machine.transition(
@@ -257,14 +257,14 @@ class ConnectorManager:
                     actor_id=actor_id,
                 )
                 connector.status = ConnectorStatus.HEALTHY
-                connector.last_sync_at = datetime.now(timezone.utc)
+                connector.last_sync_at = datetime.now(UTC)
                 connector.last_error = None
                 await session.commit()
                 await session.refresh(history)
                 return history
             except Exception as exc:  # noqa: BLE001
                 history.status = SyncStatus.FAILURE
-                history.finished_at = datetime.now(timezone.utc)
+                history.finished_at = datetime.now(UTC)
                 history.error_message = type(exc).__name__ + ": " + str(exc)
                 connector.status = ConnectorStatus.FAILED
                 connector.last_error = history.error_message
@@ -279,7 +279,9 @@ class ConnectorManager:
                         actor_id=actor_id,
                     )
                 except Exception:  # noqa: BLE001 — state-machine errors must not mask the underlying
-                    logger.exception("connector.state_transition_failed", connector_id=str(connector.id))
+                    logger.exception(
+                        "connector.state_transition_failed", connector_id=str(connector.id)
+                    )
                 await session.commit()
                 await session.refresh(history)
                 raise
@@ -330,7 +332,7 @@ class ConnectorManager:
                 ok=True,
                 latency_ms=round(latency_ms, 2),
                 detail="reachable",
-                checked_at=datetime.now(timezone.utc),
+                checked_at=datetime.now(UTC),
             )
         except Exception as exc:  # noqa: BLE001
             latency_ms = (time.perf_counter() - started) * 1000.0
@@ -339,7 +341,7 @@ class ConnectorManager:
                 ok=False,
                 latency_ms=round(latency_ms, 2),
                 detail=f"{type(exc).__name__}: {exc}",
-                checked_at=datetime.now(timezone.utc),
+                checked_at=datetime.now(UTC),
             )
 
     async def _probe_upstream(self, connector: Connector) -> None:
@@ -380,13 +382,9 @@ class ConnectorManager:
         bounded_limit = max(1, min(int(limit), 200))
         factory = get_session_factory()
         async with factory() as session:
-            stmt = select(ConnectorActivity).where(
-                ConnectorActivity.tenant_id == str(tenant_id)
-            )
+            stmt = select(ConnectorActivity).where(ConnectorActivity.tenant_id == str(tenant_id))
             if connector_id is not None:
-                stmt = stmt.where(
-                    ConnectorActivity.connector_id == str(connector_id)
-                )
+                stmt = stmt.where(ConnectorActivity.connector_id == str(connector_id))
             if event_type is not None:
                 stmt = stmt.where(ConnectorActivity.event_type == event_type)
             if since is not None:
@@ -397,12 +395,8 @@ class ConnectorManager:
                 # rather than relying on UUID randomness. When the
                 # cursor isn't in this tenant we treat it as a no-op
                 # rather than returning nothing.
-                cursor_row = await session.get(
-                    ConnectorActivity, str(before_id)
-                )
-                if cursor_row is not None and str(
-                    cursor_row.tenant_id
-                ) == str(tenant_id):
+                cursor_row = await session.get(ConnectorActivity, str(before_id))
+                if cursor_row is not None and str(cursor_row.tenant_id) == str(tenant_id):
                     cursor_started_at = cursor_row.started_at
                     stmt = stmt.where(
                         (ConnectorActivity.started_at < cursor_started_at)
@@ -448,7 +442,7 @@ class ConnectorManager:
                 connector_id=str(connector_id),
                 event_type=event_type,
                 status=status,
-                started_at=started_at or datetime.now(timezone.utc),
+                started_at=started_at or datetime.now(UTC),
                 finished_at=finished_at,
                 records_affected=records_affected,
                 actor_id=str(actor_id) if actor_id else None,
@@ -481,7 +475,7 @@ class ConnectorManager:
             if prior_status == ConnectorStatus.DISCONNECTED:
                 return connector
             connector.status = ConnectorStatus.DISCONNECTED
-            connector.disconnected_at = datetime.now(timezone.utc)
+            connector.disconnected_at = datetime.now(UTC)
             await session.commit()
             await session.refresh(connector)
 

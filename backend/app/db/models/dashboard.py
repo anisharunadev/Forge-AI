@@ -12,10 +12,10 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
+from sqlalchemy import DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, UUIDPrimaryKeyMixin
 
 
 class PinnedItem(Base, UUIDPrimaryKeyMixin):
@@ -34,9 +34,7 @@ class PinnedItem(Base, UUIDPrimaryKeyMixin):
     item_id: Mapped[str] = mapped_column(String(128), nullable=False)
     item_data: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
 class AIInsightRead(Base, UUIDPrimaryKeyMixin):
@@ -50,9 +48,7 @@ class AIInsightRead(Base, UUIDPrimaryKeyMixin):
 
     user_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, index=True)
     insight_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, index=True)
-    read_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    read_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     _audit_scope = "global"
 
 
@@ -68,7 +64,9 @@ class AIInsight(Base, UUIDPrimaryKeyMixin):
 
     tenant_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, index=True)
     user_id: Mapped[UUID | None] = mapped_column(
-        GUID(), nullable=True, index=True,
+        GUID(),
+        nullable=True,
+        index=True,
     )
     title: Mapped[str] = mapped_column(String(256), nullable=False)
     body: Mapped[str] = mapped_column(String(2048), nullable=False)
@@ -79,9 +77,7 @@ class AIInsight(Base, UUIDPrimaryKeyMixin):
     )
     action_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
     action_label: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
 class DashboardLayoutRow(Base, UUIDPrimaryKeyMixin):
@@ -97,13 +93,9 @@ class DashboardLayoutRow(Base, UUIDPrimaryKeyMixin):
 
     user_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, unique=True, index=True)
     tenant_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, index=True)
-    widgets: Mapped[list[dict[str, Any]]] = mapped_column(
-        JSONB, nullable=False, default=list
-    )
+    widgets: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
     preset: Mapped[str] = mapped_column(String(32), nullable=False, default="custom")
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
 __all__ = [

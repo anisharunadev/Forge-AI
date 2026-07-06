@@ -138,9 +138,7 @@ async def test_api_contract_generator_creates_kg_node(sqlite_db, event_bus):
     payload = {
         "openapi": "3.0.3",
         "info": {"title": "Items API", "version": "0.1.0"},
-        "paths": {
-            "/items": {"get": {"responses": {"200": {"description": "ok"}}}}
-        },
+        "paths": {"/items": {"get": {"responses": {"200": {"description": "ok"}}}}},
     }
     llm = _FakeLLM(payload)
     gen = APIContractGenerator(
@@ -319,9 +317,7 @@ async def test_task_breakdown_generator_creates_kg_node(sqlite_db, event_bus):
 
 
 @pytest.mark.asyncio
-async def test_acceptance_criteria_generator_creates_kg_node(
-    sqlite_db, event_bus
-):
+async def test_acceptance_criteria_generator_creates_kg_node(sqlite_db, event_bus):
     """AcceptanceCriteriaService.generate_from_artifact lands a KG node."""
 
     from app.db.models.architecture import ADR

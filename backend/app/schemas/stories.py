@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -12,17 +12,11 @@ from pydantic import BaseModel, ConfigDict, Field
 # Stories
 # ---------------------------------------------------------------------------
 
-StoryStatus = Literal[
-    "BACKLOG", "TODO", "IN_PROGRESS", "IN_REVIEW", "QA", "DONE", "BLOCKED"
-]
+StoryStatus = Literal["BACKLOG", "TODO", "IN_PROGRESS", "IN_REVIEW", "QA", "DONE", "BLOCKED"]
 StoryPriority = Literal["P0", "P1", "P2", "P3"]
 StoryEstimate = Literal["XS", "S", "M", "L", "XL"]
-StorySource = Literal[
-    "MANUAL", "JIRA", "GITHUB", "LINEAR", "IDEATION", "PRD", "AUTO"
-]
-StoryJiraSyncStatus = Literal[
-    "SYNCED", "PENDING", "CONFLICT", "FAILED", "DISCONNECTED"
-]
+StorySource = Literal["MANUAL", "JIRA", "GITHUB", "LINEAR", "IDEATION", "PRD", "AUTO"]
+StoryJiraSyncStatus = Literal["SYNCED", "PENDING", "CONFLICT", "FAILED", "DISCONNECTED"]
 
 
 class AcceptanceCriterion(BaseModel):
@@ -35,7 +29,7 @@ class Subtask(BaseModel):
     id: str
     title: str
     done: bool = False
-    estimate: Optional[StoryEstimate] = None
+    estimate: StoryEstimate | None = None
 
 
 class LinkedItem(BaseModel):
@@ -46,38 +40,38 @@ class LinkedItem(BaseModel):
 
 class StoryBase(BaseModel):
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     status: StoryStatus = "BACKLOG"
     priority: StoryPriority = "P2"
     estimate: StoryEstimate = "M"
     labels: list[str] = Field(default_factory=list)
-    epic_id: Optional[UUID] = None
-    sprint_id: Optional[UUID] = None
-    assignee_id: Optional[UUID] = None
+    epic_id: UUID | None = None
+    sprint_id: UUID | None = None
+    assignee_id: UUID | None = None
     acceptance_criteria: list[AcceptanceCriterion] = Field(default_factory=list)
     subtasks: list[Subtask] = Field(default_factory=list)
     linked_items: list[LinkedItem] = Field(default_factory=list)
 
 
 class StoryCreate(StoryBase):
-    reporter_id: Optional[UUID] = None
-    project_id: Optional[UUID] = None
+    reporter_id: UUID | None = None
+    project_id: UUID | None = None
     source: StorySource = "MANUAL"
-    source_id: Optional[str] = None
+    source_id: str | None = None
 
 
 class StoryUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    status: Optional[StoryStatus] = None
-    priority: Optional[StoryPriority] = None
-    estimate: Optional[StoryEstimate] = None
-    labels: Optional[list[str]] = None
-    epic_id: Optional[UUID] = None
-    sprint_id: Optional[UUID] = None
-    assignee_id: Optional[UUID] = None
-    acceptance_criteria: Optional[list[AcceptanceCriterion]] = None
-    subtasks: Optional[list[Subtask]] = None
+    title: str | None = None
+    description: str | None = None
+    status: StoryStatus | None = None
+    priority: StoryPriority | None = None
+    estimate: StoryEstimate | None = None
+    labels: list[str] | None = None
+    epic_id: UUID | None = None
+    sprint_id: UUID | None = None
+    assignee_id: UUID | None = None
+    acceptance_criteria: list[AcceptanceCriterion] | None = None
+    subtasks: list[Subtask] | None = None
 
 
 class StoryRead(StoryBase):
@@ -86,19 +80,19 @@ class StoryRead(StoryBase):
     tenant_id: UUID
     project_id: UUID
     reporter_id: UUID
-    jira_key: Optional[str] = None
-    jira_url: Optional[str] = None
-    jira_synced_at: Optional[datetime] = None
+    jira_key: str | None = None
+    jira_url: str | None = None
+    jira_synced_at: datetime | None = None
     jira_sync_status: StoryJiraSyncStatus = "disconnected"
-    active_run_id: Optional[UUID] = None
-    last_run_id: Optional[UUID] = None
+    active_run_id: UUID | None = None
+    last_run_id: UUID | None = None
     run_count: int = 0
     source: StorySource = "MANUAL"
-    source_id: Optional[str] = None
+    source_id: str | None = None
     created_at: datetime
     updated_at: datetime
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
 
 
 class StoryBulkUpdate(BaseModel):
@@ -128,6 +122,7 @@ class StartImplementationResponse(BaseModel):
 # Comments
 # ---------------------------------------------------------------------------
 
+
 class CommentCreate(BaseModel):
     body: str
     mentions: list[UUID] = Field(default_factory=list)
@@ -140,11 +135,11 @@ class CommentRead(BaseModel):
     story_id: UUID
     author_id: UUID
     author_name: str
-    author_avatar_url: Optional[str] = None
+    author_avatar_url: str | None = None
     body: str
     mentions: list[UUID] = Field(default_factory=list)
     created_at: datetime
-    edited_at: Optional[datetime] = None
+    edited_at: datetime | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -157,7 +152,7 @@ SprintStatus = Literal["planning", "active", "completed"]
 class SprintCreate(BaseModel):
     project_id: UUID
     name: str
-    goal: Optional[str] = None
+    goal: str | None = None
     start_date: datetime
     end_date: datetime
 
@@ -168,7 +163,7 @@ class SprintRead(BaseModel):
     tenant_id: UUID
     project_id: UUID
     name: str
-    goal: Optional[str] = None
+    goal: str | None = None
     start_date: datetime
     end_date: datetime
     status: SprintStatus
@@ -182,9 +177,7 @@ class SprintRead(BaseModel):
 # Epics
 # ---------------------------------------------------------------------------
 
-EpicStatus = Literal[
-    "PLANNING", "IN_PROGRESS", "ON_TRACK", "AT_RISK", "BLOCKED", "COMPLETED"
-]
+EpicStatus = Literal["PLANNING", "IN_PROGRESS", "ON_TRACK", "AT_RISK", "BLOCKED", "COMPLETED"]
 
 
 class EpicRead(BaseModel):
@@ -193,10 +186,10 @@ class EpicRead(BaseModel):
     tenant_id: UUID
     project_id: UUID
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     status: EpicStatus
-    start_date: Optional[datetime] = None
-    target_date: Optional[datetime] = None
+    start_date: datetime | None = None
+    target_date: datetime | None = None
     progress: float = 0
     story_count: int = 0
     completed_story_count: int = 0

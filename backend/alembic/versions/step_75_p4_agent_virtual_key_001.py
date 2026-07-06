@@ -26,17 +26,17 @@ Create Date: 2026-07-02 12:30:00.000000
 
 from __future__ import annotations
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "step_75_p4_agent_virtual_key_001"
-down_revision: Union[str, None] = "step_75_p3_spend_records_001"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "step_75_p3_spend_records_001"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -110,16 +110,12 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(
-        "ix_agent_virtual_key_agent_created", table_name="agent_virtual_key"
-    )
+    op.drop_index("ix_agent_virtual_key_agent_created", table_name="agent_virtual_key")
     op.drop_index(
         "ix_agent_virtual_key_tenant_project_status",
         table_name="agent_virtual_key",
     )
-    op.drop_index(
-        "agent_virtual_key_active_unique", table_name="agent_virtual_key"
-    )
+    op.drop_index("agent_virtual_key_active_unique", table_name="agent_virtual_key")
     op.drop_table("agent_virtual_key")
 
 

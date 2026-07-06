@@ -18,6 +18,8 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
@@ -25,13 +27,11 @@ from app.schemas.common import Page
 from app.schemas.tools_v2 import (
     SearchToolTestResult,
     ToolLogRead,
-    ToolOverrideUpdate,
     ToolOverrides,
+    ToolOverrideUpdate,
     ToolRead,
 )
 from app.services.tools_service import tools_service
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/tools", tags=["tools"])
 
@@ -44,9 +44,7 @@ async def list_tools(
     kind: str | None = Query(default=None),
     server_id: str | None = Query(default=None),
 ) -> Page[ToolRead]:
-    items = await tools_service.list(
-        tenant_id=principal.tenant_id, kind=kind, server_id=server_id
-    )
+    items = await tools_service.list(tenant_id=principal.tenant_id, kind=kind, server_id=server_id)
     return Page(items=items, total=len(items))
 
 
@@ -83,9 +81,9 @@ async def get_tool_overrides(
     _perm: AuthenticatedPrincipal = Depends(require_permission("tools:read")),
 ) -> ToolOverrides | None:
     return await tools_service.get_overrides(name=name)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.put("/{name}/overrides", response_model=ToolOverrides)
 @audit(action="tools.overrides.set", target_type="litellm_tool")
 async def put_tool_overrides(
@@ -105,9 +103,9 @@ async def put_tool_overrides(
         # UI's optimistic update doesn't break.
         return body.overrides
     return result
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.delete("/{name}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 @audit(action="tools.archive", target_type="litellm_tool")
 async def archive_tool(
@@ -130,9 +128,9 @@ async def list_search_tools(
 ) -> Page[dict[str, Any]]:
     items = await tools_service.search_tools_ui()
     return Page(items=items, total=len(items))
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post(
     "/search-tools/{tool_id}/test",
     response_model=SearchToolTestResult,

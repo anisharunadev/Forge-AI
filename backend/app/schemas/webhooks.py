@@ -1,8 +1,8 @@
 """Schemas for F-007 Webhook subscriptions + delivery audit (Step 55)."""
+
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
 from uuid import UUID
 
 from pydantic import Field

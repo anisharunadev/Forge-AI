@@ -20,8 +20,7 @@ The contract:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 from uuid import UUID
 
 from app.agents.tools.mcp_client import MCPClient
@@ -133,7 +132,7 @@ def _render_body(
     report_link: str | None,
     forge_run_id: str | None,
 ) -> str:
-    iso = datetime.now(timezone.utc).isoformat()
+    iso = datetime.now(UTC).isoformat()
     lines = [f"[{stage}] {outcome} by {actor_id} at {iso}"]
     if report_link:
         lines.append(f"Report: {report_link}")

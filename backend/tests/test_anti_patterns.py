@@ -18,8 +18,9 @@ from __future__ import annotations
 import json
 import os
 import subprocess
-import sys
 from typing import Any
+
+from fastapi import FastAPI
 
 # Deterministic sentinel strings (long enough to clear the regex floor).
 MASTER_KEY = "sk-1234567890abcdef-test-master-key-do-not-leak"
@@ -48,20 +49,27 @@ import structlog
 # that the sqlite StaticPool dialect rejects in this SA version.
 import app.db.session as _db_session  # noqa: E402
 
+
 class _FakeSession:
     async def __aenter__(self):
         return self
+
     async def __aexit__(self, *a):
         return False
+
     async def commit(self):
         pass
+
     async def execute(self, *_):
         return None
+
 
 def _fake_session_factory():
     def _factory():
         return _FakeSession()
+
     return _factory
+
 
 _db_session.get_session_factory = _fake_session_factory  # type: ignore[assignment]
 _db_session.get_engine = lambda: None  # type: ignore[assignment]
@@ -169,10 +177,11 @@ def test_lifespan_emits_config_loaded_exactly_once(monkeypatch: pytest.MonkeyPat
     """
     # Pre-import app.main so the heavy chain (router -> usage_query -> engine)
     # runs exactly once, *now*, with our env vars in place.
-    import app.main as app_main  # noqa: F401  (side-effect import)
     import asyncio
 
     from fastapi import FastAPI
+
+    import app.main as app_main  # noqa: F401  (side-effect import)
 
     async def _noop() -> None:
         return None

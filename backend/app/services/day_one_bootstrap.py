@@ -21,12 +21,20 @@ import hashlib
 import json
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
 
+# M2 T-A3 — Day-One Bootstrap persists Standards / Templates / Policies /
+# SteeringRule rows that all mutate project state.  Decorate the public
+# ``load_baseline`` and ``rerun`` entry points so the bootstrap cannot run
+# without a recorded PLANNING approval.  Read-only helpers
+# (``get_status``, ``status_read``, ``is_project_bootstrap_ready``) are
+# left undecorated — they don't write artifacts.
+from app.agents.approval_gate import require_approval_phase  # noqa: E402
+from app.agents.sdlc_state import SDLCPhase  # noqa: E402
 from app.core.logging import get_logger
 from app.db.models.audit import AuditEvent
 from app.db.models.policy import Policy, PolicySeverity
@@ -37,21 +45,18 @@ from app.schemas.day_one_bootstrap import (
     BootstrapResult,
     BootstrapStatus,
     BootstrapStatusRead,
-    Policy as PolicyDTO,
-    Standard as StandardDTO,
     SteeringRule,
+)
+from app.schemas.day_one_bootstrap import (
+    Policy as PolicyDTO,
+)
+from app.schemas.day_one_bootstrap import (
+    Standard as StandardDTO,
+)
+from app.schemas.day_one_bootstrap import (
     Template as TemplateDTO,
 )
 from app.services.audit_service import audit_service
-
-# M2 T-A3 — Day-One Bootstrap persists Standards / Templates / Policies /
-# SteeringRule rows that all mutate project state.  Decorate the public
-# ``load_baseline`` and ``rerun`` entry points so the bootstrap cannot run
-# without a recorded PLANNING approval.  Read-only helpers
-# (``get_status``, ``status_read``, ``is_project_bootstrap_ready``) are
-# left undecorated — they don't write artifacts.
-from app.agents.approval_gate import require_approval_phase  # noqa: E402
-from app.agents.sdlc_state import SDLCPhase  # noqa: E402
 
 logger = get_logger(__name__)
 
@@ -125,7 +130,11 @@ _KNACKFORGE_BASELINE: dict[str, list[dict[str, Any]]] = {
             },
             "variables": [
                 {"name": "title", "type": "string", "required": True},
-                {"name": "status", "type": "enum", "values": ["proposed", "accepted", "superseded"]},
+                {
+                    "name": "status",
+                    "type": "enum",
+                    "values": ["proposed", "accepted", "superseded"],
+                },
                 {"name": "deciders", "type": "list<string>", "required": False},
             ],
             "version": 1,
@@ -180,9 +189,7 @@ _KNACKFORGE_BASELINE: dict[str, list[dict[str, Any]]] = {
             "description": "All new persistence MUST target Postgres 17 unless an exception is recorded.",
             "applies_to": "*",
             "expression": {
-                "all": [
-                    {"in": [{"var": "artifact.db_engine"}, ["postgres", "postgresql", None]]}
-                ]
+                "all": [{"in": [{"var": "artifact.db_engine"}, ["postgres", "postgresql", None]]}]
             },
             "source": "baseline",
         },
@@ -266,7 +273,9 @@ async def _load_run_row_async(
         status=BootstrapStatus(str(meta.get("status", BootstrapStatus.NOT_STARTED.value))),
         counts=dict(meta.get("counts", {})),
         started_at=row.created_at,
-        completed_at=row.updated_at if meta.get("status") == BootstrapStatus.COMPLETED.value else None,
+        completed_at=row.updated_at
+        if meta.get("status") == BootstrapStatus.COMPLETED.value
+        else None,
         error=meta.get("error"),
         fingerprint=str(meta.get("fingerprint", "")),
     )
@@ -422,13 +431,10 @@ class DayOneBootstrapService:
                 logger.warning("bootstrap.tenant_id_missing", project_id=pid)
                 tid = "00000000-0000-0000-0000-000000000000"
 
-        started_at = datetime.now(timezone.utc)
+        started_at = datetime.now(UTC)
 
         # 1. Resolve bundle.
-        baseline = {
-            kind: list(entries)
-            for kind, entries in _KNACKFORGE_BASELINE.items()
-        }
+        baseline = {kind: list(entries) for kind, entries in _KNACKFORGE_BASELINE.items()}
         overlay = _project_overlay(project_metadata)
         bundle = _merge_overlay(baseline, overlay)
         fingerprint = _fingerprint(bundle)
@@ -458,7 +464,7 @@ class DayOneBootstrapService:
         #    the project to 'active' only after this completes.
         await self._mark_bootstrap_completed(tid, pid, fingerprint)
 
-        completed_at = datetime.now(timezone.utc)
+        completed_at = datetime.now(UTC)
 
         # 5. Update the run row.
         run_row = _BootstrapRunRow(
@@ -605,7 +611,7 @@ class DayOneBootstrapService:
         completed_at: datetime | None,
         error: str | None,
     ) -> BootstrapResult:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return BootstrapResult(
             tenant_id=UUID(tenant_id),
             project_id=UUID(project_id),
@@ -666,9 +672,7 @@ class DayOneBootstrapService:
                     Standard.project_id == project_id,
                     Standard.name == name,
                 )
-                existing: Standard | None = (
-                    await session.execute(stmt)
-                ).scalar_one_or_none()
+                existing: Standard | None = (await session.execute(stmt)).scalar_one_or_none()
                 meta = dict(entry.get("metadata", {}))
                 meta["bootstrap_source"] = entry.get("source", "baseline")
                 meta["bootstrap_kind"] = "day_one"
@@ -699,9 +703,7 @@ class DayOneBootstrapService:
                     Template.project_id == project_id,
                     Template.name == name,
                 )
-                existing: Template | None = (
-                    await session.execute(stmt)
-                ).scalar_one_or_none()
+                existing: Template | None = (await session.execute(stmt)).scalar_one_or_none()
                 if existing is None:
                     session.add(
                         Template(
@@ -730,9 +732,7 @@ class DayOneBootstrapService:
                     Policy.tenant_id == tenant_id,
                     Policy.name == name,
                 )
-                existing: Policy | None = (
-                    await session.execute(stmt)
-                ).scalar_one_or_none()
+                existing: Policy | None = (await session.execute(stmt)).scalar_one_or_none()
                 sev_value = str(entry.get("severity", "warn"))
                 try:
                     severity = PolicySeverity(sev_value)
@@ -766,9 +766,7 @@ class DayOneBootstrapService:
                     Standard.project_id == project_id,
                     Standard.name == name,
                 )
-                existing: Standard | None = (
-                    await session.execute(stmt)
-                ).scalar_one_or_none()
+                existing: Standard | None = (await session.execute(stmt)).scalar_one_or_none()
                 meta = {
                     "applies_to": entry.get("applies_to", "*"),
                     "expression": entry.get("expression", {}),
@@ -827,7 +825,7 @@ class DayOneBootstrapService:
                     target_type="project",
                     target_id=project_id,
                     payload={"fingerprint": fingerprint, "ready": True},
-                    occurred_at=datetime.now(timezone.utc),
+                    occurred_at=datetime.now(UTC),
                 )
             )
             await session.commit()
@@ -889,9 +887,7 @@ class DayOneBootstrapService:
             for r in rows
         ]
 
-    async def _list_project_policies(
-        self, tenant_id: str, project_id: str
-    ) -> list[dict[str, Any]]:
+    async def _list_project_policies(self, tenant_id: str, project_id: str) -> list[dict[str, Any]]:
         # Policies are tenant-scoped; for a project bootstrap we return
         # the tenant's full set so the read is honest about what is
         # available. (Idempotency in the persistence step ensures we
@@ -908,16 +904,16 @@ class DayOneBootstrapService:
                     "name": r.name,
                     "description": r.description,
                     "expression": dict(r.expression or {}),
-                    "severity": r.severity.value if hasattr(r.severity, "value") else str(r.severity),
+                    "severity": r.severity.value
+                    if hasattr(r.severity, "value")
+                    else str(r.severity),
                     "enabled": bool(r.enabled),
                     "source": "baseline",
                 }
             )
         return out
 
-    async def _list_project_steering(
-        self, tenant_id: str, project_id: str
-    ) -> list[dict[str, Any]]:
+    async def _list_project_steering(self, tenant_id: str, project_id: str) -> list[dict[str, Any]]:
         factory = get_session_factory()
         stmt = (
             select(Standard)
@@ -1027,9 +1023,7 @@ class DayOneBootstrapService:
             runner = SeedRunner(
                 session_factory=get_session_factory(),
                 audit_service=audit_service,
-                env=__import__(
-                    "app.core.config", fromlist=["settings"]
-                ).settings.environment,
+                env=__import__("app.core.config", fromlist=["settings"]).settings.environment,
             )
             try:
                 await runner.apply(

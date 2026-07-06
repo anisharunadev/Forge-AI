@@ -9,8 +9,9 @@ that don't.
 from __future__ import annotations
 
 import functools
+from collections.abc import Awaitable, Callable
 from contextlib import asynccontextmanager
-from typing import Any, Awaitable, Callable
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import event, text
@@ -36,6 +37,24 @@ def _coerce(value: UUID | str | None) -> str | None:
     if value is None:
         return None
     return str(value)
+
+
+def _enforce_missing() -> None:
+    """Return value when GUC probe returns no row.
+
+    The probe SELECT returns no rows when the session has not run
+    any GUC-setting statements yet (e.g. a bare AsyncSession opened
+    outside any explicit tenant context). We treat this as a Rule 2
+    violation: caller must wrap the session in `tenant_context`.
+
+    Returns None on purpose — the calling wrapper short-circuits the
+    protected callable so the missing-GUC path never reaches the DB.
+    """
+    logger.warning("rls.guc_probe_returned_no_row")
+    raise PermissionError(
+        "RLS: no app.tenant_id / app.project_id GUC set on session "
+        "(Rule 2 violation). Wrap the session in tenant_context()."
+    )
 
 
 @asynccontextmanager

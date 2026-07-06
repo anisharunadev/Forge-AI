@@ -18,7 +18,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 
 class MCPCategory(str, Enum):
@@ -51,9 +50,9 @@ class MCPServerDefinition:
     auth_methods: list[str]
     config_schema: dict
     capabilities: list[str]
-    rate_limits: Optional[dict] = None
-    icon: Optional[str] = None
-    docs_url: Optional[str] = None
+    rate_limits: dict | None = None
+    icon: str | None = None
+    docs_url: str | None = None
     installable: bool = True
     tags: list[str] = field(default_factory=list)
 
@@ -326,12 +325,12 @@ MCP_REGISTRY: dict[str, MCPServerDefinition] = {
 }
 
 
-def get_server(name: str) -> Optional[MCPServerDefinition]:
+def get_server(name: str) -> MCPServerDefinition | None:
     """Look up a server definition by name; returns None if missing."""
     return MCP_REGISTRY.get(name)
 
 
-def list_servers(category: Optional[MCPCategory] = None) -> list[MCPServerDefinition]:
+def list_servers(category: MCPCategory | None = None) -> list[MCPServerDefinition]:
     """Return all registered servers, optionally filtered by category."""
     if category is None:
         return list(MCP_REGISTRY.values())

@@ -30,7 +30,7 @@ import argparse
 import asyncio
 import sys
 import uuid
-from typing import Any, Sequence
+from collections.abc import Sequence
 
 # Initialize telemetry as early as possible. Failure here must NOT
 # prevent the CLI from running — the runner is useful even without
@@ -45,7 +45,6 @@ except Exception:  # noqa: BLE001
 from app.core.config import settings  # noqa: E402
 from app.db.session import get_session_factory  # noqa: E402
 from app.services.audit_service import audit_service  # noqa: E402
-
 from seeds.framework import exit_codes as ec  # noqa: E402
 from seeds.framework.exceptions import (  # noqa: E402
     ApplyRolledBackError,
@@ -153,9 +152,7 @@ async def _dispatch(args: argparse.Namespace) -> int:
         env=_resolve_env(args.env),
     )
 
-    actor_id = (
-        uuid.UUID(args.actor_id) if args.actor_id else uuid.UUID(int=0)
-    )
+    actor_id = uuid.UUID(args.actor_id) if args.actor_id else uuid.UUID(int=0)
 
     # --list does not require a seed_name.
     if args.list:
@@ -183,10 +180,7 @@ async def _dispatch(args: argparse.Namespace) -> int:
 
     if args.diff:
         diff = await runner.diff(args.seed_name)
-        print(
-            f"name={diff.name} checksum_match={diff.checksum_match} "
-            f"drift={diff.drift}"
-        )
+        print(f"name={diff.name} checksum_match={diff.checksum_match} drift={diff.drift}")
         return ec.SUCCESS
 
     if args.reset:
@@ -196,30 +190,16 @@ async def _dispatch(args: argparse.Namespace) -> int:
             triggered_by=args.triggered_by,
             scope=args.scope,
         )
-        print(
-            f"reset {run.seed_name} status={run.status} "
-            f"dropped_rows={run.dropped_rows}"
-        )
-        return (
-            ec.SUCCESS
-            if run.status == "completed"
-            else ec.APPLY_ERROR
-        )
+        print(f"reset {run.seed_name} status={run.status} dropped_rows={run.dropped_rows}")
+        return ec.SUCCESS if run.status == "completed" else ec.APPLY_ERROR
 
     if args.rollback:
         run = await runner.rollback(
             seed_name=args.seed_name,
             actor_id=actor_id,
         )
-        print(
-            f"rollback {run.seed_name} status={run.status} "
-            f"dropped_rows={run.dropped_rows}"
-        )
-        return (
-            ec.SUCCESS
-            if run.status == "completed"
-            else ec.APPLY_ERROR
-        )
+        print(f"rollback {run.seed_name} status={run.status} dropped_rows={run.dropped_rows}")
+        return ec.SUCCESS if run.status == "completed" else ec.APPLY_ERROR
 
     # Default: apply.
     run = await runner.apply(

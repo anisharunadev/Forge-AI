@@ -24,9 +24,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import (
     ARRAY,
+    GUID,
     JSONB,
     Base,
-    GUID,
     TenantScopedMixin,
     TimestampMixin,
     UUIDPrimaryKeyMixin,

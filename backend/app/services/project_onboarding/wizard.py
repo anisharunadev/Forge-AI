@@ -19,8 +19,7 @@ review step so the operator can retry without re-walking the flow.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -36,7 +35,6 @@ from app.db.session import get_session_factory
 from app.schemas.onboarding import (
     OnboardingAdvanceRequest,
     OnboardingSessionRead,
-    OnboardingStartRequest,
     OnboardingStepRead,
 )
 
@@ -180,7 +178,7 @@ class OnboardingWizard:
             will_complete = current_idx == len(STEP_ORDER) - 1 or not body.mark_complete
             if will_complete:
                 sess.status = OnboardingStatus.COMPLETED
-                sess.completed_at = datetime.now(timezone.utc)
+                sess.completed_at = datetime.now(UTC)
             else:
                 next_idx = current_idx + 1
                 sess.current_step = STEP_ORDER[next_idx]
@@ -242,7 +240,7 @@ class OnboardingWizard:
             if sess is None:
                 raise LookupError(f"onboarding_session {session_id} not found")
             sess.status = OnboardingStatus.CANCELLED
-            sess.completed_at = datetime.now(timezone.utc)
+            sess.completed_at = datetime.now(UTC)
             await session.commit()
             await session.refresh(sess)
             sid = sess.id

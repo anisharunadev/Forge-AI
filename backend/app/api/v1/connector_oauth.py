@@ -22,32 +22,33 @@ wires up a real provider.
 """
 
 from __future__ import annotations
-from datetime import datetime, timezone
+
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.db.session import get_session_factory
 from app.schemas.connectors import ConnectorRead
+from app.services.connector_manager import connector_manager
 from app.services.connectors.lifecycle import connector_lifecycle
 from app.services.connectors.oauth_state import oauth_state_store
-from app.services.connector_manager import connector_manager
 from app.services.marketplace import marketplace as marketplace_service
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/connectors", tags=["connectors"])
+
+
 @require_approval_phase(SDLCPhase.REVIEW)
-
-
 @router.post("/oauth/start")
 async def oauth_start(
     body: dict,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("connector:install"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connector:install")),
 ) -> dict:
     """M3-G3 — Start an OAuth install for a marketplace slug.
 
@@ -77,9 +78,7 @@ async def oauth_start(
         )
 
     state = oauth_state_store.mint(slug)
-    authorization_url = (
-        f"{redirect_uri}?code=demo&state={state}&slug={slug}"
-    )
+    authorization_url = f"{redirect_uri}?code=demo&state={state}&slug={slug}"
     return {"authorization_url": authorization_url, "state": state}
 
 
@@ -88,7 +87,7 @@ async def oauth_start(
 async def oauth_callback(
     body: dict,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("connector:install"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connector:install")),
 ) -> ConnectorRead:
     """M3-G4 — Complete an OAuth install.
 
@@ -193,7 +192,7 @@ async def oauth_callback(
                 preview=f"dev-mode-{slug}",
                 encrypted_secret=b"step55-placeholder",
                 meta={"dev_mode": True, "slug": slug},
-                last_rotated_at=datetime.now(timezone.utc),
+                last_rotated_at=datetime.now(UTC),
                 created_by=str(principal.user_id),
             )
         )

@@ -5,8 +5,7 @@ Platform-wide stats, deep health probe, and cache purge.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
-from typing import Any
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, select
 
@@ -32,7 +31,7 @@ class AdminService:
     """Read-only platform diagnostics + cache purge."""
 
     async def stats(self) -> AdminStats:
-        since = datetime.now(timezone.utc) - timedelta(hours=24)
+        since = datetime.now(UTC) - timedelta(hours=24)
         factory = get_session_factory()
         async with factory() as session:
             tenant_count = await session.scalar(select(func.count(Tenant.id))) or 0
@@ -63,19 +62,21 @@ class AdminService:
             cost_usd_24h=float(cost_usd_24h),
             connector_count=int(connector_count),
             artifact_count=int(artifact_count),
-            checked_at=datetime.now(timezone.utc),
+            checked_at=datetime.now(UTC),
         )
 
     async def health(self) -> AdminHealthReport:
         components: list[ComponentHealth] = []
-        checked = datetime.now(timezone.utc)
+        checked = datetime.now(UTC)
 
         # Database.
         try:
             factory = get_session_factory()
             async with factory() as session:
                 await session.execute(select(func.count(Tenant.id)))
-            components.append(ComponentHealth(name="database", status="healthy", checked_at=checked))
+            components.append(
+                ComponentHealth(name="database", status="healthy", checked_at=checked)
+            )
         except Exception as exc:  # noqa: BLE001
             components.append(
                 ComponentHealth(
@@ -155,7 +156,7 @@ class AdminService:
 
         return CachePurgeResult(
             purged_keys=purged_keys,
-            purged_at=datetime.now(timezone.utc),
+            purged_at=datetime.now(UTC),
             scope=scope,
         )
 

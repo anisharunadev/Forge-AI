@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import httpx
 import pytest
@@ -25,7 +25,7 @@ import app.db.session as _session_mod
 
 
 class _StubSession:
-    async def __aenter__(self) -> "_StubSession":
+    async def __aenter__(self) -> _StubSession:
         return self
 
     async def __aexit__(self, *args: Any) -> None:
@@ -56,7 +56,6 @@ from app.services.workflow_budget import (
     BudgetExceeded,
     Decision,
 )
-
 
 # ---------------------------------------------------------------------------
 # Test doubles
@@ -277,10 +276,14 @@ async def test_chat_with_tools_forwards_tool_choice(mock_client: Any) -> None:
 async def test_agent_loop_multi_turn(mock_client: Any) -> None:
     client, log, push, _ledger, _budget = mock_client
     call_id = "call_abc"
-    push([
-        _tool_response(tool_calls=[_tool_call_payload("search_knowledge", {"q": "auth"}, call_id)]),
-        _tool_response(content="Auth is handled by Keycloak."),
-    ])
+    push(
+        [
+            _tool_response(
+                tool_calls=[_tool_call_payload("search_knowledge", {"q": "auth"}, call_id)]
+            ),
+            _tool_response(content="Auth is handled by Keycloak."),
+        ]
+    )
 
     async def executor(call: ToolCall) -> ToolResult:
         assert call.name == "search_knowledge"
@@ -313,10 +316,14 @@ async def test_agent_loop_multi_turn(mock_client: Any) -> None:
 async def test_agent_loop_tool_result_passed_back(mock_client: Any) -> None:
     client, log, push, _ledger, _budget = mock_client
     call_id = "call_xyz"
-    push([
-        _tool_response(tool_calls=[_tool_call_payload("search_knowledge", {"q": "x"}, call_id)]),
-        _tool_response(content="done"),
-    ])
+    push(
+        [
+            _tool_response(
+                tool_calls=[_tool_call_payload("search_knowledge", {"q": "x"}, call_id)]
+            ),
+            _tool_response(content="done"),
+        ]
+    )
 
     async def executor(call: ToolCall) -> ToolResult:
         return ToolResult(tool_call_id=call.id, name=call.name, content="RESULT-CONTENT")
@@ -339,10 +346,12 @@ async def test_agent_loop_tool_result_passed_back(mock_client: Any) -> None:
 @pytest.mark.asyncio
 async def test_agent_loop_exhausted(mock_client: Any) -> None:
     client, log, push, _ledger, _budget = mock_client
-    push([
-        _tool_response(tool_calls=[_tool_call_payload("search_knowledge", {"q": "1"})]),
-        _tool_response(tool_calls=[_tool_call_payload("search_knowledge", {"q": "2"})]),
-    ])
+    push(
+        [
+            _tool_response(tool_calls=[_tool_call_payload("search_knowledge", {"q": "1"})]),
+            _tool_response(tool_calls=[_tool_call_payload("search_knowledge", {"q": "2"})]),
+        ]
+    )
 
     async def executor(call: ToolCall) -> ToolResult:
         return ToolResult(tool_call_id=call.id, name=call.name, content="no result")

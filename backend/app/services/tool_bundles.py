@@ -14,7 +14,7 @@ F-005 audit log so a violation can be traced end-to-end.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, TypedDict
 from uuid import uuid4
 
@@ -191,9 +191,7 @@ class ToolBundleRegistry:
             if payload.denied_tools is not None
             else list(current["denied_tools"])
         )
-        new_rationale = (
-            payload.rationale if payload.rationale is not None else current["rationale"]
-        )
+        new_rationale = payload.rationale if payload.rationale is not None else current["rationale"]
 
         # Sanity: no tool can be both permitted and denied.
         overlap = set(new_permitted) & set(new_denied)
@@ -205,7 +203,7 @@ class ToolBundleRegistry:
             permitted_tools=new_permitted,
             denied_tools=new_denied,
             rationale=new_rationale,
-            updated_at=datetime.now(timezone.utc).isoformat(),
+            updated_at=datetime.now(UTC).isoformat(),
             updated_by=actor_id,
         )
 
@@ -244,11 +242,7 @@ class ToolBundleRegistry:
         permitted = set(bundle["permitted_tools"])
         denied = set(bundle["denied_tools"])
 
-        agent_id = (
-            agent_state.get("agent_id")
-            or agent_state.get("agent")
-            or agent_state.get("id")
-        )
+        agent_id = agent_state.get("agent_id") or agent_state.get("agent") or agent_state.get("id")
         agent_id_str = str(agent_id) if agent_id is not None else None
 
         # Decide: denied-list always wins (deny takes precedence over allow).
@@ -261,9 +255,7 @@ class ToolBundleRegistry:
         else:
             # Not in either list → conservative default: deny.
             allowed = False
-            reason = (
-                f"tool:{attempted_tool} not permitted in stage:{current_stage}"
-            )
+            reason = f"tool:{attempted_tool} not permitted in stage:{current_stage}"
 
         decision = ToolBundleDecision(
             allowed=allowed,

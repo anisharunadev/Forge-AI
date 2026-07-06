@@ -26,8 +26,9 @@ caller-supplied Virtual Key).
 from __future__ import annotations
 
 import json
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator
+from typing import Any
 from uuid import UUID
 
 import httpx
@@ -142,7 +143,7 @@ class LiteLLMBaseClient:
     # Lifecycle — mirrors app/services/litellm_client.py:61-75
     # ------------------------------------------------------------------
 
-    async def __aenter__(self) -> "LiteLLMBaseClient":
+    async def __aenter__(self) -> LiteLLMBaseClient:
         self._require_client()  # open lazily
         logger.debug("litellm_base.client_opened", base_url=self._base_url)
         return self
@@ -333,22 +334,18 @@ class LiteLLMBaseClient:
             **(extra_kwargs or {}),
         }
         async with self.chat_session(virtual_key, trace_id=forge_trace_id) as client:
-            async with client.stream(
-                "POST", "/v1/chat/completions", json=body
-            ) as response:
+            async with client.stream("POST", "/v1/chat/completions", json=body) as response:
                 response.raise_for_status()
                 async for line in response.aiter_lines():
                     if not line or not line.startswith("data:"):
                         continue
-                    chunk_str = line[len("data:"):].strip()
+                    chunk_str = line[len("data:") :].strip()
                     if chunk_str == "[DONE]":
                         break
                     try:
                         yield json.loads(chunk_str), response.headers
                     except Exception:  # noqa: BLE001 — skip malformed
-                        logger.debug(
-                            "litellm_base.stream_decode_skip", line=chunk_str[:120]
-                        )
+                        logger.debug("litellm_base.stream_decode_skip", line=chunk_str[:120])
 
     async def embed(
         self,
@@ -377,9 +374,7 @@ class LiteLLMBaseClient:
         a tenant request (returns the subset the tenant is allowed to
         see); when ``None`` the admin key is used (full catalog).
         """
-        client = (
-            self.chat_client(virtual_key) if virtual_key else self._require_client()
-        )
+        client = self.chat_client(virtual_key) if virtual_key else self._require_client()
         try:
             response = await client.get("/models")
             response.raise_for_status()
@@ -473,30 +468,74 @@ class LiteLLMBaseClient:
         try:
             client = self._require_client()
         except RuntimeError:
-            return {"reachable": False, "version": None, "db": None, "cache": None, "callbacks": None, "status_code": None, "error": "client_not_open"}
+            return {
+                "reachable": False,
+                "version": None,
+                "db": None,
+                "cache": None,
+                "callbacks": None,
+                "status_code": None,
+                "error": "client_not_open",
+            }
         try:
             response = await client.get(_HEALTH_READINESS_PATH)
             status_code = response.status_code
             if status_code == 401:
-                return {"reachable": False, "version": None, "db": None, "cache": None, "callbacks": None, "status_code": status_code, "error": "master_key_rejected"}
+                return {
+                    "reachable": False,
+                    "version": None,
+                    "db": None,
+                    "cache": None,
+                    "callbacks": None,
+                    "status_code": status_code,
+                    "error": "master_key_rejected",
+                }
             if status_code != 200:
-                return {"reachable": False, "version": None, "db": None, "cache": None, "callbacks": None, "status_code": status_code, "error": f"http_{status_code}"}
+                return {
+                    "reachable": False,
+                    "version": None,
+                    "db": None,
+                    "cache": None,
+                    "callbacks": None,
+                    "status_code": status_code,
+                    "error": f"http_{status_code}",
+                }
             try:
                 body = response.json()
             except Exception:  # noqa: BLE001
-                return {"reachable": False, "version": None, "db": None, "cache": None, "callbacks": None, "status_code": status_code, "error": "non_json_body"}
+                return {
+                    "reachable": False,
+                    "version": None,
+                    "db": None,
+                    "cache": None,
+                    "callbacks": None,
+                    "status_code": status_code,
+                    "error": "non_json_body",
+                }
             return {
                 "reachable": True,
                 "version": body.get("version") or body.get("litellm_version"),
                 "db": body.get("db"),
                 "cache": body.get("cache") if isinstance(body.get("cache"), str) else None,
-                "callbacks": body.get("callbacks") if isinstance(body.get("callbacks"), list) else None,
+                "callbacks": body.get("callbacks")
+                if isinstance(body.get("callbacks"), list)
+                else None,
                 "status_code": status_code,
                 "error": None,
             }
         except (httpx.HTTPError, RuntimeError) as exc:
-            logger.warning("litellm_base.readiness.connection_error", error=f"{type(exc).__name__}: {exc}")
-            return {"reachable": False, "version": None, "db": None, "cache": None, "callbacks": None, "status_code": None, "error": f"{type(exc).__name__}: {exc}"}
+            logger.warning(
+                "litellm_base.readiness.connection_error", error=f"{type(exc).__name__}: {exc}"
+            )
+            return {
+                "reachable": False,
+                "version": None,
+                "db": None,
+                "cache": None,
+                "callbacks": None,
+                "status_code": None,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
 
     async def list_routes(self) -> dict[str, Any]:
         """One-shot ``GET /routes`` capability discovery at boot (spec line 95).
@@ -510,18 +549,46 @@ class LiteLLMBaseClient:
             client = self._require_client()
             response = await client.get(_ROUTES_PATH)
             if response.status_code != 200:
-                return {"routes": [], "count": 0, "status_code": response.status_code, "error": f"http_{response.status_code}"}
+                return {
+                    "routes": [],
+                    "count": 0,
+                    "status_code": response.status_code,
+                    "error": f"http_{response.status_code}",
+                }
             try:
                 body = response.json()
             except Exception:  # noqa: BLE001
-                return {"routes": [], "count": 0, "status_code": response.status_code, "error": "non_json_body"}
-            routes = body.get("data") if isinstance(body.get("data"), list) else body.get("routes") if isinstance(body.get("routes"), list) else []
+                return {
+                    "routes": [],
+                    "count": 0,
+                    "status_code": response.status_code,
+                    "error": "non_json_body",
+                }
+            routes = (
+                body.get("data")
+                if isinstance(body.get("data"), list)
+                else body.get("routes")
+                if isinstance(body.get("routes"), list)
+                else []
+            )
             if not isinstance(routes, list):
                 routes = []
-            return {"routes": [str(r) for r in routes], "count": len(routes), "status_code": response.status_code, "error": None}
+            return {
+                "routes": [str(r) for r in routes],
+                "count": len(routes),
+                "status_code": response.status_code,
+                "error": None,
+            }
         except (httpx.HTTPError, RuntimeError) as exc:
-            logger.warning("litellm_base.routes.connection_error", error=f"{type(exc).__name__}: {exc}")
-            return {"routes": [], "count": 0, "status_code": None, "error": f"{type(exc).__name__}: {exc}"}
+            logger.warning(
+                "litellm_base.routes.connection_error", error=f"{type(exc).__name__}: {exc}"
+            )
+            return {
+                "routes": [],
+                "count": 0,
+                "status_code": None,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
 
 
 # ---------------------------------------------------------------------------
@@ -559,18 +626,14 @@ class _HeaderOverlayClient:
         return await self._base.delete(url, headers=self._headers, **kwargs)
 
     @asynccontextmanager
-    async def stream(
-        self, method: str, url: str, **kwargs: Any
-    ) -> AsyncIterator[httpx.Response]:
+    async def stream(self, method: str, url: str, **kwargs: Any) -> AsyncIterator[httpx.Response]:
         """Streaming request — mirrors ``httpx.AsyncClient.stream``.
 
         Used by the SSE chat path (``chat_stream``). Yields the
         :class:`httpx.Response` so the caller can iterate
         ``response.aiter_lines()`` and friends.
         """
-        async with self._base.stream(
-            method, url, headers=self._headers, **kwargs
-        ) as response:
+        async with self._base.stream(method, url, headers=self._headers, **kwargs) as response:
             yield response
 
     async def aclose(self) -> None:
@@ -588,7 +651,7 @@ class _NullCM:
         return None
 
 
-def _null_cm() -> "_NullCM":
+def _null_cm() -> _NullCM:
     return _NullCM()
 
 

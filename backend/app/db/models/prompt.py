@@ -19,9 +19,9 @@ from sqlalchemy import ForeignKey, Index, Integer, String, Text, UniqueConstrain
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import (
-    Base,
     GUID,
     JSONB,
+    Base,
     TimestampMixin,
     UUIDPrimaryKeyMixin,
 )
@@ -90,9 +90,7 @@ class PromptVersion(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
 
     __table_args__ = (
-        UniqueConstraint(
-            "prompt_id", "version_number", name="uq_prompt_versions_prompt_version"
-        ),
+        UniqueConstraint("prompt_id", "version_number", name="uq_prompt_versions_prompt_version"),
         Index(
             "ix_prompt_versions_prompt_status",
             "prompt_id",
@@ -101,7 +99,9 @@ class PromptVersion(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
 
     def __repr__(self) -> str:  # pragma: no cover
-        return f"<PromptVersion prompt={self.prompt_id} v{self.version_number} status={self.status}>"
+        return (
+            f"<PromptVersion prompt={self.prompt_id} v{self.version_number} status={self.status}>"
+        )
 
 
 __all__ = ["Prompt", "PromptVersion"]

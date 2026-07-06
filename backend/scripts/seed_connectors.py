@@ -18,12 +18,13 @@ Verify with::
     docker compose exec postgres psql -U forge -d forge \
         -c "SELECT name, type, status FROM connectors;"
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import select
@@ -64,7 +65,7 @@ SEED_CONNECTORS: list[dict[str, Any]] = [
             "org": "acme-corp",
         },
         "status": ConnectorStatus.HEALTHY,
-        "last_sync_at": datetime.now(timezone.utc) - timedelta(minutes=2),
+        "last_sync_at": datetime.now(UTC) - timedelta(minutes=2),
         "last_error": None,
     },
     {
@@ -76,7 +77,7 @@ SEED_CONNECTORS: list[dict[str, Any]] = [
             "api_key": "demo_replace_me",
         },
         "status": ConnectorStatus.HEALTHY,
-        "last_sync_at": datetime.now(timezone.utc) - timedelta(minutes=4),
+        "last_sync_at": datetime.now(UTC) - timedelta(minutes=4),
         "last_error": None,
     },
     {
@@ -88,7 +89,7 @@ SEED_CONNECTORS: list[dict[str, Any]] = [
             "bot_token": "xoxb_demo_replace_me",
         },
         "status": ConnectorStatus.HEALTHY,
-        "last_sync_at": datetime.now(timezone.utc) - timedelta(seconds=45),
+        "last_sync_at": datetime.now(UTC) - timedelta(seconds=45),
         "last_error": None,
     },
     {
@@ -137,7 +138,7 @@ def _build_sync_history(
     """Build a small activity feed for one connector."""
     rows: list[ConnectorSyncHistory] = []
     for idx, mins in enumerate(_SYNC_OFFSETS_MINUTES):
-        started = datetime.now(timezone.utc) - timedelta(minutes=mins)
+        started = datetime.now(UTC) - timedelta(minutes=mins)
         # Most recent event is success; older ones alternate success / partial.
         if idx == 0:
             status = SyncStatus.SUCCESS
@@ -216,12 +217,16 @@ async def seed() -> None:
         history_created = 0
         for row in SEED_CONNECTORS:
             existing_count = (
-                await session.execute(
-                    select(ConnectorSyncHistory).where(
-                        ConnectorSyncHistory.connector_id == row["id"]
+                (
+                    await session.execute(
+                        select(ConnectorSyncHistory).where(
+                            ConnectorSyncHistory.connector_id == row["id"]
+                        )
                     )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             if existing_count:
                 logger.info("  ↻ sync history exists for %s", row["name"])
                 continue

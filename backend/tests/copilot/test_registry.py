@@ -18,7 +18,6 @@ import uuid
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # List-all-11
 # ---------------------------------------------------------------------------
@@ -65,7 +64,6 @@ def test_registry_list_specs_is_openai_compatible():
 
 def test_registry_register_rejects_invalid_tool():
     """``register`` validates ``name`` and ``permission`` are strings."""
-    from app.copilot.tools.base import Tool
     from app.copilot.tools.registry import ToolRegistry
 
     reg = ToolRegistry()
@@ -141,9 +139,7 @@ async def test_registry_dispatch_calls_correct_tool(sqlite_db):
     from app.copilot.tools import tool_registry
 
     tenant_id = uuid.uuid4()
-    principal = _principal(
-        permissions=["copilot:tool:check_budget"], tenant_id=tenant_id
-    )
+    principal = _principal(permissions=["copilot:tool:check_budget"], tenant_id=tenant_id)
     result = await tool_registry.dispatch(
         "check_budget",
         {"scope": "tenant"},
@@ -194,7 +190,6 @@ async def test_registry_dispatch_unknown_tool_raises_keyerror():
 @pytest.mark.asyncio
 async def test_registry_dispatch_unexpected_exception_wrapped(sqlite_db):
     """Unexpected exceptions are wrapped in ToolDownstreamFailed."""
-    from app.copilot.tools import tool_registry
     from app.copilot.tools.exceptions import ToolDownstreamFailed
     from app.copilot.tools.registry import ToolRegistry
 
@@ -213,9 +208,7 @@ async def test_registry_dispatch_unexpected_exception_wrapped(sqlite_db):
             raise RuntimeError("kaboom")
 
     reg.register(_Boom())
-    principal = _principal(
-        permissions=["copilot:tool:check_budget"], tenant_id=tenant_id
-    )
+    principal = _principal(permissions=["copilot:tool:check_budget"], tenant_id=tenant_id)
     with pytest.raises(ToolDownstreamFailed) as excinfo:
         await reg.dispatch(
             "boom",
@@ -238,9 +231,7 @@ async def test_dispatch_as_tool_result_success(sqlite_db):
     from app.copilot.tools import tool_registry
 
     tenant_id = uuid.uuid4()
-    principal = _principal(
-        permissions=["copilot:tool:check_budget"], tenant_id=tenant_id
-    )
+    principal = _principal(permissions=["copilot:tool:check_budget"], tenant_id=tenant_id)
     result = await tool_registry.dispatch_as_tool_result(
         "check_budget",
         tool_call_id="call_123",

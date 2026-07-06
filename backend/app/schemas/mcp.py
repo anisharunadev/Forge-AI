@@ -8,9 +8,7 @@ registry (admin-owned), not the public marketplace catalog.
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any, Literal
-from uuid import UUID
 
 from pydantic import Field
 

@@ -33,6 +33,8 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 from app.api.deps import DbSession, get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.logging import get_logger
@@ -68,8 +70,6 @@ from app.services.rbac import (
     GOVERNANCE_PERMISSION_MANAGE,
     GOVERNANCE_PERMISSION_READ,
 )
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -143,9 +143,7 @@ def _audit_event(
     """
     event = AuditEvent(
         tenant_id=UUID(principal.tenant_id),
-        project_id=UUID(principal.project_id)
-        if principal.project_id
-        else uuid4(),
+        project_id=UUID(principal.project_id) if principal.project_id else uuid4(),
         actor_id=UUID(principal.user_id) if principal.user_id else None,
         action=action,
         target_type=target_type,
@@ -188,9 +186,9 @@ async def list_policies(
             )
         )
     return out
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/policies/{policy_id}/accept", response_model=PolicyRead)
 @audit(action="governance.policy.accept", target_type="policy")
 async def accept_policy(
@@ -224,7 +222,10 @@ async def accept_policy(
         category=_derive_policy_category(policy.name, policy.description),
         version="1.0.0",
         updatedAt=policy.updated_at,
-        updatedBy={"id": body.actor_id or principal.user_id, "displayName": body.actor_id or principal.user_id},
+        updatedBy={
+            "id": body.actor_id or principal.user_id,
+            "displayName": body.actor_id or principal.user_id,
+        },
     )
 
 
@@ -240,9 +241,7 @@ async def list_approvals(
     _perm: AuthenticatedPrincipal = Depends(require_permission(GOVERNANCE_PERMISSION_READ)),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> list[ApprovalRead]:
-    stmt = select(ApprovalRequest).where(
-        ApprovalRequest.tenant_id == UUID(principal.tenant_id)
-    )
+    stmt = select(ApprovalRequest).where(ApprovalRequest.tenant_id == UUID(principal.tenant_id))
     rows = (await db.execute(stmt)).scalars().all()
     out: list[ApprovalRead] = []
     for r in rows:
@@ -307,9 +306,9 @@ async def _decide_approval(
         decidedAt=approval.decided_at,
         reason=approval.reason,
     )
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/approvals/{approval_id}/accept", response_model=ApprovalRead)
 @audit(action="governance.approval.accept", target_type="approval")
 async def accept_approval(
@@ -328,9 +327,9 @@ async def accept_approval(
         state=ApprovalState.ACCEPTED,
         action="governance.approval.accept",
     )
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/approvals/{approval_id}/decline", response_model=ApprovalRead)
 @audit(action="governance.approval.decline", target_type="approval")
 async def decline_approval(
@@ -402,9 +401,7 @@ async def list_board_confirmations(
     _perm: AuthenticatedPrincipal = Depends(require_permission(GOVERNANCE_PERMISSION_READ)),
     db: DbSession = None,  # type: ignore[assignment]
 ) -> list[BoardConfirmationRead]:
-    stmt = select(BoardConfirmation).where(
-        BoardConfirmation.tenant_id == UUID(principal.tenant_id)
-    )
+    stmt = select(BoardConfirmation).where(BoardConfirmation.tenant_id == UUID(principal.tenant_id))
     rows = (await db.execute(stmt)).scalars().all()
     return [
         BoardConfirmationRead(
@@ -419,9 +416,9 @@ async def list_board_confirmations(
         )
         for r in rows
     ]
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/board-confirmations", response_model=BoardConfirmationRead)
 @audit(action="governance.board.ack", target_type="board_confirmation")
 async def ack_board_confirmation(

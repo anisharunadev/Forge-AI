@@ -23,17 +23,17 @@ Create Date: 2026-07-02 12:00:00.000000
 
 from __future__ import annotations
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "step_75_p3_spend_records_001"
-down_revision: Union[str, None] = "l2m3n4o5p6q7"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "l2m3n4o5p6q7"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -78,9 +78,7 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.func.now(),
         ),
-        sa.UniqueConstraint(
-            "litellm_request_id", name="uq_spend_records_litellm_request_id"
-        ),
+        sa.UniqueConstraint("litellm_request_id", name="uq_spend_records_litellm_request_id"),
     )
     op.create_index(
         "ix_spend_records_tenant_project_created",
@@ -95,12 +93,8 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(
-        "ix_spend_records_tenant_created", table_name="spend_records"
-    )
-    op.drop_index(
-        "ix_spend_records_tenant_project_created", table_name="spend_records"
-    )
+    op.drop_index("ix_spend_records_tenant_created", table_name="spend_records")
+    op.drop_index("ix_spend_records_tenant_project_created", table_name="spend_records")
     op.drop_table("spend_records")
 
 

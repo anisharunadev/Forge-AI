@@ -21,7 +21,7 @@ from sqlalchemy import DateTime, ForeignKey, Index, String, Text
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, UUIDPrimaryKeyMixin
 
 
 class LessonStatus(str, Enum):
@@ -80,16 +80,13 @@ class LessonCandidate(Base, UUIDPrimaryKeyMixin):
         GUID(), ForeignKey("templates.id", ondelete="SET NULL"), nullable=True
     )
     decided_by: Mapped[UUID | None] = mapped_column(GUID(), nullable=True)
-    decided_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     review_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    __table_args__ = (        Index("ix_lesson_candidates_tenant_project", "tenant_id", "project_id"),
+    __table_args__ = (
+        Index("ix_lesson_candidates_tenant_project", "tenant_id", "project_id"),
         Index("ix_lessons_tenant_status", "tenant_id", "status"),
         Index("ix_lessons_tenant_created", "tenant_id", "created_at"),
     )

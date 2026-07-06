@@ -190,6 +190,7 @@ def _install_seccomp_filter() -> None:
     PR_SET_NO_NEW_PRIVS = 38  # /usr/include/linux/prctl.h
     PR_SET_SECCOMP = 22
     SECCOMP_MODE_FILTER = 2
+
     # prctl(unsigned long option, unsigned long arg2, unsigned long arg3, ...)
     # Second arg is a pointer to the sock_fprog struct: { unsigned short len; struct sock_filter *filter; }
     class _SockFprog(ctypes.Structure):
@@ -279,8 +280,7 @@ class ScriptSandbox:
         interpreter = self._INTERPRETERS[language]
         if interpreter is None:
             raise NotImplementedError(
-                f"script language {language!r} interpreter is not bundled "
-                f"in this build"
+                f"script language {language!r} interpreter is not bundled in this build"
             )
 
         timeout = float(timeout_s if timeout_s is not None else self.cpu_seconds)
@@ -292,9 +292,7 @@ class ScriptSandbox:
         # ``network_blocked=True`` for this run.
         wrapped_source = (
             "import sys as _forge_sys\n"
-            "try:\n"
-            + _indent(source, "    ")
-            + "\nexcept BaseException:\n"
+            "try:\n" + _indent(source, "    ") + "\nexcept BaseException:\n"
             "    _forge_sys.stderr.write(_forge_sys.exc_info()[1] or '')\n"
             "    raise\n"
             "finally:\n"

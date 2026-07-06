@@ -1,18 +1,19 @@
 """F-004 — Roles CRUD (RBAC bindings)."""
 
 from __future__ import annotations
+
 from typing import Annotated
 
-from fastapi import APIRouter, status, Depends
-
-from app.api.deps import DbSession, Principal, require_permission, get_current_principal
-from app.core.audit import audit
-from app.core.security import AuthenticatedPrincipal
-from app.schemas.common import ForgeBaseModel
-from app.db.models.role import Role
+from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
+
 from app.agents.approval_gate import require_approval_phase
 from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import DbSession, get_current_principal, require_permission
+from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
+from app.db.models.role import Role
+from app.schemas.common import ForgeBaseModel
 
 router = APIRouter(prefix="/roles", tags=["roles"])
 
@@ -49,9 +50,9 @@ async def list_roles(
         )
         for r in rows
     ]
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("", response_model=RoleRead, status_code=status.HTTP_201_CREATED)
 @audit(action="roles.create", target_type="role")
 async def create_role(

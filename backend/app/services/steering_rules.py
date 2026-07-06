@@ -42,11 +42,12 @@ import hashlib
 import os
 import re
 import threading
+from collections.abc import Iterable, Mapping
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import delete, select
@@ -60,7 +61,6 @@ from app.db.rls import tenant_context
 from app.db.session import get_session_factory
 from app.schemas.steering_rules import (
     STEERING_STAGES,
-    InjectionResult,
     SteeringCatalog,
     SteeringDecision,
     SteeringRuleCreate,
@@ -93,6 +93,7 @@ _FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*(?:\n|$)", re.DOTALL)
 # key: value pairs, simple lists, and inline [a, b] lists. We parse it
 # inline to avoid pulling in PyYAML for a 30-line grammar. A future
 # commit can swap this for `import yaml.safe_load` if rules grow richer.
+
 
 def _strip_inline_comment(value: str) -> str:
     v = value.strip()
@@ -181,7 +182,7 @@ def parse_front_matter(text: str) -> tuple[dict[str, Any], str]:
     if not match:
         return {}, text
     block = match.group(1)
-    body = text[match.end():]
+    body = text[match.end() :]
     parsed: dict[str, Any] = {}
     pending_key: str | None = None
     pending_list: list[str] = []
@@ -237,7 +238,7 @@ class CatalogEntry:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_row(cls, row: SteeringRule) -> "CatalogEntry":
+    def from_row(cls, row: SteeringRule) -> CatalogEntry:
         return cls(
             id=row.id,
             rule_id=row.rule_id,
@@ -354,9 +355,7 @@ class SteeringEngine:
             if entry is None:
                 continue
             entries.append(entry)
-        catalog = SteeringRuleCatalog(
-            tenant_id=tid, project_id=pid, entries=entries
-        )
+        catalog = SteeringRuleCatalog(tenant_id=tid, project_id=pid, entries=entries)
         with self._lock:
             self._catalogs[(str(tid), str(pid))] = catalog
         if persist and entries:
@@ -395,14 +394,13 @@ class SteeringEngine:
         tid = str(tenant_id)
         pid = str(project_id)
         factory = get_session_factory()
-        async with factory() as session:
-            async with _maybe_tenant_context(session, tid, pid):
-                stmt = select(SteeringRule).where(
-                    SteeringRule.tenant_id == tid,
-                    SteeringRule.project_id == pid,
-                )
-                rows = (await session.execute(stmt)).scalars().all()
-                return [SteeringRuleRead.model_validate(r) for r in rows]
+        async with factory() as session, _maybe_tenant_context(session, tid, pid):
+            stmt = select(SteeringRule).where(
+                SteeringRule.tenant_id == tid,
+                SteeringRule.project_id == pid,
+            )
+            rows = (await session.execute(stmt)).scalars().all()
+            return [SteeringRuleRead.model_validate(r) for r in rows]
 
     async def add_rule(
         self,
@@ -416,42 +414,41 @@ class SteeringEngine:
         pid = str(body.project_id or project_id)
         content = body.content or ""
         factory = get_session_factory()
-        async with factory() as session:
-            async with _maybe_tenant_context(session, tid, pid):
-                stmt = (
-                    pg_insert(SteeringRule)
-                    .values(
-                        id=uuid4(),
-                        tenant_id=tid,
-                        project_id=pid,
-                        rule_id=body.rule_id,
-                        file_path=body.file_path,
-                        content=content,
-                        content_hash=_file_hash(content),
-                        indexed_at=datetime.now(timezone.utc),
-                        scope=body.scope or "project",
-                        applies_to_stages=list(body.applies_to_stages or []),
-                        metadata_=body.metadata or {},
-                    )
-                    .on_conflict_do_update(
-                        index_elements=["tenant_id", "project_id", "rule_id"],
-                        set_={
-                            "file_path": body.file_path,
-                            "content": content,
-                            "content_hash": _file_hash(content),
-                            "indexed_at": datetime.now(timezone.utc),
-                            "scope": body.scope or "project",
-                            "applies_to_stages": list(body.applies_to_stages or []),
-                            "metadata": body.metadata or {},
-                            "updated_at": datetime.now(timezone.utc),
-                        },
-                    )
-                    .returning(SteeringRule)
+        async with factory() as session, _maybe_tenant_context(session, tid, pid):
+            stmt = (
+                pg_insert(SteeringRule)
+                .values(
+                    id=uuid4(),
+                    tenant_id=tid,
+                    project_id=pid,
+                    rule_id=body.rule_id,
+                    file_path=body.file_path,
+                    content=content,
+                    content_hash=_file_hash(content),
+                    indexed_at=datetime.now(UTC),
+                    scope=body.scope or "project",
+                    applies_to_stages=list(body.applies_to_stages or []),
+                    metadata_=body.metadata or {},
                 )
-                result = await session.execute(stmt)
-                await session.commit()
-                row = result.scalar_one()
-                return SteeringRuleRead.model_validate(row)
+                .on_conflict_do_update(
+                    index_elements=["tenant_id", "project_id", "rule_id"],
+                    set_={
+                        "file_path": body.file_path,
+                        "content": content,
+                        "content_hash": _file_hash(content),
+                        "indexed_at": datetime.now(UTC),
+                        "scope": body.scope or "project",
+                        "applies_to_stages": list(body.applies_to_stages or []),
+                        "metadata": body.metadata or {},
+                        "updated_at": datetime.now(UTC),
+                    },
+                )
+                .returning(SteeringRule)
+            )
+            result = await session.execute(stmt)
+            await session.commit()
+            row = result.scalar_one()
+            return SteeringRuleRead.model_validate(row)
 
     async def delete_rule(
         self,
@@ -464,25 +461,24 @@ class SteeringEngine:
         pid = str(project_id)
         rid = str(rule_id)
         factory = get_session_factory()
-        async with factory() as session:
-            async with _maybe_tenant_context(session, tid, pid):
-                # Try to interpret `rule_id` as either the DB row id or
-                # the human-readable `rule_id` column.
-                if _looks_like_uuid(rid):
-                    stmt = delete(SteeringRule).where(
-                        SteeringRule.tenant_id == tid,
-                        SteeringRule.project_id == pid,
-                        SteeringRule.id == rid,
-                    )
-                else:
-                    stmt = delete(SteeringRule).where(
-                        SteeringRule.tenant_id == tid,
-                        SteeringRule.project_id == pid,
-                        SteeringRule.rule_id == rid,
-                    )
-                result = await session.execute(stmt)
-                await session.commit()
-                return bool(result.rowcount)
+        async with factory() as session, _maybe_tenant_context(session, tid, pid):
+            # Try to interpret `rule_id` as either the DB row id or
+            # the human-readable `rule_id` column.
+            if _looks_like_uuid(rid):
+                stmt = delete(SteeringRule).where(
+                    SteeringRule.tenant_id == tid,
+                    SteeringRule.project_id == pid,
+                    SteeringRule.id == rid,
+                )
+            else:
+                stmt = delete(SteeringRule).where(
+                    SteeringRule.tenant_id == tid,
+                    SteeringRule.project_id == pid,
+                    SteeringRule.rule_id == rid,
+                )
+            result = await session.execute(stmt)
+            await session.commit()
+            return bool(result.rowcount)
 
     def inject_into_context(
         self,
@@ -501,9 +497,7 @@ class SteeringEngine:
         ``agent_state`` is currently unused but accepted so the signature
         is stable for future per-agent filtering (e.g. by agent_type).
         """
-        catalog = self.get_catalog(
-            tenant_id=tenant_id, project_id=project_id
-        )
+        catalog = self.get_catalog(tenant_id=tenant_id, project_id=project_id)
         if catalog is None:
             return {}
         out: dict[str, list[str]] = {}
@@ -525,9 +519,7 @@ class SteeringEngine:
         tenant_id: UUID | str,
         project_id: UUID | str,
     ) -> SteeringCatalog | None:
-        catalog = self.get_catalog(
-            tenant_id=tenant_id, project_id=project_id
-        )
+        catalog = self.get_catalog(tenant_id=tenant_id, project_id=project_id)
         if catalog is None:
             return None
         return SteeringCatalog(
@@ -545,9 +537,9 @@ class SteeringEngine:
                     applies_to_stages=list(e.applies_to_stages or []),
                     metadata=e.metadata,
                     content_hash=e.content_hash,
-                    indexed_at=datetime.now(timezone.utc),
-                    created_at=datetime.now(timezone.utc),
-                    updated_at=datetime.now(timezone.utc),
+                    indexed_at=datetime.now(UTC),
+                    created_at=datetime.now(UTC),
+                    updated_at=datetime.now(UTC),
                 )
                 for e in catalog.entries
             ],
@@ -604,14 +596,9 @@ class SteeringEngine:
             ``reason``, and ``metadata``.
         """
         if stage not in STEERING_STAGES:
-            raise ValueError(
-                f"unknown steering stage {stage!r}; "
-                f"expected one of {STEERING_STAGES}"
-            )
+            raise ValueError(f"unknown steering stage {stage!r}; expected one of {STEERING_STAGES}")
 
-        catalog = self.get_catalog(
-            tenant_id=tenant_id, project_id=project_id
-        )
+        catalog = self.get_catalog(tenant_id=tenant_id, project_id=project_id)
         if catalog is None:
             # No catalog means no rules fired -- safe default is allow.
             return SteeringDecision(
@@ -628,10 +615,7 @@ class SteeringEngine:
 
         matches = catalog.rules_for_stage(stage)
         rule_ids: list[str] = [m.rule_id for m in matches]
-        severities = [
-            str((m.metadata or {}).get("severity") or "info").lower()
-            for m in matches
-        ]
+        severities = [str((m.metadata or {}).get("severity") or "info").lower() for m in matches]
 
         if any(s == "block" for s in severities):
             action: str = "block"
@@ -643,10 +627,7 @@ class SteeringEngine:
         reason_suffix = f" {len(matches)} rule(s) matched" if matches else " no rules matched"
         reason = (
             f"rules-only evaluation of stage={stage!r}; "
-            + (
-                f"severity ladder says {action!r} because"
-                + reason_suffix
-            )
+            + (f"severity ladder says {action!r} because" + reason_suffix)
             if False
             else (
                 f"severity ladder resolved to {action!r} (matched "
@@ -725,7 +706,7 @@ class SteeringEngine:
             return False
 
         class _Handler(FileSystemEventHandler):  # type: ignore[misc]
-            def on_any_event(self, event: "FileSystemEvent") -> None:  # type: ignore[override]
+            def on_any_event(self, event: FileSystemEvent) -> None:  # type: ignore[override]
                 if event.is_directory:
                     return
                 path = Path(str(event.src_path))
@@ -820,49 +801,49 @@ class SteeringEngine:
 
     async def _persist_catalog(self, catalog: SteeringRuleCatalog) -> None:
         factory = get_session_factory()
-        async with factory() as session:
-            async with _maybe_tenant_context(
-                session, str(catalog.tenant_id), str(catalog.project_id)
-            ):
-                for entry in catalog.entries:
-                    stmt = (
-                        pg_insert(SteeringRule)
-                        .values(
-                            id=entry.id,
-                            tenant_id=str(catalog.tenant_id),
-                            project_id=str(catalog.project_id),
-                            rule_id=entry.rule_id,
-                            file_path=entry.file_path,
-                            content=entry.content,
-                            content_hash=entry.content_hash,
-                            indexed_at=datetime.now(timezone.utc),
-                            scope=entry.scope,
-                            applies_to_stages=list(entry.applies_to_stages or []),
-                            metadata_=entry.metadata or {},
-                        )
-                        .on_conflict_do_update(
-                            index_elements=["tenant_id", "project_id", "rule_id"],
-                            set_={
-                                "file_path": entry.file_path,
-                                "content": entry.content,
-                                "content_hash": entry.content_hash,
-                                "indexed_at": datetime.now(timezone.utc),
-                                "scope": entry.scope,
-                                "applies_to_stages": list(entry.applies_to_stages or []),
-                                "metadata": entry.metadata or {},
-                                "updated_at": datetime.now(timezone.utc),
-                            },
-                        )
+        async with (
+            factory() as session,
+            _maybe_tenant_context(session, str(catalog.tenant_id), str(catalog.project_id)),
+        ):
+            for entry in catalog.entries:
+                stmt = (
+                    pg_insert(SteeringRule)
+                    .values(
+                        id=entry.id,
+                        tenant_id=str(catalog.tenant_id),
+                        project_id=str(catalog.project_id),
+                        rule_id=entry.rule_id,
+                        file_path=entry.file_path,
+                        content=entry.content,
+                        content_hash=entry.content_hash,
+                        indexed_at=datetime.now(UTC),
+                        scope=entry.scope,
+                        applies_to_stages=list(entry.applies_to_stages or []),
+                        metadata_=entry.metadata or {},
                     )
-                    try:
-                        await session.execute(stmt)
-                    except SQLAlchemyError as exc:
-                        logger.warning(
-                            "steering.persist_skip",
-                            rule_id=entry.rule_id,
-                            error=str(exc),
-                        )
-                await session.commit()
+                    .on_conflict_do_update(
+                        index_elements=["tenant_id", "project_id", "rule_id"],
+                        set_={
+                            "file_path": entry.file_path,
+                            "content": entry.content,
+                            "content_hash": entry.content_hash,
+                            "indexed_at": datetime.now(UTC),
+                            "scope": entry.scope,
+                            "applies_to_stages": list(entry.applies_to_stages or []),
+                            "metadata": entry.metadata or {},
+                            "updated_at": datetime.now(UTC),
+                        },
+                    )
+                )
+                try:
+                    await session.execute(stmt)
+                except SQLAlchemyError as exc:
+                    logger.warning(
+                        "steering.persist_skip",
+                        rule_id=entry.rule_id,
+                        error=str(exc),
+                    )
+            await session.commit()
 
     @staticmethod
     def _format_injection_block(entry: CatalogEntry) -> str:

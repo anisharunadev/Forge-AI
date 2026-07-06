@@ -18,9 +18,7 @@ from typing import Any
 import httpx
 from fastapi import APIRouter
 
-from app.core.config import settings
 from app.core.logging import get_logger
-from app.integrations.litellm.litellm_base_client import LiteLLMBaseClient
 from app.schemas.forge import ForgeHealth, LiteLLMHealthDetail
 from app.services.forge_config import get_forge_config
 from app.services.observability_service import observability_service
@@ -59,24 +57,54 @@ async def _readiness_live(timeout: float) -> dict[str, Any]:
         async with httpx.AsyncClient(timeout=timeout) as client:
             response = await client.get(f"{cfg.proxy_url}{_READINESS_PATH}", headers=headers)
             if response.status_code == 401:
-                return {"reachable": False, "version": None, "db": None, "cache": None, "callbacks": None, "error": "master_key_rejected"}
+                return {
+                    "reachable": False,
+                    "version": None,
+                    "db": None,
+                    "cache": None,
+                    "callbacks": None,
+                    "error": "master_key_rejected",
+                }
             if response.status_code != 200:
-                return {"reachable": False, "version": None, "db": None, "cache": None, "callbacks": None, "error": f"http_{response.status_code}"}
+                return {
+                    "reachable": False,
+                    "version": None,
+                    "db": None,
+                    "cache": None,
+                    "callbacks": None,
+                    "error": f"http_{response.status_code}",
+                }
             try:
                 body = response.json()
             except json.JSONDecodeError:
-                return {"reachable": False, "version": None, "db": None, "cache": None, "callbacks": None, "error": "non_json_body"}
+                return {
+                    "reachable": False,
+                    "version": None,
+                    "db": None,
+                    "cache": None,
+                    "callbacks": None,
+                    "error": "non_json_body",
+                }
             status = body.get("status") or body.get("health_status")
             return {
                 "reachable": status in ("healthy", "ok", "live"),
                 "version": body.get("version") or body.get("litellm_version"),
                 "db": body.get("db"),
                 "cache": body.get("cache") if isinstance(body.get("cache"), str) else None,
-                "callbacks": body.get("callbacks") if isinstance(body.get("callbacks"), list) else None,
+                "callbacks": body.get("callbacks")
+                if isinstance(body.get("callbacks"), list)
+                else None,
                 "error": None,
             }
     except (httpx.HTTPError, RuntimeError) as exc:
-        return {"reachable": False, "version": None, "db": None, "cache": None, "callbacks": None, "error": f"{type(exc).__name__}: {exc}"}
+        return {
+            "reachable": False,
+            "version": None,
+            "db": None,
+            "cache": None,
+            "callbacks": None,
+            "error": f"{type(exc).__name__}: {exc}",
+        }
 
 
 async def _readiness_cached() -> dict[str, Any]:

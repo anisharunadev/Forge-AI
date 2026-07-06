@@ -18,7 +18,7 @@ conftest, we keep the Lesson tests narrow and headless.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
@@ -33,7 +33,7 @@ from app.services.event_bus import EventType
 class _FakeRow:
     """Stub row — every attribute _to_wire reads is set here."""
 
-    def __init__(self, source_event: str, status_enum: "LessonStatus") -> None:
+    def __init__(self, source_event: str, status_enum: LessonStatus) -> None:
         self.id = uuid.uuid4()
         self.tenant_id = uuid.uuid4()
         self.project_id = None
@@ -48,7 +48,7 @@ class _FakeRow:
         self.decided_by = None
         self.decided_at = None
         self.review_notes = None
-        self.created_at = datetime.now(timezone.utc)
+        self.created_at = datetime.now(UTC)
 
 
 # ---------------------------------------------------------------------------
@@ -111,7 +111,7 @@ async def test_decide_approve_promotes_into_template() -> None:
         decided_by = None
         decided_at = None
         review_notes = None
-        created_at = datetime.now(timezone.utc)
+        created_at = datetime.now(UTC)
 
     fake_candidate = _FakeCandidate()
     captured: dict[str, Any] = {}

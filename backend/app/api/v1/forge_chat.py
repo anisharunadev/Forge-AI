@@ -14,16 +14,19 @@ Rule 6: audit is emitted by the service, not the route.
 from __future__ import annotations
 
 import json
-from typing import Annotated, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.core.auth import CurrentUser
 from app.core.logging import get_logger
 from app.core.rate_limit import enforce_rate_limit
 from app.core.security import AuthenticatedPrincipal
-from app.core.auth import CurrentUser
 from app.schemas.forge_chat import (
     ChatCancelRequest,
     ChatCancelResponse,
@@ -42,8 +45,6 @@ from app.services.forge_chat_errors import (
     UpstreamError,
     ValidationError,
 )
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/forge", tags=["forge.chat"])
 logger = get_logger(__name__)
@@ -84,16 +85,16 @@ def _sse_envelope(chunk: ChatStreamChunk) -> bytes:
         },
         default=str,
     )
-    return f"event: {chunk.event}\ndata: {payload}\n\n".encode("utf-8")
+    return f"event: {chunk.event}\ndata: {payload}\n\n".encode()
 
 
 def _sse_error(code: str, message: str) -> bytes:
     """Typed-error envelope for the SSE error channel."""
     payload = json.dumps({"code": code, "message": message})
-    return f"event: error\ndata: {payload}\n\n".encode("utf-8")
+    return f"event: error\ndata: {payload}\n\n".encode()
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post(
     "/chat/stream",
     summary="SSE stream of a chat completion for an agent",
@@ -111,9 +112,7 @@ async def _chat_rate_limit_dep(
     principal: Annotated[AuthenticatedPrincipal, Depends(require_tenant)],
 ) -> None:
     """Per-tenant sliding-window cap on chat completion calls."""
-    await enforce_rate_limit(
-        "chat", tenant_id=UUID(str(principal.tenant_id))
-    )
+    await enforce_rate_limit("chat", tenant_id=UUID(str(principal.tenant_id)))
 
 
 async def stream_chat_endpoint(
@@ -173,10 +172,8 @@ async def stream_chat_endpoint(
             )
 
             if isinstance(exc, QueuedForLater):
-                payload = json.dumps(
-                    {"event": "queued", "request_id": exc.request_id}
-                )
-                yield f"event: queued\ndata: {payload}\n\n".encode("utf-8")
+                payload = json.dumps({"event": "queued", "request_id": exc.request_id})
+                yield f"event: queued\ndata: {payload}\n\n".encode()
                 return
             if isinstance(exc, QueueFull):
                 payload = json.dumps(
@@ -186,7 +183,7 @@ async def stream_chat_endpoint(
                         "retry_after_seconds": exc.retry_after_seconds,
                     }
                 )
-                yield f"event: error\ndata: {payload}\n\n".encode("utf-8")
+                yield f"event: error\ndata: {payload}\n\n".encode()
                 return
             # Anything else: surface as a generic 500-ish SSE error.
             logger.exception("forge_chat.unexpected_error")
@@ -200,9 +197,9 @@ async def stream_chat_endpoint(
         "Content-Type": "text/event-stream",
     }
     return StreamingResponse(generator(), media_type="text/event-stream", headers=headers)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post(
     "/chat/cancel",
     response_model=ChatCancelResponse,

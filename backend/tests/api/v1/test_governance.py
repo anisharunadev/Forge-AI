@@ -30,9 +30,8 @@ from __future__ import annotations
 
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -40,7 +39,6 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-
 
 # ---------------------------------------------------------------------------
 # Env setup (must run before importing app modules)
@@ -69,8 +67,6 @@ from app.db.models.board_confirmation import (  # noqa: E402
 )
 from app.db.models.policy import Policy, PolicySeverity  # noqa: E402
 from app.db.models.role import Role  # noqa: E402
-from app.db.session import get_session_factory  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -88,11 +84,11 @@ def engine():
     # ApprovalRequest, AuditEvent, Role, BoardConfirmation). The full
     # Base.metadata has Postgres-only ARRAY columns (e.g. phase4_sso_configs)
     # that SQLite can't compile.
-    from app.db.models.policy import Policy
     from app.db.models.approval import ApprovalRequest
     from app.db.models.audit import AuditEvent
-    from app.db.models.role import Role
     from app.db.models.board_confirmation import BoardConfirmation
+    from app.db.models.policy import Policy
+    from app.db.models.role import Role
 
     Base.metadata.create_all(
         eng,
@@ -112,9 +108,7 @@ def engine():
 def session_factory(engine, monkeypatch):
     """Sync session factory for the seed step. The route handlers run
     against an async shim installed by ``db_session_override``."""
-    factory = sessionmaker(
-        bind=engine, autoflush=False, autocommit=False, expire_on_commit=False
-    )
+    factory = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
     return factory
 
 
@@ -200,7 +194,7 @@ def tenants(session_factory):
                 plan_rev="rev-1",
                 outcome=BoardConfirmationOutcome.ACCEPTED,
                 decider_id=user_id,
-                decided_at=datetime.now(timezone.utc),
+                decided_at=datetime.now(UTC),
                 idempotency_key="ack-1",
                 prompt="ok",
             )
@@ -286,16 +280,10 @@ def test_policies_require_governance_read(client, fastapi_app, tenants):
     assert resp.status_code == 403
 
 
-def test_accept_policy_flips_enabled(
-    client, fastapi_app, tenants, session_factory
-):
+def test_accept_policy_flips_enabled(client, fastapi_app, tenants, session_factory):
     # Look up the disabled policy under tenant A.
     with session_factory() as s:
-        policy_id = next(
-            p.id
-            for p in s.query(Policy).all()
-            if p.tenant_id == tenants.tenant_a
-        )
+        policy_id = next(p.id for p in s.query(Policy).all() if p.tenant_id == tenants.tenant_a)
 
     _override(
         fastapi_app,
@@ -316,11 +304,7 @@ def test_accept_policy_flips_enabled(
         row = s.get(Policy, policy_id)
         assert row.enabled is True
         # Audit row written
-        evt = (
-            s.query(AuditEvent)
-            .filter(AuditEvent.action == "governance.policy.accept")
-            .one()
-        )
+        evt = s.query(AuditEvent).filter(AuditEvent.action == "governance.policy.accept").one()
         assert evt.target_id == str(policy_id)
 
 
@@ -329,9 +313,7 @@ def test_accept_policy_flips_enabled(
 # ---------------------------------------------------------------------------
 
 
-def test_approvals_list_and_decide(
-    client, fastapi_app, tenants, session_factory
-):
+def test_approvals_list_and_decide(client, fastapi_app, tenants, session_factory):
     _override(
         fastapi_app,
         _principal(tenants.tenant_a, tenants.user_id, permissions=["governance:read"]),
@@ -392,9 +374,7 @@ def test_rbac_roles_scoped_and_permission_split(client, fastapi_app, tenants):
 # ---------------------------------------------------------------------------
 
 
-def test_board_confirmations_list_and_idempotent_ack(
-    client, fastapi_app, tenants
-):
+def test_board_confirmations_list_and_idempotent_ack(client, fastapi_app, tenants):
     _override(
         fastapi_app,
         _principal(tenants.tenant_a, tenants.user_id, permissions=["governance:read"]),

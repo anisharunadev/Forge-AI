@@ -1,14 +1,15 @@
 """F-015 — Connector Marketplace REST endpoints."""
 
 from __future__ import annotations
-from typing import Annotated
 
-from datetime import datetime, timezone
-from uuid import UUID
+from datetime import UTC, datetime
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.marketplace import (
@@ -16,11 +17,7 @@ from app.schemas.marketplace import (
     MarketplaceInstallRequest,
     MarketplaceInstallResult,
 )
-from app.services.connector_manager import connector_manager
 from app.services.marketplace import marketplace
-from app.schemas.connectors import ConnectorRead
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/marketplace/connectors", tags=["marketplace"])
 
@@ -29,7 +26,7 @@ router = APIRouter(prefix="/marketplace/connectors", tags=["marketplace"])
 @audit(action="marketplace.list", target_type="marketplace_connector")
 async def list_marketplace(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("marketplace:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("marketplace:read")),
 ) -> list[MarketplaceConnectorRead]:
     rows = await marketplace.list_available()
     return [
@@ -54,7 +51,7 @@ async def list_marketplace(
 async def get_marketplace_entry(
     slug: str,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("marketplace:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("marketplace:read")),
 ) -> MarketplaceConnectorRead:
     try:
         entry = await marketplace.get_details(slug)
@@ -72,16 +69,16 @@ async def get_marketplace_entry(
         downloads=entry.downloads,
         rating=entry.rating,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/{slug}/install", response_model=MarketplaceInstallResult)
 @audit(action="marketplace.install", target_type="connector")
 async def install_marketplace(
     slug: str,
     body: MarketplaceInstallRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:create"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:create")),
 ) -> MarketplaceInstallResult:
     try:
         entry, connector = await marketplace.install(
@@ -99,7 +96,7 @@ async def install_marketplace(
     return MarketplaceInstallResult(
         slug=entry.slug,
         connector_id=connector.id,
-        installed_at=datetime.now(timezone.utc).isoformat(),
+        installed_at=datetime.now(UTC).isoformat(),
     )
 
 

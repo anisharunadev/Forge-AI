@@ -15,22 +15,22 @@ Revision ID: h6i7j8k9l0m1
 Revises: g5h6i7j8k9l0
 Create Date: 2026-06-29 12:30:00.000000
 """
+
 from __future__ import annotations
 
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 
 revision: str = "h6i7j8k9l0m1"
-down_revision: Union[str, None] = "g5h6i7j8k9l0"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "g5h6i7j8k9l0"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -41,8 +41,7 @@ def upgrade() -> None:
     in-place patch is a no-op rather than an error.
     """
     op.execute(
-        "ALTER TABLE workflows "
-        "ADD COLUMN IF NOT EXISTS status VARCHAR(32) NOT NULL DEFAULT 'draft'"
+        "ALTER TABLE workflows ADD COLUMN IF NOT EXISTS status VARCHAR(32) NOT NULL DEFAULT 'draft'"
     )
     op.execute(
         "CREATE INDEX IF NOT EXISTS ix_workflows_tenant_project_status "

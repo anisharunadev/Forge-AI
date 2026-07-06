@@ -87,16 +87,9 @@ class AuditEvent(Base, UUIDPrimaryKeyMixin):
     # M7 — tamper-evident hash chain reference. NULL on legacy rows;
     # populated on every new write by ``AuditService.record`` via a
     # raw-SQL UPDATE that bypasses the ``before_update`` listener.
-    hash_chain_ref: Mapped[str | None] = mapped_column(
-        String(64), nullable=True, index=True
-    )
+    hash_chain_ref: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
 
-
-
-    __table_args__ = (
-        Index("ix_audit_events_tenant_project", "tenant_id", "project_id"),
-    )
-
+    __table_args__ = (Index("ix_audit_events_tenant_project", "tenant_id", "project_id"),)
 
 
 # SQLAlchemy ORM-level immutability: any UPDATE or DELETE attempt is

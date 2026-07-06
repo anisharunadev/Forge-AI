@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import logging
 from collections import Counter
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -116,11 +116,13 @@ class LessonService:
         stmt = stmt.order_by(LessonCandidate.created_at.desc()).limit(limit)
         return list((await db.execute(stmt)).scalars().all())
 
-    async def count_by_status(
-        self, db: AsyncSession, *, tenant_id: UUID
-    ) -> dict[str, int]:
+    async def count_by_status(self, db: AsyncSession, *, tenant_id: UUID) -> dict[str, int]:
         rows = list(
-            (await db.execute(select(LessonCandidate).where(LessonCandidate.tenant_id == tenant_id)))
+            (
+                await db.execute(
+                    select(LessonCandidate).where(LessonCandidate.tenant_id == tenant_id)
+                )
+            )
             .scalars()
             .all()
         )
@@ -157,12 +159,10 @@ class LessonService:
         # into a Template — the steward always wins.
         cand.title = title_override or cand.title
         cand.body = body_override or cand.body
-        cand.proposed_skill_name = (
-            proposed_skill_name_override or cand.proposed_skill_name
-        )
+        cand.proposed_skill_name = proposed_skill_name_override or cand.proposed_skill_name
         cand.status = decision
         cand.decided_by = editor_id
-        cand.decided_at = datetime.now(timezone.utc)
+        cand.decided_at = datetime.now(UTC)
         cand.review_notes = review_notes
 
         promoted_template_id: UUID | None = None
@@ -208,7 +208,7 @@ class LessonService:
         period_end: datetime | None = None,
         auto_promote_threshold: int = 3,
     ) -> MonthlyDigest:
-        end = period_end or datetime.now(timezone.utc)
+        end = period_end or datetime.now(UTC)
         start = period_start or (end - timedelta(days=30))
         stmt = (
             select(LessonCandidate)
@@ -282,23 +282,15 @@ class LessonService:
 
         candidate = LessonCandidate(
             tenant_id=UUID(str(event.tenant_id)),
-            project_id=(
-                UUID(str(event.project_id))
-                if event.project_id is not None
-                else None
-            ),
-            run_id=(
-                UUID(str(payload.get("run_id")))
-                if payload.get("run_id")
-                else None
-            ),
+            project_id=(UUID(str(event.project_id)) if event.project_id is not None else None),
+            run_id=(UUID(str(payload.get("run_id"))) if payload.get("run_id") else None),
             source_event=source.value,
             status=LessonStatus.PENDING,
             title=_derive_title(event),
             body=_derive_body(event),
             proposed_skill_name=payload.get("proposed_skill_name"),
             evidence={"links": evidence},
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
         factory = self._factory
         if factory is None:

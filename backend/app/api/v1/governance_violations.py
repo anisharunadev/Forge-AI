@@ -23,19 +23,19 @@ Routes
 """
 
 from __future__ import annotations
-from typing import Annotated
 
 from datetime import datetime, timedelta
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 
-from app.api.deps import Principal, get_current_principal, require_permission
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.services.litellm_admin import list_spend_logs
 from app.services.rbac import GOVERNANCE_PERMISSION_MANAGE, GOVERNANCE_PERMISSION_READ
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/governance", tags=["governance"])
 
@@ -52,9 +52,7 @@ def _state_key(tenant_id: str, violation_id: str) -> str:
     return f"{tenant_id}:{violation_id}"
 
 
-async def _load_violations(
-    tenant_id: str, severity: str, days: int
-) -> list[dict]:
+async def _load_violations(tenant_id: str, severity: str, days: int) -> list[dict]:
     """Derive violations from LiteLLM spend logs (shared by list + poll)."""
     start = (datetime.utcnow() - timedelta(days=days)).isoformat()
     logs = await list_spend_logs(
@@ -75,11 +73,7 @@ async def _load_violations(
                     "id": log.get("request_id"),
                     "timestamp": log.get("startTime"),
                     "model": log.get("model"),
-                    "severity": (
-                        "high"
-                        if status in (403, 429, "403", "429")
-                        else "medium"
-                    ),
+                    "severity": ("high" if status in (403, 429, "403", "429") else "medium"),
                     "kind": guardrail_action or "unknown",
                     "description": metadata.get(
                         "guardrail_reason",
@@ -97,8 +91,7 @@ async def _load_violations(
     for v in violations:
         v["status"] = (
             "RESOLVED"
-            if _RESOLUTION_STATE.get(_state_key(tenant_id, v["id"]))
-            == "resolved"
+            if _RESOLUTION_STATE.get(_state_key(tenant_id, v["id"])) == "resolved"
             else "OPEN"
         )
 
@@ -120,9 +113,9 @@ async def list_violations(
     canonical record is in LiteLLM, surfaced through ``list_spend_logs``.
     """
     return await _load_violations(principal.tenant_id, severity, days)
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/violations/{violation_id}/resolve")
 @audit(action="governance.violation.resolve", target_type="violation")
 async def resolve_violation(
@@ -138,9 +131,9 @@ async def resolve_violation(
         "resolved_by": principal.user_id,
         "resolved_at": datetime.utcnow().isoformat(),
     }
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/violations/{violation_id}/reopen")
 @audit(action="governance.violation.reopen", target_type="violation")
 async def reopen_violation(
@@ -156,9 +149,9 @@ async def reopen_violation(
         "reopened_by": principal.user_id,
         "reopened_at": datetime.utcnow().isoformat(),
     }
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/violations/poll")
 @audit(action="governance.violations.poll", target_type="tenant")
 async def poll_violations(

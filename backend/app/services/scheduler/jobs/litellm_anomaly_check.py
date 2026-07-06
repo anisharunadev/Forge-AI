@@ -11,11 +11,10 @@ rate low (the spec requires >= 4 buckets of history before firing).
 
 from __future__ import annotations
 
-import math
 import statistics
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 
 from app.core.logging import get_logger
 from app.db.models.cost import CostEntry
@@ -23,7 +22,7 @@ from app.db.models.tenant import Tenant
 from app.db.rls import tenant_context
 from app.db.session import get_session_factory
 from app.services.audit_service import audit_service
-from app.services.event_bus import event_bus, EventType
+from app.services.event_bus import EventType, event_bus
 
 logger = get_logger(__name__)
 
@@ -48,7 +47,7 @@ async def anomaly_check_job() -> None:
         logger.info("litellm.anomaly.no_tenants")
         return
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     window_start = now - timedelta(hours=_HOUR_BUCKETS)
     for tenant in tenants:
         try:
@@ -136,34 +135,31 @@ async def _check_one(tenant_id: str, window_start: datetime, now: datetime) -> N
         )
 
 
-async def _hourly_buckets(
-    tenant_id: str, window_start: datetime, now: datetime
-) -> list[float]:
+async def _hourly_buckets(tenant_id: str, window_start: datetime, now: datetime) -> list[float]:
     """Return ``_HOUR_BUCKETS`` floats of cost_usd, oldest first."""
     factory = get_session_factory()
-    async with factory() as session:
-        async with tenant_context(session, tenant_id):
-            # Fetch raw rows in window; aggregate per-hour in Python to
-            # keep this portable across PostgreSQL versions.
-            stmt = (
-                select(CostEntry.cost_usd, CostEntry.recorded_at)
-                .where(
-                    CostEntry.tenant_id == tenant_id,
-                    CostEntry.source == "litellm",
-                    CostEntry.recorded_at >= window_start,
-                    CostEntry.recorded_at <= now,
-                )
-                .order_by(CostEntry.recorded_at.asc())
+    async with factory() as session, tenant_context(session, tenant_id):
+        # Fetch raw rows in window; aggregate per-hour in Python to
+        # keep this portable across PostgreSQL versions.
+        stmt = (
+            select(CostEntry.cost_usd, CostEntry.recorded_at)
+            .where(
+                CostEntry.tenant_id == tenant_id,
+                CostEntry.source == "litellm",
+                CostEntry.recorded_at >= window_start,
+                CostEntry.recorded_at <= now,
             )
-            rows = (await session.execute(stmt)).all()
+            .order_by(CostEntry.recorded_at.asc())
+        )
+        rows = (await session.execute(stmt)).all()
 
     buckets = [0.0] * _HOUR_BUCKETS
     for cost, recorded_at in rows:
         if recorded_at is None:
             continue
-        recorded_at = recorded_at.astimezone(timezone.utc) if hasattr(
-            recorded_at, "astimezone"
-        ) else recorded_at
+        recorded_at = (
+            recorded_at.astimezone(UTC) if hasattr(recorded_at, "astimezone") else recorded_at
+        )
         idx = int((recorded_at - window_start).total_seconds() // 3600)
         if 0 <= idx < _HOUR_BUCKETS:
             try:

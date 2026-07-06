@@ -32,7 +32,6 @@ import httpx
 
 from app.core.logging import get_logger
 
-
 logger = get_logger(__name__)
 
 
@@ -267,9 +266,7 @@ async def get_model_info(model_name: str) -> dict[str, Any]:
 async def _get_cost_map_cached(_day_bucket: int) -> dict[str, Any]:
     """Raw call to `/public/litellm_model_cost_map` (no auth)."""
     async with httpx.AsyncClient(timeout=30) as client:
-        res = await client.get(
-            f"{LITELLM_BASE_URL}/public/litellm_model_cost_map"
-        )
+        res = await client.get(f"{LITELLM_BASE_URL}/public/litellm_model_cost_map")
         res.raise_for_status()
         return res.json() if res.content else {}
 

@@ -9,13 +9,12 @@ without code changes (Rule 8).
 
 from __future__ import annotations
 
-from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import DateTime, Index, String, UniqueConstraint
+from sqlalchemy import Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class LiteLLMModelAssignment(Base, UUIDPrimaryKeyMixin, TimestampMixin):
@@ -36,9 +35,7 @@ class LiteLLMModelAssignment(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     max_input_tokens: Mapped[int | None] = mapped_column(default=None, nullable=True)
     max_output_tokens: Mapped[int | None] = mapped_column(default=None, nullable=True)
     enabled: Mapped[bool] = mapped_column(default=True, nullable=False)
-    metadata_: Mapped[dict] = mapped_column(
-        "metadata", JSONB, nullable=False, default=dict
-    )
+    metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, default=dict)
 
     __table_args__ = (
         UniqueConstraint(

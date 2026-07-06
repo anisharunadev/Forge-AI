@@ -8,10 +8,12 @@ from uuid import UUID
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
-from app.core.security import AuthenticatedPrincipal
 from app.core.logging import get_logger
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.model_providers import (
     ModelProviderCreate,
     ModelProviderRead,
@@ -19,8 +21,6 @@ from app.schemas.model_providers import (
     ModelProviderUpdate,
 )
 from app.services.model_provider_registry import model_provider_registry
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -31,7 +31,7 @@ router = APIRouter(prefix="/model-providers", tags=["model-providers"])
 @audit(action="model_providers.list", target_type="model_provider")
 async def list_providers(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:read")),
 ) -> list[ModelProviderRead]:
     rows = await model_provider_registry.list_providers(principal.tenant_id)
     return [ModelProviderRead.model_validate(r) for r in rows]
@@ -42,7 +42,7 @@ async def list_providers(
 async def get_provider(
     provider_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:read")),
 ) -> ModelProviderRead:
     try:
         provider = await model_provider_registry.get_provider(provider_id)
@@ -51,15 +51,15 @@ async def get_provider(
     if str(provider.tenant_id) != str(principal.tenant_id):
         raise HTTPException(status_code=404, detail="model_provider_not_found")
     return ModelProviderRead.model_validate(provider)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("", response_model=ModelProviderRead, status_code=status.HTTP_201_CREATED)
 @audit(action="model_providers.create", target_type="model_provider")
 async def create_provider(
     body: ModelProviderCreate,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:create"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:create")),
 ) -> ModelProviderRead:
     provider = await model_provider_registry.create_provider(
         tenant_id=principal.tenant_id,
@@ -72,16 +72,16 @@ async def create_provider(
         rate_limit_tpm=body.rate_limit_tpm,
     )
     return ModelProviderRead.model_validate(provider)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/{provider_id}", response_model=ModelProviderRead)
 @audit(action="model_providers.update", target_type="model_provider")
 async def update_provider(
     provider_id: UUID,
     body: ModelProviderUpdate,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:update"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:update")),
 ) -> ModelProviderRead:
     try:
         existing = await model_provider_registry.get_provider(provider_id)
@@ -98,9 +98,9 @@ async def update_provider(
         rate_limit_tpm=body.rate_limit_tpm,
     )
     return ModelProviderRead.model_validate(updated)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.delete(
     "/{provider_id}",
     response_model=None,
@@ -110,7 +110,7 @@ async def update_provider(
 async def delete_provider(
     provider_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:delete"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:delete")),
 ):
     try:
         existing = await model_provider_registry.get_provider(provider_id)
@@ -126,12 +126,10 @@ async def delete_provider(
 async def resolve_provider(
     model_alias: str,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:read")),
 ) -> ModelProviderResolveResult:
     try:
-        provider = await model_provider_registry.resolve_provider(
-            principal.tenant_id, model_alias
-        )
+        provider = await model_provider_registry.resolve_provider(principal.tenant_id, model_alias)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return ModelProviderResolveResult(
@@ -152,7 +150,7 @@ async def resolve_provider(
 async def test_provider(  # noqa: PLR0911, PLR0912 — spec-driven branching
     provider_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("model_providers:read")),
 ) -> dict[str, Any]:
     try:
         existing = await model_provider_registry.get_provider(provider_id)
@@ -262,9 +260,7 @@ async def test_provider(  # noqa: PLR0911, PLR0912 — spec-driven branching
     if status_code == 200:
         return {
             "status": "ok",
-            "message": (
-                f"Provider '{existing.name}' ({provider_type}) reachable"
-            ),
+            "message": (f"Provider '{existing.name}' ({provider_type}) reachable"),
             "provider_id": str(existing.id),
             "latency_ms": latency_ms,
             "http_status": status_code,
@@ -280,10 +276,7 @@ async def test_provider(  # noqa: PLR0911, PLR0912 — spec-driven branching
     if status_code == 404:
         return {
             "status": "error",
-            "message": (
-                f"Upstream returned 404 — check api_base and model name "
-                f"(model='{model}')"
-            ),
+            "message": (f"Upstream returned 404 — check api_base and model name (model='{model}')"),
             "provider_id": str(existing.id),
             "latency_ms": latency_ms,
             "http_status": status_code,

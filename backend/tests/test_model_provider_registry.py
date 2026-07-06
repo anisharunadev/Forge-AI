@@ -51,9 +51,7 @@ async def test_rate_limit_check(reg, sqlite_db):
         rate_limit_tpm=0,
     )
 
-    allowed, _ = await reg.rate_limit_check(
-        tenant_id, "gpt-4o-mini", current_rpm=2, current_tpm=0
-    )
+    allowed, _ = await reg.rate_limit_check(tenant_id, "gpt-4o-mini", current_rpm=2, current_tpm=0)
     assert allowed is True
 
     blocked, reason = await reg.rate_limit_check(

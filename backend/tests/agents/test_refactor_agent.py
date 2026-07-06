@@ -21,7 +21,6 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Fixtures / helpers
 # ---------------------------------------------------------------------------
@@ -71,9 +70,9 @@ def test_refactor_graph_compiles():
     # Every declared phase should be present.
     for phase in REFACTOR_PHASES:
         # ``nodes`` dict key is the node name itself.
-        assert phase in node_names or any(
-            phase in str(k) for k in node_names
-        ), f"phase {phase!r} not found in compiled graph nodes {node_names!r}"
+        assert phase in node_names or any(phase in str(k) for k in node_names), (
+            f"phase {phase!r} not found in compiled graph nodes {node_names!r}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -85,8 +84,8 @@ def test_refactor_graph_compiles():
 async def test_inventory_source_node_emits_typed_inventory(event_bus):
     """inventory_source_node writes a SourceInventory-shaped dict onto state."""
     from app.agents.refactor_agent import (
-        inventory_source_node,
         ARTIFACT_TYPE_SOURCE_INVENTORY,
+        inventory_source_node,
     )
     from app.services.aws_transform_client import AWSTransformClient
 
@@ -300,7 +299,7 @@ def test_migration_plan_schema_rejects_malformed_input():
 async def test_push_to_jira_invokes_f213(event_bus):
     """push_to_jira_node calls PushToDeliveryService.push_to_jira with the right args."""
     from app.agents.refactor_agent import push_to_jira_node
-    from app.services.ideation.push_to_delivery import PushResult, PushTarget, PushStatus
+    from app.services.ideation.push_to_delivery import PushResult, PushTarget
 
     # Construct a fully-populated state by running the heuristic node outputs.
     state = _initial_state()

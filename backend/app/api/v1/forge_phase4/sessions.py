@@ -8,6 +8,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 from app.api.deps import require_permission
 from app.core.security import AuthenticatedPrincipal
 from app.services.phase4_sessions import (
@@ -22,8 +24,6 @@ from app.services.phase4_sessions import (
     record_a2a_handshake,
     resume_session,
 )
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="", tags=["phase4-sessions"])
 
@@ -55,7 +55,9 @@ async def sessions_list(
     active_only: bool = True,
     limit: int = 100,
 ) -> dict[str, Any]:
-    return {"sessions": await list_sessions(principal.tenant_id, active_only=active_only, limit=limit)}
+    return {
+        "sessions": await list_sessions(principal.tenant_id, active_only=active_only, limit=limit)
+    }
 
 
 @router.get("/sessions/{session_id}")
@@ -67,9 +69,9 @@ async def sessions_get(
     if row is None:
         raise HTTPException(status_code=404, detail="session_not_found")
     return row
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/sessions/{session_id}/heartbeat")
 async def sessions_heartbeat(
     session_id: UUID,
@@ -77,9 +79,9 @@ async def sessions_heartbeat(
     duration_ms: int | None = None,
 ) -> dict[str, Any]:
     return await heartbeat(session_id, principal.tenant_id, duration_ms=duration_ms)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/sessions/{session_id}/extend")
 async def sessions_extend(
     session_id: UUID,
@@ -87,41 +89,45 @@ async def sessions_extend(
     principal: AuthenticatedPrincipal = Depends(require_permission("forge:read")),
 ) -> dict[str, Any]:
     return await extend_session(
-        session_id, principal.tenant_id, principal.user_id,
+        session_id,
+        principal.tenant_id,
+        principal.user_id,
         project_id=principal.project_id or "00000000-0000-0000-0000-000000000000",
         additional_seconds=additional_seconds,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/sessions/{session_id}/cancel")
 async def sessions_cancel(
     session_id: UUID,
     principal: AuthenticatedPrincipal = Depends(require_permission("forge:read")),
 ) -> dict[str, Any]:
     await cancel_session(
-        session_id, principal.tenant_id, principal.user_id,
+        session_id,
+        principal.tenant_id,
+        principal.user_id,
         project_id=principal.project_id or "00000000-0000-0000-0000-000000000000",
     )
     return {"cancelled": True}
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/sessions/{session_id}/resume")
 async def sessions_resume(
     session_id: UUID,
     principal: AuthenticatedPrincipal = Depends(require_permission("forge:read")),
 ) -> dict[str, Any]:
     return await resume_session(
-        session_id, principal.tenant_id, principal.user_id,
+        session_id,
+        principal.tenant_id,
+        principal.user_id,
         project_id=principal.project_id or "00000000-0000-0000-0000-000000000000",
     )
 
 
 # ── Realtime ─────────────────────────────────────────────────────────
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/realtime/client-secret")
 async def realtime_client_secret(
     session_id: UUID,
@@ -133,9 +139,9 @@ async def realtime_client_secret(
         actor_id=principal.user_id,
         session_id=session_id,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/realtime/sessions")
 async def realtime_session_create(
     body: CreateSessionIn,
@@ -166,9 +172,9 @@ def mount_a2a(app: Any) -> None:
         methods=["GET"],
         include_in_schema=False,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/a2a/message")
 async def a2a_message(
     body: A2AHandshakeIn,
@@ -188,8 +194,6 @@ async def a2a_message(
 
 # ── Background responses (F17 §Background) ──────────────────────────
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/responses")
 async def responses_start(
     body: CreateSessionIn,

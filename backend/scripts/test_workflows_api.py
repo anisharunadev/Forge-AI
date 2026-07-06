@@ -15,7 +15,6 @@ dev — the realm's client secret env var is unset).
 from __future__ import annotations
 
 import asyncio
-import json
 import subprocess
 import sys
 
@@ -42,13 +41,13 @@ def get_token() -> str:
     # Last non-empty line of stdout is the JWT.
     candidates = [line for line in out.stdout.splitlines() if line.strip()]
     if not candidates:
-        raise RuntimeError(
-            f"issue_dev_token produced no token (stderr: {out.stderr[:500]})"
-        )
+        raise RuntimeError(f"issue_dev_token produced no token (stderr: {out.stderr[:500]})")
     return candidates[-1].strip()
 
 
-async def probe(client: httpx.AsyncClient, method: str, path: str, token: str, expected: int = 200, **kw):
+async def probe(
+    client: httpx.AsyncClient, method: str, path: str, token: str, expected: int = 200, **kw
+):
     headers = {"Authorization": f"Bearer {token}"}
     res = await getattr(client, method)(f"{BASE_URL}{path}", headers=headers, **kw)
     ok = "✓" if res.status_code == expected else "✗"
@@ -85,7 +84,10 @@ async def main() -> int:
             count(await probe(c, "get", f"/workflows/{wf_id}/budget/history", token) is not None)
             count(await probe(c, "get", f"/workflows/{wf_id}/runs", token) is not None)
             count(await probe(c, "post", f"/workflows/{wf_id}/publish", token) is not None)
-            count(await probe(c, "post", f"/workflows/{wf_id}/duplicate", token, expected=201) is not None)
+            count(
+                await probe(c, "post", f"/workflows/{wf_id}/duplicate", token, expected=201)
+                is not None
+            )
 
         # Create + delete a fresh workflow
         new_wf = await probe(
@@ -114,7 +116,10 @@ async def main() -> int:
         count(new_wf is not None)
         if new_wf:
             count(
-                await probe(c, "patch", f"/workflows/{new_wf['id']}", token, json={"name": "Renamed"}) is not None
+                await probe(
+                    c, "patch", f"/workflows/{new_wf['id']}", token, json={"name": "Renamed"}
+                )
+                is not None
             )
             await probe(c, "delete", f"/workflows/{new_wf['id']}", token, expected=204)
 
@@ -129,7 +134,10 @@ async def main() -> int:
                 run_id = new_run["id"]
                 count(await probe(c, "get", f"/workflows/runs/{run_id}", token) is not None)
                 # SSE — just verify the endpoint accepts the connection
-                count(await probe(c, "get", f"/workflows/runs/{run_id}/events", token) is not None or True)
+                count(
+                    await probe(c, "get", f"/workflows/runs/{run_id}/events", token) is not None
+                    or True
+                )
                 count(await probe(c, "post", f"/workflows/runs/{run_id}/cancel", token) is not None)
 
     print(f"\n{'=' * 64}\nRESULTS: {passed} passed, {failed} failed\n{'=' * 64}")

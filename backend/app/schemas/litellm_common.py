@@ -27,7 +27,6 @@ from pydantic import Field
 
 from app.schemas.common import ForgeBaseModel
 
-
 # ---------------------------------------------------------------------
 # Guardrails (Feature 6)
 # ---------------------------------------------------------------------
@@ -37,10 +36,10 @@ from app.schemas.common import ForgeBaseModel
 # hot path that the pre-/post-call envelope in
 # ``ForgeLLMClient.chat`` consults.
 GuardrailKind = Literal[
-    "pre_call_input",   # applied to the user message BEFORE the model call
-    "pre_call_llm",     # applied to the system prompt + history
-    "post_call_output", # applied to the model's final message
-    "during_call",      # applied per-chunk during streaming
+    "pre_call_input",  # applied to the user message BEFORE the model call
+    "pre_call_llm",  # applied to the system prompt + history
+    "post_call_output",  # applied to the model's final message
+    "during_call",  # applied per-chunk during streaming
 ]
 
 # Closed set of decisions an ``/apply_guardrail`` call can return.

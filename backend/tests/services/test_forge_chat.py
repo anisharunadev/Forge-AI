@@ -38,7 +38,6 @@ from uuid import UUID, uuid4
 
 import httpx
 import pytest
-import pytest_asyncio
 
 # Stub the session factory BEFORE importing forge_chat — see test_forge_spend.py.
 import app.db.session as _session_mod
@@ -56,15 +55,6 @@ def _passthrough_factory() -> Any:
 _session_mod.get_session_factory = _passthrough_factory  # type: ignore[assignment]
 
 from app.services import forge_chat as chat_mod  # noqa: E402
-from app.services.forge_chat_errors import (  # noqa: E402
-    AgentBudgetExceededError,
-    AuthenticationError,
-    ContextLengthExceededError,
-    RateLimitError,
-    UpstreamError,
-    ValidationError,
-)
-
 
 # ---------------------------------------------------------------------------
 # Stub virtual-key resolution + budget guard so stream_chat() reaches the
@@ -148,7 +138,7 @@ class _FakeBase:
             base_url="http://litellm.test", timeout=10.0, transport=transport
         )
 
-    async def __aenter__(self) -> "_FakeBase":
+    async def __aenter__(self) -> _FakeBase:
         return self
 
     async def __aexit__(self, *exc: Any) -> None:
@@ -169,7 +159,7 @@ class _FakeChatCM:
         self._client = client
         self._api_key = api_key
 
-    async def __aenter__(self) -> "_FakeChatClient":
+    async def __aenter__(self) -> _FakeChatClient:
         return _FakeChatClient(self._client, self._api_key)
 
     async def __aexit__(self, *exc: Any) -> None:
@@ -421,7 +411,7 @@ async def test_first_token_within_300ms(monkeypatch):
     # Drain remaining (none expected — single chunk).
     try:
         await asyncio.wait_for(gen.__anext__(), timeout=0.5)
-    except (StopAsyncIteration, asyncio.TimeoutError):
+    except (TimeoutError, StopAsyncIteration):
         pass
 
 
@@ -489,7 +479,6 @@ async def test_disconnect_cancels_upstream(monkeypatch):
     # [DONE]. We do this by wrapping the underlying transport so that
     # the first chunk yields normally and subsequent iteration is
     # delayed long enough for cancel_run to set the event.
-    from app.services.forge_chat import _StreamContext
 
     gen = chat_mod.stream_chat(_principal(), _agent_id(), _request())
 
@@ -516,7 +505,7 @@ async def test_disconnect_cancels_upstream(monkeypatch):
         while True:
             chunk = await asyncio.wait_for(gen.__anext__(), timeout=0.5)
             chunks.append(chunk)
-    except (StopAsyncIteration, asyncio.TimeoutError):
+    except (TimeoutError, StopAsyncIteration):
         pass
 
     assert len(chat_calls) >= 1, "expected at least one chat completion call"
@@ -526,12 +515,8 @@ async def test_disconnect_cancels_upstream(monkeypatch):
     assert cancel_calls[0].method == "POST"
 
     # No token chunks beyond the first.
-    post_cancel_tokens = [
-        c for c in chunks[1:] if c.event == "token"
-    ]
-    assert not post_cancel_tokens, (
-        f"unexpected post-cancel tokens: {post_cancel_tokens}"
-    )
+    post_cancel_tokens = [c for c in chunks[1:] if c.event == "token"]
+    assert not post_cancel_tokens, f"unexpected post-cancel tokens: {post_cancel_tokens}"
 
 
 # ---------------------------------------------------------------------------
@@ -626,19 +611,13 @@ async def test_no_secrets_in_sse_payload(monkeypatch):
     #    headers or URL — the Forge backend uses its own per-agent key,
     #    not the master.
     for req in call_log:
-        assert master_key not in str(req.url), (
-            f"master key in URL: {req.url}"
-        )
+        assert master_key not in str(req.url), f"master key in URL: {req.url}"
         for k, v in req.headers.items():
-            assert master_key not in v, (
-                f"master key in header {k}: {v}"
-            )
+            assert master_key not in v, f"master key in header {k}: {v}"
         # Authorization header should be the per-agent virtual key, not
         # contain the master key string.
         auth = req.headers.get("authorization", "")
-        assert master_key not in auth, (
-            f"master key in Authorization header: {auth}"
-        )
+        assert master_key not in auth, f"master key in Authorization header: {auth}"
 
     # 2) Yielded chunk ``data`` MUST NOT contain the master key, the
     #    plaintext virtual key, or a Bearer token string.

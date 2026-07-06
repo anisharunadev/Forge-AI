@@ -31,9 +31,8 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import DbSession, Principal, require_permission
+from app.api.deps import DbSession, require_permission
 from app.core.audit import audit
 from app.core.logging import get_logger
 from app.integrations.litellm.litellm_base_client import LiteLLMBaseClient
@@ -42,16 +41,16 @@ from app.schemas.observability_v2 import (
     AlertConfigRead,
     AuditEventRead,
     AuditPage,
-    AlertConfig as AlertConfigSchema,
     ComplianceReport,
-    CostRealtimeBucket,
-    CostRealtimeResponse,
     GdprDeleteRequest,
     GdprDeleteResponse,
     GdprExportResponse,
     HealthServicesResponse,
     MetricsResponse,
     TenantBudgetRead,
+)
+from app.schemas.observability_v2 import (
+    AlertConfig as AlertConfigSchema,
 )
 from app.services.observability_service import (
     ObservabilityError,
@@ -175,9 +174,7 @@ async def metrics_spend_drift(
     db: DbSession,
     principal: Annotated[object, Depends(require_permission("metrics:read"))],
 ) -> dict:
-    return await observability_service.drift_status(
-        db, tenant_id=_tenant_id(principal)
-    )
+    return await observability_service.drift_status(db, tenant_id=_tenant_id(principal))
 
 
 @router.get("/metrics/rate-limits", response_model=MetricsResponse)
@@ -223,12 +220,11 @@ async def get_tenant_budget(
 ) -> TenantBudgetRead:
     """Return the tenant's current budget status (Phase 6 SC-6.1)."""
     from datetime import UTC, datetime
+
     from app.services.cost_ledger import cost_ledger
     from app.services.forge_budget_guard import tenant_budget_guard
 
-    snapshot = await tenant_budget_guard.check_pre_call(
-        tenant_id=tenant_id, est_cost_usd=0.0
-    )
+    snapshot = await tenant_budget_guard.check_pre_call(tenant_id=tenant_id, est_cost_usd=0.0)
     today_start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
     today_usd = await cost_ledger.get_total_for_tenant(
         tenant_id=tenant_id,
@@ -272,7 +268,9 @@ async def compliance_gdpr_export(
 ) -> GdprExportResponse:
     # Permission gate: self-export or org-admin. Other-user export
     # requires explicit justification which is logged at audit-time.
-    requester = UUID(getattr(principal, "user_id", "")) if getattr(principal, "user_id", None) else None
+    requester = (
+        UUID(getattr(principal, "user_id", "")) if getattr(principal, "user_id", None) else None
+    )
     caller_role = getattr(principal, "role", None)
     if requester != user_id and caller_role not in {"org_admin", "super_admin"}:
         raise HTTPException(
@@ -320,9 +318,7 @@ async def get_alert_config(
     db: DbSession,
     principal: Annotated[object, Depends(require_permission("alerts:read"))],
 ) -> AlertConfigRead | None:
-    return await observability_service.get_alert_config(
-        db, tenant_id=_tenant_id(principal)
-    )
+    return await observability_service.get_alert_config(db, tenant_id=_tenant_id(principal))
 
 
 @router.post("/orgs/{org_id}/alerts", response_model=AlertConfigRead)
@@ -348,9 +344,7 @@ async def active_alerts(
     db: DbSession,
     principal: Annotated[object, Depends(require_permission("alerts:read"))],
 ) -> list[ActiveAlert]:
-    return await observability_service.active_alerts(
-        db, tenant_id=_tenant_id(principal)
-    )
+    return await observability_service.active_alerts(db, tenant_id=_tenant_id(principal))
 
 
 # ---------------------------------------------------------------------------
@@ -371,7 +365,6 @@ async def webhook_callback(
         await client.observability.callback(payload)
     except Exception as exc:  # noqa: BLE001
         logger.warning("observability.webhook_callback.upstream_error", error=str(exc))
-    return None
 
 
 @router.post("/event-logging", status_code=status.HTTP_204_NO_CONTENT)
@@ -385,7 +378,6 @@ async def event_logging(
         await client.observability.event_logging(payload)
     except Exception as exc:  # noqa: BLE001
         logger.warning("observability.event_logging.upstream_error", error=str(exc))
-    return None
 
 
 @router.get("/in-product-nudges", response_model=dict)

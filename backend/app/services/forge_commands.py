@@ -32,12 +32,12 @@ This module owns:
 from __future__ import annotations
 
 import argparse
-import asyncio
 import json
 import re
 import sys
-from dataclasses import dataclass, field, asdict
-from typing import Iterable, Literal, Mapping
+from collections.abc import Iterable, Mapping
+from dataclasses import asdict, dataclass
+from typing import Literal
 
 # ---------------------------------------------------------------------------
 # Types
@@ -90,93 +90,297 @@ class ForgeCommand:
 # Internal names are opaque on purpose (DL-024).
 _ENTRIES: tuple[tuple[str, str, str, CommandTier, bool], ...] = (
     # 1. Onboarding (4)
-    ("forge-onboard-welcome", "gsd:onboard:welcome", "Welcome a new project / tenant.", "user", False),
-    ("forge-onboard-detect-stack", "gsd:onboard:detect-stack", "Auto-detect languages, frameworks, runtimes.", "user", False),
-    ("forge-onboard-bootstrap", "gsd:onboard:bootstrap", "Scaffold .gsd config + initial telemetry.", "admin", True),
-    ("forge-onboard-resume", "gsd:onboard:resume", "Resume an interrupted onboarding session.", "user", False),
-
+    (
+        "forge-onboard-welcome",
+        "gsd:onboard:welcome",
+        "Welcome a new project / tenant.",
+        "user",
+        False,
+    ),
+    (
+        "forge-onboard-detect-stack",
+        "gsd:onboard:detect-stack",
+        "Auto-detect languages, frameworks, runtimes.",
+        "user",
+        False,
+    ),
+    (
+        "forge-onboard-bootstrap",
+        "gsd:onboard:bootstrap",
+        "Scaffold .gsd config + initial telemetry.",
+        "admin",
+        True,
+    ),
+    (
+        "forge-onboard-resume",
+        "gsd:onboard:resume",
+        "Resume an interrupted onboarding session.",
+        "user",
+        False,
+    ),
     # 2. Project Intelligence (6)
-    ("forge-intel-scan-repo", "gsd:intel:scan-repo", "Scan repo layout and entrypoints.", "user", False),
-    ("forge-intel-scan-deps", "gsd:intel:scan-deps", "Inventory direct and transitive dependencies.", "user", False),
-    ("forge-intel-scan-services", "gsd:intel:scan-services", "Map services and their contracts.", "user", False),
-    ("forge-intel-scan-secrets", "gsd:intel:scan-secrets", "Detect accidentally committed secrets.", "admin", True),
-    ("forge-intel-summarize", "gsd:intel:summarize", "Generate a project-level executive summary.", "user", False),
+    (
+        "forge-intel-scan-repo",
+        "gsd:intel:scan-repo",
+        "Scan repo layout and entrypoints.",
+        "user",
+        False,
+    ),
+    (
+        "forge-intel-scan-deps",
+        "gsd:intel:scan-deps",
+        "Inventory direct and transitive dependencies.",
+        "user",
+        False,
+    ),
+    (
+        "forge-intel-scan-services",
+        "gsd:intel:scan-services",
+        "Map services and their contracts.",
+        "user",
+        False,
+    ),
+    (
+        "forge-intel-scan-secrets",
+        "gsd:intel:scan-secrets",
+        "Detect accidentally committed secrets.",
+        "admin",
+        True,
+    ),
+    (
+        "forge-intel-summarize",
+        "gsd:intel:summarize",
+        "Generate a project-level executive summary.",
+        "user",
+        False,
+    ),
     ("forge-intel-trend", "gsd:intel:trend", "Show velocity and quality trends.", "user", False),
-
     # 3. Ideation (5)
-    ("forge-ideate-brainstorm", "gsd:ideate:brainstorm", "Generate candidate approaches for a problem.", "user", False),
-    ("forge-ideate-refine", "gsd:ideate:refine", "Refine a chosen idea into concrete shape.", "user", False),
-    ("forge-ideate-compare", "gsd:ideate:compare", "Trade-off table for 2+ approaches.", "user", False),
-    ("forge-ideate-prune", "gsd:ideate:prune", "Discard rejected approaches with rationale.", "user", False),
-    ("forge-ideate-crystallize", "gsd:ideate:crystallize", "Freeze an approach into a recordable decision.", "admin", True),
-
+    (
+        "forge-ideate-brainstorm",
+        "gsd:ideate:brainstorm",
+        "Generate candidate approaches for a problem.",
+        "user",
+        False,
+    ),
+    (
+        "forge-ideate-refine",
+        "gsd:ideate:refine",
+        "Refine a chosen idea into concrete shape.",
+        "user",
+        False,
+    ),
+    (
+        "forge-ideate-compare",
+        "gsd:ideate:compare",
+        "Trade-off table for 2+ approaches.",
+        "user",
+        False,
+    ),
+    (
+        "forge-ideate-prune",
+        "gsd:ideate:prune",
+        "Discard rejected approaches with rationale.",
+        "user",
+        False,
+    ),
+    (
+        "forge-ideate-crystallize",
+        "gsd:ideate:crystallize",
+        "Freeze an approach into a recordable decision.",
+        "admin",
+        True,
+    ),
     # 4. Architecture (6)
-    ("forge-arch-diagram", "gsd:arch:diagram", "Render a system diagram from the model.", "user", False),
-    ("forge-arch-component-map", "gsd:arch:component-map", "List components and their dependencies.", "user", False),
-    ("forge-arch-contract-spec", "gsd:arch:contract-spec", "Draft API/data contracts between components.", "admin", True),
-    ("forge-arch-data-model", "gsd:arch:data-model", "Generate or update the data model.", "admin", True),
+    (
+        "forge-arch-diagram",
+        "gsd:arch:diagram",
+        "Render a system diagram from the model.",
+        "user",
+        False,
+    ),
+    (
+        "forge-arch-component-map",
+        "gsd:arch:component-map",
+        "List components and their dependencies.",
+        "user",
+        False,
+    ),
+    (
+        "forge-arch-contract-spec",
+        "gsd:arch:contract-spec",
+        "Draft API/data contracts between components.",
+        "admin",
+        True,
+    ),
+    (
+        "forge-arch-data-model",
+        "gsd:arch:data-model",
+        "Generate or update the data model.",
+        "admin",
+        True,
+    ),
     ("forge-arch-adr", "gsd:arch:adr", "Record an architectural decision record.", "admin", True),
-    ("forge-arch-drift", "gsd:arch:drift", "Detect drift between code and architecture.", "user", False),
-
+    (
+        "forge-arch-drift",
+        "gsd:arch:drift",
+        "Detect drift between code and architecture.",
+        "user",
+        False,
+    ),
     # 5. Development (7)
-    ("forge-dev-scaffold", "gsd:dev:scaffold", "Scaffold code from a contract spec.", "user", False),
+    (
+        "forge-dev-scaffold",
+        "gsd:dev:scaffold",
+        "Scaffold code from a contract spec.",
+        "user",
+        False,
+    ),
     ("forge-dev-implement", "gsd:dev:implement", "Implement a feature end-to-end.", "user", False),
-    ("forge-dev-refactor", "gsd:dev:refactor", "Refactor while preserving behavior.", "user", False),
+    (
+        "forge-dev-refactor",
+        "gsd:dev:refactor",
+        "Refactor while preserving behavior.",
+        "user",
+        False,
+    ),
     ("forge-dev-format", "gsd:dev:format", "Format the working tree.", "user", False),
     ("forge-dev-lint", "gsd:dev:lint", "Run project linters.", "user", False),
     ("forge-dev-hotfix", "gsd:dev:hotfix", "Emergency patch path with audit.", "admin", True),
     ("forge-dev-migrate", "gsd:dev:migrate", "Run data or schema migrations.", "admin", True),
-
     # 6. Testing (5)
     ("forge-test-plan", "gsd:test:plan", "Generate a test plan from the diff.", "user", False),
     ("forge-test-unit", "gsd:test:unit", "Run the unit test suite.", "user", False),
-    ("forge-test-integration", "gsd:test:integration", "Run the integration test suite.", "user", False),
+    (
+        "forge-test-integration",
+        "gsd:test:integration",
+        "Run the integration test suite.",
+        "user",
+        False,
+    ),
     ("forge-test-e2e", "gsd:test:e2e", "Run the end-to-end test suite.", "admin", True),
-    ("forge-test-coverage", "gsd:test:coverage", "Report coverage deltas against baseline.", "user", False),
-
+    (
+        "forge-test-coverage",
+        "gsd:test:coverage",
+        "Report coverage deltas against baseline.",
+        "user",
+        False,
+    ),
     # 7. Security (5)
     ("forge-sec-scan", "gsd:sec:scan", "Run SAST/SCA scanners.", "admin", True),
     ("forge-sec-sbom", "gsd:sec:sbom", "Generate or refresh an SBOM.", "admin", True),
-    ("forge-sec-policy-check", "gsd:sec:policy-check", "Evaluate tenant policy against the repo.", "admin", True),
+    (
+        "forge-sec-policy-check",
+        "gsd:sec:policy-check",
+        "Evaluate tenant policy against the repo.",
+        "admin",
+        True,
+    ),
     ("forge-sec-incident", "gsd:sec:incident", "Open a security incident record.", "system", True),
-    ("forge-sec-audit-export", "gsd:sec:audit-export", "Export a tenant-scoped audit bundle.", "admin", True),
-
+    (
+        "forge-sec-audit-export",
+        "gsd:sec:audit-export",
+        "Export a tenant-scoped audit bundle.",
+        "admin",
+        True,
+    ),
     # 8. Code Review (4)
     ("forge-review-diff", "gsd:review:diff", "Summarize a diff for reviewers.", "user", False),
     ("forge-review-risk", "gsd:review:risk", "Score change risk across axes.", "user", False),
     ("forge-review-approve", "gsd:review:approve", "Approve a change set.", "admin", True),
-    ("forge-review-request-changes", "gsd:review:request-changes", "Block a change set with reviewer notes.", "admin", True),
-
+    (
+        "forge-review-request-changes",
+        "gsd:review:request-changes",
+        "Block a change set with reviewer notes.",
+        "admin",
+        True,
+    ),
     # 9. Deployment (5)
-    ("forge-deploy-plan", "gsd:deploy:plan", "Plan a deployment (versions, blast radius).", "admin", True),
+    (
+        "forge-deploy-plan",
+        "gsd:deploy:plan",
+        "Plan a deployment (versions, blast radius).",
+        "admin",
+        True,
+    ),
     ("forge-deploy-stage", "gsd:deploy:stage", "Promote a build to staging.", "admin", True),
     ("forge-deploy-prod", "gsd:deploy:prod", "Promote a build to production.", "admin", True),
-    ("forge-deploy-rollback", "gsd:deploy:rollback", "Roll back the most recent prod deploy.", "system", True),
-    ("forge-deploy-status", "gsd:deploy:status", "Show current deploy state per environment.", "user", False),
-
+    (
+        "forge-deploy-rollback",
+        "gsd:deploy:rollback",
+        "Roll back the most recent prod deploy.",
+        "system",
+        True,
+    ),
+    (
+        "forge-deploy-status",
+        "gsd:deploy:status",
+        "Show current deploy state per environment.",
+        "user",
+        False,
+    ),
     # 10. Milestones (4)
-    ("forge-milestone-cut", "gsd:milestone:cut", "Cut a release branch + bump versions.", "admin", True),
+    (
+        "forge-milestone-cut",
+        "gsd:milestone:cut",
+        "Cut a release branch + bump versions.",
+        "admin",
+        True,
+    ),
     ("forge-milestone-tag", "gsd:milestone:tag", "Tag the release commit.", "admin", True),
-    ("forge-milestone-changelog", "gsd:milestone:changelog", "Render the changelog for a release.", "user", False),
-    ("forge-milestone-archive", "gsd:milestone:archive", "Archive artifacts and notes for a release.", "admin", True),
-
+    (
+        "forge-milestone-changelog",
+        "gsd:milestone:changelog",
+        "Render the changelog for a release.",
+        "user",
+        False,
+    ),
+    (
+        "forge-milestone-archive",
+        "gsd:milestone:archive",
+        "Archive artifacts and notes for a release.",
+        "admin",
+        True,
+    ),
     # 11. Learning (4)
     ("forge-learn-capture", "gsd:learn:capture", "Capture a lesson from a session.", "user", False),
-    ("forge-learn-summarize", "gsd:learn:summarize", "Summarize captured lessons for review.", "user", False),
-    ("forge-learn-promote", "gsd:learn:promote", "Promote a lesson to a durable rule.", "admin", True),
+    (
+        "forge-learn-summarize",
+        "gsd:learn:summarize",
+        "Summarize captured lessons for review.",
+        "user",
+        False,
+    ),
+    (
+        "forge-learn-promote",
+        "gsd:learn:promote",
+        "Promote a lesson to a durable rule.",
+        "admin",
+        True,
+    ),
     ("forge-learn-search", "gsd:learn:search", "Search the org-wide lesson corpus.", "user", False),
-
     # 12. Workflow (4)
     ("forge-flow-plan", "gsd:flow:plan", "Plan a multi-agent workflow run.", "user", False),
     ("forge-flow-run", "gsd:flow:run", "Execute a workflow.", "user", False),
     ("forge-flow-cancel", "gsd:flow:cancel", "Cancel a running workflow.", "admin", True),
-    ("forge-flow-status", "gsd:flow:status", "Inspect a running or completed workflow.", "user", False),
-
+    (
+        "forge-flow-status",
+        "gsd:flow:status",
+        "Inspect a running or completed workflow.",
+        "user",
+        False,
+    ),
     # 13. Environment (4)
     ("forge-env-list", "gsd:env:list", "List environments for the tenant.", "user", False),
     ("forge-env-diff", "gsd:env:diff", "Diff two environments.", "admin", True),
     ("forge-env-sync", "gsd:env:sync", "Sync env A to env B (destructive).", "system", True),
-    ("forge-env-promote", "gsd:env:promote", "Promote a version between environments.", "admin", True),
+    (
+        "forge-env-promote",
+        "gsd:env:promote",
+        "Promote a version between environments.",
+        "admin",
+        True,
+    ),
 )
 
 # Validate every entry up front — fail loud, fail early.
@@ -185,9 +389,7 @@ for _forge, _internal, _desc, _tier, _approval in _ENTRIES:
     if not _FORGE_NAME_RE.match(_forge):
         raise ValueError(f"bad forge command name: {_forge!r}")
     if not _internal.startswith("gsd:"):
-        raise ValueError(
-            f"internal cmd {_internal!r} for {_forge!r} must be opaque 'gsd:...' form"
-        )
+        raise ValueError(f"internal cmd {_internal!r} for {_forge!r} must be opaque 'gsd:...' form")
     _VALIDATED.append(
         ForgeCommand(
             forge_cmd=_forge,
@@ -211,6 +413,7 @@ assert len(FORGE_COMMAND_MAP) >= 60, (
 # Resolver / iterator
 # ---------------------------------------------------------------------------
 
+
 class UnknownForgeCommand(LookupError):
     """Raised when a ``forge-*`` name is not in the map."""
 
@@ -222,15 +425,11 @@ def get_forge_command(name: str) -> ForgeCommand:
     """
 
     if not _FORGE_NAME_RE.match(name):
-        raise UnknownForgeCommand(
-            f"{name!r} is not a valid forge-* command identifier"
-        )
+        raise UnknownForgeCommand(f"{name!r} is not a valid forge-* command identifier")
     try:
         return FORGE_COMMAND_MAP[name]
     except KeyError as exc:  # pragma: no cover - explicit branch
-        raise UnknownForgeCommand(
-            f"{name!r} is not registered in FORGE_COMMAND_MAP"
-        ) from exc
+        raise UnknownForgeCommand(f"{name!r} is not registered in FORGE_COMMAND_MAP") from exc
 
 
 def list_forge_commands(category: str | None = None) -> Iterable[ForgeCommand]:
@@ -244,6 +443,7 @@ def list_forge_commands(category: str | None = None) -> Iterable[ForgeCommand]:
 # ---------------------------------------------------------------------------
 # Executor stub — bridges to GSDWrapper
 # ---------------------------------------------------------------------------
+
 
 def route_to_gsd(
     forge_cmd: str,
@@ -289,6 +489,7 @@ def route_to_gsd(
 # ---------------------------------------------------------------------------
 # CLI: `python -m backend.app.services.forge_commands {list,exec}`
 # ---------------------------------------------------------------------------
+
 
 def _cli_list(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="forge_commands list")

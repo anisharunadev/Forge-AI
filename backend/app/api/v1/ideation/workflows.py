@@ -5,13 +5,15 @@ UI can bootstrap the workflow before opening the WebSocket.
 """
 
 from __future__ import annotations
-from typing import Annotated
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import (
@@ -20,8 +22,6 @@ from app.schemas.ideation import (
     WorkflowStartRequest,
 )
 from app.services.ideation.realtime_workflow import realtime_workflow
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/ideation/workflows", tags=["ideation"])
 
@@ -41,9 +41,9 @@ def _to_read(row, steps: list[dict]) -> WorkflowSessionRead:
         created_at=row.created_at,
         updated_at=row.updated_at,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post(
     "/ideas/{idea_id}/start",
     response_model=WorkflowSessionRead,
@@ -54,7 +54,7 @@ async def start_workflow(
     idea_id: UUID,
     body: WorkflowStartRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:workflow"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:workflow")),
 ) -> WorkflowSessionRead:
     user_id = body.user_id or principal.user_id
     try:
@@ -68,9 +68,7 @@ async def start_workflow(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except PermissionError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    state = await realtime_workflow.get_workflow_state(
-        row.id, tenant_id=principal.tenant_id
-    )
+    state = await realtime_workflow.get_workflow_state(row.id, tenant_id=principal.tenant_id)
     return _to_read(row, state.steps)
 
 
@@ -79,7 +77,7 @@ async def start_workflow(
 async def get_workflow(
     session_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read")),
 ) -> WorkflowSessionRead:
     try:
         state = await realtime_workflow.get_workflow_state(
@@ -97,16 +95,16 @@ async def get_workflow(
     async with factory() as session:
         row = await session.get(WorkflowSession, str(session_id))
     return _to_read(row, state.steps)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/{session_id}/intervene", response_model=WorkflowSessionRead)
 @audit(action="ideation.workflow.intervene", target_type="workflow_session")
 async def intervene_workflow(
     session_id: UUID,
     body: WorkflowIntervention,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:workflow"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:workflow")),
 ) -> WorkflowSessionRead:
     try:
         new_state = await realtime_workflow.intervene(
@@ -130,15 +128,15 @@ async def intervene_workflow(
     async with factory() as session:
         row = await session.get(WorkflowSession, str(session_id))
     return _to_read(row, new_state.steps)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/{session_id}/complete", response_model=dict)
 @audit(action="ideation.workflow.complete", target_type="workflow_session")
 async def complete_workflow(
     session_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:workflow"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:workflow")),
 ) -> dict:
     try:
         bundle = await realtime_workflow.complete_workflow(

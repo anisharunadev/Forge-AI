@@ -1,4 +1,5 @@
 """Phase 5 -- scheduler wiring for the cost aggregator."""
+
 from __future__ import annotations
 
 import asyncio

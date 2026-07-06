@@ -46,9 +46,7 @@ async def check_production_safety(
     """
     tenant_type = str(manifest.get("tenant_type", "")).lower()
     is_demo = tenant_type == SeedTenantType.DEMO.value
-    manifest_allow = bool(
-        (manifest.get("production_safety") or {}).get("allow_in_prod", False)
-    )
+    manifest_allow = bool((manifest.get("production_safety") or {}).get("allow_in_prod", False))
 
     if env != "production":
         return

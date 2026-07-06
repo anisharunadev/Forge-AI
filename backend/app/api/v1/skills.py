@@ -12,12 +12,14 @@ Spec §Feature 9 Forge Backend contract:
 * ``POST   /skills/preview``      — render a skill's prompt with variables
 """
 
-from __future__ import annotations
+from __future__ import annotations  # noqa: B904
 
-from typing import Annotated, Any
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
@@ -34,8 +36,6 @@ from app.schemas.skills import (
 )
 from app.services.skills_service import SkillRenderError as SkillRenderExc
 from app.services.skills_service import skills_service
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/skills", tags=["skills"])
 
@@ -52,9 +52,9 @@ async def list_skills(
         tenant_id=principal.tenant_id, category=category, status=status_filter
     )
     return Page(items=items, total=len(items))
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("", response_model=SkillRead, status_code=status.HTTP_201_CREATED)
 @audit(action="skills.create", target_type="litellm_skill")
 async def create_skill(
@@ -70,7 +70,7 @@ async def create_skill(
             actor_id=getattr(principal, "user_id", None),
         )
     except SkillRenderExc as exc:
-        raise HTTPException(
+        raise HTTPException(  # noqa: B904
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=SkillRenderError(skill_id=exc.skill_id, template_error=exc.message).model_dump(),
         )
@@ -95,13 +95,17 @@ async def list_hub(
                 category=r.get("category") or "custom",
                 tags=list(r.get("tags") or []),
                 source=str(r.get("source") or "public"),
-                extra={k: v for k, v in r.items() if k not in {"id", "name", "description", "category", "tags", "source"}},
+                extra={
+                    k: v
+                    for k, v in r.items()
+                    if k not in {"id", "name", "description", "category", "tags", "source"}
+                },
             )
         )
     return out
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/hub/import", response_model=SkillRead, status_code=status.HTTP_201_CREATED)
 @audit(action="skills.hub.import", target_type="litellm_skill")
 async def import_hub(
@@ -116,10 +120,10 @@ async def import_hub(
             actor_id=getattr(principal, "user_id", None),
         )
     except LookupError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))  # noqa: B904
+
+
 @require_approval_phase(SDLCPhase.REVIEW)
-
-
 @router.post("/preview", response_model=SkillRenderResult)
 @audit(action="skills.preview", target_type="litellm_skill")
 async def preview_skill(
@@ -133,7 +137,7 @@ async def preview_skill(
         template = body.skill.prompt_template
         skill_id = body.skill.id or body.skill.name
     if not template:
-        raise HTTPException(
+        raise HTTPException(  # noqa: B904
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="prompt_template or skill.prompt_template required",
         )
@@ -144,7 +148,7 @@ async def preview_skill(
             skill_id=skill_id,
         )
     except SkillRenderExc as exc:
-        raise HTTPException(
+        raise HTTPException(  # noqa: B904
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=SkillRenderError(skill_id=exc.skill_id, template_error=exc.message).model_dump(),
         )
@@ -160,11 +164,11 @@ async def get_skill(
 ) -> SkillRead:
     detail = await skills_service.detail(skill_id, tenant_id=principal.tenant_id)
     if detail is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="skill not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="skill not found")  # noqa: B904
     return detail
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.patch("/{skill_id}", response_model=SkillRead)
 @audit(action="skills.update", target_type="litellm_skill")
 async def update_skill(
@@ -182,16 +186,16 @@ async def update_skill(
             actor_id=getattr(principal, "user_id", None),
         )
     except SkillRenderExc as exc:
-        raise HTTPException(
+        raise HTTPException(  # noqa: B904
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=SkillRenderError(skill_id=exc.skill_id, template_error=exc.message).model_dump(),
         )
     if result is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="skill not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="skill not found")  # noqa: B904
     return result
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/{skill_id}/archive", response_model=SkillRead)
 @audit(action="skills.archive", target_type="litellm_skill")
 async def archive_skill(
@@ -206,7 +210,7 @@ async def archive_skill(
         actor_id=getattr(principal, "user_id", None),
     )
     if result is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="skill not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="skill not found")  # noqa: B904
     return result
 
 

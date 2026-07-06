@@ -30,14 +30,13 @@ import json
 import logging
 import time
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID, uuid4
 
 import httpx
 import pytest
-import pytest_asyncio
 
 # ---------------------------------------------------------------------------
 # Pre-stub the lazy engine + session factory BEFORE any `from app.*` import
@@ -107,25 +106,29 @@ def _sse_chunk(payload: dict) -> str:
 
 
 def _text_delta(content: str, *, finish: str | None = None) -> str:
-    return _sse_chunk({
-        "id": "chatcmpl-ac",
-        "object": "chat.completion.chunk",
-        "choices": [{"index": 0, "delta": {"content": content}, "finish_reason": finish}],
-    })
+    return _sse_chunk(
+        {
+            "id": "chatcmpl-ac",
+            "object": "chat.completion.chunk",
+            "choices": [{"index": 0, "delta": {"content": content}, "finish_reason": finish}],
+        }
+    )
 
 
 def _usage_chunk(prompt: int, completion: int, cost: float = 0.01) -> str:
-    return _sse_chunk({
-        "id": "chatcmpl-ac",
-        "object": "chat.completion.chunk",
-        "choices": [],
-        "usage": {
-            "prompt_tokens": prompt,
-            "completion_tokens": completion,
-            "total_tokens": prompt + completion,
-            "cost_usd": cost,
-        },
-    })
+    return _sse_chunk(
+        {
+            "id": "chatcmpl-ac",
+            "object": "chat.completion.chunk",
+            "choices": [],
+            "usage": {
+                "prompt_tokens": prompt,
+                "completion_tokens": completion,
+                "total_tokens": prompt + completion,
+                "cost_usd": cost,
+            },
+        }
+    )
 
 
 # ===========================================================================
@@ -189,7 +192,9 @@ class TestP1ConfigAuth:
         # --- db=Not connected → status='degraded'
         body_deg = {"status": "healthy", "version": "1.82.6", "db": "Not connected"}
         mock_deg = AsyncMock()
-        mock_deg.get.return_value = MagicMock(status_code=200, json=MagicMock(return_value=body_deg))
+        mock_deg.get.return_value = MagicMock(
+            status_code=200, json=MagicMock(return_value=body_deg)
+        )
         mock_deg.__aenter__ = AsyncMock(return_value=mock_deg)
         mock_deg.__aexit__ = AsyncMock(return_value=None)
 
@@ -232,14 +237,18 @@ class TestP1ConfigAuth:
         """AC4 — env var name 'LITELLM_MASTER_KEY' never appears in log lines."""
         with caplog.at_level(logging.DEBUG):
             logging.getLogger("forge").info("forge.auth.config_loaded", extra={"version": "1.0"})
-            logging.getLogger("forge").info("forge.startup", extra={"litellm_proxy_url": "http://litellm.test"})
-            logging.getLogger("forge").info("forge.spend.recorded", extra={"metadata": {"forge_run_id": "r-1"}})
-            logging.getLogger("forge").warning("forge.budget.warning", extra={"key_alias": "forge-agent-x"})
+            logging.getLogger("forge").info(
+                "forge.startup", extra={"litellm_proxy_url": "http://litellm.test"}
+            )
+            logging.getLogger("forge").info(
+                "forge.spend.recorded", extra={"metadata": {"forge_run_id": "r-1"}}
+            )
+            logging.getLogger("forge").warning(
+                "forge.budget.warning", extra={"key_alias": "forge-agent-x"}
+            )
 
         joined = "\n".join(rec.getMessage() for rec in caplog.records)
-        assert "LITELLM_MASTER_KEY" not in joined, (
-            f"env var name leaked into logs:\n{joined}"
-        )
+        assert "LITELLM_MASTER_KEY" not in joined, f"env var name leaked into logs:\n{joined}"
 
     @pytest.mark.asyncio
     async def test_ac5_routes_discovery_logged_once(self, caplog, monkeypatch):
@@ -252,7 +261,7 @@ class TestP1ConfigAuth:
         import app.main as main_mod
 
         class _FakeBase:
-            async def __aenter__(self) -> "_FakeBase":
+            async def __aenter__(self) -> _FakeBase:
                 return self
 
             async def __aexit__(self, *exc: Any) -> None:
@@ -277,7 +286,8 @@ class TestP1ConfigAuth:
 
         monkeypatch.setattr(main_mod, "bus", _FakeBus())
         monkeypatch.setattr(
-            main_mod, "lesson_service",
+            main_mod,
+            "lesson_service",
             type("L", (), {"register": staticmethod(lambda *_a, **_kw: None)}),
         )
 
@@ -383,22 +393,31 @@ class TestP2ModelsRegistry:
             "/v1/models": lambda req: httpx.Response(200, json=_v1_models_response(["gpt-4o"])),
             "/model/info": lambda req: httpx.Response(
                 200,
-                json=_model_info_response([{"model_name": "gpt-4o", "model_info": {"owned_by": "openai"}}]),
+                json=_model_info_response(
+                    [{"model_name": "gpt-4o", "model_info": {"owned_by": "openai"}}]
+                ),
             ),
             "/public/litellm_model_cost_map": lambda req: httpx.Response(
                 200,
-                json=_cost_map_response({
-                    "gpt-4o": {"input_cost_per_token": 0.000005, "output_cost_per_token": 0.000015},
-                }),
+                json=_cost_map_response(
+                    {
+                        "gpt-4o": {
+                            "input_cost_per_token": 0.000005,
+                            "output_cost_per_token": 0.000015,
+                        },
+                    }
+                ),
             ),
         }
         transport = _make_transport_with_log(handlers, call_log=[])  # type: ignore[arg-type]
 
         class _FakeBase:
             def __init__(self) -> None:
-                self._client = httpx.AsyncClient(base_url=lite_env["proxy"], timeout=10.0, transport=transport)
+                self._client = httpx.AsyncClient(
+                    base_url=lite_env["proxy"], timeout=10.0, transport=transport
+                )
 
-            async def __aenter__(self) -> "_FakeBase":
+            async def __aenter__(self) -> _FakeBase:
                 return self
 
             async def __aexit__(self, *exc: Any) -> None:
@@ -410,7 +429,9 @@ class TestP2ModelsRegistry:
 
             def chat_client(self, api_key: str, *, trace_id: Any = None) -> httpx.AsyncClient:
                 return httpx.AsyncClient(
-                    base_url=lite_env["proxy"], timeout=10.0, transport=transport,
+                    base_url=lite_env["proxy"],
+                    timeout=10.0,
+                    transport=transport,
                     headers={"Authorization": f"Bearer {api_key}"},
                 )
 
@@ -446,34 +467,50 @@ class TestP2ModelsRegistry:
 
         handlers = {
             "/v1/models": lambda req: httpx.Response(200, json=_v1_models_response(["gpt-4o"])),
-            "/model/info": lambda req: httpx.Response(200, json=_model_info_response(
-                [{"model_name": "gpt-4o", "model_info": {"owned_by": "openai"}}]
-            )),
-            "/public/litellm_model_cost_map": lambda req: httpx.Response(200, json=_cost_map_response(
-                {"gpt-4o": {"input_cost_per_token": 0.000005, "output_cost_per_token": 0.000015}}
-            )),
+            "/model/info": lambda req: httpx.Response(
+                200,
+                json=_model_info_response(
+                    [{"model_name": "gpt-4o", "model_info": {"owned_by": "openai"}}]
+                ),
+            ),
+            "/public/litellm_model_cost_map": lambda req: httpx.Response(
+                200,
+                json=_cost_map_response(
+                    {
+                        "gpt-4o": {
+                            "input_cost_per_token": 0.000005,
+                            "output_cost_per_token": 0.000015,
+                        }
+                    }
+                ),
+            ),
         }
 
         def _make_logged_transport() -> httpx.MockTransport:
             async def handler(request: httpx.Request) -> httpx.Response:
-                request_log.append({
-                    "method": request.method,
-                    "url": str(request.url),
-                    "path": request.url.path,
-                })
+                request_log.append(
+                    {
+                        "method": request.method,
+                        "url": str(request.url),
+                        "path": request.url.path,
+                    }
+                )
                 for path, fn in handlers.items():
                     if request.url.path.endswith(path):
                         return fn(request)
                 return httpx.Response(500, json={"error": f"unhandled {request.url.path}"})
+
             return httpx.MockTransport(handler)
 
         transport = _make_logged_transport()
 
         class _FakeBase:
             def __init__(self) -> None:
-                self._client = httpx.AsyncClient(base_url=lite_env["proxy"], timeout=10.0, transport=transport)
+                self._client = httpx.AsyncClient(
+                    base_url=lite_env["proxy"], timeout=10.0, transport=transport
+                )
 
-            async def __aenter__(self) -> "_FakeBase":
+            async def __aenter__(self) -> _FakeBase:
                 return self
 
             async def __aexit__(self, *exc: Any) -> None:
@@ -485,7 +522,9 @@ class TestP2ModelsRegistry:
 
             def chat_client(self, api_key: str, *, trace_id: Any = None) -> httpx.AsyncClient:
                 return httpx.AsyncClient(
-                    base_url=lite_env["proxy"], timeout=10.0, transport=transport,
+                    base_url=lite_env["proxy"],
+                    timeout=10.0,
+                    transport=transport,
                     headers={"Authorization": f"Bearer {api_key}"},
                 )
 
@@ -518,10 +557,10 @@ class TestP2ModelsRegistry:
         own allow-list."""
         from app.integrations.litellm import litellm_base_client
         from app.services.forge_models import (
+            ModelsService,
             _cost_map_bucket,
             _model_info_bucket,
             _v1_models_bucket,
-            ModelsService,
         )
 
         registry = [
@@ -543,15 +582,19 @@ class TestP2ModelsRegistry:
         handlers = {
             "/v1/models": v1_handler,
             "/model/info": lambda req: httpx.Response(200, json=_model_info_response(registry)),
-            "/public/litellm_model_cost_map": lambda req: httpx.Response(200, json=_cost_map_response({})),
+            "/public/litellm_model_cost_map": lambda req: httpx.Response(
+                200, json=_cost_map_response({})
+            ),
         }
         transport = _make_transport_with_log(handlers, call_log=[])  # type: ignore[arg-type]
 
         class _FakeBase:
             def __init__(self) -> None:
-                self._client = httpx.AsyncClient(base_url=lite_env["proxy"], timeout=10.0, transport=transport)
+                self._client = httpx.AsyncClient(
+                    base_url=lite_env["proxy"], timeout=10.0, transport=transport
+                )
 
-            async def __aenter__(self) -> "_FakeBase":
+            async def __aenter__(self) -> _FakeBase:
                 return self
 
             async def __aexit__(self, *exc: Any) -> None:
@@ -563,7 +606,9 @@ class TestP2ModelsRegistry:
 
             def chat_client(self, api_key: str, *, trace_id: Any = None) -> httpx.AsyncClient:
                 return httpx.AsyncClient(
-                    base_url=lite_env["proxy"], timeout=10.0, transport=transport,
+                    base_url=lite_env["proxy"],
+                    timeout=10.0,
+                    transport=transport,
                     headers={"Authorization": f"Bearer {api_key}"},
                 )
 
@@ -641,12 +686,11 @@ class TestP3SpendAggregation:
     @pytest.mark.asyncio
     async def test_ac1_record_idempotent(self, sqlite_db, monkeypatch):
         """AC1 — record_from_usage is idempotent on litellm_request_id."""
-        from app.services.forge_spend import SpendService
-
         # Stub audit_service.record (otherwise it would try to write via
         # the real DB session, which is the pre-existing pool_size issue
         # path).
         from app.services import audit_service as audit_mod
+        from app.services.forge_spend import SpendService
 
         audit_calls: list[dict[str, Any]] = []
 
@@ -658,10 +702,16 @@ class TestP3SpendAggregation:
         svc = SpendService()
         req_id = f"req-P3A1-{uuid4()}"
         kwargs = dict(
-            tenant_id=uuid4(), project_id=uuid4(), agent_id=uuid4(),
-            user_id=uuid4(), team_id=None, model="gpt-4o",
-            prompt_tokens=100, completion_tokens=50,
-            litellm_request_id=req_id, cost_usd=0.001,
+            tenant_id=uuid4(),
+            project_id=uuid4(),
+            agent_id=uuid4(),
+            user_id=uuid4(),
+            team_id=None,
+            model="gpt-4o",
+            prompt_tokens=100,
+            completion_tokens=50,
+            litellm_request_id=req_id,
+            cost_usd=0.001,
         )
         first = await svc.record_from_usage(**kwargs)
         second = await svc.record_from_usage(**kwargs)
@@ -670,12 +720,14 @@ class TestP3SpendAggregation:
     @pytest.mark.asyncio
     async def test_ac2_reconcile_zero_drift_window(self, sqlite_db, monkeypatch):
         """AC2 — when /spend/logs and Forge DB agree, drift_count=0."""
-        from app.services.forge_spend import SpendService, SpendRecord as SR
         from app.services import audit_service as audit_mod
         from app.services import forge_spend as fs_mod
+        from app.services.forge_spend import SpendRecord as SR
+        from app.services.forge_spend import SpendService
 
         audit_calls: list[dict[str, Any]] = []
         await asyncio.sleep(0)  # placeholder for ordering
+
         async def _noop(**kw: Any) -> None:
             audit_calls.append(kw)
 
@@ -690,35 +742,52 @@ class TestP3SpendAggregation:
 
         factory = _session_mod.get_session_factory()
         async with factory() as s:
-            s.add(SR(
-                id=uuid4(), tenant_id=tenant_id, project_id=project_id,
-                agent_id=agent_id, user_id=user_id, team_id=None, model="gpt-4o",
-                prompt_tokens=1000, completion_tokens=500, total_tokens=1500,
-                cost_usd=0.0100, litellm_request_id=req_id,
-            ))
+            s.add(
+                SR(
+                    id=uuid4(),
+                    tenant_id=tenant_id,
+                    project_id=project_id,
+                    agent_id=agent_id,
+                    user_id=user_id,
+                    team_id=None,
+                    model="gpt-4o",
+                    prompt_tokens=1000,
+                    completion_tokens=500,
+                    total_tokens=1500,
+                    cost_usd=0.0100,
+                    litellm_request_id=req_id,
+                )
+            )
             await s.commit()
 
         handlers = {
-            "/spend/logs": lambda req: httpx.Response(200, json=[{
-                "request_id": req_id,
-                "tenant_id": str(tenant_id),
-                "project_id": str(project_id),
-                "agent_id": str(agent_id),
-                "user_id": str(user_id),
-                "model": "gpt-4o",
-                "prompt_tokens": 1000,
-                "completion_tokens": 500,
-                "total_tokens": 1500,
-                "spend": 0.0100,  # exact match → no drift
-            }]),
+            "/spend/logs": lambda req: httpx.Response(
+                200,
+                json=[
+                    {
+                        "request_id": req_id,
+                        "tenant_id": str(tenant_id),
+                        "project_id": str(project_id),
+                        "agent_id": str(agent_id),
+                        "user_id": str(user_id),
+                        "model": "gpt-4o",
+                        "prompt_tokens": 1000,
+                        "completion_tokens": 500,
+                        "total_tokens": 1500,
+                        "spend": 0.0100,  # exact match → no drift
+                    }
+                ],
+            ),
         }
         transport = _make_transport_with_log(handlers, call_log=[])  # type: ignore[arg-type]
 
         class _FakeBase:
             def __init__(self) -> None:
-                self._client = httpx.AsyncClient(base_url="http://l", timeout=10.0, transport=transport)
+                self._client = httpx.AsyncClient(
+                    base_url="http://l", timeout=10.0, transport=transport
+                )
 
-            async def __aenter__(self) -> "_FakeBase":
+            async def __aenter__(self) -> _FakeBase:
                 return self
 
             async def __aexit__(self, *exc: Any) -> None:
@@ -729,16 +798,17 @@ class TestP3SpendAggregation:
                 return self._client
 
         monkeypatch.setattr(fs_mod, "LiteLLMBaseClient", _FakeBase)
-        result = await svc.reconcile(last_sync=datetime.now(timezone.utc))
+        result = await svc.reconcile(last_sync=datetime.now(UTC))
         assert result["drift_count"] == 0
 
     @pytest.mark.asyncio
     async def test_ac3_drift_event_emitted_above_1pct(self, sqlite_db, monkeypatch):
         """AC3 — reconcile emits ``forge.spend.drift_detected`` when the
         upstream cost differs by > 1%."""
-        from app.services.forge_spend import SpendService, SpendRecord as SR
         from app.services import audit_service as audit_mod
         from app.services import forge_spend as fs_mod
+        from app.services.forge_spend import SpendRecord as SR
+        from app.services.forge_spend import SpendService
 
         audit_calls: list[dict[str, Any]] = []
 
@@ -756,29 +826,52 @@ class TestP3SpendAggregation:
 
         factory = _session_mod.get_session_factory()
         async with factory() as s:
-            s.add(SR(
-                id=uuid4(), tenant_id=tid, project_id=pid, agent_id=aid, user_id=uid,
-                team_id=None, model="gpt-4o",
-                prompt_tokens=1000, completion_tokens=500, total_tokens=1500,
-                cost_usd=0.0100, litellm_request_id=req_id,
-            ))
+            s.add(
+                SR(
+                    id=uuid4(),
+                    tenant_id=tid,
+                    project_id=pid,
+                    agent_id=aid,
+                    user_id=uid,
+                    team_id=None,
+                    model="gpt-4o",
+                    prompt_tokens=1000,
+                    completion_tokens=500,
+                    total_tokens=1500,
+                    cost_usd=0.0100,
+                    litellm_request_id=req_id,
+                )
+            )
             await s.commit()
 
         handlers = {
-            "/spend/logs": lambda req: httpx.Response(200, json=[{
-                "request_id": req_id, "tenant_id": str(tid), "project_id": str(pid),
-                "agent_id": str(aid), "user_id": str(uid), "model": "gpt-4o",
-                "prompt_tokens": 1000, "completion_tokens": 500, "total_tokens": 1500,
-                "spend": 0.020,  # 100% drift
-            }]),
+            "/spend/logs": lambda req: httpx.Response(
+                200,
+                json=[
+                    {
+                        "request_id": req_id,
+                        "tenant_id": str(tid),
+                        "project_id": str(pid),
+                        "agent_id": str(aid),
+                        "user_id": str(uid),
+                        "model": "gpt-4o",
+                        "prompt_tokens": 1000,
+                        "completion_tokens": 500,
+                        "total_tokens": 1500,
+                        "spend": 0.020,  # 100% drift
+                    }
+                ],
+            ),
         }
         transport = _make_transport_with_log(handlers, call_log=[])  # type: ignore[arg-type]
 
         class _FakeBase:
             def __init__(self) -> None:
-                self._client = httpx.AsyncClient(base_url="http://l", timeout=10.0, transport=transport)
+                self._client = httpx.AsyncClient(
+                    base_url="http://l", timeout=10.0, transport=transport
+                )
 
-            async def __aenter__(self) -> "_FakeBase":
+            async def __aenter__(self) -> _FakeBase:
                 return self
 
             async def __aexit__(self, *exc: Any) -> None:
@@ -789,7 +882,7 @@ class TestP3SpendAggregation:
                 return self._client
 
         monkeypatch.setattr(fs_mod, "LiteLLMBaseClient", _FakeBase)
-        await svc.reconcile(last_sync=datetime.now(timezone.utc))
+        await svc.reconcile(last_sync=datetime.now(UTC))
         drift = [c for c in audit_calls if c.get("action") == "forge.spend.drift_detected"]
         assert len(drift) == 1, f"expected drift event, got {audit_calls}"
 
@@ -804,8 +897,8 @@ class TestP3SpendAggregation:
         ever hits the transport.
         """
         from app.services import audit_service as audit_mod
-        from app.services.forge_chat_errors import AgentBudgetExceededError
         from app.services import forge_chat as chat_mod
+        from app.services.forge_chat_errors import AgentBudgetExceededError
 
         # Stub audit first — prevents the post-yield _emit path from
         # touching the stubbed session_factory.
@@ -839,7 +932,8 @@ class TestP3SpendAggregation:
             )
 
         monkeypatch.setattr(
-            chat_mod, "budget_guard",
+            chat_mod,
+            "budget_guard",
             type("G", (), {"check_pre_call": staticmethod(_block)})(),
         )
 
@@ -863,9 +957,7 @@ class TestP3SpendAggregation:
                     {
                         "agent_id": _uuid4(),
                         "model": "gpt-4o",
-                        "messages": [
-                            type("M", (), {"role": "user", "content": "hi"})()
-                        ],
+                        "messages": [type("M", (), {"role": "user", "content": "hi"})()],
                     },
                 )(),
             ):
@@ -889,8 +981,9 @@ class TestP3SpendAggregation:
     @pytest.mark.asyncio
     async def test_ac5_summary_correct_aggregation(self, sqlite_db, monkeypatch):
         """AC5 — summary aggregates totals + by_model correctly."""
-        from app.services.forge_spend import SpendService, SpendRecord as SR
         from app.services import audit_service as audit_mod
+        from app.services.forge_spend import SpendRecord as SR
+        from app.services.forge_spend import SpendService
 
         async def _noop(**kw: Any) -> None:
             return None
@@ -900,7 +993,7 @@ class TestP3SpendAggregation:
         svc = SpendService()
         tid = uuid4()
         pid = uuid4()
-        since = datetime.now(timezone.utc) - timedelta(hours=1)
+        since = datetime.now(UTC) - timedelta(hours=1)
 
         factory = _session_mod.get_session_factory()
         async with factory() as s:
@@ -909,13 +1002,22 @@ class TestP3SpendAggregation:
                 ("gpt-4o", 0.020, 200, 80),
                 ("claude-3-5-sonnet", 0.030, 300, 120),
             ]:
-                s.add(SR(
-                    id=uuid4(), tenant_id=tid, project_id=pid, agent_id=uuid4(),
-                    user_id=uuid4(), team_id=None, model=model,
-                    prompt_tokens=pt, completion_tokens=ct,
-                    total_tokens=pt + ct, cost_usd=cost,
-                    litellm_request_id=f"req-{uuid4()}",
-                ))
+                s.add(
+                    SR(
+                        id=uuid4(),
+                        tenant_id=tid,
+                        project_id=pid,
+                        agent_id=uuid4(),
+                        user_id=uuid4(),
+                        team_id=None,
+                        model=model,
+                        prompt_tokens=pt,
+                        completion_tokens=ct,
+                        total_tokens=pt + ct,
+                        cost_usd=cost,
+                        litellm_request_id=f"req-{uuid4()}",
+                    )
+                )
             await s.commit()
 
         summary = await svc.summary(tenant_id=tid, project_id=pid, since=since)
@@ -938,7 +1040,9 @@ class TestP3SpendAggregation:
 # ===========================================================================
 
 
-def _patch_litellm_for_broker(monkeypatch, handlers: dict[str, Any], *, call_log: list[httpx.Request] | None = None):
+def _patch_litellm_for_broker(
+    monkeypatch, handlers: dict[str, Any], *, call_log: list[httpx.Request] | None = None
+):
     from app.services import forge_key_broker as broker_mod
 
     transport = _make_transport(handlers, call_log=call_log)  # type: ignore[arg-type]
@@ -949,7 +1053,7 @@ def _patch_litellm_for_broker(monkeypatch, handlers: dict[str, Any], *, call_log
                 base_url="http://litellm.test", timeout=10.0, transport=transport
             )
 
-        async def __aenter__(self) -> "_FakeBase":
+        async def __aenter__(self) -> _FakeBase:
             return self
 
         async def __aexit__(self, *exc: Any) -> None:
@@ -1177,9 +1281,15 @@ class TestP4VirtualKeyBroker:
             pass
 
         async with factory() as s:
-            rows = (await s.execute(
-                select(AgentVirtualKey).where(AgentVirtualKey.agent_id == agent.id)
-            )).scalars().all()
+            rows = (
+                (
+                    await s.execute(
+                        select(AgentVirtualKey).where(AgentVirtualKey.agent_id == agent.id)
+                    )
+                )
+                .scalars()
+                .all()
+            )
         actives = [r for r in rows if r.status == "active"]
         assert len(actives) <= 1, f"expected ≤1 active row, got {len(actives)}"
 
@@ -1194,7 +1304,7 @@ class _FakeChatCM:
         self._client = client
         self._api_key = api_key
 
-    async def __aenter__(self) -> "_FakeChatClient":
+    async def __aenter__(self) -> _FakeChatClient:
         return _FakeChatClient(self._client, self._api_key)
 
     async def __aexit__(self, *exc: Any) -> None:
@@ -1216,9 +1326,11 @@ class _FakeChatClient:
 class _FakeBase:
     def __init__(self, transport: httpx.MockTransport) -> None:
         self._transport = transport
-        self._client = httpx.AsyncClient(base_url="http://litellm.test", timeout=10.0, transport=transport)
+        self._client = httpx.AsyncClient(
+            base_url="http://litellm.test", timeout=10.0, transport=transport
+        )
 
-    async def __aenter__(self) -> "_FakeBase":
+    async def __aenter__(self) -> _FakeBase:
         return self
 
     async def __aexit__(self, *exc: Any) -> None:
@@ -1233,7 +1345,12 @@ class _FakeBase:
 
 
 def _principal() -> dict:
-    return {"tenant_id": str(uuid4()), "project_id": str(uuid4()), "user_id": str(uuid4()), "team_id": None}
+    return {
+        "tenant_id": str(uuid4()),
+        "project_id": str(uuid4()),
+        "user_id": str(uuid4()),
+        "team_id": None,
+    }
 
 
 def _request() -> Any:
@@ -1280,7 +1397,8 @@ def _patch_chat_deps(monkeypatch):
         return None
 
     monkeypatch.setattr(
-        chat_mod, "budget_guard",
+        chat_mod,
+        "budget_guard",
         type("G", (), {"check_pre_call": _noop_b})(),
     )
 
@@ -1498,11 +1616,13 @@ class TestP5ChatSSE:
             return httpx.Response(
                 200,
                 headers={"content-type": "text/event-stream"},
-                content="\n".join([
-                    _text_delta("ok"),
-                    _usage_chunk(prompt=10, completion=5, cost=0.001),
-                    "data: [DONE]",
-                ]).encode(),
+                content="\n".join(
+                    [
+                        _text_delta("ok"),
+                        _usage_chunk(prompt=10, completion=5, cost=0.001),
+                        "data: [DONE]",
+                    ]
+                ).encode(),
             )
 
         fake = _FakeBase(httpx.MockTransport(handler))

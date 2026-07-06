@@ -128,12 +128,14 @@ def test_create_session_endpoint_returns_201_and_uuid(http_app, http_principal) 
 
     app.dependency_overrides[mod_sessions.get_current_principal] = _principal_override
 
-    with patch.object(
-        mod_sessions.session_manager, "create_session", AsyncMock(return_value=fake)
-    ), patch(
-        "app.api.deps.rbac.check",
-        Mock(return_value=SimpleNamespace(allowed=True, reason="")),
-    ), TestClient(app) as client:
+    with (
+        patch.object(mod_sessions.session_manager, "create_session", AsyncMock(return_value=fake)),
+        patch(
+            "app.api.deps.rbac.check",
+            Mock(return_value=SimpleNamespace(allowed=True, reason="")),
+        ),
+        TestClient(app) as client,
+    ):
         resp = client.post(
             "/terminal/sessions",
             json={"agent_type": "claude_code", "workspace_path": "default"},
@@ -161,10 +163,13 @@ def test_create_session_endpoint_requires_project(http_app) -> None:
 
     app.dependency_overrides[mod_sessions.get_current_principal] = _principal_override
 
-    with patch(
-        "app.api.deps.rbac.check",
-        Mock(return_value=SimpleNamespace(allowed=True, reason="")),
-    ), TestClient(app) as client:
+    with (
+        patch(
+            "app.api.deps.rbac.check",
+            Mock(return_value=SimpleNamespace(allowed=True, reason="")),
+        ),
+        TestClient(app) as client,
+    ):
         resp = client.post(
             "/terminal/sessions",
             json={"agent_type": "claude_code", "workspace_path": "default"},
@@ -193,23 +198,22 @@ def test_ws_accepts_valid_token_and_emits_ready() -> None:
     pty = _fake_pty()
     audit_mock = AsyncMock()
 
-    with patch.object(
-        ws_mod.session_manager, "get_session", AsyncMock(return_value=fake)
-    ), patch.object(ws_mod.agent_launcher, "launch", return_value=pty), patch.object(
-        ws_mod.rbac,
-        "check",
-        Mock(return_value=SimpleNamespace(allowed=True, reason="")),
-    ), patch.object(
-        ws_mod.terminal_audit, "record_session_lifecycle", audit_mock
-    ), TestClient(app) as client, client.websocket_connect(
-        f"/ws/terminal/{fake.id}?token={token}"
-    ) as ws:
+    with (
+        patch.object(ws_mod.session_manager, "get_session", AsyncMock(return_value=fake)),
+        patch.object(ws_mod.agent_launcher, "launch", return_value=pty),
+        patch.object(
+            ws_mod.rbac,
+            "check",
+            Mock(return_value=SimpleNamespace(allowed=True, reason="")),
+        ),
+        patch.object(ws_mod.terminal_audit, "record_session_lifecycle", audit_mock),
+        TestClient(app) as client,
+        client.websocket_connect(f"/ws/terminal/{fake.id}?token={token}") as ws,
+    ):
         frame = ws.receive_text()
         msg = json.loads(frame)
         assert msg["type"] == "ready", f"unexpected first frame: {msg!r}"
         assert msg["agent_type"] == "claude_code"
 
-    started_calls = [
-        c for c in audit_mock.call_args_list if c.kwargs.get("event") == "started"
-    ]
+    started_calls = [c for c in audit_mock.call_args_list if c.kwargs.get("event") == "started"]
     assert started_calls, "expected a 'started' audit row from record_session_lifecycle"

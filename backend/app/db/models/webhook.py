@@ -5,25 +5,27 @@ to a tenant. The :class:`WebhookDelivery` table is an append-only audit
 log of every delivery attempt so the Webhooks tab can show a delivery
 timeline without re-hitting the upstream provider.
 """
+
 from __future__ import annotations
 
 import enum
 from datetime import datetime
-from typing import Any
 from uuid import UUID
 
 from sqlalchemy import (
     DateTime,
-    Enum as SAEnum,
     ForeignKey,
     Index,
     Integer,
     String,
     Text,
 )
+from sqlalchemy import (
+    Enum as SAEnum,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class WebhookDirection(str, enum.Enum):
@@ -90,14 +92,13 @@ class Webhook(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     last_triggered_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    last_delivery_status: Mapped[str | None] = mapped_column(
-        String(16), nullable=True
-    )
+    last_delivery_status: Mapped[str | None] = mapped_column(String(16), nullable=True)
     success_count_24h: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     error_count_24h: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_by: Mapped[UUID] = mapped_column(GUID(), nullable=False)
 
-    __table_args__ = (        Index("ix_webhooks_tenant_project", "tenant_id", "project_id"),
+    __table_args__ = (
+        Index("ix_webhooks_tenant_project", "tenant_id", "project_id"),
         Index("ix_webhook_tenant_status", "tenant_id", "status"),
         Index("ix_webhook_tenant_direction", "tenant_id", "direction"),
     )
@@ -124,13 +125,12 @@ class WebhookDelivery(Base, UUIDPrimaryKeyMixin):
     )
     response_code: Mapped[int | None] = mapped_column(Integer, nullable=True)
     duration_ms: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    attempted_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    attempted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     payload_preview: Mapped[str] = mapped_column(Text, nullable=False, default="")
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    __table_args__ = (        Index("ix_webhook_deliveries_tenant_project", "tenant_id", "project_id"),
+    __table_args__ = (
+        Index("ix_webhook_deliveries_tenant_project", "tenant_id", "project_id"),
         Index(
             "ix_webhook_delivery_webhook_attempted",
             "webhook_id",

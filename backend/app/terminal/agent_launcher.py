@@ -7,10 +7,8 @@ session's workspace_path so users can't escape it via `cd`.
 from __future__ import annotations
 
 import os
-from enum import Enum
 from pathlib import Path
 
-from app.core.config import settings
 from app.core.logging import get_logger
 from app.terminal.pty_process import PTYProcess
 from app.terminal.session_manager import AgentType

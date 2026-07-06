@@ -72,10 +72,10 @@ skipping any model whose DDL the SQLite dialect cannot compile.
 The session factory still uses the same engine/lifecycle so the tests
 exercise the exact same SQLAlchemy session behaviour.
 """
+
 from __future__ import annotations
 
-import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -95,7 +95,6 @@ from app.db.models.ideation import Idea, IdeaStatus, WorkflowSession
 from app.db.models.user import User
 from app.db.models.workflow import WorkflowRun, WorkflowRunStatus
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -107,7 +106,7 @@ def _uuid() -> UUID:
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _tenant_labels() -> tuple[UUID, UUID]:
@@ -435,9 +434,9 @@ async def _assert_b_cannot_see_or_mutate(
         # SELECT — tenant B must see 0 rows from tenant A's table.
         stmt = select(table).where(*b_filter)
         rows_b = (await session_b.execute(stmt)).scalars().all()
-        assert all(
-            getattr(r, "id", None) != inserted_id for r in rows_b
-        ), "tenant B must not see any of tenant A's rows"
+        assert all(getattr(r, "id", None) != inserted_id for r in rows_b), (
+            "tenant B must not see any of tenant A's rows"
+        )
 
         # Confirm: tenant A can still see its own row.
         stmt_a = select(table).where(*a_filter)
@@ -699,15 +698,23 @@ async def test_visibility_matrix_ideas(two_tenants: dict[str, Any]) -> None:
 
     async with factory() as session:
         rows_a = (
-            await session.execute(
-                select(Idea).where(Idea.tenant_id == tenant_a, Idea.project_id == project_a)
+            (
+                await session.execute(
+                    select(Idea).where(Idea.tenant_id == tenant_a, Idea.project_id == project_a)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         rows_b = (
-            await session.execute(
-                select(Idea).where(Idea.tenant_id == tenant_b, Idea.project_id == project_b)
+            (
+                await session.execute(
+                    select(Idea).where(Idea.tenant_id == tenant_b, Idea.project_id == project_b)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         a_ids = {r.id for r in rows_a}
         b_ids = {r.id for r in rows_b}

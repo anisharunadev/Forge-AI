@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -26,7 +26,8 @@ from app.core.logging import get_logger
 from app.db.models.ideation import Idea, IdeaSource, IdeaStatus
 from app.db.session import get_session_factory
 from app.schemas.ideation import EntityExtraction, IdeaCreate, IdeaUpdate
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 from app.services.litellm_client import LiteLLMClient
 
 logger = get_logger(__name__)
@@ -162,19 +163,43 @@ async def _ner_via_litellm(
 
 
 _TECH_KEYWORDS = {
-    "python", "fastapi", "pydantic", "react", "typescript", "rust",
-    "go", "kubernetes", "docker", "postgres", "redis", "kafka",
-    "graphql", "grpc", "aws", "azure", "gcp", "terraform", "helm",
-    "openai", "anthropic", "claude", "litellm", "nextjs", "node",
-    "java", "kotlin", "swift", "spark", "airflow", "dbt",
+    "python",
+    "fastapi",
+    "pydantic",
+    "react",
+    "typescript",
+    "rust",
+    "go",
+    "kubernetes",
+    "docker",
+    "postgres",
+    "redis",
+    "kafka",
+    "graphql",
+    "grpc",
+    "aws",
+    "azure",
+    "gcp",
+    "terraform",
+    "helm",
+    "openai",
+    "anthropic",
+    "claude",
+    "litellm",
+    "nextjs",
+    "node",
+    "java",
+    "kotlin",
+    "swift",
+    "spark",
+    "airflow",
+    "dbt",
 }
 _METRIC_RE = re.compile(
     r"\b\d+(?:\.\d+)?\s?%|\b\d+(?:\.\d+)?\s?(?:ms|s|sec|seconds|minutes|hrs|hours|days|users|requests|rps|qps|MB|GB|KB)\b",
     flags=re.IGNORECASE,
 )
-_DATE_RE = re.compile(
-    r"\b(?:\d{4}-\d{2}-\d{2}|\d{1,2}/\d{1,2}/\d{2,4}|Q[1-4]\s?\d{4}|FY\d{2,4})\b"
-)
+_DATE_RE = re.compile(r"\b(?:\d{4}-\d{2}-\d{2}|\d{1,2}/\d{1,2}/\d{2,4}|Q[1-4]\s?\d{4}|FY\d{2,4})\b")
 
 
 def _deterministic_entities(text: str) -> EntityExtraction:
@@ -422,7 +447,7 @@ class IdeaIntakeService:
                 attachments.append(
                     {
                         "artifact_id": str(artifact_id),
-                        "attached_at": datetime.now(timezone.utc).isoformat(),
+                        "attached_at": datetime.now(UTC).isoformat(),
                         "attached_by": str(actor_id) if actor_id else None,
                     }
                 )

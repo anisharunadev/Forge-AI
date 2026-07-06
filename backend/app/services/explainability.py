@@ -14,7 +14,8 @@ etc. directly.
 from __future__ import annotations
 
 from collections import Counter
-from typing import TYPE_CHECKING, Any, Iterable
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from sqlalchemy import select
@@ -28,7 +29,6 @@ from app.schemas.explainability import (
     ChangeKindLiteral,
     CheckEntry,
     CheckOutcomeLiteral,
-    CheckSourceLiteral,
     GradeLiteral,
     Q1ChangesAndWhy,
     Q2ChecksPerformed,
@@ -37,7 +37,7 @@ from app.schemas.explainability import (
     Q5Counterfactual,
     RunExplainability,
 )
-from app.schemas.validation_report import DecisionLiteral, ValidationReport
+from app.schemas.validation_report import ValidationReport
 
 if TYPE_CHECKING:
     # Imported only for type hints — pulling this in at runtime would
@@ -82,7 +82,7 @@ class RunExplainabilityService:
     #: Below this raw_score we recommend human escalation.
     CONFIDENCE_THRESHOLD: float = 70.0
 
-    def __init__(self, manager: "SDLCRunManager | Any") -> None:
+    def __init__(self, manager: SDLCRunManager | Any) -> None:
         self._manager = manager
 
     # ------------------------------------------------------------------
@@ -216,7 +216,7 @@ class RunExplainabilityService:
         seen_files: set[str] = set()
 
         for cr in command_runs:
-            files = ((cr.output or {}).get("files") or [])
+            files = (cr.output or {}).get("files") or []
             for f in files:
                 if not isinstance(f, dict):
                     continue
@@ -232,9 +232,7 @@ class RunExplainabilityService:
                         lines_added=int(f.get("lines_added") or 0),
                         lines_removed=int(f.get("lines_removed") or 0),
                         rationale=str(f.get("rationale") or f.get("reason") or ""),
-                        citation=(
-                            f"command_run:{cr.id}" if cr.id is not None else None
-                        ),
+                        citation=(f"command_run:{cr.id}" if cr.id is not None else None),
                     )
                 )
 
@@ -292,10 +290,7 @@ class RunExplainabilityService:
             total = report.summary.total_findings
             # PASS ⇒ check passed. FAIL with no critical/high findings ⇒ warn.
             # Otherwise fail.
-            critical_high = sum(
-                report.summary.by_severity.get(s, 0)
-                for s in ("critical", "high")
-            )
+            critical_high = sum(report.summary.by_severity.get(s, 0) for s in ("critical", "high"))
             if decision == "PASS":
                 outcome: CheckOutcomeLiteral = "pass"
                 detail = f"Validator v{report.validator_version}: PASS ({total} findings)."
@@ -348,9 +343,7 @@ class RunExplainabilityService:
             entries=entries,
         )
 
-    def _q3_from_data(
-        self, *, checks: Q2ChecksPerformed, has_validator: bool
-    ) -> Q3CoverageGaps:
+    def _q3_from_data(self, *, checks: Q2ChecksPerformed, has_validator: bool) -> Q3CoverageGaps:
         explicit: list[str] = []
         implicit: list[str] = []
 

@@ -36,9 +36,9 @@ def _service() -> StandardsAttestationService:
         audit_service=audit_service,
         event_bus=bus,
     )
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post(
     "/attest",
     response_model=AttestationResponse,
@@ -49,7 +49,7 @@ async def attest(
     body: AttestationRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: UUID = Query(...),
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:standards:attest"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:standards:attest")),
 ) -> AttestationResponse:
     """Run the standard checks for an artifact and record the outcome."""
     payload = await _service().attest(
@@ -67,7 +67,7 @@ async def attest(
 async def list_attestations(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: UUID = Query(...),
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:standards:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:standards:read")),
 ) -> AttestationListResponse:
     rows = await _service().list_attestations(
         tenant_id=principal.tenant_id,
@@ -89,7 +89,7 @@ async def check_artifact(
     artifact_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: UUID | None = Query(default=None),
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:standards:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:standards:read")),
 ) -> list[StandardCheckResponse]:
     """List applicable standards and whether they're met (no audit row)."""
     rows = await _service().get_standards_for_artifact(
@@ -99,9 +99,9 @@ async def check_artifact(
         project_id=project_id,
     )
     return [StandardCheckResponse.model_validate(r) for r in rows]
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post(
     "/attestations/{attestation_id}/revoke",
     response_model=AttestationResponse,
@@ -111,7 +111,7 @@ async def revoke_attestation(
     attestation_id: UUID,
     body: AttestationRevokeRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:standards:revoke"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:standards:revoke")),
 ) -> AttestationResponse:
     """Revoke a previously issued attestation (forge-admin only)."""
     try:

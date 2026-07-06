@@ -24,13 +24,13 @@ types from the closed set in ``ALLOWED_EVENT_TYPES``.
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 from app.core.logging import get_logger
 from app.services.audit_service import audit_service
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 
 logger = get_logger(__name__)
 

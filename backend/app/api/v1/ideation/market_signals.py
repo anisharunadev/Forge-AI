@@ -144,9 +144,7 @@ async def list_market_signals(
     rows; this endpoint is a read-only projection over its output.
     """
     _seed_cache_from_global()
-    return _list_for_tenant(
-        str(principal.tenant_id), kind, limit, before_id
-    )
+    return _list_for_tenant(str(principal.tenant_id), kind, limit, before_id)
 
 
 @router.post("/synthesize", response_model=SynthesisResult)

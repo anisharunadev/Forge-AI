@@ -16,9 +16,9 @@ from sqlalchemy import ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import (
-    Base,
     GUID,
     JSONB,
+    Base,
     TimestampMixin,
     UUIDPrimaryKeyMixin,
 )
@@ -41,14 +41,12 @@ class Organization(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     brand: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     billing_ref: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
 
-    __table_args__ = (
-        Index("ix_organizations_tenant", "tenant_id"),
-    )
+    __table_args__ = (Index("ix_organizations_tenant", "tenant_id"),)
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<Organization id={self.id} name={self.name!r}>"
 
-
     _audit_scope = "tenant-only"
+
 
 __all__ = ["Organization"]

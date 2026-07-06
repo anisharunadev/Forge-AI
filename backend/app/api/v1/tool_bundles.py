@@ -5,13 +5,15 @@
 """
 
 from __future__ import annotations
-from typing import Annotated
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.tool_bundles import (
@@ -22,8 +24,6 @@ from app.schemas.tool_bundles import (
 )
 from app.services.audit_service import audit_service
 from app.services.tool_bundles import tool_bundles
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/tool-bundles", tags=["tool-bundles"])
 
@@ -40,7 +40,7 @@ def _row_to_read(stage: Stage, bundle, row) -> ToolBundleRead:
         overridden_by=row.updated_by if row is not None else None,
         tenant_id="00000000-0000-0000-0000-000000000000",
         project_id=None,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     )
 
 
@@ -48,7 +48,7 @@ def _row_to_read(stage: Stage, bundle, row) -> ToolBundleRead:
 @audit(action="tool_bundles.list", target_type="tool_bundle")
 async def list_tool_bundles(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("tool_bundles:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("tool_bundles:read")),
 ) -> list[ToolBundleRead]:
     """List every stage's effective bundle (default or override)."""
     out: list[ToolBundleRead] = []
@@ -57,16 +57,16 @@ async def list_tool_bundles(
         row = tool_bundles.override_row(stage)
         out.append(_row_to_read(stage, bundle, row))
     return out
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.put("/{stage}", response_model=ToolBundleRead)
 @audit(action="tool_bundles.override", target_type="tool_bundle")
 async def override_tool_bundle(
     stage: Stage,
     body: ToolBundleUpdate,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("tool_bundles:override"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("tool_bundles:override")),
 ) -> ToolBundleRead:
     """Apply a Steward override for a single stage. Audited in F-005."""
     if stage not in STAGES:

@@ -13,11 +13,9 @@ import errno
 import fcntl
 import os
 import pty
-import select
 import signal
 import struct
 import termios
-from typing import Any
 
 
 class PTYProcess:

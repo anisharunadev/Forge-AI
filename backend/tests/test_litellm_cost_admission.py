@@ -156,9 +156,7 @@ async def litellm_client_factory(stubbed_ledger: Any) -> Any:
                 body = json.loads(request.content)
             except json.JSONDecodeError:
                 body = {}
-        request_log.append(
-            {"method": request.method, "url": str(request.url), "body": body}
-        )
+        request_log.append({"method": request.method, "url": str(request.url), "body": body})
         if not queue_ref["items"]:
             return httpx.Response(500, json={"error": "no scripted response"})
         return httpx.Response(200, json=queue_ref["items"].pop(0))
@@ -283,9 +281,7 @@ async def test_pre_call_admission_allows_under_cap(
     assert decision.spent_usd == pytest.approx(0.0)
     # The projection is computed from the pricing YAML, not a
     # caller-supplied value.
-    assert decision.projected_cost_usd == pytest.approx(
-        project_cost_usd("gpt-4o-mini", 1000, 500)
-    )
+    assert decision.projected_cost_usd == pytest.approx(project_cost_usd("gpt-4o-mini", 1000, 500))
 
 
 # ---------------------------------------------------------------------------

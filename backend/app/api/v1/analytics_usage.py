@@ -13,7 +13,7 @@ dashboard's poll cycle does not hammer Postgres.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -53,11 +53,8 @@ async def get_tenant_usage(
     _principal: Any = Depends(get_current_principal),
 ) -> dict[str, Any]:
     """Per-tenant LLM usage aggregate (cost, tokens, calls, by-model, by-user)."""
-    until_dt = _parse_iso(until) or datetime.now(timezone.utc)
-    since_dt = (
-        _parse_iso(since)
-        or (until_dt - timedelta(hours=24))
-    )
+    until_dt = _parse_iso(until) or datetime.now(UTC)
+    since_dt = _parse_iso(since) or (until_dt - timedelta(hours=24))
     snap = await usage_query.get_tenant_usage(tenant_id, since_dt, until_dt)
     payload = snap.to_dict()
     # Surface the freshness so the UI can render "last updated X seconds ago".
@@ -99,7 +96,7 @@ async def get_billing_quota(
 
     from app.core.config import settings as app_settings
 
-    until_dt = datetime.now(tz=timezone.utc)
+    until_dt = datetime.now(tz=UTC)
     since_dt = until_dt - timedelta(days=30)
     snap = await usage_query.get_tenant_usage(tenant_id, since_dt, until_dt)
     cost = float(snap.to_dict().get("cost_usd", 0.0))

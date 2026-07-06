@@ -14,13 +14,14 @@ from __future__ import annotations
 import json
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
 from app.core.logging import get_logger
 from app.services.cost_ledger import cost_ledger
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 from app.services.knowledge_graph import Node, knowledge_graph_service
 from app.services.litellm_client import LiteLLMClient
 
@@ -128,7 +129,7 @@ class QAService:
                 role="user",
                 content=question,
                 sources=[],
-                created_at=datetime.now(timezone.utc),
+                created_at=datetime.now(UTC),
             )
         )
         history.append(
@@ -137,7 +138,7 @@ class QAService:
                 role="assistant",
                 content=answer_text,
                 sources=sources,
-                created_at=datetime.now(timezone.utc),
+                created_at=datetime.now(UTC),
             )
         )
         return answer
@@ -297,9 +298,7 @@ class QAService:
         base = min(1.0, 0.4 + 0.1 * len(nodes) + 0.05 * len(keyword_rows))
         return round(base, 2)
 
-    def _suggest_follow_ups(
-        self, question: str, nodes: list[Node]
-    ) -> list[str]:
+    def _suggest_follow_ups(self, question: str, nodes: list[Node]) -> list[str]:
         seeds = [
             "Which services depend on this?",
             "What's the blast radius of changing this?",

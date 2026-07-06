@@ -4,6 +4,7 @@ We don't spin up a real Redis here; the test asserts the negative
 path (missing token is rejected) and that the WS module imports
 cleanly so the route is registered in main.py.
 """
+
 from __future__ import annotations
 
 import importlib

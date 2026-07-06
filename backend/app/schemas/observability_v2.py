@@ -25,7 +25,6 @@ from pydantic import Field, model_validator
 
 from app.schemas.common import ForgeBaseModel, Page
 
-
 # ---------------------------------------------------------------------------
 # Audit log
 # ---------------------------------------------------------------------------
@@ -98,8 +97,8 @@ class ForgeHealthDetail(ForgeBaseModel):
 class HealthServicesResponse(ForgeBaseModel):
     """Per-service health check result."""
 
-    db: str = Field(description='`ok` | `degraded` | `down`')
-    cache: str = Field(description='`ok` | `degraded` | `down`')
+    db: str = Field(description="`ok` | `degraded` | `down`")
+    cache: str = Field(description="`ok` | `degraded` | `down`")
     providers: list[str] = Field(default_factory=list)
 
 
@@ -138,7 +137,7 @@ class CostRealtimeResponse(ForgeBaseModel):
     has_activity: bool = False
 
     @model_validator(mode="after")
-    def _set_has_activity(self) -> "CostRealtimeResponse":
+    def _set_has_activity(self) -> CostRealtimeResponse:
         object.__setattr__(self, "has_activity", self.today_usd > 0)
         return self
 
@@ -200,9 +199,7 @@ class AlertConfig(ForgeBaseModel):
     tenant_id: UUID
     warn_pct: int = Field(default=80, ge=0, le=100)
     exceed_pct: int = Field(default=95, ge=0, le=100)
-    channels: list[Literal["email", "slack"]] = Field(
-        default_factory=lambda: ["email"]
-    )
+    channels: list[Literal["email", "slack"]] = Field(default_factory=lambda: ["email"])
 
 
 class AlertConfigRead(AlertConfig):

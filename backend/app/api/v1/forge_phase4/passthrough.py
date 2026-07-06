@@ -192,7 +192,6 @@ async def _top_level_proxy(request: Request, provider: str, path: str) -> Any:
         )
         return StreamingResponse(gen(), media_type="text/event-stream")
 
-
     async with httpx.AsyncClient(timeout=httpx.Timeout(60.0)) as client:
         response = await client.request(
             request.method,

@@ -246,8 +246,7 @@ def _enforce_local(state: Any, allowed_phases: tuple[str, ...]) -> None:
     pending = getattr(state, "pending_approval", None)
     if pending is None:
         raise ApprovalRequiredPermissionError(
-            f"no pending_approval on state; expected one of "
-            f"{list(allowed_phases)}",
+            f"no pending_approval on state; expected one of {list(allowed_phases)}",
             phase=allowed_phases[0],
             run_id=getattr(state, "run_id", None),
             tenant_id=getattr(state, "tenant_id", None),
@@ -255,8 +254,7 @@ def _enforce_local(state: Any, allowed_phases: tuple[str, ...]) -> None:
     pending_phase = getattr(pending, "type", None)
     if pending_phase not in set(allowed_phases):
         raise ApprovalRequiredPermissionError(
-            f"pending_approval.type={pending_phase!r} is not in "
-            f"{list(allowed_phases)}",
+            f"pending_approval.type={pending_phase!r} is not in {list(allowed_phases)}",
             phase=str(pending_phase) if pending_phase else allowed_phases[0],
             run_id=getattr(state, "run_id", None),
             tenant_id=getattr(state, "tenant_id", None),
@@ -352,9 +350,7 @@ class RefactorAgent:
         _validate_whitelist()
         self._reject_protected_paths(diff_obj)
 
-        chunks = diff_obj.chunks or _extract_chunks_from_unified(
-            diff_obj.unified_diff
-        )
+        chunks = diff_obj.chunks or _extract_chunks_from_unified(diff_obj.unified_diff)
         classifications = [_classify_chunk(c) for c in chunks]
 
         breaking = [
@@ -369,9 +365,7 @@ class RefactorAgent:
         ]
 
         digest = MigrationPlanDigest(
-            source_files=sorted(
-                set(diff_obj.source_files or [c.file_path for c in chunks])
-            ),
+            source_files=sorted(set(diff_obj.source_files or [c.file_path for c in chunks])),
             target_patterns=patterns,
             breaking_changes=breaking,
             rollback_steps=steps,
@@ -446,23 +440,17 @@ class RefactorAgent:
                 chunks=list(diff.get("chunks") or []),
                 source_files=list(diff.get("source_files") or []),
             )
-        raise TypeError(
-            "diff must be an ImplementationDiff or mapping; "
-            f"got {type(diff).__name__}"
-        )
+        raise TypeError(f"diff must be an ImplementationDiff or mapping; got {type(diff).__name__}")
 
     def _reject_protected_paths(self, diff: ImplementationDiff) -> None:
         """Reject the plan if any diff chunk touches a protected path."""
         for path in diff.source_files or []:
             if PROTECTED_FILE_GLOB_RE.match(path):
-                raise PermissionError(
-                    f"refactor_agent refuses to touch protected path {path!r}"
-                )
+                raise PermissionError(f"refactor_agent refuses to touch protected path {path!r}")
         for chunk in diff.chunks or []:
             if PROTECTED_FILE_GLOB_RE.match(chunk.file_path):
                 raise PermissionError(
-                    f"refactor_agent refuses to touch protected chunk "
-                    f"{chunk.file_path!r}"
+                    f"refactor_agent refuses to touch protected chunk {chunk.file_path!r}"
                 )
 
     def _compose_migration_plan(
@@ -481,9 +469,7 @@ class RefactorAgent:
             language=language,
             framework=None,
             total_files=len({p for p in touched if p}),
-            total_lines_of_code=sum(
-                c.added_lines + c.removed_lines for c in diff.chunks
-            ),
+            total_lines_of_code=sum(c.added_lines + c.removed_lines for c in diff.chunks),
             components=[],
             external_dependencies=[],
             data_stores=[],
@@ -526,9 +512,9 @@ class RefactorAgent:
             generated_at=datetime.now(UTC),
             metadata={
                 "whitelist_forge_cmd": ALLOWED_REFACTOR_FORGE_CMD,
-                "digest_id": hashlib.sha256(
-                    f"{digest.model_dump_json()}".encode()
-                ).hexdigest()[:32],
+                "digest_id": hashlib.sha256(f"{digest.model_dump_json()}".encode()).hexdigest()[
+                    :32
+                ],
             },
         )
 
@@ -598,9 +584,7 @@ def _extract_chunks_from_unified(unified: str) -> list[DiffChunk]:
             path = line[4:].split("\t", 1)[0].strip()
             if path and path != "/dev/null":
                 tentative = path.removeprefix("a/")
-                chunks.setdefault(
-                    tentative, DiffChunk(file_path=tentative)
-                )
+                chunks.setdefault(tentative, DiffChunk(file_path=tentative))
                 current_path = tentative
             continue
         if line.startswith("@@"):
@@ -651,10 +635,7 @@ def _describe_classification(
     chunk: DiffChunk,
     cls: ChangeClassification,
 ) -> str:
-    return (
-        f"{cls.value} change in {chunk.file_path} "
-        f"(+{chunk.added_lines}/-{chunk.removed_lines})"
-    )
+    return f"{cls.value} change in {chunk.file_path} (+{chunk.added_lines}/-{chunk.removed_lines})"
 
 
 def _count_classifications(
@@ -788,9 +769,7 @@ def _build_phased_plan(
                 scope_services=[],
                 estimated_effort_days=1.0,
                 estimated_cost_usd=0.0,
-                prerequisites=[
-                    p.name for p in phases
-                ],
+                prerequisites=[p.name for p in phases],
                 acceptance_criteria=["Rollback playbook committed."],
                 strategy="parallel",
             )
@@ -844,5 +823,3 @@ __all__ = [
     "PROTECTED_FILE_GLOB_RE",
     "RefactorAgent",
 ]
-
-

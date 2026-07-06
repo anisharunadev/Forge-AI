@@ -21,7 +21,7 @@ Rules respected:
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
@@ -32,7 +32,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.crypto import encrypt
 from app.core.logging import get_logger
-from app.db.base import ARRAY, Base, GUID, UUIDPrimaryKeyMixin
+from app.db.base import ARRAY, GUID, Base, UUIDPrimaryKeyMixin
 from app.db.models.agent import Agent
 from app.db.session import get_session_factory
 from app.integrations.litellm.litellm_base_client import LiteLLMBaseClient
@@ -86,9 +86,7 @@ class AgentVirtualKey(Base, UUIDPrimaryKeyMixin):
     tpm_limit: Mapped[int | None] = mapped_column(Integer, nullable=True)
     rpm_limit: Mapped[int | None] = mapped_column(Integer, nullable=True)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    status: Mapped[str] = mapped_column(
-        String(16), nullable=False, server_default="active"
-    )
+    status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="active")
     litellm_key_alias: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
@@ -192,21 +190,15 @@ class ForgeKeyBroker:
         if rpm_limit is not None:
             body["rpm_limit"] = int(rpm_limit)
         if expires_at is not None:
-            body["duration"] = (
-                expires_at - datetime.now(timezone.utc)
-            ).total_seconds()
+            body["duration"] = (expires_at - datetime.now(UTC)).total_seconds()
 
         try:
             response = await self._admin_post("/key/generate", json_body=body)
         except httpx.HTTPError as exc:
-            raise RuntimeError(
-                f"litellm /key/generate failed for agent {agent.id}: {exc}"
-            ) from exc
+            raise RuntimeError(f"litellm /key/generate failed for agent {agent.id}: {exc}") from exc
         secret = self._extract_key_value(response)
         if not secret:
-            raise RuntimeError(
-                f"litellm /key/generate returned no key for agent {agent.id}"
-            )
+            raise RuntimeError(f"litellm /key/generate returned no key for agent {agent.id}")
         return secret
 
     async def _block_litellm_key(self, key_alias: str) -> None:
@@ -216,9 +208,7 @@ class ForgeKeyBroker:
         authoritative source of truth for forge-side revocation.
         """
         try:
-            await self._admin_post(
-                "/key/block", json_body={"key_aliases": [key_alias]}
-            )
+            await self._admin_post("/key/block", json_body={"key_aliases": [key_alias]})
         except Exception as exc:  # noqa: BLE001 — network path
             logger.warning(
                 "forge_key_broker.block_failed",
@@ -246,9 +236,9 @@ class ForgeKeyBroker:
                 return None, None
             prior.status = new_status
             if new_status == "rotated":
-                prior.rotated_at = datetime.now(timezone.utc)
+                prior.rotated_at = datetime.now(UTC)
             elif new_status == "revoked":
-                prior.revoked_at = datetime.now(timezone.utc)
+                prior.revoked_at = datetime.now(UTC)
             await session.commit()
             return prior.litellm_key_alias, prior.encrypted_key
 
@@ -270,7 +260,7 @@ class ForgeKeyBroker:
         On any provisioning failure nothing is persisted — the row insert
         is the *last* step, after encrypt + fingerprint succeed.
         """
-        alias = f"forge-agent-{agent.id}-{int(datetime.now(timezone.utc).timestamp())}"
+        alias = f"forge-agent-{agent.id}-{int(datetime.now(UTC).timestamp())}"
 
         # Provision the upstream key FIRST. If this fails we never
         # touch the DB, never produce a phantom plaintext column.
@@ -293,7 +283,7 @@ class ForgeKeyBroker:
         # (DB has a partial UNIQUE on (agent_id) WHERE status='active').
         await self._revoke_prior_active(agent.id, "rotated")
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         row = AgentVirtualKey(
             id=uuid4(),
             tenant_id=agent.tenant_id,
@@ -383,10 +373,7 @@ class ForgeKeyBroker:
         if agent is None:
             raise LookupError(f"no active virtual key for agent {agent_id}")
 
-        new_alias = (
-            f"forge-agent-{agent.id}-rotated-"
-            f"{int(datetime.now(timezone.utc).timestamp())}"
-        )
+        new_alias = f"forge-agent-{agent.id}-rotated-{int(datetime.now(UTC).timestamp())}"
 
         # Mint a new key upstream.
         plaintext = await self._provision_litellm_key(
@@ -402,7 +389,7 @@ class ForgeKeyBroker:
         new_fingerprint = _fingerprint(plaintext)
         plaintext = None  # noqa: F841
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         factory = get_session_factory()
         async with factory() as session:
             # Mark the old row as rotated, then insert the new active row.
@@ -515,7 +502,7 @@ class ForgeKeyBroker:
             if prior is None:
                 raise LookupError(f"no active virtual key for agent {agent_id}")
             prior.status = "revoked"
-            prior.revoked_at = datetime.now(timezone.utc)
+            prior.revoked_at = datetime.now(UTC)
             await session.commit()
             alias = prior.litellm_key_alias
             fingerprint = prior.fingerprint
@@ -554,7 +541,7 @@ class ForgeKeyBroker:
         return ForgeKeyRevokeResponse(
             agent_id=agent_id,
             fingerprint=fingerprint,
-            revoked_at=datetime.now(timezone.utc),
+            revoked_at=datetime.now(UTC),
             reason=reason,
         )
 
@@ -628,7 +615,9 @@ class ForgeKeyBroker:
                     AgentVirtualKey.status == "active",
                 )
             )
-            ceiling = float(row.max_budget_usd) if row and row.max_budget_usd else DEFAULT_BUDGET_USD
+            ceiling = (
+                float(row.max_budget_usd) if row and row.max_budget_usd else DEFAULT_BUDGET_USD
+            )
         spent_f = float(spent or 0.0)
         pct = (spent_f / ceiling) if ceiling > 0 else 0.0
         return {
@@ -640,7 +629,7 @@ class ForgeKeyBroker:
 
     async def _spent_30d(self, session: Any, agent_id: UUID) -> float:
         """SUM(cost_usd) for ``agent_id`` in the last 30 days."""
-        cutoff = datetime.now(timezone.utc) - timedelta(days=BUDGET_WINDOW_DAYS)
+        cutoff = datetime.now(UTC) - timedelta(days=BUDGET_WINDOW_DAYS)
         result = await session.execute(
             select(func.coalesce(func.sum(SpendRecord.cost_usd), 0)).where(
                 SpendRecord.agent_id == agent_id,
@@ -676,9 +665,7 @@ class ForgeKeyBroker:
             spent = await self._spent_30d(session, agent.id)
 
         # Stale? rotate.
-        if created_at and (
-            datetime.now(timezone.utc) - created_at
-        ) >= timedelta(days=ROTATE_AGE_DAYS):
+        if created_at and (datetime.now(UTC) - created_at) >= timedelta(days=ROTATE_AGE_DAYS):
             try:
                 await self.rotate(agent.id, reason="auto_age")
             except Exception as exc:  # noqa: BLE001 — fall through to status

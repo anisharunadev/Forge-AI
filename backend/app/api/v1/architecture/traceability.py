@@ -1,4 +1,5 @@
 """F-306 API router."""
+
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
@@ -17,7 +18,9 @@ async def get_traceability(
     project_id: UUID = Query(...),
     service: TraceabilityService = Depends(get_traceability_service),
 ):
-    return await service.build_matrix(tenant_id=UUID("00000000-0000-0000-0000-000000000000"), project_id=project_id)
+    return await service.build_matrix(
+        tenant_id=UUID("00000000-0000-0000-0000-000000000000"), project_id=project_id
+    )
 
 
 @router.get("/lineage/{artifact_type}/{artifact_id}")
@@ -35,7 +38,9 @@ async def get_orphans(
     project_id: UUID = Query(...),
     service: TraceabilityService = Depends(get_traceability_service),
 ):
-    return await service.find_orphans(tenant_id=UUID("00000000-0000-0000-0000-000000000000"), project_id=project_id)
+    return await service.find_orphans(
+        tenant_id=UUID("00000000-0000-0000-0000-000000000000"), project_id=project_id
+    )
 
 
 @router.get("/breaking-changes/{contract_id}")

@@ -21,10 +21,8 @@ import uuid
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 
 # ---------------------------------------------------------------------------
 # App + auth override — mirror `test_explainability.py`'s pattern.
@@ -35,7 +33,6 @@ def _build_app() -> FastAPI:
     """Mount every ideation router (the same set `app/api/v1/router.py`
     mounts in production)."""
     from app.api.v1 import ideation
-    from app.api.v1 import deps as deps_mod
 
     app = FastAPI()
     app.include_router(ideation.ideas.router, prefix="/api/v1")
@@ -87,15 +84,15 @@ def _override_db() -> Any:
     endpoints to return empty without spinning up SQLite."""
 
     async def _execute(_stmt: Any) -> Any:
+        class _S:
+            def all(self_inner) -> list[Any]:
+                return []
+
+            def first(self_inner) -> Any:
+                return None
+
         class _R:
             def scalars(self_inner) -> Any:
-                class _S:
-                    def all(self_ii) -> list[Any]:
-                        return []
-
-                    def first(self_ii) -> Any:
-                        return None
-
                 return _S()
 
             def scalars_one_or_none(self_inner) -> Any:
@@ -169,8 +166,7 @@ def test_compare_impact_accepts_query_params() -> None:
     # Should reach the service (200 with an empty comparison object),
     # not 422 from a JSON-body validation failure.
     assert resp.status_code != 422, (
-        f"compare_impact must accept idea_ids as query params, "
-        f"got {resp.status_code}: {resp.text}"
+        f"compare_impact must accept idea_ids as query params, got {resp.status_code}: {resp.text}"
     )
 
 
@@ -197,8 +193,7 @@ def test_score_batch_accepts_query_params() -> None:
             params=[("idea_ids", i) for i in ids] + [("strategy", "ai")],
         )
     assert resp.status_code != 422, (
-        f"score/batch must accept idea_ids as query params, "
-        f"got {resp.status_code}: {resp.text}"
+        f"score/batch must accept idea_ids as query params, got {resp.status_code}: {resp.text}"
     )
 
 
@@ -230,9 +225,7 @@ def test_tenant_isolation_on_ideas_list() -> None:
     # Spy on the service to confirm the tenant filter is applied.
     captured: dict[str, Any] = {}
 
-    async def fake_list_ideas(
-        session: Any, tenant_id: str, project_id: str, **_: Any
-    ) -> Any:
+    async def fake_list_ideas(session: Any, tenant_id: str, project_id: str, **_: Any) -> Any:
         captured["tenant_id"] = tenant_id
         captured["project_id"] = project_id
         return []
@@ -242,8 +235,7 @@ def test_tenant_isolation_on_ideas_list() -> None:
             client.get("/api/v1/ideation/ideas")
 
     assert captured.get("tenant_id") == tenant_a, (
-        f"tenant filter dropped or rewritten: got {captured.get('tenant_id')}, "
-        f"expected {tenant_a}"
+        f"tenant filter dropped or rewritten: got {captured.get('tenant_id')}, expected {tenant_a}"
     )
     assert captured.get("tenant_id") != tenant_b
 
@@ -262,6 +254,7 @@ __all__ = [
 
 def _build_ingest_app() -> FastAPI:
     from app.api.v1.ideation import ingest_status
+
     app = FastAPI()
     app.include_router(ingest_status.router, prefix="/api/v1")
     return app
@@ -270,7 +263,6 @@ def _build_ingest_app() -> FastAPI:
 def test_ingest_status_returns_never_when_no_runs() -> None:
     """No scheduler writes have landed yet → status='never', counters 0."""
     from app.api.v1 import deps as deps_mod
-    from app.api.v1.ideation import ingest_status
 
     app = _build_ingest_app()
     app.dependency_overrides[deps_mod.require_permission] = _override_principal(
@@ -291,6 +283,7 @@ def test_ingest_status_returns_never_when_no_runs() -> None:
     }
     # `ingest_status` is in the ideation `__all__` so the orphan guard sees it.
     from app.api.v1 import ideation
+
     assert "ingest_status" in ideation.__all__
 
 
@@ -317,7 +310,6 @@ def test_ingest_status_is_tenant_scoped() -> None:
     would require a separate principal with that tenant_id, not a
     query-param override."""
     from app.api.v1 import deps as deps_mod
-    from app.api.v1.ideation import ingest_status
 
     tenant_a = "acme-corp"
     captured: dict[str, str | None] = {}
@@ -335,6 +327,7 @@ def test_ingest_status_is_tenant_scoped() -> None:
                 roles=["developer"],
                 raw_claims={"forge.permissions": ["ideation.read"]},
             )
+
         return _inner
 
     app = _build_ingest_app()

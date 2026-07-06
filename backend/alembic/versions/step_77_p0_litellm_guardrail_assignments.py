@@ -22,18 +22,18 @@ Create Date: 2026-07-02 14:00:00.000000
 
 from __future__ import annotations
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "step_77_p0_litellm_guardrail_assignments"
-down_revision: Union[str, None] = "step_78_f12_rbac_hierarchy"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "step_78_f12_rbac_hierarchy"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def _enable_rls(table_name: str) -> None:

@@ -5,10 +5,11 @@ from __future__ import annotations
 import enum
 from uuid import UUID
 
-from sqlalchemy import Boolean, Enum as SAEnum, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import Boolean, Index, Integer, String, Text
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class HookPhase(str, enum.Enum):

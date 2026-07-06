@@ -22,9 +22,10 @@ from __future__ import annotations
 
 import asyncio
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Awaitable, Callable
+from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
 
 import redis.asyncio as aioredis
@@ -175,7 +176,7 @@ class SessionBroadcaster:
             user_id=str(user_id),
             tenant_id=str(tenant_id),
             write=bool(write and (await self._is_write_authorized(channel, user_id, write))),
-            opened_at=datetime.now(timezone.utc),
+            opened_at=datetime.now(UTC),
         )
 
         loop = asyncio.get_running_loop()
@@ -200,7 +201,7 @@ class SessionBroadcaster:
                     data, msg_type = await send_q.get()
                 except asyncio.CancelledError:
                     return
-                subscription.last_sent_at = datetime.now(timezone.utc)
+                subscription.last_sent_at = datetime.now(UTC)
                 subscription.bytes_sent += len(data)
                 # Callback set after subscribe returns; we just keep queueing.
                 _ = msg_type  # reserved for future typed fanout
@@ -221,7 +222,11 @@ class SessionBroadcaster:
                         if payload.startswith(b"SUB_META:"):
                             continue
                         await send_q.put((payload, "o"))
-                    elif subscription.write and isinstance(payload, bytes) and payload.startswith(b"IN:"):
+                    elif (
+                        subscription.write
+                        and isinstance(payload, bytes)
+                        and payload.startswith(b"IN:")
+                    ):
                         await send_q.put((payload[3:], "i"))
             except asyncio.CancelledError:
                 pass
@@ -242,9 +247,7 @@ class SessionBroadcaster:
                 channel._write_grants.add(subscription.id)
         return subscription, send_fn
 
-    async def unsubscribe(
-        self, session_id: str, subscription: Subscription
-    ) -> None:
+    async def unsubscribe(self, session_id: str, subscription: Subscription) -> None:
         """Tear down a subscription."""
         channel = self._channels.get(session_id)
         if channel is not None:
@@ -296,9 +299,7 @@ class SessionBroadcaster:
                 )
             return out
 
-    async def grant_write(
-        self, session_id: str, *, actor_user_id: UUID | str
-    ) -> int:
+    async def grant_write(self, session_id: str, *, actor_user_id: UUID | str) -> int:
         """Grant broadcast write capability for a session (RBAC enforced upstream)."""
         channel = self._channels.get(session_id)
         if channel is None:
@@ -310,9 +311,7 @@ class SessionBroadcaster:
                     sub.write = True
         return len(channel._write_grants)
 
-    async def revoke_write(
-        self, session_id: str, *, actor_user_id: UUID | str
-    ) -> int:
+    async def revoke_write(self, session_id: str, *, actor_user_id: UUID | str) -> int:
         """Revoke broadcast write capability (RBAC enforced upstream)."""
         channel = self._channels.get(session_id)
         if channel is None:

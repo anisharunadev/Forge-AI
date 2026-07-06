@@ -64,12 +64,8 @@ class SecurityReport(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMixi
         nullable=True,
         index=True,
     )
-    discovered_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    mitigated_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    discovered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    mitigated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     generated_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     __table_args__ = (

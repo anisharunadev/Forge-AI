@@ -24,9 +24,8 @@ import html
 import json
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Literal
-from uuid import UUID
 
 from sqlalchemy import select
 
@@ -40,7 +39,6 @@ from app.services.terminal.cast_encoder import (
     validate_audit_chain,
 )
 from app.terminal.session_manager import (
-    AgentType,
     TerminalSession,
     session_manager,
 )
@@ -61,7 +59,7 @@ class ExportedFile:
     mime_type: str
     content: str
     audit_hash_chain: list[dict[str, Any]] = field(default_factory=list)
-    generated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    generated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -80,6 +78,7 @@ class ExportedFile:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _canonical(obj: Any) -> str:
     return json.dumps(obj, sort_keys=True, separators=(",", ":"), default=str)
@@ -127,6 +126,7 @@ def verify_audit_hash_chain(chain: list[dict[str, Any]]) -> bool:
 # Exporter
 # ---------------------------------------------------------------------------
 
+
 class SessionExporter:
     """Renders a session to the requested format."""
 
@@ -163,7 +163,7 @@ class SessionExporter:
                 "session_id": session_id,
                 "url": url,
                 "format": format,
-                "uploaded_at": datetime.now(timezone.utc).isoformat(),
+                "uploaded_at": datetime.now(UTC).isoformat(),
             }
         )
 
@@ -240,7 +240,9 @@ class SessionExporter:
             if isinstance(output, bytes):
                 output = output.decode("utf-8", errors="replace")
             lines.append(output.rstrip("\n"))
-            lines.append(f"  (output_sha256={rec.get('output_hash')}, ms={rec.get('duration_ms', 0)})")
+            lines.append(
+                f"  (output_sha256={rec.get('output_hash')}, ms={rec.get('duration_ms', 0)})"
+            )
             lines.append("-" * 80)
         lines.append("")
         lines.append("Audit hash chain:")
@@ -277,7 +279,7 @@ class SessionExporter:
             "metadata": self._metadata(session),
             "records": serializable_records,
             "audit_hash_chain": chain,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         }
         return ExportedFile(
             session_id=session.id,
@@ -325,9 +327,7 @@ class SessionExporter:
         lines.append("| # | prev | hash |")
         lines.append("|---|------|------|")
         for idx, entry in enumerate(chain):
-            lines.append(
-                f"| {idx} | `{entry['prev_hash'][:16]}...` | `{entry['hash'][:16]}...` |"
-            )
+            lines.append(f"| {idx} | `{entry['prev_hash'][:16]}...` | `{entry['hash'][:16]}...` |")
         return ExportedFile(
             session_id=session.id,
             format="md",
@@ -395,9 +395,7 @@ class SessionExporter:
                 output = output.decode("utf-8", errors="replace")
             cast_records.append(
                 {
-                    "t": (
-                        rec["occurred_at"] - session.created_at
-                    ).total_seconds()
+                    "t": (rec["occurred_at"] - session.created_at).total_seconds()
                     if isinstance(rec.get("occurred_at"), datetime)
                     else 0.0,
                     "type": "i",

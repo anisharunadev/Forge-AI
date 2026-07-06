@@ -17,8 +17,8 @@ Covers:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 
 import pytest
 import pytest_asyncio
@@ -39,7 +39,6 @@ from app.db.session import get_session_factory
 from app.services.connector_manager import ConnectorManager, TestResult
 from app.services.connectors.lifecycle import ConnectorLifecycle
 from app.services.event_bus import EventType
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -101,7 +100,7 @@ class _StubManager:
             ok=True,
             latency_ms=1.23,
             detail="reachable",
-            checked_at=datetime.now(timezone.utc),
+            checked_at=datetime.now(UTC),
         )
 
 
@@ -126,12 +125,8 @@ async def focused_db(monkeypatch) -> AsyncIterator[None]:
     focused schema is the same approach ``tests/api/v1/test_audit.py``
     uses for its subset.
     """
-    engine = create_async_engine(
-        "sqlite+aiosqlite:///:memory:", future=True
-    )
-    factory = async_sessionmaker(
-        bind=engine, expire_on_commit=False, autoflush=False
-    )
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
+    factory = async_sessionmaker(bind=engine, expire_on_commit=False, autoflush=False)
     async with engine.begin() as conn:
         await conn.run_sync(
             lambda sync_conn: Base.metadata.create_all(
@@ -316,9 +311,7 @@ async def test_test_writes_health_history_row(focused_db, lifecycle, stub_manage
 # ---------------------------------------------------------------------------
 
 
-async def test_disconnect_soft_deletes_and_writes_audit(
-    focused_db, event_bus
-):
+async def test_disconnect_soft_deletes_and_writes_audit(focused_db, event_bus):
     """M3-G2 — POST /connectors/{id}/disconnect writes one audit + one
     activity row on the first call.
 
@@ -456,9 +449,7 @@ async def test_disconnect_is_idempotent(focused_db, event_bus):
 # ---------------------------------------------------------------------------
 
 
-async def test_oauth_start_dev_mode_returns_demo_url(
-    monkeypatch, focused_db
-):
+async def test_oauth_start_dev_mode_returns_demo_url(monkeypatch, focused_db):
     """M3-G3 — POST /connectors/oauth/start in dev mode returns a
     deterministic demo URL containing code=demo&state=…&slug=…
     """
@@ -475,8 +466,8 @@ async def test_oauth_start_dev_mode_returns_demo_url(
     monkeypatch.setenv("ENVIRONMENT", "development")
     config_mod.get_settings.cache_clear()  # type: ignore[attr-defined]
 
-    from app.api.v1.connector_oauth import router as oauth_router
     from app.api.deps import get_current_principal
+    from app.api.v1.connector_oauth import router as oauth_router
     from app.core.security import AuthenticatedPrincipal
     from app.services import rbac as rbac_mod
 
@@ -516,9 +507,7 @@ async def test_oauth_start_dev_mode_returns_demo_url(
         )
     assert resp.status_code == 200, resp.text
     body = resp.json()
-    assert body["authorization_url"].startswith(
-        "http://localhost:3000/oauth/callback?"
-    )
+    assert body["authorization_url"].startswith("http://localhost:3000/oauth/callback?")
     assert "code=demo" in body["authorization_url"]
     assert "state=" in body["authorization_url"]
     assert "slug=forge-slack" in body["authorization_url"]
@@ -532,9 +521,7 @@ async def test_oauth_start_dev_mode_returns_demo_url(
 # ---------------------------------------------------------------------------
 
 
-async def test_oauth_callback_creates_connector_with_oauth_credential(
-    monkeypatch, focused_db
-):
+async def test_oauth_callback_creates_connector_with_oauth_credential(monkeypatch, focused_db):
     """M3-G4 — POST /connectors/oauth/callback with code=demo + a
     valid state token must create a Connector + a ConnectorCredential
     (type=oauth-token) + an install activity row.
@@ -552,8 +539,8 @@ async def test_oauth_callback_creates_connector_with_oauth_credential(
     monkeypatch.setenv("ENVIRONMENT", "development")
     config_mod.get_settings.cache_clear()  # type: ignore[attr-defined]
 
-    from app.api.v1.connector_oauth import router as oauth_router
     from app.api.deps import get_current_principal
+    from app.api.v1.connector_oauth import router as oauth_router
     from app.core.security import AuthenticatedPrincipal
     from app.services import rbac as rbac_mod
     from app.services.connectors.oauth_state import oauth_state_store

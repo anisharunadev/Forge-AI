@@ -19,18 +19,18 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 from app.api.deps import require_permission
 from app.core.logging import get_logger
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.tenant import Tenant
 from app.db.session import get_session_factory
 from app.services.feature_flag_catalog import get_catalog
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -61,9 +61,7 @@ class FeatureFlagUpdate(BaseModel):
 
 @router.get("", response_model=list[FeatureFlag])
 async def list_feature_flags(
-    principal: AuthenticatedPrincipal = Depends(
-        require_permission("tenants:read")
-    ),
+    principal: AuthenticatedPrincipal = Depends(require_permission("tenants:read")),
 ) -> list[FeatureFlag]:
     """Merge system + tenant overrides; expose all known keys."""
     catalog = get_catalog()
@@ -92,16 +90,14 @@ async def list_feature_flags(
                 )
             )
     return flags
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/{key}", response_model=FeatureFlag)
 async def patch_feature_flag(
     key: str,
     body: FeatureFlagUpdate,
-    principal: AuthenticatedPrincipal = Depends(
-        require_permission("tenants:manage")
-    ),
+    principal: AuthenticatedPrincipal = Depends(require_permission("tenants:manage")),
 ) -> FeatureFlag:
     """Set a per-tenant override for ``key``.
 
@@ -166,7 +162,7 @@ async def _load_overrides(principal: AuthenticatedPrincipal) -> dict[str, dict[s
         ).first()
     if rows is None or rows[0] is None:
         return {}
-    return dict((rows[0].get("feature_flags") or {}))
+    return dict(rows[0].get("feature_flags") or {})
 
 
 def _value_matches_type(value: Any, type_name: str) -> bool:

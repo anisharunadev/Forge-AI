@@ -1,25 +1,25 @@
 """Project members + invitations (Settings → Members tab)."""
 
 from __future__ import annotations
-from typing import Annotated
 
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+from typing import Annotated
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from app.api.deps import DbSession, Principal, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import DbSession, get_current_principal
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.project_invitation import ProjectInvitation
 from app.db.models.project_member import ProjectMember
 from app.db.models.role import Role
 from app.db.models.user import User
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/projects/{project_id}/members", tags=["members"])
 
@@ -128,9 +128,9 @@ async def list_members(
         )
 
     return MemberListResponse(members=members, invitations=invitations)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/invite", response_model=InvitationRead, status_code=201)
 @audit(action="members.invite", target_type="project")
 async def invite_member(
@@ -140,9 +140,7 @@ async def invite_member(
     db: DbSession,
 ) -> InvitationRead:
     """Invite an email to join the project with a given role."""
-    role = (
-        await db.execute(select(Role).where(Role.id == body.role_id))
-    ).scalar_one_or_none()
+    role = (await db.execute(select(Role).where(Role.id == body.role_id))).scalar_one_or_none()
     if role is None:
         raise HTTPException(status_code=404, detail="role_not_found")
 
@@ -170,7 +168,7 @@ async def invite_member(
         invited_by=UUID(principal.user_id) if principal.user_id else uuid4(),
         status="pending",
         token=token,
-        expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+        expires_at=datetime.now(UTC) + timedelta(days=7),
     )
     db.add(invitation)
     await db.commit()
@@ -188,9 +186,9 @@ async def invite_member(
         created_at=invitation.created_at,
         token=token,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/{member_id}", response_model=MemberRead)
 @audit(action="members.update_role", target_type="project")
 async def update_member_role(
@@ -212,9 +210,7 @@ async def update_member_role(
     if pm is None:
         raise HTTPException(status_code=404, detail="member_not_found")
 
-    role = (
-        await db.execute(select(Role).where(Role.id == body.role_id))
-    ).scalar_one_or_none()
+    role = (await db.execute(select(Role).where(Role.id == body.role_id))).scalar_one_or_none()
     if role is None:
         raise HTTPException(status_code=404, detail="role_not_found")
 
@@ -222,9 +218,7 @@ async def update_member_role(
     await db.commit()
     await db.refresh(pm)
 
-    user = (
-        await db.execute(select(User).where(User.id == pm.user_id))
-    ).scalar_one()
+    user = (await db.execute(select(User).where(User.id == pm.user_id))).scalar_one()
 
     return MemberRead(
         id=pm.id,
@@ -237,9 +231,9 @@ async def update_member_role(
         status=pm.status,
         joined_at=pm.created_at,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.delete("/{member_id}")
 @audit(action="members.remove", target_type="project")
 async def remove_member(
@@ -262,7 +256,13 @@ async def remove_member(
 
     await db.delete(pm)
     await db.commit()
-    return None
 
 
-__all__ = ["router", "MemberRead", "InvitationRead", "InviteCreate", "RoleUpdate", "MemberListResponse"]
+__all__ = [
+    "router",
+    "MemberRead",
+    "InvitationRead",
+    "InviteCreate",
+    "RoleUpdate",
+    "MemberListResponse",
+]

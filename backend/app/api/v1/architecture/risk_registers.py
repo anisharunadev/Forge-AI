@@ -37,15 +37,17 @@ def _service() -> RiskRegisterService:
         artifact_registry=artifact_registry,
         event_bus=bus,
     )
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("", response_model=RiskRegisterResponse, status_code=status.HTTP_201_CREATED)
 @audit(action="architecture.risk_register.create", target_type="risk_register")
 async def create_risk_register(
     body: RiskRegisterCreateRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:risk_register:create"))
+    _perm: AuthenticatedPrincipal = Depends(
+        require_permission("architecture:risk_register:create")
+    ),
 ) -> RiskRegisterResponse:
     """Derive a risk register from an ADR, task breakdown, or idea."""
     svc = _service()
@@ -94,15 +96,15 @@ async def list_risk_registers(
 async def get_risk_register(
     register_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:risk_register:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:risk_register:read")),
 ) -> RiskRegisterResponse:
     register = await _service().get_register(register_id)
     if register is None or register.tenant_id != principal.tenant_id:
         raise HTTPException(status_code=404, detail="risk_register_not_found")
     return _serialize(register)
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post(
     "/{register_id}/risks",
     response_model=RiskRegisterResponse,
@@ -113,7 +115,9 @@ async def add_risk(
     register_id: UUID,
     body: RiskCreate,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:risk_register:update"))
+    _perm: AuthenticatedPrincipal = Depends(
+        require_permission("architecture:risk_register:update")
+    ),
 ) -> RiskRegisterResponse:
     payload = body.model_dump()
     try:
@@ -127,9 +131,9 @@ async def add_risk(
     if register.tenant_id != principal.tenant_id:
         raise HTTPException(status_code=404, detail="risk_register_not_found")
     return _serialize(register)
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.patch("/{register_id}/risks/{risk_id}", response_model=RiskRegisterResponse)
 @audit(action="architecture.risk_register.update_risk", target_type="risk_register")
 async def update_risk(
@@ -137,7 +141,9 @@ async def update_risk(
     risk_id: str,
     body: RiskUpdateRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:risk_register:update"))
+    _perm: AuthenticatedPrincipal = Depends(
+        require_permission("architecture:risk_register:update")
+    ),
 ) -> RiskRegisterResponse:
     updates = body.model_dump(exclude_unset=True)
     try:
@@ -170,9 +176,7 @@ async def top_risks(
 
 
 def _serialize(register) -> RiskRegisterResponse:  # type: ignore[no-untyped-def]
-    risks = [
-        RiskResponse.model_validate(r) for r in (register.risks or [])
-    ]
+    risks = [RiskResponse.model_validate(r) for r in (register.risks or [])]
     base = RiskRegisterResponse.model_validate(register).model_dump()
     base["risks"] = [r.model_dump() for r in risks]
     return RiskRegisterResponse.model_validate(base)

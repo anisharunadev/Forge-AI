@@ -63,6 +63,7 @@ class StandardsAttestationService:
         event_bus: Any | None = None,
     ) -> None:
         from app.services.artifact_registry import artifact_registry as _default_registry
+
         self._registry = artifact_registry if artifact_registry is not None else _default_registry
         self._standards = standard_service
         self._audit = audit_service
@@ -319,9 +320,10 @@ class StandardsAttestationService:
                     "content": row.content,
                     "scope": "project" if row.project_id else "org",
                     "metadata": dict(getattr(row, "metadata_", {}) or {}),
-                    "applies_to": list((getattr(row, "metadata_", {}) or {}).get(
-                        "applies_to", []
-                    ) or ["adr", "api_contract", "task_breakdown", "risk_register"]),
+                    "applies_to": list(
+                        (getattr(row, "metadata_", {}) or {}).get("applies_to", [])
+                        or ["adr", "api_contract", "task_breakdown", "risk_register"]
+                    ),
                 }
                 for row in rows
             ]
@@ -365,9 +367,7 @@ class StandardsAttestationService:
 
         if policy == "presence":
             required_fields = list(meta.get("required_fields") or [])
-            missing = [
-                f for f in required_fields if not artifact.get(f)
-            ]
+            missing = [f for f in required_fields if not artifact.get(f)]
             if missing:
                 return False, f"missing required fields: {', '.join(missing)}"
             return True, "all required fields present"

@@ -38,7 +38,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
-from app.api.deps import Principal, require_permission
+from app.api.deps import require_permission
 from app.core.audit import audit
 from app.core.logging import get_logger
 from app.schemas.async_v2 import (
@@ -240,9 +240,7 @@ async def get_fine_tune_job(
     principal: Annotated[object, Depends(require_permission("async:read"))],
 ) -> FineTuneJobRead:
     try:
-        return await async_service.get_fine_tune_job(
-            tenant_id=_tenant_id(principal), job_id=job_id
-        )
+        return await async_service.get_fine_tune_job(tenant_id=_tenant_id(principal), job_id=job_id)
     except AsyncError as exc:
         raise _async_error_to_http(exc) from exc
 
@@ -273,9 +271,7 @@ async def start_response(
     principal: Annotated[object, Depends(require_permission("async:write"))],
 ) -> ResponseRead:
     try:
-        return await async_service.start_response(
-            tenant_id=_tenant_id(principal), payload=payload
-        )
+        return await async_service.start_response(tenant_id=_tenant_id(principal), payload=payload)
     except AsyncError as exc:
         raise _async_error_to_http(exc) from exc
 
@@ -347,7 +343,9 @@ async def compact_response(
     principal: Annotated[object, Depends(require_permission("async:write"))],
 ) -> dict:
     try:
-        return await async_service.compact_response(tenant_id=_tenant_id(principal), payload=payload)
+        return await async_service.compact_response(
+            tenant_id=_tenant_id(principal), payload=payload
+        )
     except AsyncError as exc:
         raise _async_error_to_http(exc) from exc
 

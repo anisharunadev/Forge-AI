@@ -5,12 +5,13 @@ organization style guides, and OWASP top-10 coverage. Findings from
 this scanner typically have ``severity=low|medium`` and surface in
 the FAIL decision only when escalated by the aggregator.
 """
+
 from __future__ import annotations
 
 import logging
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Protocol
 
 from app.agents.code_validator_state import (
@@ -59,7 +60,7 @@ async def scan_standards(
 ) -> dict[str, Any]:
     started = time.perf_counter()
     scanner = scanner or SemgrepScanner()
-    started_at = datetime.now(timezone.utc)
+    started_at = datetime.now(UTC)
     rules = list((state.metadata or {}).get("semgrep_rules", []) or [])
 
     try:
@@ -70,7 +71,7 @@ async def scan_standards(
             scanner="standards",
             findings=[],
             started_at=started_at,
-            finished_at=datetime.now(timezone.utc),
+            finished_at=datetime.now(UTC),
             duration_ms=int((time.perf_counter() - started) * 1000),
             error=str(exc),
         )
@@ -81,14 +82,13 @@ async def scan_standards(
         }
 
     tagged = [
-        f.model_copy(update={"scanner": "standards"}) if not f.scanner else f
-        for f in findings
+        f.model_copy(update={"scanner": "standards"}) if not f.scanner else f for f in findings
     ]
     envelope = ScannerEnvelope(
         scanner="standards",
         findings=tagged,
         started_at=started_at,
-        finished_at=datetime.now(timezone.utc),
+        finished_at=datetime.now(UTC),
         duration_ms=int((time.perf_counter() - started) * 1000),
     )
     return {

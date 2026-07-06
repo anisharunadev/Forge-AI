@@ -10,10 +10,7 @@ Verifies:
 from __future__ import annotations
 
 import asyncio
-import os
 import uuid
-from datetime import datetime, timezone
-from pathlib import Path
 
 import pytest
 
@@ -21,11 +18,9 @@ from app.db.models.persona_memory import PersonaMemoryHistory
 from app.db.models.tenant import Tenant
 from app.db.session import get_session_factory
 from app.services.memory.persona_store import (
-    PERSONA_KEYS,
     PersonaMemoryStore,
 )
 from app.services.tenant_directory import _reset_cache
-
 
 pytestmark = pytest.mark.asyncio
 
@@ -72,13 +67,7 @@ async def test_append_writes_history_and_file(sqlite_db, tenants_root):
     )
     assert row.id is not None
     file_path = (
-        tenants_root
-        / "acme"
-        / "workspace"
-        / "memory"
-        / "personas"
-        / "developer"
-        / "ideation.md"
+        tenants_root / "acme" / "workspace" / "memory" / "personas" / "developer" / "ideation.md"
     )
     body = file_path.read_text(encoding="utf-8")
     assert "remember to flag billing changes" in body
@@ -89,11 +78,13 @@ async def test_append_writes_history_and_file(sqlite_db, tenants_root):
         rows = list(
             (
                 await session.execute(
-                    __import__("sqlalchemy").select(PersonaMemoryHistory).where(
-                        PersonaMemoryHistory.tenant_id == tenant_id
-                    )
+                    __import__("sqlalchemy")
+                    .select(PersonaMemoryHistory)
+                    .where(PersonaMemoryHistory.tenant_id == tenant_id)
                 )
-            ).scalars().all()
+            )
+            .scalars()
+            .all()
         )
     assert len(rows) == 1
 
@@ -118,13 +109,7 @@ async def test_concurrent_appends_dont_clobber(sqlite_db, tenants_root):
         ),
     )
     dev_file = (
-        tenants_root
-        / "acme"
-        / "workspace"
-        / "memory"
-        / "personas"
-        / "developer"
-        / "ideation.md"
+        tenants_root / "acme" / "workspace" / "memory" / "personas" / "developer" / "ideation.md"
     )
     pm_file = (
         tenants_root
@@ -152,13 +137,7 @@ async def test_consolidate_merges_recent_rows(sqlite_db, tenants_root):
     n = await store.consolidate(tenant_id=tenant_id)
     assert n == 1
     file_path = (
-        tenants_root
-        / "acme"
-        / "workspace"
-        / "memory"
-        / "personas"
-        / "developer"
-        / "ideation.md"
+        tenants_root / "acme" / "workspace" / "memory" / "personas" / "developer" / "ideation.md"
     )
     body = file_path.read_text(encoding="utf-8")
     assert "recent dev note" in body
@@ -182,12 +161,6 @@ async def test_file_path_uses_tenant_slug(sqlite_db, tenants_root):
         written_by=uuid.uuid4(),
     )
     expected = (
-        tenants_root
-        / "globex"
-        / "workspace"
-        / "memory"
-        / "personas"
-        / "developer"
-        / "coding.md"
+        tenants_root / "globex" / "workspace" / "memory" / "personas" / "developer" / "coding.md"
     )
     assert expected.exists()

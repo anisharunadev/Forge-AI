@@ -10,8 +10,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-import pytest
-
 
 def test_scheduler_start_registers_two_jobs(monkeypatch):
     """start() registers daily_ideation_ingest + memory_consolidate."""

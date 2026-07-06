@@ -12,6 +12,7 @@ demand via ``POST /runtimes/start``.
 Run with:
     docker compose exec backend python -m scripts.seed_agents
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -25,7 +26,6 @@ from app.db.models.agent import Agent, AgentStatus, AgentType
 from app.db.models.model_provider import ModelProvider, ModelProviderType
 from app.db.models.tenant import Tenant
 from app.db.session import get_session_factory
-
 from scripts._seed_helpers import ACME_TENANT_ID
 
 logger = logging.getLogger("seed_agents")
@@ -265,10 +265,8 @@ async def seed() -> None:
         logger.info("")
         logger.info("✅ Seed complete!")
         logger.info("   - 1 tenant (acme-corp)")
-        logger.info("   - %d providers created (%d total)",
-                    providers_created, len(SEED_PROVIDERS))
-        logger.info("   - %d agents created (%d total)",
-                    agents_created, len(SEED_AGENTS))
+        logger.info("   - %d providers created (%d total)", providers_created, len(SEED_PROVIDERS))
+        logger.info("   - %d agents created (%d total)", agents_created, len(SEED_AGENTS))
 
 
 if __name__ == "__main__":

@@ -19,7 +19,6 @@ the UI shows the empty state and a toast).
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID
 
 from app.core.logging import get_logger
 from app.integrations.litellm.litellm_base_client import LiteLLMBaseClient
@@ -118,12 +117,7 @@ class MCPServerRegistry:
         for raw in rows:
             if not isinstance(raw, dict):
                 continue
-            sid = (
-                raw.get("server_id")
-                or raw.get("id")
-                or raw.get("server_name")
-                or raw.get("name")
-            )
+            sid = raw.get("server_id") or raw.get("id") or raw.get("server_name") or raw.get("name")
             if not sid:
                 continue
             normalized.append(

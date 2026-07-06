@@ -12,13 +12,12 @@ audience / issuer check). Same pattern as ``test_agents_api.py``.
 Run with:
     docker compose exec backend python -m scripts.test_architecture_api
 """
+
 from __future__ import annotations
 
 import asyncio
-import json
 import sys
 import time
-import uuid
 from typing import Any
 
 import httpx
@@ -92,7 +91,11 @@ async def main() -> int:
 
         # 1) GET /stories/stories
         ok, _, body = await expect_json(
-            client, "GET", "/stories/stories", headers, 200,
+            client,
+            "GET",
+            "/stories/stories",
+            headers,
+            200,
             label="GET  /stories/stories",
         )
         runner.record(ok and isinstance(body, list) and len(body) >= 20)
@@ -100,26 +103,40 @@ async def main() -> int:
         first_id: str | None = None
         if isinstance(body, list) and body:
             first_id = body[0].get("id")
-            print(f"      (returned {len(body)} stories; first id={first_id[:8] if first_id else 'n/a'}...)")
+            print(
+                f"      (returned {len(body)} stories; first id={first_id[:8] if first_id else 'n/a'}...)"
+            )
 
         if first_id:
             # 2) GET /stories/stories/{id}
             ok, _, _ = await expect_json(
-                client, "GET", f"/stories/stories/{first_id}", headers, 200,
+                client,
+                "GET",
+                f"/stories/stories/{first_id}",
+                headers,
+                200,
                 label=f"GET  /stories/stories/{first_id[:8]}...",
             )
             runner.record(ok)
 
             # 3) GET /stories/stories/{id}/linked
             ok, _, _ = await expect_json(
-                client, "GET", f"/stories/stories/{first_id}/linked", headers, 200,
+                client,
+                "GET",
+                f"/stories/stories/{first_id}/linked",
+                headers,
+                200,
                 label=f"GET  /stories/stories/{first_id[:8]}.../linked",
             )
             runner.record(ok)
 
             # 4) PATCH /stories/stories/{id} (priority change)
             ok, _, _ = await expect_json(
-                client, "PATCH", f"/stories/stories/{first_id}", headers, 200,
+                client,
+                "PATCH",
+                f"/stories/stories/{first_id}",
+                headers,
+                200,
                 label=f"PATCH /stories/stories/{first_id[:8]}... (priority)",
                 json={"priority": "P0"},
             )
@@ -134,7 +151,11 @@ async def main() -> int:
             "project_id": PROJECT_ID,
         }
         ok, _, created = await expect_json(
-            client, "POST", "/stories/stories", headers, 201,
+            client,
+            "POST",
+            "/stories/stories",
+            headers,
+            201,
             label="POST /stories/stories",
             json=new_story_payload,
         )
@@ -144,7 +165,11 @@ async def main() -> int:
         # 6) DELETE /stories/stories/{id}
         if new_story_id:
             ok, status, _ = await expect_json(
-                client, "DELETE", f"/stories/stories/{new_story_id}", headers, 204,
+                client,
+                "DELETE",
+                f"/stories/stories/{new_story_id}",
+                headers,
+                204,
                 label=f"DELETE /stories/stories/{new_story_id[:8]}...",
             )
             runner.record(ok)
@@ -154,7 +179,11 @@ async def main() -> int:
         # 7) PATCH /stories/stories/bulk
         if first_id:
             ok, _, _ = await expect_json(
-                client, "PATCH", "/stories/stories/bulk", headers, 200,
+                client,
+                "PATCH",
+                "/stories/stories/bulk",
+                headers,
+                200,
                 label="PATCH /stories/stories/bulk",
                 json={"updates": [{"id": first_id, "priority": "P1"}]},
             )
@@ -171,7 +200,11 @@ async def main() -> int:
 
         # 8) GET /architecture/adrs
         ok, _, body = await expect_json(
-            client, "GET", "/architecture/adrs", headers, 200,
+            client,
+            "GET",
+            "/architecture/adrs",
+            headers,
+            200,
             label="GET  /architecture/adrs",
         )
         items = (body or {}).get("items", []) if isinstance(body, dict) else []
@@ -184,7 +217,11 @@ async def main() -> int:
         # 9) GET /architecture/adrs/{id}
         if first_adr_id:
             ok, _, _ = await expect_json(
-                client, "GET", f"/architecture/adrs/{first_adr_id}", headers, 200,
+                client,
+                "GET",
+                f"/architecture/adrs/{first_adr_id}",
+                headers,
+                200,
                 label=f"GET  /architecture/adrs/{first_adr_id[:8]}...",
             )
             runner.record(ok)
@@ -193,7 +230,11 @@ async def main() -> int:
 
         # 10) GET /architecture/contracts
         ok, _, body = await expect_json(
-            client, "GET", "/architecture/contracts", headers, 200,
+            client,
+            "GET",
+            "/architecture/contracts",
+            headers,
+            200,
             label="GET  /architecture/contracts",
         )
         contract_items = (body or {}).get("items", []) if isinstance(body, dict) else []
@@ -204,8 +245,11 @@ async def main() -> int:
         # 11) POST /architecture/contracts/{id}/validate
         if first_contract_id:
             ok, _, _ = await expect_json(
-                client, "POST", f"/architecture/contracts/{first_contract_id}/validate",
-                headers, 200,
+                client,
+                "POST",
+                f"/architecture/contracts/{first_contract_id}/validate",
+                headers,
+                200,
                 label=f"POST /architecture/contracts/{first_contract_id[:8]}.../validate",
                 json={},
             )
@@ -215,7 +259,11 @@ async def main() -> int:
 
         # 12) GET /architecture/risk-registers
         ok, _, _ = await expect_json(
-            client, "GET", "/architecture/risk-registers", headers, 200,
+            client,
+            "GET",
+            "/architecture/risk-registers",
+            headers,
+            200,
             label="GET  /architecture/risk-registers",
         )
         runner.record(ok)
@@ -226,23 +274,33 @@ async def main() -> int:
         # known seeded id.
         risk_reg_id = "f0000020-0000-4000-8000-00000000r001"
         ok, _, _ = await expect_json(
-            client, "GET",
+            client,
+            "GET",
             f"/architecture/risk-registers/{risk_reg_id}/top",
-            headers, 200,
+            headers,
+            200,
             label=f"GET  /architecture/risk-registers/{risk_reg_id[:8]}.../top",
         )
         runner.record(ok)
 
         # 14) GET /architecture/task-breakdowns
         ok, _, _ = await expect_json(
-            client, "GET", "/architecture/task-breakdowns", headers, 200,
+            client,
+            "GET",
+            "/architecture/task-breakdowns",
+            headers,
+            200,
             label="GET  /architecture/task-breakdowns",
         )
         runner.record(ok)
 
         # 15) GET /architecture/approvals
         ok, _, _ = await expect_json(
-            client, "GET", "/architecture/approvals", headers, 200,
+            client,
+            "GET",
+            "/architecture/approvals",
+            headers,
+            200,
             label="GET  /architecture/approvals",
         )
         runner.record(ok)
@@ -250,9 +308,11 @@ async def main() -> int:
         # 16) GET /architecture/standards/attestations
         # The standards route requires project_id; include it.
         ok, _, _ = await expect_json(
-            client, "GET",
+            client,
+            "GET",
             f"/architecture/standards/attestations?project_id={PROJECT_ID}",
-            headers, 200,
+            headers,
+            200,
             label="GET  /architecture/standards/attestations",
         )
         runner.record(ok)
@@ -261,27 +321,33 @@ async def main() -> int:
         # Requires artifact_type + artifact_id query params.
         adr_query_id = first_adr_id or "f0000001-0000-4000-8000-00000000ad01"
         ok, _, _ = await expect_json(
-            client, "GET",
+            client,
+            "GET",
             f"/architecture/versions?artifact_type=adr&artifact_id={adr_query_id}",
-            headers, 200,
+            headers,
+            200,
             label="GET  /architecture/versions (empty list OK)",
         )
         runner.record(ok)
 
         # 18) GET /architecture/traceability (requires project_id)
         ok, _, _ = await expect_json(
-            client, "GET",
+            client,
+            "GET",
             f"/architecture/traceability?project_id={PROJECT_ID}",
-            headers, 200,
+            headers,
+            200,
             label="GET  /architecture/traceability",
         )
         runner.record(ok)
 
         # 19) GET /architecture/orphans (requires project_id)
         ok, _, _ = await expect_json(
-            client, "GET",
+            client,
+            "GET",
             f"/architecture/orphans?project_id={PROJECT_ID}",
-            headers, 200,
+            headers,
+            200,
             label="GET  /architecture/orphans",
         )
         runner.record(ok)

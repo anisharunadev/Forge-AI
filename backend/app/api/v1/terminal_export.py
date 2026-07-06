@@ -3,21 +3,20 @@
 from __future__ import annotations
 
 import base64
-import os
-from datetime import datetime, timezone
-from typing import Annotated, Any, Literal
+from datetime import UTC, datetime
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import Response
 from pydantic import BaseModel
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.services.terminal.exporter import ExportFormat, session_exporter
 from app.terminal.session_manager import session_manager
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/terminal", tags=["terminal-export"])
 
@@ -49,7 +48,9 @@ def _coerce_format(value: str | None) -> ExportFormat:
     return value  # type: ignore[return-value]
 
 
-async def _check_session(session_id: str, principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)]) -> None:
+async def _check_session(
+    session_id: str, principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)]
+) -> None:
     session = await session_manager.get_session(session_id)
     if session is None or session.tenant_id != principal.tenant_id:
         raise HTTPException(
@@ -81,9 +82,9 @@ async def export_session(
             "X-Audit-Chain-Length": str(len(rendered.audit_hash_chain)),
         },
     )
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post(
     "/sessions/{session_id}/export/upload",
     response_model=UploadResponse,
@@ -116,7 +117,7 @@ async def upload_export(
         ok=True,
         url=url,
         format=fmt,
-        uploaded_at=datetime.now(timezone.utc).isoformat(),
+        uploaded_at=datetime.now(UTC).isoformat(),
     )
 
 
@@ -128,7 +129,7 @@ async def upload_export(
 async def export_history(
     session_id: str,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("terminal:read")),
 ) -> list[ExportHistoryItem]:
     """List prior exports for a session."""
     await _check_session(session_id, principal)

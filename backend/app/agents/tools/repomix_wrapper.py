@@ -12,15 +12,13 @@ deterministic file-listing stub so tests and CI environments without
 from __future__ import annotations
 
 import asyncio
-import os
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, ClassVar, Literal
+from typing import Any, Literal
 
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, ConfigDict, Field
-
 
 OutputFormat = Literal["xml", "json", "markdown", "plain"]
 
@@ -107,10 +105,8 @@ class RepomixTool:
             stderr=asyncio.subprocess.PIPE,
         )
         try:
-            stdout_b, stderr_b = await asyncio.wait_for(
-                proc.communicate(), timeout=self._timeout
-            )
-        except asyncio.TimeoutError:
+            stdout_b, stderr_b = await asyncio.wait_for(proc.communicate(), timeout=self._timeout)
+        except TimeoutError:
             proc.kill()
             await proc.wait()
             return _stub_pack(repo_path, output_format, reason="timeout").output
@@ -132,9 +128,7 @@ class RepomixTool:
         """Synchronous wrapper used by LangChain ``_run`` and tests."""
 
         return asyncio.run(
-            self.pack_repo_async(
-                repo_path, output_format, include_patterns=include_patterns
-            )
+            self.pack_repo_async(repo_path, output_format, include_patterns=include_patterns)
         )
 
     # ---- Stub fallback -------------------------------------------------

@@ -5,14 +5,15 @@ cost rollup table populated by the ``cost_aggregate`` scheduler
 job. Future surfaces (SLO status, sampling decisions) plug into
 the same router.
 """
+
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
-from app.api.deps import DbSession, get_current_principal, require_permission
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.db.session import get_session_factory
@@ -33,7 +34,7 @@ async def get_cost(
     ``hours`` caps the lookback window at 168 (1 week). The default
     is 24h which matches the admin dashboard's primary range.
     """
-    since = datetime.now(timezone.utc) - timedelta(hours=hours)
+    since = datetime.now(UTC) - timedelta(hours=hours)
     rows = await query_cost(get_session_factory(), str(principal.tenant_id), since)
     return [
         {

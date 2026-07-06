@@ -13,14 +13,13 @@ in the full JWT pipeline.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
 
 from app.api.v1 import scheduler as scheduler_module
-
 
 # ---------------------------------------------------------------------------
 # FastAPI client fixture
@@ -59,8 +58,18 @@ def _principal(*, roles=None, permissions=None):
 
 def test_list_jobs_returns_two_jobs(monkeypatch, fastapi_client):
     fake_jobs = [
-        SimpleNamespace(id="daily_ideation_ingest", name="daily_ideation_ingest", next_run_time=datetime(2026, 6, 22, 6, 0, tzinfo=timezone.utc), trigger="cron[hour='6']"),
-        SimpleNamespace(id="memory_consolidate", name="memory_consolidate", next_run_time=None, trigger="cron[hour='2']"),
+        SimpleNamespace(
+            id="daily_ideation_ingest",
+            name="daily_ideation_ingest",
+            next_run_time=datetime(2026, 6, 22, 6, 0, tzinfo=UTC),
+            trigger="cron[hour='6']",
+        ),
+        SimpleNamespace(
+            id="memory_consolidate",
+            name="memory_consolidate",
+            next_run_time=None,
+            trigger="cron[hour='2']",
+        ),
     ]
     fake_inner = MagicMock()
     fake_inner.get_jobs.return_value = fake_jobs
@@ -73,9 +82,7 @@ def test_list_jobs_returns_two_jobs(monkeypatch, fastapi_client):
 
     monkeypatch.setattr(svc_mod, "scheduler", fake_sched)
 
-    principal = _principal(
-        permissions=["ideation:read"], roles=["tenant:admin"]
-    )
+    principal = _principal(permissions=["ideation:read"], roles=["tenant:admin"])
 
     async def _override():
         return principal
@@ -122,9 +129,7 @@ def test_run_job_invokes_modify_job(monkeypatch, fastapi_client):
 
     fastapi_client.app.dependency_overrides[deps_mod.get_current_principal] = _override
 
-    resp = fastapi_client.post(
-        "/api/v1/scheduler/jobs/daily_ideation_ingest/run"
-    )
+    resp = fastapi_client.post("/api/v1/scheduler/jobs/daily_ideation_ingest/run")
     assert resp.status_code == 200, resp.text
     body = resp.json()
     assert body["job_id"] == "daily_ideation_ingest"
@@ -155,9 +160,7 @@ def test_run_job_403_when_pm_lacks_enhance(monkeypatch):
 
     from app.api.deps import require_permission
 
-    pm_no_perm = _principal(
-        roles=["product_manager"], permissions=["ideation:read"]
-    )
+    pm_no_perm = _principal(roles=["product_manager"], permissions=["ideation:read"])
     dep = require_permission("ideation:enhance")
 
     async def _attempt():

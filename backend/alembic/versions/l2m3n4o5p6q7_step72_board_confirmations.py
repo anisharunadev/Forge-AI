@@ -8,19 +8,20 @@ Revision ID: l2m3n4o5p6q7
 Revises: k1l2m3n4o5p6
 Create Date: 2026-07-01 12:00:00.000000
 """
+
 from __future__ import annotations
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "l2m3n4o5p6q7"
-down_revision: Union[str, None] = "k1l2m3n4o5p6"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "k1l2m3n4o5p6"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -47,9 +48,7 @@ def upgrade() -> None:
         sa.Column("prompt", sa.Text(), nullable=True),
         sa.Column(
             "payload",
-            sa.JSON().with_variant(
-                sa.dialects.postgresql.JSONB(), "postgresql"
-            ),
+            sa.JSON().with_variant(sa.dialects.postgresql.JSONB(), "postgresql"),
             nullable=False,
             server_default="{}",
         ),

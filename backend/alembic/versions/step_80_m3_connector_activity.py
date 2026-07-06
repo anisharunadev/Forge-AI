@@ -36,24 +36,23 @@ Create Date: 2026-07-05 09:00:00.000000
 
 from __future__ import annotations
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "step_80_m3_connector_activity"
-down_revision: Union[str, None] = "step_79_m2_cost_ledger_columns"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "step_79_m2_cost_ledger_columns"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
     # 1. extend connector_status enum with "disconnected"
-    op.execute(
-        "ALTER TYPE connector_status ADD VALUE IF NOT EXISTS 'disconnected';"
-    )
+    op.execute("ALTER TYPE connector_status ADD VALUE IF NOT EXISTS 'disconnected';")
 
     # 2. connectors.disconnected_at column
     op.add_column(
@@ -159,10 +158,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute(
-        "DROP POLICY IF EXISTS connector_activity_tenant_isolation "
-        "ON connector_activity;"
-    )
+    op.execute("DROP POLICY IF EXISTS connector_activity_tenant_isolation ON connector_activity;")
     op.drop_index(
         "ix_connector_activity_connector_started",
         table_name="connector_activity",

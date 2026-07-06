@@ -19,11 +19,12 @@ import asyncio
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Deque
+from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
 
 from app.core.logging import get_logger
+from app.services.forge_commands import UnknownForgeCommand, get_forge_command
 from app.terminal.audit import terminal_audit
 from app.terminal.session_manager import (
     AgentType,
@@ -31,7 +32,6 @@ from app.terminal.session_manager import (
     TerminalSession,
     session_manager,
 )
-from app.services.forge_commands import UnknownForgeCommand, get_forge_command
 
 logger = get_logger(__name__)
 
@@ -39,6 +39,7 @@ logger = get_logger(__name__)
 # ---------------------------------------------------------------------------
 # Output buffer model
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class OutputChunk:
@@ -60,7 +61,7 @@ class OutputChunk:
 class _SessionBuffer:
     """Per-session ring buffer of output chunks."""
 
-    chunks: Deque[OutputChunk] = field(default_factory=deque)
+    chunks: deque[OutputChunk] = field(default_factory=deque)
     max_bytes: int = 16 * 1024 * 1024  # 16 MiB
     max_chunks: int = 4096
     _bytes: int = 0
@@ -75,9 +76,7 @@ class _SessionBuffer:
     def append(self, chunk: OutputChunk) -> None:
         self.chunks.append(chunk)
         self._bytes += len(chunk.data)
-        while (
-            self._bytes > self.max_bytes or len(self.chunks) > self.max_chunks
-        ) and self.chunks:
+        while (self._bytes > self.max_bytes or len(self.chunks) > self.max_chunks) and self.chunks:
             evicted = self.chunks.popleft()
             self._bytes -= len(evicted.data)
 
@@ -88,6 +87,7 @@ class _SessionBuffer:
 # ---------------------------------------------------------------------------
 # Launcher
 # ---------------------------------------------------------------------------
+
 
 class CommandIntegration:
     """Bridge the Command Center to the Terminal Center.
@@ -173,8 +173,8 @@ class CommandIntegration:
             buf.append(
                 OutputChunk(
                     cursor=buf.next_cursor(),
-                    data=f"# forge: {forge_cmd}\n# {description}\n".encode("utf-8"),
-                    occurred_at=datetime.now(timezone.utc),
+                    data=f"# forge: {forge_cmd}\n# {description}\n".encode(),
+                    occurred_at=datetime.now(UTC),
                 )
             )
         logger.info(
@@ -207,8 +207,8 @@ class CommandIntegration:
         buf.append(
             OutputChunk(
                 cursor=buf.next_cursor(),
-                data=f"$ {command}\n".encode("utf-8"),
-                occurred_at=datetime.now(timezone.utc),
+                data=f"$ {command}\n".encode(),
+                occurred_at=datetime.now(UTC),
             )
         )
         await terminal_audit.record_command(
@@ -237,7 +237,7 @@ class CommandIntegration:
         chunk = OutputChunk(
             cursor=buf.next_cursor(),
             data=data,
-            occurred_at=datetime.now(timezone.utc),
+            occurred_at=datetime.now(UTC),
         )
         buf.append(chunk)
         return chunk
@@ -246,6 +246,7 @@ class CommandIntegration:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _default_agent_for(forge_cmd: str, category: str) -> AgentType:
     """Pick the agent CLI for a forge command.

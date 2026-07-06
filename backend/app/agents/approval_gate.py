@@ -97,6 +97,7 @@ def _resolve_workflow_budget_service() -> Any:
 
     return workflow_budget_service
 
+
 # ``workflow_budget_service`` is imported lazily inside the gate's
 # ``__init__`` to avoid a circular import — Track A retrofit (T-A3)
 # has ``app.services.workflow_budget`` depending on
@@ -255,9 +256,9 @@ def _coerce_sdlc_state(args: tuple[Any, ...]) -> SDLCState | None:
         cand_cls = type(candidate)
         if cand_cls is SDLCState:
             return candidate
-        if cand_cls.__name__ == SDLCStateName and getattr(
-            cand_cls, "__module__", ""
-        ).endswith(SDLCStateModule.rsplit(".", 1)[-1]):
+        if cand_cls.__name__ == SDLCStateName and getattr(cand_cls, "__module__", "").endswith(
+            SDLCStateModule.rsplit(".", 1)[-1]
+        ):
             return candidate
         # Same class object after re-export — final fallback.
         try:
@@ -366,8 +367,7 @@ def _enforce(state: SDLCState, allowed_phases: tuple[SDLCPhase, ...]) -> None:
     pending = state.pending_approval
     if pending is None:
         raise ApprovalRequiredError(
-            f"no pending_approval on state; expected one of "
-            f"{[p.value for p in allowed_phases]}",
+            f"no pending_approval on state; expected one of {[p.value for p in allowed_phases]}",
             phase=allowed_phases[0],
             run_id=state.run_id,
             tenant_id=state.tenant_id,
@@ -383,8 +383,7 @@ def _enforce(state: SDLCState, allowed_phases: tuple[SDLCPhase, ...]) -> None:
         except ValueError:
             phase_enum = allowed_phases[0]
         raise ApprovalRequiredError(
-            f"pending_approval.type={pending.type!r} is not in "
-            f"{[p.value for p in allowed_phases]}",
+            f"pending_approval.type={pending.type!r} is not in {[p.value for p in allowed_phases]}",
             phase=phase_enum,
             run_id=state.run_id,
             tenant_id=state.tenant_id,
@@ -570,12 +569,15 @@ class ApprovalGateNode:
         # frozen source.  Pydantic v2's frozen models still allow
         # ``model_copy`` with ``update=`` and ``deep=True`` so the
         # call below remains legal.
-        new_metadata = {**state.metadata, self._decision_key(pending): {
-            "granted": response.granted,
-            "decided_by": str(response.decided_by),
-            "reason": response.reason,
-            "decided_at": response.decided_at.isoformat(),
-        }}
+        new_metadata = {
+            **state.metadata,
+            self._decision_key(pending): {
+                "granted": response.granted,
+                "decided_by": str(response.decided_by),
+                "reason": response.reason,
+                "decided_at": response.decided_at.isoformat(),
+            },
+        }
         # Stamp the frozen ApprovalEnvelope alongside the decision so
         # audit + timeout scan have a typed artifact to consume.
         envelope = ApprovalEnvelope.from_response(

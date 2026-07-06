@@ -296,10 +296,7 @@ async def test_plan_emits_audit_row(
     assert kwargs["target_type"] == "migration_plan"
     assert kwargs["target_id"] == str(plan.id)
     assert kwargs["payload"]["forge_cmd"] == ALLOWED_REFACTOR_FORGE_CMD
-    assert (
-        kwargs["payload"]["digest_source_files"]
-        == len(digest.source_files)
-    )
+    assert kwargs["payload"]["digest_source_files"] == len(digest.source_files)
 
 
 # ---------------------------------------------------------------------------
@@ -377,15 +374,9 @@ def test_unified_diff_extraction_handles_multiple_files():
 
 
 def test_classify_chunk_uses_severity_ladder():
-    additive = _classify_chunk(
-        DiffChunk(file_path="a.py", added_lines=3, removed_lines=0)
-    )
-    breaking = _classify_chunk(
-        DiffChunk(file_path="a.py", added_lines=10, removed_lines=10)
-    )
-    cosmetic = _classify_chunk(
-        DiffChunk(file_path="a.py", added_lines=1, removed_lines=1)
-    )
+    additive = _classify_chunk(DiffChunk(file_path="a.py", added_lines=3, removed_lines=0))
+    breaking = _classify_chunk(DiffChunk(file_path="a.py", added_lines=10, removed_lines=10))
+    cosmetic = _classify_chunk(DiffChunk(file_path="a.py", added_lines=1, removed_lines=1))
     assert additive is ChangeClassification.ADDITIVE
     assert breaking is ChangeClassification.BREAKING
     # 1 vs 1 is below the breaking threshold; cosmetic default applies.
@@ -477,8 +468,5 @@ def test_decorator_wires_approval_required_phases_attribute():
 
     raw = getattr(RefactorAgent.plan, "__approval_required_phases__", None)
     assert raw is not None
-    resolved = tuple(
-        p if isinstance(p, SDLCPhase) else SDLCPhase(str(p))
-        for p in raw
-    )
+    resolved = tuple(p if isinstance(p, SDLCPhase) else SDLCPhase(str(p)) for p in raw)
     assert resolved == (SDLCPhase.IMPLEMENTATION,)

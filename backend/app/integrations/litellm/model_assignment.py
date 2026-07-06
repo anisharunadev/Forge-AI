@@ -10,8 +10,7 @@ in-process cache; writes upsert on ``(tenant_id, tier)``.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -80,33 +79,32 @@ class ModelAssignmentResolver:
         normalized_tier = tier.strip().lower()
 
         factory = get_session_factory()
-        async with factory() as session:
-            async with tenant_context(session, tid, pid):
-                row = await session.scalar(
-                    select(LiteLLMModelAssignment).where(
-                        LiteLLMModelAssignment.tenant_id == tid,
-                        LiteLLMModelAssignment.tier == normalized_tier,
-                    )
+        async with factory() as session, tenant_context(session, tid, pid):
+            row = await session.scalar(
+                select(LiteLLMModelAssignment).where(
+                    LiteLLMModelAssignment.tenant_id == tid,
+                    LiteLLMModelAssignment.tier == normalized_tier,
                 )
-                if row is None:
-                    row = LiteLLMModelAssignment(
-                        tenant_id=tid,
-                        project_id=pid,
-                        tier=normalized_tier,
-                        model_name=model_name,
-                        max_input_tokens=max_input_tokens,
-                        max_output_tokens=max_output_tokens,
-                        enabled=True,
-                        metadata_={},
-                    )
-                    session.add(row)
-                else:
-                    row.project_id = pid
-                    row.model_name = model_name
-                    row.max_input_tokens = max_input_tokens
-                    row.max_output_tokens = max_output_tokens
-                    row.enabled = True
-                await session.commit()
+            )
+            if row is None:
+                row = LiteLLMModelAssignment(
+                    tenant_id=tid,
+                    project_id=pid,
+                    tier=normalized_tier,
+                    model_name=model_name,
+                    max_input_tokens=max_input_tokens,
+                    max_output_tokens=max_output_tokens,
+                    enabled=True,
+                    metadata_={},
+                )
+                session.add(row)
+            else:
+                row.project_id = pid
+                row.model_name = model_name
+                row.max_input_tokens = max_input_tokens
+                row.max_output_tokens = max_output_tokens
+                row.enabled = True
+            await session.commit()
 
         cache_key = f"{tid}:{normalized_tier}"
         self._cache_put(cache_key, model_name)
@@ -121,16 +119,13 @@ class ModelAssignmentResolver:
         """Return all assignments for a tenant (admin UI)."""
         tid = str(tenant_id)
         factory = get_session_factory()
-        async with factory() as session:
-            async with tenant_context(session, tid):
-                rows = (
-                    await session.scalars(
-                        select(LiteLLMModelAssignment).where(
-                            LiteLLMModelAssignment.tenant_id == tid
-                        )
-                    )
-                ).all()
-                return list(rows)
+        async with factory() as session, tenant_context(session, tid):
+            rows = (
+                await session.scalars(
+                    select(LiteLLMModelAssignment).where(LiteLLMModelAssignment.tenant_id == tid)
+                )
+            ).all()
+            return list(rows)
 
     # ------------------------------------------------------------------
     # Cache helpers
@@ -140,16 +135,16 @@ class ModelAssignmentResolver:
         if entry is None:
             return None
         value, expires_at = entry
-        if expires_at <= datetime.now(timezone.utc):
+        if expires_at <= datetime.now(UTC):
             self._cache.pop(key, None)
             return None
         return value
 
     def _cache_put(self, key: str, value: str) -> None:
-        expires_at = datetime.now(timezone.utc).timestamp() + self._cache_ttl_seconds
+        expires_at = datetime.now(UTC).timestamp() + self._cache_ttl_seconds
         from datetime import datetime as _dt
 
-        self._cache[key] = (value, _dt.fromtimestamp(expires_at, tz=timezone.utc))
+        self._cache[key] = (value, _dt.fromtimestamp(expires_at, tz=UTC))
 
     # ------------------------------------------------------------------
     # Internals
@@ -160,14 +155,13 @@ class ModelAssignmentResolver:
         tier: str,
     ) -> LiteLLMModelAssignment | None:
         factory = get_session_factory()
-        async with factory() as session:
-            async with tenant_context(session, tenant_id):
-                return await session.scalar(
-                    select(LiteLLMModelAssignment).where(
-                        LiteLLMModelAssignment.tenant_id == tenant_id,
-                        LiteLLMModelAssignment.tier == tier,
-                    )
+        async with factory() as session, tenant_context(session, tenant_id):
+            return await session.scalar(
+                select(LiteLLMModelAssignment).where(
+                    LiteLLMModelAssignment.tenant_id == tenant_id,
+                    LiteLLMModelAssignment.tier == tier,
                 )
+            )
 
 
 # Module-level singleton (mirrors `audit_service.py:49`).

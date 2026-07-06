@@ -23,17 +23,17 @@ from uuid import UUID
 
 from sqlalchemy import (
     DateTime,
-    Enum as SAEnum,
     ForeignKey,
     Index,
     Integer,
-    String,
     Text,
+)
+from sqlalchemy import (
+    Enum as SAEnum,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
-
+from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 # String values used for the SAEnum columns — kept in sync with the
 # Literal types in ``app.schemas.connector_activity``.
@@ -83,12 +83,8 @@ class ConnectorActivity(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         nullable=False,
         default="in_progress",
     )
-    started_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    finished_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     records_affected: Mapped[int | None] = mapped_column(Integer, nullable=True)
     actor_id: Mapped[UUID | None] = mapped_column(GUID(), nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -99,9 +95,7 @@ class ConnectorActivity(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __table_args__ = (
         Index("ix_connector_activity_tenant_project", "tenant_id", "project_id"),
         Index("ix_connector_activity_tenant_started", "tenant_id", "started_at"),
-        Index(
-            "ix_connector_activity_connector_started", "connector_id", "started_at"
-        ),
+        Index("ix_connector_activity_connector_started", "connector_id", "started_at"),
     )
 
 

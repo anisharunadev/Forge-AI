@@ -1,7 +1,7 @@
 """Phase 5 -- cost aggregator unit tests."""
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
@@ -37,9 +37,7 @@ async def test_aggregate_once_groups_by_tenant(monkeypatch):
 @pytest.mark.asyncio
 async def test_aggregate_once_handles_no_logs():
     """An empty LiteLLM response short-circuits without touching the DB."""
-    fake_client = SimpleNamespace(
-        list_spend_logs=AsyncMock(return_value=[])
-    )
+    fake_client = SimpleNamespace(list_spend_logs=AsyncMock(return_value=[]))
 
     def factory():
         raise AssertionError("factory must not be called when no logs")

@@ -8,6 +8,7 @@ goes through here. Thin per-entity services (``org_service``,
 
 from __future__ import annotations
 
+from datetime import UTC
 from typing import Any
 from uuid import UUID
 
@@ -35,9 +36,9 @@ logger = get_logger(__name__)
 
 def _24h_ago():
     """Return UTC now - 24h as a naive datetime for SQLA comparisons."""
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
-    return datetime.now(timezone.utc) - timedelta(hours=24)
+    return datetime.now(UTC) - timedelta(hours=24)
 
 
 class RBACv2Service:
@@ -509,7 +510,9 @@ class RBACv2Service:
     ) -> list[Project]:
         stmt = select(Project).where(Project.tenant_id == tenant_id)
         if team_id is not None:
-            stmt = stmt.where(Project.id == team_id)  # ponytail: team filter via join if/when ProjectTeam junction exists; for now filter by id-or-team_id through ProjectMember — kept simple
+            stmt = stmt.where(
+                Project.id == team_id
+            )  # ponytail: team filter via join if/when ProjectTeam junction exists; for now filter by id-or-team_id through ProjectMember — kept simple
         stmt = stmt.order_by(Project.created_at.desc())
         result = await db.execute(stmt)
         return list(result.scalars().all())
@@ -587,10 +590,7 @@ class RBACv2Service:
             TeamMember.team_id == team_id,
             TeamMember.user_id.in_([UUID(str(m["user_id"])) for m in members]),
         )
-        existing = {
-            tm.user_id: tm
-            for tm in (await db.execute(existing_q)).scalars().all()
-        }
+        existing = {tm.user_id: tm for tm in (await db.execute(existing_q)).scalars().all()}
 
         added = 0
         for m in members:
@@ -700,8 +700,9 @@ class RBACv2Service:
         entity_id: UUID,
     ) -> DailyRollup:
         try:
+            from sqlalchemy import func
+
             from app.db.models.litellm_call_record import LiteLLMCallRecord
-            from sqlalchemy import func, or_
 
             base_filter = [
                 LiteLLMCallRecord.tenant_id == tenant_id,
@@ -714,9 +715,7 @@ class RBACv2Service:
                 # containment probe. Cheap on small volumes; promote to
                 # a real column once call records table is hot.
                 base_filter.append(
-                    LiteLLMCallRecord.metadata_[
-                        entity_type + "_id"
-                    ].astext == str(entity_id)
+                    LiteLLMCallRecord.metadata_[entity_type + "_id"].astext == str(entity_id)
                 )
 
             error_states = ("failed", "budget_blocked", "upstream_error", "litellm_down")
@@ -735,13 +734,15 @@ class RBACv2Service:
                             0,
                         ).label("errs"),
                         func.coalesce(
-                            func.percentile_cont(0.5)
-                            .within_group(LiteLLMCallRecord.latency_ms.asc()),
+                            func.percentile_cont(0.5).within_group(
+                                LiteLLMCallRecord.latency_ms.asc()
+                            ),
                             0.0,
                         ).label("p50"),
                         func.coalesce(
-                            func.percentile_cont(0.95)
-                            .within_group(LiteLLMCallRecord.latency_ms.asc()),
+                            func.percentile_cont(0.95).within_group(
+                                LiteLLMCallRecord.latency_ms.asc()
+                            ),
                             0.0,
                         ).label("p95"),
                     ).where(*base_filter)
@@ -824,9 +825,7 @@ class RBACv2Service:
             await db.refresh(team)
 
         # 4. User (mirror)
-        result = await db.execute(
-            select(User).where(User.keycloak_sub == keycloak_sub)
-        )
+        result = await db.execute(select(User).where(User.keycloak_sub == keycloak_sub))
         user = result.scalar_one_or_none()
         if user is None:
             user = User(

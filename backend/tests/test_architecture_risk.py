@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import uuid
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 import pytest_asyncio
@@ -15,7 +14,6 @@ import pytest_asyncio
 # this import the architecture_* tables won't exist in the in-memory
 # SQLite engine used by tests.
 from app.db.models import architecture as _architecture_models  # noqa: F401
-
 
 # ---------------------------------------------------------------------------
 # Shared fixtures (mirrors test_architecture_core.py)
@@ -29,7 +27,7 @@ class _FakeLLM:
         self._payload = payload
         self.calls: list[list[dict[str, Any]]] = []
 
-    async def __aenter__(self) -> "_FakeLLM":
+    async def __aenter__(self) -> _FakeLLM:
         return self
 
     async def __aexit__(self, *_exc: Any) -> None:
@@ -88,6 +86,7 @@ def _risk_payload() -> dict[str, Any]:
 @pytest_asyncio.fixture
 async def sqlite_db(sqlite_db):  # type: ignore[no-untyped-def]
     from app.db.models import architecture  # noqa: F401
+
     return sqlite_db
 
 
@@ -111,9 +110,7 @@ async def captured_events(event_bus):  # type: ignore[no-untyped-def]
 
 
 @pytest.mark.asyncio
-async def test_risk_register_generate_from_adr(
-    sqlite_db, event_bus, captured_events
-):
+async def test_risk_register_generate_from_adr(sqlite_db, event_bus, captured_events):
     from app.services.architecture.adr_generator import ADRGenerator
     from app.services.architecture.risk_register import RiskRegisterService
 
@@ -207,9 +204,7 @@ async def test_risk_register_add_risk(sqlite_db, event_bus, captured_events):
         "owner": "procurement",
         "status": "open",
     }
-    updated = await svc.add_risk(
-        register_id=register.id, risk=new_risk, actor_id=uuid.uuid4()
-    )
+    updated = await svc.add_risk(register_id=register.id, risk=new_risk, actor_id=uuid.uuid4())
 
     assert len(updated.risks) == initial_count + 1
     added = updated.risks[-1]
@@ -250,9 +245,7 @@ async def test_risk_register_score_calculation(sqlite_db, event_bus, captured_ev
         await session.commit()
         await session.refresh(breakdown)
 
-    register = await svc.generate_from_breakdown(
-        breakdown_id=breakdown.id, actor_id=uuid.uuid4()
-    )
+    register = await svc.generate_from_breakdown(breakdown_id=breakdown.id, actor_id=uuid.uuid4())
     for r in register.risks:
         assert r["score"] == int(r["likelihood"]) * int(r["impact"])
 
@@ -282,7 +275,13 @@ async def test_risk_register_top_risks_sorted(sqlite_db, event_bus, captured_eve
         "risks": [
             {"id": "R-LOW", "title": "low", "category": "technical", "likelihood": 1, "impact": 1},
             {"id": "R-MED", "title": "med", "category": "security", "likelihood": 3, "impact": 3},
-            {"id": "R-HIGH", "title": "high", "category": "operational", "likelihood": 5, "impact": 5},
+            {
+                "id": "R-HIGH",
+                "title": "high",
+                "category": "operational",
+                "likelihood": 5,
+                "impact": 5,
+            },
             {"id": "R-MID", "title": "mid", "category": "business", "likelihood": 2, "impact": 4},
         ],
     }
@@ -310,9 +309,7 @@ async def test_risk_register_top_risks_sorted(sqlite_db, event_bus, captured_eve
         await session.commit()
         await session.refresh(breakdown)
 
-    register = await svc.generate_from_breakdown(
-        breakdown_id=breakdown.id, actor_id=uuid.uuid4()
-    )
+    register = await svc.generate_from_breakdown(breakdown_id=breakdown.id, actor_id=uuid.uuid4())
     top = await svc.get_top_risks(register.id, top_n=3)
     scores = [int(r["score"]) for r in top]
     assert scores == sorted(scores, reverse=True)

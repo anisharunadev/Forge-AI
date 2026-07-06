@@ -34,9 +34,8 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import math
-import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -46,7 +45,6 @@ from app.core.logging import get_logger
 from app.db.models.artifact import Artifact, ArtifactStatus
 from app.db.models.audit import AuditEvent
 from app.db.session import get_session_factory
-from app.services.artifact_registry import artifact_registry
 from app.services.litellm_client import LiteLLMClient
 from app.services.terminal.command_integration import command_integration
 
@@ -105,6 +103,7 @@ class _CacheEntry:
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _cosine(a: list[float], b: list[float]) -> float:
     """Standard cosine similarity with a 1e-12 floor to avoid 0/0."""
     if not a or not b or len(a) != len(b):
@@ -141,6 +140,7 @@ def _hash_query(text: str) -> str:
 # Service
 # ---------------------------------------------------------------------------
 
+
 class KnowledgeContextService:
     """Pulls and ranks context for a terminal session."""
 
@@ -154,9 +154,7 @@ class KnowledgeContextService:
 
     # -- public surface ---------------------------------------------------
 
-    async def get_context_for_session(
-        self, session_id: str
-    ) -> list[ContextItem]:
+    async def get_context_for_session(self, session_id: str) -> list[ContextItem]:
         """Top-N context items for a session, with cache.
 
         The cache key is the session_id; the value is invalidated
@@ -164,7 +162,7 @@ class KnowledgeContextService:
         """
         async with self._lock:
             entry = self._cache.get(session_id)
-            if entry is not None and entry.expires_at > datetime.now(timezone.utc):
+            if entry is not None and entry.expires_at > datetime.now(UTC):
                 return entry.items
 
         session = await command_integration._buffer_for(session_id)  # type: ignore[attr-defined]
@@ -181,7 +179,7 @@ class KnowledgeContextService:
         async with self._lock:
             self._cache[session_id] = _CacheEntry(
                 items=items,
-                expires_at=datetime.now(timezone.utc) + timedelta(seconds=self.CACHE_TTL_SECONDS),
+                expires_at=datetime.now(UTC) + timedelta(seconds=self.CACHE_TTL_SECONDS),
                 query_hash=_hash_query(query_text),
             )
         return items
@@ -192,9 +190,7 @@ class KnowledgeContextService:
             self._cache.pop(session_id, None)
         return await self.get_context_for_session(session_id)
 
-    async def get_context_item(
-        self, session_id: str, item_id: str
-    ) -> ContextItem | None:
+    async def get_context_item(self, session_id: str, item_id: str) -> ContextItem | None:
         """Find a specific context item (full form) by id."""
         for item in await self.get_context_for_session(session_id):
             if item.id == item_id:
@@ -231,9 +227,7 @@ class KnowledgeContextService:
             # Without a query, surface the most recent items in stable order.
             return candidates[: self.TOP_N]
 
-        query_vec = await _embed(
-            query_text, tenant_id=tenant_id, project_id=project_id
-        )
+        query_vec = await _embed(query_text, tenant_id=tenant_id, project_id=project_id)
         scored: list[ContextItem] = []
         for item in candidates:
             vec = item.extra.get("embedding") if isinstance(item.extra, dict) else None
@@ -259,9 +253,7 @@ class KnowledgeContextService:
 
     # -- candidate gathering ----------------------------------------------
 
-    async def _gather_candidates(
-        self, tenant_id: str, project_id: str
-    ) -> list[ContextItem]:
+    async def _gather_candidates(self, tenant_id: str, project_id: str) -> list[ContextItem]:
         """Combine Artifact rows (ADRs, contracts, risks) + audit-stream
         commits/PRs + any project-intelligence artifacts into one list."""
         items: list[ContextItem] = []
@@ -314,11 +306,7 @@ class KnowledgeContextService:
         for ev in events:
             payload = dict(ev.payload or {})
             kind = ev.target_type
-            title = str(
-                payload.get("title")
-                or payload.get("message")
-                or f"{kind}:{ev.target_id}"
-            )
+            title = str(payload.get("title") or payload.get("message") or f"{kind}:{ev.target_id}")
             items.append(
                 ContextItem(
                     id=f"{kind}:{ev.id}",

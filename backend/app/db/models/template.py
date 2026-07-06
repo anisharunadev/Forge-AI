@@ -8,7 +8,7 @@ from uuid import UUID
 from sqlalchemy import ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class Template(Base, UUIDPrimaryKeyMixin, TimestampMixin):
@@ -31,7 +31,8 @@ class Template(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     variables: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
     version: Mapped[int] = mapped_column(nullable=False, default=1)
 
-    __table_args__ = (        Index("ix_templates_tenant_project", "tenant_id", "project_id"),
+    __table_args__ = (
+        Index("ix_templates_tenant_project", "tenant_id", "project_id"),
         Index("ix_templates_tenant_type", "tenant_id", "type"),
     )
 

@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
@@ -21,16 +20,17 @@ from sqlalchemy import select
 from app.core.logging import get_logger
 from app.db.models.connector import Connector, ConnectorType
 from app.db.models.ideation import (
+    PRD,
     ArchitecturePreview,
     Idea,
-    PRD,
     PushRecord,
     PushStatus,
     PushTarget,
 )
 from app.db.session import get_session_factory
 from app.services.connector_manager import connector_manager
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 
 logger = get_logger(__name__)
 
@@ -433,9 +433,7 @@ class PushToDeliveryService:
             project_id=idea.project_id,
         )
 
-    async def _load_idea(
-        self, idea_id: UUID | str, *, tenant_id: UUID | str
-    ) -> Idea:
+    async def _load_idea(self, idea_id: UUID | str, *, tenant_id: UUID | str) -> Idea:
         factory = get_session_factory()
         async with factory() as session:
             idea = await session.get(Idea, str(idea_id))
@@ -458,9 +456,7 @@ class PushToDeliveryService:
     async def _latest_preview(self, idea_id: UUID | str) -> ArchitecturePreview | None:
         factory = get_session_factory()
         async with factory() as session:
-            stmt = select(ArchitecturePreview).where(
-                ArchitecturePreview.idea_id == str(idea_id)
-            )
+            stmt = select(ArchitecturePreview).where(ArchitecturePreview.idea_id == str(idea_id))
             rows = list((await session.execute(stmt)).scalars().all())
         if not rows:
             return None

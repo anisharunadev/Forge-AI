@@ -14,25 +14,25 @@ Revision ID: f021a8b9c0d1
 Revises: e5f6a7b8c9d0
 Create Date: 2026-06-27 19:50:00.000000
 """
+
 from __future__ import annotations
 
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence, Union
+
+import sqlalchemy as sa
 
 from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.db.base import GUID, JSONB  # noqa: E402
 
-
 # revision identifiers, used by Alembic.
 revision: str = "f021a8b9c0d1"
-down_revision: Union[str, None] = "e5f6a7b8c9d0"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "e5f6a7b8c9d0"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def _enable_rls(table_name: str) -> None:
@@ -50,22 +50,43 @@ def _enable_rls(table_name: str) -> None:
 
 def upgrade() -> None:
     story_status = sa.Enum(
-        "BACKLOG", "TODO", "IN_PROGRESS", "IN_REVIEW", "QA", "DONE", "BLOCKED",
+        "BACKLOG",
+        "TODO",
+        "IN_PROGRESS",
+        "IN_REVIEW",
+        "QA",
+        "DONE",
+        "BLOCKED",
         name="story_status",
     )
     story_priority = sa.Enum("P0", "P1", "P2", "P3", name="story_priority")
     story_estimate = sa.Enum("XS", "S", "M", "L", "XL", name="story_estimate")
     story_source = sa.Enum(
-        "MANUAL", "JIRA", "GITHUB", "LINEAR", "IDEATION", "PRD", "AUTO",
+        "MANUAL",
+        "JIRA",
+        "GITHUB",
+        "LINEAR",
+        "IDEATION",
+        "PRD",
+        "AUTO",
         name="story_source",
     )
     jira_sync = sa.Enum(
-        "SYNCED", "PENDING", "CONFLICT", "FAILED", "DISCONNECTED",
+        "SYNCED",
+        "PENDING",
+        "CONFLICT",
+        "FAILED",
+        "DISCONNECTED",
         name="story_jira_sync_status",
     )
     sprint_status = sa.Enum("PLANNING", "ACTIVE", "COMPLETED", name="sprint_status")
     epic_status = sa.Enum(
-        "PLANNING", "IN_PROGRESS", "ON_TRACK", "AT_RISK", "BLOCKED", "COMPLETED",
+        "PLANNING",
+        "IN_PROGRESS",
+        "ON_TRACK",
+        "AT_RISK",
+        "BLOCKED",
+        "COMPLETED",
         name="epic_status",
     )
 
@@ -90,7 +111,9 @@ def upgrade() -> None:
         sa.Column("jira_url", sa.Text(), nullable=True),
         sa.Column("jira_synced_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column(
-            "jira_sync_status", jira_sync, nullable=False,
+            "jira_sync_status",
+            jira_sync,
+            nullable=False,
             server_default="DISCONNECTED",
         ),
         sa.Column("active_run_id", GUID(), nullable=True),
@@ -125,9 +148,7 @@ def upgrade() -> None:
         sa.Column("status", sprint_status, nullable=False, server_default="PLANNING"),
         sa.Column("story_ids", JSONB, nullable=False, server_default="[]"),
         sa.Column("total_points", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column(
-            "completed_points", sa.Integer(), nullable=False, server_default="0"
-        ),
+        sa.Column("completed_points", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("id", GUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
@@ -150,9 +171,7 @@ def upgrade() -> None:
         sa.Column("target_date", sa.DateTime(timezone=True), nullable=True),
         sa.Column("progress", sa.Float(), nullable=False, server_default="0"),
         sa.Column("story_count", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column(
-            "completed_story_count", sa.Integer(), nullable=False, server_default="0"
-        ),
+        sa.Column("completed_story_count", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("id", GUID(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
@@ -188,11 +207,11 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute('DROP POLICY IF EXISTS story_comments_tenant_isolation ON story_comments;')
+    op.execute("DROP POLICY IF EXISTS story_comments_tenant_isolation ON story_comments;")
     op.drop_table("story_comments")
-    op.execute('DROP POLICY IF EXISTS epics_tenant_isolation ON epics;')
+    op.execute("DROP POLICY IF EXISTS epics_tenant_isolation ON epics;")
     op.drop_table("epics")
-    op.execute('DROP POLICY IF EXISTS sprints_tenant_isolation ON sprints;')
+    op.execute("DROP POLICY IF EXISTS sprints_tenant_isolation ON sprints;")
     op.drop_table("sprints")
-    op.execute('DROP POLICY IF EXISTS stories_tenant_isolation ON stories;')
+    op.execute("DROP POLICY IF EXISTS stories_tenant_isolation ON stories;")
     op.drop_table("stories")

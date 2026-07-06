@@ -20,8 +20,8 @@ Headless — no DB, no Keycloak, no LiteLLM proxy on the wire.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, patch
+from datetime import UTC, datetime, timedelta
+from unittest.mock import patch
 
 import pytest
 from fastapi import FastAPI
@@ -30,7 +30,6 @@ from jose import jwt
 
 from app.core import proxy_token_cache
 from app.core.oauth2_rsa import issue_proxy_token, proxy_token_fingerprint
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -100,8 +99,8 @@ def test_issue_proxy_token_has_litellm_shaped_claims() -> None:
     assert claims["tenant_id"] == "tenant-acme"
     assert claims["aud"] == "litellm-proxy"
     assert "proxy_admin" in claims["roles"], "owner role should promote to proxy_admin"
-    iat = datetime.fromtimestamp(claims["iat"], tz=timezone.utc)
-    exp = datetime.fromtimestamp(claims["exp"], tz=timezone.utc)
+    iat = datetime.fromtimestamp(claims["iat"], tz=UTC)
+    exp = datetime.fromtimestamp(claims["exp"], tz=UTC)
     # The 1-hour default TTL flows from oauth2_rsa._DEFAULT_TTL.
     assert (exp - iat) == timedelta(hours=1)
 
@@ -229,7 +228,7 @@ async def test_litellm_chat_accepts_proxy_token_kwarg() -> None:
             captured["kwargs"] = kwargs
             return {"id": "chatcmpl-test", "choices": []}
 
-        async def __aenter__(self) -> "_FakeImpl":
+        async def __aenter__(self) -> _FakeImpl:
             return self
 
         async def __aexit__(self, *_exc: object) -> None:
@@ -265,7 +264,7 @@ async def test_litellm_chat_omits_proxy_token_when_not_given() -> None:
             captured["kwargs"] = kwargs
             return {"id": "chatcmpl-test", "choices": []}
 
-        async def __aenter__(self) -> "_FakeImpl":
+        async def __aenter__(self) -> _FakeImpl:
             return self
 
         async def __aexit__(self, *_exc: object) -> None:

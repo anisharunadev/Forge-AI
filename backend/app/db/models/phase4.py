@@ -20,7 +20,6 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     DateTime,
-    Float,
     ForeignKey,
     Index,
     Integer,
@@ -33,15 +32,13 @@ from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import (
-    ARRAY,
+    GUID,
     JSONB,
     Base,
-    GUID,
     TenantScopedMixin,
     TimestampMixin,
     UUIDPrimaryKeyMixin,
 )
-
 
 # ── F19 Cache ─────────────────────────────────────────────────────────
 
@@ -91,10 +88,14 @@ class Phase4Session(Base, UUIDPrimaryKeyMixin, TenantScopedMixin):
     agent_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    last_heartbeat_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_heartbeat_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     max_duration_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=14400)
-    session_metadata: Mapped[dict[str, Any]] = mapped_column("metadata", JSONB, nullable=False, default=dict)
+    session_metadata: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSONB, nullable=False, default=dict
+    )
 
 
 class Phase4SessionEvent(Base, UUIDPrimaryKeyMixin, TenantScopedMixin):
@@ -104,7 +105,9 @@ class Phase4SessionEvent(Base, UUIDPrimaryKeyMixin, TenantScopedMixin):
         Index("ix_phase4_session_events_tenant_project", "tenant_id", "project_id"),
     )
 
-    session_id: Mapped[UUID] = mapped_column(GUID(), ForeignKey("phase4_sessions.id", ondelete="CASCADE"), nullable=False)
+    session_id: Mapped[UUID] = mapped_column(
+        GUID(), ForeignKey("phase4_sessions.id", ondelete="CASCADE"), nullable=False
+    )
     event_type: Mapped[str] = mapped_column(String(32), nullable=False)
     duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
@@ -113,7 +116,8 @@ class Phase4SessionEvent(Base, UUIDPrimaryKeyMixin, TenantScopedMixin):
 
 class Phase4RealtimeClientSecret(Base, UUIDPrimaryKeyMixin, TenantScopedMixin):
     __tablename__ = "phase4_realtime_client_secrets"
-    __table_args__ = (        Index("ix_phase4_realtime_client_secrets_tenant_project", "tenant_id", "project_id"),
+    __table_args__ = (
+        Index("ix_phase4_realtime_client_secrets_tenant_project", "tenant_id", "project_id"),
         Index("ix_phase4_realtime_client_secrets_session", "session_id"),
         Index("ix_phase4_realtime_client_secrets_expires", "expires_at"),
     )
@@ -126,9 +130,7 @@ class Phase4RealtimeClientSecret(Base, UUIDPrimaryKeyMixin, TenantScopedMixin):
 
 class Phase4A2ADelegation(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMixin):
     __tablename__ = "phase4_a2a_delegations"
-    __table_args__ = (
-        Index("ix_phase4_a2a_delegations_tenant_project", "tenant_id", "project_id"),
-    )
+    __table_args__ = (Index("ix_phase4_a2a_delegations_tenant_project", "tenant_id", "project_id"),)
 
     from_agent_id: Mapped[str] = mapped_column(String(128), nullable=False)
     to_agent_id: Mapped[str] = mapped_column(String(128), nullable=False)
@@ -145,9 +147,7 @@ class Phase4A2ADelegation(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, Timestam
 
 class Phase4SsoConfig(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "phase4_sso_configs"
-    __table_args__ = (
-        UniqueConstraint("tenant_id", name="tenant_id"),
-    )
+    __table_args__ = (UniqueConstraint("tenant_id", name="tenant_id"),)
 
     tenant_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, unique=True)
     project_id: Mapped[UUID] = mapped_column(GUID(), nullable=False)
@@ -179,9 +179,7 @@ class Phase4ScimToken(Base, UUIDPrimaryKeyMixin):
 
 class Phase4OAuthClient(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMixin):
     __tablename__ = "phase4_oauth_clients"
-    __table_args__ = (
-        UniqueConstraint("client_id", name="client_id"),
-    )
+    __table_args__ = (UniqueConstraint("client_id", name="client_id"),)
 
     client_id: Mapped[str] = mapped_column(String(128), nullable=False)
     client_secret_hash: Mapped[str] = mapped_column(String(128), nullable=False)
@@ -206,14 +204,14 @@ class Phase4JwtSigningKey(Base, UUIDPrimaryKeyMixin):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     retired_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-
-# ── F20 Credentials / Vault / FinOps ──────────────────────────────────
+    # ── F20 Credentials / Vault / FinOps ──────────────────────────────────
     _audit_scope = "global"
 
 
 class Phase4Credential(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMixin):
     __tablename__ = "phase4_credentials"
-    __table_args__ = (        Index("ix_phase4_credentials_tenant_project", "tenant_id", "project_id"),
+    __table_args__ = (
+        Index("ix_phase4_credentials_tenant_project", "tenant_id", "project_id"),
         UniqueConstraint("tenant_id", "credential_name", name="tenant_id"),
     )
 
@@ -227,7 +225,8 @@ class Phase4Credential(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMi
 
 class Phase4VaultConfig(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "phase4_vault_configs"
-    __table_args__ = (        Index("ix_phase4_vault_configs_tenant_project", "tenant_id", "project_id"),
+    __table_args__ = (
+        Index("ix_phase4_vault_configs_tenant_project", "tenant_id", "project_id"),
         UniqueConstraint("tenant_id", name="tenant_id"),
     )
 
@@ -267,7 +266,8 @@ class Phase4FinopsExport(Base, UUIDPrimaryKeyMixin, TenantScopedMixin):
 
 class Phase4FinopsSettings(Base, UUIDPrimaryKeyMixin, TenantScopedMixin):
     __tablename__ = "phase4_finops_settings"
-    __table_args__ = (        Index("ix_phase4_finops_settings_tenant_project", "tenant_id", "project_id"),
+    __table_args__ = (
+        Index("ix_phase4_finops_settings_tenant_project", "tenant_id", "project_id"),
         UniqueConstraint("tenant_id", "destination", name="tenant_id"),
     )
 

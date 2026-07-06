@@ -25,6 +25,7 @@ Environment overrides::
     FORGE_USERNAME   (default arun@acme-corp.com)
     FORGE_PASSWORD   (default dev-password-change-in-prod)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -168,9 +169,7 @@ async def main() -> int:
         count(ok)
         cred_id = body.get("id") if isinstance(body, dict) else None
         if cred_id:
-            ok, body = await _call(
-                "post", f"/connectors/credentials/{cred_id}/reveal", token
-            )
+            ok, body = await _call("post", f"/connectors/credentials/{cred_id}/reveal", token)
             count(ok)
             ok, _ = await _call(
                 "post",
@@ -179,9 +178,7 @@ async def main() -> int:
                 json={"secret": "sk-rotated-" + uuid.uuid4().hex},
             )
             count(ok)
-            ok, _ = await _call(
-                "delete", f"/connectors/credentials/{cred_id}", token, expected=204
-            )
+            ok, _ = await _call("delete", f"/connectors/credentials/{cred_id}", token, expected=204)
             count(ok)
 
         print("\n" + "=" * 60 + "\nWEBHOOKS\n" + "=" * 60)

@@ -29,12 +29,12 @@ import uuid
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Mark this entire module as integration-only. Opt in via:
 #   pytest -m integration
 # The default ``pytest`` collection skips these.
 # ---------------------------------------------------------------------------
+
 
 def _integration_targets_present() -> bool:
     """Return True iff both LiteLLM and AWS Secrets Manager look reachable."""

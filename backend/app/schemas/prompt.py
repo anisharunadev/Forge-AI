@@ -14,8 +14,7 @@ from uuid import UUID
 
 from pydantic import Field, field_validator
 
-from app.schemas.common import ForgeBaseModel, TenantScopedModel
-
+from app.schemas.common import ForgeBaseModel
 
 # ---------------------------------------------------------------------------
 # Variable system (step-78 §"Variable system")

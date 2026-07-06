@@ -16,21 +16,21 @@ Categories and counts (per spec):
 Run with:
     docker compose exec backend python -m scripts.seed_org_knowledge
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select
 
 from app.db.models.tenant import Tenant
 from app.db.session import get_session_factory
-
-from scripts._seed_helpers import ACME_TENANT_ID
 from app.services.knowledge_graph import KGNode
+from scripts._seed_helpers import ACME_TENANT_ID
 
 logger = logging.getLogger("seed_org_knowledge")
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -203,7 +203,7 @@ def _expected_counts() -> dict[str, int]:
 async def seed() -> None:
     """Insert organization-knowledge ``KGNode`` rows for acme-corp. Idempotent."""
     sf = get_session_factory()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     async with sf() as session:
         tenant = (
@@ -253,8 +253,9 @@ async def seed() -> None:
         logger.info("")
         logger.info("✅ Seed complete!")
         logger.info("   - 1 tenant (acme-corp)")
-        logger.info("   - %d org-knowledge docs created (%d total)",
-                    docs_created, len(SEED_ORG_DOCS))
+        logger.info(
+            "   - %d org-knowledge docs created (%d total)", docs_created, len(SEED_ORG_DOCS)
+        )
         expected = _expected_counts()
         logger.info("   - by category: %s", expected)
 

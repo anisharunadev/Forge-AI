@@ -20,8 +20,7 @@ from uuid import UUID
 from sqlalchemy import Boolean, DateTime, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, TimestampMixin, UUIDPrimaryKeyMixin
-
+from app.db.base import GUID, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 # Closed-set of persona identifiers (mirrors the persona primer
 # Markdown files under ``steering/personas/``).
@@ -61,12 +60,8 @@ class PersonaMemoryHistory(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     key: Mapped[str] = mapped_column(String(64), nullable=False)
     entry_md: Mapped[str] = mapped_column(Text, nullable=False)
     written_by: Mapped[UUID] = mapped_column(GUID(), nullable=False)
-    written_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    consolidated: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False
-    )
+    written_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    consolidated: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     __table_args__ = (
         Index(

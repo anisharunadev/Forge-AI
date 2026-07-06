@@ -25,8 +25,7 @@ incomplete assignment is never persisted).
 
 from __future__ import annotations
 
-import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -149,26 +148,25 @@ class GuardrailSync:
         #    truth; the mirror is for UI reads only).
         try:
             factory = get_session_factory()
-            async with factory() as session:
-                async with tenant_context(session, tid, pid):
-                    prior = await session.scalars(
-                        select(LiteLLMGuardrailAssignment).where(
-                            LiteLLMGuardrailAssignment.tenant_id == tid
-                        )
+            async with factory() as session, tenant_context(session, tid, pid):
+                prior = await session.scalars(
+                    select(LiteLLMGuardrailAssignment).where(
+                        LiteLLMGuardrailAssignment.tenant_id == tid
                     )
-                    for row in prior.all():
-                        await session.delete(row)
-                    session.add(
-                        LiteLLMGuardrailAssignment(
-                            tenant_id=tid,
-                            project_id=pid,
-                            litellm_team_id=team_id,
-                            guardrail_ids=list(guardrail_ids),
-                            assigned_at=datetime.now(timezone.utc),
-                            assigned_by=str(actor_id) if actor_id else None,
-                        )
+                )
+                for row in prior.all():
+                    await session.delete(row)
+                session.add(
+                    LiteLLMGuardrailAssignment(
+                        tenant_id=tid,
+                        project_id=pid,
+                        litellm_team_id=team_id,
+                        guardrail_ids=list(guardrail_ids),
+                        assigned_at=datetime.now(UTC),
+                        assigned_by=str(actor_id) if actor_id else None,
                     )
-                    await session.commit()
+                )
+                await session.commit()
         except Exception as exc:
             # Mirror write failed but LiteLLM is updated. The UI
             # next call will re-fetch and reconcile.
@@ -204,16 +202,15 @@ class GuardrailSync:
         tid = str(tenant_id)
         try:
             factory = get_session_factory()
-            async with factory() as session:
-                async with tenant_context(session, tid):
-                    row = await session.scalar(
-                        select(LiteLLMGuardrailAssignment)
-                        .where(LiteLLMGuardrailAssignment.tenant_id == tid)
-                        .order_by(LiteLLMGuardrailAssignment.assigned_at.desc())
-                    )
-                    if row is None:
-                        return []
-                    return list(row.guardrail_ids or [])
+            async with factory() as session, tenant_context(session, tid):
+                row = await session.scalar(
+                    select(LiteLLMGuardrailAssignment)
+                    .where(LiteLLMGuardrailAssignment.tenant_id == tid)
+                    .order_by(LiteLLMGuardrailAssignment.assigned_at.desc())
+                )
+                if row is None:
+                    return []
+                return list(row.guardrail_ids or [])
         except Exception as exc:  # pragma: no cover — DB path
             logger.warning(
                 "litellm.guardrail_sync.read_failed",
@@ -242,9 +239,7 @@ class GuardrailSync:
     ) -> dict[str, Any]:
         if self._base_client_factory is not None:
             async with self._base_client_factory() as client:
-                response = await client.admin_client.post(
-                    path, json=json_body or {}
-                )
+                response = await client.admin_client.post(path, json=json_body or {})
                 return self._parse(response)
         async with LiteLLMBaseClient() as client:
             response = await client.admin_client.post(path, json=json_body or {})
@@ -257,16 +252,13 @@ class GuardrailSync:
         from app.db.models.litellm_team_mapping import LiteLLMTeamMapping
 
         factory = get_session_factory()
-        async with factory() as session:
-            async with tenant_context(session, tenant_id):
-                row = await session.scalar(
-                    select(LiteLLMTeamMapping).where(
-                        LiteLLMTeamMapping.tenant_id == tenant_id
-                    )
-                )
-                if row is None:
-                    return None
-                return row.litellm_team_id
+        async with factory() as session, tenant_context(session, tenant_id):
+            row = await session.scalar(
+                select(LiteLLMTeamMapping).where(LiteLLMTeamMapping.tenant_id == tenant_id)
+            )
+            if row is None:
+                return None
+            return row.litellm_team_id
 
     # ------------------------------------------------------------------
     # Parsing

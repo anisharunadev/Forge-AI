@@ -1,19 +1,19 @@
 """Architecture Preview REST endpoints (F-207)."""
 
 from __future__ import annotations
-from typing import Annotated
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import ArchPreviewRead
 from app.services.ideation.arch_preview import arch_preview_service
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/ideation/ideas", tags=["ideation"])
 
@@ -34,9 +34,9 @@ def _to_read(preview) -> ArchPreviewRead:
         created_at=preview.created_at,
         updated_at=preview.updated_at,
     )
+
+
 @require_approval_phase(SDLCPhase.REVIEW)
-
-
 @router.post(
     "/{idea_id}/arch-preview",
     response_model=ArchPreviewRead,
@@ -46,7 +46,7 @@ def _to_read(preview) -> ArchPreviewRead:
 async def generate_arch_preview(
     idea_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:arch_preview"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:arch_preview")),
 ) -> ArchPreviewRead:
     try:
         preview = await arch_preview_service.generate_preview(
@@ -66,12 +66,10 @@ async def generate_arch_preview(
 async def get_arch_preview(
     idea_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read")),
 ) -> ArchPreviewRead | None:
     try:
-        preview = await arch_preview_service.get_preview(
-            idea_id, tenant_id=principal.tenant_id
-        )
+        preview = await arch_preview_service.get_preview(idea_id, tenant_id=principal.tenant_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except PermissionError as exc:
@@ -79,15 +77,15 @@ async def get_arch_preview(
     if preview is None:
         return None
     return _to_read(preview)
+
+
 @require_approval_phase(SDLCPhase.REVIEW)
-
-
 @router.post("/{idea_id}/arch-preview/regenerate", response_model=ArchPreviewRead)
 @audit(action="ideation.arch_preview.regenerate", target_type="arch_preview")
 async def regenerate_arch_preview(
     idea_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:arch_preview"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:arch_preview")),
 ) -> ArchPreviewRead:
     try:
         preview = await arch_preview_service.regenerate_preview(

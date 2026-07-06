@@ -7,8 +7,8 @@ to a no-op provider so tests don't need a collector running.
 from __future__ import annotations
 
 from opentelemetry import metrics, trace
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
@@ -73,10 +73,13 @@ def init_telemetry() -> None:
 def _build_sampler():
     """Build a tenant-scoped sampler when redis + session factory are available."""
     from app.core.tenant_sampler import TenantSettingsCache, make_sampler
+
     try:
+        import redis.asyncio as aioredis
+
         from app.core.config import settings
         from app.db.session import get_session_factory
-        import redis.asyncio as aioredis
+
         redis_client = None
         if settings.redis_url:
             try:
@@ -88,6 +91,7 @@ def _build_sampler():
     except Exception:  # noqa: BLE001
         logger.warning("telemetry.sampler_unavailable")
         from opentelemetry.sdk.trace.sampling import ParentBased, TraceIdRatioBased
+
         return ParentBased(TraceIdRatioBased(1.0))
 
 

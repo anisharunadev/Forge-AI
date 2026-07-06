@@ -1,13 +1,15 @@
 """Roadmap REST endpoints (F-205)."""
 
 from __future__ import annotations
-from typing import Annotated
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import (
@@ -15,12 +17,9 @@ from app.schemas.ideation import (
     RoadmapCreate,
     RoadmapListResponse,
     RoadmapRead,
-    RoadmapRemoveItem,
     RoadmapUpdate,
 )
 from app.services.ideation.roadmap_generator import roadmap_generator
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/ideation/roadmaps", tags=["ideation"])
 
@@ -40,15 +39,15 @@ def _to_read(roadmap) -> RoadmapRead:
         created_at=roadmap.created_at,
         updated_at=roadmap.updated_at,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("", response_model=RoadmapRead, status_code=status.HTTP_201_CREATED)
 @audit(action="ideation.roadmap.generate", target_type="roadmap")
 async def generate_roadmap(
     body: RoadmapCreate,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:roadmap"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:roadmap")),
 ) -> RoadmapRead:
     try:
         roadmap = await roadmap_generator.generate_roadmap(
@@ -71,7 +70,7 @@ async def list_roadmaps(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: UUID | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=500),
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read")),
 ) -> RoadmapListResponse:
     rows = await roadmap_generator.list_roadmaps(
         tenant_id=principal.tenant_id,
@@ -87,27 +86,25 @@ async def list_roadmaps(
 async def get_roadmap(
     roadmap_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read")),
 ) -> RoadmapRead:
     try:
-        roadmap = await roadmap_generator.get_roadmap(
-            roadmap_id, tenant_id=principal.tenant_id
-        )
+        roadmap = await roadmap_generator.get_roadmap(roadmap_id, tenant_id=principal.tenant_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except PermissionError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return _to_read(roadmap)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/{roadmap_id}", response_model=RoadmapRead)
 @audit(action="ideation.roadmap.update", target_type="roadmap")
 async def update_roadmap(
     roadmap_id: UUID,
     body: RoadmapUpdate,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:roadmap"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:roadmap")),
 ) -> RoadmapRead:
     try:
         roadmap = await roadmap_generator.update_roadmap(
@@ -123,15 +120,15 @@ async def update_roadmap(
     except PermissionError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return _to_read(roadmap)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/{roadmap_id}/approve", response_model=RoadmapRead)
 @audit(action="ideation.roadmap.approve", target_type="roadmap")
 async def approve_roadmap(
     roadmap_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:roadmap:approve"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:roadmap:approve")),
 ) -> RoadmapRead:
     try:
         roadmap = await roadmap_generator.approve_roadmap(
@@ -142,16 +139,16 @@ async def approve_roadmap(
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return _to_read(roadmap)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/{roadmap_id}/regenerate", response_model=RoadmapRead)
 @audit(action="ideation.roadmap.regenerate", target_type="roadmap")
 async def regenerate_roadmap(
     roadmap_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     top_n: int | None = Query(default=None, ge=1, le=100),
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:roadmap"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:roadmap")),
 ) -> RoadmapRead:
     try:
         roadmap = await roadmap_generator.regenerate_roadmap(
@@ -163,16 +160,16 @@ async def regenerate_roadmap(
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return _to_read(roadmap)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/{roadmap_id}/items", response_model=RoadmapRead)
 @audit(action="ideation.roadmap.add_item", target_type="roadmap")
 async def add_to_roadmap(
     roadmap_id: UUID,
     body: RoadmapAddItem,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:roadmap"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:roadmap")),
 ) -> RoadmapRead:
     try:
         roadmap = await roadmap_generator.add_to_roadmap(
@@ -188,9 +185,9 @@ async def add_to_roadmap(
     except PermissionError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return _to_read(roadmap)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.delete(
     "/{roadmap_id}/items/{idea_id}",
     response_model=None,
@@ -202,7 +199,7 @@ async def remove_from_roadmap(
     roadmap_id: UUID,
     idea_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:roadmap"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:roadmap")),
 ):
     try:
         roadmap = await roadmap_generator.remove_from_roadmap(

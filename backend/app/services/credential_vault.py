@@ -5,17 +5,16 @@ Credentials tab. The actual secret cipher is a placeholder
 (``step55-placeholder``) — KMS-backed encryption is a follow-up; the
 seam is ``CredentialVault._encrypt`` / ``_decrypt``.
 """
+
 from __future__ import annotations
 
 import hashlib
-import os
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
 from app.db.models.connector_credential import (
@@ -86,7 +85,7 @@ class CredentialVault:
                 encrypted_secret=self._encrypt(secret),
                 meta=meta or {},
                 expires_at=expires_at,
-                last_rotated_at=datetime.now(timezone.utc),
+                last_rotated_at=datetime.now(UTC),
                 rotation_reminder_days=rotation_reminder_days,
                 created_by=str(actor_id),
             )
@@ -108,7 +107,7 @@ class CredentialVault:
                 raise LookupError(f"credential {credential_id} not found")
             if str(cred.tenant_id) != str(tenant_id):
                 raise PermissionError("credential not in tenant")
-            cred.last_used_at = datetime.now(timezone.utc)
+            cred.last_used_at = datetime.now(UTC)
             await session.commit()
             return RevealResult(
                 id=cred.id,
@@ -134,7 +133,7 @@ class CredentialVault:
                 raise PermissionError("credential not in tenant")
             cred.encrypted_secret = self._encrypt(new_secret)
             cred.preview = self._preview(new_secret)
-            cred.last_rotated_at = datetime.now(timezone.utc)
+            cred.last_rotated_at = datetime.now(UTC)
             await session.commit()
             await session.refresh(cred)
             return cred

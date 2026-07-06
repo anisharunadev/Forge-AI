@@ -19,9 +19,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import (
     ARRAY,
+    GUID,
     JSONB,
     Base,
-    GUID,
     TenantScopedMixin,
     TimestampMixin,
     UUIDPrimaryKeyMixin,
@@ -39,18 +39,12 @@ class ADR(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMixin):
     context: Mapped[str] = mapped_column(Text, nullable=False, default="")
     decision: Mapped[str] = mapped_column(Text, nullable=False, default="")
     consequences: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
-    alternatives: Mapped[list[dict[str, Any]]] = mapped_column(
-        JSONB, nullable=False, default=list
-    )
-    related_adrs: Mapped[list[str]] = mapped_column(
-        ARRAY(String), nullable=False, default=list
-    )
+    alternatives: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
+    related_adrs: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
     generated_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
     reviewed_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
     approved_by: Mapped[UUID | None] = mapped_column(GUID(), nullable=True)
-    approved_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
         Index(
@@ -104,9 +98,7 @@ class TaskBreakdown(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMixin
     parent_artifact_type: Mapped[str] = mapped_column(String(64), nullable=False)
     parent_artifact_id: Mapped[UUID] = mapped_column(GUID(), nullable=False)
     tasks: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
-    total_estimate_hours: Mapped[float] = mapped_column(
-        Float, nullable=False, default=0.0
-    )
+    total_estimate_hours: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="draft")
     generated_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
@@ -160,9 +152,7 @@ class ArchitectureApproval(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     requested_by: Mapped[UUID] = mapped_column(GUID(), nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")
     decided_by: Mapped[UUID | None] = mapped_column(GUID(), nullable=True)
-    decided_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     __table_args__ = (

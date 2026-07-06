@@ -70,13 +70,13 @@ Design notes
    requiring every operator to learn the UUID syntax.
 """
 
-from __future__ import annotations
+from __future__ import annotations  # noqa: B904
 
 import argparse
 import asyncio
 import sys
 import uuid
-from typing import Any, Sequence
+from collections.abc import Sequence
 
 # Initialize telemetry best-effort. The framework CLI does the
 # same; a downed OTLP collector must not block a seed run.
@@ -90,7 +90,6 @@ except Exception:  # noqa: BLE001
 from app.core.config import settings  # noqa: E402
 from app.db.session import get_session_factory  # noqa: E402
 from app.services.audit_service import audit_service  # noqa: E402
-
 from seeds.framework import exit_codes as ec  # noqa: E402
 from seeds.framework.exceptions import (  # noqa: E402
     ApplyRolledBackError,
@@ -217,9 +216,7 @@ def _resolve_actor_id(raw: str | None) -> uuid.UUID:
     try:
         return uuid.UUID(raw)
     except (TypeError, ValueError):
-        raise argparse.ArgumentTypeError(
-            f"--actor-id must be a UUID; got {raw!r}"
-        )
+        raise argparse.ArgumentTypeError(f"--actor-id must be a UUID; got {raw!r}")  # noqa: B904
 
 
 async def _dispatch_apply(args: argparse.Namespace) -> int:
@@ -263,23 +260,15 @@ async def _dispatch_status(args: argparse.Namespace) -> int:
     # tabular summary so the operator can spot at a glance which
     # packages are applied.
     summaries = runner.list()
-    print(
-        f"{'NAME':<22}{'APPLIED':<10}{'LAST_RUN':<14}"
-        f"{'MANIFEST':<10}{'CHECKSUM':<10}"
-    )
+    print(f"{'NAME':<22}{'APPLIED':<10}{'LAST_RUN':<14}{'MANIFEST':<10}{'CHECKSUM':<10}")
     print("-" * 66)
     for summary in summaries:
         status = await runner.status(summary.name)
         applied = "yes" if status.applied else "no"
         last_run = status.last_run_status or "-"
-        manifest = (
-            str(status.manifest_version) if status.manifest_version else "-"
-        )
+        manifest = str(status.manifest_version) if status.manifest_version else "-"
         checksum = (status.checksum or "-")[:8]
-        print(
-            f"{status.name:<22}{applied:<10}{last_run:<14}"
-            f"{manifest:<10}{checksum:<10}"
-        )
+        print(f"{status.name:<22}{applied:<10}{last_run:<14}{manifest:<10}{checksum:<10}")
     return ec.SUCCESS
 
 
@@ -305,10 +294,7 @@ async def _dispatch_diff(args: argparse.Namespace) -> int:
         env=settings.environment,
     )
     diff = await runner.diff(args.name)
-    print(
-        f"name={diff.name} checksum_match={diff.checksum_match} "
-        f"drift={diff.drift}"
-    )
+    print(f"name={diff.name} checksum_match={diff.checksum_match} drift={diff.drift}")
     return ec.SUCCESS
 
 

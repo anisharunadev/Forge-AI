@@ -16,13 +16,12 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 
 # ---------------------------------------------------------------------------
 # Stubs — small typed dataclasses so the building blocks see real
@@ -42,7 +41,7 @@ class StubAuditEvent:
     id: str
     action: str
     payload: dict[str, Any] = field(default_factory=dict)
-    occurred_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    occurred_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 @dataclass(slots=True)
@@ -61,7 +60,7 @@ class StubFinding:
 class StubValidatorReport:
     report_id: uuid.UUID = field(default_factory=uuid.uuid4)
     run_id: uuid.UUID = field(default_factory=uuid.uuid4)
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     validator_version: str = "1.0.0"
     decision: str = "PASS"
     findings: list[StubFinding] = field(default_factory=list)
@@ -86,7 +85,6 @@ def _service() -> Any:
 def _summary(total: int, by_severity: dict[str, int] | None = None) -> Any:
     """Build a real ``ValidationSummary`` for the report stub."""
     from app.schemas.validation_report import aggregate_summary
-    from app.schemas.explainability import Q2ChecksPerformed
 
     return aggregate_summary(
         [StubFinding(f"f{i}", "low") for i in range(total)],
@@ -144,8 +142,10 @@ def test_q2_validator_fail_becomes_failed_check() -> None:
     from app.schemas.validation_report import ValidationSummary
 
     summary = ValidationSummary(
-        total_findings=2, by_severity={"critical": 1, "high": 1, "medium": 0, "low": 0, "info": 0},
-        scan_duration_ms=10, scanners_executed=["lint"],
+        total_findings=2,
+        by_severity={"critical": 1, "high": 1, "medium": 0, "low": 0, "info": 0},
+        scan_duration_ms=10,
+        scanners_executed=["lint"],
     )
     report = StubValidatorReport(decision="FAIL", summary=summary)
     q2 = svc._q2_from_data(validator_reports=[report], audit_events=[])
@@ -212,17 +212,17 @@ def test_q5_counterfactual_includes_validator_fail() -> None:
     report = StubValidatorReport(
         decision="FAIL",
         summary=ValidationSummary(
-            total_findings=3, by_severity={"critical": 1, "high": 1, "medium": 0, "low": 1, "info": 0},
-            scan_duration_ms=10, scanners_executed=["lint"],
+            total_findings=3,
+            by_severity={"critical": 1, "high": 1, "medium": 0, "low": 1, "info": 0},
+            scan_duration_ms=10,
+            scanners_executed=["lint"],
         ),
     )
 
     class _State:
         current_phase = "review"
 
-    q5 = svc._q5_from_data(
-        validator_reports=[report], audit_events=[], state=_State()
-    )
+    q5 = svc._q5_from_data(validator_reports=[report], audit_events=[], state=_State())
     assert q5.conditions[0] == "Validator returned a blocking decision"
     assert q5.counter_recommendation  # non-empty
 
@@ -265,7 +265,6 @@ def test_grade_a_when_all_conditions_met() -> None:
 
 def test_grade_f_when_low_everywhere() -> None:
     from app.schemas.explainability import (
-        CheckEntry,
         Q2ChecksPerformed,
         Q3CoverageGaps,
         Q4ConfidenceScore,
@@ -314,8 +313,8 @@ class _FakeState:
     pending_approval: Any = None
     cost_so_far: float = 0.0
     errors: list[Any] = field(default_factory=list)
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     metadata: dict[str, Any] = field(default_factory=dict)
     context: dict[str, Any] = field(default_factory=dict)
     actor_id: uuid.UUID = field(default_factory=uuid.uuid4)
@@ -326,9 +325,11 @@ class _FakeManager:
         self._state = state
 
     async def get_run(self, run_id: uuid.UUID) -> _FakeState | None:
-        print(f"DEBUG _FakeManager.get_run called run_id={run_id}, state.run_id={self._state.run_id if self._state else None}")
+        print(
+            f"DEBUG _FakeManager.get_run called run_id={run_id}, state.run_id={self._state.run_id if self._state else None}"
+        )
         if self._state is None or self._state.run_id != run_id:
-            print(f"DEBUG _FakeManager returning None")
+            print("DEBUG _FakeManager returning None")
             return None
         return self._state
 
@@ -338,8 +339,9 @@ def _client(state: _FakeState | None) -> Any:
     # sessionmaker so the transitive ``app.agents`` → ``app.services.litellm_client``
     # chain doesn't blow up trying to create a Postgres-pool engine
     # against an SQLite URL during TestClient startup.
-    import app.db.session as session_mod
     from unittest.mock import MagicMock
+
+    import app.db.session as session_mod
 
     session_mod._session_factory = MagicMock()  # type: ignore[assignment]
 
@@ -411,9 +413,8 @@ def _client(state: _FakeState | None) -> Any:
     app.dependency_overrides[deps_mod.db_session] = _override_db
 
     audit_mock = AsyncMock()
-    with patch.object(runs_router, "audit_service", audit_mock):
-        with TestClient(app) as c:
-            return c, audit_mock
+    with patch.object(runs_router, "audit_service", audit_mock), TestClient(app) as c:
+        return c, audit_mock
 
 
 def test_explainability_endpoint_404_for_unknown_run() -> None:

@@ -27,12 +27,13 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import StreamingResponse
 
-from app.api.deps import DbSession, Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import DbSession, get_current_principal, require_permission
 from app.core.audit import audit
-from app.core.security import AuthenticatedPrincipal
-from app.core.security import AuthenticatedPrincipal
 from app.core.config import settings
 from app.core.logging import get_logger
+from app.core.security import AuthenticatedPrincipal
 from app.schemas.copilot import (
     CopilotChatRequest,
     CopilotChatResponse,
@@ -54,8 +55,6 @@ from app.services.copilot_service import (
 )
 from app.services.rbac import COPILOT_PERMISSION_USE
 from app.services.workflow_budget import BudgetExceeded
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -89,15 +88,13 @@ def _sse_format(payload: dict[str, Any]) -> bytes:
     ponytail: copy of runs.py:361 — extracting to a shared helper is
     YAGNI at 2 call sites; revisit on the third.
     """
-    return f"data: {json.dumps(payload, default=str)}\n\n".encode("utf-8")
+    return f"data: {json.dumps(payload, default=str)}\n\n".encode()
 
 
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post(
     "/conversations",
     response_model=CopilotChatResponse,
@@ -120,9 +117,7 @@ async def post_chat(
     # Per-user rate limit (Plan 5). Sliding 60s window keyed by
     # (user_id, tenant_id); 429 with Retry-After when the cap is hit.
     try:
-        await copilot_rate_limiter.check_and_record(
-            principal.user_id, principal.tenant_id
-        )
+        await copilot_rate_limiter.check_and_record(principal.user_id, principal.tenant_id)
     except RateLimitExceeded as exc:
         # Audit the block so we can detect rate-limit abuse patterns
         # (sudden spikes from a single user, etc.).
@@ -193,9 +188,9 @@ async def post_chat(
                 "max_turns": exc.max_turns,
             },
         ) from exc
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post(
     "/conversations:stream",
     response_class=StreamingResponse,
@@ -230,9 +225,7 @@ async def post_chat_stream(
 
     # Rate limit BEFORE the stream opens so we can 429 cleanly.
     try:
-        await copilot_rate_limiter.check_and_record(
-            principal.user_id, principal.tenant_id
-        )
+        await copilot_rate_limiter.check_and_record(principal.user_id, principal.tenant_id)
     except RateLimitExceeded as exc:
         try:
             await audit_service.record(
@@ -247,8 +240,10 @@ async def post_chat_stream(
                     "limit": settings.copilot_rate_limit_per_min,
                 },
             )
-        except Exception:  # noqa: BLE001 — audit is best-effort
-            logger.warning("copilot.api.stream.rate_limit_audit_failed")
+        except Exception as audit_exc:  # noqa: BLE001 — audit is best-effort
+            logger.warning("copilot.api.stream.rate_limit_audit_failed", error=str(audit_exc))
+
+        retry_after_seconds = exc.retry_after_seconds
 
         async def _blocked() -> AsyncIterator[bytes]:
             yield _sse_format(
@@ -256,7 +251,7 @@ async def post_chat_stream(
                     "event": "error",
                     "data": {
                         "code": "rate_limited",
-                        "message": f"retry in {exc.retry_after_seconds}s",
+                        "message": f"retry in {retry_after_seconds}s",
                     },
                 }
             )
@@ -278,9 +273,7 @@ async def post_chat_stream(
                 conversation_id=request.conversation_id,
                 project_id=request.project_id,
             )
-            yield _sse_format(
-                {"event": "start", "data": {"conversation_id": str(conv_id)}}
-            )
+            yield _sse_format({"event": "start", "data": {"conversation_id": str(conv_id)}})
             async for event in service.stream_chat(request):
                 yield _sse_format(event)
         except CopilotBudgetBlocked as exc:
@@ -345,9 +338,9 @@ async def get_conversation(
         return await service.get_conversation(conversation_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.delete(
     "/conversations/{conversation_id}",
     response_model=None,
@@ -371,9 +364,9 @@ async def delete_conversation(
     # try to JSON-encode the response and trip
     # `assert is_body_allowed_for_status_code(...)` in routing.py:509.
     return Response(content=b"")
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post(
     "/messages/{message_id}/feedback",
     response_model=None,

@@ -12,12 +12,12 @@ The list of installed alerts is built by
 in ``docs/standards/slos.md``. ``scripts/check-slos.sh`` enforces
 that every row in the doc maps to an alert.
 """
+
 from __future__ import annotations
 
 import time
-from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 from app.services.observability.alerts import alert_manager
 
@@ -107,24 +107,82 @@ async def _publish(alert: SLOAlert, value: float) -> None:
 def install_default_alerts() -> list[SLOAlert]:
     """Build the canonical alert set from ``docs/standards/slos.md``."""
     return [
-        SLOAlert(surface="chat", metric="latency_p95_ms", threshold=1500.0, comparator=lambda v, t: v > t),
-        SLOAlert(surface="chat", metric="error_rate", threshold=0.01, comparator=lambda v, t: v > t),
-        SLOAlert(surface="chat", metric="availability", threshold=0.999, comparator=lambda v, t: v < t),
-        SLOAlert(surface="kg", metric="latency_p95_ms", threshold=2000.0, comparator=lambda v, t: v > t),
+        SLOAlert(
+            surface="chat", metric="latency_p95_ms", threshold=1500.0, comparator=lambda v, t: v > t
+        ),
+        SLOAlert(
+            surface="chat", metric="error_rate", threshold=0.01, comparator=lambda v, t: v > t
+        ),
+        SLOAlert(
+            surface="chat", metric="availability", threshold=0.999, comparator=lambda v, t: v < t
+        ),
+        SLOAlert(
+            surface="kg", metric="latency_p95_ms", threshold=2000.0, comparator=lambda v, t: v > t
+        ),
         SLOAlert(surface="kg", metric="error_rate", threshold=0.01, comparator=lambda v, t: v > t),
-        SLOAlert(surface="kg", metric="availability", threshold=0.999, comparator=lambda v, t: v < t),
-        SLOAlert(surface="ideation", metric="latency_p95_ms", threshold=10000.0, comparator=lambda v, t: v > t),
-        SLOAlert(surface="ideation", metric="error_rate", threshold=0.02, comparator=lambda v, t: v > t),
-        SLOAlert(surface="ideation", metric="availability", threshold=0.995, comparator=lambda v, t: v < t),
-        SLOAlert(surface="forge-models", metric="latency_p95_ms", threshold=3000.0, comparator=lambda v, t: v > t),
-        SLOAlert(surface="forge-models", metric="error_rate", threshold=0.01, comparator=lambda v, t: v > t),
-        SLOAlert(surface="forge-models", metric="availability", threshold=0.999, comparator=lambda v, t: v < t),
-        SLOAlert(surface="terminal", metric="latency_p95_ms", threshold=500.0, comparator=lambda v, t: v > t),
-        SLOAlert(surface="terminal", metric="error_rate", threshold=0.005, comparator=lambda v, t: v > t),
-        SLOAlert(surface="terminal", metric="availability", threshold=0.999, comparator=lambda v, t: v < t),
-        SLOAlert(surface="copilot", metric="latency_p95_ms", threshold=800.0, comparator=lambda v, t: v > t),
-        SLOAlert(surface="copilot", metric="error_rate", threshold=0.01, comparator=lambda v, t: v > t),
-        SLOAlert(surface="copilot", metric="availability", threshold=0.999, comparator=lambda v, t: v < t),
+        SLOAlert(
+            surface="kg", metric="availability", threshold=0.999, comparator=lambda v, t: v < t
+        ),
+        SLOAlert(
+            surface="ideation",
+            metric="latency_p95_ms",
+            threshold=10000.0,
+            comparator=lambda v, t: v > t,
+        ),
+        SLOAlert(
+            surface="ideation", metric="error_rate", threshold=0.02, comparator=lambda v, t: v > t
+        ),
+        SLOAlert(
+            surface="ideation",
+            metric="availability",
+            threshold=0.995,
+            comparator=lambda v, t: v < t,
+        ),
+        SLOAlert(
+            surface="forge-models",
+            metric="latency_p95_ms",
+            threshold=3000.0,
+            comparator=lambda v, t: v > t,
+        ),
+        SLOAlert(
+            surface="forge-models",
+            metric="error_rate",
+            threshold=0.01,
+            comparator=lambda v, t: v > t,
+        ),
+        SLOAlert(
+            surface="forge-models",
+            metric="availability",
+            threshold=0.999,
+            comparator=lambda v, t: v < t,
+        ),
+        SLOAlert(
+            surface="terminal",
+            metric="latency_p95_ms",
+            threshold=500.0,
+            comparator=lambda v, t: v > t,
+        ),
+        SLOAlert(
+            surface="terminal", metric="error_rate", threshold=0.005, comparator=lambda v, t: v > t
+        ),
+        SLOAlert(
+            surface="terminal",
+            metric="availability",
+            threshold=0.999,
+            comparator=lambda v, t: v < t,
+        ),
+        SLOAlert(
+            surface="copilot",
+            metric="latency_p95_ms",
+            threshold=800.0,
+            comparator=lambda v, t: v > t,
+        ),
+        SLOAlert(
+            surface="copilot", metric="error_rate", threshold=0.01, comparator=lambda v, t: v > t
+        ),
+        SLOAlert(
+            surface="copilot", metric="availability", threshold=0.999, comparator=lambda v, t: v < t
+        ),
     ]
 
 

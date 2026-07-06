@@ -13,19 +13,19 @@ list path.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import select, update
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 from app.core.logging import get_logger
 from app.core.security import AuthenticatedPrincipal, get_current_principal
 from app.db.models.user_session import UserSession
 from app.db.session import get_session_factory
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -66,15 +66,19 @@ async def list_sessions(
     factory = get_session_factory()
     async with factory() as session:
         rows = (
-            await session.execute(
-                select(UserSession)
-                .where(
-                    UserSession.user_id == UUID(principal.user_id),
-                    UserSession.tenant_id == UUID(principal.tenant_id),
+            (
+                await session.execute(
+                    select(UserSession)
+                    .where(
+                        UserSession.user_id == UUID(principal.user_id),
+                        UserSession.tenant_id == UUID(principal.tenant_id),
+                    )
+                    .order_by(UserSession.last_seen_at.desc())
                 )
-                .order_by(UserSession.last_seen_at.desc())
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
     return [
         SessionRead(
@@ -89,9 +93,9 @@ async def list_sessions(
         )
         for r in rows
     ]
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.delete("/{session_id}")
 async def revoke_session(
     session_id: UUID,
@@ -120,7 +124,7 @@ async def revoke_session(
                 UserSession.user_id == UUID(principal.user_id),
                 UserSession.tenant_id == UUID(principal.tenant_id),
             )
-            .values(revoked_at=datetime.now(tz=timezone.utc))
+            .values(revoked_at=datetime.now(tz=UTC))
         )
         await session.commit()
         if result.rowcount == 0:

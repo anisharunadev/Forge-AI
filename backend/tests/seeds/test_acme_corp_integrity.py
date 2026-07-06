@@ -25,7 +25,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
 from jsonschema import Draft202012Validator
 
 # ---------------------------------------------------------------------------
@@ -67,9 +66,8 @@ def test_manifest_validates_against_schema() -> None:
     schema = json.loads(SCHEMA_PATH.read_text())
     validator = Draft202012Validator(schema)
     errors = sorted(validator.iter_errors(manifest), key=lambda e: e.path)
-    assert not errors, (
-        f"acme-corp manifest failed schema validation: "
-        + "; ".join(f"{'/'.join(map(str, e.path))}: {e.message}" for e in errors)
+    assert not errors, "acme-corp manifest failed schema validation: " + "; ".join(
+        f"{'/'.join(map(str, e.path))}: {e.message}" for e in errors
     )
 
 
@@ -116,9 +114,7 @@ def test_all_rows_have_natural_key() -> None:
         rows = _load_data_file(df["file"])
         for i, row in enumerate(rows):
             for col in df["idempotency_key"]:
-                assert col in row, (
-                    f"Row {i} of {df['file']!r} missing natural-key column {col!r}"
-                )
+                assert col in row, f"Row {i} of {df['file']!r} missing natural-key column {col!r}"
                 assert row[col] is not None, (
                     f"Row {i} of {df['file']!r} has null natural-key column {col!r}"
                 )
@@ -166,9 +162,7 @@ def test_no_duplicate_natural_keys_within_file() -> None:
         seen: set[tuple] = set()
         for i, row in enumerate(rows):
             key = tuple(row.get(c) for c in df["idempotency_key"])
-            assert key not in seen, (
-                f"Duplicate natural key {key!r} in {df['file']!r} at row {i}"
-            )
+            assert key not in seen, f"Duplicate natural key {key!r} in {df['file']!r} at row {i}"
             seen.add(key)
 
 
@@ -253,9 +247,7 @@ def test_prds_reference_ideas_and_have_valid_status() -> None:
     valid_statuses = {"draft", "review", "approved", "published", "archived"}
     for r in files["018_prds.json"]:
         assert r["idea_id"] in idea_ids, f"PRD {r['id']!r} references unknown idea"
-        assert r["status"] in valid_statuses, (
-            f"PRD {r['id']!r} has invalid status {r['status']!r}"
-        )
+        assert r["status"] in valid_statuses, f"PRD {r['id']!r} has invalid status {r['status']!r}"
 
 
 def test_workflow_sessions_reference_ideas() -> None:
@@ -264,9 +256,7 @@ def test_workflow_sessions_reference_ideas() -> None:
     sessions = files["019_workflow_sessions.json"]
     valid_statuses = {"pending", "running", "completed", "failed", "cancelled"}
     for r in sessions:
-        assert r["idea_id"] in idea_ids, (
-            f"workflow_session {r['id']!r} references unknown idea"
-        )
+        assert r["idea_id"] in idea_ids, f"workflow_session {r['id']!r} references unknown idea"
         assert r["status"] in valid_statuses, (
             f"workflow_session {r['id']!r} has invalid status {r['status']!r}"
         )
@@ -325,9 +315,7 @@ def test_three_intentional_conflicts_have_valid_enums() -> None:
         assert c["status"] in valid_status, (
             f"Conflict {c['conflict_key']!r} has invalid status {c['status']!r}"
         )
-        assert c["status"] == "open", (
-            f"Conflict {c['conflict_key']!r} must be open for the demo"
-        )
+        assert c["status"] == "open", f"Conflict {c['conflict_key']!r} must be open for the demo"
         assert c["sources"], f"Conflict {c['conflict_key']!r} has no sources"
         has_adr_source = any(s.get("source_type") == "adr" for s in c["sources"])
         assert has_adr_source, (

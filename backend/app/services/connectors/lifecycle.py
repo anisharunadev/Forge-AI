@@ -34,7 +34,7 @@ terse.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -52,7 +52,8 @@ from app.services.connector_manager import (
     TestResult,
     connector_manager,
 )
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 
 logger = get_logger(__name__)
 
@@ -111,9 +112,7 @@ class ConnectorLifecycle:
         # Probe + persist history regardless. The test does not raise;
         # a failed probe returns ``TestResult(ok=False, ...)`` which the
         # history row records faithfully.
-        result = await self._manager.test_connection(
-            connector.id, tenant_id=tenant_id
-        )
+        result = await self._manager.test_connection(connector.id, tenant_id=tenant_id)
         await self._persist_probe(connector=connector, result=result)
         await self._stamp_last_healthcheck(connector=connector, result=result)
 
@@ -166,9 +165,7 @@ class ConnectorLifecycle:
         up the new config the next time it resolves the connector.
         """
         # Verify tenant ownership before mutating.
-        connector = await self._manager.get_connector(
-            connector_id, tenant_id=tenant_id
-        )
+        connector = await self._manager.get_connector(connector_id, tenant_id=tenant_id)
 
         merged_config: dict[str, Any] = dict(connector.config or {})
         merged_config.update(dict(new_credentials or {}))
@@ -193,9 +190,7 @@ class ConnectorLifecycle:
 
         # Re-probe with the new credentials so a bad rotation surfaces
         # immediately rather than waiting for the next sync.
-        result = await self._manager.test_connection(
-            updated.id, tenant_id=updated.tenant_id
-        )
+        result = await self._manager.test_connection(updated.id, tenant_id=updated.tenant_id)
         await self._persist_probe(connector=updated, result=result)
         await self._stamp_last_healthcheck(connector=updated, result=result)
 
@@ -239,12 +234,8 @@ class ConnectorLifecycle:
         gap-free.
         """
         # tenant-scoped get — raises PermissionError if cross-tenant.
-        connector = await self._manager.get_connector(
-            connector_id, tenant_id=tenant_id
-        )
-        result = await self._manager.test_connection(
-            connector.id, tenant_id=tenant_id
-        )
+        connector = await self._manager.get_connector(connector_id, tenant_id=tenant_id)
+        result = await self._manager.test_connection(connector.id, tenant_id=tenant_id)
         await self._persist_probe(connector=connector, result=result)
         await self._stamp_last_healthcheck(connector=connector, result=result)
 
@@ -287,17 +278,13 @@ class ConnectorLifecycle:
           event_type=disconnect so the Activity tab can highlight
           disconnect events distinctly from sync/test/install events.
         """
-        connector = await self._manager.get_connector(
-            connector_id, tenant_id=tenant_id
-        )
+        connector = await self._manager.get_connector(connector_id, tenant_id=tenant_id)
         prior_status = ConnectorStatus(connector.status)
         if prior_status == ConnectorStatus.DISCONNECTED:
             # No-op; don't double-write audit / activity.
             return connector
 
-        refreshed = await self._manager.disconnect_connector(
-            connector.id, actor_id=actor_id
-        )
+        refreshed = await self._manager.disconnect_connector(connector.id, actor_id=actor_id)
 
         await audit_service.record(
             tenant_id=tenant_id,
@@ -310,9 +297,7 @@ class ConnectorLifecycle:
                 "from_state": prior_status.value,
                 "to_state": refreshed.status.value,
                 "disconnected_at": (
-                    refreshed.disconnected_at.isoformat()
-                    if refreshed.disconnected_at
-                    else None
+                    refreshed.disconnected_at.isoformat() if refreshed.disconnected_at else None
                 ),
             },
         )
@@ -322,8 +307,8 @@ class ConnectorLifecycle:
             connector_id=refreshed.id,
             event_type="disconnect",
             status="success",
-            started_at=refreshed.disconnected_at or datetime.now(timezone.utc),
-            finished_at=refreshed.disconnected_at or datetime.now(timezone.utc),
+            started_at=refreshed.disconnected_at or datetime.now(UTC),
+            finished_at=refreshed.disconnected_at or datetime.now(UTC),
             actor_id=actor_id,
             event_metadata={
                 "from_state": prior_status.value,
@@ -351,7 +336,7 @@ class ConnectorLifecycle:
                     tenant_id=str(connector.tenant_id),
                     project_id=str(connector.project_id),
                     connector_id=connector.id,
-                    checked_at=result.checked_at or datetime.now(timezone.utc),
+                    checked_at=result.checked_at or datetime.now(UTC),
                     ok=result.ok,
                     latency_ms=result.latency_ms,
                     detail=result.detail,
@@ -360,9 +345,7 @@ class ConnectorLifecycle:
             await session.commit()
 
     @staticmethod
-    async def _stamp_last_healthcheck(
-        *, connector: Connector, result: TestResult
-    ) -> None:
+    async def _stamp_last_healthcheck(*, connector: Connector, result: TestResult) -> None:
         """Write ``Connector.last_healthcheck_at`` + ``last_healthcheck_status``.
 
         Done in a separate session so the history insert (above) and
@@ -375,10 +358,8 @@ class ConnectorLifecycle:
             row = await session.get(Connector, str(connector.id))
             if row is None:
                 return
-            row.last_healthcheck_at = result.checked_at or datetime.now(timezone.utc)
-            row.last_healthcheck_status = (
-                _STATUS_OK if result.ok else _STATUS_UNREACHABLE
-            )
+            row.last_healthcheck_at = result.checked_at or datetime.now(UTC)
+            row.last_healthcheck_status = _STATUS_OK if result.ok else _STATUS_UNREACHABLE
             await session.commit()
 
 

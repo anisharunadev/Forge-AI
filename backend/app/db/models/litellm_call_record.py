@@ -21,7 +21,7 @@ from uuid import UUID
 from sqlalchemy import DateTime, Float, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, UUIDPrimaryKeyMixin
 
 
 class LiteLLMCallStatus(str, Enum):

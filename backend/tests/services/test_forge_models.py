@@ -33,7 +33,7 @@ import app.db.session as _session_mod
 
 
 class _StubSession:
-    async def __aenter__(self) -> "_StubSession":
+    async def __aenter__(self) -> _StubSession:
         return self
 
     async def __aexit__(self, *args: Any) -> None:
@@ -56,7 +56,6 @@ from app.services.forge_models import (  # noqa: E402  — must follow the stub 
     _model_info_bucket,
     _v1_models_bucket,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -93,7 +92,6 @@ def proxy_url() -> str:
 def lite_env(monkeypatch, master_key, proxy_url):
     """Patch settings so get_forge_config returns a non-empty master_key + proxy."""
     from app.services import forge_config
-    from app.services import forge_models as fm
 
     monkeypatch.setattr(forge_config.settings, "litellm_proxy_url", proxy_url, raising=False)
     monkeypatch.setattr(forge_config.settings, "litellm_master_key", master_key, raising=False)
@@ -182,19 +180,33 @@ async def test_cold_cache_three_litellm_calls(monkeypatch, lite_env):
     caller_key = "sk-caller-AAA"
 
     handlers = {
-        "/v1/models": lambda req: httpx.Response(200, json=_v1_models_response(["gpt-4o", "bedrock/claude-3-5-sonnet"])),
-        "/model/info": lambda req: httpx.Response(200, json=_model_info_response(
-            [
-                {"model_name": "gpt-4o", "model_info": {"owned_by": "openai"}},
-                {"model_name": "bedrock/claude-3-5-sonnet", "model_info": {"owned_by": "bedrock"}},
-            ]
-        )),
-        "/public/litellm_model_cost_map": lambda req: httpx.Response(200, json=_cost_map_response(
-            {
-                "gpt-4o": {"input_cost_per_token": 0.000005, "output_cost_per_token": 0.000015},
-                "bedrock/claude-3-5-sonnet": {"input_cost_per_token": 0.000003, "output_cost_per_token": 0.000015},
-            }
-        )),
+        "/v1/models": lambda req: httpx.Response(
+            200, json=_v1_models_response(["gpt-4o", "bedrock/claude-3-5-sonnet"])
+        ),
+        "/model/info": lambda req: httpx.Response(
+            200,
+            json=_model_info_response(
+                [
+                    {"model_name": "gpt-4o", "model_info": {"owned_by": "openai"}},
+                    {
+                        "model_name": "bedrock/claude-3-5-sonnet",
+                        "model_info": {"owned_by": "bedrock"},
+                    },
+                ]
+            ),
+        ),
+        "/public/litellm_model_cost_map": lambda req: httpx.Response(
+            200,
+            json=_cost_map_response(
+                {
+                    "gpt-4o": {"input_cost_per_token": 0.000005, "output_cost_per_token": 0.000015},
+                    "bedrock/claude-3-5-sonnet": {
+                        "input_cost_per_token": 0.000003,
+                        "output_cost_per_token": 0.000015,
+                    },
+                }
+            ),
+        ),
     }
     transport = _make_transport(request_log, handlers)
 
@@ -203,9 +215,11 @@ async def test_cold_cache_three_litellm_calls(monkeypatch, lite_env):
     #   .chat_client(api_key)       → returns mock AsyncClient (overlay)
     class _FakeBase:
         def __init__(self) -> None:
-            self._client = httpx.AsyncClient(base_url=lite_env["proxy"], timeout=10.0, transport=transport)
+            self._client = httpx.AsyncClient(
+                base_url=lite_env["proxy"], timeout=10.0, transport=transport
+            )
 
-        async def __aenter__(self) -> "_FakeBase":
+        async def __aenter__(self) -> _FakeBase:
             return self
 
         async def __aexit__(self, *exc: Any) -> None:
@@ -256,7 +270,9 @@ async def test_cold_cache_three_litellm_calls(monkeypatch, lite_env):
 
     # /public/litellm_model_cost_map is unauthenticated.
     auth_cost = by_path["/public/litellm_model_cost_map"]["auth"]
-    assert auth_cost is None or auth_cost == "", f"cost map must be unauthenticated, got {auth_cost!r}"
+    assert auth_cost is None or auth_cost == "", (
+        f"cost map must be unauthenticated, got {auth_cost!r}"
+    )
 
     # Sanity: descriptors returned.
     assert len(out) == 2
@@ -277,20 +293,28 @@ async def test_warm_cache_zero_calls(monkeypatch, lite_env):
 
     handlers = {
         "/v1/models": lambda req: httpx.Response(200, json=_v1_models_response(["gpt-4o"])),
-        "/model/info": lambda req: httpx.Response(200, json=_model_info_response(
-            [{"model_name": "gpt-4o", "model_info": {"owned_by": "openai"}}]
-        )),
-        "/public/litellm_model_cost_map": lambda req: httpx.Response(200, json=_cost_map_response(
-            {"gpt-4o": {"input_cost_per_token": 0.000005, "output_cost_per_token": 0.000015}}
-        )),
+        "/model/info": lambda req: httpx.Response(
+            200,
+            json=_model_info_response(
+                [{"model_name": "gpt-4o", "model_info": {"owned_by": "openai"}}]
+            ),
+        ),
+        "/public/litellm_model_cost_map": lambda req: httpx.Response(
+            200,
+            json=_cost_map_response(
+                {"gpt-4o": {"input_cost_per_token": 0.000005, "output_cost_per_token": 0.000015}}
+            ),
+        ),
     }
     transport = _make_transport(request_log, handlers)
 
     class _FakeBase:
         def __init__(self) -> None:
-            self._client = httpx.AsyncClient(base_url=lite_env["proxy"], timeout=10.0, transport=transport)
+            self._client = httpx.AsyncClient(
+                base_url=lite_env["proxy"], timeout=10.0, transport=transport
+            )
 
-        async def __aenter__(self) -> "_FakeBase":
+        async def __aenter__(self) -> _FakeBase:
             return self
 
         async def __aexit__(self, *exc: Any) -> None:
@@ -325,7 +349,9 @@ async def test_warm_cache_zero_calls(monkeypatch, lite_env):
 
     # Second call within 5 min — same caller — must make ZERO outbound calls.
     second = await svc.list_for_caller({"tenant_id": "t-1", "virtual_key": caller_key})
-    assert len(request_log) == 3, f"warm call must not hit the proxy, got {len(request_log)} total calls"
+    assert len(request_log) == 3, (
+        f"warm call must not hit the proxy, got {len(request_log)} total calls"
+    )
     assert second == first
 
 
@@ -370,15 +396,19 @@ async def test_three_caller_scopes_different_allowed(monkeypatch, lite_env):
     handlers = {
         "/v1/models": v1_handler,
         "/model/info": lambda req: httpx.Response(200, json=_model_info_response(registry_entries)),
-        "/public/litellm_model_cost_map": lambda req: httpx.Response(200, json=_cost_map_response({})),
+        "/public/litellm_model_cost_map": lambda req: httpx.Response(
+            200, json=_cost_map_response({})
+        ),
     }
     transport = _make_transport(request_log, handlers)
 
     class _FakeBase:
         def __init__(self) -> None:
-            self._client = httpx.AsyncClient(base_url=lite_env["proxy"], timeout=10.0, transport=transport)
+            self._client = httpx.AsyncClient(
+                base_url=lite_env["proxy"], timeout=10.0, transport=transport
+            )
 
-        async def __aenter__(self) -> "_FakeBase":
+        async def __aenter__(self) -> _FakeBase:
             return self
 
         async def __aexit__(self, *exc: Any) -> None:
@@ -443,25 +473,33 @@ async def test_cost_map_matches_to_the_cent(monkeypatch, lite_env):
     # output: $0.000015 / token → $0.015 / 1k
     cost_in = 0.000005
     cost_out = 0.000015
-    expected_in_per_1k = cost_in * 1000   # 0.005
-    expected_out_per_1k = cost_out * 1000 # 0.015
+    expected_in_per_1k = cost_in * 1000  # 0.005
+    expected_out_per_1k = cost_out * 1000  # 0.015
 
     handlers = {
         "/v1/models": lambda req: httpx.Response(200, json=_v1_models_response(["gpt-4o"])),
-        "/model/info": lambda req: httpx.Response(200, json=_model_info_response(
-            [{"model_name": "gpt-4o", "model_info": {"owned_by": "openai"}}]
-        )),
-        "/public/litellm_model_cost_map": lambda req: httpx.Response(200, json=_cost_map_response(
-            {"gpt-4o": {"input_cost_per_token": cost_in, "output_cost_per_token": cost_out}}
-        )),
+        "/model/info": lambda req: httpx.Response(
+            200,
+            json=_model_info_response(
+                [{"model_name": "gpt-4o", "model_info": {"owned_by": "openai"}}]
+            ),
+        ),
+        "/public/litellm_model_cost_map": lambda req: httpx.Response(
+            200,
+            json=_cost_map_response(
+                {"gpt-4o": {"input_cost_per_token": cost_in, "output_cost_per_token": cost_out}}
+            ),
+        ),
     }
     transport = _make_transport(request_log, handlers)
 
     class _FakeBase:
         def __init__(self) -> None:
-            self._client = httpx.AsyncClient(base_url=lite_env["proxy"], timeout=10.0, transport=transport)
+            self._client = httpx.AsyncClient(
+                base_url=lite_env["proxy"], timeout=10.0, transport=transport
+            )
 
-        async def __aenter__(self) -> "_FakeBase":
+        async def __aenter__(self) -> _FakeBase:
             return self
 
         async def __aexit__(self, *exc: Any) -> None:
@@ -543,23 +581,33 @@ async def test_groups_endpoint_uses_provider_split(monkeypatch, lite_env):
 
     handlers = {
         "/v1/models": lambda req: httpx.Response(200, json=_v1_models_response([])),
-        "/model/info": lambda req: httpx.Response(200, json=_model_info_response(
-            [
-                {"model_name": "gpt-4o", "model_info": {"owned_by": "openai"}},
-                {"model_name": "bedrock/claude-3-5-sonnet", "model_info": {"owned_by": "bedrock"}},
-                {"model_name": "vertex_ai/gemini-pro", "model_info": {"owned_by": "vertex_ai"}},
-                {"model_name": "azure/gpt-4o", "model_info": {"owned_by": "azure"}},
-            ]
-        )),
-        "/public/litellm_model_cost_map": lambda req: httpx.Response(200, json=_cost_map_response({})),
+        "/model/info": lambda req: httpx.Response(
+            200,
+            json=_model_info_response(
+                [
+                    {"model_name": "gpt-4o", "model_info": {"owned_by": "openai"}},
+                    {
+                        "model_name": "bedrock/claude-3-5-sonnet",
+                        "model_info": {"owned_by": "bedrock"},
+                    },
+                    {"model_name": "vertex_ai/gemini-pro", "model_info": {"owned_by": "vertex_ai"}},
+                    {"model_name": "azure/gpt-4o", "model_info": {"owned_by": "azure"}},
+                ]
+            ),
+        ),
+        "/public/litellm_model_cost_map": lambda req: httpx.Response(
+            200, json=_cost_map_response({})
+        ),
     }
     transport = _make_transport(request_log, handlers)
 
     class _FakeBase:
         def __init__(self) -> None:
-            self._client = httpx.AsyncClient(base_url=lite_env["proxy"], timeout=10.0, transport=transport)
+            self._client = httpx.AsyncClient(
+                base_url=lite_env["proxy"], timeout=10.0, transport=transport
+            )
 
-        async def __aenter__(self) -> "_FakeBase":
+        async def __aenter__(self) -> _FakeBase:
             return self
 
         async def __aexit__(self, *exc: Any) -> None:
@@ -615,29 +663,43 @@ async def test_no_master_key_in_caller_response(monkeypatch, lite_env):
     request_log: list[dict[str, Any]] = []
 
     handlers = {
-        "/v1/models": lambda req: httpx.Response(200, json=_v1_models_response(
-            ["gpt-4o", "bedrock/claude-3-5-sonnet"]
-        )),
-        "/model/info": lambda req: httpx.Response(200, json=_model_info_response(
-            [
-                {"model_name": "gpt-4o", "model_info": {"owned_by": "openai"}},
-                {"model_name": "bedrock/claude-3-5-sonnet", "model_info": {"owned_by": "bedrock"}},
-            ]
-        )),
-        "/public/litellm_model_cost_map": lambda req: httpx.Response(200, json=_cost_map_response(
-            {
-                "gpt-4o": {"input_cost_per_token": 0.000005, "output_cost_per_token": 0.000015},
-                "bedrock/claude-3-5-sonnet": {"input_cost_per_token": 0.000003, "output_cost_per_token": 0.000015},
-            }
-        )),
+        "/v1/models": lambda req: httpx.Response(
+            200, json=_v1_models_response(["gpt-4o", "bedrock/claude-3-5-sonnet"])
+        ),
+        "/model/info": lambda req: httpx.Response(
+            200,
+            json=_model_info_response(
+                [
+                    {"model_name": "gpt-4o", "model_info": {"owned_by": "openai"}},
+                    {
+                        "model_name": "bedrock/claude-3-5-sonnet",
+                        "model_info": {"owned_by": "bedrock"},
+                    },
+                ]
+            ),
+        ),
+        "/public/litellm_model_cost_map": lambda req: httpx.Response(
+            200,
+            json=_cost_map_response(
+                {
+                    "gpt-4o": {"input_cost_per_token": 0.000005, "output_cost_per_token": 0.000015},
+                    "bedrock/claude-3-5-sonnet": {
+                        "input_cost_per_token": 0.000003,
+                        "output_cost_per_token": 0.000015,
+                    },
+                }
+            ),
+        ),
     }
     transport = _make_transport(request_log, handlers)
 
     class _FakeBase:
         def __init__(self) -> None:
-            self._client = httpx.AsyncClient(base_url=lite_env["proxy"], timeout=10.0, transport=transport)
+            self._client = httpx.AsyncClient(
+                base_url=lite_env["proxy"], timeout=10.0, transport=transport
+            )
 
-        async def __aenter__(self) -> "_FakeBase":
+        async def __aenter__(self) -> _FakeBase:
             return self
 
         async def __aexit__(self, *exc: Any) -> None:

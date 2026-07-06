@@ -40,9 +40,8 @@ that a stolen state token expires before any practical replay window.
 from __future__ import annotations
 
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from threading import RLock
-from typing import Optional
 
 from app.core.logging import get_logger
 
@@ -95,7 +94,7 @@ class OAuthStateStore:
         if not state_for:
             raise ValueError("state_for must be a non-empty string")
         token = secrets.token_urlsafe(32)
-        expires_at = datetime.now(timezone.utc) + self._ttl
+        expires_at = datetime.now(UTC) + self._ttl
         with self._lock:
             self._states[token] = (state_for, expires_at)
         logger.info(
@@ -105,7 +104,7 @@ class OAuthStateStore:
         )
         return token
 
-    def consume(self, state: str) -> Optional[str]:
+    def consume(self, state: str) -> str | None:
         """Pop and return the slug associated with ``state``.
 
         Returns ``None`` if:
@@ -127,7 +126,7 @@ class OAuthStateStore:
             # We return None silently so the caller can issue a 400.
             return None
         state_for, expires_at = entry
-        if datetime.now(timezone.utc) >= expires_at:
+        if datetime.now(UTC) >= expires_at:
             # Expired — purge and treat as missing.
             logger.info(
                 "oauth.state.expired",
@@ -146,14 +145,10 @@ class OAuthStateStore:
         reaping happens inside :meth:`consume` so a missed sweep is
         not a correctness bug, only a slow memory leak.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         purged = 0
         with self._lock:
-            stale = [
-                tok
-                for tok, (_, expires_at) in self._states.items()
-                if expires_at <= now
-            ]
+            stale = [tok for tok, (_, expires_at) in self._states.items() if expires_at <= now]
             for tok in stale:
                 self._states.pop(tok, None)
                 purged += 1

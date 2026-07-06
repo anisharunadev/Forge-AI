@@ -23,9 +23,7 @@ from app.services.artifact_registry import artifact_registry
 from app.services.event_bus import bus
 from app.services.litellm_client import LiteLLMClient
 
-router = APIRouter(
-    prefix="/architecture/contracts", tags=["architecture:contracts"]
-)
+router = APIRouter(prefix="/architecture/contracts", tags=["architecture:contracts"])
 
 
 def _generator() -> APIContractGenerator:
@@ -34,15 +32,15 @@ def _generator() -> APIContractGenerator:
         artifact_registry=artifact_registry,
         event_bus=bus,
     )
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("", response_model=APIContractResponse, status_code=status.HTTP_201_CREATED)
 @audit(action="architecture.contract.create", target_type="api_contract")
 async def create_contract(
     body: APIContractCreateRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:contract:create"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:contract:create")),
 ) -> APIContractResponse:
     contract = await _generator().generate_from_description(
         tenant_id=principal.tenant_id,
@@ -76,11 +74,9 @@ async def list_contracts(
 async def get_contract(
     contract_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:contract:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:contract:read")),
 ) -> APIContractResponse:
-    factory = __import__(
-        "app.db.session", fromlist=["get_session_factory"]
-    ).get_session_factory()
+    factory = __import__("app.db.session", fromlist=["get_session_factory"]).get_session_factory()
     async with factory() as session:
         from app.db.models.architecture import APIContract
 
@@ -88,28 +84,26 @@ async def get_contract(
     if contract is None or contract.tenant_id != principal.tenant_id:
         raise HTTPException(status_code=404, detail="contract_not_found")
     return APIContractResponse.model_validate(contract)
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/{contract_id}/validate", response_model=APIContractValidationResponse)
 @audit(action="architecture.contract.validate", target_type="api_contract")
 async def validate_contract(
     contract_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:contract:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:contract:read")),
 ) -> APIContractValidationResponse:
-    return APIContractValidationResponse(
-        **await _generator().validate_spec(contract_id)
-    )
+    return APIContractValidationResponse(**await _generator().validate_spec(contract_id))
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/{contract_id}/publish", response_model=APIContractResponse)
 @audit(action="architecture.contract.publish", target_type="api_contract")
 async def publish_contract(
     contract_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:contract:publish"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:contract:publish")),
 ) -> APIContractResponse:
     try:
         contract = await _generator().publish_contract(contract_id)

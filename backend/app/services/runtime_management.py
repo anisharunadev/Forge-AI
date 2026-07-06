@@ -9,12 +9,11 @@ view on top.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 from uuid import UUID
 
 from app.core.logging import get_logger
-from app.schemas.runtime import RuntimeMetrics, RuntimeState
+from app.schemas.runtime import RuntimeState
 from app.services.agent_runtime import AgentRuntime, RuntimeHandle, agent_runtime
 
 logger = get_logger(__name__)
@@ -79,7 +78,7 @@ class RuntimeManagementService:
         for h in handles:
             if h.started_at is None:
                 continue
-            end = h.stopped_at or datetime.now(timezone.utc)
+            end = h.stopped_at or datetime.now(UTC)
             total_uptime += (end - h.started_at).total_seconds()
         return PlatformRuntimeMetrics(
             total_runtimes=len(handles),
@@ -87,7 +86,7 @@ class RuntimeManagementService:
             stopped=stopped,
             failed=failed,
             total_uptime_seconds=round(total_uptime, 2),
-            collected_at=datetime.now(timezone.utc),
+            collected_at=datetime.now(UTC),
         )
 
 

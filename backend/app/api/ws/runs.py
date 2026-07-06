@@ -25,7 +25,7 @@ import asyncio
 import json
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -34,7 +34,6 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 from app.agents.sdlc_state import ApprovalResponse, SDLCPhase
 from app.core.security import principal_from_token
 from app.schemas.sdlc import WSEnvelope, WSMessageType
-from app.services.event_bus import bus as default_bus
 from app.services.sdlc_run_manager import SDLCRunManager, get_default_manager
 
 logger = logging.getLogger(__name__)
@@ -53,7 +52,7 @@ async def _authenticate(websocket: WebSocket) -> bool:
         return True
     try:
         first = await asyncio.wait_for(websocket.receive_text(), timeout=5.0)
-    except (asyncio.TimeoutError, WebSocketDisconnect):
+    except (TimeoutError, WebSocketDisconnect):
         return False
     try:
         msg = json.loads(first)
@@ -100,10 +99,8 @@ async def run_socket(websocket: WebSocket, run_id: UUID) -> None:
         while True:
             try:
                 snapshot = await asyncio.wait_for(sub.queue.get(), timeout=15.0)
-            except asyncio.TimeoutError:
-                await websocket.send_json(
-                    _envelope("ping", {}).model_dump(mode="json")
-                )
+            except TimeoutError:
+                await websocket.send_json(_envelope("ping", {}).model_dump(mode="json"))
                 continue
             await websocket.send_json(
                 _envelope("state", snapshot.model_dump(mode="json")).model_dump(mode="json")
@@ -142,22 +139,20 @@ async def _consumer(
                         approval_id=UUID(payload["approval_id"]),
                         granted=bool(payload.get("granted", False)),
                         decided_by=UUID(payload["decided_by"]),
-                        decided_at=datetime.now(timezone.utc),
+                        decided_at=datetime.now(UTC),
                         reason=str(payload.get("reason", "")),
                     )
                     await manager.resume_run(run_id, approval_response=response)
                 except (KeyError, ValueError) as exc:
                     logger.warning("ws.bad_approval_response", error=str(exc))
             elif envelope.type == "ping":
-                await websocket.send_json(
-                    _envelope("ping", {}).model_dump(mode="json")
-                )
+                await websocket.send_json(_envelope("ping", {}).model_dump(mode="json"))
     except WebSocketDisconnect:
         return
 
 
 def _envelope(msg_type: WSMessageType, payload: dict[str, Any]) -> WSEnvelope:
-    return WSEnvelope(type=msg_type, payload=payload, sent_at=datetime.now(timezone.utc))
+    return WSEnvelope(type=msg_type, payload=payload, sent_at=datetime.now(UTC))
 
 
 __all__ = ["router"]

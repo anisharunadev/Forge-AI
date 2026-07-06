@@ -22,13 +22,13 @@ The executor's behavior is owned by the unit test in
 from __future__ import annotations
 
 import uuid
+from datetime import UTC
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -78,7 +78,7 @@ def _make_paused_run(
 def _make_succeeded_run(rid: uuid.UUID, tid: uuid.UUID) -> Any:
     """Stub run in terminal SUCCEEDED state — what get_run returns after
     resume() advances the DAG past the approval gate."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from app.db.models.workflow import WorkflowRunStatus
 
@@ -90,8 +90,8 @@ def _make_succeeded_run(rid: uuid.UUID, tid: uuid.UUID) -> Any:
     run.status = WorkflowRunStatus.SUCCEEDED
     run.current_step_id = None
     run.triggered_by = uuid.uuid4()
-    run.started_at = datetime.now(timezone.utc)
-    run.finished_at = datetime.now(timezone.utc)
+    run.started_at = datetime.now(UTC)
+    run.finished_at = datetime.now(UTC)
     run.error = None
     run.state = {
         "stepResults": {
@@ -161,9 +161,10 @@ def test_resume_returns_200_when_executor_succeeds(capsys: pytest.CaptureFixture
     get_run_mock = AsyncMock(side_effect=[paused_run, succeeded_run])
     resume_mock = AsyncMock(return_value=succeeded_run)
 
-    with patch("app.services.workflow_service.WorkflowService.get_run", get_run_mock), patch(
-        "app.services.workflow_executor.get_executor"
-    ) as exec_factory:
+    with (
+        patch("app.services.workflow_service.WorkflowService.get_run", get_run_mock),
+        patch("app.services.workflow_executor.get_executor") as exec_factory,
+    ):
         exec_factory.return_value.resume = resume_mock
 
         response = client.post(f"/api/v1/workflows/runs/{run_id}/resume")
@@ -223,9 +224,10 @@ def test_resume_returns_200_when_run_re_pauses(capsys: pytest.CaptureFixture[str
         )
     )
 
-    with patch("app.services.workflow_service.WorkflowService.get_run", get_run_mock), patch(
-        "app.services.workflow_executor.get_executor"
-    ) as exec_factory:
+    with (
+        patch("app.services.workflow_service.WorkflowService.get_run", get_run_mock),
+        patch("app.services.workflow_executor.get_executor") as exec_factory,
+    ):
         exec_factory.return_value.resume = resume_mock
 
         response = client.post(f"/api/v1/workflows/runs/{run_id}/resume")

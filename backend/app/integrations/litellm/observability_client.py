@@ -114,9 +114,7 @@ class ObservabilityClientGroup:
     # ------------------------------------------------------------------
 
     async def compliance_eu_ai_act(self, tenant_id: str) -> dict[str, Any]:
-        r = await self._base.get(
-            "/compliance/eu-ai-act", params={"tenant_id": tenant_id}
-        )
+        r = await self._base.get("/compliance/eu-ai-act", params={"tenant_id": tenant_id})
         return self._ok(r)
 
     async def compliance_gdpr(self, tenant_id: str, user_id: str) -> dict[str, Any]:

@@ -324,9 +324,7 @@ class MergeGate:
             row at ``merge_gate.evaluate`` is emitted exactly once per
             call.
         """
-        resolved_actor = (
-            actor_id if actor_id is not None else getattr(state, "actor_id", None)
-        )
+        resolved_actor = actor_id if actor_id is not None else getattr(state, "actor_id", None)
         resolved_tenant = getattr(state, "tenant_id", None)
         resolved_project = getattr(state, "project_id", None)
         logger.info(
@@ -516,16 +514,12 @@ try:
         evaluated_at: datetime
 
         @classmethod
-        def from_decision(
-            cls, decision: MergeGateDecision
-        ) -> MergeGateDecisionPayload:
+        def from_decision(cls, decision: MergeGateDecision) -> MergeGateDecisionPayload:
             return cls(
                 allowed=decision.allowed,
                 report_id=decision.report_id,
                 decision=decision.decision,
-                findings=[
-                    GateFindingPayload(**f.to_dict()) for f in decision.findings
-                ],
+                findings=[GateFindingPayload(**f.to_dict()) for f in decision.findings],
                 reason=decision.reason,
                 tenant_id=decision.tenant_id,
                 project_id=decision.project_id,

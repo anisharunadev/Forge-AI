@@ -187,30 +187,38 @@ async def test_backlinks_tenant_isolation(sqlite_db, _patch_internals):
     )
 
     await knowledge_graph_service.add_edge(
-        a1.id, n_a.id, "references", {},
-        tenant_id=TENANT_A, project_id=PROJECT_ID,
+        a1.id,
+        n_a.id,
+        "references",
+        {},
+        tenant_id=TENANT_A,
+        project_id=PROJECT_ID,
     )
     await knowledge_graph_service.add_edge(
-        a2.id, n_a.id, "references", {},
-        tenant_id=TENANT_A, project_id=PROJECT_ID,
+        a2.id,
+        n_a.id,
+        "references",
+        {},
+        tenant_id=TENANT_A,
+        project_id=PROJECT_ID,
     )
     await knowledge_graph_service.add_edge(
-        b1.id, n_b.id, "references", {},
-        tenant_id=TENANT_B, project_id=PROJECT_ID,
+        b1.id,
+        n_b.id,
+        "references",
+        {},
+        tenant_id=TENANT_B,
+        project_id=PROJECT_ID,
     )
 
     # Tenant A caller: sees only A1 + A2.
-    backlinks_a = await knowledge_graph_service.backlinks_for(
-        n_a.id, tenant_id=TENANT_A
-    )
+    backlinks_a = await knowledge_graph_service.backlinks_for(n_a.id, tenant_id=TENANT_A)
     names_a = sorted(n.name for n in backlinks_a)
     assert names_a == ["A1", "A2"]
     assert all(str(n.tenant_id) == TENANT_A for n in backlinks_a)
 
     # Tenant B caller: sees only B1.
-    backlinks_b = await knowledge_graph_service.backlinks_for(
-        n_b.id, tenant_id=TENANT_B
-    )
+    backlinks_b = await knowledge_graph_service.backlinks_for(n_b.id, tenant_id=TENANT_B)
     names_b = [n.name for n in backlinks_b]
     assert names_b == ["B1"]
     assert all(str(n.tenant_id) == TENANT_B for n in backlinks_b)
@@ -240,9 +248,7 @@ async def test_kg_node_creation_mirrors_freshness(sqlite_db, _patch_internals):
 
     # mark_fresh must have been called at least once with the node id,
     # the right tenant, and the right source.
-    matching = [
-        call for call in fake.mark_fresh_calls if call["node_id"] == str(node.id)
-    ]
+    matching = [call for call in fake.mark_fresh_calls if call["node_id"] == str(node.id)]
     assert len(matching) >= 1
     last = matching[-1]
     assert last["tenant_id"] == TENANT_A

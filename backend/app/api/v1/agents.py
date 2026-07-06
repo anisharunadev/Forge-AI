@@ -1,19 +1,19 @@
 from typing import Annotated
+
 """F-011 — Agent Registry REST endpoints."""
 
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Response, status
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
-from app.db.models.agent import Agent
 from app.schemas.agents import AgentCreate, AgentRead, AgentUpdate
 from app.services.agent_registry import agent_registry
 from app.services.forge_key_broker import forge_key_broker
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
@@ -23,11 +23,9 @@ router = APIRouter(prefix="/agents", tags=["agents"])
 async def list_agents(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     project_id: UUID | None = Query(default=None),
-    _perm: AuthenticatedPrincipal = Depends(require_permission("agents:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("agents:read")),
 ) -> list[AgentRead]:
-    agents = await agent_registry.list_agents(
-        principal.tenant_id, project_id=project_id
-    )
+    agents = await agent_registry.list_agents(principal.tenant_id, project_id=project_id)
     return [AgentRead.model_validate(a) for a in agents]
 
 
@@ -36,7 +34,7 @@ async def list_agents(
 async def get_agent(
     agent_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("agents:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("agents:read")),
 ) -> AgentRead:
     try:
         agent = await agent_registry.get_agent(agent_id)
@@ -45,16 +43,16 @@ async def get_agent(
     if str(agent.tenant_id) != str(principal.tenant_id):
         raise HTTPException(status_code=404, detail="agent_not_found")
     return AgentRead.model_validate(agent)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("", response_model=AgentRead, status_code=status.HTTP_201_CREATED)
 @audit(action="agents.create", target_type="agent")
 async def create_agent(
     body: AgentCreate,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     background_tasks: BackgroundTasks,
-    _perm: AuthenticatedPrincipal = Depends(require_permission("agents:create"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("agents:create")),
 ) -> AgentRead:
     agent = await agent_registry.create_agent(
         tenant_id=principal.tenant_id,
@@ -66,9 +64,9 @@ async def create_agent(
     )
     background_tasks.add_task(forge_key_broker.issue_or_rotate, agent)
     return AgentRead.model_validate(agent)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.patch("/{agent_id}", response_model=AgentRead)
 @audit(action="agents.update", target_type="agent")
 async def update_agent(
@@ -76,7 +74,7 @@ async def update_agent(
     body: AgentUpdate,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     background_tasks: BackgroundTasks,
-    _perm: AuthenticatedPrincipal = Depends(require_permission("agents:update"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("agents:update")),
 ) -> AgentRead:
     try:
         existing = await agent_registry.get_agent(agent_id)
@@ -93,9 +91,9 @@ async def update_agent(
     )
     background_tasks.add_task(forge_key_broker.issue_or_rotate, updated)
     return AgentRead.model_validate(updated)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.delete(
     "/{agent_id}",
     response_model=None,
@@ -105,7 +103,7 @@ async def update_agent(
 async def delete_agent(
     agent_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("agents:delete"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("agents:delete")),
 ):
     try:
         existing = await agent_registry.get_agent(agent_id)
@@ -127,7 +125,7 @@ async def delete_agent(
 async def test_agent(
     agent_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("agents:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("agents:read")),
 ) -> dict[str, str]:
     try:
         existing = await agent_registry.get_agent(agent_id)

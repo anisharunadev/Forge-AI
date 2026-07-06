@@ -10,9 +10,8 @@ from __future__ import annotations
 
 from enum import Enum
 from typing import Any
-from uuid import UUID
 
-from sqlalchemy import Boolean, ForeignKey, Index, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Index, String, Text, UniqueConstraint
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -20,7 +19,6 @@ from app.db.base import (
     ARRAY,
     JSONB,
     Base,
-    GUID,
     TenantScopedMixin,
     TimestampMixin,
     UUIDPrimaryKeyMixin,
@@ -48,9 +46,7 @@ class ToolBundle(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMixin):
         nullable=False,
         default=ToolBundleTier.READ_ONLY,
     )
-    tools: Mapped[list[dict[str, Any]]] = mapped_column(
-        JSONB, nullable=False, default=list
-    )
+    tools: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
     requires_approval: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     tags: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
 

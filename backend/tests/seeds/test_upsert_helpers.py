@@ -12,9 +12,7 @@ from backend.seeds.framework.upsert_helpers import (
 
 
 def test_build_upsert_sql_basic() -> None:
-    sql, params = build_upsert_sql(
-        "standards", ["name", "content", "version"], ["name"]
-    )
+    sql, params = build_upsert_sql("standards", ["name", "content", "version"], ["name"])
     assert "INSERT INTO standards" in sql
     assert "(name, content, version)" in sql
     assert "VALUES (:name, :content, :version)" in sql
@@ -24,9 +22,7 @@ def test_build_upsert_sql_basic() -> None:
 
 
 def test_build_upsert_sql_composite_key() -> None:
-    sql, _ = build_upsert_sql(
-        "templates", ["type", "name", "content"], ["type", "name"]
-    )
+    sql, _ = build_upsert_sql("templates", ["type", "name", "content"], ["type", "name"])
     assert "ON CONFLICT (type, name)" in sql
     assert "DO UPDATE SET content = EXCLUDED.content" in sql
 

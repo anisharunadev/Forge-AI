@@ -34,7 +34,7 @@ Why public-client + PKCE and not confidential-client code exchange:
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import httpx
@@ -43,6 +43,8 @@ from jose import JWTError, jwt
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 from app.core import proxy_token_cache
 from app.core.config import settings
 from app.core.logging import get_logger
@@ -57,8 +59,6 @@ from app.db.models.user import User
 from app.db.session import get_session_factory
 from app.services.tenants import _coerce_tenant_id, get_or_create_tenant
 from app.services.users import get_or_create_user, get_user_by_id
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -69,19 +69,16 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 # Constants
 # ---------------------------------------------------------------------------
 
+
 # Keycloak endpoint discovery. We hit the same paths on every
 # environment; only ``KEYCLOAK_URL`` / ``KEYCLOAK_REALM`` change.
 def _keycloak_token_url() -> str:
-    return (
-        f"{settings.keycloak_url}/realms/{settings.keycloak_realm}"
-        "/protocol/openid-connect/token"
-    )
+    return f"{settings.keycloak_url}/realms/{settings.keycloak_realm}/protocol/openid-connect/token"
 
 
 def _keycloak_userinfo_url() -> str:
     return (
-        f"{settings.keycloak_url}/realms/{settings.keycloak_realm}"
-        "/protocol/openid-connect/userinfo"
+        f"{settings.keycloak_url}/realms/{settings.keycloak_realm}/protocol/openid-connect/userinfo"
     )
 
 
@@ -201,13 +198,10 @@ class SsoConfigRead(BaseModel):
     scopes: list[str]
 
 
-
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/oidc/callback", response_model=TokenResponse)
 async def oidc_callback(req: OIDCCallbackRequest) -> TokenResponse:
     """Exchange a Keycloak authorization code for Forge JWTs.
@@ -306,7 +300,9 @@ async def oidc_callback(req: OIDCCallbackRequest) -> TokenResponse:
     if not keycloak_sub or not email:
         # Required claims — refuse the login rather than synthesize a
         # bogus principal.
-        logger.warning("auth.oidc.missing_required_claims", sub=bool(keycloak_sub), email=bool(email))
+        logger.warning(
+            "auth.oidc.missing_required_claims", sub=bool(keycloak_sub), email=bool(email)
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="oidc_userinfo_missing_claims",
@@ -341,7 +337,7 @@ async def oidc_callback(req: OIDCCallbackRequest) -> TokenResponse:
         )
 
     # 5. Issue Forge JWTs.
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     access_claims = {
         "sub": user["id"],
         "email": user["email"],
@@ -400,9 +396,9 @@ async def oidc_callback(req: OIDCCallbackRequest) -> TokenResponse:
         user=user,
         tenant=tenant,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/refresh", response_model=AccessTokenResponse)
 async def refresh(req: RefreshRequest) -> AccessTokenResponse:
     """Trade a Forge refresh token for a fresh access token.
@@ -443,7 +439,7 @@ async def refresh(req: RefreshRequest) -> AccessTokenResponse:
             detail="invalid_refresh_token",
         )
 
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     access_claims = {
         "sub": user["id"],
         "email": user["email"],
@@ -478,9 +474,9 @@ async def refresh(req: RefreshRequest) -> AccessTokenResponse:
         access_token=forge_access,
         proxy_token=proxy_token_value,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/logout")
 async def logout(
     principal: AuthenticatedPrincipal = Depends(get_current_principal),
@@ -518,8 +514,8 @@ async def proxy_token_jwks() -> dict[str, Any]:
     rotating the keypair invalidates every cached token (a
     deliberate, scheduled event).
     """
-    from jose.utils import long_to_base64
     from cryptography.hazmat.primitives import serialization
+    from jose.utils import long_to_base64
 
     from app.core.oauth2_rsa import _load_or_generate  # module-private but safe
 
@@ -565,9 +561,9 @@ async def get_me(
             detail="user_not_found",
         )
     return user
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/me", response_model=dict[str, Any])
 async def patch_me(
     body: UserProfileUpdate,
@@ -638,9 +634,7 @@ async def get_sso_config() -> SsoConfigRead:
     """
     issuer: str | None = None
     if settings.keycloak_url and settings.keycloak_realm:
-        issuer = (
-            f"{settings.keycloak_url.rstrip('/')}/realms/{settings.keycloak_realm}"
-        )
+        issuer = f"{settings.keycloak_url.rstrip('/')}/realms/{settings.keycloak_realm}"
     client_id = getattr(settings, "keycloak_client_id", None) or "forge-ui"
     scopes_raw = getattr(settings, "oidc_scopes", None) or "openid profile email"
     return SsoConfigRead(
@@ -703,17 +697,13 @@ async def list_my_tenants(
     factory = get_session_factory()
     async with factory() as session:
         # All User rows (any tenant) sharing this email.
-        user_rows = (
-            await session.execute(select(User).where(User.email == email))
-        ).scalars().all()
+        user_rows = (await session.execute(select(User).where(User.email == email))).scalars().all()
         tenant_ids = {u.tenant_id for u in user_rows}
         if not tenant_ids:
             return []
         tenants = (
-            await session.execute(
-                select(Tenant).where(Tenant.id.in_(tenant_ids))
-            )
-        ).scalars().all()
+            (await session.execute(select(Tenant).where(Tenant.id.in_(tenant_ids)))).scalars().all()
+        )
 
     # Index by tenant-id for current-tenant detection + role lookup.
     current_tenant_uuid = _coerce_tenant_id(principal.tenant_id)
@@ -752,10 +742,7 @@ async def list_my_tenants(
 
 
 def _keycloak_jwks_url() -> str:
-    return (
-        f"{settings.keycloak_url}/realms/{settings.keycloak_realm}"
-        "/protocol/openid-connect/certs"
-    )
+    return f"{settings.keycloak_url}/realms/{settings.keycloak_realm}/protocol/openid-connect/certs"
 
 
 # Cache the JWKS in-process so every callback doesn't refetch the key set.
@@ -772,7 +759,10 @@ async def _get_jwks() -> list[dict[str, Any]]:
     import time
 
     now = time.monotonic()
-    if _JWKS_CACHE["keys"] is not None and (now - _JWKS_CACHE["fetched_at"]) < _JWKS_CACHE_TTL_SECONDS:
+    if (
+        _JWKS_CACHE["keys"] is not None
+        and (now - _JWKS_CACHE["fetched_at"]) < _JWKS_CACHE_TTL_SECONDS
+    ):
         return _JWKS_CACHE["keys"]
 
     async with httpx.AsyncClient(timeout=10.0) as client:

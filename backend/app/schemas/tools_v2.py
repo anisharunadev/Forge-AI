@@ -8,14 +8,12 @@ Rule 4: typed artifacts only.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Literal
-from uuid import UUID
+from typing import Any
 
 from pydantic import Field
 
 from app.schemas.common import ForgeBaseModel
 from app.schemas.litellm_common import ToolKind
-
 
 # ---------------------------------------------------------------------
 # Catalog

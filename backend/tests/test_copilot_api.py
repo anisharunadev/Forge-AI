@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import uuid
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -37,7 +37,7 @@ class _StubSession:
     def __init__(self) -> None:
         self.added: list[Any] = []
 
-    async def __aenter__(self) -> "_StubSession":
+    async def __aenter__(self) -> _StubSession:
         return self
 
     async def __aexit__(self, *args: Any) -> None:
@@ -75,7 +75,6 @@ from app.api.deps import db_session  # noqa: E402
 from app.api.v1 import copilot as copilot_module  # noqa: E402
 from app.core.security import AuthenticatedPrincipal, get_current_principal  # noqa: E402
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -95,7 +94,7 @@ def _principal(*, permissions=None, tenant_id=None, user_id=None) -> Any:
 @pytest.fixture
 def fastapi_client(sqlite_db):
     """Build a minimal FastAPI test client for the copilot router."""
-    from typing import AsyncIterator
+    from collections.abc import AsyncIterator
 
     app = FastAPI()
     app.include_router(copilot_module.router, prefix="/api/v1")
@@ -120,13 +119,13 @@ def _stub_agent_loop(response, calls, results):
     async def _no_op_aexit(self, *args):
         return None
 
-    return patch(
-        "app.services.litellm_client.LiteLLMClient.__aenter__", _no_op_aenter
-    ), patch(
-        "app.services.litellm_client.LiteLLMClient.__aexit__", _no_op_aexit
-    ), patch(
-        "app.services.litellm_client.LiteLLMClient.agent_loop",
-        AsyncMock(return_value=(response, calls, results)),
+    return (
+        patch("app.services.litellm_client.LiteLLMClient.__aenter__", _no_op_aenter),
+        patch("app.services.litellm_client.LiteLLMClient.__aexit__", _no_op_aexit),
+        patch(
+            "app.services.litellm_client.LiteLLMClient.agent_loop",
+            AsyncMock(return_value=(response, calls, results)),
+        ),
     )
 
 
@@ -156,9 +155,7 @@ def _tool_response_with_call(
             "cost_usd": cost_usd,
         },
     }
-    calls = [
-        ToolCall(id=call_id, name="search_knowledge", arguments_json='{"query": "x"}')
-    ]
+    calls = [ToolCall(id=call_id, name="search_knowledge", arguments_json='{"query": "x"}')]
     results = [
         ToolResult(
             tool_call_id=call_id,
@@ -257,6 +254,7 @@ def test_post_chat_returns_403_without_copilot_use_permission(monkeypatch, sqlit
 def test_list_conversations_returns_only_callers(monkeypatch, sqlite_db):
     """Caller A sees only their conversations; caller B sees only theirs."""
     import asyncio
+
     from app.db.models.copilot import CopilotConversation
 
     tenant_id = uuid.uuid4()
@@ -265,14 +263,12 @@ def test_list_conversations_returns_only_callers(monkeypatch, sqlite_db):
 
     async def _seed():
         async with sqlite_db() as db:
-            db.add_all([
-                CopilotConversation(
-                    tenant_id=tenant_id, project_id=None, user_id=user_a
-                ),
-                CopilotConversation(
-                    tenant_id=tenant_id, project_id=None, user_id=user_b
-                ),
-            ])
+            db.add_all(
+                [
+                    CopilotConversation(tenant_id=tenant_id, project_id=None, user_id=user_a),
+                    CopilotConversation(tenant_id=tenant_id, project_id=None, user_id=user_b),
+                ]
+            )
             await db.commit()
 
     asyncio.get_event_loop().run_until_complete(_seed())
@@ -304,6 +300,7 @@ def test_list_conversations_returns_only_callers(monkeypatch, sqlite_db):
 def test_get_conversation_404_for_wrong_user(sqlite_db):
     """User B cannot read User A's conversation."""
     import asyncio
+
     from app.db.models.copilot import CopilotConversation
 
     tenant_id = uuid.uuid4()
@@ -312,9 +309,7 @@ def test_get_conversation_404_for_wrong_user(sqlite_db):
 
     async def _seed():
         async with sqlite_db() as db:
-            conv = CopilotConversation(
-                tenant_id=tenant_id, project_id=None, user_id=user_a
-            )
+            conv = CopilotConversation(tenant_id=tenant_id, project_id=None, user_id=user_a)
             db.add(conv)
             await db.commit()
             return conv.id
@@ -334,7 +329,6 @@ def test_get_conversation_404_for_wrong_user(sqlite_db):
 
     app.dependency_overrides[get_current_principal] = _override_p  # type: ignore[attr-defined]
     app.dependency_overrides[db_session] = _override_sess
-    from app.core import config
     from app.core.config import settings
 
     settings.copilot_enabled = True
@@ -344,6 +338,7 @@ def test_get_conversation_404_for_wrong_user(sqlite_db):
 
 def test_delete_conversation_204(monkeypatch, sqlite_db):
     import asyncio
+
     from app.db.models.copilot import CopilotConversation
 
     tenant_id = uuid.uuid4()
@@ -351,9 +346,7 @@ def test_delete_conversation_204(monkeypatch, sqlite_db):
 
     async def _seed():
         async with sqlite_db() as db:
-            conv = CopilotConversation(
-                tenant_id=tenant_id, project_id=None, user_id=user_id
-            )
+            conv = CopilotConversation(tenant_id=tenant_id, project_id=None, user_id=user_id)
             db.add(conv)
             await db.commit()
             return conv.id
@@ -382,6 +375,7 @@ def test_delete_conversation_204(monkeypatch, sqlite_db):
 
 def test_submit_feedback_204(monkeypatch, sqlite_db):
     import asyncio
+
     from app.db.models.copilot import CopilotConversation, CopilotMessage
 
     tenant_id = uuid.uuid4()
@@ -389,9 +383,7 @@ def test_submit_feedback_204(monkeypatch, sqlite_db):
 
     async def _seed():
         async with sqlite_db() as db:
-            conv = CopilotConversation(
-                tenant_id=tenant_id, project_id=None, user_id=user_id
-            )
+            conv = CopilotConversation(tenant_id=tenant_id, project_id=None, user_id=user_id)
             db.add(conv)
             await db.flush()
             msg = CopilotMessage(
@@ -458,6 +450,7 @@ def test_list_tools_returns_11_tools(monkeypatch, fastapi_client):
 def test_get_conversation_cost_returns_shape(monkeypatch, sqlite_db):
     import asyncio
     from decimal import Decimal
+
     from app.db.models.copilot import CopilotConversation
 
     tenant_id = uuid.uuid4()

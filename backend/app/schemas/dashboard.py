@@ -16,12 +16,12 @@ from uuid import UUID
 
 from pydantic import Field
 
-from app.schemas.common import ForgeBaseModel, TenantScopedModel
-
+from app.schemas.common import ForgeBaseModel
 
 # ---------------------------------------------------------------------------
 # KPI aggregation
 # ---------------------------------------------------------------------------
+
 
 class RunsByDayPoint(ForgeBaseModel):
     date: str

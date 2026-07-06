@@ -19,12 +19,12 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from sqlalchemy import DateTime, ForeignKey, Index, String, Text, event
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TenantScopedMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, TenantScopedMixin, UUIDPrimaryKeyMixin
 
 
 class VectorStore(Base, UUIDPrimaryKeyMixin, TenantScopedMixin):
@@ -39,12 +39,8 @@ class VectorStore(Base, UUIDPrimaryKeyMixin, TenantScopedMixin):
 
     external_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     name: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    status: Mapped[str] = mapped_column(
-        String(32), nullable=False, default="active", index=True
-    )
-    archived_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="active", index=True)
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # ponytail: named ``metadata_`` because SQLAlchemy reserves ``metadata``
     # on Declarative Base; the API exposes ``metadata``.
     metadata_: Mapped[dict[str, Any]] = mapped_column(

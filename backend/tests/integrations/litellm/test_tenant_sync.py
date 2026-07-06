@@ -62,7 +62,7 @@ class _FakeBaseClient:
         self.admin_client.get = AsyncMock(name="admin_client.get")
         self.admin_client.delete = AsyncMock(name="admin_client.delete")
 
-    async def __aenter__(self) -> "_FakeBaseClient":
+    async def __aenter__(self) -> _FakeBaseClient:
         return self
 
     async def __aexit__(self, *_exc) -> None:
@@ -209,17 +209,21 @@ async def test_archive_team_revokes_keys(
 
     # The mapping status is now ARCHIVED.
     from app.db.models.litellm_team_mapping import LiteLLMTeamMapping
-
     from app.db.session import get_session_factory
+
     factory = get_session_factory()
     async with factory() as session:
         row = (
-            await session.execute(
-                select(LiteLLMTeamMapping).where(
-                    LiteLLMTeamMapping.tenant_id == fake_tenant_id,
+            (
+                await session.execute(
+                    select(LiteLLMTeamMapping).where(
+                        LiteLLMTeamMapping.tenant_id == fake_tenant_id,
+                    )
                 )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
     assert row is not None
     assert row.status == "archived"
 

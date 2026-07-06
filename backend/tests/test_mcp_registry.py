@@ -10,15 +10,14 @@ from app.services.marketplace import (
     list_available_servers,
 )
 from app.services.mcp_registry import (
+    MCP_REGISTRY,
     MCPCategory,
     MCPServerDefinition,
-    MCP_REGISTRY,
     get_server,
     list_categories,
     list_servers,
     to_dict,
 )
-
 
 # ---------------------------------------------------------------------------
 # Registry shape and contents

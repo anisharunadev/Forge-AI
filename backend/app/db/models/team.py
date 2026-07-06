@@ -14,9 +14,9 @@ from sqlalchemy import Boolean, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import (
-    Base,
     GUID,
     JSONB,
+    Base,
     TimestampMixin,
     UUIDPrimaryKeyMixin,
 )
@@ -42,17 +42,13 @@ class Team(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    model_allowlist: Mapped[list[str]] = mapped_column(
-        JSONB, nullable=False, default=list
-    )
+    model_allowlist: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)
     default_agent_config: Mapped[dict[str, Any]] = mapped_column(
         JSONB, nullable=False, default=dict
     )
     blocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    __table_args__ = (
-        Index("ix_teams_tenant_org", "tenant_id", "org_id"),
-    )
+    __table_args__ = (Index("ix_teams_tenant_org", "tenant_id", "org_id"),)
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<Team id={self.id} name={self.name!r} blocked={self.blocked}>"

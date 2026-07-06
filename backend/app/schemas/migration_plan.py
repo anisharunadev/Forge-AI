@@ -11,7 +11,7 @@ the F-010 registry stores and the API surfaces.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -95,7 +95,7 @@ class RiskItem(ForgeBaseModel):
     tags: list[str] = Field(default_factory=list, max_length=32)
 
     @model_validator(mode="after")
-    def _compute_severity(self) -> "RiskItem":
+    def _compute_severity(self) -> RiskItem:
         """Auto-compute severity = likelihood * impact when caller didn't set it."""
         if not self.severity:
             object.__setattr__(self, "severity", self.likelihood * self.impact)
@@ -119,9 +119,7 @@ class SourceInventory(ForgeBaseModel):
 
     # AWS Transform job that produced this inventory, if any.
     aws_transform_job_id: str | None = None
-    inventory_generated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    inventory_generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class TargetArchitecture(ForgeBaseModel):
@@ -177,9 +175,7 @@ class MigrationPlan(ForgeBaseModel):
     dependencies: list[str] = Field(default_factory=list, max_length=500)
 
     generated_by: str = "refactor_agent"
-    generated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     metadata: dict[str, Any] = Field(default_factory=dict)
 

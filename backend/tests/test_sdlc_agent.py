@@ -14,10 +14,8 @@ Coverage
 from __future__ import annotations
 
 import asyncio
-import json
-import time
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -25,10 +23,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 import pytest_asyncio
 
-
 # ---------------------------------------------------------------------------
 # Helpers / fixtures
 # ---------------------------------------------------------------------------
+
 
 def _state(**overrides: Any):
     from backend.app.agents.sdlc_state import SDLCState
@@ -68,8 +66,9 @@ def event_bus(event_bus):
 # State model tests
 # ---------------------------------------------------------------------------
 
+
 def test_sdlc_state_initial_values():
-    from backend.app.agents.sdlc_state import SDLCPhase, SDLCState
+    from backend.app.agents.sdlc_state import SDLCPhase
 
     state = _state()
     assert state.current_phase == SDLCPhase.DISCOVERY
@@ -90,7 +89,6 @@ def test_sdlc_state_with_phase_appends_history():
 
 
 def test_sdlc_state_add_cost_rejects_negative():
-    from backend.app.agents.sdlc_state import SDLCState
 
     state = _state()
     with pytest.raises(ValueError):
@@ -109,9 +107,10 @@ def test_sdlc_state_serialization_roundtrip():
 # DiscoveryNode
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_discovery_node_runs_intel_commands(sqlite_db, gsd_stub, event_bus):
-    from backend.app.agents.nodes.discovery import DiscoveryNode, ARTIFACT_TYPE_DISCOVERY
+    from backend.app.agents.nodes.discovery import ARTIFACT_TYPE_DISCOVERY, DiscoveryNode
 
     node = DiscoveryNode(event_bus=event_bus)
     state = _state()
@@ -128,6 +127,7 @@ async def test_discovery_node_runs_intel_commands(sqlite_db, gsd_stub, event_bus
 # ---------------------------------------------------------------------------
 # PlanningNode
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_planning_node_generates_roadmap(sqlite_db, gsd_stub, event_bus):
@@ -150,6 +150,7 @@ async def test_planning_node_generates_roadmap(sqlite_db, gsd_stub, event_bus):
 # ---------------------------------------------------------------------------
 # ArchitectureNode
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_architecture_node_requires_approval(sqlite_db, gsd_stub, event_bus):
@@ -180,6 +181,7 @@ async def test_architecture_node_creates_typed_artifacts(sqlite_db, gsd_stub, ev
 # ImplementationNode
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_implementation_node_uses_terminal(sqlite_db, gsd_stub, event_bus):
     from backend.app.agents.nodes.implementation import (
@@ -187,9 +189,7 @@ async def test_implementation_node_uses_terminal(sqlite_db, gsd_stub, event_bus)
         ImplementationNode,
     )
 
-    with patch(
-        "backend.app.agents.nodes.implementation.AgentRuntime"
-    ) as runtime_cls:
+    with patch("backend.app.agents.nodes.implementation.AgentRuntime") as runtime_cls:
         runtime = MagicMock()
         handle = MagicMock(id=uuid.uuid4())
         runtime.start = AsyncMock(return_value=handle)
@@ -207,6 +207,7 @@ async def test_implementation_node_uses_terminal(sqlite_db, gsd_stub, event_bus)
 # SecurityNode
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_security_node_requires_approval(event_bus):
     from backend.app.agents.nodes.security import SecurityNode
@@ -218,6 +219,7 @@ async def test_security_node_requires_approval(event_bus):
 # ---------------------------------------------------------------------------
 # DeploymentNode
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_deployment_node_requires_approval(event_bus):
@@ -243,6 +245,7 @@ async def test_deployment_node_requires_approval(event_bus):
 # callers see the raised error.
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_approval_gate_raises_on_missing_decision():
     from backend.app.agents.approval_gate import (
@@ -256,11 +259,9 @@ async def test_approval_gate_raises_on_missing_decision():
         approval_id=uuid.uuid4(),
         type="architecture",
         required_role="forge-architect",
-        expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        expires_at=datetime.now(UTC) + timedelta(hours=1),
     )
-    state = _state().set_pending_approval(pending).with_phase(
-        SDLCPhase.BLOCKED_APPROVAL
-    )
+    state = _state().set_pending_approval(pending).with_phase(SDLCPhase.BLOCKED_APPROVAL)
     with pytest.raises(ApprovalRequiredError):
         await gate(state)
 
@@ -279,13 +280,9 @@ async def test_approval_grant_resumes_graph():
         approval_id=uuid.uuid4(),
         type="architecture",
         required_role="forge-architect",
-        expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        expires_at=datetime.now(UTC) + timedelta(hours=1),
     )
-    state = (
-        _state()
-        .set_pending_approval(pending)
-        .with_phase(SDLCPhase.BLOCKED_APPROVAL)
-    )
+    state = _state().set_pending_approval(pending).with_phase(SDLCPhase.BLOCKED_APPROVAL)
     response = ApprovalResponse(
         approval_id=pending.approval_id,
         granted=True,
@@ -315,13 +312,9 @@ async def test_approval_deny_raises():
         approval_id=uuid.uuid4(),
         type="security",
         required_role="forge-security",
-        expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        expires_at=datetime.now(UTC) + timedelta(hours=1),
     )
-    state = (
-        _state()
-        .set_pending_approval(pending)
-        .with_phase(SDLCPhase.BLOCKED_APPROVAL)
-    )
+    state = _state().set_pending_approval(pending).with_phase(SDLCPhase.BLOCKED_APPROVAL)
     state = await gate.record_response(
         state,
         ApprovalResponse(
@@ -358,13 +351,9 @@ async def test_approval_timeout_raises_before_intervention():
         approval_id=uuid.uuid4(),
         type="deployment",
         required_role="forge-deployer",
-        expires_at=datetime.now(timezone.utc) - timedelta(seconds=1),
+        expires_at=datetime.now(UTC) - timedelta(seconds=1),
     )
-    state = (
-        _state()
-        .set_pending_approval(pending)
-        .with_phase(SDLCPhase.BLOCKED_APPROVAL)
-    )
+    state = _state().set_pending_approval(pending).with_phase(SDLCPhase.BLOCKED_APPROVAL)
     with pytest.raises(ApprovalRequiredError):
         await gate(state)
 
@@ -373,10 +362,12 @@ async def test_approval_timeout_raises_before_intervention():
 # Supervisor / checkpointing
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_run_state_persists_in_checkpoint():
-    from backend.app.agents.sdlc_agent import build_sdlc_graph
     from langgraph.checkpoint.memory import MemorySaver
+
+    from backend.app.agents.sdlc_agent import build_sdlc_graph
 
     saver = MemorySaver()
     graph = build_sdlc_graph(checkpointer=saver)
@@ -416,6 +407,7 @@ async def test_run_resume_uses_existing_thread_id(event_bus):
 # Cost tracking
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_cost_ledger_records_per_phase(sqlite_db, event_bus):
     from backend.app.agents.cost_tracking import SDLCPhaseCostTracker
@@ -453,6 +445,7 @@ async def test_cost_ledger_records_per_phase(sqlite_db, event_bus):
 # ---------------------------------------------------------------------------
 # Hook orchestration
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_hook_pre_phase_fires(event_bus, sqlite_db):

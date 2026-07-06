@@ -17,11 +17,11 @@ stable non-human ``submitted_by`` reference.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import select, update as sa_update
+from sqlalchemy import select
+from sqlalchemy import update as sa_update
 
 from app.core.logging import get_logger
 from app.db.models.ideation import Idea, IdeaSource, IdeaStatus
@@ -38,25 +38,71 @@ _SYSTEM_ACTOR = uuid.UUID("00000000-0000-0000-0000-00000000feed")
 _KEYWORD_OVERLAP_MIN = 2
 
 # Stopwords stripped before the keyword overlap check.
-_STOPWORDS = frozenset({
-    "the", "and", "for", "with", "this", "that", "from", "into",
-    "have", "has", "are", "was", "were", "but", "not", "you",
-    "your", "our", "their", "they", "them", "out", "any", "all",
-    "use", "using", "via", "per", "more", "less", "very", "much",
-    "should", "would", "could", "will", "can", "may", "might",
-    "need", "needs", "needed", "want", "wants", "wanted", "make",
-    "makes", "making", "do", "does", "did", "done", "be", "been",
-})
+_STOPWORDS = frozenset(
+    {
+        "the",
+        "and",
+        "for",
+        "with",
+        "this",
+        "that",
+        "from",
+        "into",
+        "have",
+        "has",
+        "are",
+        "was",
+        "were",
+        "but",
+        "not",
+        "you",
+        "your",
+        "our",
+        "their",
+        "they",
+        "them",
+        "out",
+        "any",
+        "all",
+        "use",
+        "using",
+        "via",
+        "per",
+        "more",
+        "less",
+        "very",
+        "much",
+        "should",
+        "would",
+        "could",
+        "will",
+        "can",
+        "may",
+        "might",
+        "need",
+        "needs",
+        "needed",
+        "want",
+        "wants",
+        "wanted",
+        "make",
+        "makes",
+        "making",
+        "do",
+        "does",
+        "did",
+        "done",
+        "be",
+        "been",
+    }
+)
 
 
 def _tokenize(text: str) -> list[str]:
     """Lower-case word tokens, strip stopwords."""
     if not text:
         return []
-    raw = [
-        tok.strip(".,;:!?\"'()[]{}<>*&^%$#@`~")
-        for tok in text.lower().split()
-    ]
+    raw = [tok.strip(".,;:!?\"'()[]{}<>*&^%$#@`~") for tok in text.lower().split()]
     return [t for t in raw if t and t not in _STOPWORDS and len(t) > 2]
 
 
@@ -100,9 +146,7 @@ class Synthesizer:
         for cluster in clusters:
             if not cluster:
                 continue
-            idea = await self._create_idea_from_cluster(
-                tenant_id=tenant_id, cluster=cluster
-            )
+            idea = await self._create_idea_from_cluster(tenant_id=tenant_id, cluster=cluster)
             if idea is None:
                 continue
             await self._link_signals_to_idea(cluster, idea.id)
@@ -119,9 +163,7 @@ class Synthesizer:
 
     # ---- Internals ----------------------------------------------------
 
-    async def _load_uncategorized(
-        self, tenant_id: UUID | str
-    ) -> list[IdeaSourceSignal]:
+    async def _load_uncategorized(self, tenant_id: UUID | str) -> list[IdeaSourceSignal]:
         factory = get_session_factory()
         async with factory() as session:
             stmt = (
@@ -133,9 +175,7 @@ class Synthesizer:
             )
             return list((await session.execute(stmt)).scalars().all())
 
-    def _cluster_by_keywords(
-        self, signals: list[IdeaSourceSignal]
-    ) -> list[list[IdeaSourceSignal]]:
+    def _cluster_by_keywords(self, signals: list[IdeaSourceSignal]) -> list[list[IdeaSourceSignal]]:
         """Union-find greedy clustering on title-keyword overlap."""
         parent: dict[int, int] = {i: i for i in range(len(signals))}
 
@@ -152,9 +192,10 @@ class Synthesizer:
 
         for i in range(len(signals)):
             for j in range(i + 1, len(signals)):
-                if _keyword_overlap(
-                    signals[i].title or "", signals[j].title or ""
-                ) >= _KEYWORD_OVERLAP_MIN:
+                if (
+                    _keyword_overlap(signals[i].title or "", signals[j].title or "")
+                    >= _KEYWORD_OVERLAP_MIN
+                ):
                     union(i, j)
 
         groups: dict[int, list[IdeaSourceSignal]] = {}
@@ -186,10 +227,7 @@ class Synthesizer:
                 source=IdeaSource.SIGNAL,
                 submitted_by=_SYSTEM_ACTOR,
                 status=IdeaStatus.NEW,
-                tags=[
-                    f"source:{s.source}"
-                    for s in cluster[:3]
-                ] + ["daily-ingest"],
+                tags=[f"source:{s.source}" for s in cluster[:3]] + ["daily-ingest"],
                 attachments=[
                     {
                         "kind": "ideation_source_signals",
@@ -238,7 +276,7 @@ class Synthesizer:
             row.ideas_created = ideas_created
             row.status = status
             row.degraded_budget = degraded_budget
-            row.finished_at = datetime.now(timezone.utc)
+            row.finished_at = datetime.now(UTC)
             await session.commit()
 
 

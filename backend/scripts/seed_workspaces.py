@@ -8,6 +8,7 @@ exist.
 
 Run: ``python -m scripts.seed_workspaces``
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -40,9 +41,7 @@ async def seed() -> None:
 
         # Workspace — idempotent.
         existing = (
-            await session.execute(
-                select(Tenant).where(Tenant.slug == WORKSPACE_SLUG)
-            )
+            await session.execute(select(Tenant).where(Tenant.slug == WORKSPACE_SLUG))
         ).scalar_one_or_none()
         if existing is not None:
             tenant = existing
@@ -109,10 +108,7 @@ async def seed() -> None:
                 error=str(exc),
             )
 
-    print(
-        "\n✅ Workspaces seeded. The TenantSwitcher dropdown should now "
-        "show two workspaces."
-    )
+    print("\n✅ Workspaces seeded. The TenantSwitcher dropdown should now show two workspaces.")
 
 
 if __name__ == "__main__":

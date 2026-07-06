@@ -16,11 +16,10 @@ from uuid import UUID
 
 from sqlalchemy import select
 
-from app.core.logging import get_logger
-from app.core.security import AuthenticatedPrincipal
-from app.copilot.tools.base import Tool
 from app.copilot.tools.exceptions import ToolArgumentInvalid
 from app.copilot.tools.registry import tool_registry
+from app.core.logging import get_logger
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.copilot import CopilotConversation  # noqa: F401  (loads model)
 from app.db.models.standard import Standard  # noqa: F401  (loads model)
 from app.db.models.template import Template  # noqa: F401  (loads model)
@@ -71,8 +70,7 @@ class SearchKnowledgeTool:
             raise ToolArgumentInvalid(self.name, "query must be a non-empty string", field="query")
         node_types = args.get("node_types")
         if node_types is not None and (
-            not isinstance(node_types, list)
-            or not all(isinstance(t, str) for t in node_types)
+            not isinstance(node_types, list) or not all(isinstance(t, str) for t in node_types)
         ):
             raise ToolArgumentInvalid(
                 self.name, "node_types must be a list of strings", field="node_types"

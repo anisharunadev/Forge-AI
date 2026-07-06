@@ -20,7 +20,6 @@ import importlib.util
 import os
 import sys
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -42,7 +41,7 @@ def _load(name: str, relpath: str):  # type: ignore[no-untyped-def]
 
 def _routes_for(relpath: str):  # type: ignore[no-untyped-def]
     """Return ``{(method, path)}`` from a FastAPI router source file via AST."""
-    src = open(os.path.join(_BACKEND, relpath), "r", encoding="utf-8").read()
+    src = open(os.path.join(_BACKEND, relpath), encoding="utf-8").read()
     tree = ast.parse(src)
 
     # Look up the router's prefix (e.g. ``APIRouter(prefix="/forge")``).
@@ -127,7 +126,7 @@ def test_async_client_group_methods_present():
 def test_base_client_exposes_async_property():
     """b) LiteLLMBaseClient has `async` property — AST check (env-independent)."""
     src_path = os.path.join(_BACKEND, "app", "integrations", "litellm", "litellm_base_client.py")
-    tree = ast.parse(open(src_path, "r", encoding="utf-8").read())
+    tree = ast.parse(open(src_path, encoding="utf-8").read())
 
     found = False
     for node in ast.walk(tree):
@@ -209,11 +208,12 @@ def test_error_codes_in_service_exceptions():
     # ``app.integrations.litellm.litellm_base_client``; inspect the AST
     # and re-execute ``AsyncError`` + ``ERROR_CODES`` definitions in an
     # isolated namespace.
-    src = open(os.path.join(_BACKEND, "app/services/async_service.py"), "r", encoding="utf-8").read()
+    src = open(os.path.join(_BACKEND, "app/services/async_service.py"), encoding="utf-8").read()
     tree = ast.parse(src)
 
     # Collect the source fragments that define AsyncError + ERROR_CODES + async_service.
     captured: dict = {}
+
     class _Visitor(ast.NodeVisitor):
         def visit_ClassDef(self, node):  # noqa: D401
             if node.name == "AsyncError":
@@ -235,7 +235,9 @@ def test_error_codes_in_service_exceptions():
     _Visitor().visit(tree)
 
     ns: dict = {}
-    assert "AsyncError" in captured and "ERROR_CODES" in captured, "service source missing ERROR_CODES"
+    assert "AsyncError" in captured and "ERROR_CODES" in captured, (
+        "service source missing ERROR_CODES"
+    )
     exec(compile(captured["AsyncError"], "async_service.AsyncError", "exec"), ns)  # noqa: S102
     exec(compile(captured["ERROR_CODES"], "async_service.ERROR_CODES", "exec"), ns)  # noqa: S102
     AsyncError = ns["AsyncError"]

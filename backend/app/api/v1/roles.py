@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Annotated, Optional
+from datetime import UTC, datetime
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from app.api.deps import DbSession, Principal, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import DbSession, get_current_principal
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.role import Role
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/roles", tags=["roles"])
 
@@ -24,18 +24,18 @@ class RoleRead(BaseModel):
     id: UUID
     tenant_id: UUID
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     permissions: list[str]
-    parent_role_id: Optional[UUID] = None
+    parent_role_id: UUID | None = None
     is_system: bool = False
 
     model_config = {"from_attributes": True}
 
 
 class RoleUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    permissions: Optional[list[str]] = None
+    name: str | None = None
+    description: str | None = None
+    permissions: list[str] | None = None
 
 
 @router.get("", response_model=list[RoleRead])
@@ -50,17 +50,15 @@ async def list_roles(
     tenant-defined roles alphabetically.
     """
     result = await db.execute(
-        select(Role)
-        .where(Role.tenant_id == UUID(principal.tenant_id))
-        .order_by(Role.name)
+        select(Role).where(Role.tenant_id == UUID(principal.tenant_id)).order_by(Role.name)
     )
     rows = result.scalars().all()
     # Sort: system roles first.
     rows = sorted(rows, key=lambda r: (not (r.permissions == ["*"]), r.name))
     return [RoleRead.model_validate(r) for r in rows]
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/{role_id}", response_model=RoleRead)
 @audit(action="roles.update", target_type="role")
 async def update_role(
@@ -82,9 +80,7 @@ async def update_role(
         raise HTTPException(status_code=404, detail="role_not_found")
 
     if role.permissions == ["*"] and body.permissions is not None:
-        raise HTTPException(
-            status_code=403, detail="cannot_modify_system_role_permissions"
-        )
+        raise HTTPException(status_code=403, detail="cannot_modify_system_role_permissions")
 
     if body.name is not None:
         role.name = body.name
@@ -93,7 +89,7 @@ async def update_role(
     if body.permissions is not None:
         role.permissions = body.permissions
 
-    role.updated_at = datetime.now(timezone.utc)
+    role.updated_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(role)
     return RoleRead.model_validate(role)

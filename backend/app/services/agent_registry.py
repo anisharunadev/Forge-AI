@@ -148,7 +148,11 @@ class AgentRegistry:
         agents = await self.list_agents(tenant_id, project_id=project_id)
         candidates = [a for a in agents if a.status == AgentStatus.ENABLED]
         if required_capabilities:
-            candidates = [a for a in candidates if _matches_capabilities(a.capabilities, required_capabilities)]
+            candidates = [
+                a
+                for a in candidates
+                if _matches_capabilities(a.capabilities, required_capabilities)
+            ]
         return candidates
 
 

@@ -14,8 +14,8 @@ from sqlalchemy import DateTime, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import (
-    Base,
     GUID,
+    Base,
     TimestampMixin,
     UUIDPrimaryKeyMixin,
 )
@@ -34,17 +34,11 @@ class ProjectInvitation(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         GUID(), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False
     )
     email: Mapped[str] = mapped_column(String(320), nullable=False)
-    role_id: Mapped[UUID] = mapped_column(
-        GUID(), ForeignKey("roles.id"), nullable=False
-    )
-    invited_by: Mapped[UUID] = mapped_column(
-        GUID(), ForeignKey("users.id"), nullable=False
-    )
+    role_id: Mapped[UUID] = mapped_column(GUID(), ForeignKey("roles.id"), nullable=False)
+    invited_by: Mapped[UUID] = mapped_column(GUID(), ForeignKey("users.id"), nullable=False)
     status: Mapped[str] = mapped_column(String(32), default="pending", nullable=False)
     token: Mapped[str] = mapped_column(Text, nullable=False)
-    expires_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (
         Index("ix_project_invitations_email", "email"),
@@ -52,7 +46,7 @@ class ProjectInvitation(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         Index("ix_project_invitations_project_status", "project_id", "status"),
     )
 
-
     _audit_scope = "project-only"
+
 
 __all__ = ["ProjectInvitation"]

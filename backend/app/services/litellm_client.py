@@ -144,6 +144,7 @@ def project_cost_usd(
 # sites continue to function.
 # ---------------------------------------------------------------------------
 
+
 def _load_canonical():
     """Import :class:`ForgeLLMClient` lazily, returning ``None`` if absent."""
     try:
@@ -308,9 +309,7 @@ class LiteLLMClient:
         :meth:`_record_actual_for_run`.
         """
         projected = (
-            projected_cost_usd
-            if projected_cost_usd is not None
-            else _DEFAULT_PROJECTED_CHAT_USD
+            projected_cost_usd if projected_cost_usd is not None else _DEFAULT_PROJECTED_CHAT_USD
         )
         # M2 ADR-009 — per-RUN admission runs BEFORE per-WORKFLOW so a
         # breached RUN cap short-circuits before the per-WORKFLOW check
@@ -442,7 +441,7 @@ class LiteLLMClient:
             async for line in response.aiter_lines():
                 if not line or not line.startswith("data:"):
                     continue
-                chunk = line[len("data:"):].strip()
+                chunk = line[len("data:") :].strip()
                 if chunk == "[DONE]":
                     break
                 try:
@@ -479,9 +478,7 @@ class LiteLLMClient:
         when their respective scope is unset.
         """
         projected = (
-            projected_cost_usd
-            if projected_cost_usd is not None
-            else _DEFAULT_PROJECTED_EMBED_USD
+            projected_cost_usd if projected_cost_usd is not None else _DEFAULT_PROJECTED_EMBED_USD
         )
         # M2 ADR-009 — per-RUN admission (Track B T-B3).
         await self.pre_call_admission(
@@ -510,6 +507,7 @@ class LiteLLMClient:
                 # for embed calls (token counts are bounded by input size).
                 try:
                     from app.services.cost_ledger import cost_ledger
+
                     if self._cost_ledger is None:
                         self._cost_ledger = cost_ledger
                     await self._cost_ledger.record_actual(
@@ -689,9 +687,7 @@ class LiteLLMClient:
             assistant message (empty when the model answered directly).
         """
         projected = (
-            projected_cost_usd
-            if projected_cost_usd is not None
-            else _DEFAULT_PROJECTED_CHAT_USD
+            projected_cost_usd if projected_cost_usd is not None else _DEFAULT_PROJECTED_CHAT_USD
         )
         # M2 ADR-009 — per-RUN admission (Track B T-B3).
         await self.pre_call_admission(
@@ -937,9 +933,7 @@ class LiteLLMClient:
 
         tenant_key = str(tenant_id)
         ceiling_usd = float(
-            settings.run_budget_cap_overrides.get(
-                tenant_key, settings.run_budget_cap_usd
-            )
+            settings.run_budget_cap_overrides.get(tenant_key, settings.run_budget_cap_usd)
         )
         spent_usd = await cost_ledger.sum_spent_for_run(run_id)
         if projected_cost_usd is None:
@@ -1175,6 +1169,7 @@ try:
         ForgeLLMClient,
         forge_llm_client,
     )
+
     __all__ = [
         "LiteLLMClient",
         "ForgeLLMClient",

@@ -23,8 +23,9 @@ Create Date: 2026-06-24
 from __future__ import annotations
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "0008_custom_workflows"
@@ -61,14 +62,18 @@ def upgrade() -> None:
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
         sa.PrimaryKeyConstraint("id", name="pk_workflows"),
         sa.UniqueConstraint(
-            "tenant_id", "project_id", "name",
+            "tenant_id",
+            "project_id",
+            "name",
             name="uq_workflows_tenant_project_name",
         ),
     )
     op.create_index("ix_workflows_tenant_id", "workflows", ["tenant_id"])
     op.create_index("ix_workflows_project_id", "workflows", ["project_id"])
     op.create_index(
-        "ix_workflows_tenant_project", "workflows", ["tenant_id", "project_id"],
+        "ix_workflows_tenant_project",
+        "workflows",
+        ["tenant_id", "project_id"],
     )
     op.create_index(
         "ix_workflows_tenant_project_deleted",
@@ -123,7 +128,9 @@ def upgrade() -> None:
     op.create_index("ix_workflow_runs_tenant_id", "workflow_runs", ["tenant_id"])
     op.create_index("ix_workflow_runs_project_id", "workflow_runs", ["project_id"])
     op.create_index(
-        "ix_workflow_runs_workflow_id", "workflow_runs", ["workflow_id"],
+        "ix_workflow_runs_workflow_id",
+        "workflow_runs",
+        ["workflow_id"],
     )
     op.create_index(
         "ix_workflow_runs_tenant_project",
@@ -150,25 +157,17 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute(
-        "DROP POLICY IF EXISTS workflow_runs_tenant_isolation ON workflow_runs;"
-    )
+    op.execute("DROP POLICY IF EXISTS workflow_runs_tenant_isolation ON workflow_runs;")
     op.drop_index("ix_workflow_runs_status", table_name="workflow_runs")
-    op.drop_index(
-        "ix_workflow_runs_workflow_status", table_name="workflow_runs"
-    )
-    op.drop_index(
-        "ix_workflow_runs_tenant_project", table_name="workflow_runs"
-    )
+    op.drop_index("ix_workflow_runs_workflow_status", table_name="workflow_runs")
+    op.drop_index("ix_workflow_runs_tenant_project", table_name="workflow_runs")
     op.drop_index("ix_workflow_runs_project_id", table_name="workflow_runs")
     op.drop_index("ix_workflow_runs_tenant_id", table_name="workflow_runs")
     op.drop_index("ix_workflow_runs_workflow_id", table_name="workflow_runs")
     op.drop_table("workflow_runs")
 
     op.execute("DROP POLICY IF EXISTS workflows_tenant_isolation ON workflows;")
-    op.drop_index(
-        "ix_workflows_tenant_project_deleted", table_name="workflows"
-    )
+    op.drop_index("ix_workflows_tenant_project_deleted", table_name="workflows")
     op.drop_index("ix_workflows_tenant_project", table_name="workflows")
     op.drop_index("ix_workflows_project_id", table_name="workflows")
     op.drop_index("ix_workflows_tenant_id", table_name="workflows")

@@ -1,12 +1,15 @@
 from typing import Annotated
+
 """F-014 — Agent Runtime REST endpoints."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.runtime import (
@@ -15,8 +18,6 @@ from app.schemas.runtime import (
     RuntimeStartRequest,
 )
 from app.services.agent_runtime import agent_runtime
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/runtimes", tags=["agent-runtimes"])
 
@@ -25,19 +26,19 @@ router = APIRouter(prefix="/runtimes", tags=["agent-runtimes"])
 @audit(action="runtimes.list", target_type="runtime")
 async def list_runtimes(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:read")),
 ) -> list[RuntimeHandle]:
     handles = await agent_runtime.list_runtimes(principal.tenant_id)
     return [_handle_to_schema(h) for h in handles]
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/start", response_model=RuntimeHandle)
 @audit(action="runtimes.start", target_type="runtime")
 async def start_runtime(
     body: RuntimeStartRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:start"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:start")),
 ) -> RuntimeHandle:
     handle = await agent_runtime.start(
         agent_id=body.agent_id,
@@ -47,15 +48,15 @@ async def start_runtime(
         kind=body.kind,
     )
     return _handle_to_schema(handle)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/{handle_id}/stop", response_model=RuntimeHandle)
 @audit(action="runtimes.stop", target_type="runtime")
 async def stop_runtime(
     handle_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:stop"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:stop")),
 ) -> RuntimeHandle:
     try:
         await agent_runtime.stop(handle_id)
@@ -71,8 +72,8 @@ async def stop_runtime(
         agent_id=handle_id,  # placeholder; we don't reload from storage in M2.
         workspace_path="",
         kind=body_kind_default(),
-        started_at=datetime.now(timezone.utc),
-        stopped_at=datetime.now(timezone.utc),
+        started_at=datetime.now(UTC),
+        stopped_at=datetime.now(UTC),
     )
     rh.state = _state_after_stop()
     return _handle_to_schema(rh)
@@ -83,7 +84,7 @@ async def stop_runtime(
 async def runtime_metrics(
     handle_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:read")),
 ) -> RuntimeMetrics:
     try:
         metrics = await agent_runtime.get_runtime_metrics(handle_id)
@@ -95,7 +96,7 @@ async def runtime_metrics(
 def _handle_to_schema(handle) -> RuntimeHandle:
     from app.schemas.runtime import RuntimeKind, RuntimeState
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     started = getattr(handle, "started_at", None)
     stopped = getattr(handle, "stopped_at", None)
     return RuntimeHandle(
@@ -107,7 +108,9 @@ def _handle_to_schema(handle) -> RuntimeHandle:
         agent_id=handle.agent_id,
         workspace_path=handle.workspace_path,
         kind=handle.kind if isinstance(handle.kind, RuntimeKind) else RuntimeKind(handle.kind),
-        state=handle.state if isinstance(handle.state, RuntimeState) else RuntimeState(handle.state),
+        state=handle.state
+        if isinstance(handle.state, RuntimeState)
+        else RuntimeState(handle.state),
         started_at=started,
         stopped_at=stopped,
     )

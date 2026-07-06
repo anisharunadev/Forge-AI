@@ -30,18 +30,19 @@ Verify with::
     docker compose exec postgres psql -U forge -d forge \
         -c "SELECT edge_type, count(*) FROM kg_edges GROUP BY 1;"
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select
 
-from app.db.models.tenant import Tenant
 from app.db.models.project import Project
+from app.db.models.tenant import Tenant
 from app.db.session import get_session_factory
 from app.services.knowledge_graph import KGEdge, KGNode
 
@@ -644,65 +645,315 @@ SEED_NODES: list[dict[str, Any]] = [
 # comment above for why that was a smell).
 SEED_EDGES: list[dict[str, Any]] = [
     # People → Teams (membership / ownership)
-    {"edge_key": "edge:arun-owns-platform",      "edge_type": "owns",      "from": "person:arun-achalam",   "to": "team:platform",   "properties": {}},
-    {"edge_key": "edge:priya-owns-connectors",   "edge_type": "owns",      "from": "person:priya-iyer",    "to": "team:connectors", "properties": {}},
-    {"edge_key": "edge:ravi-owns-workflows",     "edge_type": "owns",      "from": "person:ravi-kumar",    "to": "team:workflows",  "properties": {}},
-    {"edge_key": "edge:meera-member-connectors", "edge_type": "member_of", "from": "person:meera-patel",   "to": "team:connectors", "properties": {}},
-    {"edge_key": "edge:vikram-member-workflows", "edge_type": "member_of", "from": "person:vikram-shah",   "to": "team:workflows",  "properties": {}},
-    {"edge_key": "edge:anjali-owns-knowledge",   "edge_type": "owns",      "from": "person:anjali-rao",    "to": "team:knowledge",  "properties": {}},
-
+    {
+        "edge_key": "edge:arun-owns-platform",
+        "edge_type": "owns",
+        "from": "person:arun-achalam",
+        "to": "team:platform",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:priya-owns-connectors",
+        "edge_type": "owns",
+        "from": "person:priya-iyer",
+        "to": "team:connectors",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:ravi-owns-workflows",
+        "edge_type": "owns",
+        "from": "person:ravi-kumar",
+        "to": "team:workflows",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:meera-member-connectors",
+        "edge_type": "member_of",
+        "from": "person:meera-patel",
+        "to": "team:connectors",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:vikram-member-workflows",
+        "edge_type": "member_of",
+        "from": "person:vikram-shah",
+        "to": "team:workflows",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:anjali-owns-knowledge",
+        "edge_type": "owns",
+        "from": "person:anjali-rao",
+        "to": "team:knowledge",
+        "properties": {},
+    },
     # Teams → Services (ownership / contribution)
-    {"edge_key": "edge:platform-owns-api",       "edge_type": "owns",            "from": "team:platform",   "to": "service:forge-api",     "properties": {}},
-    {"edge_key": "edge:platform-owns-litellm",   "edge_type": "owns",            "from": "team:platform",   "to": "service:litellm-proxy", "properties": {}},
-    {"edge_key": "edge:platform-owns-keycloak",  "edge_type": "owns",            "from": "team:platform",   "to": "service:keycloak",      "properties": {}},
-    {"edge_key": "edge:connectors-contrib-api",  "edge_type": "contributes_to",  "from": "team:connectors", "to": "service:forge-api",     "properties": {"weight": 0.8}},
-    {"edge_key": "edge:knowledge-owns-ui",       "edge_type": "owns",            "from": "team:knowledge",  "to": "service:forge-ui",      "properties": {}},
-    {"edge_key": "edge:workflows-contrib-ui",    "edge_type": "contributes_to",  "from": "team:workflows",  "to": "service:forge-ui",      "properties": {"weight": 0.8}},
-
+    {
+        "edge_key": "edge:platform-owns-api",
+        "edge_type": "owns",
+        "from": "team:platform",
+        "to": "service:forge-api",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:platform-owns-litellm",
+        "edge_type": "owns",
+        "from": "team:platform",
+        "to": "service:litellm-proxy",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:platform-owns-keycloak",
+        "edge_type": "owns",
+        "from": "team:platform",
+        "to": "service:keycloak",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:connectors-contrib-api",
+        "edge_type": "contributes_to",
+        "from": "team:connectors",
+        "to": "service:forge-api",
+        "properties": {"weight": 0.8},
+    },
+    {
+        "edge_key": "edge:knowledge-owns-ui",
+        "edge_type": "owns",
+        "from": "team:knowledge",
+        "to": "service:forge-ui",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:workflows-contrib-ui",
+        "edge_type": "contributes_to",
+        "from": "team:workflows",
+        "to": "service:forge-ui",
+        "properties": {"weight": 0.8},
+    },
     # Services → Modules (contains)
-    {"edge_key": "edge:api-has-workflow-exec",   "edge_type": "contains", "from": "service:forge-api", "to": "module:workflow_executor",           "properties": {}},
-    {"edge_key": "edge:api-has-conn-mgr",        "edge_type": "contains", "from": "service:forge-api", "to": "module:connector_manager",            "properties": {}},
-    {"edge_key": "edge:api-has-kg-api",          "edge_type": "contains", "from": "service:forge-api", "to": "module:knowledge_graph_api",          "properties": {}},
-    {"edge_key": "edge:ui-has-agent-center",     "edge_type": "contains", "from": "service:forge-ui",  "to": "module:agent_center",                 "properties": {}},
-    {"edge_key": "edge:ui-has-live-conn",        "edge_type": "contains", "from": "service:forge-ui",  "to": "module:live_connector_data_provider", "properties": {}},
-
+    {
+        "edge_key": "edge:api-has-workflow-exec",
+        "edge_type": "contains",
+        "from": "service:forge-api",
+        "to": "module:workflow_executor",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:api-has-conn-mgr",
+        "edge_type": "contains",
+        "from": "service:forge-api",
+        "to": "module:connector_manager",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:api-has-kg-api",
+        "edge_type": "contains",
+        "from": "service:forge-api",
+        "to": "module:knowledge_graph_api",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:ui-has-agent-center",
+        "edge_type": "contains",
+        "from": "service:forge-ui",
+        "to": "module:agent_center",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:ui-has-live-conn",
+        "edge_type": "contains",
+        "from": "service:forge-ui",
+        "to": "module:live_connector_data_provider",
+        "properties": {},
+    },
     # Services → Services (dependencies)
-    {"edge_key": "edge:api-deps-pg",             "edge_type": "depends_on", "from": "service:forge-api",     "to": "service:postgres",      "properties": {}},
-    {"edge_key": "edge:api-deps-litellm",        "edge_type": "depends_on", "from": "service:forge-api",     "to": "service:litellm-proxy", "properties": {}},
-    {"edge_key": "edge:api-deps-keycloak",       "edge_type": "depends_on", "from": "service:forge-api",     "to": "service:keycloak",      "properties": {}},
-    {"edge_key": "edge:ui-deps-api",             "edge_type": "depends_on", "from": "service:forge-ui",      "to": "service:forge-api",     "properties": {}},
-    {"edge_key": "edge:ui-deps-keycloak",        "edge_type": "depends_on", "from": "service:forge-ui",      "to": "service:keycloak",      "properties": {}},
-    {"edge_key": "edge:litellm-deps-pg",         "edge_type": "depends_on", "from": "service:litellm-proxy", "to": "service:postgres",      "properties": {}},
-    {"edge_key": "edge:mcp-deps-api",            "edge_type": "depends_on", "from": "service:mcp-server",    "to": "service:forge-api",     "properties": {}},
-
+    {
+        "edge_key": "edge:api-deps-pg",
+        "edge_type": "depends_on",
+        "from": "service:forge-api",
+        "to": "service:postgres",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:api-deps-litellm",
+        "edge_type": "depends_on",
+        "from": "service:forge-api",
+        "to": "service:litellm-proxy",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:api-deps-keycloak",
+        "edge_type": "depends_on",
+        "from": "service:forge-api",
+        "to": "service:keycloak",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:ui-deps-api",
+        "edge_type": "depends_on",
+        "from": "service:forge-ui",
+        "to": "service:forge-api",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:ui-deps-keycloak",
+        "edge_type": "depends_on",
+        "from": "service:forge-ui",
+        "to": "service:keycloak",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:litellm-deps-pg",
+        "edge_type": "depends_on",
+        "from": "service:litellm-proxy",
+        "to": "service:postgres",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:mcp-deps-api",
+        "edge_type": "depends_on",
+        "from": "service:mcp-server",
+        "to": "service:forge-api",
+        "properties": {},
+    },
     # Services → Tools (integration)
-    {"edge_key": "edge:api-integ-github",        "edge_type": "integrates_with", "from": "service:forge-api", "to": "tool:github", "properties": {}},
-    {"edge_key": "edge:api-integ-jira",          "edge_type": "integrates_with", "from": "service:forge-api", "to": "tool:jira",   "properties": {}},
-    {"edge_key": "edge:api-integ-slack",         "edge_type": "integrates_with", "from": "service:forge-api", "to": "tool:slack",  "properties": {}},
-
+    {
+        "edge_key": "edge:api-integ-github",
+        "edge_type": "integrates_with",
+        "from": "service:forge-api",
+        "to": "tool:github",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:api-integ-jira",
+        "edge_type": "integrates_with",
+        "from": "service:forge-api",
+        "to": "tool:jira",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:api-integ-slack",
+        "edge_type": "integrates_with",
+        "from": "service:forge-api",
+        "to": "tool:slack",
+        "properties": {},
+    },
     # Docs → Services (documents)
-    {"edge_key": "edge:arch-doc-api",            "edge_type": "documents", "from": "doc:architecture-overview",   "to": "service:forge-api",       "properties": {}},
-    {"edge_key": "edge:arch-doc-ui",             "edge_type": "documents", "from": "doc:architecture-overview",   "to": "service:forge-ui",        "properties": {}},
-    {"edge_key": "edge:mt-doc-pg",               "edge_type": "documents", "from": "doc:multi-tenancy",           "to": "service:postgres",        "properties": {}},
-    {"edge_key": "edge:cag-doc-conn-mgr",        "edge_type": "documents", "from": "doc:connector-author-guide",  "to": "module:connector_manager","properties": {}},
-    {"edge_key": "edge:wyr-doc-wf-exec",         "edge_type": "documents", "from": "doc:workflow-yaml-reference", "to": "module:workflow_executor","properties": {}},
-
+    {
+        "edge_key": "edge:arch-doc-api",
+        "edge_type": "documents",
+        "from": "doc:architecture-overview",
+        "to": "service:forge-api",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:arch-doc-ui",
+        "edge_type": "documents",
+        "from": "doc:architecture-overview",
+        "to": "service:forge-ui",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:mt-doc-pg",
+        "edge_type": "documents",
+        "from": "doc:multi-tenancy",
+        "to": "service:postgres",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:cag-doc-conn-mgr",
+        "edge_type": "documents",
+        "from": "doc:connector-author-guide",
+        "to": "module:connector_manager",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:wyr-doc-wf-exec",
+        "edge_type": "documents",
+        "from": "doc:workflow-yaml-reference",
+        "to": "module:workflow_executor",
+        "properties": {},
+    },
     # ADRs → Services (decides)
-    {"edge_key": "edge:adr1-api",                "edge_type": "decides", "from": "adr:001-langgraph",   "to": "service:forge-api",     "properties": {}},
-    {"edge_key": "edge:adr2-litellm",            "edge_type": "decides", "from": "adr:002-litellm",    "to": "service:litellm-proxy", "properties": {}},
-    {"edge_key": "edge:adr3-ui",                 "edge_type": "decides", "from": "adr:003-tanstack",   "to": "service:forge-ui",      "properties": {}},
-    {"edge_key": "edge:adr4-core",               "edge_type": "decides", "from": "adr:004-forge-core", "to": "service:forge-core",    "properties": {}},
-
+    {
+        "edge_key": "edge:adr1-api",
+        "edge_type": "decides",
+        "from": "adr:001-langgraph",
+        "to": "service:forge-api",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:adr2-litellm",
+        "edge_type": "decides",
+        "from": "adr:002-litellm",
+        "to": "service:litellm-proxy",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:adr3-ui",
+        "edge_type": "decides",
+        "from": "adr:003-tanstack",
+        "to": "service:forge-ui",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:adr4-core",
+        "edge_type": "decides",
+        "from": "adr:004-forge-core",
+        "to": "service:forge-core",
+        "properties": {},
+    },
     # Services → Policies (governs)
-    {"edge_key": "edge:pii-api",                 "edge_type": "governs", "from": "service:forge-api", "to": "policy:pii-handling",     "properties": {}},
-    {"edge_key": "edge:ag-api",                  "edge_type": "governs", "from": "service:forge-api", "to": "policy:approval-gates",   "properties": {}},
-    {"edge_key": "edge:cc-api",                  "edge_type": "governs", "from": "service:forge-api", "to": "policy:cost-ceiling",     "properties": {}},
-    {"edge_key": "edge:ti-pg",                   "edge_type": "governs", "from": "service:postgres",  "to": "policy:tenant-isolation", "properties": {}},
-
+    {
+        "edge_key": "edge:pii-api",
+        "edge_type": "governs",
+        "from": "service:forge-api",
+        "to": "policy:pii-handling",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:ag-api",
+        "edge_type": "governs",
+        "from": "service:forge-api",
+        "to": "policy:approval-gates",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:cc-api",
+        "edge_type": "governs",
+        "from": "service:forge-api",
+        "to": "policy:cost-ceiling",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:ti-pg",
+        "edge_type": "governs",
+        "from": "service:postgres",
+        "to": "policy:tenant-isolation",
+        "properties": {},
+    },
     # Runbooks → Services (operates)
-    {"edge_key": "edge:rb-db-pg",                "edge_type": "operates", "from": "runbook:db-failover",             "to": "service:postgres",      "properties": {}},
-    {"edge_key": "edge:rb-kc-keycloak",          "edge_type": "operates", "from": "runbook:keycloak-realm-recovery", "to": "service:keycloak",      "properties": {}},
-    {"edge_key": "edge:rb-ll-litellm",           "edge_type": "operates", "from": "runbook:litellm-outage",          "to": "service:litellm-proxy", "properties": {}},
+    {
+        "edge_key": "edge:rb-db-pg",
+        "edge_type": "operates",
+        "from": "runbook:db-failover",
+        "to": "service:postgres",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:rb-kc-keycloak",
+        "edge_type": "operates",
+        "from": "runbook:keycloak-realm-recovery",
+        "to": "service:keycloak",
+        "properties": {},
+    },
+    {
+        "edge_key": "edge:rb-ll-litellm",
+        "edge_type": "operates",
+        "from": "runbook:litellm-outage",
+        "to": "service:litellm-proxy",
+        "properties": {},
+    },
 ]
 
 
@@ -721,14 +972,11 @@ async def seed() -> None:
         # ``ACME_TENANT_ID`` was stale and pointed at a UUID that no
         # tenant row carries).
         tenant = (
-            await session.execute(
-                select(Tenant).where(Tenant.slug == ACME_TENANT_SLUG)
-            )
+            await session.execute(select(Tenant).where(Tenant.slug == ACME_TENANT_SLUG))
         ).scalar_one_or_none()
         if tenant is None:
             raise RuntimeError(
-                f"{ACME_TENANT_SLUG} tenant not found. "
-                "Run the day_one_bootstrap service first."
+                f"{ACME_TENANT_SLUG} tenant not found. Run the day_one_bootstrap service first."
             )
         logger.info("tenant: %s (%s)", tenant.slug, tenant.name)
 
@@ -747,10 +995,10 @@ async def seed() -> None:
             # still works on environments where the demo project UUID
             # differs (e.g. after a partial reset).
             project = (
-                await session.execute(
-                    select(Project).where(Project.tenant_id == tenant.id)
-                )
-            ).scalars().first()
+                (await session.execute(select(Project).where(Project.tenant_id == tenant.id)))
+                .scalars()
+                .first()
+            )
             if project is None:
                 raise RuntimeError(
                     "No project found for acme-corp tenant. "
@@ -760,10 +1008,10 @@ async def seed() -> None:
 
         # Idempotency: if any KGNode row exists for this tenant, skip.
         existing = (
-            await session.execute(
-                select(KGNode.id).where(KGNode.tenant_id == tenant.id)
-            )
-        ).scalars().first()
+            (await session.execute(select(KGNode.id).where(KGNode.tenant_id == tenant.id)))
+            .scalars()
+            .first()
+        )
         if existing is not None:
             logger.info("  ↻ knowledge graph already seeded — skipping")
             logger.info("")
@@ -771,7 +1019,7 @@ async def seed() -> None:
             return
 
         # ----- nodes -----
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         nodes_by_key: dict[str, uuid.UUID] = {}
         created_nodes = 0
         for row in SEED_NODES:
@@ -791,7 +1039,9 @@ async def seed() -> None:
             created_nodes += 1
             logger.info(
                 "  ✓ node[%s] %s (%s)",
-                row["node_type"], row["name"], node_id,
+                row["node_type"],
+                row["name"],
+                node_id,
             )
 
         # Flush so the edges that follow have FK targets ready.
@@ -806,7 +1056,8 @@ async def seed() -> None:
             if from_id is None or to_id is None:
                 logger.warning(
                     "  ⚠ edge skipped (missing endpoint): %s -> %s",
-                    row["from"], row["to"],
+                    row["from"],
+                    row["to"],
                 )
                 skipped_edges += 1
                 continue
@@ -823,7 +1074,9 @@ async def seed() -> None:
             created_edges += 1
             logger.info(
                 "  ✓ edge[%s] %s -> %s",
-                row["edge_type"], row["from"], row["to"],
+                row["edge_type"],
+                row["from"],
+                row["to"],
             )
 
         await session.commit()
@@ -844,11 +1097,14 @@ async def seed() -> None:
         logger.info("   - 1 project (%s)", project.id)
         logger.info(
             "   - %d nodes created (%d total seeded)",
-            created_nodes, len(SEED_NODES),
+            created_nodes,
+            len(SEED_NODES),
         )
         logger.info(
             "   - %d edges created (%d skipped, %d total)",
-            created_edges, skipped_edges, len(SEED_EDGES),
+            created_edges,
+            skipped_edges,
+            len(SEED_EDGES),
         )
         logger.info("")
         logger.info("   Nodes by node_type:")

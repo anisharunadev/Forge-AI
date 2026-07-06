@@ -4,6 +4,7 @@ Locks the canonical acme-corp tenant UUID so a rename in
 ``day_one_bootstrap`` or ``seeds/framework`` doesn't silently
 desync the seed scripts that import it.
 """
+
 from __future__ import annotations
 
 import uuid

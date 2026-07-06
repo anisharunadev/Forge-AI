@@ -1,20 +1,20 @@
 """Output Bundle REST endpoints (F-211)."""
 
 from __future__ import annotations
-from typing import Annotated
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import Response
 
-from app.api.deps import Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
 from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.ideation import OutputBundleRead
 from app.services.ideation.output_bundle import output_bundle_service
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/ideation", tags=["ideation"])
 
@@ -30,9 +30,9 @@ def _to_read(bundle) -> OutputBundleRead:
         created_at=bundle.created_at,
         updated_at=bundle.updated_at,
     )
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post(
     "/ideas/{idea_id}/bundles",
     response_model=OutputBundleRead,
@@ -42,7 +42,7 @@ def _to_read(bundle) -> OutputBundleRead:
 async def create_bundle(
     idea_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:bundle"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:bundle")),
 ) -> OutputBundleRead:
     try:
         bundle = await output_bundle_service.create_bundle(
@@ -63,11 +63,9 @@ async def create_bundle(
 async def get_bundle(
     bundle_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read")),
 ) -> OutputBundleRead:
-    bundle = await output_bundle_service.get_bundle(
-        bundle_id, tenant_id=principal.tenant_id
-    )
+    bundle = await output_bundle_service.get_bundle(bundle_id, tenant_id=principal.tenant_id)
     if bundle is None:
         raise HTTPException(status_code=404, detail=f"bundle {bundle_id} not found")
     return _to_read(bundle)
@@ -79,7 +77,7 @@ async def export_bundle(
     bundle_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
     fmt: str = Query(default="json"),
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read")),
 ) -> Response:
     try:
         body = await output_bundle_service.export_bundle(

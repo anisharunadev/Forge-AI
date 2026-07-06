@@ -41,21 +41,18 @@ def test_diff_unified_format():
     a = "hello\nworld\n"
     b = "hello\nWORLD\nfoo\n"
     import difflib
+
     udiff = "".join(
-        difflib.unified_diff(a.splitlines(keepends=True), b.splitlines(keepends=True), fromfile="v1", tofile="v2")
+        difflib.unified_diff(
+            a.splitlines(keepends=True), b.splitlines(keepends=True), fromfile="v1", tofile="v2"
+        )
     )
     assert "-world" in udiff and "+WORLD" in udiff and "+foo" in udiff
 
 
 def test_dotprompt_import_parses_frontmatter_and_template():
     """Acceptance #5."""
-    src = (
-        "---\n"
-        "model: gpt-4o-mini\n"
-        "temperature: 0.2\n"
-        "---\n"
-        "Write a haiku about {{ topic }}.\n"
-    )
+    src = "---\nmodel: gpt-4o-mini\ntemperature: 0.2\n---\nWrite a haiku about {{ topic }}.\n"
     name, template, model_defaults, variables = _parse_dotprompt(src, override_name=None)
     assert "haiku" in template
     assert model_defaults.get("model") == "gpt-4o-mini"
@@ -69,6 +66,7 @@ def test_max_versions_constant_matches_spec():
 def test_route_count_matches_spec():
     """Spec requires 11 endpoints; accept the documented surface."""
     from app.api.v1 import forge_prompts
+
     expected = {
         "GET /forge/prompts",
         "POST /forge/prompts",
@@ -92,6 +90,7 @@ def test_route_count_matches_spec():
 
 if __name__ == "__main__":  # pragma: no cover
     import sys
+
     failed = 0
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

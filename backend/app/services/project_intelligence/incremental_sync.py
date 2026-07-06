@@ -12,20 +12,17 @@ from __future__ import annotations
 
 import hashlib
 import os
-import shutil
 import subprocess
-import tempfile
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import select
-
 from app.core.logging import get_logger
-from app.db.models.repo_ingestion import IngestionRun, Repo
+from app.db.models.repo_ingestion import Repo
 from app.db.session import get_session_factory
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 from app.services.knowledge_graph import Node, knowledge_graph_service
 
 logger = get_logger(__name__)
@@ -104,7 +101,7 @@ class IncrementalSyncService:
             repo=repo,
         )
 
-        finished_at = datetime.now(timezone.utc)
+        finished_at = datetime.now(UTC)
         result = SyncResult(
             repo_id=repo.id,
             since_commit_sha=since_commit_sha,
@@ -116,16 +113,18 @@ class IncrementalSyncService:
         )
         await self._bus.publish(
             EventType.CONNECTOR_HEALTHY,
-            {"graph_event": "incremental_sync", "repo_id": str(repo.id), "files": len(changed_files)},
+            {
+                "graph_event": "incremental_sync",
+                "repo_id": str(repo.id),
+                "files": len(changed_files),
+            },
             tenant_id=tenant_id,
             project_id=project_id,
             actor_id=actor_id,
         )
         return result
 
-    async def get_pending_conflicts(
-        self, project_id: UUID | str
-    ) -> list[ConflictRecord]:
+    async def get_pending_conflicts(self, project_id: UUID | str) -> list[ConflictRecord]:
         return [c for c in self._conflicts.get(project_id, []) if c.status == "pending"]
 
     async def resolve_conflict(
@@ -156,9 +155,7 @@ class IncrementalSyncService:
 
     # -- internal ---------------------------------------------------------
 
-    async def _get_repo(
-        self, repo_id: UUID | str, *, tenant_id: UUID | str
-    ) -> Repo:
+    async def _get_repo(self, repo_id: UUID | str, *, tenant_id: UUID | str) -> Repo:
         factory = get_session_factory()
         async with factory() as session:
             repo = await session.get(Repo, str(repo_id))
@@ -222,7 +219,9 @@ class IncrementalSyncService:
                 existing=name_index.get(path),
             )
             if existing_node := name_index.get(path):
-                if existing_node.properties.get("content_hash") != node.properties.get("content_hash"):
+                if existing_node.properties.get("content_hash") != node.properties.get(
+                    "content_hash"
+                ):
                     updated += 1
             else:
                 added += 1
@@ -279,7 +278,7 @@ class IncrementalSyncService:
             project_id=project_id,
             entity_ref=entity_ref,
             sources=sources,
-            detected_at=datetime.now(timezone.utc),
+            detected_at=datetime.now(UTC),
             resolution=None,
             status="pending",
         )

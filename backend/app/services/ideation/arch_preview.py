@@ -14,9 +14,7 @@ graph when the proxy is unreachable. Versioned, append-only.
 from __future__ import annotations
 
 import json
-import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
@@ -30,7 +28,8 @@ from app.db.models.ideation import (
 )
 from app.db.session import get_session_factory
 from app.services.cost_ledger import cost_ledger
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 from app.services.knowledge_graph import knowledge_graph_service
 from app.services.litellm_client import LiteLLMClient
 
@@ -122,8 +121,18 @@ async def _build_from_kg(
         )
     if not components:
         components = [
-            {"id": "svc:api", "name": f"{idea.title} API", "kind": "service", "metadata": {"language": "python"}},
-            {"id": "db:primary", "name": "Primary DB", "kind": "database_table", "metadata": {"engine": "postgres"}},
+            {
+                "id": "svc:api",
+                "name": f"{idea.title} API",
+                "kind": "service",
+                "metadata": {"language": "python"},
+            },
+            {
+                "id": "db:primary",
+                "name": "Primary DB",
+                "kind": "database_table",
+                "metadata": {"engine": "postgres"},
+            },
         ]
     # Add a tiny default integration if KG is sparse.
     if len(components) >= 2:
@@ -360,9 +369,7 @@ class ArchPreviewService:
             await session.commit()
             return row
 
-    async def _load_idea(
-        self, idea_id: UUID | str, *, tenant_id: UUID | str
-    ) -> Idea:
+    async def _load_idea(self, idea_id: UUID | str, *, tenant_id: UUID | str) -> Idea:
         factory = get_session_factory()
         async with factory() as session:
             idea = await session.get(Idea, str(idea_id))
@@ -390,9 +397,7 @@ class ArchPreviewService:
     async def _latest_preview_in_session(
         self, session: Any, idea_id: str
     ) -> ArchitecturePreview | None:
-        stmt = select(ArchitecturePreview).where(
-            ArchitecturePreview.idea_id == idea_id
-        )
+        stmt = select(ArchitecturePreview).where(ArchitecturePreview.idea_id == idea_id)
         rows = list((await session.execute(stmt)).scalars().all())
         if not rows:
             return None

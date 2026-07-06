@@ -19,23 +19,25 @@ References: ADR-002 (PostgreSQL 17 + AGE + pgvector).
 from __future__ import annotations
 
 import asyncio
-from logging.config import fileConfig
 
-from alembic import context
+# Make ``app.*`` importable when running ``alembic`` from anywhere.
+import sys
+from logging.config import fileConfig
+from pathlib import Path
+
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-# Make ``app.*`` importable when running ``alembic`` from anywhere.
-import sys
-from pathlib import Path
+from alembic import context
+
 _BACKEND_ROOT = Path(__file__).resolve().parents[1]
 if str(_BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(_BACKEND_ROOT))
 
+import app.db.models  # noqa: F401,E402 — register all ORM models on Base.metadata
 from app.core.config import settings  # noqa: E402
 from app.db.base import Base  # noqa: E402
-import app.db.models  # noqa: F401,E402 — register all ORM models on Base.metadata
 
 # Alembic Config object — provides access to alembic.ini values.
 config = context.config

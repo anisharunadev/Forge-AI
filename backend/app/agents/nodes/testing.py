@@ -17,7 +17,6 @@ from app.agents.sdlc_state import ArtifactRef, SDLCPhase, SDLCState
 from app.agents.tools.gsd_wrapper import GSDWrapper, build_default_wrapper
 from app.services.artifact_registry import ArtifactRegistry
 
-
 ARTIFACT_TYPE_TEST_REPORT = "test_report"
 
 
@@ -75,9 +74,7 @@ class TestingNode(BasePhaseNode):
             "integration": _summary("integration", integration),
             "coverage": _summary("coverage", coverage),
         }
-        canonical = json.dumps(
-            payload, sort_keys=True, separators=(",", ":"), default=str
-        )
+        canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
         content_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
         artifact = await self._registry.create(
             tenant_id=tenant_id,

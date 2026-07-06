@@ -34,8 +34,9 @@ Exports:
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Awaitable, Callable, TypedDict
+from typing import TypedDict
 
 
 class ToolSpec(TypedDict):
@@ -103,8 +104,7 @@ class ToolLoopExhausted(RuntimeError):
 
     def __init__(self, max_turns: int) -> None:
         super().__init__(
-            f"agent_loop hit the {max_turns}-turn cap without the model "
-            "returning a final answer"
+            f"agent_loop hit the {max_turns}-turn cap without the model returning a final answer"
         )
         self.max_turns = max_turns
 

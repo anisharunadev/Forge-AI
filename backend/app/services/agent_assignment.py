@@ -10,14 +10,14 @@ Picks the right Agent for a task using one of four strategies:
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
 from sqlalchemy import func, select
 
 from app.core.logging import get_logger
-from app.db.models.agent import Agent, AgentStatus
+from app.db.models.agent import Agent
 from app.db.models.cost import CostEntry
 from app.db.session import get_session_factory
 from app.services.agent_registry import AgentRegistry, agent_registry
@@ -56,9 +56,7 @@ class AgentAssignment:
             required_capabilities=required_capabilities,
         )
         if not candidates:
-            raise LookupError(
-                f"no_enabled_agents_for task_type={task_type} strategy={strategy}"
-            )
+            raise LookupError(f"no_enabled_agents_for task_type={task_type} strategy={strategy}")
 
         if strategy == "capability_match":
             return _rank_by_capability_overlap(candidates, required_capabilities or {})[0]
@@ -106,7 +104,7 @@ async def _pick_least_loaded(
     candidates: list[Agent],
 ) -> Agent:
     """Agent with fewest CostEntry rows in the last 24h wins."""
-    since = datetime.now(timezone.utc) - timedelta(hours=24)
+    since = datetime.now(UTC) - timedelta(hours=24)
     factory = get_session_factory()
     async with factory() as session:
         stmt = (

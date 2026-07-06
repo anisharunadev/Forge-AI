@@ -11,7 +11,7 @@ Run from backend/:
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import select
@@ -21,12 +21,10 @@ from app.db.models.agent import Agent
 from app.db.models.agent_config import AgentConfig
 from app.db.models.env_var import EnvVar
 from app.db.models.project import Project
-from app.db.models.project_invitation import ProjectInvitation
 from app.db.models.project_member import ProjectMember
 from app.db.models.role import Role
 from app.db.models.user import User
 from app.db.session import async_session_maker
-
 
 SEED_ROLES = [
     {
@@ -144,25 +142,23 @@ async def seed() -> None:
     async with async_session_maker() as session:
         # Pick the seeded demo user + tenant from the acme-corp package.
         user = (
-            await session.execute(
-                select(User).where(User.email == "arun@acme-corp.com")
-            )
+            await session.execute(select(User).where(User.email == "arun@acme-corp.com"))
         ).scalar_one_or_none()
         if user is None:
             print("✗ User arun@acme-corp.com not found — run base seed first.")
             return
 
         project = (
-            await session.execute(
-                select(Project).where(Project.tenant_id == user.tenant_id)
-            )
-        ).scalars().first()
+            (await session.execute(select(Project).where(Project.tenant_id == user.tenant_id)))
+            .scalars()
+            .first()
+        )
         if project is None:
             print("✗ No project found — run base seed first.")
             return
 
         tenant_id = user.tenant_id
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Roles (per-tenant, unique on (tenant_id, name)).
         print("→ Seeding roles...")
@@ -247,8 +243,10 @@ async def seed() -> None:
         # Agent configs — one row per agent in the tenant.
         print("→ Seeding agent configs...")
         agents = (
-            await session.execute(select(Agent).where(Agent.tenant_id == tenant_id))
-        ).scalars().all()
+            (await session.execute(select(Agent).where(Agent.tenant_id == tenant_id)))
+            .scalars()
+            .all()
+        )
         for agent in agents:
             existing = (
                 await session.execute(

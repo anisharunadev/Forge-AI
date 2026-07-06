@@ -6,29 +6,28 @@ require the ``lessons:decide`` permission; reads require
 come through here — they land via the event bus.
 """
 
-from __future__ import annotations
+from __future__ import annotations  # noqa: B904
 
 from datetime import datetime
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import DbSession, Principal, require_permission, get_current_principal
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import DbSession, get_current_principal, require_permission
 from app.core.security import AuthenticatedPrincipal
 from app.db.models.lesson import LessonStatus
-from app.services.audit_service import audit_service
 from app.schemas.lesson import (
     LessonCandidateListResponse,
-    LessonCandidateWire,
     LessonDecideRequest,
     LessonDecisionResult,
     MonthlyDigest,
 )
+from app.services.audit_service import audit_service
 from app.services.lesson_service import LessonService, _to_wire
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 router = APIRouter(prefix="/lessons", tags=["lessons"])
 
@@ -50,7 +49,7 @@ async def list_lessons(
         try:
             target_status = LessonStatus(status_filter)
         except ValueError as exc:
-            raise HTTPException(status_code=422, detail=str(exc)) from exc
+            raise HTTPException(status_code=422, detail=str(exc)) from exc  # noqa: B904
 
     svc = LessonService()
     rows = await svc.list_candidates(
@@ -64,9 +63,9 @@ async def list_lessons(
         approved_count=counts["approved"],
         rejected_count=counts["rejected"],
     )
+
+
 @require_approval_phase(SDLCPhase.REVIEW)
-
-
 @router.post("/{lesson_id}/approve", response_model=LessonDecisionResult)
 async def approve_lesson(
     lesson_id: UUID,
@@ -82,9 +81,9 @@ async def approve_lesson(
         decision=LessonStatus.APPROVED,
         body=body,
     )
+
+
 @require_approval_phase(SDLCPhase.REVIEW)
-
-
 @router.post("/{lesson_id}/reject", response_model=LessonDecisionResult)
 async def reject_lesson(
     lesson_id: UUID,
@@ -124,9 +123,9 @@ async def _decide(
             proposed_skill_name_override=body.proposed_skill_name_override,
         )
     except LookupError:
-        raise HTTPException(status_code=404, detail="lesson_not_found")
+        raise HTTPException(status_code=404, detail="lesson_not_found")  # noqa: B904
     except ValueError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+        raise HTTPException(status_code=409, detail=str(exc)) from exc  # noqa: B904
 
     await audit_service.record(
         tenant_id=principal.tenant_id,

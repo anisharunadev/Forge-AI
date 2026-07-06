@@ -166,8 +166,7 @@ async def load_sample_data(
                         "Architecture Center is populated for a new pilot.",
                         "decision": "Adopt the Day-One Bootstrap standards, templates, "
                         "and governance policies as the project baseline.",
-                        "consequences": "Delete this sample ADR once real decisions "
-                        "are recorded.",
+                        "consequences": "Delete this sample ADR once real decisions are recorded.",
                     },
                 )
             )

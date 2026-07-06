@@ -18,7 +18,6 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -125,9 +124,7 @@ async def test_permitted_tool_is_allowed(fresh_registry) -> None:
 
 
 @pytest.mark.asyncio
-async def test_audit_row_created_on_violation(
-    fresh_registry, stub_audit: MagicMock
-) -> None:
+async def test_audit_row_created_on_violation(fresh_registry, stub_audit: MagicMock) -> None:
     """A deny decision must produce exactly one tool_bundle.violation audit row."""
     from app.services.tool_bundles import ToolBundleViolation
 
@@ -210,9 +207,7 @@ def test_override_partial_keeps_unset_fields(fresh_registry) -> None:
 
 
 @pytest.mark.asyncio
-async def test_override_is_audited(
-    fresh_registry, stub_audit: MagicMock
-) -> None:
+async def test_override_is_audited(fresh_registry, stub_audit: MagicMock) -> None:
     """Calling `override` directly should leave an override audit trail
     when the API path records one. Here we exercise the registry's
     enforcement on a now-overridden stage and assert the new permit
@@ -310,7 +305,5 @@ async def test_agent_runtime_enforces_bundle(
     assert "tool_bundle.violation" in actions
 
     # The runtime populated the agent_id on the decision correctly.
-    allow = next(
-        e for e in stub_audit.events if e["action"] == "tool_bundle.allow"
-    )
+    allow = next(e for e in stub_audit.events if e["action"] == "tool_bundle.allow")
     assert allow["payload"]["agent_id"] == str(handle.agent_id)

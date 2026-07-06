@@ -59,18 +59,14 @@ def upgrade() -> None:
             server_default="medium",
         ),
         sa.Column("category", sa.String(length=32), nullable=False),
-        sa.Column(
-            "description", sa.Text(), nullable=False, server_default=""
-        ),
+        sa.Column("description", sa.Text(), nullable=False, server_default=""),
         sa.Column(
             "affected_service",
             sa.String(length=200),
             nullable=False,
             server_default="",
         ),
-        sa.Column(
-            "recommendation", sa.Text(), nullable=False, server_default=""
-        ),
+        sa.Column("recommendation", sa.Text(), nullable=False, server_default=""),
         sa.Column(
             "status",
             sa.String(length=16),

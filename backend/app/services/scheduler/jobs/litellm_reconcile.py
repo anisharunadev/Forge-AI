@@ -11,7 +11,7 @@ Runs at 02:30 UTC nightly — registered in
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, select
 
@@ -47,7 +47,7 @@ async def reconcile_job() -> None:
         logger.info("litellm.reconcile.no_tenants")
         return
 
-    window_start = datetime.now(timezone.utc) - timedelta(hours=_RECONCILE_WINDOW_HOURS)
+    window_start = datetime.now(UTC) - timedelta(hours=_RECONCILE_WINDOW_HOURS)
     for tenant in tenants:
         try:
             await _reconcile_one(str(tenant.id), window_start)
@@ -106,16 +106,15 @@ async def _reconcile_one(tenant_id: str, window_start: datetime) -> None:
 
 async def _sum_cost_ledger(tenant_id: str, since: datetime) -> float:
     factory = get_session_factory()
-    async with factory() as session:
-        async with tenant_context(session, tenant_id):
-            total = await session.scalar(
-                select(func.coalesce(func.sum(CostEntry.cost_usd), 0)).where(
-                    CostEntry.tenant_id == tenant_id,
-                    CostEntry.recorded_at >= since,
-                    CostEntry.source == "litellm",
-                )
+    async with factory() as session, tenant_context(session, tenant_id):
+        total = await session.scalar(
+            select(func.coalesce(func.sum(CostEntry.cost_usd), 0)).where(
+                CostEntry.tenant_id == tenant_id,
+                CostEntry.recorded_at >= since,
+                CostEntry.source == "litellm",
             )
-            return float(total or 0)
+        )
+        return float(total or 0)
 
 
 async def _sum_litellm_spend(tenant_id: str, since: datetime) -> float:
@@ -129,7 +128,7 @@ async def _sum_litellm_spend(tenant_id: str, since: datetime) -> float:
     try:
         params = {
             "start_time": since.isoformat(),
-            "end_time": datetime.now(timezone.utc).isoformat(),
+            "end_time": datetime.now(UTC).isoformat(),
         }
         async with LiteLLMBaseClient() as client:
             response = await client.admin_client.get("/spend/logs", params=params)
@@ -149,9 +148,10 @@ async def _sum_litellm_spend(tenant_id: str, since: datetime) -> float:
     for row in payload:
         if not isinstance(row, dict):
             continue
-        if str(row.get("team_id") or "") != tenant_id and str(
-            row.get("custom_llm_provider") or ""
-        ) != tenant_id:
+        if (
+            str(row.get("team_id") or "") != tenant_id
+            and str(row.get("custom_llm_provider") or "") != tenant_id
+        ):
             # LiteLLM keys spend by team_id when called via Virtual Key;
             # fall back to summing everything when no team filter exists.
             pass
@@ -166,17 +166,14 @@ async def _touch_mapping(tenant_id: str) -> None:
     """Bump ``last_synced_at`` on the tenant's mapping."""
     try:
         factory = get_session_factory()
-        async with factory() as session:
-            async with tenant_context(session, tenant_id):
-                row = await session.scalar(
-                    select(LiteLLMTeamMapping).where(
-                        LiteLLMTeamMapping.tenant_id == tenant_id
-                    )
-                )
-                if row is None:
-                    return
-                row.last_synced_at = datetime.now(timezone.utc)
-                await session.commit()
+        async with factory() as session, tenant_context(session, tenant_id):
+            row = await session.scalar(
+                select(LiteLLMTeamMapping).where(LiteLLMTeamMapping.tenant_id == tenant_id)
+            )
+            if row is None:
+                return
+            row.last_synced_at = datetime.now(UTC)
+            await session.commit()
     except Exception as exc:  # noqa: BLE001 — best-effort
         logger.warning(
             "litellm.reconcile.touch_failed",
@@ -188,18 +185,15 @@ async def _touch_mapping(tenant_id: str) -> None:
 async def _mark_mapping_drifted(tenant_id: str) -> None:
     try:
         factory = get_session_factory()
-        async with factory() as session:
-            async with tenant_context(session, tenant_id):
-                row = await session.scalar(
-                    select(LiteLLMTeamMapping).where(
-                        LiteLLMTeamMapping.tenant_id == tenant_id
-                    )
-                )
-                if row is None:
-                    return
-                row.status = "drifted"
-                row.last_synced_at = datetime.now(timezone.utc)
-                await session.commit()
+        async with factory() as session, tenant_context(session, tenant_id):
+            row = await session.scalar(
+                select(LiteLLMTeamMapping).where(LiteLLMTeamMapping.tenant_id == tenant_id)
+            )
+            if row is None:
+                return
+            row.status = "drifted"
+            row.last_synced_at = datetime.now(UTC)
+            await session.commit()
     except Exception as exc:  # noqa: BLE001 — best-effort
         logger.warning(
             "litellm.reconcile.drift_persist_failed",

@@ -27,10 +27,11 @@ from __future__ import annotations
 
 import functools
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, Literal
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from jsonschema import Draft202012Validator
@@ -42,12 +43,13 @@ from app.core.telemetry import get_tracer
 from app.db.models.seed import (
     SeedMigration,
     SeedOperation,
-    SeedRun as SeedRunRow,
     SeedRunStatus,
     SeedTenantType,
 )
+from app.db.models.seed import (
+    SeedRun as SeedRunRow,
+)
 from app.services.audit_service import AuditService
-
 from seeds.framework.checksum import compute_checksum, compute_row_count_checksum
 from seeds.framework.exceptions import (
     ApplyRolledBackError,
@@ -58,10 +60,11 @@ from seeds.framework.exceptions import (
     SeedNotFoundError,
 )
 from seeds.framework.production_safety import check_production_safety
-from seeds.framework.upsert_helpers import build_upsert_sql, chunk_rows, flatten_row
+from seeds.framework.upsert_helpers import build_upsert_sql, chunk_rows
 
 logger = get_logger(__name__)
 _tracer = get_tracer("forge.seeds")
+
 
 # OTel span decorator: wraps the wrapped function in a span and sets the
 # span name. If the tracer provider has not been initialized (e.g. during
@@ -232,7 +235,7 @@ class SeedRunner:
         resolve_map = await self._resolve_references(package_dir, manifest)
 
         run_id = uuid4()
-        started_at = datetime.now(timezone.utc)
+        started_at = datetime.now(UTC)
         row_counts: dict[str, int] = {}
         dropped_rows: dict[str, int] = {}
         applied_versions: list[str] = []
@@ -258,9 +261,7 @@ class SeedRunner:
             await session.commit()
 
             try:
-                data_files = sorted(
-                    manifest["data_files"], key=lambda d: int(d["order"])
-                )
+                data_files = sorted(manifest["data_files"], key=lambda d: int(d["order"]))
                 all_paths = [package_dir / "data" / d["file"] for d in data_files]
                 for df, path in zip(data_files, all_paths):
                     await self._check_schema(session, df["table"], df["idempotency_key"])
@@ -283,7 +284,7 @@ class SeedRunner:
                     seed_name=seed_name,
                     manifest_version=int(manifest["version"]),
                     description=manifest.get("description"),
-                    applied_at=datetime.now(timezone.utc),
+                    applied_at=datetime.now(UTC),
                     applied_by=actor_id,
                     checksum=checksum,
                     row_counts=row_counts,
@@ -310,7 +311,7 @@ class SeedRunner:
                     if run_row is not None:
                         run_row.status = SeedRunStatus.FAILED
                         run_row.error = error_payload
-                        run_row.completed_at = datetime.now(timezone.utc)
+                        run_row.completed_at = datetime.now(UTC)
                         await fail_session.commit()
                 await self._audit(
                     action="seed.apply.failed",
@@ -319,16 +320,12 @@ class SeedRunner:
                     manifest_version=int(manifest["version"]),
                     error=error_payload,
                 )
-                raise ApplyRolledBackError(
-                    f"Seed apply for {seed_name!r} failed: {exc}"
-                ) from exc
+                raise ApplyRolledBackError(f"Seed apply for {seed_name!r} failed: {exc}") from exc
 
         # Final state: update SeedRun row with completed status.
-        completed_at = datetime.now(timezone.utc)
+        completed_at = datetime.now(UTC)
         async with self._session_factory() as complete_session:
-            res = await complete_session.execute(
-                select(SeedRunRow).where(SeedRunRow.id == run_id)
-            )
+            res = await complete_session.execute(select(SeedRunRow).where(SeedRunRow.id == run_id))
             run_row = res.scalar_one_or_none()
             if run_row is not None:
                 run_row.status = status
@@ -337,9 +334,7 @@ class SeedRunner:
                 run_row.dropped_rows = dropped_rows
                 run_row.checksum_after = compute_row_count_checksum(row_counts)
                 run_row.completed_at = completed_at
-                run_row.duration_ms = int(
-                    (completed_at - started_at).total_seconds() * 1000
-                )
+                run_row.duration_ms = int((completed_at - started_at).total_seconds() * 1000)
                 await complete_session.commit()
 
         await self._audit(
@@ -385,7 +380,7 @@ class SeedRunner:
         self._validate_manifest(manifest)
 
         run_id = uuid4()
-        started_at = datetime.now(timezone.utc)
+        started_at = datetime.now(UTC)
         dropped_rows: dict[str, int] = {}
         status = SeedRunStatus.RUNNING
         error_payload: dict[str, Any] = {}
@@ -406,9 +401,7 @@ class SeedRunner:
                     if scope == "demo_only":
                         result = await session.execute(
                             text(
-                                f"DELETE FROM {table} "
-                                "WHERE tenant_id = :tid "
-                                "AND is_demo = :is_demo"
+                                f"DELETE FROM {table} WHERE tenant_id = :tid AND is_demo = :is_demo"
                             ),
                             {
                                 "tid": str(actor_id) if False else None,  # placeholder
@@ -431,11 +424,9 @@ class SeedRunner:
                 manifest_version=int(manifest["version"]),
                 error=error_payload,
             )
-            raise ApplyRolledBackError(
-                f"Seed reset for {seed_name!r} failed: {exc}"
-            ) from exc
+            raise ApplyRolledBackError(f"Seed reset for {seed_name!r} failed: {exc}") from exc
 
-        completed_at = datetime.now(timezone.utc)
+        completed_at = datetime.now(UTC)
         await self._audit(
             action="seed.reset.completed",
             seed_name=seed_name,
@@ -522,7 +513,7 @@ class SeedRunner:
         expected = dict(manifest.get("row_counts_expected") or {})
         actual: dict[str, int] = {}
         async with self._session_factory() as session:
-            for table in expected.keys():
+            for table in expected:
                 res = await session.execute(text(f"SELECT COUNT(*) FROM {table}"))
                 row = res.first()
                 actual[table] = int(row[0]) if row else 0
@@ -574,9 +565,7 @@ class SeedRunner:
             raise SeedNotFoundError(f"Seed package not found: {seed_name!r}")
         manifest_path = package_dir / "manifest.json"
         if not manifest_path.exists():
-            raise InvalidManifestError(
-                f"Seed package {seed_name!r} has no manifest.json"
-            )
+            raise InvalidManifestError(f"Seed package {seed_name!r} has no manifest.json")
         try:
             manifest = json.loads(manifest_path.read_text())
         except json.JSONDecodeError as exc:
@@ -634,9 +623,7 @@ class SeedRunner:
                 {"t": table, "c": col},
             )
             if res.first() is None:
-                raise SchemaMismatchError(
-                    f"Table {table!r} is missing required column {col!r}"
-                )
+                raise SchemaMismatchError(f"Table {table!r} is missing required column {col!r}")
 
     async def _resolve_references(
         self,

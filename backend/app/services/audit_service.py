@@ -78,8 +78,7 @@ class AuditService:
             row = AuditEvent(
                 tenant_id=str(tenant_uuid),
                 project_id=(
-                    str(project_id) if project_id
-                    else "00000000-0000-0000-0000-000000000000"
+                    str(project_id) if project_id else "00000000-0000-0000-0000-000000000000"
                 ),
                 actor_id=str(actor_id) if actor_id else None,
                 action=action,
@@ -98,18 +97,13 @@ class AuditService:
             # for the tenant in this process). After
             # ``observability_service.chain_hash`` the new head is
             # already cached for the next call.
-            digest = observability_service.chain_hash(
-                tenant_id=tenant_uuid, payload=payload_dict
-            )
+            digest = observability_service.chain_hash(tenant_id=tenant_uuid, payload=payload_dict)
 
             # Persist the digest — raw SQL so the ORM ``before_update``
             # immutability listener does not fire. This UPDATE is the
             # single, narrowly-scoped bypass of the append-only rule.
             await session.execute(
-                text(
-                    "UPDATE audit_events SET hash_chain_ref = :ref "
-                    "WHERE id = :id"
-                ),
+                text("UPDATE audit_events SET hash_chain_ref = :ref WHERE id = :id"),
                 {"ref": digest, "id": str(row.id)},
             )
             await session.commit()

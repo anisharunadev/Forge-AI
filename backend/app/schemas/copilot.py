@@ -18,7 +18,6 @@ from pydantic import Field
 
 from app.schemas.common import ForgeBaseModel, TenantScopedModel
 
-
 # ---------------------------------------------------------------------------
 # Page context
 # ---------------------------------------------------------------------------

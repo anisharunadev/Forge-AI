@@ -12,10 +12,11 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import DateTime, Enum as SAEnum, Index, Numeric, String
+from sqlalchemy import DateTime, Index, Numeric, String
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class WorkflowBudgetStatus(str, Enum):
@@ -45,18 +46,14 @@ class WorkflowBudget(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     project_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, index=True)
     workflow_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, unique=True)
     ceiling_usd: Mapped[float] = mapped_column(Numeric(18, 8), nullable=False)
-    spent_usd: Mapped[float] = mapped_column(
-        Numeric(18, 8), nullable=False, default=0
-    )
+    spent_usd: Mapped[float] = mapped_column(Numeric(18, 8), nullable=False, default=0)
     status: Mapped[WorkflowBudgetStatus] = mapped_column(
         SAEnum(WorkflowBudgetStatus, name="workflow_budget_status"),
         nullable=False,
         default=WorkflowBudgetStatus.ACTIVE,
     )
     declared_by: Mapped[UUID | None] = mapped_column(GUID(), nullable=True)
-    declared_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    declared_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     metadata_: Mapped[dict[str, Any]] = mapped_column(
         "metadata", JSONB, nullable=False, default=dict
     )
@@ -79,9 +76,7 @@ class WorkflowBudgetDecision(Base, UUIDPrimaryKeyMixin):
     project_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, index=True)
     workflow_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, index=True)
     decision: Mapped[str] = mapped_column(String(32), nullable=False)
-    projected_cost_usd: Mapped[float] = mapped_column(
-        Numeric(18, 8), nullable=False
-    )
+    projected_cost_usd: Mapped[float] = mapped_column(Numeric(18, 8), nullable=False)
     spent_usd: Mapped[float] = mapped_column(Numeric(18, 8), nullable=False)
     ceiling_usd: Mapped[float] = mapped_column(Numeric(18, 8), nullable=False)
     actor_id: Mapped[UUID | None] = mapped_column(GUID(), nullable=True)
@@ -90,7 +85,8 @@ class WorkflowBudgetDecision(Base, UUIDPrimaryKeyMixin):
         DateTime(timezone=True), nullable=False, index=True
     )
 
-    __table_args__ = (        Index("ix_workflow_budget_decisions_tenant_project", "tenant_id", "project_id"),
+    __table_args__ = (
+        Index("ix_workflow_budget_decisions_tenant_project", "tenant_id", "project_id"),
         Index(
             "ix_workflow_budget_decisions_workflow",
             "workflow_id",

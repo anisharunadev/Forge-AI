@@ -19,7 +19,7 @@ import subprocess
 import tempfile
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -35,12 +35,9 @@ from app.db.models.repo_ingestion import (
     Repo,
 )
 from app.db.session import get_session_factory
-from app.services.connector_manager import connector_manager
-from app.services.event_bus import EventType, bus as default_bus
-from app.services.freshness_ledger import freshness_ledger
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 from app.services.knowledge_graph import (
-    Edge,
-    Node,
     knowledge_graph_service,
 )
 
@@ -283,7 +280,7 @@ class RepoIngestionService:
                 tenant_id=str(tenant_id),
                 project_id=str(project_id),
                 repo_id=repo.id,
-                started_at=datetime.now(timezone.utc),
+                started_at=datetime.now(UTC),
                 status=IngestionStatus.CLONING,
                 started_by=str(actor_id),
                 started_commit_sha=repo.last_commit_sha,
@@ -370,9 +367,7 @@ class RepoIngestionService:
             )
             commit_sha: str | None = None
             if clone_rc == 0:
-                sha_rc, sha_out = _safe_run(
-                    ["git", "rev-parse", "HEAD"], cwd=workdir, timeout=10
-                )
+                sha_rc, sha_out = _safe_run(["git", "rev-parse", "HEAD"], cwd=workdir, timeout=10)
                 if sha_rc == 0:
                     commit_sha = sha_out.strip().splitlines()[0] if sha_out.strip() else None
 
@@ -619,7 +614,7 @@ class RepoIngestionService:
                 content_ref=payload["content_ref"],
                 content_hash=payload["content_hash"],
                 size_bytes=payload.get("size_bytes", 0),
-                created_at=datetime.now(timezone.utc),
+                created_at=datetime.now(UTC),
             )
             session.add(art)
             await session.commit()
@@ -669,7 +664,7 @@ class RepoIngestionService:
             run.status = status
             run.items_processed = items
             run.artifacts_produced = artifacts_produced
-            run.finished_at = datetime.now(timezone.utc)
+            run.finished_at = datetime.now(UTC)
             run.finished_commit_sha = commit_sha
             repo_row = await session.get(Repo, str(repo.id))
             if repo_row is not None:
@@ -678,7 +673,9 @@ class RepoIngestionService:
                 repo_row.last_commit_sha = commit_sha
             await session.commit()
         await self._bus.publish(
-            EventType.CONNECTOR_HEALTHY if status == IngestionStatus.SUCCESS else EventType.CONNECTOR_FAILED,
+            EventType.CONNECTOR_HEALTHY
+            if status == IngestionStatus.SUCCESS
+            else EventType.CONNECTOR_FAILED,
             {
                 "graph_event": "ingestion_finished",
                 "run_id": str(run_id),
@@ -703,12 +700,8 @@ class RepoIngestionService:
             if run is None:
                 raise LookupError(f"ingestion_run {ingestion_run_id} not found")
             if str(run.tenant_id) != str(tenant_id):
-                raise PermissionError(
-                    f"ingestion_run {ingestion_run_id} not in tenant {tenant_id}"
-                )
-            stmt = select(IngestionArtifact).where(
-                IngestionArtifact.ingestion_run_id == run.id
-            )
+                raise PermissionError(f"ingestion_run {ingestion_run_id} not in tenant {tenant_id}")
+            stmt = select(IngestionArtifact).where(IngestionArtifact.ingestion_run_id == run.id)
             arts = list((await session.execute(stmt)).scalars().all())
             return IngestionProgress(
                 run_id=run.id,
@@ -760,11 +753,9 @@ class RepoIngestionService:
             if run is None:
                 raise LookupError(f"ingestion_run {ingestion_run_id} not found")
             if str(run.tenant_id) != str(tenant_id):
-                raise PermissionError(
-                    f"ingestion_run {ingestion_run_id} not in tenant {tenant_id}"
-                )
+                raise PermissionError(f"ingestion_run {ingestion_run_id} not in tenant {tenant_id}")
             run.status = IngestionStatus.CANCELLED
-            run.finished_at = datetime.now(timezone.utc)
+            run.finished_at = datetime.now(UTC)
             await session.commit()
             await session.refresh(run)
         await self._bus.publish(

@@ -17,7 +17,7 @@ from uuid import UUID
 from sqlalchemy import DateTime, Index, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class LiteLLMBudgetPeriod(str, Enum):
@@ -46,9 +46,7 @@ class LiteLLMBudgetConfig(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     max_usd: Mapped[Decimal] = mapped_column(Numeric(18, 4), nullable=False)
     period: Mapped[str] = mapped_column(String(16), nullable=False, default="monthly")
     hard_limit: Mapped[bool] = mapped_column(default=True, nullable=False)
-    last_synced_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
         Index(

@@ -14,7 +14,6 @@ Covers the bidirectional sync half of the Jira bridge:
 from __future__ import annotations
 
 import uuid
-from typing import Any
 
 import pytest
 from sqlalchemy import select
@@ -90,9 +89,7 @@ async def test_observed_event_upserts_idea(sqlite_db, mem_bus):
     # event loop yield, so a direct DB read is safe).
     factory = get_session_factory()
     async with factory() as session:
-        stmt = select(Idea).where(
-            Idea.tenant_id == tenant_id, Idea.external_key == "FORA-1234"
-        )
+        stmt = select(Idea).where(Idea.tenant_id == tenant_id, Idea.external_key == "FORA-1234")
         rows = list((await session.execute(stmt)).scalars().all())
         assert len(rows) == 1
         row = rows[0]
@@ -114,9 +111,7 @@ async def test_republish_is_noop(sqlite_db, mem_bus):
     )
     factory = get_session_factory()
     async with factory() as session:
-        stmt = select(Idea).where(
-            Idea.tenant_id == tenant_id, Idea.external_key == "FORA-1234"
-        )
+        stmt = select(Idea).where(Idea.tenant_id == tenant_id, Idea.external_key == "FORA-1234")
         rows = list((await session.execute(stmt)).scalars().all())
         assert len(rows) == 1
 
@@ -125,9 +120,7 @@ async def test_transition_event_updates_status(sqlite_db, mem_bus):
     tenant_id = str(uuid.uuid4())
     project_id = str(uuid.uuid4())
     JiraIngestionService(bus=mem_bus)
-    await _publish_issue_observed(
-        mem_bus, tenant_id=tenant_id, project_id=project_id, key="FORA-9"
-    )
+    await _publish_issue_observed(mem_bus, tenant_id=tenant_id, project_id=project_id, key="FORA-9")
     await _publish_transition(
         mem_bus,
         tenant_id=tenant_id,
@@ -137,9 +130,7 @@ async def test_transition_event_updates_status(sqlite_db, mem_bus):
     )
     factory = get_session_factory()
     async with factory() as session:
-        stmt = select(Idea).where(
-            Idea.tenant_id == tenant_id, Idea.external_key == "FORA-9"
-        )
+        stmt = select(Idea).where(Idea.tenant_id == tenant_id, Idea.external_key == "FORA-9")
         rows = list((await session.execute(stmt)).scalars().all())
         assert len(rows) == 1
         assert rows[0].status == IdeaStatus.ANALYZING  # "In Progress" → ANALYZING
@@ -161,9 +152,7 @@ async def test_transition_done_moves_to_in_roadmap(sqlite_db, mem_bus):
     )
     factory = get_session_factory()
     async with factory() as session:
-        stmt = select(Idea).where(
-            Idea.tenant_id == tenant_id, Idea.external_key == "FORA-10"
-        )
+        stmt = select(Idea).where(Idea.tenant_id == tenant_id, Idea.external_key == "FORA-10")
         row = (await session.execute(stmt)).scalars().first()
         assert row is not None
         assert row.status == IdeaStatus.IN_ROADMAP

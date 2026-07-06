@@ -20,7 +20,6 @@ from app.agents.tools.mcp_client import MCPClient, build_default_mcp_client
 from app.services.artifact_registry import ArtifactRegistry
 from app.services.litellm_client import LiteLLMClient
 
-
 ARTIFACT_TYPE_SECURITY_REPORT = "security_report"
 
 
@@ -73,9 +72,7 @@ class SecurityNode(BasePhaseNode):
             user_id=user_id,
         )
         if not policy.ok:
-            raise RuntimeError(
-                f"forge-sec-policy-check failed: {policy.error}"
-            )
+            raise RuntimeError(f"forge-sec-policy-check failed: {policy.error}")
 
         # 3. Optional: LLM-based threat-model synthesis.
         threat_model = None
@@ -93,9 +90,7 @@ class SecurityNode(BasePhaseNode):
                             },
                             {
                                 "role": "user",
-                                "content": json.dumps(scan.output, default=str)[
-                                    :6000
-                                ],
+                                "content": json.dumps(scan.output, default=str)[:6000],
                             },
                         ],
                         tenant_id=tenant_id,
@@ -103,9 +98,9 @@ class SecurityNode(BasePhaseNode):
                         workflow_id=state.run_id,
                         actor_id=user_id,
                     )
-                    threat_model = response.get("choices", [{}])[0].get(
-                        "message", {}
-                    ).get("content", "")
+                    threat_model = (
+                        response.get("choices", [{}])[0].get("message", {}).get("content", "")
+                    )
             except Exception:  # noqa: BLE001 — LLM is best-effort
                 threat_model = None
 
@@ -116,9 +111,7 @@ class SecurityNode(BasePhaseNode):
             "approver_role": "forge-security",
             "context": state.context,
         }
-        canonical = json.dumps(
-            payload, sort_keys=True, separators=(",", ":"), default=str
-        )
+        canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
         content_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
         artifact = await self._registry.create(
             tenant_id=tenant_id,

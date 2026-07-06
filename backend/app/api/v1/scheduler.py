@@ -17,17 +17,17 @@ identity, target job id, and outcome are all captured.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import Principal, require_permission, get_current_principal
-from app.core.audit import audit
-from app.core.security import AuthenticatedPrincipal
-from app.core.logging import get_logger
 from app.agents.approval_gate import require_approval_phase
 from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
+from app.core.audit import audit
+from app.core.logging import get_logger
+from app.core.security import AuthenticatedPrincipal
 
 logger = get_logger(__name__)
 
@@ -51,9 +51,7 @@ def _job_to_dict(job: Any) -> dict[str, Any]:
     return {
         "id": str(getattr(job, "id", "")),
         "name": str(getattr(job, "name", "") or getattr(job, "id", "")),
-        "next_run_time": (
-            next_run.isoformat() if isinstance(next_run, datetime) else None
-        ),
+        "next_run_time": (next_run.isoformat() if isinstance(next_run, datetime) else None),
         "trigger": str(trigger) if trigger is not None else None,
     }
 
@@ -86,19 +84,19 @@ def _list_jobs() -> list[dict[str, Any]]:
 @audit(action="scheduler.list", target_type="scheduler_job")
 async def list_jobs(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:read")),
 ) -> dict[str, Any]:
     """Return registered jobs (id, name, next_run_time, trigger)."""
     return {"jobs": _list_jobs()}
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/jobs/{job_id}/run")
 @audit(action="scheduler.run", target_type="scheduler_job")
 async def run_job(
     job_id: str,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:enhance"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("ideation:enhance")),
 ) -> dict[str, Any]:
     """Run ``job_id`` immediately and return a status payload.
 
@@ -130,7 +128,7 @@ async def run_job(
 
     # Force the next tick to be "now".
     try:
-        inner.modify_job(job_id, next_run_time=datetime.now(timezone.utc))
+        inner.modify_job(job_id, next_run_time=datetime.now(UTC))
     except Exception as exc:  # noqa: BLE001
         logger.warning("scheduler.run_now_failed", job_id=job_id, error=str(exc))
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -146,7 +144,7 @@ async def run_job(
     return {
         "job_id": job_id,
         "status": "scheduled",
-        "requested_at": datetime.now(timezone.utc).isoformat(),
+        "requested_at": datetime.now(UTC).isoformat(),
     }
 
 

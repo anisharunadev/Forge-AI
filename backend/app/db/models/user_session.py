@@ -20,10 +20,10 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class UserApiToken(Base, UUIDPrimaryKeyMixin, TimestampMixin):
@@ -48,15 +48,9 @@ class UserApiToken(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     # the small keyspace. Swap for argon2 if rotating to user-supplied
     # passwords later.
     secret_hash: Mapped[str] = mapped_column(String(64), nullable=False)
-    last_used_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    revoked_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
         Index("ix_user_api_tokens_user_active", "user_id", "revoked_at"),
@@ -83,17 +77,11 @@ class UserSession(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     ip: Mapped[str] = mapped_column(String(64), nullable=False, default="")
     # ponytail: client-reported label ("Chrome on macOS"), best-effort.
     label: Mapped[str] = mapped_column(String(200), nullable=False, default="")
-    last_seen_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    revoked_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     is_current: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    __table_args__ = (
-        Index("ix_user_sessions_user_active", "user_id", "revoked_at"),
-    )
+    __table_args__ = (Index("ix_user_sessions_user_active", "user_id", "revoked_at"),)
 
 
 __all__ = ["UserApiToken", "UserSession"]

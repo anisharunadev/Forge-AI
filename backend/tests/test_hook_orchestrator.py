@@ -9,7 +9,6 @@ import uuid
 import pytest
 
 from app.db.models.hook import HookPhase
-from app.schemas.hooks import HookResult
 from app.services.hook_orchestrator import HookOrchestrator
 
 
@@ -52,10 +51,10 @@ async def test_fire_pre_mutates_context(orch, sqlite_db):
         script=(
             f"{sys.executable} -c "
             "'import json,sys; "
-            'ctx=json.loads(sys.argv[1]); '
-            'ctx[\"enriched\"]=True; '
-            'print(\"__forge_mutate__:\",json.dumps(ctx))\' '
-            "\"$FORGE_HOOK_CONTEXT\""
+            "ctx=json.loads(sys.argv[1]); "
+            'ctx["enriched"]=True; '
+            'print("__forge_mutate__:",json.dumps(ctx))\' '
+            '"$FORGE_HOOK_CONTEXT"'
         ),
         run_order=10,
     )

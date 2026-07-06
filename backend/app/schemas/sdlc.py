@@ -17,10 +17,10 @@ from pydantic import Field
 from app.agents.sdlc_state import SDLCPhase
 from app.schemas.common import ForgeBaseModel, Page
 
-
 # ---------------------------------------------------------------------------
 # Run create / read
 # ---------------------------------------------------------------------------
+
 
 class SDLCRunCreateRequest(ForgeBaseModel):
     """POST /api/v1/runs request body."""
@@ -105,6 +105,7 @@ class SDLCRunListResponse(Page["SDLCRunStateResponse"]):
 # Approval response
 # ---------------------------------------------------------------------------
 
+
 class ApprovalResponseRequest(ForgeBaseModel):
     """POST /api/v1/runs/{id}/resume request body."""
 
@@ -129,6 +130,7 @@ class ApprovalResponseResponse(ForgeBaseModel):
 # Cancel
 # ---------------------------------------------------------------------------
 
+
 class SDLCancelRequest(ForgeBaseModel):
     """POST /api/v1/runs/{id}/cancel request body."""
 
@@ -140,13 +142,13 @@ class SDLCancelRequest(ForgeBaseModel):
 # ---------------------------------------------------------------------------
 
 WSMessageType = Literal[
-    "state",       # server -> client: full state snapshot
-    "approval",    # server -> client: approval request snapshot
-    "artifact",    # server -> client: artifact produced
-    "phase",       # server -> client: phase transition
+    "state",  # server -> client: full state snapshot
+    "approval",  # server -> client: approval request snapshot
+    "artifact",  # server -> client: artifact produced
+    "phase",  # server -> client: phase transition
     "approval_response",  # client -> server: response
-    "error",       # server -> client: error envelope
-    "ping",        # bidirectional heartbeat
+    "error",  # server -> client: error envelope
+    "ping",  # bidirectional heartbeat
 ]
 
 

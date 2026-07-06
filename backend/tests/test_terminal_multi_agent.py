@@ -27,15 +27,15 @@ from __future__ import annotations
 
 import tempfile
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 
 from app.terminal.agent_launcher import (
-    AgentLaunchError,
-    AgentLauncher,
     _AGENT_BINARY,
+    AgentLauncher,
+    AgentLaunchError,
     detect_agent,
 )
 from app.terminal.session_manager import (
@@ -43,7 +43,6 @@ from app.terminal.session_manager import (
     SessionStatus,
     TerminalSession,
 )
-
 
 # ---------------------------------------------------------------------------
 # AC4.1 — AgentType enum covers all four CLI families
@@ -139,7 +138,7 @@ def test_detect_agent_custom_fallback(workspace_root: Path) -> None:
 
 
 def _make_session(agent_type: AgentType, workspace: str) -> TerminalSession:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return TerminalSession(
         id=str(uuid.uuid4()),
         tenant_id="tenant-A",

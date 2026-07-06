@@ -12,11 +12,10 @@ from uuid import UUID
 
 from sqlalchemy import func, select
 
-from app.core.logging import get_logger
-from app.core.security import AuthenticatedPrincipal
-from app.copilot.tools.base import Tool
 from app.copilot.tools.exceptions import ToolArgumentInvalid
 from app.copilot.tools.registry import tool_registry
+from app.core.logging import get_logger
+from app.core.security import AuthenticatedPrincipal
 from app.db.models.standard import Standard
 from app.db.session import get_session_factory
 from app.services.rbac import COPILOT_PERMISSION_TOOL_GET_STANDARDS

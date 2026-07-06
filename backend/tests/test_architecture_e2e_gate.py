@@ -84,12 +84,16 @@ async def test_full_approval_gate_chain(sqlite_db, event_bus):
         required_role="forge-architect",
         expires_at=datetime.now(UTC) + timedelta(hours=1),
     )
-    granted_state = SDLCState(
-        tenant_id=uuid.uuid4(),
-        project_id=uuid.uuid4(),
-        actor_id=uuid.uuid4(),
-        context={"repo_path": "/tmp", "workspace_path": "/tmp/ws"},
-    ).set_pending_approval(pending).with_phase(SDLCPhase.BLOCKED_APPROVAL)
+    granted_state = (
+        SDLCState(
+            tenant_id=uuid.uuid4(),
+            project_id=uuid.uuid4(),
+            actor_id=uuid.uuid4(),
+            context={"repo_path": "/tmp", "workspace_path": "/tmp/ws"},
+        )
+        .set_pending_approval(pending)
+        .with_phase(SDLCPhase.BLOCKED_APPROVAL)
+    )
     granted_state = granted_state.model_copy(
         update={
             "metadata": {

@@ -14,8 +14,8 @@ from sqlalchemy import Boolean, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import (
-    Base,
     GUID,
+    Base,
     TimestampMixin,
     UUIDPrimaryKeyMixin,
 )
@@ -42,9 +42,7 @@ class Customer(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     blocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     billing_ref: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
 
-    __table_args__ = (
-        Index("ix_customers_tenant_org", "tenant_id", "org_id"),
-    )
+    __table_args__ = (Index("ix_customers_tenant_org", "tenant_id", "org_id"),)
 
 
 __all__ = ["Customer"]

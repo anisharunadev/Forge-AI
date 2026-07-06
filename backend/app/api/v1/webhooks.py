@@ -31,11 +31,11 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.services.merge_gate import MergeGate, merge_gate_default
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -119,8 +119,6 @@ def get_gate() -> MergeGate:
 # Endpoint
 # ---------------------------------------------------------------------------
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post(
     "/github/pre-commit",
     response_model=GateWebhookResponse,
@@ -179,9 +177,9 @@ def _respond_blocked(body: GateWebhookResponse) -> GateWebhookResponse:
     raising an HTTPException(403, detail=body.model_dump_json()).
     """
     return body
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post(
     "/github/pre-commit/lock",
     include_in_schema=False,

@@ -48,12 +48,12 @@ The ``thread_id`` argument to ``run_sdlc`` is used as LangGraph's
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Any, AsyncIterator
-from uuid import UUID, uuid4
+from typing import Any
 
-from langgraph.graph import END, START, StateGraph
 from langgraph.checkpoint.base import BaseCheckpointSaver
+from langgraph.graph import END, START, StateGraph
 
 from app.agents.approval_gate import ApprovalGateNode
 from app.agents.nodes.architecture import ArchitectureNode
@@ -73,6 +73,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Edge routing — the supervisor's brain
 # ---------------------------------------------------------------------------
+
 
 @dataclass(slots=True)
 class GraphSpec:
@@ -179,6 +180,7 @@ def _route_done(state: SDLCState) -> str:
 # Graph builder
 # ---------------------------------------------------------------------------
 
+
 def build_sdlc_graph(
     *,
     checkpointer: BaseCheckpointSaver[Any, Any] | None = None,
@@ -212,7 +214,6 @@ def build_sdlc_graph(
     gate: ApprovalGateNode = approval_gate or ApprovalGateNode()
 
     builder: StateGraph = StateGraph(SDLCState)
-    
 
     for name, node in nodes.items():
         builder.add_node(name, node)
@@ -311,6 +312,7 @@ def _default_nodes() -> dict[str, BasePhaseNode]:
 # High-level entry point — the public run helper
 # ---------------------------------------------------------------------------
 
+
 async def run_sdlc(
     initial_state: SDLCState,
     *,
@@ -326,9 +328,7 @@ async def run_sdlc(
 
     if graph is None:
         graph = build_sdlc_graph(checkpointer=checkpointer)
-    config: dict[str, Any] = {
-        "configurable": {"thread_id": thread_id or str(initial_state.run_id)}
-    }
+    config: dict[str, Any] = {"configurable": {"thread_id": thread_id or str(initial_state.run_id)}}
     async for snapshot in graph.astream(initial_state.model_dump(mode="json"), config=config):
         if not isinstance(snapshot, dict):
             continue

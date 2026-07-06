@@ -42,9 +42,7 @@ _DESTINATION_TYPES: tuple[ConnectorType, ...] = (
 )
 
 
-def _arch_preview_destination(
-    tenant_id: str, project_id: str | None
-) -> PushDestinationRead:
+def _arch_preview_destination(tenant_id: str, project_id: str | None) -> PushDestinationRead:
     """Always-available architecture-preview slot (synthetic)."""
     return PushDestinationRead(
         id=uuid.UUID("00000000-0000-0000-0000-00000000a4a1"),  # fixed placeholder
@@ -60,11 +58,7 @@ def _arch_preview_destination(
 
 
 def _connector_to_destination(connector: Connector) -> PushDestinationRead:
-    type_str = (
-        connector.type.value
-        if hasattr(connector.type, "value")
-        else str(connector.type)
-    )
+    type_str = connector.type.value if hasattr(connector.type, "value") else str(connector.type)
     return PushDestinationRead(
         id=connector.id,
         tenant_id=connector.tenant_id,
@@ -72,9 +66,7 @@ def _connector_to_destination(connector: Connector) -> PushDestinationRead:
         kind=type_str,  # type: ignore[arg-type]
         config=dict(connector.config or {}),
         last_pushed_at=connector.last_sync_at,
-        status="healthy"
-        if str(connector.status) in {"healthy", "HEALTHY"}
-        else "degraded",
+        status="healthy" if str(connector.status) in {"healthy", "HEALTHY"} else "degraded",
         created_at=connector.created_at,
         updated_at=connector.updated_at,
     )
@@ -95,9 +87,7 @@ async def list_destinations(
     slot.
     """
     factory = get_session_factory()
-    effective_project_id = (
-        str(project_id) if project_id is not None else str(principal.project_id)
-    )
+    effective_project_id = str(project_id) if project_id is not None else str(principal.project_id)
 
     async with factory() as session:
         stmt = select(Connector).where(Connector.tenant_id == str(principal.tenant_id))
@@ -107,10 +97,12 @@ async def list_destinations(
         rows = list((await session.execute(stmt)).scalars().all())
 
     destinations = [_connector_to_destination(c) for c in rows]
-    destinations.append(_arch_preview_destination(
-        tenant_id=str(principal.tenant_id),
-        project_id=effective_project_id,
-    ))
+    destinations.append(
+        _arch_preview_destination(
+            tenant_id=str(principal.tenant_id),
+            project_id=effective_project_id,
+        )
+    )
     return destinations
 
 

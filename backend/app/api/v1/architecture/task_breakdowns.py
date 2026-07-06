@@ -35,15 +35,17 @@ def _generator() -> TaskBreakdownGenerator:
         artifact_registry=artifact_registry,
         event_bus=bus,
     )
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("", response_model=TaskBreakdownResponse, status_code=status.HTTP_201_CREATED)
 @audit(action="architecture.task_breakdown.create", target_type="task_breakdown")
 async def create_task_breakdown(
     body: TaskBreakdownCreateRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:task_breakdown:create"))
+    _perm: AuthenticatedPrincipal = Depends(
+        require_permission("architecture:task_breakdown:create")
+    ),
 ) -> TaskBreakdownResponse:
     """Generate a task breakdown from a source artifact (ADR, contract, etc.)."""
     if body.source_type != "adr":
@@ -85,25 +87,25 @@ async def list_task_breakdowns(
 async def get_task_breakdown(
     breakdown_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:task_breakdown:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:task_breakdown:read")),
 ) -> TaskBreakdownResponse:
     breakdown = await _generator().get_task_breakdown(breakdown_id)
     if breakdown is None or breakdown.tenant_id != principal.tenant_id:
         raise HTTPException(status_code=404, detail="task_breakdown_not_found")
     return TaskBreakdownResponse.model_validate(breakdown)
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
-@router.patch(
-    "/{breakdown_id}/tasks/{task_id}", response_model=TaskBreakdownResponse
-)
+@router.patch("/{breakdown_id}/tasks/{task_id}", response_model=TaskBreakdownResponse)
 @audit(action="architecture.task_breakdown.update_task", target_type="task_breakdown")
 async def update_task(
     breakdown_id: UUID,
     task_id: str,
     body: TaskUpdateRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:task_breakdown:update"))
+    _perm: AuthenticatedPrincipal = Depends(
+        require_permission("architecture:task_breakdown:update")
+    ),
 ) -> TaskBreakdownResponse:
     updates = body.model_dump(exclude_unset=True)
     try:

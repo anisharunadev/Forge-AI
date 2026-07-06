@@ -108,11 +108,7 @@ def _slug_from_connector(name: str) -> str:
 
 def _to_read(connector: Connector) -> IngestSourceRead:
     """Project a Connector ORM row into IngestSourceRead."""
-    type_str = (
-        connector.type.value
-        if hasattr(connector.type, "value")
-        else str(connector.type)
-    )
+    type_str = connector.type.value if hasattr(connector.type, "value") else str(connector.type)
     return IngestSourceRead(
         id=connector.id,
         tenant_id=connector.tenant_id,
@@ -197,11 +193,7 @@ async def sync_source(
             raise HTTPException(status_code=404, detail="source_not_found")
         if str(connector.tenant_id) != str(principal.tenant_id):
             raise HTTPException(status_code=404, detail="source_not_in_tenant")
-        type_str = (
-            connector.type.value
-            if hasattr(connector.type, "value")
-            else str(connector.type)
-        )
+        type_str = connector.type.value if hasattr(connector.type, "value") else str(connector.type)
         puller_kind = _SOURCE_KIND_TO_PULLER.get(type_str)
         if puller_kind is None:
             raise HTTPException(
@@ -209,10 +201,7 @@ async def sync_source(
                 detail=f"no_puller_for_type:{type_str}",
             )
 
-        since = body.since or (
-            connector.last_sync_at
-            or (datetime.now(UTC) - timedelta(days=14))
-        )
+        since = body.since or (connector.last_sync_at or (datetime.now(UTC) - timedelta(days=14)))
 
         # Run the puller (idempotent). Each puller accepts the same
         # signature shape — limit + since + tenant + project.

@@ -52,6 +52,7 @@ async def list_servers(
     base_client: LiteLLMBaseClient | None = None,
 ) -> list[dict[str, Any]]:
     """``GET /v1/mcp/servers``."""
+
     async def _call(client: LiteLLMBaseClient) -> list[dict[str, Any]]:
         response = await client.admin_client.get("/v1/mcp/servers")
         if response.status_code >= 400:
@@ -81,10 +82,9 @@ async def list_tools(
     params: dict[str, Any] = {}
     if server_ids:
         params["server_ids"] = ",".join(server_ids)
+
     async def _call(client: LiteLLMBaseClient) -> list[dict[str, Any]]:
-        response = await client.admin_client.get(
-            "/v1/mcp/tools", params=params
-        )
+        response = await client.admin_client.get("/v1/mcp/tools", params=params)
         if response.status_code >= 400:
             return []
         raw = response.json() or {}
@@ -124,6 +124,7 @@ async def call_tool(
         "tool_name": tool_name,
         "arguments": arguments or {},
     }
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
         started = time.monotonic()
         try:
@@ -177,12 +178,11 @@ async def test_connection(
     AC #7 — returns ``{reachable: false}`` on unreachable, never a 500.
     """
     body = {"server_id": server_id}
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
         started = time.monotonic()
         try:
-            response = await client.admin_client.post(
-                "/mcp-rest/test", json=body
-            )
+            response = await client.admin_client.post("/mcp-rest/test", json=body)
         except Exception as exc:  # noqa: BLE001
             return {
                 "reachable": False,
@@ -224,10 +224,9 @@ async def register_server(
     server_name = server.get("name") or server.get("server_name") or ""
     if not server_name:
         return None
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
-        response = await client.admin_client.post(
-            f"/{server_name}/register", json=server
-        )
+        response = await client.admin_client.post(f"/{server_name}/register", json=server)
         if response.status_code >= 400:
             return None
         return response.json() or {}
@@ -245,10 +244,9 @@ async def unregister_server(
 ) -> bool:
     """Best-effort unregister; the proxy may not support DELETE so we
     no-op on 405."""
+
     async def _call(client: LiteLLMBaseClient) -> bool:
-        response = await client.admin_client.delete(
-            f"/v1/mcp/servers/{server_name}"
-        )
+        response = await client.admin_client.delete(f"/v1/mcp/servers/{server_name}")
         return response.status_code < 400 or response.status_code == 404
 
     if base_client is not None:
@@ -279,10 +277,9 @@ async def authorize_url(
     params: dict[str, Any] = {"redirect_uri": redirect_uri}
     if state:
         params["state"] = state
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
-        response = await client.admin_client.get(
-            f"/{server_name}/authorize", params=params
-        )
+        response = await client.admin_client.get(f"/{server_name}/authorize", params=params)
         if response.status_code >= 400:
             return None
         return response.json() or {}
@@ -301,6 +298,7 @@ async def fetch_jwks(
 
     Ponytail: cached in-process (TTL controlled by the caller).
     """
+
     async def _call(client: LiteLLMBaseClient) -> dict[str, Any] | None:
         response = await client.admin_client.get("/.well-known/jwks.json")
         if response.status_code >= 400:
@@ -327,6 +325,7 @@ async def public_hub(
     AC #10 — 500ms SLA is enforced at the router layer via per-route
     caching; this proxy just returns whatever the upstream serves.
     """
+
     async def _call(client: LiteLLMBaseClient) -> list[dict[str, Any]]:
         response = await client.admin_client.get("/public/mcp_hub")
         if response.status_code >= 400:

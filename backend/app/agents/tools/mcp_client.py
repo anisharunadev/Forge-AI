@@ -14,9 +14,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable
-from uuid import UUID
+from typing import Any
 
 
 @dataclass(slots=True)
@@ -96,7 +96,7 @@ class MCPClient:
                 handler(server_name, method, dict(params or {})),
                 timeout=self._timeout,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return MCPResult(
                 server=server_name,
                 method=method,
@@ -195,13 +195,13 @@ DEFAULT_CATALOG: dict[str, list[MCPTool]] = {
 }
 
 
-async def _default_server_handler(
-    server: str, method: str, params: dict[str, Any]
-) -> MCPResult:
+async def _default_server_handler(server: str, method: str, params: dict[str, Any]) -> MCPResult:
     """Echo-catalog handler — returns the static catalog for ``__catalog__``."""
 
     if method == "__catalog__":
-        return MCPResult(server=server, method=method, ok=True, output=DEFAULT_CATALOG.get(server, []))
+        return MCPResult(
+            server=server, method=method, ok=True, output=DEFAULT_CATALOG.get(server, [])
+        )
     return MCPResult(
         server=server,
         method=method,

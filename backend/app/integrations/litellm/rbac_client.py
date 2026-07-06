@@ -25,7 +25,6 @@ Sister method groups for F11/F13/F14/F15 live alongside this one.
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID
 
 import httpx
 

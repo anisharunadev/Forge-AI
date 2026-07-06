@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -23,12 +23,8 @@ from app.services.knowledge_graph import knowledge_graph_service
 logger = get_logger(__name__)
 
 
-_DECISION_RE = re.compile(
-    r"\b(decided|decision|approved|agreed|concluded)\b", re.IGNORECASE
-)
-_ACTION_RE = re.compile(
-    r"\b(ACTION|TODO|FIXME|@[\w_-]+)\b"
-)
+_DECISION_RE = re.compile(r"\b(decided|decision|approved|agreed|concluded)\b", re.IGNORECASE)
+_ACTION_RE = re.compile(r"\b(ACTION|TODO|FIXME|@[\w_-]+)\b")
 _REFERENCE_RE = re.compile(r"\[([\w-]+)\]|@([\w._-]+)")
 
 
@@ -144,7 +140,7 @@ class CommIngestionService:
                 "since": since.isoformat() if since else None,
                 "connector_id": str(connector.id) if connector else None,
                 "placeholder": connector is None,
-                "fetched_at": datetime.now(timezone.utc).isoformat(),
+                "fetched_at": datetime.now(UTC).isoformat(),
             },
             tenant_id=tenant_id,
             project_id=project_id,
@@ -169,13 +165,9 @@ class CommIngestionService:
 
     def detect(self, text: str) -> dict[str, Any]:
         """Public helper: scan a free-form message and return detections."""
-        decisions = [
-            DetectedDecision(text=m.group(0))
-            for m in _DECISION_RE.finditer(text)
-        ]
+        decisions = [DetectedDecision(text=m.group(0)) for m in _DECISION_RE.finditer(text)]
         actions = [
-            DetectedAction(text=m.group(0), assignee=None)
-            for m in _ACTION_RE.finditer(text)
+            DetectedAction(text=m.group(0), assignee=None) for m in _ACTION_RE.finditer(text)
         ]
         refs = []
         for m in _REFERENCE_RE.finditer(text):

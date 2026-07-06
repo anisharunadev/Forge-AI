@@ -12,7 +12,7 @@ Rules respected:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -148,9 +148,7 @@ class BudgetSync:
                 "max_usd": float(row.max_usd),
                 "period": row.period,
                 "hard_limit": row.hard_limit,
-                "last_synced_at": (
-                    row.last_synced_at.isoformat() if row.last_synced_at else None
-                ),
+                "last_synced_at": (row.last_synced_at.isoformat() if row.last_synced_at else None),
             }
 
         team_id = await self._team_id_for_tenant(tid)
@@ -239,7 +237,9 @@ class BudgetSync:
     # ------------------------------------------------------------------
     # HTTP helpers
     # ------------------------------------------------------------------
-    async def _admin_post(self, path: str, *, json_body: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def _admin_post(
+        self, path: str, *, json_body: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         if self._base_client_factory is not None:
             async with self._base_client_factory() as client:
                 response = await client.admin_client.post(path, json=json_body or {})
@@ -249,7 +249,9 @@ class BudgetSync:
             response = await client.admin_client.post(path, json=json_body or {})
             return self._parse(response)
 
-    async def _admin_get(self, path: str, *, params: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def _admin_get(
+        self, path: str, *, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         if self._base_client_factory is not None:
             async with self._base_client_factory() as client:
                 response = await client.admin_client.get(path, params=params or {})
@@ -274,59 +276,50 @@ class BudgetSync:
     ) -> None:
         normalized_period = self._normalize_period(period)
         factory = get_session_factory()
-        async with factory() as session:
-            async with tenant_context(session, tenant_id, project_id):
-                row = await session.scalar(
-                    select(LiteLLMBudgetConfig).where(
-                        LiteLLMBudgetConfig.tenant_id == tenant_id
-                    )
+        async with factory() as session, tenant_context(session, tenant_id, project_id):
+            row = await session.scalar(
+                select(LiteLLMBudgetConfig).where(LiteLLMBudgetConfig.tenant_id == tenant_id)
+            )
+            if row is None:
+                row = LiteLLMBudgetConfig(
+                    tenant_id=tenant_id,
+                    project_id=project_id,
+                    litellm_team_id=litellm_team_id,
+                    litellm_budget_id=litellm_budget_id,
+                    max_usd=max_usd,
+                    period=normalized_period,
+                    hard_limit=hard_limit,
+                    last_synced_at=datetime.now(UTC),
                 )
-                if row is None:
-                    row = LiteLLMBudgetConfig(
-                        tenant_id=tenant_id,
-                        project_id=project_id,
-                        litellm_team_id=litellm_team_id,
-                        litellm_budget_id=litellm_budget_id,
-                        max_usd=max_usd,
-                        period=normalized_period,
-                        hard_limit=hard_limit,
-                        last_synced_at=datetime.now(timezone.utc),
-                    )
-                    session.add(row)
-                else:
-                    row.litellm_team_id = litellm_team_id
-                    if litellm_budget_id is not None:
-                        row.litellm_budget_id = litellm_budget_id
-                    row.max_usd = max_usd
-                    row.period = normalized_period
-                    row.hard_limit = hard_limit
-                    row.last_synced_at = datetime.now(timezone.utc)
-                await session.commit()
+                session.add(row)
+            else:
+                row.litellm_team_id = litellm_team_id
+                if litellm_budget_id is not None:
+                    row.litellm_budget_id = litellm_budget_id
+                row.max_usd = max_usd
+                row.period = normalized_period
+                row.hard_limit = hard_limit
+                row.last_synced_at = datetime.now(UTC)
+            await session.commit()
 
     async def _get_mirrored(self, tenant_id: str) -> LiteLLMBudgetConfig | None:
         factory = get_session_factory()
-        async with factory() as session:
-            async with tenant_context(session, tenant_id):
-                return await session.scalar(
-                    select(LiteLLMBudgetConfig).where(
-                        LiteLLMBudgetConfig.tenant_id == tenant_id
-                    )
-                )
+        async with factory() as session, tenant_context(session, tenant_id):
+            return await session.scalar(
+                select(LiteLLMBudgetConfig).where(LiteLLMBudgetConfig.tenant_id == tenant_id)
+            )
 
     async def _team_id_for_tenant(self, tenant_id: str) -> str | None:
         from app.db.models.litellm_team_mapping import LiteLLMTeamMapping
 
         factory = get_session_factory()
-        async with factory() as session:
-            async with tenant_context(session, tenant_id):
-                row = await session.scalar(
-                    select(LiteLLMTeamMapping).where(
-                        LiteLLMTeamMapping.tenant_id == tenant_id
-                    )
-                )
-                if row is None:
-                    return None
-                return row.litellm_team_id
+        async with factory() as session, tenant_context(session, tenant_id):
+            row = await session.scalar(
+                select(LiteLLMTeamMapping).where(LiteLLMTeamMapping.tenant_id == tenant_id)
+            )
+            if row is None:
+                return None
+            return row.litellm_team_id
 
     @staticmethod
     def _normalize_period(period: str) -> str:

@@ -8,9 +8,10 @@ an `ImpactComparison` for cross-idea comparison.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any, Iterable
+from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID, uuid4
 
 from app.core.logging import get_logger
@@ -126,7 +127,9 @@ def _test_names_for(components: Iterable[GraphNode]) -> list[str]:
         elif kind == "function":
             out.append(f"unit::test_{label}")
         elif kind == "api":
-            out.append(f"contract::test_{label.replace('/', '_').replace('{', '').replace('}', '')}")
+            out.append(
+                f"contract::test_{label.replace('/', '_').replace('{', '').replace('}', '')}"
+            )
         elif kind == "database_table":
             out.append(f"db::test_table_{label}")
         elif kind == "dependency":
@@ -193,7 +196,15 @@ class ImpactGraphService:
             logger.warning("impact_graph.kg_list_failed", error=str(exc))
             project_nodes = []
 
-        relevant_types = {"service", "module", "function", "api", "database_table", "dependency", "component"}
+        relevant_types = {
+            "service",
+            "module",
+            "function",
+            "api",
+            "database_table",
+            "dependency",
+            "component",
+        }
         relevant: list = [n for n in project_nodes if n.node_type in relevant_types]
 
         for n in relevant:
@@ -260,7 +271,7 @@ class ImpactGraphService:
             idea_id=idea.id,
             nodes=list(nodes.values()),
             edges=list(edges.values()),
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
             summary=self._summary(nodes, edges),
         )
         self._cache[str(idea.id)] = graph
@@ -303,7 +314,7 @@ class ImpactGraphService:
                 )
             )
         entries.sort(key=lambda e: e.total_impact_score, reverse=True)
-        return ComparisonResult(entries=entries, compared_at=datetime.now(timezone.utc))
+        return ComparisonResult(entries=entries, compared_at=datetime.now(UTC))
 
     # -- internals --------------------------------------------------------
 

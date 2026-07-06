@@ -89,9 +89,7 @@ def _make_decision(*, granted: bool = True) -> dict:
 async def test_granted_proceeds():
     """A recorded granted decision lets the decorated handler run."""
     pending = _make_pending(phase="architecture")
-    state = _make_state().set_pending_approval(pending).with_phase(
-        SDLCPhase.BLOCKED_APPROVAL
-    )
+    state = _make_state().set_pending_approval(pending).with_phase(SDLCPhase.BLOCKED_APPROVAL)
     state = state.model_copy(
         update={
             "metadata": {
@@ -119,9 +117,7 @@ async def test_granted_proceeds():
 async def test_denied_raises():
     """A recorded denied decision raises ApprovalRequiredError."""
     pending = _make_pending(phase="architecture")
-    state = _make_state().set_pending_approval(pending).with_phase(
-        SDLCPhase.BLOCKED_APPROVAL
-    )
+    state = _make_state().set_pending_approval(pending).with_phase(SDLCPhase.BLOCKED_APPROVAL)
     state = state.model_copy(
         update={
             "metadata": {
@@ -152,9 +148,7 @@ async def test_denied_raises():
 async def test_missing_decision_raises():
     """pending_approval set but no recorded decision → raise."""
     pending = _make_pending(phase="security")
-    state = _make_state().set_pending_approval(pending).with_phase(
-        SDLCPhase.BLOCKED_APPROVAL
-    )
+    state = _make_state().set_pending_approval(pending).with_phase(SDLCPhase.BLOCKED_APPROVAL)
     # Note: no metadata["approval:security:decision"] written.
 
     @require_approval_phase(SDLCPhase.SECURITY)
@@ -201,9 +195,7 @@ async def test_missing_pending_raises():
 async def test_wrong_phase_raises():
     """pending_approval.type not in the decorator's allowed set → raise."""
     pending = _make_pending(phase="architecture")
-    state = _make_state().set_pending_approval(pending).with_phase(
-        SDLCPhase.BLOCKED_APPROVAL
-    )
+    state = _make_state().set_pending_approval(pending).with_phase(SDLCPhase.BLOCKED_APPROVAL)
     state = state.model_copy(
         update={
             "metadata": {
@@ -237,9 +229,7 @@ async def test_wrong_phase_raises():
 def test_frozen_state_envelope_writes_to_metadata():
     """frozen_state_envelope stamps the envelope at the right metadata key."""
     pending = _make_pending(phase="architecture")
-    state = _make_state().set_pending_approval(pending).with_phase(
-        SDLCPhase.BLOCKED_APPROVAL
-    )
+    state = _make_state().set_pending_approval(pending).with_phase(SDLCPhase.BLOCKED_APPROVAL)
     response = ApprovalResponse(
         approval_id=pending.approval_id,
         granted=True,

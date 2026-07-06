@@ -10,11 +10,10 @@ Run with: ``pytest tests/copilot/test_streaming.py -v``
 from __future__ import annotations
 
 import json
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 import pytest
-
-from app.services._litellm_tools import ToolCall, ToolResult
 
 
 def _delta_chunk(text: str) -> dict[str, Any]:
@@ -34,11 +33,13 @@ def _delta_chunk(text: str) -> dict[str, Any]:
             self.choices = [_Choice(content)]
             self.usage: dict[str, Any] = {}
 
-    return _Chunk(content)  # type: ignore[return-value]
+    return _Chunk(text)  # type: ignore[arg-type]  # noqa: F821
 
 
 def _terminal_chunk(
-    tokens_in: int = 3, tokens_out: int = 7, cost_usd: float = 0.001,
+    tokens_in: int = 3,
+    tokens_out: int = 7,
+    cost_usd: float = 0.001,
 ) -> dict[str, Any]:
     """Terminal chunk carrying the usage block."""
 
@@ -68,7 +69,7 @@ class _StubLiteLLMClient:
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.calls: list[dict[str, Any]] = []
 
-    async def __aenter__(self) -> "_StubLiteLLMClient":
+    async def __aenter__(self) -> _StubLiteLLMClient:
         return self
 
     async def __aexit__(self, *_exc: Any) -> None:
@@ -86,13 +87,16 @@ class _StubLiteLLMClient:
 
 @pytest.mark.asyncio
 async def test_chat_stream_emits_sse_events(
-    client: Any, principal_steward: Any, monkeypatch: pytest.MonkeyPatch,
+    client: Any,
+    principal_steward: Any,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """``POST /conversations:stream`` emits start → token* → done with
     the expected headers + content."""
 
     monkeypatch.setattr(
-        "app.services.copilot_service.LiteLLMClient", _StubLiteLLMClient,
+        "app.services.copilot_service.LiteLLMClient",
+        _StubLiteLLMClient,
     )
 
     response = await client.post(
@@ -143,7 +147,9 @@ async def test_chat_stream_emits_sse_events(
 
 @pytest.mark.asyncio
 async def test_chat_stream_emits_error_event_on_llm_failure(
-    client: Any, principal_steward: Any, monkeypatch: pytest.MonkeyPatch,
+    client: Any,
+    principal_steward: Any,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """When the LLM client raises mid-stream, the route emits one
     ``error`` event and closes."""
@@ -152,7 +158,7 @@ async def test_chat_stream_emits_error_event_on_llm_failure(
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             pass
 
-        async def __aenter__(self) -> "_BoomLiteLLMClient":
+        async def __aenter__(self) -> _BoomLiteLLMClient:
             return self
 
         async def __aexit__(self, *_exc: Any) -> None:
@@ -165,7 +171,8 @@ async def test_chat_stream_emits_error_event_on_llm_failure(
             yield  # pragma: no cover — makes this an async generator
 
     monkeypatch.setattr(
-        "app.services.copilot_service.LiteLLMClient", _BoomLiteLLMClient,
+        "app.services.copilot_service.LiteLLMClient",
+        _BoomLiteLLMClient,
     )
 
     response = await client.post(

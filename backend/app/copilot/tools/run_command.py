@@ -21,14 +21,13 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from app.core.logging import get_logger
-from app.core.security import AuthenticatedPrincipal
-from app.copilot.tools.base import Tool
 from app.copilot.tools.exceptions import (
     ToolArgumentInvalid,
     ToolDenied,
 )
 from app.copilot.tools.registry import tool_registry
+from app.core.logging import get_logger
+from app.core.security import AuthenticatedPrincipal
 from app.services.forge_commands import (
     UnknownForgeCommand,
     get_forge_command,
@@ -95,14 +94,10 @@ class RunCommandTool:
     ) -> dict[str, Any]:
         command_id = args.get("command_id")
         if not isinstance(command_id, str) or not command_id.strip():
-            raise ToolArgumentInvalid(
-                self.name, "command_id is required", field="command_id"
-            )
+            raise ToolArgumentInvalid(self.name, "command_id is required", field="command_id")
         inputs = args.get("inputs") or {}
         if not isinstance(inputs, dict):
-            raise ToolArgumentInvalid(
-                self.name, "inputs must be an object", field="inputs"
-            )
+            raise ToolArgumentInvalid(self.name, "inputs must be an object", field="inputs")
 
         try:
             cmd = get_forge_command(command_id)
@@ -182,9 +177,7 @@ class RunCommandTool:
         }
 
 
-def _budget_workflow_id(
-    tenant_id: UUID, project_id: UUID | None, command_id: str
-) -> str:
+def _budget_workflow_id(tenant_id: UUID, project_id: UUID | None, command_id: str) -> str:
     """Build a stable workflow id for the synthetic budget check.
 
     The Co-pilot conversation declares a synthetic workflow_budget row

@@ -35,7 +35,7 @@ from __future__ import annotations
 import json
 import time
 from collections.abc import AsyncIterator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
@@ -43,10 +43,10 @@ from uuid import UUID, uuid4
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.copilot.tools import tool_registry
 from app.core.logging import get_logger
 from app.core.security import AuthenticatedPrincipal
 from app.core.telemetry import get_tracer
-from app.copilot.tools import tool_registry
 from app.db.models.copilot import CopilotConversation, CopilotMessage
 from app.schemas.copilot import (
     CopilotChatRequest,
@@ -64,7 +64,8 @@ from app.services.copilot_budget import (
     copilot_synthetic_workflow_id,
     ensure_conversation_budget,
 )
-from app.services.event_bus import EventType, bus as default_bus
+from app.services.event_bus import EventType
+from app.services.event_bus import bus as default_bus
 from app.services.workflow_budget import BudgetExceeded
 
 logger = get_logger(__name__)
@@ -154,9 +155,7 @@ class CopilotService:
             )
             turn_span.set_attribute("conversation_id", str(conversation.id))
             turn_span.set_attribute("user_id", self._principal.user_id)
-            turn_span.set_attribute(
-                "tenant_id", str(self._principal.tenant_id)
-            )
+            turn_span.set_attribute("tenant_id", str(self._principal.tenant_id))
             turn_span.set_attribute(
                 "project_id", str(conversation.project_id) if conversation.project_id else ""
             )
@@ -293,9 +292,7 @@ class CopilotService:
             turn_span.set_attribute("tool_count", len(tool_call_records))
             turn_span.set_attribute("total_cost_usd", float(cost_usd))
             turn_span.set_attribute("latency_ms", latency_ms)
-            turn_span.set_attribute(
-                "model", self._settings.litellm_default_model
-            )
+            turn_span.set_attribute("model", self._settings.litellm_default_model)
 
             # Persist the entire turn in one commit so cross-session
             # reads (other tests, downstream consumers) see the full
@@ -318,7 +315,8 @@ class CopilotService:
             )
 
     async def stream_chat(
-        self, request: CopilotChatRequest,
+        self,
+        request: CopilotChatRequest,
     ) -> AsyncIterator[dict[str, Any]]:
         """Same pipeline as :meth:`chat` but yields SSE-shaped dicts.
 
@@ -379,9 +377,7 @@ class CopilotService:
 
             # 4 + 5. Tool specs + streaming tool loop.
             tool_specs: list[dict[str, Any]] = tool_registry.list_specs()
-            working_messages: list[dict[str, Any]] = self._assemble_messages(
-                history, request
-            )
+            working_messages: list[dict[str, Any]] = self._assemble_messages(history, request)
 
             # Lazy import — same rationale as chat() (test fragility).
             from app.services._litellm_tools import ToolLoopExhausted
@@ -474,15 +470,10 @@ class CopilotService:
             self._db.add(assistant_message)
             conversation.message_count = (conversation.message_count or 0) + 2
             conversation.total_cost_usd = float(
-                Decimal(str(conversation.total_cost_usd or 0))
-                + Decimal(str(cost_usd))
+                Decimal(str(conversation.total_cost_usd or 0)) + Decimal(str(cost_usd))
             )
-            conversation.total_tokens_in = (
-                conversation.total_tokens_in or 0
-            ) + tokens_in
-            conversation.total_tokens_out = (
-                conversation.total_tokens_out or 0
-            ) + tokens_out
+            conversation.total_tokens_in = (conversation.total_tokens_in or 0) + tokens_in
+            conversation.total_tokens_out = (conversation.total_tokens_out or 0) + tokens_out
             await self._db.flush()
 
             await self._audit_and_emit(
@@ -516,9 +507,7 @@ class CopilotService:
             turn_span.set_attribute("tool_count", len(tool_call_records))
             turn_span.set_attribute("total_cost_usd", float(cost_usd))
             turn_span.set_attribute("latency_ms", latency_ms)
-            turn_span.set_attribute(
-                "model", self._settings.litellm_default_model
-            )
+            turn_span.set_attribute("model", self._settings.litellm_default_model)
 
             await self._db.commit()
 
@@ -531,9 +520,7 @@ class CopilotService:
                     citations=self._extract_citations(accumulated_results),
                     confidence=assistant_message.confidence or "medium",
                     tool_calls=tool_call_records,
-                    suggested_actions=self._extract_suggested_actions(
-                        accumulated_results
-                    ),
+                    suggested_actions=self._extract_suggested_actions(accumulated_results),
                     cost_usd=Decimal(str(cost_usd)),
                     tokens_in=tokens_in,
                     tokens_out=tokens_out,
@@ -597,7 +584,7 @@ class CopilotService:
                 deltas.append(content)
                 full_content += content
 
-            for tc in (delta.get("tool_calls") or []):
+            for tc in delta.get("tool_calls") or []:
                 idx = tc.get("index", 0)
                 while len(tool_calls_raw) <= idx:
                     tool_calls_raw.append(
@@ -619,9 +606,7 @@ class CopilotService:
                 usage_acc = chunk["usage"]
 
         aggregated: dict[str, Any] = {
-            "choices": [
-                {"message": {"role": "assistant", "content": full_content}}
-            ],
+            "choices": [{"message": {"role": "assistant", "content": full_content}}],
             "usage": usage_acc,
         }
         if tool_calls_raw:
@@ -745,9 +730,7 @@ class CopilotService:
             for row in rows
         ]
 
-    async def get_conversation(
-        self, conversation_id: UUID
-    ) -> CopilotConversationRead:
+    async def get_conversation(self, conversation_id: UUID) -> CopilotConversationRead:
         """Load a single conversation (with messages) for the caller.
 
         Raises:
@@ -793,7 +776,7 @@ class CopilotService:
         conversation = (await self._db.execute(stmt)).scalar_one_or_none()
         if conversation is None:
             raise LookupError(f"conversation {conversation_id} not found")
-        conversation.archived_at = datetime.now(timezone.utc)
+        conversation.archived_at = datetime.now(UTC)
         await self._db.flush()
         await audit_service.record(
             tenant_id=conversation.tenant_id,
@@ -806,9 +789,7 @@ class CopilotService:
         )
         await self._db.commit()
 
-    async def submit_feedback(
-        self, message_id: UUID, request: CopilotFeedbackRequest
-    ) -> None:
+    async def submit_feedback(self, message_id: UUID, request: CopilotFeedbackRequest) -> None:
         """Record a thumbs-up/down + comment on an assistant message."""
         stmt = (
             select(CopilotMessage, CopilotConversation)
@@ -825,7 +806,7 @@ class CopilotService:
         message, conversation = row
         message.feedback_rating = request.rating
         message.feedback_comment = request.comment
-        message.feedback_at = datetime.now(timezone.utc)
+        message.feedback_at = datetime.now(UTC)
         await self._db.flush()
         await audit_service.record(
             tenant_id=conversation.tenant_id,
@@ -856,9 +837,7 @@ class CopilotService:
             )
         return out
 
-    async def get_conversation_cost(
-        self, conversation_id: UUID
-    ) -> CopilotCostRead:
+    async def get_conversation_cost(self, conversation_id: UUID) -> CopilotCostRead:
         """Return running cost + budget status for the conversation."""
         stmt = select(CopilotConversation).where(
             CopilotConversation.id == conversation_id,
@@ -871,18 +850,12 @@ class CopilotService:
 
         budget_snapshot = await self._load_budget_snapshot(conversation)
         budget_remaining_usd = (
-            Decimal(str(budget_snapshot["remaining_usd"]))
-            if budget_snapshot
-            else None
+            Decimal(str(budget_snapshot["remaining_usd"])) if budget_snapshot else None
         )
         budget_ceiling_usd = (
-            Decimal(str(budget_snapshot["ceiling_usd"]))
-            if budget_snapshot
-            else None
+            Decimal(str(budget_snapshot["ceiling_usd"])) if budget_snapshot else None
         )
-        budget_status = (
-            budget_snapshot["status"] if budget_snapshot else None
-        )
+        budget_status = budget_snapshot["status"] if budget_snapshot else None
 
         return CopilotCostRead(
             conversation_id=conversation.id,
@@ -898,9 +871,7 @@ class CopilotService:
     # Internals
     # ------------------------------------------------------------------
 
-    async def _load_history(
-        self, conversation_id: UUID, *, limit: int
-    ) -> list[CopilotMessage]:
+    async def _load_history(self, conversation_id: UUID, *, limit: int) -> list[CopilotMessage]:
         stmt = (
             select(CopilotMessage)
             .where(CopilotMessage.conversation_id == conversation_id)
@@ -932,7 +903,11 @@ class CopilotService:
         recent = ", ".join(request.context.recent_actions[-5:]) or "none"
         page = request.context.current_page
         center = request.context.current_center or "unknown"
-        artifact = str(request.context.current_artifact_id) if request.context.current_artifact_id else "none"
+        artifact = (
+            str(request.context.current_artifact_id)
+            if request.context.current_artifact_id
+            else "none"
+        )
         return (
             "You are Forge Co-pilot, an in-product AI assistant for the "
             "Forge platform. Ground every answer in tool results; cite "
@@ -1035,15 +1010,11 @@ class CopilotService:
         usage = response.get("usage") or {}
         tokens_in = int(usage.get("prompt_tokens", 0))
         tokens_out = int(usage.get("completion_tokens", 0))
-        cost_usd = float(
-            response.get("cost_usd") or usage.get("cost_usd") or 0.0
-        )
+        cost_usd = float(response.get("cost_usd") or usage.get("cost_usd") or 0.0)
         return tokens_in, tokens_out, cost_usd
 
     @staticmethod
-    def _build_tool_call_records(
-        calls: list[Any], results: list[Any]
-    ) -> list[CopilotToolCall]:
+    def _build_tool_call_records(calls: list[Any], results: list[Any]) -> list[CopilotToolCall]:
         """Pair :class:`ToolCall` rows with their :class:`ToolResult` rows."""
         out: list[CopilotToolCall] = []
         by_id: dict[str, Any] = {r.tool_call_id: r for r in results}
@@ -1101,9 +1072,7 @@ class CopilotService:
         return out
 
     @staticmethod
-    def _infer_confidence(
-        results: list[Any], assistant_text: str
-    ) -> str:
+    def _infer_confidence(results: list[Any], assistant_text: str) -> str:
         if not assistant_text:
             return "low"
         if any(getattr(r, "is_error", False) for r in results):

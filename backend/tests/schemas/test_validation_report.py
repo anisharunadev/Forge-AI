@@ -18,14 +18,13 @@ the artifact registry + audit service as the seam).
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
 from pydantic import ValidationError
-
 
 # ---------------------------------------------------------------------------
 # Helpers / fixtures
@@ -70,7 +69,7 @@ def _make_report_payload(*, decision: str = "FAIL") -> dict[str, Any]:
     return {
         "report_id": str(uuid.uuid4()),
         "run_id": str(uuid.uuid4()),
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "validator_version": "1.4.2",
         "decision": decision,
         "findings": [_make_finding()],
@@ -95,7 +94,7 @@ def stub_registry() -> MagicMock:
         record.payload = kwargs["payload"]
         record.created_by = str(kwargs["created_by"])
         record.content_hash = "deadbeef" * 8
-        record.created_at = datetime.now(timezone.utc)
+        record.created_at = datetime.now(UTC)
         reg.created.append(record)
         return record
 
@@ -126,9 +125,7 @@ def stub_bus() -> MagicMock:
     bus.published: list[dict[str, Any]] = []
 
     async def _publish(event_type: Any, payload: dict, **kwargs: Any) -> None:
-        bus.published.append(
-            {"event_type": event_type, "payload": payload, **kwargs}
-        )
+        bus.published.append({"event_type": event_type, "payload": payload, **kwargs})
 
     bus.publish = AsyncMock(side_effect=_publish)
     return bus
@@ -152,8 +149,8 @@ async def event_bus(event_bus):  # type: ignore[no-untyped-def]
 def test_schema_validates_canonical_report() -> None:
     """A well-formed payload must construct without errors."""
     from app.schemas.validation_report import (
-        ValidationReport,
         SCHEMA_VERSION,
+        ValidationReport,
     )
 
     payload = _make_report_payload(decision="PASS")

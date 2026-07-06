@@ -51,8 +51,14 @@ No commentary. No markdown fences.
 class TaskBreakdownGenerator:
     """Generate, fetch, and update task breakdowns."""
 
-    def __init__(self, litellm_client: Any, artifact_registry: Any | None = None, event_bus: Any | None = None) -> None:
+    def __init__(
+        self,
+        litellm_client: Any,
+        artifact_registry: Any | None = None,
+        event_bus: Any | None = None,
+    ) -> None:
         from app.services.artifact_registry import artifact_registry as _default_registry
+
         self._llm = litellm_client
         self._registry = artifact_registry if artifact_registry is not None else _default_registry
         self._bus = event_bus

@@ -23,7 +23,7 @@ Design notes
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Literal
@@ -48,18 +48,18 @@ class SDLCPhase(str, Enum):
     BLOCKED_APPROVAL = "blocked_approval"
 
     @classmethod
-    def terminal(cls) -> tuple["SDLCPhase", ...]:
+    def terminal(cls) -> tuple[SDLCPhase, ...]:
         """Phases that indicate the run has ended."""
         return (cls.DONE, cls.FAILED)
 
     @classmethod
-    def requires_approval(cls) -> tuple["SDLCPhase", ...]:
+    def requires_approval(cls) -> tuple[SDLCPhase, ...]:
         """Phases that transition through an approval gate (Rule 3)."""
         return (cls.ARCHITECTURE, cls.SECURITY, cls.DEPLOYMENT)
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _new_uuid() -> UUID:
@@ -245,7 +245,7 @@ class SDLCState(BaseModel):
         *,
         actor_id: UUID | None = None,
         reason: str = "",
-    ) -> "SDLCState":
+    ) -> SDLCState:
         """Return a copy with ``current_phase`` set and a history row appended.
 
         T-A2 contract: ``deep=True`` ensures ``phase_history`` is a
@@ -271,7 +271,7 @@ class SDLCState(BaseModel):
             deep=True,
         )
 
-    def add_artifact(self, key: str, ref: ArtifactRef) -> "SDLCState":
+    def add_artifact(self, key: str, ref: ArtifactRef) -> SDLCState:
         return self.model_copy(
             update={
                 "artifacts": {**self.artifacts, key: ref},
@@ -280,7 +280,7 @@ class SDLCState(BaseModel):
             deep=True,
         )
 
-    def add_error(self, err: ErrorRecord) -> "SDLCState":
+    def add_error(self, err: ErrorRecord) -> SDLCState:
         return self.model_copy(
             update={
                 "errors": [*self.errors, err],
@@ -289,7 +289,7 @@ class SDLCState(BaseModel):
             deep=True,
         )
 
-    def add_message(self, message: Message) -> "SDLCState":
+    def add_message(self, message: Message) -> SDLCState:
         return self.model_copy(
             update={
                 "messages": [*self.messages, message],
@@ -298,7 +298,7 @@ class SDLCState(BaseModel):
             deep=True,
         )
 
-    def add_cost(self, cost: Decimal) -> "SDLCState":
+    def add_cost(self, cost: Decimal) -> SDLCState:
         if cost < 0:
             raise ValueError("cost increment must be non-negative")
         return self.model_copy(
@@ -309,7 +309,7 @@ class SDLCState(BaseModel):
             deep=True,
         )
 
-    def set_pending_approval(self, approval: ApprovalRequest | None) -> "SDLCState":
+    def set_pending_approval(self, approval: ApprovalRequest | None) -> SDLCState:
         return self.model_copy(
             update={
                 "pending_approval": approval,
@@ -323,7 +323,7 @@ class SDLCState(BaseModel):
         return self.model_dump(mode="json")
 
     @classmethod
-    def from_langgraph_state(cls, payload: dict[str, Any]) -> "SDLCState":
+    def from_langgraph_state(cls, payload: dict[str, Any]) -> SDLCState:
         """Reconstruct a :class:`SDLCState` from a checkpointed dict.
 
         Decimal and UUID fields are coerced back from JSON strings.

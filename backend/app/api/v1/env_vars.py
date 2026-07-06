@@ -7,21 +7,21 @@ demand and writes an audit row (Rule 6).
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Annotated, Literal, Optional
+from datetime import UTC, datetime
+from typing import Annotated, Literal
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from app.api.deps import DbSession, Principal, get_current_principal
-from app.core.audit import audit
-from app.core.security import AuthenticatedPrincipal
-from app.core.crypto import decrypt, encrypt
-from app.db.models.env_var import EnvVar
 from app.agents.approval_gate import require_approval_phase
 from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import DbSession, get_current_principal
+from app.core.audit import audit
+from app.core.crypto import decrypt, encrypt
+from app.core.security import AuthenticatedPrincipal
+from app.db.models.env_var import EnvVar
 
 router = APIRouter(prefix="/projects/{project_id}/env-vars", tags=["env-vars"])
 
@@ -30,10 +30,10 @@ class EnvVarRead(BaseModel):
     id: UUID
     project_id: UUID
     key: str
-    description: Optional[str] = None
+    description: str | None = None
     scope: str
     visibility: str
-    last_used_at: Optional[datetime] = None
+    last_used_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -48,16 +48,16 @@ class EnvVarReveal(BaseModel):
 class EnvVarCreate(BaseModel):
     key: str = Field(..., pattern=r"^[A-Z][A-Z0-9_]*$", min_length=2, max_length=128)
     value: str = Field(..., min_length=1)
-    description: Optional[str] = None
+    description: str | None = None
     scope: Literal["build", "runtime", "test"] = "runtime"
     visibility: Literal["secret", "public"] = "secret"
 
 
 class EnvVarUpdate(BaseModel):
-    value: Optional[str] = None
-    description: Optional[str] = None
-    scope: Optional[Literal["build", "runtime", "test"]] = None
-    visibility: Optional[Literal["secret", "public"]] = None
+    value: str | None = None
+    description: str | None = None
+    scope: Literal["build", "runtime", "test"] | None = None
+    visibility: Literal["secret", "public"] | None = None
 
 
 def _to_read(ev: EnvVar) -> EnvVarRead:
@@ -91,9 +91,9 @@ async def list_env_vars(
         .order_by(EnvVar.key)
     )
     return [_to_read(ev) for ev in result.scalars().all()]
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("", response_model=EnvVarRead, status_code=201)
 @audit(action="env_vars.create", target_type="project")
 async def create_env_var(
@@ -114,7 +114,7 @@ async def create_env_var(
     if existing is not None:
         raise HTTPException(status_code=409, detail="key_already_exists")
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     ev = EnvVar(
         id=uuid4(),
         tenant_id=UUID(principal.tenant_id),
@@ -132,9 +132,9 @@ async def create_env_var(
     await db.commit()
     await db.refresh(ev)
     return _to_read(ev)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.patch("/{env_var_id}", response_model=EnvVarRead)
 @audit(action="env_vars.update", target_type="project")
 async def update_env_var(
@@ -166,13 +166,13 @@ async def update_env_var(
     if body.visibility is not None:
         ev.visibility = body.visibility
 
-    ev.updated_at = datetime.now(timezone.utc)
+    ev.updated_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(ev)
     return _to_read(ev)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.delete("/{env_var_id}")
 @audit(action="env_vars.delete", target_type="project")
 async def delete_env_var(
@@ -196,10 +196,9 @@ async def delete_env_var(
 
     await db.delete(ev)
     await db.commit()
-    return None
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("/{env_var_id}/reveal", response_model=EnvVarReveal)
 @audit(action="env_vars.reveal", target_type="project")
 async def reveal_env_var(

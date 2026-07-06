@@ -32,8 +32,6 @@ import json
 import re
 from pathlib import Path
 
-import pytest
-
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
@@ -122,9 +120,7 @@ def test_manifest_tables_exist_in_models() -> None:
     declared = {df["table"] for df in manifest["data_files"]} - carveouts
     model_tables = _scan_models()
     missing = declared - model_tables
-    assert not missing, (
-        f"Manifest references tables with no SQLAlchemy model: {sorted(missing)}"
-    )
+    assert not missing, f"Manifest references tables with no SQLAlchemy model: {sorted(missing)}"
 
 
 def test_manifest_idempotency_keys_are_real_columns() -> None:

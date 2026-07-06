@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 import types
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -20,7 +20,6 @@ from app.services.steering_rules import (
     parse_front_matter,
     steering_engine,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -144,13 +143,7 @@ def test_parse_front_matter_block_list():
 
 
 def test_parse_front_matter_inline_list():
-    text = (
-        "---\n"
-        "rule_id: x\n"
-        "applies_to_stages: [pre_commit, pre_deploy]\n"
-        "---\n"
-        "body\n"
-    )
+    text = "---\nrule_id: x\napplies_to_stages: [pre_commit, pre_deploy]\n---\nbody\n"
     meta, _ = parse_front_matter(text)
     assert meta["applies_to_stages"] == ["pre_commit", "pre_deploy"]
 
@@ -236,9 +229,7 @@ def test_watcher_handler_invokes_build_catalog(engine, workspace, monkeypatch):
 
     # Directly fire the registered handler with a synthetic event.
     assert engine._observer is not None
-    scheduled_handlers = [
-        h[0] for h in engine._observer.handlers if hasattr(h[0], "on_any_event")
-    ]
+    scheduled_handlers = [h[0] for h in engine._observer.handlers if hasattr(h[0], "on_any_event")]
     assert scheduled_handlers, "no watchdog-style handler was registered"
     handler = scheduled_handlers[0]
 
@@ -251,9 +242,7 @@ def test_watcher_handler_invokes_build_catalog(engine, workspace, monkeypatch):
     # the time on_any_event returns the catalog should be populated.
     handler.on_any_event(_FakeEvent())  # type: ignore[attr-defined]
 
-    catalog = engine.get_catalog(
-        tenant_id=tenant_id, project_id=project_id
-    )
+    catalog = engine.get_catalog(tenant_id=tenant_id, project_id=project_id)
     assert catalog is not None
     assert any(e.rule_id == "code-style" for e in catalog.entries)
     assert calls, "handler should have triggered build_catalog"
@@ -291,7 +280,7 @@ async def test_rls_isolation_between_tenants(sqlite_db):
                 file_path="steering/a.md",
                 content="a",
                 content_hash="x" * 64,
-                indexed_at=datetime.now(timezone.utc),
+                indexed_at=datetime.now(UTC),
                 scope="project",
                 applies_to_stages=["pre_code"],
                 metadata_={},
@@ -300,22 +289,16 @@ async def test_rls_isolation_between_tenants(sqlite_db):
         await session.commit()
 
     # Tenant_b in the same project must not see tenant_a's rule.
-    rules_b = await steering_engine.list_rules(
-        tenant_id=tenant_b, project_id=shared_project
-    )
+    rules_b = await steering_engine.list_rules(tenant_id=tenant_b, project_id=shared_project)
     assert all(r.rule_id != "rule-a" for r in rules_b)
 
     # Tenant_a sees its own rule.
-    rules_a = await steering_engine.list_rules(
-        tenant_id=tenant_a, project_id=shared_project
-    )
+    rules_a = await steering_engine.list_rules(tenant_id=tenant_a, project_id=shared_project)
     assert any(r.rule_id == "rule-a" for r in rules_a)
 
     # Tenant_b with a *different* project also sees nothing relevant.
     other_project = uuid.uuid4()
-    rules_other = await steering_engine.list_rules(
-        tenant_id=tenant_b, project_id=other_project
-    )
+    rules_other = await steering_engine.list_rules(tenant_id=tenant_b, project_id=other_project)
     assert rules_other == []
 
 
@@ -396,9 +379,7 @@ async def test_inject_into_context_per_stage(engine):
     assert deploy == {}
 
     # Fan-out: no stage arg => all stages present
-    fanout = engine.inject_into_context(
-        tenant_id=tenant_id, project_id=project_id
-    )
+    fanout = engine.inject_into_context(tenant_id=tenant_id, project_id=project_id)
     assert {"pre_plan", "pre_code", "pre_commit"} <= set(fanout.keys())
 
 
@@ -423,9 +404,7 @@ async def test_add_and_delete_rule_roundtrip(sqlite_db):
     )
     assert created.rule_id == "my-rule"
 
-    listed = await steering_engine.list_rules(
-        tenant_id=tenant_id, project_id=project_id
-    )
+    listed = await steering_engine.list_rules(tenant_id=tenant_id, project_id=project_id)
     assert any(r.rule_id == "my-rule" for r in listed)
 
     removed = await steering_engine.delete_rule(
@@ -435,7 +414,5 @@ async def test_add_and_delete_rule_roundtrip(sqlite_db):
     )
     assert removed is True
 
-    listed_after = await steering_engine.list_rules(
-        tenant_id=tenant_id, project_id=project_id
-    )
+    listed_after = await steering_engine.list_rules(tenant_id=tenant_id, project_id=project_id)
     assert all(r.rule_id != "my-rule" for r in listed_after)

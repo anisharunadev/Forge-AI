@@ -23,8 +23,8 @@ from uuid import UUID, uuid5
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.tenant import Tenant
 from app.core.logging import get_logger
+from app.db.models.tenant import Tenant
 
 logger = get_logger(__name__)
 

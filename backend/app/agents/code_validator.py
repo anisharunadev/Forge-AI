@@ -27,6 +27,7 @@ fanned out in parallel using LangGraph's :class:`Send` API. All four
 buckets feed into the terminal :func:`aggregate_findings` node which
 produces the typed :class:`ValidationReport`.
 """
+
 from __future__ import annotations
 
 import logging
@@ -35,6 +36,11 @@ from typing import Any, TypedDict
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 
+# M2 T-A3 — Code Validator is the artifact-writing handler for the
+# implementation phase (PASS/FAIL reports land in the architecture
+# attestation stream and the gate decides).  Decorate the public
+# entry points so a validator sub-graph run is gated on a recorded
+# implementation-phase approval.
 from app.agents.code_validator_nodes import (
     aggregate_findings,
     scan_iac,
@@ -43,18 +49,11 @@ from app.agents.code_validator_nodes import (
     scan_vulns,
 )
 from app.agents.code_validator_state import (
-    CodeValidatorState,
     VALIDATOR_VERSION,
+    CodeValidatorState,
     ValidationReport,
 )
 from app.agents.prompts import load_code_validator_prompt
-
-# M2 T-A3 — Code Validator is the artifact-writing handler for the
-# implementation phase (PASS/FAIL reports land in the architecture
-# attestation stream and the gate decides).  Decorate the public
-# entry points so a validator sub-graph run is gated on a recorded
-# implementation-phase approval.
-from app.agents.approval_gate import require_approval_phase
 from app.agents.sdlc_state import SDLCPhase
 
 logger = logging.getLogger(__name__)
@@ -111,6 +110,7 @@ def _secrets_fan_out(state: CodeValidatorState) -> list[Any]:
 # High-level graph builder
 # ---------------------------------------------------------------------------
 
+
 def build_code_validator_graph(
     *,
     checkpointer: Any | None = None,
@@ -156,6 +156,7 @@ def build_code_validator_graph(
 # ---------------------------------------------------------------------------
 # Convenience entry point
 # ---------------------------------------------------------------------------
+
 
 def load_prompt(state: CodeValidatorState) -> str:
     """Render the Code Validator prompt template (NFR-043)."""
@@ -203,6 +204,7 @@ def make_validator_virtual_key(
 # ---------------------------------------------------------------------------
 # Typed result wrapper — convenient for callers
 # ---------------------------------------------------------------------------
+
 
 class ValidatorRunResult(TypedDict):
     """Convenience TypedDict returned by :func:`run_code_validator`."""
@@ -252,7 +254,6 @@ async def run_code_validator_with_approval(
     # invoke the inner guard manually so the wrapper itself stays
     # free of nested-decorator surprises.
     from app.agents.approval_gate import (
-        ApprovalRequiredError,
         _enforce,
     )
 

@@ -14,12 +14,13 @@ Registered in :mod:`app.services.scheduler.service` at ``0 3 * * *``.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import func, select
 
 from app.core.logging import get_logger
+from app.db.models.cost import CostEntry
 from app.db.session import get_session_factory
 
 logger = get_logger(__name__)
@@ -42,11 +43,10 @@ async def run() -> None:
     # ponytail: lazy import keeps the scheduler module importable in
     # environments where the broker / its deps are not exercised.
     from app.services.forge_key_broker import (
+        BUDGET_WINDOW_DAYS,
         ROTATE_AGE_DAYS,
         ROTATE_BUDGET_PCT,
         AgentVirtualKey,
-        BUDGET_WINDOW_DAYS,
-        SpendRecord,
         forge_key_broker,
     )
 
@@ -55,8 +55,8 @@ async def run() -> None:
     window_days = BUDGET_WINDOW_DAYS
 
     factory = get_session_factory()
-    cutoff_age = datetime.now(timezone.utc) - timedelta(days=age_days)
-    cutoff_spend = datetime.now(timezone.utc) - timedelta(days=window_days)
+    cutoff_age = datetime.now(UTC) - timedelta(days=age_days)
+    cutoff_spend = datetime.now(UTC) - timedelta(days=window_days)
 
     async with factory() as session:
         rows = list(
@@ -76,7 +76,9 @@ async def run() -> None:
     for row in rows:
         try:
             stale = bool(row.created_at and row.created_at < cutoff_age)
-            over_budget = await _is_over_budget(session_factory=factory, row=row, cutoff_spend=cutoff_spend, threshold=budget_pct)
+            over_budget = await _is_over_budget(
+                session_factory=factory, row=row, cutoff_spend=cutoff_spend, threshold=budget_pct
+            )
             if not (stale or over_budget):
                 skipped += 1
                 continue
@@ -111,9 +113,9 @@ async def _is_over_budget(
         return False
     async with session_factory() as session:
         total = await session.scalar(
-            select(func.coalesce(func.sum(SpendRecord.cost_usd), 0)).where(
-                SpendRecord.agent_id == row.agent_id,
-                SpendRecord.created_at >= cutoff_spend,
+            select(func.coalesce(func.sum(CostEntry.cost_usd), 0)).where(
+                CostEntry.agent_id == row.agent_id,
+                CostEntry.created_at >= cutoff_spend,
             )
         )
     spent = float(total or 0.0)

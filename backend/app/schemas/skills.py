@@ -16,7 +16,6 @@ from pydantic import Field
 from app.schemas.common import ForgeBaseModel, TenantScopedModel
 from app.schemas.litellm_common import ToolRef
 
-
 SkillStatus = Literal["draft", "active", "archived"]
 SkillCategory = Literal["code", "review", "test", "docs", "ops", "custom"]
 ResponseFormat = Literal["json", "text"]

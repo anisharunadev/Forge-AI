@@ -6,7 +6,7 @@ a pool; tests and CLI tools can run without DATABASE_URL set.
 
 from __future__ import annotations
 
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,

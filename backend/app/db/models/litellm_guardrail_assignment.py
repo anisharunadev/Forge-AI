@@ -52,9 +52,7 @@ class LiteLLMGuardrailAssignment(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         default=list,
         server_default="{}",
     )
-    assigned_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    assigned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     assigned_by: Mapped[str | None] = mapped_column(String(128), nullable=True)
     # Free-form metadata for future per-assignment notes (e.g. source UI,
     # change reason, link to a Steward ticket). Kept narrow on purpose —

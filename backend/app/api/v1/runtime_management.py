@@ -1,18 +1,20 @@
 from typing import Annotated
+
 """F-016 — Runtime Management admin REST endpoints."""
 
 from dataclasses import asdict
+from datetime import UTC
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
-from app.api.deps import Principal, require_permission, get_current_principal
-from app.core.audit import audit
-from app.core.security import AuthenticatedPrincipal
-from app.schemas.runtime import RuntimeHandle, RuntimeMetrics
-from app.services.runtime_management import runtime_management
 from app.agents.approval_gate import require_approval_phase
 from app.agents.sdlc_state import SDLCPhase
+from app.api.deps import get_current_principal, require_permission
+from app.core.audit import audit
+from app.core.security import AuthenticatedPrincipal
+from app.schemas.runtime import RuntimeHandle
+from app.services.runtime_management import runtime_management
 
 router = APIRouter(prefix="/runtime", tags=["runtime-management"])
 
@@ -21,7 +23,7 @@ router = APIRouter(prefix="/runtime", tags=["runtime-management"])
 @audit(action="runtime_management.list", target_type="runtime")
 async def list_all_runtimes(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:admin"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:admin")),
 ) -> list[RuntimeHandle]:
     from app.schemas.runtime import RuntimeKind, RuntimeState
 
@@ -44,27 +46,27 @@ async def list_all_runtimes(
             )
         )
     return out
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/agents/{handle_id}/restart", response_model=RuntimeHandle)
 @audit(action="runtime_management.restart", target_type="runtime")
 async def restart_runtime(
     handle_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:admin"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:admin")),
 ) -> RuntimeHandle:
     new_handle = await runtime_management.restart_runtime(handle_id)
     return _handle_to_schema(new_handle)
+
+
 @require_approval_phase(SDLCPhase.IMPLEMENTATION)
-
-
 @router.post("/agents/{handle_id}/stop", response_model=RuntimeHandle)
 @audit(action="runtime_management.stop", target_type="runtime")
 async def stop_runtime_admin(
     handle_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:admin"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:admin")),
 ) -> RuntimeHandle:
     handle = await runtime_management.stop_runtime(handle_id)
     return _handle_to_schema(handle)
@@ -74,7 +76,7 @@ async def stop_runtime_admin(
 @audit(action="runtime_management.metrics", target_type="runtime")
 async def platform_metrics(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:admin"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("runtimes:admin")),
 ) -> dict:
     metrics = await runtime_management.platform_metrics()
     d = asdict(metrics)
@@ -94,16 +96,18 @@ def _handle_to_schema(handle) -> RuntimeHandle:
         agent_id=handle.agent_id,
         workspace_path=handle.workspace_path,
         kind=handle.kind if isinstance(handle.kind, RuntimeKind) else RuntimeKind(handle.kind),
-        state=handle.state if isinstance(handle.state, RuntimeState) else RuntimeState(handle.state),
+        state=handle.state
+        if isinstance(handle.state, RuntimeState)
+        else RuntimeState(handle.state),
         started_at=handle.started_at,
         stopped_at=handle.stopped_at,
     )
 
 
 def _utcnow():
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 __all__ = ["router"]

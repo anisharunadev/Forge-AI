@@ -9,15 +9,16 @@ spend logs for the previous minute window, groups them by
 ``query_cost`` is the read path exposed to
 ``GET /v1/observability/cost`` -- the admin cost dashboard.
 """
+
 from __future__ import annotations
 
-from app.core.logging import get_logger
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
+from app.core.logging import get_logger
 from app.db.models.cost_rollup import CostMinuteRollup
 
 log = get_logger(__name__)
@@ -32,7 +33,7 @@ async def _aggregate_once(
 
     Returns the number of rollup rows written (or updated).
     """
-    now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(UTC).replace(second=0, microsecond=0)
     window_start = now - timedelta(minutes=1)
     try:
         logs = await litellm_client.list_spend_logs(start=window_start, end=now)
@@ -90,7 +91,7 @@ async def aggregate_loop(
             log.exception("cost_aggregate_tick_failed")
         try:
             await asyncio.wait_for(stop.wait(), timeout=interval_seconds)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pass
 
 

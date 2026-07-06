@@ -16,19 +16,19 @@ from __future__ import annotations
 
 import hashlib
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select, update
 
+from app.agents.approval_gate import require_approval_phase
+from app.agents.sdlc_state import SDLCPhase
 from app.core.logging import get_logger
 from app.core.security import AuthenticatedPrincipal, get_current_principal
 from app.db.models.user_session import UserApiToken
 from app.db.session import get_session_factory
-from app.agents.approval_gate import require_approval_phase
-from app.agents.sdlc_state import SDLCPhase
 
 logger = get_logger(__name__)
 
@@ -76,20 +76,24 @@ async def list_api_tokens(
     factory = get_session_factory()
     async with factory() as session:
         rows = (
-            await session.execute(
-                select(UserApiToken)
-                .where(
-                    UserApiToken.user_id == UUID(principal.user_id),
-                    UserApiToken.tenant_id == UUID(principal.tenant_id),
+            (
+                await session.execute(
+                    select(UserApiToken)
+                    .where(
+                        UserApiToken.user_id == UUID(principal.user_id),
+                        UserApiToken.tenant_id == UUID(principal.tenant_id),
+                    )
+                    .order_by(UserApiToken.created_at.desc())
                 )
-                .order_by(UserApiToken.created_at.desc())
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
     return [_to_read(r) for r in rows]
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.post("", response_model=ApiTokenCreated, status_code=status.HTTP_201_CREATED)
 async def create_api_token(
     body: ApiTokenCreate,
@@ -99,10 +103,8 @@ async def create_api_token(
     secret = secrets.token_urlsafe(32)
     secret_hash = hashlib.sha256(secret.encode("utf-8")).hexdigest()
     fingerprint = secret_hash[:12]
-    now = datetime.now(tz=timezone.utc)
-    expires_at = (
-        now + timedelta(days=body.expires_in_days) if body.expires_in_days else None
-    )
+    now = datetime.now(tz=UTC)
+    expires_at = now + timedelta(days=body.expires_in_days) if body.expires_in_days else None
 
     row = UserApiToken(
         id=uuid4(),
@@ -131,9 +133,9 @@ async def create_api_token(
         scope=body.scope,
     )
     return ApiTokenCreated(**_to_read(row).model_dump(), secret=secret)
+
+
 @require_approval_phase(SDLCPhase.PLANNING)
-
-
 @router.delete("/{token_id}")
 async def revoke_api_token(
     token_id: UUID,
@@ -149,7 +151,7 @@ async def revoke_api_token(
                 UserApiToken.user_id == UUID(principal.user_id),
                 UserApiToken.tenant_id == UUID(principal.tenant_id),
             )
-            .values(revoked_at=datetime.now(tz=timezone.utc))
+            .values(revoked_at=datetime.now(tz=UTC))
         )
         await session.commit()
         if result.rowcount == 0:

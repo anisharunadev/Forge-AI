@@ -1,4 +1,5 @@
 """F-307 API router."""
+
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
@@ -25,15 +26,20 @@ class RollbackRequest(BaseModel):
 
 def get_versioning_service() -> ArchitectureVersioningService:
     return ArchitectureVersioningService()
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/versions")
 async def create_version(
     req: VersionCreateRequest,
     service: ArchitectureVersioningService = Depends(get_versioning_service),
 ):
-    return await service.create_version(req.artifact_type, req.artifact_id, req.snapshot_reason, UUID("00000000-0000-0000-0000-000000000000"))
+    return await service.create_version(
+        req.artifact_type,
+        req.artifact_id,
+        req.snapshot_reason,
+        UUID("00000000-0000-0000-0000-000000000000"),
+    )
 
 
 @router.get("/versions")
@@ -52,12 +58,17 @@ async def diff_versions(
     service: ArchitectureVersioningService = Depends(get_versioning_service),
 ):
     return await service.diff_versions(version_a, version_b)
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/versions/rollback")
 async def rollback(
     req: RollbackRequest,
     service: ArchitectureVersioningService = Depends(get_versioning_service),
 ):
-    return await service.rollback_to_version(req.artifact_type, req.artifact_id, req.version_id, UUID("00000000-0000-0000-0000-000000000000"))
+    return await service.rollback_to_version(
+        req.artifact_type,
+        req.artifact_id,
+        req.version_id,
+        UUID("00000000-0000-0000-0000-000000000000"),
+    )

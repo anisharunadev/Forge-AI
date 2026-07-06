@@ -25,7 +25,6 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # ID fixtures — uuid4 strings so they format cleanly into trace payloads
 # ---------------------------------------------------------------------------

@@ -33,15 +33,15 @@ def _generator() -> ADRGenerator:
         artifact_registry=artifact_registry,
         event_bus=bus,
     )
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("", response_model=ADRResponse, status_code=status.HTTP_201_CREATED)
 @audit(action="architecture.adr.create", target_type="adr")
 async def create_adr(
     body: ADRCreateRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:adr:create"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:adr:create")),
 ) -> ADRResponse:
     """Generate a new ADR from the supplied context."""
     adr = await _generator().generate_adr(
@@ -85,22 +85,22 @@ async def list_adrs(
 async def get_adr(
     adr_id: UUID,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:adr:read"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:adr:read")),
 ) -> ADRResponse:
     adr = await _generator().get_adr(adr_id)
     if adr is None or adr.tenant_id != principal.tenant_id:
         raise HTTPException(status_code=404, detail="adr_not_found")
     return ADRResponse.model_validate(adr)
+
+
 @require_approval_phase(SDLCPhase.ARCHITECTURE)
-
-
 @router.post("/{adr_id}/supersede", response_model=ADRResponse)
 @audit(action="architecture.adr.supersede", target_type="adr")
 async def supersede_adr(
     adr_id: UUID,
     body: ADRSupersedeRequest,
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
-    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:adr:supersede"))
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:adr:supersede")),
 ) -> ADRResponse:
     """Chain the old ADR's id into the new one's `related_adrs`."""
     try:

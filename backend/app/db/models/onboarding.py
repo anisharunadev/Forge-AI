@@ -7,10 +7,11 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import DateTime, Enum as SAEnum, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, GUID, JSONB, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class OnboardingStatus(str, enum.Enum):
@@ -53,9 +54,7 @@ class OnboardingSession(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     state: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    __table_args__ = (
-        Index("ix_onboarding_sessions_tenant_project", "tenant_id", "project_id"),
-    )
+    __table_args__ = (Index("ix_onboarding_sessions_tenant_project", "tenant_id", "project_id"),)
 
 
 class OnboardingStep(Base, UUIDPrimaryKeyMixin, TimestampMixin):
@@ -81,9 +80,7 @@ class OnboardingStep(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     output: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    __table_args__ = (
-        Index("ix_onboarding_steps_session_order", "session_id", "step_order"),
-    )
+    __table_args__ = (Index("ix_onboarding_steps_session_order", "session_id", "step_order"),)
 
 
 __all__ = [
