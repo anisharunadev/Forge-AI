@@ -486,6 +486,9 @@ SEED_TECH_RADAR: list[dict[str, Any]] = [
      "description": "Append-only audit log",
      "rationale": "Useful for approval gate timeline; trade-offs unclear",
      "owner": "governance-team"},
+]
+
+
 # 3 C4 / dataflow diagrams mirroring the previous frontend MOCK_DIAGRAMS
 # fixture (apps/forge/lib/architecture/mock-fixtures.ts:720). Stable UUIDs
 # so re-seeding is idempotent.

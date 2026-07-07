@@ -345,7 +345,6 @@ __all__ = [
     "TechRadarCreateRequest",
     "TechRadarEntryResponse",
     "TechRadarListResponse",
-    "DIAGRAM_LEVELS",
     "DiagramEdgeResponse",
     "DiagramNodeResponse",
     "C4DiagramResponse",
@@ -618,69 +617,6 @@ class TechRadarCreateRequest(ForgeBaseModel):
 
 # ---------------------------------------------------------------------------
 # Day 2 mock-removal track H — Architecture Diagrams (F-311)
-# ---------------------------------------------------------------------------
-
-
-DIAGRAM_LEVELS = {"context", "container", "component", "dataflow", "sequence"}
-
-
-class DiagramNodeResponse(ForgeBaseModel):
-    """One node of a C4 / dataflow diagram (Day 2 track H)."""
-
-    id: UUID
-    node_key: str
-    label: str
-    layer: str
-    x: int = 0
-    y: int = 0
-    details: str = ""
-
-
-class DiagramEdgeResponse(ForgeBaseModel):
-    """One directed edge between two diagram nodes (Day 2 track H)."""
-
-    id: UUID
-    source_node_id: UUID
-    target_node_id: UUID
-    source_node_key: str
-    target_node_key: str
-    label: str | None = None
-
-
-class C4DiagramResponse(ForgeBaseModel):
-    """One C4 / dataflow diagram with its nodes + edges nested (track H).
-
-    Mirrors the previous frontend ``MOCK_DIAGRAMS`` shape so the UI can
-    drop the mock fixture without an adapter.
-    """
-
-    id: UUID
-    name: str
-    level: str
-    description: str = ""
-    tenant_id: UUID
-    project_id: UUID
-    nodes: list[DiagramNodeResponse] = Field(default_factory=list)
-    edges: list[DiagramEdgeResponse] = Field(default_factory=list)
-    created_at: datetime
-    updated_at: datetime
-
-
-class C4DiagramListResponse(ForgeBaseModel):
-    items: list[C4DiagramResponse] = Field(default_factory=list)
-    total: int = 0
-
-
-# Re-export TenantScopedModel to keep the public surface explicit for
-# downstream consumers that import the schema module directly.
-# ---------------------------------------------------------------------------
-# Day 2 mock-removal track H — Architecture Diagrams (F-311)
-# ---------------------------------------------------------------------------
-
-
-DIAGRAM_LEVELS = {"context", "container", "component", "dataflow", "sequence"}
-
-
 class DiagramNodeResponse(ForgeBaseModel):
     """One node of a C4 / dataflow diagram (Day 2 track H).
 

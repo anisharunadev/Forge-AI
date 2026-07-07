@@ -8,7 +8,6 @@ from app.api.v1.architecture import (
     approvals,
     contracts,
     diagrams,
-
     metrics,
     risk_registers,
     security_reports,
