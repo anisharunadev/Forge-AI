@@ -35,7 +35,10 @@ from app.db.models.architecture import (
     ADR,
     APIContract,
     ArchitectureApproval,
+    ArchitectureDiagram,
     ArchitectureVersionRow,
+    DiagramEdgeRow,
+    DiagramNodeRow,
     RiskRegister,
     TaskBreakdown,
     TechRadarEntry,
@@ -483,6 +486,72 @@ SEED_TECH_RADAR: list[dict[str, Any]] = [
      "description": "Append-only audit log",
      "rationale": "Useful for approval gate timeline; trade-offs unclear",
      "owner": "governance-team"},
+# 3 C4 / dataflow diagrams mirroring the previous frontend MOCK_DIAGRAMS
+# fixture (apps/forge/lib/architecture/mock-fixtures.ts:720). Stable UUIDs
+# so re-seeding is idempotent.
+SEED_DIAGRAMS: list[dict[str, Any]] = [
+    {
+        "id": uuid.UUID("f0000050-0000-4000-8000-00000000d001"),
+        "name": "System Context (C4 Level 1)",
+        "level": "context",
+        "description": "How users and external systems interact with Forge OS.",
+        "nodes": [
+            ("user", "Engineering Lead", "user", 100, 180, "Primary user — defines ADRs, approves gates."),
+            ("gateway", "Forge Gateway", "gateway", 320, 180, "OIDC SSO, rate limiting, audit."),
+            ("pal", "Forge OS", "service", 540, 180, "Workflow orchestration + knowledge graph."),
+            ("github", "GitHub", "external", 760, 100, "Connector — code, PRs, webhooks."),
+            ("keycloak", "Keycloak", "external", 760, 260, "OIDC + SAML identity provider."),
+        ],
+        "edges": [
+            ("user", "gateway", "HTTPS"),
+            ("gateway", "pal", "gRPC"),
+            ("pal", "github", "REST + Webhook"),
+            ("gateway", "keycloak", "OIDC"),
+        ],
+    },
+    {
+        "id": uuid.UUID("f0000050-0000-4000-8000-00000000d002"),
+        "name": "Container Diagram (C4 Level 2)",
+        "level": "container",
+        "description": "Forge OS decomposed into deployable containers.",
+        "nodes": [
+            ("dashboard", "Next.js Dashboard", "user", 80, 80, "apps/forge — React 19 + TanStack Query."),
+            ("api", "FastAPI Backend", "service", 80, 220, "Python 3.13 + Pydantic v2 + SQLAlchemy 2.x."),
+            ("orchestrator", "Workflow Orchestrator", "service", 80, 360, "LangGraph + step state machines."),
+            ("pal", "Provider Abstraction Layer", "service", 360, 360, "Adapters for OpenAI, Anthropic, Bedrock, vLLM."),
+            ("kg", "Knowledge Graph Service", "service", 360, 220, "pgvector + hybrid lexical/semantic retrieval."),
+            ("postgres", "PostgreSQL 17", "data", 600, 220, "RLS + pgvector + JSONB."),
+            ("redis", "Redis", "data", 600, 360, "Pub/Sub for workflow events; semantic cache."),
+        ],
+        "edges": [
+            ("dashboard", "api", "HTTPS"),
+            ("api", "orchestrator", "internal"),
+            ("orchestrator", "pal", "chat"),
+            ("orchestrator", "kg", "query"),
+            ("kg", "postgres", "SQL+RLS"),
+            ("orchestrator", "redis", "pub/sub"),
+            ("pal", "redis", "cache"),
+        ],
+    },
+    {
+        "id": uuid.UUID("f0000050-0000-4000-8000-00000000d003"),
+        "name": "Data Flow — Architecture Center page load",
+        "level": "dataflow",
+        "description": "What happens when the user opens /architecture.",
+        "nodes": [
+            ("page", "page.tsx", "user", 80, 180, "Client component — fetches via /api/proxy."),
+            ("proxy", "/api/proxy/[...path]", "gateway", 280, 180, "Forwards to orchestrator stub."),
+            ("stub", "Orchestrator Stub", "service", 480, 180, "bin/orchestrator-stub.py — returns 6 ADRs + fixtures."),
+            ("cache", "Redis", "data", 680, 100, "Caches ADR list (5min TTL)."),
+            ("pg", "Postgres", "data", 680, 260, "Source of truth for ADRs (RLS scoped)."),
+        ],
+        "edges": [
+            ("page", "proxy", "GET /v1/architecture/adrs"),
+            ("proxy", "stub", "forward"),
+            ("stub", "cache", "lookup"),
+            ("stub", "pg", "fallback"),
+        ],
+    },
 ]
 
 
@@ -772,6 +841,70 @@ async def seed() -> None:
             logger.info("  ✓ %d tech radar blips", len(SEED_TECH_RADAR))
         else:
             logger.info("  ↻ tech radar blips already seeded; skipping")
+        # Diagrams (C4 Level 1, 2 + a dataflow). Idempotent: skipped if any
+        # diagram rows already exist for this tenant.
+        # -----------------------------------------------------------------
+        existing_diagrams = (
+            await session.execute(
+                select(ArchitectureDiagram).where(
+                    ArchitectureDiagram.tenant_id == tenant.id
+                )
+            )
+        ).scalars().first()
+        total_nodes = total_edges = 0
+        if existing_diagrams is None:
+            for spec in SEED_DIAGRAMS:
+                diagram_id = spec["id"]
+                session.add(
+                    ArchitectureDiagram(
+                        id=diagram_id,
+                        tenant_id=tenant.id,
+                        project_id=project_id,
+                        name=spec["name"],
+                        level=spec["level"],
+                        description=spec["description"],
+                    )
+                )
+                # Build a key → UUID map so edges can resolve their source/target.
+                node_ids: dict[str, uuid.UUID] = {}
+                for node_key, label, layer, x, y, details in spec["nodes"]:
+                    nid = uuid.uuid4()
+                    node_ids[node_key] = nid
+                    session.add(
+                        DiagramNodeRow(
+                            id=nid,
+                            diagram_id=diagram_id,
+                            node_key=node_key,
+                            label=label,
+                            layer=layer,
+                            x=x,
+                            y=y,
+                            details=details,
+                        )
+                    )
+                    total_nodes += 1
+                for src, tgt, label in spec["edges"]:
+                    session.add(
+                        DiagramEdgeRow(
+                            id=uuid.uuid4(),
+                            diagram_id=diagram_id,
+                            source_node_id=node_ids[src],
+                            target_node_id=node_ids[tgt],
+                            source_node_key=src,
+                            target_node_key=tgt,
+                            label=label,
+                        )
+                    )
+                    total_edges += 1
+                logger.info(
+                    "  ✓ Diagram (%s): %s — %d nodes / %d edges",
+                    spec["level"],
+                    spec["name"],
+                    len(spec["nodes"]),
+                    len(spec["edges"]),
+                )
+        else:
+            logger.info("  ↻ architecture diagrams already seeded; skipping")
 
         await session.commit()
 
@@ -785,6 +918,12 @@ async def seed() -> None:
         logger.info("   - %d attestations (as Artifact rows)", len(SEED_ATTESTATIONS))
         logger.info("   - 3 architecture versions (stub ADR-001 snapshots)")
         logger.info("   - %d tech radar blips", len(SEED_TECH_RADAR))
+        logger.info(
+            "   - %d diagrams (%d nodes, %d edges)",
+            len(SEED_DIAGRAMS),
+            total_nodes,
+            total_edges,
+        )
 
 
 if __name__ == "__main__":

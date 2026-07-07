@@ -733,3 +733,47 @@ export interface SecurityPosture {
   trend: ReadonlyArray<{ date: string; score: number }>;
   computed_at: string;
 }
+
+
+// ---------------------------------------------------------------------------
+// F-311 — Architecture Diagrams (C4 / dataflow / sequence) — Day 2 track H
+// ---------------------------------------------------------------------------
+
+/** Mirrors `C4DiagramResponse.level` (`DIAGRAM_LEVELS`). */
+export type C4DiagramLevel =
+  | 'context'
+  | 'container'
+  | 'component'
+  | 'dataflow'
+  | 'sequence';
+
+/** Mirrors `DiagramNodeResponse.layer`. */
+export type DiagramLayer =
+  | 'user'
+  | 'gateway'
+  | 'service'
+  | 'data'
+  | 'external';
+
+// The wire shape matches the legacy MOCK_DIAGRAMS fixture exactly
+// (apps/forge/lib/architecture/mock-fixtures.ts:711). Re-export from
+// there so the existing DiagramsExplorer component — which types
+// its `diagrams` prop with `C4Diagram` from mock-fixtures — accepts
+// the live API payload without structural-type drift.
+import type { C4Diagram } from '@/lib/architecture/mock-fixtures';
+
+export type {
+  DiagramNode,
+  DiagramEdge,
+  C4Diagram,
+} from '@/lib/architecture/mock-fixtures';
+
+/** Mirrors `C4DiagramListResponse`. */
+export interface C4DiagramListResponse {
+  items: C4Diagram[];
+  total: number;
+}
+
+export interface DiagramFilter {
+  project_id?: string;
+}
