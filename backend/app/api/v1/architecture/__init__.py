@@ -11,6 +11,7 @@ from app.api.v1.architecture import (
     security_reports,
     standards,
     task_breakdowns,
+    tech_radar,
     traceability,
     versions,
 )
@@ -24,6 +25,7 @@ __all__ = [
     "security_reports",
     "standards",
     "task_breakdowns",
+    "tech_radar",
     "traceability",
     "versions",
 ]

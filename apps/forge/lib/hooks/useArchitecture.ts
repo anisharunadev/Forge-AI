@@ -94,6 +94,10 @@ import type {
   TaskBreakdownFilter,
   TaskBreakdownListResponse,
   TaskUpdateInput,
+  TechBlip,
+  TechRadarCreateInput,
+  TechRadarFilter,
+  TechRadarListResponse,
   TraceabilityFilter,
   TraceabilityMatrix,
   ValidationResult,
@@ -161,6 +165,11 @@ export const archQueryKeys = {
       [...archQueryKeys.versions.all(), 'list', filter] as const,
     diff: (filter: ArchitectureVersionDiffFilter) =>
       [...archQueryKeys.versions.all(), 'diff', filter] as const,
+  },
+  techRadar: {
+    all: () => [...archQueryKeys.all, 'tech-radar'] as const,
+    list: (filter?: TechRadarFilter) =>
+      [...archQueryKeys.techRadar.all(), 'list', filter ?? {}] as const,
   },
   standards: {
     all: () => [...archQueryKeys.all, 'standards'] as const,
@@ -732,6 +741,39 @@ export function useRollbackVersion() {
     },
     onError: (err) => {
       const message = err instanceof Error ? err.message : 'Failed to rollback version';
+      toast.error(message);
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Day 2 mock-removal track G — Tech Radar
+// ---------------------------------------------------------------------------
+
+export function useTechRadar(
+  filter?: TechRadarFilter,
+): UseQueryResult<TechRadarListResponse> {
+  return useQuery({
+    queryKey: archQueryKeys.techRadar.list(filter),
+    queryFn: () =>
+      api.get<TechRadarListResponse>(`/architecture/tech-radar${buildQuery(filter)}`),
+    enabled: !!filter?.project_id,
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useCreateTechRadarBlip() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: TechRadarCreateInput) =>
+      api.post<TechBlip>('/architecture/tech-radar', data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: archQueryKeys.techRadar.all() });
+      toast.success('Tech radar blip added');
+    },
+    onError: (err) => {
+      const message =
+        err instanceof Error ? err.message : 'Failed to add tech radar blip';
       toast.error(message);
     },
   });

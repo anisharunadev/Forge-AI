@@ -212,6 +212,8 @@ api_router.include_router(architecture.versions.router)
 # M5 T-A3 — Security Report surface (5 endpoints under
 # /architecture/security-reports; see security_reports.py).
 api_router.include_router(architecture.security_reports.router)
+# Day 2 mock-removal track G — Tech Radar.
+api_router.include_router(architecture.tech_radar.router)
 # NFR-044 Workflow Budget Guardrails
 api_router.include_router(workflows.router)
 # F-018 — Custom workflow command dispatch (closes the useForgeCommands "Backend unreachable" gap)

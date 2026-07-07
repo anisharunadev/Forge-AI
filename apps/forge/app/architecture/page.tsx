@@ -113,6 +113,7 @@ import {
   useApprovals,
   useRequestApproval,
   useDecideApproval,
+  useTechRadar,
 } from '@/lib/hooks/useArchitecture';
 import { SecurityReportPanel } from '@/components/architecture/SecurityReportPanel';
 import { useArchitecturePipelineWS } from '@/lib/architecture/use-pipeline-ws';
@@ -2129,6 +2130,8 @@ export default function ArchitectureCenterPage() {
   // callback via prop.
   const versionsQuery = useArchitectureVersions(null);
   const traceabilityQuery = useTraceability({ project_id: projectId });
+  // Day 2 mock-removal track G — Tech Radar count (replaces MOCK_TECH_RADAR.length).
+  const techRadarQuery = useTechRadar({ project_id: projectId });
   // M5-G4 — Security Report hook. The posture query reads the cached
   // deployment posture aggregate (total_open / critical_open / score).
   // The reports list backs the Open Findings inner-tab.
@@ -2302,7 +2305,7 @@ export default function ArchitectureCenterPage() {
     risks: risks.length,
     trace: traceability.nodes.length,
     versions: versions.length,
-    radar: 0,  // Day 1: no tech-radar endpoint yet
+    radar: techRadarQuery.data?.total ?? 0,
     diagrams: 0,  // Day 1: no diagrams endpoint yet
     security: securityOpenCount ?? 0,
   };
