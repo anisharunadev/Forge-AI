@@ -14,6 +14,7 @@ from app.core.audit import audit
 from app.core.security import AuthenticatedPrincipal
 from app.schemas.architecture import (
     ADRCreateRequest,
+    ADRLinksResponse,
     ADRListResponse,
     ADRResponse,
     ADRSupersedeRequest,
@@ -91,6 +92,25 @@ async def get_adr(
     if adr is None or adr.tenant_id != principal.tenant_id:
         raise HTTPException(status_code=404, detail="adr_not_found")
     return ADRResponse.model_validate(adr)
+
+
+@router.get("/{adr_id}/links", response_model=ADRLinksResponse)
+@audit(action="architecture.adr.links", target_type="adr")
+async def get_adr_links(
+    adr_id: UUID,
+    principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],
+    _perm: AuthenticatedPrincipal = Depends(require_permission("architecture:adr:read")),
+) -> ADRLinksResponse:
+    """Linked-count metadata for an ADR (Day-1 mock removal).
+
+    Counts are project-scoped (tenant_id + project_id). The route
+    translates a missing / cross-tenant ADR to 404 to avoid
+    enumeration (Rule R2).
+    """
+    counts = await _generator().get_adr_links(adr_id, principal.tenant_id)
+    if counts is None:
+        raise HTTPException(status_code=404, detail="adr_not_found")
+    return ADRLinksResponse(adr_id=adr_id, **counts)
 
 
 @require_approval_phase(SDLCPhase.ARCHITECTURE)

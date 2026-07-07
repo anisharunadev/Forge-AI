@@ -46,6 +46,7 @@ import type {
   ADR,
   ADRCreateInput,
   ADRFilter,
+  ADRLinks,
   ADRListResponse,
   ADRSupersedeInput,
   AcceptanceCriteria,
@@ -127,6 +128,7 @@ export const archQueryKeys = {
     all: () => [...archQueryKeys.all, 'adrs'] as const,
     list: (filter?: ADRFilter) => [...archQueryKeys.adrs.all(), 'list', filter ?? {}] as const,
     detail: (id: string) => [...archQueryKeys.adrs.all(), 'detail', id] as const,
+    links: (id: string) => [...archQueryKeys.adrs.all(), 'links', id] as const,
   },
   contracts: {
     all: () => [...archQueryKeys.all, 'contracts'] as const,
@@ -213,6 +215,17 @@ export function useADR(id: string | null | undefined): UseQueryResult<ADR> {
   return useQuery({
     queryKey: archQueryKeys.adrs.detail(id ?? ''),
     queryFn: () => api.get<ADR>(`/architecture/adrs/${id}`),
+    enabled: !!id,
+    staleTime: 60_000,
+  });
+}
+
+export function useADRLinks(
+  id: string | null | undefined,
+): UseQueryResult<ADRLinks> {
+  return useQuery({
+    queryKey: archQueryKeys.adrs.links(id ?? ''),
+    queryFn: () => api.get<ADRLinks>(`/architecture/adrs/${id}/links`),
     enabled: !!id,
     staleTime: 60_000,
   });

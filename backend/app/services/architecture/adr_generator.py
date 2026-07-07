@@ -15,7 +15,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
-from app.db.models.architecture import ADR
+from app.db.models.architecture import ADR, APIContract, RiskRegister, TaskBreakdown
 from app.db.session import get_session_factory
 from app.services.event_bus import EventType
 
@@ -204,6 +204,46 @@ class ADRGenerator:
         factory = get_session_factory()
         async with factory() as session:
             return await session.get(ADR, str(adr_id))
+
+    async def get_adr_links(
+        self, adr_id: UUID | str, tenant_id: UUID | str
+    ) -> dict[str, int] | None:
+        """Return linked-artifact counts for an ADR, project-scoped.
+
+        Returns ``None`` if the ADR does not exist or belongs to a
+        different tenant (the route layer translates that to 404 per
+        Rule R2 — no cross-tenant enumeration). Today's schema has no
+        direct ADR → TaskBreakdown / ADR → APIContract FK, so the
+        counts are project-scoped totals; the UI projection treats
+        them as visual indicators rather than analytics.
+        """
+        factory = get_session_factory()
+        async with factory() as session:
+            adr = await session.get(ADR, str(adr_id))
+            if adr is None or str(adr.tenant_id) != str(tenant_id):
+                return None
+            project_id = str(adr.project_id)
+
+            task_q = select(func.count(TaskBreakdown.id)).where(
+                TaskBreakdown.tenant_id == str(tenant_id),
+                TaskBreakdown.project_id == project_id,
+            )
+            risk_q = select(func.count(RiskRegister.id)).where(
+                RiskRegister.tenant_id == str(tenant_id),
+                RiskRegister.project_id == project_id,
+            )
+            contract_q = select(func.count(APIContract.id)).where(
+                APIContract.tenant_id == str(tenant_id),
+                APIContract.project_id == project_id,
+            )
+            task_count = int((await session.execute(task_q)).scalar_one() or 0)
+            risk_count = int((await session.execute(risk_q)).scalar_one() or 0)
+            contract_count = int((await session.execute(contract_q)).scalar_one() or 0)
+            return {
+                "task_breakdown_count": task_count,
+                "risk_count": risk_count,
+                "api_contract_count": contract_count,
+            }
 
     async def list_adrs(
         self,
