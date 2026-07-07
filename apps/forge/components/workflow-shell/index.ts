@@ -38,3 +38,8 @@ export { InternalErrorBoundary } from './InternalErrorBoundary';
 
 export { StagePanel } from './StagePanel';
 export type { StagePanelProps } from './StagePanel';
+
+// Sprint 4 — M20 Experience: hero journey banner (Idea → PR timer).
+
+export { HeroJourneyBanner } from './HeroJourneyBanner';
+export type { HeroJourneyBannerProps } from './HeroJourneyBanner';

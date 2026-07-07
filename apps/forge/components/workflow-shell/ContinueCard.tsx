@@ -23,7 +23,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { getStage } from '@/lib/workflow-shell/stages';
+import { getNextStage, getStage } from '@/lib/workflow-shell/stages';
+import { markJourneyStart } from '@/lib/workflow-shell/hero-journey';
 import type { WorkflowProgress } from '@/lib/workflow-shell/types';
 
 export interface ContinueCardProps {
@@ -38,6 +39,13 @@ export function ContinueCard({ progress, className }: ContinueCardProps) {
     ?.blockedReason;
   const isBlocked = status === 'blocked';
   const isDone = status === 'done';
+  const next = getNextStage(progress.currentStage);
+
+  // Mark the journey start the first time the user clicks "Continue"
+  // — gives us an accurate "time to first PR" measurement.
+  const onStartJourney = () => {
+    markJourneyStart();
+  };
 
   const headline = isDone
     ? 'All stages complete'
@@ -60,16 +68,29 @@ export function ContinueCard({ progress, className }: ContinueCardProps) {
           {isBlocked && blockedReason ? blockedReason : stage.description}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-wrap items-center gap-3">
         <Button asChild variant={isBlocked ? 'destructive' : 'default'} size="lg">
           <Link
             href={stage.centerPath}
             data-testid="workflow-continue-cta"
             aria-label={`Continue to ${stage.label}`}
+            onClick={onStartJourney}
           >
             {isDone ? 'Review final PR' : `Open ${stage.label}`}
           </Link>
         </Button>
+        {next ? (
+          <Button asChild variant="ghost" size="sm">
+            <Link
+              href={`/workflow/${next.id}`}
+              data-testid="workflow-skip-to-next-cta"
+              aria-label={`Skip to next stage: ${next.label}`}
+              onClick={onStartJourney}
+            >
+              Skip to {next.label}
+            </Link>
+          </Button>
+        ) : null}
       </CardContent>
     </Card>
   );

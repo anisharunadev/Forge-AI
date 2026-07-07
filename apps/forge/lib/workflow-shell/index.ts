@@ -17,3 +17,12 @@ export type {
   UseStageSideEffectsArgs,
   UseStageSideEffectsResult,
 } from './use-stage-side-effects';
+export {
+  HERO_STEPS,
+  HERO_JOURNEY_START_KEY,
+  markJourneyStart,
+  readJourneyStart,
+  clearJourneyStart,
+  formatElapsed,
+  getNextHeroStep,
+} from './hero-journey';
