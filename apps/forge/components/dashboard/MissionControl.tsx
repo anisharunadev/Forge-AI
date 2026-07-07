@@ -295,6 +295,7 @@ export function MissionControl() {
                 isMac={isMac}
                 onCustomize={() => setCustomizeOpen(true)}
                 onBellClick={() => setBellOpen((o) => !o)}
+                unreadAlerts={unreadAlerts}
                 onRefresh={handleRefresh}
                 showLastRefreshed={showLastRefreshed}
                 onLastRefreshedConsumed={() => setShowLastRefreshed(false)}

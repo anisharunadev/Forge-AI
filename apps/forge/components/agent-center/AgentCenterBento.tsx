@@ -37,6 +37,10 @@ const SEMANTIC = {
   violet: 'var(--accent-violet)',
 } as const;
 
+// ponytail: kept as inline @deprecated placeholder until backend exposes
+// /dashboard/agent-center/kpis. Today the four KPI tiles render "—"
+// (Rule 15 empty-state explainability) instead of fabricated numbers.
+/** @deprecated No backend counterpart exists. Tiles render "—" pending the Day 4+ KPI endpoint. */
 const SAMPLE_KPIS = {
   total: { value: 24, delta: '+3 this week', trend: [4, 5, 6, 6, 7, 9, 11, 12, 14, 16, 20, 24] },
   active: { value: 7, delta: '+2 today', trend: [2, 3, 3, 4, 5, 5, 6, 6, 7, 7, 7, 7] },
@@ -335,33 +339,33 @@ export function AgentCenterBento({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiTile
           label="Total Agents"
-          value={SAMPLE_KPIS.total.value}
-          delta={SAMPLE_KPIS.total.delta}
-          trend={SAMPLE_KPIS.total.trend}
+          value="—"
+          delta="Backend pending"
+          trend={[]}
           color={SEMANTIC.indigo}
           testId="kpi-total-agents"
         />
         <KpiTile
           label="Active Runs"
-          value={SAMPLE_KPIS.active.value}
-          delta={SAMPLE_KPIS.active.delta}
-          trend={SAMPLE_KPIS.active.trend}
+          value="—"
+          delta="Backend pending"
+          trend={[]}
           color={SEMANTIC.cyan}
           testId="kpi-active-runs"
         />
         <KpiTile
           label="Avg Latency"
-          value={SAMPLE_KPIS.latency.value}
-          delta={SAMPLE_KPIS.latency.delta}
-          trend={SAMPLE_KPIS.latency.trend}
+          value="—"
+          delta="Backend pending"
+          trend={[]}
           color={SEMANTIC.amber}
           testId="kpi-avg-latency"
         />
         <KpiTile
           label="Success Rate"
-          value={SAMPLE_KPIS.success.value}
-          delta={SAMPLE_KPIS.success.delta}
-          trend={SAMPLE_KPIS.success.trend}
+          value="—"
+          delta="Backend pending"
+          trend={[]}
           color={SEMANTIC.emerald}
           testId="kpi-success-rate"
         />
