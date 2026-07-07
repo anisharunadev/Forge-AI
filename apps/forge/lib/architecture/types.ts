@@ -121,6 +121,19 @@ export interface ADRSupersedeInput {
   new_adr_id: string;
 }
 
+/**
+ * Mirrors `ADRLinksResponse` — counts of artifacts linked to an ADR,
+ * project-scoped. Replaces the previous mock-fixture
+ * `linkedTaskCount` / `linkedRiskCount` / `linkedApiCount` fields on
+ * `ADRWithMeta`.
+ */
+export interface ADRLinks {
+  adr_id: string;
+  task_breakdown_count: number;
+  risk_count: number;
+  api_contract_count: number;
+}
+
 // ---------------------------------------------------------------------------
 // API Contract (F-302)
 // ---------------------------------------------------------------------------

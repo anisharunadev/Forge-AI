@@ -66,6 +66,21 @@ class ADRSupersedeRequest(ForgeBaseModel):
     new_adr_id: UUID
 
 
+class ADRLinksResponse(ForgeBaseModel):
+    """Linked-count metadata for an ADR (Day-1 mock removal).
+
+    Counts are derived from existing FK relationships in the ADR's
+    project scope (tenant_id + project_id). Used by the Architecture
+    Center `ADRWithMeta` projection to replace the previous mock
+    `linkedTaskCount` / `linkedRiskCount` / `linkedApiCount` fields.
+    """
+
+    adr_id: UUID
+    task_breakdown_count: int = 0
+    risk_count: int = 0
+    api_contract_count: int = 0
+
+
 # ---------------------------------------------------------------------------
 # API Contract
 # ---------------------------------------------------------------------------
@@ -299,6 +314,7 @@ class ArchitectureApprovalDecisionRequest(ForgeBaseModel):
 
 __all__ = [
     "ADRCreateRequest",
+    "ADRLinksResponse",
     "ADRListResponse",
     "ADRResponse",
     "ADRSupersedeRequest",
