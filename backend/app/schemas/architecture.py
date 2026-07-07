@@ -506,14 +506,16 @@ class LineageGraphResponse(ForgeBaseModel):
 
 
 class ArchitectureVersionResponse(ForgeBaseModel):
-    version_id: UUID
+    id: UUID
     artifact_type: str
     artifact_id: UUID
     version_number: int
     content_hash: str
     snapshot_reason: str
-    actor_id: UUID
+    actor_id: UUID | None
     created_at: datetime
+    tenant_id: UUID
+    project_id: UUID
 
 
 class ArchitectureVersionListResponse(ForgeBaseModel):

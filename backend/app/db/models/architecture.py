@@ -167,10 +167,45 @@ class ArchitectureApproval(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
 
 
+class ArchitectureVersionRow(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMixin):
+    """Append-only version snapshot of an architecture artifact.
+
+    Day 1 mock-removal track E: replaces the previous Python dataclass
+    ``ArchitectureVersion`` (which had no DB backing and therefore
+    ``list_versions`` always returned ``[]``).
+    """
+
+    __tablename__ = "architecture_versions"
+
+    artifact_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    artifact_id: Mapped[UUID] = mapped_column(GUID(), nullable=False)
+    version_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    content_hash: Mapped[str] = mapped_column(String(128), nullable=False, default="")
+    snapshot_reason: Mapped[str] = mapped_column(String(500), nullable=False, default="")
+    actor_id: Mapped[UUID | None] = mapped_column(GUID(), nullable=True)
+
+    __table_args__ = (
+        Index(
+            "ix_architecture_versions_tenant_project_artifact",
+            "tenant_id",
+            "project_id",
+            "artifact_type",
+            "artifact_id",
+        ),
+        Index(
+            "ix_architecture_versions_tenant_project_created",
+            "tenant_id",
+            "project_id",
+            "created_at",
+        ),
+    )
+
+
 __all__ = [
     "ADR",
     "APIContract",
     "ArchitectureApproval",
+    "ArchitectureVersionRow",
     "RiskRegister",
     "TaskBreakdown",
 ]
