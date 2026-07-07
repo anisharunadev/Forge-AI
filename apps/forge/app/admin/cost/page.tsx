@@ -173,7 +173,7 @@ export default function CostDashboardPage(): React.ReactElement {
                 fontSize: 12,
               }}
               labelStyle={{ color: '#c4cfe5' }}
-              formatter={(v: number) => [`$${v.toFixed(4)}`, 'Cost']}
+              formatter={(v) => [`$${Number(v).toFixed(4)}`, 'Cost'] as [string, string]}
             />
             <Line
               type="monotone"
@@ -201,7 +201,7 @@ export default function CostDashboardPage(): React.ReactElement {
                 fontSize: 12,
               }}
               labelStyle={{ color: '#c4cfe5' }}
-              formatter={(v: number) => [`$${v.toFixed(4)}`, 'Cost']}
+              formatter={(v) => [`$${Number(v).toFixed(4)}`, 'Cost'] as [string, string]}
             />
             <Bar dataKey="cost_usd" fill="#60a5fa" />
           </BarChart>

@@ -75,10 +75,10 @@ export function CredentialsTab() {
         connector: {
           id: cred.id,
           displayName: cred.name,
-          category: 'custom' as ConnectorCredential['type'] extends string ? 'custom' : 'custom',
+          category: 'custom' as const,
           status: cred.status,
         },
-      })) as ReadonlyArray<CredentialRow>)
+      })) as unknown as ReadonlyArray<CredentialRow>)
     : (mockCredentials as ReadonlyArray<CredentialRow>);
 
   const reveal = useRevealCredential();

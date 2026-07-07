@@ -299,7 +299,7 @@ function deliveryToRow(d: WebhookDeliveryWire): WebhookDeliveryRow {
   return {
     id: d.id,
     at: d.attempted_at,
-    status: d.status,
+    status: d.status === 'ok' ? 'success' : d.status === 'error' ? 'failed' : 'pending',
     code: d.response_code,
     latencyMs: d.duration_ms,
   };
@@ -459,7 +459,7 @@ export function buildFailureTrend(
   }
 
   for (const ev of events) {
-    if (ev.status !== 'error' && ev.status !== 'failed') continue;
+    if (ev.status !== 'error') continue;
     const at = ev.completed_at ?? ev.started_at;
     const day = at.slice(0, 10);
     if (!buckets.has(day)) continue;

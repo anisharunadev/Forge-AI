@@ -113,8 +113,8 @@ export function RunIndexTable({ runs, onClearFilters }: RunIndexTableProps) {
                       uses the row's last-known figures so 200 rows don't
                       hammer the budget endpoint. */}
                   <RunBudgetBadge
-                    ceilingUsd={r.cost_ceiling_usd}
-                    spentUsd={r.cost_spent_usd}
+                    ceilingUsd={Number(r.cost_ceiling_usd)}
+                    spentUsd={Number(r.cost_spent_usd)}
                   />
                 </td>
                 <td className="px-3 py-2 text-xs text-muted-foreground">

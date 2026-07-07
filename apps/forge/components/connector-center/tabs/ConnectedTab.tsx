@@ -210,8 +210,9 @@ export function ConnectedTab() {
       {openId ? (
         <DrawerShell onClose={() => setOpenId(null)}>
           <ConnectorDetailPanel
-            connector={connectors.find((c) => c.id === openId) as never}
-            auditEntries={[]}
+            connector={(connectors.find((c) => c.id === openId) ?? null) as never}
+            open={Boolean(openId)}
+            onOpenChange={(o) => { if (!o) setOpenId(null); }}
           />
         </DrawerShell>
       ) : null}

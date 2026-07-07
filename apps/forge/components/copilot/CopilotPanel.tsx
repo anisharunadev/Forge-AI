@@ -245,7 +245,6 @@ export function CopilotPanel({ mode = 'panel', backHref = '/dashboard' }: Copilo
             <MessageList
               messages={conversation.data?.messages ?? []}
               streaming={streamingFromStore}
-              streamingMessage={streamingMessage}
             />
           )
         ) : (

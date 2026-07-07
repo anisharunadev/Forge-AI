@@ -55,7 +55,7 @@ export function RunBudgetBadgeTenantDefault() {
     void (async () => {
       try {
         const mod = await import('@/lib/api/auth');
-        const id = mod.authClient.getTenantId();
+        const id = mod.auth.getTenantId();
         if (!cancelled) setTenantId(id);
       } catch {
         if (!cancelled) setTenantId(null);

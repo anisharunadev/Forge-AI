@@ -269,17 +269,16 @@ export function wireToCredential(wire: ConnectorCredentialWire): ConnectorCreden
       ? 'api_key'
       : wire.type === 'oauth-token'
         ? 'oauth'
-        : wire.type === 'pat'
-          ? 'service_account'
-          : wire.type === 'webhook-secret'
-            ? 'webhook'
-            : 'service_account',
-    scope: wire.scope,
-    preview: wire.preview,
+        : wire.type === 'webhook-secret'
+          ? 'webhook_secret'
+          : 'service_account',
+    fingerprint: '',
+    scopes: wire.scope ? [wire.scope] : [],
     lengthChars: 32,
     expiresAt: wire.expires_at ?? undefined,
     lastRotatedAt: wire.last_rotated_at,
     rotatedBy: wire.created_by,
+    owner: { name: wire.created_by, initials: (wire.created_by || 'XX').slice(0, 2).toUpperCase() },
     status: wire.expires_at && new Date(wire.expires_at).getTime() < Date.now()
       ? 'expired'
       : wire.expires_at && new Date(wire.expires_at).getTime() - Date.now() < 14 * 86_400_000

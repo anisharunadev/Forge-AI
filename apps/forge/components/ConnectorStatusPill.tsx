@@ -9,32 +9,41 @@
  * Back-compat testid/data-status/aria-label preserved.
  */
 
-import type { ToolCallStatus } from '@/lib/connectors/data';
+import type { ConnectorHealthStatus } from '@/lib/connectors/data';
 import { StatusPill } from '@/components/shell';
 import type { StateGlyph, StatusTone } from '@/lib/design-system/status';
 
-const TONE: Record<ToolCallStatus, StatusTone> = {
-  success:  'success',
-  degraded: 'warn',
-  error:    'danger',
-};
-
-const GLYPH: Record<ToolCallStatus, StateGlyph> = {
-  success:  '✓',
-  degraded: '◑',
-  error:    '✕',
-};
-
-const LABEL: Record<ToolCallStatus, string> = {
-  success:  'healthy',
-  degraded: 'degraded',
-  error:    'broken',
-};
-
 export interface ConnectorStatusPillProps {
-  readonly status: ToolCallStatus;
+  readonly status: ConnectorHealthStatus;
   readonly className?: string;
 }
+
+const TONE: Record<ConnectorHealthStatus, StatusTone> = {
+  healthy:     'success',
+  syncing:     'warn',
+  stale:       'warn',
+  failed:      'danger',
+  quarantined: 'danger',
+  paused:      'idle',
+};
+
+const GLYPH: Record<ConnectorHealthStatus, StateGlyph> = {
+  healthy:     '✓',
+  syncing:     '◐',
+  stale:       '◑',
+  failed:      '✕',
+  quarantined: '✕',
+  paused:      '○',
+};
+
+const LABEL: Record<ConnectorHealthStatus, string> = {
+  healthy:     'healthy',
+  syncing:     'syncing',
+  stale:       'stale',
+  failed:      'failed',
+  quarantined: 'quarantined',
+  paused:      'paused',
+};
 
 export function ConnectorStatusPill({ status, className }: ConnectorStatusPillProps) {
   const label = LABEL[status];

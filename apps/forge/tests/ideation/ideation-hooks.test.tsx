@@ -12,7 +12,7 @@
  */
 
 import * as React from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import {
   QueryClient,
   QueryClientProvider,
@@ -49,7 +49,7 @@ function jsonResponse(body: unknown, status = 200): Response {
 }
 
 describe('useCompareImpact (query-param shape)', () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>;
+  let fetchSpy: MockInstance<typeof fetch>;
   beforeEach(() => {
     fetchSpy = vi
       .spyOn(globalThis, 'fetch')
@@ -91,7 +91,7 @@ describe('useCompareImpact (query-param shape)', () => {
 });
 
 describe('useScoreBatch (query-param shape + strategy default)', () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>;
+  let fetchSpy: MockInstance<typeof fetch>;
   beforeEach(() => {
     fetchSpy = vi
       .spyOn(globalThis, 'fetch')
@@ -129,7 +129,7 @@ describe('useScoreBatch (query-param shape + strategy default)', () => {
 });
 
 describe('useRoadmap (enabled gate)', () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>;
+  let fetchSpy: MockInstance<typeof fetch>;
   beforeEach(() => {
     fetchSpy = vi
       .spyOn(globalThis, 'fetch')
@@ -183,7 +183,7 @@ describe('useRoadmap (enabled gate)', () => {
 });
 
 describe('useRunPipeline (invalidation)', () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>;
+  let fetchSpy: MockInstance<typeof fetch>;
   beforeEach(() => {
     fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       jsonResponse({
@@ -210,7 +210,7 @@ describe('useRunPipeline (invalidation)', () => {
       });
     });
 
-    let qc: ReturnType<typeof useQueryClient> | null = null;
+    let qc: QueryClient | null = null;
     function Probe() {
       qc = useQueryClient();
       const mutate = useRunPipeline();
@@ -233,6 +233,7 @@ describe('useRunPipeline (invalidation)', () => {
     expect(lastUrl).toContain('/ideation/workflows/ideas/idea-42/start');
     expect(lastUrl).not.toContain('/workflows/run');
     // The ideas query was invalidated → the cache is wiped.
-    expect(qc?.getQueryData(queryKeys.ideation.ideas())).toBeUndefined();
+    const client = qc as QueryClient | null;
+    expect(client === null || client.getQueryData(queryKeys.ideation.ideas()) === undefined).toBe(true);
   });
 });

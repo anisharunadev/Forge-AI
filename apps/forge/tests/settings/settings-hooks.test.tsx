@@ -40,7 +40,7 @@ import {
 // ponytail: vi.SpyInstance.mock.calls is `MockCall[][] | undefined` and
 // TS insists on the indexed element being possibly undefined even after
 // a `toHaveBeenCalledTimes(1)` await. Capture the call once, then read.
-function lastFetchCall(spy: ReturnType<typeof vi.spyOn>): [unknown, RequestInit] {
+function lastFetchCall(spy: { mock: { calls: ReadonlyArray<ReadonlyArray<unknown>> } }): [unknown, RequestInit] {
   const call = spy.mock.calls[0];
   if (!call) throw new Error('expected fetch to have been called');
   return [call[0], (call[1] ?? {}) as RequestInit];

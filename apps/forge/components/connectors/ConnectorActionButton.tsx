@@ -132,6 +132,7 @@ export function ConnectorActionButton({
         {resolved.map(({ action, connectors }) => {
           const Icon = ACTION_ICON[action.capability] ?? WandSparkles;
           const c = connectors[0];
+          if (!c) return null;
           const CIcon = resolveIcon(c.id);
           return (
             <button

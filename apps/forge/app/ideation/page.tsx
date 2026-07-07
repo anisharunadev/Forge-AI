@@ -154,7 +154,7 @@ export default function IdeationCenterPage() {
       { idea_id: target.id },
       {
         onSuccess: (prd) => {
-          toast.success('PRD generated', { description: prd.title ?? target.title });
+          toast.success('PRD generated', { description: target.title });
         },
         onError: (err) => {
           toast.error('PRD generation failed', { description: err.message });

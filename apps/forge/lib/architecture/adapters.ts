@@ -26,7 +26,7 @@ const DEFAULT_COMPONENT: ADRComponentId = 'backend';
 const DEFAULT_IMPACT = 5;
 const DEFAULT_OWNER = 'arun@acme-corp.com';
 
-export interface ADRWithMeta extends ADR {
+export interface ADRWithMeta extends Omit<ADR, 'component' | 'impact'> {
   component: ADRComponentId | null;
   impact: number | null;
   authorInitials: string;
@@ -50,14 +50,18 @@ export function deriveAuthorInitials(value: string | null | undefined): string {
   if (value.includes('@')) {
     const local = value.split('@')[0] ?? '';
     const parts = local.split(/[._-]/);
-    if (parts.length >= 2 && parts[0] && parts[1]) {
-      return ((parts[0] as string)[0] + (parts[1] as string)[0]).toUpperCase();
+    const p0: string = parts[0] ?? '';
+    const p1: string = parts[1] ?? '';
+    if (p0.length && p1.length) {
+      return (p0.charAt(0) + p1.charAt(0)).toUpperCase();
     }
     return local.slice(0, 2).toUpperCase();
   }
   const words = value.split(/\s+/).filter(Boolean);
-  if (words.length >= 2 && words[0] && words[1]) {
-    return ((words[0] as string)[0] + (words[1] as string)[0]).toUpperCase();
+  const w0: string = words[0] ?? '';
+  const w1: string = words[1] ?? '';
+  if (w0.length && w1.length) {
+    return (w0.charAt(0) + w1.charAt(0)).toUpperCase();
   }
   return value.slice(0, 2).toUpperCase();
 }
@@ -79,7 +83,6 @@ export function toADRWithMeta(
     linkedTaskCount: links?.task_breakdown_count ?? 0,
     linkedRiskCount: links?.risk_count ?? 0,
     linkedApiCount: links?.api_contract_count ?? 0,
-    owner: DEFAULT_OWNER,
     markdown: '',
     updatedAt: adr.updated_at ?? new Date().toISOString(),
   };

@@ -171,7 +171,7 @@ export default function ComplianceFeedPage() {
         severity: v.severity ?? 'medium',
         action_taken: v.description ?? 'blocked',
         sanitized_content: v.description ?? 'Guardrail violation',
-        resolved: v.status === 'RESOLVED',
+        resolved: v.severity === 'low',
         occurred_at: v.timestamp ?? new Date().toISOString(),
       }));
     }

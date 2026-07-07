@@ -42,7 +42,7 @@ export interface ReplayButtonProps {
   className?: string;
 }
 
-const LIVE_STATUSES = new Set<RunStatus>(['running', 'pending']);
+const LIVE_STATUSES = new Set<RunStatus>(['running', 'created']);
 
 export function ReplayButton({
   runId,

@@ -242,7 +242,7 @@ describe('error handling', () => {
   it('propagates ForgeApiError on 401', async () => {
     const errorBody = { detail: 'Unauthorized' };
     mockedGet.mockRejectedValueOnce(
-      new ForgeApiError('Forge API 401', 401, errorBody),
+      new ForgeApiError(401, 'Forge API 401', errorBody),
     );
 
     await expect(listConversations(TENANT)).rejects.toMatchObject({
@@ -255,7 +255,7 @@ describe('error handling', () => {
   it('propagates ForgeApiError on 429', async () => {
     const errorBody = { detail: 'Too Many Requests' };
     mockedGet.mockRejectedValueOnce(
-      new ForgeApiError('Forge API 429', 429, errorBody),
+      new ForgeApiError(429, 'Forge API 429', errorBody),
     );
 
     await expect(sendMessage(
