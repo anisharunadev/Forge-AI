@@ -12,10 +12,7 @@
  */
 
 import type { ForgePhase } from '../forge-core/manifest';
-import {
-  SAMPLE_TICKETS,
-  type Ticket,
-} from './sample-data';
+import type { Ticket } from './sample-data';
 import type { OrchestrationEvent, OrchestrationEventKind } from './store';
 
 /* ---------------------------------------------------------------------------
@@ -175,32 +172,9 @@ export function scheduleOrchestration(
 }
 
 /* ---------------------------------------------------------------------------
- * Mock "Forge it ⚡" ticket fetch — simulates a connector call.
- * Returns the matched ticket from SAMPLE_TICKETS (fuzzy match on id).
+ * Ponytail (Day 4): deleted the "Forge it ⚡" mock ticket fetcher
+ * (`matchTicketByDraft` + `TICKET_FETCH_STEPS` + `TicketFetchStep`) — 0
+ * callers, and it would have thrown on empty SAMPLE_TICKETS anyway.
+ * PhaseExecutionDrawer already passes the resolved Ticket into
+ * `scheduleOrchestration` directly.
  * ------------------------------------------------------------------------- */
-export interface TicketFetchStep {
-  readonly id: string;
-  readonly label: string;
-  readonly delayMs: number;
-}
-
-export const TICKET_FETCH_STEPS: ReadonlyArray<TicketFetchStep> = [
-  { id: 'connect', label: 'Connecting to source', delayMs: 250 },
-  { id: 'fetch', label: 'Fetching ticket', delayMs: 500 },
-  { id: 'analyze', label: 'Analyzing context', delayMs: 350 },
-  { id: 'entities', label: 'Loading linked entities', delayMs: 400 },
-];
-
-export function matchTicketByDraft(draft: string): Ticket {
-  const fallback = SAMPLE_TICKETS[0];
-  if (!fallback) {
-    throw new Error('SAMPLE_TICKETS is empty — seed data missing');
-  }
-  const trimmed = draft.trim().toLowerCase();
-  if (!trimmed) return fallback;
-  return (
-    SAMPLE_TICKETS.find((t) => t.id.toLowerCase() === trimmed) ??
-    SAMPLE_TICKETS.find((t) => trimmed.includes(t.id.toLowerCase())) ??
-    fallback
-  );
-}
