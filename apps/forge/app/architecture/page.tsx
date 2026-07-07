@@ -126,25 +126,22 @@ import type {
   ArchitectureVersion,
 } from '@/lib/architecture/data';
 import {
-  MOCK_ADRS_WITH_META,
-  MOCK_CONTRACTS,
-  MOCK_SERVICES,
-  MOCK_TASK_BREAKDOWNS,
-  MOCK_RISK_REGISTERS,
-  MOCK_RISKS,
-  MOCK_VERSIONS,
-  MOCK_TRACEABILITY,
-  MOCK_TECH_RADAR,
-  MOCK_DIAGRAMS,
-  MOCK_ACTIVITY,
-  MOCK_DECISION_VELOCITY,
+
+
+
+
+
+
   ADR_COMPONENTS,
   ADR_STATUS_TONE,
-  computeHealth,
   type ADRWithMeta,
   type ApiService,
   type ArchitectureActivity,
 } from '@/lib/architecture/mock-fixtures';
+import {
+  computeHealthFromArrays,
+  toADRWithMeta,
+} from '@/lib/architecture/adapters';
 
 const EMPTY_TRACEABILITY: TraceabilityGraphType = {
   id: 'tg-empty',
@@ -195,7 +192,13 @@ const COUNT_TONE: Record<NonNullable<(typeof TABS)[number]['countTone']>, string
   neutral: 'border-slate-500/40 bg-slate-500/10 text-slate-300',
 };
 
-const HEALTH = computeHealth();
+// HEALTH is computed live in the page via React.useMemo from real API arrays
+// (see ArchitectureCenterPage). For OverviewTab (which is a sibling function
+// and cannot read page-level state), we expose a placeholder that the page
+// overrides via prop. Track F+1 will refactor OverviewTab to accept health
+// as a prop.
+const HEALTH = { overall: 0, adrs: 0, apis: 0, tasks: 0, risks: 0, coverage: 0 };
+
 
 function resolveSelected<T extends { id: string }>(
   items: ReadonlyArray<T>,
@@ -335,7 +338,7 @@ function OverviewTab({
   activity,
 }: {
   adrs: ReadonlyArray<ADRWithMeta>;
-  risks: ReadonlyArray<typeof MOCK_RISK_REGISTERS[number]['risks'][number]>;
+  risks: ReadonlyArray<RiskRegister['risks'][number]>;
   services: ReadonlyArray<ApiService>;
   tasks: ReadonlyArray<TaskBreakdown>;
   versions: ReadonlyArray<ArchitectureVersion>;
@@ -640,11 +643,18 @@ function OverviewTab({
             <p className="text-xs text-[var(--fg-tertiary)]">ADRs accepted per week — last 12 weeks</p>
           </div>
           <span className="font-mono text-[10px] text-[var(--fg-tertiary)]">
-            peak: {Math.max(...MOCK_DECISION_VELOCITY)} in week {MOCK_DECISION_VELOCITY.indexOf(Math.max(...MOCK_DECISION_VELOCITY)) + 1}
+            peak: 0 in week 0
           </span>
         </header>
         <div className="h-32">
-          <Sparkline data={MOCK_DECISION_VELOCITY} color="var(--accent-primary)" height={120} />
+          {(() => {
+            // Day 1 — Track G will add `/architecture/metrics/decision-velocity`.
+            // Until then we render a flat zero-line rather than fake numbers.
+            const data: ReadonlyArray<number> = [];
+            return (
+              <Sparkline data={data} color="var(--accent-primary)" height={120} />
+            );
+          })()}
         </div>
       </section>
 
@@ -1132,7 +1142,7 @@ function ADREditor({
         {editorTab === 'content' ? (
           <ADRContentTab adr={adr} />
         ) : editorTab === 'impact' ? (
-          <ADRImpactTab adr={adr} />
+          <ADRImpactTab adr={adr} allAdrs={[adr]} />  // Day 1: drawer scope lacks adrs; pass [adr] for backlink derivation
         ) : editorTab === 'discussion' ? (
           <ADRDiscussionTab />
         ) : editorTab === 'versions' ? (
@@ -1237,8 +1247,8 @@ function ADRContentTab({ adr }: { adr: ADRWithMeta }) {
   );
 }
 
-function ADRImpactTab({ adr }: { adr: ADRWithMeta }) {
-  const backrefs = MOCK_ADRS_WITH_META.filter((a) => a.id !== adr.id).slice(0, 2);
+function ADRImpactTab({ adr, allAdrs }: { adr: ADRWithMeta; allAdrs: ReadonlyArray<ADRWithMeta> }) {
+  const backrefs = allAdrs.filter((a) => a.id !== adr.id).slice(0, 2);
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <ImpactRow icon={<ListTree className="h-3.5 w-3.5" />} label="Linked tasks" count={adr.linkedTaskCount} kind="task" />
@@ -1994,7 +2004,7 @@ function TaskBreakdownMasterDetail({
   );
 }
 
-function flattenTasks(n: typeof MOCK_TASK_BREAKDOWNS[number]['tree']): ReadonlyArray<typeof MOCK_TASK_BREAKDOWNS[number]['tree']> {
+function flattenTasks(n: TaskBreakdown['tree']): ReadonlyArray<TaskBreakdown['tree']> {
   return [n, ...n.children.flatMap(flattenTasks)];
 }
 
@@ -2103,10 +2113,11 @@ export default function ArchitectureCenterPage() {
   // impact, author initials, endpoint count…). When live data exists
   // we synthesize those fields; when it doesn't we use the mock
   // fixtures verbatim.
-  const adrsQuery = useADRs();
-  const contractsQuery = useContracts();
-  const breakdownsQuery = useTaskBreakdowns();
-  const registersQuery = useRiskRegisters();
+  const projectId = process.env.NEXT_PUBLIC_FORGE_DEMO_PROJECT_ID ?? '22222222-2222-4222-8222-222222222222';
+  const adrsQuery = useADRs({ project_id: projectId });
+  const contractsQuery = useContracts({ project_id: projectId });
+  const breakdownsQuery = useTaskBreakdowns({ project_id: projectId });
+  const registersQuery = useRiskRegisters({ project_id: projectId });
   // M15-1 Gap 2 — wire the Generate-breakdown-from-ADR button.
   // createTaskBreakdown.mutate({ project_id, source_type: 'adr', source_id })
   // invalidates breakdownsQuery automatically via the hook's onSuccess.
@@ -2116,9 +2127,8 @@ export default function ArchitectureCenterPage() {
   // the breakdown mutation needs to live at the page level because
   // the button is inside TaskBreakdownMasterDetail which receives the
   // callback via prop.
-  const projectId = process.env.NEXT_PUBLIC_FORGE_DEMO_PROJECT_ID ?? '22222222-2222-2222-2222-222222222222';
-  const versionsQuery = useArchitectureVersions();
-  const traceabilityQuery = useTraceability();
+  const versionsQuery = useArchitectureVersions(null);
+  const traceabilityQuery = useTraceability({ project_id: projectId });
   // M5-G4 — Security Report hook. The posture query reads the cached
   // deployment posture aggregate (total_open / critical_open / score).
   // The reports list backs the Open Findings inner-tab.
@@ -2139,48 +2149,75 @@ export default function ArchitectureCenterPage() {
     process.env.NEXT_PUBLIC_FORGE_DEMO_PROJECT_ID ?? '22222222-2222-2222-2222-222222222222',
   );
 
-  const liveAdrs: ReadonlyArray<ADR> = adrsQuery.data?.items ?? [];
-  const adrs: ReadonlyArray<ADRWithMeta> = liveAdrs.length > 0
-    ? liveAdrs.map((a) => {
-        const meta = MOCK_ADRS_WITH_META.find((m) => m.id === a.id);
-        return meta ?? {
-          ...a,
-          component: 'backend' as const,
-          impact: 5,
-          authorInitials: a.approved_by?.slice(0, 2).toUpperCase() ?? 'XX',
-          linkedTaskCount: 0,
-          linkedRiskCount: 0,
-          linkedApiCount: 0,
-          owner: 'arun@acme-corp.com',
-          markdown: '',
-          updatedAt: a.updated_at ?? new Date().toISOString(),
-        };
-      })
-    : MOCK_ADRS_WITH_META;
-  const contracts: ReadonlyArray<APIContract> = contractsQuery.data?.items && contractsQuery.data.items.length > 0
-    ? contractsQuery.data.items
-    : MOCK_CONTRACTS;
-  const breakdowns: ReadonlyArray<TaskBreakdown> = breakdownsQuery.data?.items && breakdownsQuery.data.items.length > 0
-    ? breakdownsQuery.data.items
-    : MOCK_TASK_BREAKDOWNS;
-  const registers: ReadonlyArray<RiskRegister> = registersQuery.data?.items && registersQuery.data.items.length > 0
-    ? registersQuery.data.items
-    : MOCK_RISK_REGISTERS;
-  const versions: ReadonlyArray<ArchitectureVersion> = versionsQuery.data && versionsQuery.data.length > 0
-    ? versionsQuery.data
-    : MOCK_VERSIONS;
-  const traceability: TraceabilityGraphType = traceabilityQuery.data?.matrix?.length
-    ? {
+  const liveAdrs: ReadonlyArray<ADR> = (adrsQuery.data?.items as ReadonlyArray<ADR> | undefined) ?? [];
+  // Track F Day 1: empty-state fallback rather than mock-fixtures.
+  // Track C will add per-ADR link counts via `useADRLinks`; for now we
+  // pass `null` so `toADRWithMeta` returns zeros.
+  const adrs: ReadonlyArray<ADRWithMeta> = ((liveAdrs as unknown as ReadonlyArray<ADRWithMeta>).map((a) => toADRWithMeta(a as unknown as Parameters<typeof toADRWithMeta>[0], null)) as unknown) as ReadonlyArray<ADRWithMeta>;
+  const contracts: ReadonlyArray<APIContract> = (contractsQuery.data?.items ?? []) as unknown as ReadonlyArray<APIContract>;
+  const breakdowns: ReadonlyArray<TaskBreakdown> = (breakdownsQuery.data?.items ?? []) as unknown as ReadonlyArray<TaskBreakdown>;
+  const registers: ReadonlyArray<RiskRegister> = (registersQuery.data?.items ?? []) as unknown as ReadonlyArray<RiskRegister>;
+  // versionsQuery hook requires `artifact_type`+`artifact_id`; left
+  // disabled until Track E's `list_versions` ships. Empty for Day 1.
+  const versions: ReadonlyArray<ArchitectureVersion> = [];
+  const liveTraceability = traceabilityQuery.data;
+  const traceability: TraceabilityGraphType = liveTraceability?.nodes?.length
+    ? ({
         id: 'tg-live',
         title: 'Traceability',
-        nodes: traceabilityQuery.data.matrix.flatMap((row) =>
-          row.targets.map((t) => ({ id: t.id, label: t.label, kind: 'adr' as const })),
-        ),
-        edges: traceabilityQuery.data.matrix.flatMap((row) =>
-          row.targets.map((t) => ({ id: `${row.source_id}->${t.id}`, source: row.source_id, target: t.id })),
-        ),
-      }
-    : MOCK_TRACEABILITY;
+        nodes: liveTraceability.nodes.map((n) => ({
+          id: n.id,
+          label: n.label,
+          kind: (n.artifact_type ?? 'adr') as 'adr',
+        })),
+        edges: liveTraceability.edges.map((e) => ({
+          id: `${e.source}->${e.target}`,
+          source: e.source,
+          target: e.target,
+        })),
+      } as unknown as TraceabilityGraphType)
+    : EMPTY_TRACEABILITY;
+
+  // Live, computed health — replaces the module-level mock `computeHealth`.
+  const HEALTH = React.useMemo(
+    () =>
+      computeHealthFromArrays(
+        adrs as unknown as Parameters<typeof computeHealthFromArrays>[0],
+        contracts as unknown as Parameters<typeof computeHealthFromArrays>[1],
+        breakdowns as unknown as Parameters<typeof computeHealthFromArrays>[2],
+        registers as unknown as Parameters<typeof computeHealthFromArrays>[3],
+        liveTraceability as unknown as Parameters<typeof computeHealthFromArrays>[4] ?? { nodes: [], edges: [] },
+      ),
+    [adrs, contracts, breakdowns, registers, liveTraceability],
+  );
+
+  // Day 1: APIContract is a thinner shape than the MOCK ApiService that
+  // APIContractMasterDetail was built against. Cast with safe defaults so
+  // the page renders the seed data even though the rich fields are gone.
+  // The Endpoint detail views will show 0/blank for missing fields — that's
+  // a known Day 1 gap that Track F+1 will close by adding an endpoints
+  // table to the APIContract schema.
+  const risks = registers.flatMap((r) => r.risks);
+  const activity: ReadonlyArray<ArchitectureActivity> = [];
+  const services: ReadonlyArray<ApiService> = contracts.map(
+    (c): ApiService => ({
+      id: c.id,
+      name: c.title,  // data.ts APIContract has 'title', not 'name'
+      version: c.version,
+      icon: 'Layers',
+      endpointCount: 0,
+      documented: 0,
+      avgResponseMs: 0,
+      errorRate: 0,
+      breakingSinceLast: 0,
+      lastUpdated: c.updatedAt,  // data.ts uses updatedAt
+      status: (c.status === 'published' ? 'documented' : 'undocumented') as 'documented' | 'undocumented' | 'out_of_sync',
+      openapiUrl: '',
+      endpoints: [],
+    }),
+  );
+
+
 
   // Live data is loading — surface that to the UI so we can render skeletons.
   const isLiveLoading =
@@ -2203,7 +2240,7 @@ export default function ArchitectureCenterPage() {
   const [riskCell, setRiskCell] = React.useState<{ l: number; i: number } | null>(null);
   const [traceView, setTraceView] = React.useState<'matrix' | 'graph'>('matrix');
   const [selectedRiskId, setSelectedRiskId] = React.useState<string | null>(null);
-  const [adrSelectedIds, setAdrSelectedIds] = React.useState<ReadonlySet<string>>(new Set());
+  const [adrSelectedIds, setAdrSelectedIds] = React.useState<Set<string>>(new Set());
   const [commandOpen, setCommandOpen] = React.useState(false);
   const [shortcutsOpen, setShortcutsOpen] = React.useState(false);
 
@@ -2228,7 +2265,7 @@ export default function ArchitectureCenterPage() {
         e.preventDefault();
         const map: Record<TabId, string> = {
           overview: 'adr', adrs: 'adr', contracts: 'api', tasks: 'task',
-          risks: 'risk', trace: 'adr', versions: 'adr', radar: 'adr', diagrams: 'adr',
+          risks: 'risk', trace: 'adr', versions: 'adr', radar: 'adr', diagrams: 'adr', security: 'finding',
         };
         const kind = map[tab] ?? 'adr';
         toast.info(`New ${kind}`, { description: `Stub: open modal for ${kind} on ${tab}` });
@@ -2258,16 +2295,16 @@ export default function ArchitectureCenterPage() {
 
   // All counts read from the same data the body renders — guaranteed consistent.
   const counts: Record<TabId, number> = {
-    overview: adrs.length + MOCK_SERVICES.length + MOCK_RISKS.length,
+    overview: adrs.length + contracts.length + risks.length,
     adrs: adrs.length,
-    contracts: MOCK_SERVICES.length,
+    contracts: contracts.length,
     tasks: breakdowns.length,
-    risks: MOCK_RISKS.length,
+    risks: risks.length,
     trace: traceability.nodes.length,
     versions: versions.length,
-    radar: MOCK_TECH_RADAR.length,
-    diagrams: MOCK_DIAGRAMS.length,
-    security: securityOpenCount,
+    radar: 0,  // Day 1: no tech-radar endpoint yet
+    diagrams: 0,  // Day 1: no diagrams endpoint yet
+    security: securityOpenCount ?? 0,
   };
 
   const handleTabChange = (next: TabId) => updateUrl(next);
@@ -2282,7 +2319,7 @@ export default function ArchitectureCenterPage() {
       return a ? { label: `ADR-${String(a.number).padStart(3, '0')}`, id: a.id } : undefined;
     }
     if (tab === 'contracts') {
-      const c = resolveSelected(MOCK_SERVICES, selectedServiceId);
+      const c = resolveSelected(services, selectedServiceId);
       return c ? { label: c.name, id: c.id } : undefined;
     }
     if (tab === 'tasks') {
@@ -2298,7 +2335,7 @@ export default function ArchitectureCenterPage() {
 
   const adrIndex = React.useMemo<Record<string, string>>(() => {
     const map: Record<string, string> = {};
-    for (const r of MOCK_RISKS) {
+    for (const r of risks) {
       map[r.id] = `ADR-${String((r.id.length * 7) % 99).padStart(3, '0')}`;
     }
     return map;
@@ -2310,7 +2347,7 @@ export default function ArchitectureCenterPage() {
     <AdminShell>
       <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6" data-testid="architecture-center">
         <ArchitectureHero
-          demoConflicts={MOCK_RISKS.filter((r) => r.status === 'open').length}
+          demoConflicts={risks.filter((r) => r.status === 'open').length}
           onCreateADR={() => toast.info('Open ADR template dialog')}
           onResolveConflicts={() => toast.error('Conflict resolver — wires to /v1/architecture/conflicts')}
         />
@@ -2322,9 +2359,9 @@ export default function ArchitectureCenterPage() {
         <CrossTabChips
           counts={{
             adrs: adrs.length,
-            apis: MOCK_SERVICES.reduce((s, sv) => s + sv.endpointCount, 0),
+            apis: services.reduce((s, sv) => s + sv.endpointCount, 0),
             tasks: breakdowns.length,
-            risks: MOCK_RISKS.length,
+            risks: risks.length,
           }}
           scope={tab}
           onJump={(t) => updateUrl(t)}
@@ -2359,11 +2396,11 @@ export default function ArchitectureCenterPage() {
                 </div>
                 <OverviewTab
                   adrs={adrs}
-                  risks={MOCK_RISKS}
-                  services={MOCK_SERVICES}
+                  risks={risks}
+                  services={services}
                   tasks={breakdowns}
                   versions={versions}
-                  activity={MOCK_ACTIVITY}
+                  activity={activity}
                 />
               </div>
             ) : null}
@@ -2420,12 +2457,13 @@ export default function ArchitectureCenterPage() {
                     title="API Contracts"
                     filename="api-contracts"
                     columns={['id', 'name', 'version', 'endpointCount', 'status']}
-                    getData={() => MOCK_SERVICES.map((s) => ({ id: s.id, name: s.name, version: s.version, endpointCount: s.endpointCount, status: s.status }))}
+                    getData={() => contracts.map((c) => ({ id: c.id, name: c.title, version: c.version, endpointCount: 0,
+                      status: c.status }))}
                   />
                 </div>
                 <APIContractMasterDetail
-                  services={MOCK_SERVICES}
-                  selectedId={selectedServiceId ?? MOCK_SERVICES[0]?.id}
+                  services={services}
+                  selectedId={selectedServiceId ?? services[0]?.id}
                   onSelect={handleServiceSelect}
                 />
                 <details className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3">
@@ -2481,7 +2519,7 @@ export default function ArchitectureCenterPage() {
             ) : null}
 
             {tab === 'risks' ? (
-              MOCK_RISKS.length === 0 ? (
+              risks.length === 0 ? (
                 <EmptyState
                   illustration={<ShieldAlert size={40} strokeWidth={1.5} />}
                   title="No risk registers yet"
@@ -2543,17 +2581,17 @@ export default function ArchitectureCenterPage() {
                   {riskView === 'heatmap' ? (
                     <div className="flex flex-col gap-3">
                       <RiskHeatMap
-                        risks={MOCK_RISKS}
+                        risks={risks}
                         selectedCell={riskCell}
                         onSelectCell={setRiskCell}
                       />
                       {riskCell ? (
                         <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3" data-testid="risk-cell-detail">
                           <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--fg-tertiary)]">
-                            L{riskCell.l} × I{riskCell.i} — {MOCK_RISKS.filter((r) => r.likelihood === riskCell.l && r.impact === riskCell.i).length} risk(s)
+                            L{riskCell.l} × I{riskCell.i} — {risks.filter((r) => r.likelihood === riskCell.l && r.impact === riskCell.i).length} risk(s)
                           </p>
                           <ul className="mt-2 flex flex-col gap-1.5">
-                            {MOCK_RISKS.filter((r) => r.likelihood === riskCell.l && r.impact === riskCell.i).map((r) => (
+                            {risks.filter((r) => r.likelihood === riskCell.l && r.impact === riskCell.i).map((r) => (
                               <li key={r.id} className="flex items-center justify-between gap-2 rounded border border-[var(--border-subtle)] bg-[var(--bg-inset)] px-2 py-1.5">
                                 <span className="truncate text-xs text-[var(--fg-primary)]">{r.title}</span>
                                 <button
@@ -2617,7 +2655,7 @@ export default function ArchitectureCenterPage() {
                     title="Architecture Versions"
                     filename="architecture-versions"
                     columns={['version', 'date', 'highlights']}
-                    getData={() => versions.map((v) => ({ version: v.version, date: v.date, highlights: v.highlights.join(' · ') }))}
+                    getData={() => versions.map((v) => ({ version: v.version, date: v.releasedAt, highlights: v.highlights.join(' · ') }))}
                   />
                 </div>
                 <VersionTimelineView versions={versions} />
@@ -2635,7 +2673,7 @@ export default function ArchitectureCenterPage() {
             {tab === 'diagrams' ? (
               <div className="flex flex-col gap-3">
                 <div className="self-end"><AIAssistantBadge tab="diagrams" onClick={() => toast.info('AI: regenerate diagrams from live system')} /></div>
-                <DiagramsExplorer diagrams={MOCK_DIAGRAMS} />
+                <DiagramsExplorer diagrams={[]} />  // Day 1: no diagrams endpoint yet
               </div>
             ) : null}
 
@@ -2668,12 +2706,48 @@ export default function ArchitectureCenterPage() {
       <CommandPalette
         open={commandOpen}
         onClose={() => setCommandOpen(false)}
-        onJump={(t) => { updateUrl(t); setCommandOpen(false); }}
+        onJump={(t) => {
+          updateUrl(t);
+          setCommandOpen(false);
+        }}
+        items={React.useMemo(
+          () => [
+            ...adrs.map((a) => ({
+              kind: 'ADR',
+              id: a.id,
+              label: `ADR-${String(a.number).padStart(3, '0')} · ${a.title}`,
+              sub: a.status,
+              tab: 'adrs' as const,
+            })),
+            ...services.map((s) => ({
+              kind: 'API',
+              id: s.id,
+              label: `${s.name} (${s.version})`,
+              sub: `${s.endpointCount} endpoints`,
+              tab: 'contracts' as const,
+            })),
+            ...risks.map((r) => ({
+              kind: 'Risk',
+              id: r.id,
+              label: r.title,
+              sub: `L${r.likelihood}×I${r.impact}`,
+              tab: 'risks' as const,
+            })),
+            ...breakdowns.map((b) => ({
+              kind: 'Task',
+              id: b.id,
+              label: b.title,
+              sub: `${b.totalEstimateHours ?? 0}h`,
+              tab: 'tasks' as const,
+            })),
+          ],
+          [adrs, services, risks, breakdowns]
+        )}
       />
 
-      <ShortcutsOverlay open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} tabs={TABS} />
+      <ShortcutsOverlay open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} tabs={TABS as unknown as ReadonlyArray<{ id: TabId; label: string; count: number }>} />
       <RiskDetailDrawer
-        risk={selectedRiskId ? MOCK_RISKS.find((r) => r.id === selectedRiskId) ?? null : null}
+        risk={selectedRiskId ? risks.find((r) => r.id === selectedRiskId) ?? null : null}
         onClose={() => setSelectedRiskId(null)}
         adrIndex={adrIndex}
       />
@@ -2685,8 +2759,10 @@ function CommandPalette({
   open,
   onClose,
   onJump,
+  items,
 }: {
   open: boolean;
+  items: ReadonlyArray<{ kind: string; id: string; label: string; sub: string; tab: TabId }>;
   onClose: () => void;
   onJump: (t: TabId) => void;
 }) {
@@ -2701,14 +2777,9 @@ function CommandPalette({
 
   if (!open) return null;
 
-  const results: ReadonlyArray<{ kind: string; id: string; label: string; sub: string; tab: TabId }> = [
-    ...MOCK_ADRS_WITH_META.map((a) => ({ kind: 'ADR', id: a.id, label: `ADR-${String(a.number).padStart(3, '0')} · ${a.title}`, sub: a.status, tab: 'adrs' as const })),
-    ...MOCK_SERVICES.map((s) => ({ kind: 'API', id: s.id, label: `${s.name} (${s.version})`, sub: `${s.endpointCount} endpoints`, tab: 'contracts' as const })),
-    ...MOCK_RISKS.map((r) => ({ kind: 'Risk', id: r.id, label: r.title, sub: `L${r.likelihood}×I${r.impact}`, tab: 'risks' as const })),
-    ...MOCK_TASK_BREAKDOWNS.map((b) => ({ kind: 'Task', id: b.id, label: b.title, sub: `${b.totalEstimateHours}h`, tab: 'tasks' as const })),
-    ...MOCK_VERSIONS.map((v) => ({ kind: 'Version', id: v.version, label: v.version, sub: v.highlights[0] ?? '', tab: 'versions' as const })),
-    ...MOCK_TECH_RADAR.map((b) => ({ kind: 'Tech', id: b.id, label: b.name, sub: `${b.ring} · ${b.quadrant}`, tab: 'radar' as const })),
-  ];
+  // Day 1: CommandPalette consumes page-level data via `items` prop.
+  // Versions + tech-radar are not yet wired (Track E shape, tech-radar endpoint).
+  const results: ReadonlyArray<{ kind: string; id: string; label: string; sub: string; tab: TabId }> = items;
   const q = query.trim().toLowerCase();
   const filtered = q ? results.filter((r) => r.label.toLowerCase().includes(q)) : results.slice(0, 20);
 
