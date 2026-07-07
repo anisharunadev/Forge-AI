@@ -62,11 +62,21 @@ declare module '@axe-core/react' {
   export default axe;
 }
 declare module 'framer-motion' {
-  // ponytail: broad stub for `motion.<tag>` access (section/aside/article/li/...).
-  // Real framer-motion types in node_modules provide proper HTMLMotionComponents
-  // for every HTML element; this shim is kept loose so call sites don't break.
+  // ponytail: explicit per-tag motion stubs (React 19 + noUncheckedIndexedAccess).
+  // An index signature `[tag: string]` produced `ComponentType<...> | undefined`
+  // under noUncheckedIndexedAccess, which React 19 JSX rejects (TS2786/TS2604).
+  // Listing tags as definite props makes each access return `MotionComponent`
+  // directly. Keep this list in sync with `motion.<tag>` call sites.
+  type MotionComponent = React.FC<Record<string, unknown>>;
   export const motion: {
-    [tag: string]: React.FC<Record<string, unknown>>;
+    div: MotionComponent;
+    span: MotionComponent;
+    article: MotionComponent;
+    aside: MotionComponent;
+    li: MotionComponent;
+    p: MotionComponent;
+    path: MotionComponent;
+    section: MotionComponent;
   };
   export const AnimatePresence: React.FC<{ children: React.ReactNode }>;
 }
