@@ -45,7 +45,6 @@ import {
   INGEST_SOURCES,
   LIVE_REASONING_SCRIPT,
   PIPELINE_STATUS,
-  SAMPLE_REASONING,
   type Destination,
   type IngestSource,
 } from '@/lib/ideation/pipeline-data';
@@ -741,54 +740,35 @@ export function PipelineView({
 
       <PipelineStatusBar />
 
-      {/* Exported reasoning preview — so the chain is visible in the hub. */}
+      {/* Exported reasoning preview — empty state until the ideation
+          reasoning endpoint ships. The lite card stays defined below
+          (Day-4 wiring) and is only used when real chain data lands. */}
       <div className="mt-4">
-        <ReasoningChainLite chain={SAMPLE_REASONING} />
+        <ReasoningChainLiteEmpty />
       </div>
     </section>
   );
 }
 
-// Lightweight inline reasoning card used at the bottom of the Pipeline tab.
-// (The full <ReasoningChain> is used inside the idea drawer — this is a
-// teaser that links to "open idea".)
-function ReasoningChainLite({
-  chain,
-}: {
-  chain: typeof SAMPLE_REASONING;
-}) {
+// ponytail: empty-state variant of the reasoning preview card — Track O
+// (Day 3) removed the SAMPLE_REASONING seed. Rendered until the
+// ideation reasoning endpoint lands.
+function ReasoningChainLiteEmpty() {
   return (
     <article
       data-testid="pipeline-reasoning-lite"
-      className="rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4"
+      className="flex flex-col gap-2 rounded-[var(--radius-lg)] border border-dashed border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4 text-center"
     >
-      <header className="mb-3 flex items-center justify-between">
-        <div>
-          <p className="text-[10px] uppercase tracking-wider text-[var(--fg-tertiary)]">
-            Latest reasoning chain
-          </p>
-          <h3 className="text-sm font-semibold text-[var(--fg-primary)]">
-            {chain.ideaTitle}
-          </h3>
-        </div>
-        <span className="rounded-[var(--radius-sm)] bg-[rgba(168,85,247,0.12)] px-2 py-0.5 font-mono text-xs text-[var(--accent-violet)]">
-          {chain.finalScore.toFixed(1)} / 10
-        </span>
-      </header>
-      <ol className="grid grid-cols-1 gap-2 text-[11px] md:grid-cols-3 lg:grid-cols-6">
-        {chain.steps.map((s, i) => (
-          <li
-            key={s.id}
-            className="flex flex-col gap-1 rounded-[var(--radius-md)] bg-[var(--bg-elevated)] p-2"
-          >
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--fg-tertiary)]">
-              Step {i + 1}
-            </span>
-            <span className="font-medium text-[var(--fg-primary)]">{s.title}</span>
-            <span className="line-clamp-2 text-[var(--fg-tertiary)]">{s.detail}</span>
-          </li>
-        ))}
-      </ol>
+      <p className="text-[10px] uppercase tracking-wider text-[var(--fg-tertiary)]">
+        Latest reasoning chain
+      </p>
+      <p className="text-sm font-medium text-[var(--fg-primary)]">
+        No reasoning chain yet
+      </p>
+      <p className="text-xs text-[var(--fg-tertiary)]">
+        The Ideation reasoning endpoint ships on Day 4+. Latest agent
+        run output will appear here.
+      </p>
     </article>
   );
 }

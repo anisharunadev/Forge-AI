@@ -371,6 +371,13 @@ export interface ReasoningChain {
   readonly generatedAt: string;
 }
 
+/**
+ * @deprecated Retained for backwards-compat only. Track O (Day 3) removed
+ *   this fixture from PipelineView and IdeaDetailPanel; the components now
+ *   render an explicit empty state until the ideation reasoning endpoint
+ *   ships (Day 4+). Drop on Day 4+ once external callers migrate.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const SAMPLE_REASONING: ReasoningChain = {
   id: 'reasoning-2026-06-26',
   ideaTitle: 'Unify the refund flow across web + mobile',
