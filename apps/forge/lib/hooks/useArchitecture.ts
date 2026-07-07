@@ -982,3 +982,62 @@ export function useSecurityPosture(
     staleTime: 60_000,
   });
 }
+
+// ---------------------------------------------------------------------------
+// Activity feed — Day 2 Track J.
+//
+// Wraps `useAuditEvents` (from the LiteLLM / governance hooks layer)
+// and maps each row through `toArchitectureActivity` so the page can
+// consume a tab-shaped payload instead of the verbose audit shape.
+// Rule R2: tenant scoping comes from the JWT inside the audit
+// endpoint itself; we still require `project_id` so consumers declare
+// their scope explicitly and the query can be `enabled`-gated.
+// ---------------------------------------------------------------------------
+
+import { useMemo } from 'react';
+
+import { useAuditEvents, type AuditEventEntry } from './useLiteLLM';
+import { toArchitectureActivity } from '@/lib/architecture/adapters';
+import type { ArchitectureActivity } from '@/lib/architecture/types';
+
+const ACTIVITY_DEFAULT_LIMIT = 50;
+
+export interface ArchitectureActivityQuery {
+  data: ReadonlyArray<ArchitectureActivity>;
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+}
+
+/**
+ * Architecture Center activity feed. Pure projection over
+ * `useAuditEvents` — same network call, same cache slot, but the
+ * payload is shaped for the Overview tab. When the audit log is
+ * empty (or the query is mid-flight) we return `[]` so the page can
+ * render the empty state without nil-checks.
+ */
+export function useArchitectureActivity(args: {
+  project_id: string;
+  limit?: number;
+}): ArchitectureActivityQuery {
+  const limit = Math.min(args.limit ?? ACTIVITY_DEFAULT_LIMIT, ACTIVITY_DEFAULT_LIMIT);
+  const audit = useAuditEvents(7, limit);
+  const data = useMemo<ReadonlyArray<ArchitectureActivity>>(() => {
+    const rows: ReadonlyArray<AuditEventEntry> = audit.data ?? [];
+    return rows
+      .filter(
+        (e) =>
+          !args.project_id ||
+          !e.project_id ||
+          e.project_id === args.project_id,
+      )
+      .slice(0, limit)
+      .map(toArchitectureActivity);
+  }, [audit.data, args.project_id, limit]);
+  return {
+    data,
+    isLoading: audit.isLoading,
+    isError: audit.isError,
+    error: audit.error,
+  };
+}

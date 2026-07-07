@@ -113,6 +113,7 @@ import {
   useApprovals,
   useRequestApproval,
   useDecideApproval,
+  useArchitectureActivity,
 } from '@/lib/hooks/useArchitecture';
 import { SecurityReportPanel } from '@/components/architecture/SecurityReportPanel';
 import { useArchitecturePipelineWS } from '@/lib/architecture/use-pipeline-ws';
@@ -2138,6 +2139,11 @@ export default function ArchitectureCenterPage() {
   const securityOpenCount = (securityReportsQuery.data?.items ?? []).filter(
     (r) => r.status === 'open' || r.status === 'mitigating',
   ).length;
+  // Day 2 Track J — Architecture Center activity feed. Projected from
+  // the Forge audit log (GET /audit) via `useAuditEvents` + the
+  // `toArchitectureActivity` adapter. Empty audit log → `[]` (the
+  // page renders the activity section as the empty state).
+  const activityQuery = useArchitectureActivity({ project_id: projectId });
 
   // M5-G4 — wire the architecture WS bus so Security Report lifecycle
   // events (`architecture.security_report.created`, posture recompute)
@@ -2198,7 +2204,10 @@ export default function ArchitectureCenterPage() {
   // a known Day 1 gap that Track F+1 will close by adding an endpoints
   // table to the APIContract schema.
   const risks = registers.flatMap((r) => r.risks);
-  const activity: ReadonlyArray<ArchitectureActivity> = [];
+  // Day 2 Track J — live activity from the audit log (was `[]` until the
+  // adapter + hook landed). The Overview tab renders the empty state
+  // when `activity` is `[]`.
+  const activity: ReadonlyArray<ArchitectureActivity> = activityQuery.data ?? [];
   const services: ReadonlyArray<ApiService> = contracts.map(
     (c): ApiService => ({
       id: c.id,
