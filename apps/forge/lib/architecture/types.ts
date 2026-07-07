@@ -89,6 +89,8 @@ export interface ADR {
   consequences: Record<string, unknown>;
   alternatives: Array<Record<string, unknown>>;
   related_adrs: string[];
+  component: string | null;
+  impact: string | null;
   generated_by: string | null;
   reviewed_by: string | null;
   approved_by: string | null;
@@ -638,6 +640,11 @@ export interface TechRadarCreateInput {
 /** Query filter for `GET /architecture/tech-radar`. */
 export interface TechRadarFilter {
   project_id?: string;
+  quadrant?: TechQuadrant;
+  ring?: TechRing;
+  limit?: number;
+}
+
 // Decision Velocity metric (Day-2 mock-removal track I)
 // ---------------------------------------------------------------------------
 
@@ -765,18 +772,13 @@ export type DiagramLayer =
   | 'data'
   | 'external';
 
-// The wire shape matches the legacy MOCK_DIAGRAMS fixture exactly
-// (apps/forge/lib/architecture/mock-fixtures.ts:711). Re-export from
-// there so the existing DiagramsExplorer component — which types
-// its `diagrams` prop with `C4Diagram` from mock-fixtures — accepts
-// the live API payload without structural-type drift.
-import type { C4Diagram } from '@/lib/architecture/mock-fixtures';
+// DiagramNode/Edge/C4Diagram are declared below as interfaces that
+// mirror the backend `C4DiagramResponse` + nested node/edge schemas
+// (see Track H in MOCK_REMOVAL_AUDIT.md). They intentionally share
+// names with the legacy `mock-fixtures.ts` types so the existing
+// `DiagramsExplorer` component accepts the live API payload without
+// structural-type drift.
 
-export type {
-  DiagramNode,
-  DiagramEdge,
-  C4Diagram,
-} from '@/lib/architecture/mock-fixtures';
 /**
  * Mirrors `C4DiagramResponse` + nested nodes/edges from the backend.
  *

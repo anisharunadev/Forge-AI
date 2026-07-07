@@ -647,36 +647,6 @@ function SpecSidePanel({ spec }: { spec: Spec }) {
           </li>
         </ul>
       </section>
-            <li
-              key={s.id}
-              className="rounded-[var(--radius-md)] border border-[var(--accent-violet)]/30 bg-[var(--accent-violet)]/5 p-3"
-            >
-              <header className="flex items-center gap-2">
-                <Lightbulb className="h-3 w-3 text-[var(--accent-violet)]" aria-hidden />
-                <p className="text-xs font-semibold text-[var(--fg-primary)]">
-                  {s.title}
-                </p>
-              </header>
-              <p className="mt-1 text-[11px] text-[var(--fg-secondary)]">
-                {s.body}
-              </p>
-              <div className="mt-2 flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-6 px-2 text-[10px]"
-                  onClick={() => toast.info(`Triggered: ${s.primary.label}`)}
-                >
-                  {s.primary.label}
-                </Button>
-                <span className="ml-auto font-mono text-[9px] text-[var(--fg-tertiary)]">
-                  {Math.round(s.confidence * 100)}% conf
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
     </aside>
   );
 }

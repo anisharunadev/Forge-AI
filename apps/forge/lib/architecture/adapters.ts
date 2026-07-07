@@ -27,13 +27,12 @@ const DEFAULT_IMPACT = 5;
 const DEFAULT_OWNER = 'arun@acme-corp.com';
 
 export interface ADRWithMeta extends ADR {
-  component: ADRComponentId;
-  impact: number;
+  component: ADRComponentId | null;
+  impact: number | null;
   authorInitials: string;
   linkedTaskCount: number;
   linkedRiskCount: number;
   linkedApiCount: number;
-  owner: string;
   markdown: string;
   updatedAt: string;
 }
@@ -52,13 +51,13 @@ export function deriveAuthorInitials(value: string | null | undefined): string {
     const local = value.split('@')[0] ?? '';
     const parts = local.split(/[._-]/);
     if (parts.length >= 2 && parts[0] && parts[1]) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
+      return ((parts[0] as string)[0] + (parts[1] as string)[0]).toUpperCase();
     }
     return local.slice(0, 2).toUpperCase();
   }
   const words = value.split(/\s+/).filter(Boolean);
   if (words.length >= 2 && words[0] && words[1]) {
-    return (words[0][0] + words[1][0]).toUpperCase();
+    return ((words[0] as string)[0] + (words[1] as string)[0]).toUpperCase();
   }
   return value.slice(0, 2).toUpperCase();
 }
@@ -70,7 +69,7 @@ export function toADRWithMeta(
 ): ADRWithMeta {
   const component: ADRComponentId =
     (adr.component as ADRComponentId | null | undefined) ?? DEFAULT_COMPONENT;
-  const impact = adr.impact ?? DEFAULT_IMPACT;
+  const impact = typeof adr.impact === "number" ? adr.impact : (adr.impact != null ? Number(adr.impact) : DEFAULT_IMPACT);
   const initialsSource = adr.approved_by ?? adr.reviewed_by ?? adr.generated_by ?? null;
   return {
     ...adr,

@@ -22,7 +22,7 @@ import { Network, ZoomIn, ZoomOut, RotateCcw, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/src/components/empty-state';
-import type { C4Diagram, DiagramNode } from '@/lib/architecture/mock-fixtures';
+import type { C4Diagram, DiagramNode } from '@/lib/architecture/types';
 
 const LAYER_TONE: Record<DiagramNode['layer'], string> = {
   user: 'fill-indigo-500/15 stroke-indigo-400',

@@ -1056,8 +1056,6 @@ import {
   toArchitectureActivity,
   type ArchitectureActivity,
 } from '@/lib/architecture/adapters';
-import { toArchitectureActivity } from '@/lib/architecture/adapters';
-import type { ArchitectureActivity } from '@/lib/architecture/types';
 
 const ACTIVITY_DEFAULT_LIMIT = 50;
 
