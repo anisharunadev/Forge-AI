@@ -45,6 +45,8 @@ class ADR(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMixin):
     reviewed_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
     approved_by: Mapped[UUID | None] = mapped_column(GUID(), nullable=True)
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    component: Mapped[str | None] = mapped_column(String(32), nullable=True, default="backend")
+    impact: Mapped[int | None] = mapped_column(Integer, nullable=True, default=5)
 
     __table_args__ = (
         Index(
