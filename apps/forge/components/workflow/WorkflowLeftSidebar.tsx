@@ -2,21 +2,18 @@
 
 import * as React from 'react';
 import {
-  CheckCircle2,
   ChevronDown,
-  Clock,
   GripVertical,
   History,
   Layers,
   LayoutTemplate,
-  Loader2,
   Search,
-  XCircle,
   type LucideIcon,
 } from 'lucide-react';
 import type { Node as RFNode } from '@xyflow/react';
 
 import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/shell/EmptyState';
 import { useWorkflowStore } from './store';
 import type { LeftPanelTab } from './store';
 import {
@@ -30,7 +27,6 @@ import type {
   WorkflowTemplate,
   WorkflowNodeData,
 } from '@/lib/workflow/types';
-import { SAMPLE_RUNS } from '@/lib/workflow/templates';
 
 void isWorkflowNodeData;
 
@@ -127,7 +123,8 @@ function RailToggleButton({
 const COLLAPSED_TABS: ReadonlyArray<{ id: LeftPanelTab; label: string; icon: LucideIcon; count: number }> = [
   { id: 'nodes', label: 'Nodes', icon: Layers, count: PALETTE_ITEMS.length },
   { id: 'templates', label: 'Templates', icon: LayoutTemplate, count: 6 },
-  { id: 'runs', label: 'Runs', icon: History, count: SAMPLE_RUNS.length },
+  // ponytail: backend pending, Day 4+ — no /v1/workflows/runs list endpoint
+  { id: 'runs', label: 'Runs', icon: History, count: 0 },
 ];
 
 function CollapsedRail({
@@ -194,7 +191,7 @@ function ExpandedRail({
         {(['nodes', 'templates', 'runs'] as const).map((t) => {
           const active = tab === t;
           const count =
-            t === 'nodes' ? PALETTE_ITEMS.length : t === 'templates' ? 6 : SAMPLE_RUNS.length;
+            t === 'nodes' ? PALETTE_ITEMS.length : t === 'templates' ? 6 : 0;
           return (
             <button
               key={t}
@@ -433,47 +430,17 @@ function TemplatesTab({ onOpenTemplate }: { onOpenTemplate: (template: WorkflowT
  * Runs tab
  * --------------------------------------------------------------------------- */
 
-const RUN_STATUS_ICON = {
-  succeeded: { Icon: CheckCircle2, cls: 'text-[var(--accent-emerald)]' },
-  failed: { Icon: XCircle, cls: 'text-[var(--accent-rose)]' },
-  running: { Icon: Loader2, cls: 'text-[var(--accent-cyan)] animate-spin motion-reduce:animate-none' },
-  waiting: { Icon: Clock, cls: 'text-[var(--accent-amber)] animate-pulse motion-reduce:animate-none' },
-} as const;
-
 function RunsTab() {
+  // ponytail: backend pending, Day 4+ — no /v1/workflows/runs list endpoint
   return (
-    <ul role="list" className="flex flex-col gap-1.5 p-3" data-testid="runs-tab-list">
-      {SAMPLE_RUNS.map((r: (typeof SAMPLE_RUNS)[number]) => {
-        const meta = RUN_STATUS_ICON[r.status as keyof typeof RUN_STATUS_ICON] ?? RUN_STATUS_ICON.waiting;
-        const Icon = meta.Icon;
-        return (
-          <li key={r.id}>
-            <div className="flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3">
-              <Icon className={cn('h-4 w-4', meta.cls)} aria-hidden="true" />
-              <div className="min-w-0 flex-1">
-                <p className="font-mono text-xs text-[var(--fg-primary)]">{r.id}</p>
-                <p className="text-xs text-[var(--fg-tertiary)]">
-                  {r.startedAt}
-                  {'durationMs' in r && r.durationMs ? ` · ${formatMs(r.durationMs)}` : ''} · {r.triggeredBy}
-                </p>
-              </div>
-              <button type="button" className="text-xs text-[var(--accent-primary)] hover:underline">
-                View
-              </button>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="p-3" data-testid="runs-tab-list">
+      <EmptyState
+        icon={<History className="h-5 w-5" />}
+        title="No runs yet"
+        description="Backend integration pending — Day 4+. Recent workflow runs will appear here."
+      />
+    </div>
   );
-}
-
-function formatMs(ms: number): string {
-  const s = Math.round(ms / 1000);
-  if (s < 60) return `${s}s`;
-  const m = Math.floor(s / 60);
-  const rs = s % 60;
-  return `${m}m ${rs.toString().padStart(2, '0')}s`;
 }
 
 export { RailToggleButton };

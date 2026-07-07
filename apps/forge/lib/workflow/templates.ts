@@ -309,27 +309,32 @@ export const WORKFLOW_KPIS = [
 ] as const;
 
 /**
- * Removed in step-56 (Phase 4) — the Workflows center now lists real
- * workflows from the FastAPI backend via `useWorkflows()`.
- * Kept the export name so legacy imports still resolve to `[]` and
- * pages that haven't migrated yet render the empty state.
+ * @deprecated Track N (Day 3): no `GET /v1/workflows` list endpoint exists.
+ * `WorkflowGallery` now renders an explicit "Backend integration pending — Day 4+"
+ * empty state. When the list endpoint ships, replace consumers with the
+ * equivalent TanStack Query hook (`useWorkflows`). Kept the export name so
+ * legacy imports still resolve to `[]`.
  */
 export const SAMPLE_USER_WORKFLOWS: ReadonlyArray<never> = [] as const;
 
 /**
- * Removed in step-56 (Phase 4) — the Run Center now lists real
- * workflow runs from the FastAPI backend via `useWorkflowRuns()`.
+ * @deprecated Track N (Day 3): no `GET /v1/workflows/runs` list endpoint exists.
+ * `WorkflowLeftSidebar.RunsTab` now renders an explicit
+ * "Backend integration pending — Day 4+" empty state. Replace with
+ * `useWorkflowRuns()` once the endpoint ships.
  */
 export const SAMPLE_RUNS: ReadonlyArray<never> = [] as const;
 
 /**
- * Removed in step-56 (Phase 4) — drafts now come from the backend
- * (`useWorkflows({ status: 'draft' })`).
+ * @deprecated Track N (Day 3): drafts now come from the backend
+ * (`useWorkflows({ status: 'draft' })`); the gallery renders an empty
+ * state until the list endpoint ships (Day 4+).
  */
 export const SAMPLE_DRAFTS: ReadonlyArray<never> = [] as const;
 
 /**
- * Removed in step-56 (Phase 4) — shared workflows now come from the
- * backend (the closest analog is `status: 'published'`).
+ * @deprecated Track N (Day 3): shared workflows now come from the backend
+ * (the closest analog is `status: 'published'`); the gallery renders an
+ * empty state until the list endpoint ships (Day 4+).
  */
 export const SAMPLE_SHARED: ReadonlyArray<never> = [] as const;
