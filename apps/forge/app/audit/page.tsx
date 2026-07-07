@@ -52,6 +52,7 @@ import {
   KeyRound,
   CircleSlash,
 } from 'lucide-react';
+import { AuditIntegrityBanner } from '@/components/audit/AuditIntegrityBanner';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';

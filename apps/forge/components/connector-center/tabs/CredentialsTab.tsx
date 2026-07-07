@@ -70,7 +70,7 @@ export function CredentialsTab() {
   const mockCredentials = listCredentials();
   const liveRows = liveCredentials.data ?? [];
   const credentials: ReadonlyArray<CredentialRow> = liveRows.length > 0
-    ? liveRows.map((cred) => ({
+    ? (liveRows.map((cred) => ({
         credential: cred,
         connector: {
           id: cred.id,
@@ -78,8 +78,8 @@ export function CredentialsTab() {
           category: 'custom' as ConnectorCredential['type'] extends string ? 'custom' : 'custom',
           status: cred.status,
         },
-      }))
-    : mockCredentials;
+      })) as ReadonlyArray<CredentialRow>)
+    : (mockCredentials as ReadonlyArray<CredentialRow>);
 
   const reveal = useRevealCredential();
   const rotate = useRotateCredential();
@@ -96,7 +96,7 @@ export function CredentialsTab() {
 
   React.useEffect(() => {
     if (!selectedId && filtered.length > 0) {
-      setSelectedId(filtered[0].credential.id);
+      setSelectedId(filtered[0]!.credential.id);
     }
   }, [filtered, selectedId]);
 
@@ -278,7 +278,10 @@ export function CredentialsTab() {
               onRotate={handleRotate}
               onRevoke={handleRevoke}
               copiedAt={copiedAt}
-            />
+            
+          revealedSecret={revealedSecret}
+              onHide={() => setRevealing(false)}
+        />
           ) : (
             <EmptyVault onBrowse={() => (window.location.href = '/connector-center?tab=marketplace')} />
           )}
@@ -351,7 +354,9 @@ export function CredentialsTab() {
 function CredentialDetail({
   credential,
   revealing,
+  revealedSecret,
   onReveal,
+  onHide,
   onCopy,
   onRotate,
   onRevoke,
@@ -359,7 +364,9 @@ function CredentialDetail({
 }: {
   credential: ConnectorCredential;
   revealing: boolean;
+  revealedSecret: string | null;
   onReveal: () => void;
+  onHide: () => void;
   onCopy: () => void;
   onRotate: () => void;
   onRevoke: () => void;
@@ -406,7 +413,7 @@ function CredentialDetail({
             size="sm"
             variant="ghost"
             className="h-7 px-2 text-[11px]"
-            onClick={() => (revealing ? setRevealing(false) : onReveal())}
+            onClick={() => (revealing ? onHide() : onReveal())}
             aria-pressed={revealing}
             data-testid="credential-reveal"
           >

@@ -16,6 +16,14 @@
  */
 
 // ---------------------------------------------------------------------------
+// Re-exports — keep parity with `lib/stories/types.ts` so consumers
+// can import everything from a single path.
+// ponytail: Day 5 — added re-exports for types that consumers imported
+// from `@/lib/api/stories` before this file existed.
+// ---------------------------------------------------------------------------
+export type { Assignee } from '@/lib/stories/types';
+
+// ---------------------------------------------------------------------------
 // Story status — kanban column buckets
 // ---------------------------------------------------------------------------
 

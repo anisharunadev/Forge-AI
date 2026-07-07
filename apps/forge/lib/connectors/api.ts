@@ -35,6 +35,10 @@ import type {
   WebhookWire,
 } from './types';
 
+// ponytail: Day 5 — re-export these so consumers can use them as api.OAuthCallbackResult
+// instead of pulling the wire types module directly. No behavior change.
+export type { OAuthCallbackResult, WebhookTestResult, RevealCredentialResult };
+
 const ENV_BASE =
   process.env.NEXT_PUBLIC_FORGE_API_URL ?? process.env.FORA_FORGE_API_URL;
 

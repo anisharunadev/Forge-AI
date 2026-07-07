@@ -41,6 +41,9 @@ import { DraftReviewModal } from '@/components/copilot/DraftReviewModal';
 import type { CopilotSuggestedAction } from '@/lib/api/copilot';
 
 export default function CopilotRoutePage() {
+  const streamingFromStore = useCopilotStore((s) => s.streaming);
+  const streamingMessage = useCopilotStore((s) => s.streamingMessage);
+
   return (
     <main
       id="main-content"

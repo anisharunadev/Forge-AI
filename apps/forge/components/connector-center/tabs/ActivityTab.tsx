@@ -78,7 +78,7 @@ export function ActivityTab() {
   // memo so the mapped rows are stable across re-renders (filter
   // changes don't trigger a re-map).
   const events = React.useMemo<ReadonlyArray<ActivityRow>>(
-    () => (liveActivity.data ?? []).map(wireToActivityRow),
+    () => (liveActivity.data ?? []).map((row) => wireToActivityRow(row as never)),
     [liveActivity.data],
   );
 

@@ -57,11 +57,8 @@ import {
 import { usePathname } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
-import { useSendMessage } from '@/hooks/use-copilot-mutations';
-import {
-  COPILOT_ERROR_CODES,
-  ForgeApiError,
-} from '@/lib/api';
+import { useSendMessageStream } from '@/hooks/use-copilot-mutations';
+
 import {
   dispatchCopilotGuardrailDenied,
   dispatchCopilotRateLimit,
@@ -144,12 +141,22 @@ export function ComposerInput() {
   const clearDraft = useCopilotStore((s) => s.clearDraft);
   const activeConversationId = useCopilotStore((s) => s.activeConversationId);
   const setActiveConversation = useCopilotStore((s) => s.setActiveConversation);
-  const setError = useCopilotStore((s) => s.setError);
-  const setPermissionDenied = useCopilotStore((s) => s.setPermissionDenied);
+  // lastError / permissionDenied are observed here so we can dispatch
+  // the structured toast events (rate-limit, guardrail, 403) that the
+  // streaming hook writes into the store.
+  const lastError = useCopilotStore((s) => s.lastError);
+  const permissionDenied = useCopilotStore((s) => s.permissionDenied);
   const streaming = useCopilotStore((s) => s.streaming);
-  const setStreaming = useCopilotStore((s) => s.setStreaming);
 
-  const sendMessage = useSendMessage();
+  // Phase 1 — streaming variant of the send mutation. Owns its own
+  // AbortController (returned on `send`) so the Stop button can cancel
+  // mid-flight; `streaming` mirrors the Zustand flag so the icon swap
+  // works without prop-drilling.
+  const { send: sendStream, streaming: streamStreaming, stop: stopStream } = useSendMessageStream();
+  // Backwards-compat alias — some render branches still reference
+  // `sendMessage.isPending` to gate the textarea. We treat
+  // `streamStreaming` as the in-flight signal.
+  const sendMessage = { isPending: streamStreaming };
   const pathname = usePathname() ?? '/';
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
@@ -196,90 +203,51 @@ export function ComposerInput() {
 
   const handleSend = React.useCallback(() => {
     const trimmed = draft.trim();
-    if (!trimmed || sendMessage.isPending) return;
-    setError(null);
-    setPermissionDenied(false);
-    setStreaming(true);
+    if (!trimmed || streamStreaming) return;
     setSlashOpen(false);
+    clearDraft();
 
-    sendMessage.mutate(
-      {
-        conversation_id: activeConversationId,
-        project_id: null,
-        message: trimmed,
-        context: {
-          current_page: pathname,
-          current_center: null,
-          current_artifact_id: null,
-          recent_actions: [],
-        },
+    sendStream({
+      conversation_id: activeConversationId,
+      project_id: null,
+      message: trimmed,
+      context: {
+        current_page: pathname,
+        current_center: null,
+        current_artifact_id: null,
+        recent_actions: [],
       },
-      {
-        onSuccess: (response) => {
-          setActiveConversation(response.conversation_id);
-          clearDraft();
-        },
-        onError: (err) => {
-          // M10 Track B — structured failure shapes. We dispatch
-          // toast events instead of (or in addition to) the inline
-          // `lastError` path so the panel renders a tailored toast
-          // rather than a generic "Send failed" line.
-          const forgeErr = err as ForgeApiError | null;
-          const status = forgeErr?.status;
-          const errorCode = forgeErr?.errorCode ?? null;
-          const isRateLimit =
-            status === 429 ||
-            errorCode === COPILOT_ERROR_CODES.RATE_LIMIT_EXCEEDED;
-          const isGuardrail = errorCode === COPILOT_ERROR_CODES.GUARDRAIL_DENIED;
-
-          if (isRateLimit) {
-            // Retry-After header is the authoritative source per
-            // spec (M10-G1). `Headers.get` is already
-            // case-insensitive, but we read both casings for
-            // resilience against intermediaries that re-case.
-            const headers = forgeErr?.headers ?? null;
-            const raw =
-              headers?.get('Retry-After') ?? headers?.get('retry-after');
-            const retryAfter = Number(raw ?? '0');
-            const safeRetry = Number.isFinite(retryAfter) && retryAfter > 0
-              ? retryAfter
-              : 60;
-            dispatchCopilotRateLimit(safeRetry);
-            setError(null);
-          } else if (isGuardrail) {
-            dispatchCopilotGuardrailDenied();
-            setError(null);
-          } else if (status === 403) {
-            setPermissionDenied(true);
-          } else {
-            setError(err instanceof Error ? err.message : 'Send failed');
-          }
-        },
-        onSettled: () => {
-          setStreaming(false);
-        },
-      },
-    );
+    });
   }, [
     draft,
-    sendMessage,
+    streamStreaming,
+    sendStream,
     activeConversationId,
     pathname,
-    setError,
-    setPermissionDenied,
-    setActiveConversation,
     clearDraft,
-    setStreaming,
   ]);
 
+  // Translate structured lastError into the existing toast events.
+  // Rate-limit / guardrail codes ride alongside `lastError` so we can
+  // dispatch the same toast as the JSON path did.
+  React.useEffect(() => {
+    if (!lastError) return;
+    if (typeof lastError !== 'string') return;
+    if (lastError.startsWith('rate_limit')) {
+      const retryAfter = Number(lastError.split(':')[1] ?? '60');
+      dispatchCopilotRateLimit(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 60);
+    } else if (lastError.startsWith('guardrail')) {
+      dispatchCopilotGuardrailDenied();
+    }
+  }, [lastError]);
+
   const handleStop = React.useCallback(() => {
-    // TanStack Query mutations don't expose cancel for fetchers out
-    // of the box; here we just flip the streaming flag so the UI
-    // leaves the "thinking" state. The backend will still complete
-    // the response, which is fine — we just stop showing the
-    // spinner in the composer.
-    setStreaming(false);
-  }, [setStreaming]);
+    // Aborts the SSE fetch via the hook's AbortController. The
+    // backend closes the connection when the client cancels; the
+    // store's streamingMessage is cleared by the hook's error
+    // branch (AbortError surfaces as `network`).
+    stopStream();
+  }, [stopStream]);
 
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

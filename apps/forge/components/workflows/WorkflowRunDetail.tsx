@@ -283,7 +283,8 @@ function TabButton({
   active: boolean;
   onClick: () => void;
   testId: string;
-  badge: string | null;
+  // ponytail: Day 5 — badge is optional; some tabs don't have a count.
+  badge?: string | null;
 }) {
   return (
     <button

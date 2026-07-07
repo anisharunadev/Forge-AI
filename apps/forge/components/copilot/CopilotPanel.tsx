@@ -85,6 +85,8 @@ export function CopilotPanel({ mode = 'panel', backHref = '/dashboard' }: Copilo
   // Plan 6 — master toggle.
   const copilotEnabled = useCopilotEnabled();
   const open = useCopilotStore((s) => s.open);
+  const streamingFromStore = useCopilotStore((s) => s.streaming);
+  const streamingMessage = useCopilotStore((s) => s.streamingMessage);
   const setOpen = useCopilotStore((s) => s.setOpen);
   const activeConversationId = useCopilotStore((s) => s.activeConversationId);
   const permissionDenied = useCopilotStore((s) => s.permissionDenied);
@@ -240,7 +242,11 @@ export function CopilotPanel({ mode = 'panel', backHref = '/dashboard' }: Copilo
               testId="copilot-conversation-load-error"
             />
           ) : (
-            <MessageList messages={conversation.data?.messages ?? []} />
+            <MessageList
+              messages={conversation.data?.messages ?? []}
+              streaming={streamingFromStore}
+              streamingMessage={streamingMessage}
+            />
           )
         ) : (
           <EmptyState />

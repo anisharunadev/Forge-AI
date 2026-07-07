@@ -1,3 +1,4 @@
+import * as React from 'react';
 /**
  * F-800 — Co-pilot mutation hooks (TanStack Query).
  *
@@ -21,11 +22,15 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 import {
   deleteConversation,
   sendMessage,
+  streamMessage,
   submitFeedback,
   type CopilotChatRequest,
   type CopilotChatResponse,
   type CopilotFeedbackRating,
+  type CopilotStreamEvent,
+  type StreamMessageHandle,
 } from '@/lib/api/copilot';
+import { useTenantId } from '@/hooks/use-tenant-id';
 import { useCopilotStore } from '@/lib/store/copilot';
 
 /**
@@ -53,6 +58,155 @@ export function useSendMessage(): UseMutationResult<
     },
   });
 }
+
+
+/**
+ * F-800 Phase 1 — streaming variant of `useSendMessage`.
+ *
+ * POSTs `/copilot/conversations:stream` via the SSE consumer in
+ * `lib/api/copilot.ts#streamMessage`. The caller owns the AbortController
+ * (typically via `useRef`) so the Stop button can cancel mid-flight;
+ * we expose `handle.stop()` and the live `abortController` ref so the
+ * component can wire both buttons without re-rendering.
+ *
+ * SSE events are folded into the Zustand store — `start` allocates a
+ * streaming bubble id, `token` appends to the assistant draft,
+ * `finish` finalises the bubble and invalidates the conversations
+ * query so the side panels refresh, `error` surfaces a typed failure
+ * so the composer can dispatch the same toasts the JSON path emits.
+ *
+ * Returns a stable `stop()` function that aborts the underlying fetch;
+ * the React tree re-renders when `setStreaming(false)` lands.
+ */
+export interface UseSendMessageStreamResult {
+  /** Imperatively start a streaming turn. Returns a stop handle. */
+  send: (req: CopilotChatRequest) => StreamMessageHandle;
+  /** True while the SSE connection is open. */
+  streaming: boolean;
+  /** Latest streamed error message (null when healthy). */
+  lastError: string | null;
+  /** Cancel the in-flight stream (no-op when idle). */
+  stop: () => void;
+}
+
+export function useSendMessageStream(): UseSendMessageStreamResult {
+  const tenantId = useTenantId();
+  const queryClient = useQueryClient();
+  const setActiveConversation = useCopilotStore((s) => s.setActiveConversation);
+  const setStreaming = useCopilotStore((s) => s.setStreaming);
+  const setError = useCopilotStore((s) => s.setError);
+  const setPermissionDenied = useCopilotStore((s) => s.setPermissionDenied);
+  const setStreamingMessage = useCopilotStore((s) => s.setStreamingMessage);
+  const appendStreamToken = useCopilotStore((s) => s.appendStreamToken);
+  const appendStreamReasoning = useCopilotStore((s) => s.appendStreamReasoning);
+  const pushStreamToolCall = useCopilotStore((s) => s.pushStreamToolCall);
+  const streaming = useCopilotStore((s) => s.streaming);
+
+  // Latest handle so the Stop button can abort even when the component
+  // re-renders mid-stream. Stored in a ref so changing it doesn't
+  // trigger a re-render.
+  const handleRef = React.useRef<StreamMessageHandle | null>(null);
+
+  const send = React.useCallback(
+    (req: CopilotChatRequest) => {
+      // Defensive: cancel any previous handle that's still alive.
+      handleRef.current?.abort();
+
+      setError(null);
+      setPermissionDenied(false);
+      setStreaming(true);
+
+      const handle = streamMessage(
+        req,
+        (event: CopilotStreamEvent) => {
+          if (event.event === 'start') {
+            setStreamingMessage({
+              id: `stream-${Date.now()}`,
+              conversationId: event.data.conversation_id,
+              content: '',
+              reasoning: '',
+              toolCalls: [],
+            });
+            return;
+          }
+          if (event.event === 'token') {
+            appendStreamToken(event.data);
+            return;
+          }
+          if (event.event === 'reasoning') {
+            appendStreamReasoning(event.data);
+            return;
+          }
+          if (event.event === 'tool_call') {
+            pushStreamToolCall(event.data);
+            return;
+          }
+          if (event.event === 'error') {
+            const code = event.data?.code ?? 'unknown';
+            const message = event.data?.message ?? 'stream failed';
+            if (code === 'http_403') setPermissionDenied(true);
+            else setError(`${code}: ${message}`);
+            setStreamingMessage(null);
+            setStreaming(false);
+            return;
+          }
+          if (event.event === 'finish') {
+            const finish = event.data;
+            setActiveConversation(finish.conversation_id);
+            setStreamingMessage(null);
+            setStreaming(false);
+            queryClient.invalidateQueries({
+              queryKey: ['copilot', 'conversations'],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ['copilot', 'conversation', finish.conversation_id],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ['copilot', 'cost', finish.conversation_id],
+            });
+          }
+          // `usage` is intentionally unconsumed here — cost lands via
+          // the invalidated `copilot.cost` query once the conversation
+          // settles (single source of truth on the cost badge).
+        },
+        tenantId,
+      );
+      handleRef.current = handle;
+      return handle;
+    },
+    [
+      queryClient,
+      setActiveConversation,
+      setError,
+      setPermissionDenied,
+      setStreaming,
+      setStreamingMessage,
+      appendStreamToken,
+      appendStreamReasoning,
+      pushStreamToolCall,
+      tenantId,
+    ],
+  );
+
+  const stop = React.useCallback(() => {
+    handleRef.current?.abort();
+    handleRef.current = null;
+    setStreaming(false);
+  }, [setStreaming]);
+
+  // Cleanup on unmount so a closed composer doesn't leave a fetch
+  // running in the background.
+  React.useEffect(() => {
+    return () => {
+      handleRef.current?.abort();
+      handleRef.current = null;
+    };
+  }, []);
+
+  const lastError = useCopilotStore((s) => s.lastError);
+  return { send, streaming, lastError, stop };
+}
+
 
 export interface SubmitFeedbackArgs {
   messageId: string;

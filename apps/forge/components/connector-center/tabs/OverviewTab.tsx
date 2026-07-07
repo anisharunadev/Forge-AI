@@ -64,7 +64,7 @@ export function OverviewTab() {
       key,
       label: STATUS_LABEL[key as ConnectorHealthStatus],
       value,
-      color: HEALTH_COLORS[key],
+      color: HEALTH_COLORS[key] ?? 'var(--fg-muted)',
     }));
   }, [installed]);
 

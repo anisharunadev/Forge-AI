@@ -30,6 +30,7 @@
 
 import Link from "next/link";
 import type { Connector } from "@/lib/connectors/data"; // ponytail: aliased to Connector after refactor
+import { asScopeDetail } from "@/lib/connectors/data";
 import { ConnectorStatusPill } from "@/components/ConnectorStatusPill";
 import type { AuditEntry } from "@/lib/connectors/audit-feed-types";
 
@@ -200,6 +201,7 @@ function AuditEntryRow({ entry }: { entry: AuditEntry }) {
 
 export function ConnectorDetailPanel({ connector, auditEntries }: ConnectorDetailPanelProps) {
   const c = connector;
+  const scope = asScopeDetail(c.scope);
   const trend = latencyTrend(c.health.p50Ms, c.health.p95Ms);
   const imminent = isRotationDeadlineImminent(c.credential.expiresAt);
 
@@ -310,17 +312,17 @@ export function ConnectorDetailPanel({ connector, auditEntries }: ConnectorDetai
         <p className="text-xs text-forge-300">
           Role binding:{" "}
           <Link
-            href={`/governance-center?role=${encodeURIComponent(c.scope.roleBinding)}`}
+            href={`/governance-center?role=${encodeURIComponent(scope.roleBinding)}`}
             className="rounded-sm border border-forge-700 bg-forge-800 px-2 py-0.5 font-mono text-forge-50 hover:border-forge-500"
             data-testid="connector-role-binding"
-            aria-label={`Open ${c.scope.roleBinding} role binding in Governance Center`}
+            aria-label={`Open ${scope.roleBinding} role binding in Governance Center`}
           >
-            {c.scope.roleBinding}
+            {scope.roleBinding}
           </Link>
         </p>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="text-forge-300">Granted:</span>
-          {c.scope.grantedScopes.length === 0 ? (
+          {scope.grantedScopes.length === 0 ? (
             <span
               className="rounded-sm border border-forge-700 bg-forge-800 px-2 py-0.5 font-mono text-forge-300"
               data-testid="scope-granted-empty"
@@ -328,7 +330,7 @@ export function ConnectorDetailPanel({ connector, auditEntries }: ConnectorDetai
               none
             </span>
           ) : (
-            c.scope.grantedScopes.map((s) => (
+            scope.grantedScopes.map((s) => (
               <span
                 key={`g-${s}`}
                 className="rounded-sm border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 font-mono text-emerald-200"
@@ -341,10 +343,10 @@ export function ConnectorDetailPanel({ connector, auditEntries }: ConnectorDetai
             ))
           )}
         </div>
-        {c.scope.deniedScopes && c.scope.deniedScopes.length > 0 && (
+        {scope.deniedScopes && scope.deniedScopes.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="text-forge-300">Denied:</span>
-            {c.scope.deniedScopes.map((s) => (
+            {scope.deniedScopes.map((s) => (
               <span
                 key={`d-${s}`}
                 className="rounded-sm border border-forge-700 bg-forge-900 px-2 py-0.5 font-mono text-forge-300"

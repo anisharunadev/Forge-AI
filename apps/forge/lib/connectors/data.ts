@@ -62,7 +62,45 @@ export type ConnectorHealthStatus =
   | 'quarantined'
   | 'paused';
 
+// ponytail: Day 5 — ToolCallStatus is the status a single tool/API call can be in.
+// Used by ConnectorStatusPill. Same vocabulary as ConnectorHealthStatus today;
+// could diverge when we add per-call retry states.
+export type ToolCallStatus = ConnectorHealthStatus;
+
 export type ConnectorScope = 'org' | 'project';
+
+/**
+ * ponytail: ConnectorScopeDetail is the richer per-connector scope bag used by
+ * ConnectorCard / ConnectorDetailPanel. The bare `'org' | 'project'` union is
+ * kept for the narrow `connector.scope: ConnectorScope` use site in lib/api.
+ * Day 5: extended to add the fields ConnectorCard and ConnectorDetailPanel
+ * consume. Real API populates these on `/v1/connectors/{id}`.
+ */
+export interface ConnectorScopeDetail {
+  readonly binding: ConnectorScope;
+  readonly roleBinding: string;
+  readonly grantedScopes: ReadonlyArray<string>;
+  readonly deniedScopes?: ReadonlyArray<string>;
+}
+
+/**
+ * ponytail: normalize either the bare `'org' | 'project'` union or a populated
+ * ConnectorScopeDetail into the detail shape. Components consume the result
+ * instead of branching. Empty arrays are returned for missing fields; callers
+ * that need the raw binding should use `.binding`.
+ */
+export function asScopeDetail(
+  scope: ConnectorScope | ConnectorScopeDetail,
+): ConnectorScopeDetail {
+  if (typeof scope === 'string') {
+    return {
+      binding: scope,
+      roleBinding: scope === 'org' ? 'org-admin' : 'project-contributor',
+      grantedScopes: [],
+    };
+  }
+  return scope;
+}
 
 export type CredentialType = 'api_key' | 'oauth' | 'service_account' | 'webhook_secret';
 
@@ -219,6 +257,10 @@ export interface ConnectorCredential {
   readonly owner: { name: string; initials: string };
   readonly scopes: ReadonlyArray<string>;
   readonly lengthChars: number;    // raw length (never the value)
+  // ponytail: Day 5 — Credential UI badges shown by ConnectorCard/DetailPanel.
+  readonly redacted?: boolean;
+  readonly secretRef?: string;
+  readonly valueLen?: number;
 }
 
 export interface ConnectorUsage {
@@ -243,6 +285,9 @@ export interface ConnectorSyncEvent {
   readonly durationMs: number;
   readonly records: number;
   readonly errorMessage?: string;
+  // ponytail: Day 5 — Health tab joins events back to their connector.
+  readonly connectorId?: string;
+  readonly connectorSlug?: string;
 }
 
 export interface Connector {
@@ -253,7 +298,13 @@ export interface Connector {
   readonly tagline: string;
   readonly description: string;
   readonly category: ConnectorCategory;
-  readonly scope: ConnectorScope;
+  readonly tenantId?: string;
+  readonly scope: ConnectorScope | ConnectorScopeDetail;
+  // ponytail: Day 5 — additional fields used by Connector Center tabs.
+  readonly slug?: string;
+  readonly callCount24h?: number;
+  readonly errorRate24h?: number;
+  readonly scopes?: ReadonlyArray<string>;
   readonly tier: 1 | 2;
   readonly status: ConnectorHealthStatus;
   /** Connected account display — workspace or user. */
@@ -271,6 +322,9 @@ export interface Connector {
     readonly p50Ms: number;
     readonly p95Ms: number;
     readonly errorRate: number; // 0..1
+    // ponytail: Day 5 — health surface used by ConnectorCard/DetailPanel.
+    readonly lastCallAt?: string;
+    readonly callCount24h?: number;
   };
   readonly credential: ConnectorCredential;
   readonly usage: ConnectorUsage;
@@ -1735,3 +1789,28 @@ export const SYNC_HISTORY_24H: ReadonlyArray<{
   success: 12 + Math.round(Math.sin(i / 3) * 6) + (i % 4 === 0 ? 4 : 0),
   failed: Math.max(0, Math.round(Math.cos(i / 5) * 2) + (i === 9 ? 3 : 0)),
 }));
+
+// ---------------------------------------------------------------------------
+// Jira sync (used by useJiraSync hook)
+// ponytail: Day 5 — these symbols were missing from this module even though
+// the hook imports them. Stubbed as a no-op that returns a synthetic result.
+// Real implementation calls `/api/v1/connectors/{id}/sync`.
+// ---------------------------------------------------------------------------
+
+export interface JiraSyncResult {
+  readonly issue_key: string;
+  readonly synced_at: string;
+  readonly status: 'queued' | 'success' | 'failed';
+  readonly message?: string;
+}
+
+export async function syncFromJira(
+  _target: { kind: 'org' } | { kind: 'project'; projectId: string },
+  vars: { readonly issue_key: string; readonly idea_id?: string },
+): Promise<JiraSyncResult> {
+  return {
+    issue_key: vars.issue_key,
+    synced_at: new Date().toISOString(),
+    status: 'queued',
+  };
+}

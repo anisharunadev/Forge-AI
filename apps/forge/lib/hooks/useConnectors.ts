@@ -49,12 +49,13 @@ import {
   wireToConnector,
   wireToCredential,
   wireToSyncEvent,
-  type Connector,
   type ConnectorCredentialWire,
   type ConnectorSyncEventWire,
   type ConnectorWire,
   type WebhookDeliveryWire,
+  type WebhookWire,
 } from '@/lib/connectors/types';
+import type { Connector } from '@/lib/connectors/data';
 import {
   ConnectorApiError,
 } from '@/lib/connectors/api';

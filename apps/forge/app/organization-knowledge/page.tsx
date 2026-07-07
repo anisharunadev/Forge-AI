@@ -115,7 +115,6 @@ import {
 } from '@/lib/org-knowledge/data';
 
 import {
-  ACTIVITY,
   OverviewTab,
   TemplateGrid,
   RunbookTimeline,
@@ -127,6 +126,7 @@ import {
   scopeLabel,
   type Scope as ScopeT,
 } from '@/src/components/knowledge';
+import { ACTIVITY } from '@/src/components/knowledge/sample-data';
 
 type TabId =
   | 'overview'

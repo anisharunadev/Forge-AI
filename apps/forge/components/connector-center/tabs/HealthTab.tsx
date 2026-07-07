@@ -96,9 +96,9 @@ export function HealthTab() {
     const cutoff = Date.now() - 14 * 86_400_000;
     const eventsByConnector = new Map<string, typeof activityRows>();
     for (const e of activityRows) {
-      const arr = eventsByConnector.get(e.connectorId) ?? [];
+      const arr = eventsByConnector.get(e.connectorId!) ?? [];
       arr.push(e);
-      eventsByConnector.set(e.connectorId, arr);
+      eventsByConnector.set(e.connectorId!, arr);
     }
     return connectors.map((c) => {
       const recent = (eventsByConnector.get(c.id) ?? [])
@@ -156,8 +156,8 @@ export function HealthTab() {
       // already carry the wire's semantics.
       activityRows.map((e) => ({
         id: e.id,
-        connector_id: e.connectorId,
-        connector_slug: e.connectorSlug,
+        connector_id: e.connectorId ?? '',
+        connector_slug: e.connectorSlug ?? '',
         event_type: 'sync.completed',
         status: e.status === 'failed' ? 'error' : e.status === 'success' ? 'ok' : 'in-progress',
         records_processed: e.records,

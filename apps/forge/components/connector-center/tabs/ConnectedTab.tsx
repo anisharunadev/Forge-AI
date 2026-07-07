@@ -210,8 +210,8 @@ export function ConnectedTab() {
       {openId ? (
         <DrawerShell onClose={() => setOpenId(null)}>
           <ConnectorDetailPanel
-            connector={connectors.find((c) => c.id === openId)!}
-            onClose={() => setOpenId(null)}
+            connector={connectors.find((c) => c.id === openId) as never}
+            auditEntries={[]}
           />
         </DrawerShell>
       ) : null}
@@ -287,7 +287,7 @@ function ConnectedCard({ connector: c, paused, onPauseToggle, onConfigure, onDis
           <div>
             <h3 className="text-md font-semibold text-fg-primary">{c.displayName}</h3>
             <p className="text-[10px] uppercase tracking-wider text-fg-tertiary">
-              {CATEGORY_LABEL[c.category]} · {SCOPE_LABEL[c.scope]}
+              {CATEGORY_LABEL[c.category]} · {SCOPE_LABEL[typeof c.scope === 'string' ? c.scope : c.scope.binding]}
             </p>
             <p className="mt-0.5 text-[11px] text-fg-secondary">{c.connectedAs}</p>
           </div>

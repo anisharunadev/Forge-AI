@@ -30,6 +30,18 @@ interface CopilotState {
    *  floating launcher to show the "thinking" gradient pulse even
    *  after the panel is closed). Set true on send, false on settle. */
   streaming: boolean;
+  /** Live streaming assistant message (Phase 1 SSE consumer).
+   *  Set on `start`, mutated on every `token`/`reasoning` event,
+   *  cleared on `finish` or `error`. The composer and message list
+   *  read this so tokens appear in real time without round-tripping
+   *  through the conversations query. */
+  streamingMessage: {
+    id: string;
+    conversationId: string;
+    content: string;
+    reasoning: string;
+    toolCalls: Array<{ tool: string; args: Record<string, unknown> }>;
+  } | null;
   /** Unread message count surfaced on the FAB's notification badge.
    *  Increments when a response lands while the panel is closed;
    *  clears when the user opens the panel. */
@@ -45,6 +57,12 @@ interface CopilotState {
   setPermissionDenied: (denied: boolean) => void;
   dismissFirstRun: () => void;
   setStreaming: (streaming: boolean) => void;
+  setStreamingMessage: (
+    msg: CopilotState['streamingMessage'],
+  ) => void;
+  appendStreamToken: (chunk: string) => void;
+  appendStreamReasoning: (chunk: string) => void;
+  pushStreamToolCall: (call: { tool: string; args: Record<string, unknown> }) => void;
   incrementUnread: () => void;
   clearUnread: () => void;
   /** Per-conversation pin flag — local-only UI state. Mirrors the
@@ -66,6 +84,7 @@ export const useCopilotStore = create<CopilotState>((set) => ({
   // does not log a hydration mismatch.
   firstRunDismissed: false,
   streaming: false,
+  streamingMessage: null,
   unreadCount: 0,
   isPinned: false,
 
@@ -95,6 +114,40 @@ export const useCopilotStore = create<CopilotState>((set) => ({
       // the count the next time the user opens the panel.
       unreadCount: !streaming && !state.open && state.streaming ? state.unreadCount + 1 : state.unreadCount,
     })),
+  setStreamingMessage: (msg) => set({ streamingMessage: msg }),
+  appendStreamToken: (chunk) =>
+    set((state) =>
+      state.streamingMessage
+        ? {
+            streamingMessage: {
+              ...state.streamingMessage,
+              content: state.streamingMessage.content + chunk,
+            },
+          }
+        : state,
+    ),
+  appendStreamReasoning: (chunk) =>
+    set((state) =>
+      state.streamingMessage
+        ? {
+            streamingMessage: {
+              ...state.streamingMessage,
+              reasoning: state.streamingMessage.reasoning + chunk,
+            },
+          }
+        : state,
+    ),
+  pushStreamToolCall: (call) =>
+    set((state) =>
+      state.streamingMessage
+        ? {
+            streamingMessage: {
+              ...state.streamingMessage,
+              toolCalls: [...state.streamingMessage.toolCalls, call],
+            },
+          }
+        : state,
+    ),
   incrementUnread: () =>
     set((state) => ({ unreadCount: state.unreadCount + 1 })),
   clearUnread: () => set({ unreadCount: 0 }),

@@ -72,8 +72,8 @@ function simulate(nodes: Node[], edges: Edge[], width: number, height: number) {
     // Repulsion between non-forge nodes.
     for (let i = 1; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
-        const a = nodes[i];
-        const b = nodes[j];
+        const a = nodes[i]!;
+        const b = nodes[j]!;
         const dx = b.x - a.x;
         const dy = b.y - a.y;
         const dist = Math.max(8, Math.sqrt(dx * dx + dy * dy));

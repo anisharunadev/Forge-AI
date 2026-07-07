@@ -16,6 +16,8 @@
  */
 
 import { api, FORGE_API_BASE_URL, ForgeApiError } from '@/lib/api/client';
+// ponytail: streamMessage uses the same bearer+tenant plumbing as the JSON
+// client via `api.postStream`. The fetch below is the SSE consumer only.
 import { SEED_TENANT_ID } from '@/lib/auth';
 
 // ---------------------------------------------------------------------------
@@ -211,67 +213,76 @@ export function streamMessage(
   req: CopilotChatRequest,
   onEvent: (event: CopilotStreamEvent) => void,
   tenantId: string = SEED_TENANT_ID,
+  externalSignal?: AbortSignal,
 ): StreamMessageHandle {
+  // Use the canonical client so Authorization + x-forge-tenant-id are
+  // attached by the same code path as every other call. Caller passes
+  // their own AbortSignal (e.g. from a React mutation) so the stop
+  // button cancels mid-stream; we keep our own controller too as a
+  // safety net for the rare case the caller forgets.
   const controller = new AbortController();
+  if (externalSignal) {
+    if (externalSignal.aborted) controller.abort();
+    else externalSignal.addEventListener("abort", () => controller.abort(), { once: true });
+  }
   void (async () => {
     let res: Response;
     try {
-      // Stream endpoint — bypass the JSON-buffering `api` client.
-      // `api.ws` would attach the bearer token but the server expects
-      // `?token=` AND body, which doesn't fit the WS contract.
-      const streamHeaders: Record<string, string> = {
-        'content-type': 'application/json',
-        'x-forge-tenant-id': tenantId ?? SEED_TENANT_ID,
-      };
-      res = await fetch(
-        `${FORGE_API_BASE_URL}/copilot/conversations:stream`,
-        {
-          method: 'POST',
-          headers: streamHeaders,
-          body: JSON.stringify(req),
-          signal: controller.signal,
-        },
+      res = await api.postStream(
+        "/copilot/conversations:stream",
+        req,
+        { tenantId, signal: controller.signal },
       );
     } catch (err) {
       onEvent({
-        event: 'error',
-        data: { code: 'network', message: String(err) },
+        event: "error",
+        data: { code: "network", message: String(err) },
+      });
+      return;
+    }
+    if (!res.ok) {
+      onEvent({
+        event: "error",
+        data: {
+          code: `http_${res.status}`,
+          message: `stream failed with ${res.status}`,
+        },
       });
       return;
     }
     if (!res.body) {
       onEvent({
-        event: 'error',
-        data: { code: 'no_body', message: 'empty response' },
+        event: "error",
+        data: { code: "no_body", message: "empty response" },
       });
       return;
     }
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
-    let buf = '';
+    let buf = "";
     try {
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
         buf += decoder.decode(value, { stream: true });
         let idx: number;
-        while ((idx = buf.indexOf('\n\n')) !== -1) {
+        while ((idx = buf.indexOf("\n\n")) !== -1) {
           const raw = buf.slice(0, idx);
           buf = buf.slice(idx + 2);
-          const line = raw.split('\n').find((l) => l.startsWith('data:'));
+          const line = raw.split("\n").find((l) => l.startsWith("data:"));
           if (!line) continue;
           try {
             onEvent(JSON.parse(line.slice(5).trim()) as CopilotStreamEvent);
           } catch (err) {
-            console.error('copilot.stream.parse_error', err, line);
+            console.error("copilot.stream.parse_error", err, line);
           }
         }
       }
     } catch (err) {
-      if ((err as { name?: string })?.name !== 'AbortError') {
+      if ((err as { name?: string })?.name !== "AbortError") {
         onEvent({
-          event: 'error',
-          data: { code: 'network', message: String(err) },
+          event: "error",
+          data: { code: "network", message: String(err) },
         });
       }
     }

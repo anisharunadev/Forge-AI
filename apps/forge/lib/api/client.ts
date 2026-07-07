@@ -262,6 +262,56 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 }
 
 // ---------------------------------------------------------------------------
+// Streaming variant of `request`. Same auth/tenant plumbing, but returns
+// the raw `Response` so callers can iterate the body (SSE/NDJSON). We
+// still throw `ApiError` on transport failure and on 401 (after one
+// refresh), but we never read the body — that's the caller's job.
+// ---------------------------------------------------------------------------
+async function requestStream(
+  path: string,
+  options: RequestOptions = {},
+): Promise<Response> {
+  const { body, headers, tenantId, signal } = options;
+
+  const url = path.startsWith('http')
+    ? path
+    : `${FORGE_API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+
+  const finalHeaders = new Headers(headers ?? {});
+  finalHeaders.set('content-type', 'application/json');
+  finalHeaders.set('accept', 'text/event-stream');
+
+  if (authAccessor) {
+    const token = authAccessor.getToken();
+    if (token) {
+      finalHeaders.set('Authorization', `Bearer ${token}`);
+    }
+  }
+
+  const resolvedTenant =
+    tenantId ??
+    authAccessor?.getTenantId() ??
+    SEED_TENANT_ID;
+  if (resolvedTenant) {
+    finalHeaders.set('x-forge-tenant-id', resolvedTenant);
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: finalHeaders,
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new ApiError(0, `Network error: ${message}`, null, 'network_error');
+  }
+  return res;
+}
+
+// ---------------------------------------------------------------------------
 // Public surface — verbs + WebSocket helper.
 // ---------------------------------------------------------------------------
 
@@ -280,6 +330,18 @@ export const api = {
 
   delete: <T>(path: string, options?: RequestOptions) =>
     request<T>(path, { ...(options ?? {}), method: 'DELETE' }),
+
+  /**
+   * POST that returns the raw `Response` so callers can stream the body
+   * (SSE, NDJSON, chunked). Same auth/tenant plumbing as `post`; only
+   * the response shape differs — we don't buffer JSON here.
+   *
+   * Throws `ApiError` for transport failures and 401 once, but does NOT
+   * auto-retry beyond the refresh — the caller owns the response stream.
+   */
+  postStream(path: string, body?: unknown, options?: RequestOptions): Promise<Response> {
+    return requestStream(path, { ...(options ?? {}), method: 'POST', body });
+  },
 
   /**
    * Open an authenticated WebSocket. The token is appended as a

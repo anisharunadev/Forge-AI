@@ -223,9 +223,9 @@ export function OverviewTab() {
                   data-testid="ok-quick-row"
                   className="flex w-full items-center justify-between gap-2 rounded-[var(--radius-sm)] px-2 py-1.5 text-left text-xs text-[var(--fg-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--fg-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]"
                 >
-                  <span className="truncate font-medium">{q.label}</span>
+                  <span className="truncate font-medium">{q.title}</span>
                   <span className="shrink-0 font-mono text-[10px] text-[var(--fg-tertiary)]">
-                    {q.views} views
+                    {q.uses} views
                   </span>
                 </button>
               </li>

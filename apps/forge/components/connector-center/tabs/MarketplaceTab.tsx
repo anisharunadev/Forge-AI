@@ -221,7 +221,7 @@ export function MarketplaceTab() {
               id: c.id,
               name: c.name,
               displayName: c.displayName,
-              category: c.category,
+              category: c.category as never,
               publisher: c.publisher,
               shortDescription: c.tagline,
               rating: 4.0 + ((c.id.length * 7) % 10) / 10,

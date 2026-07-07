@@ -27,7 +27,7 @@ import {
   Loader2, Rocket,
   Send,
   Sparkles,
-  // Trello,
+  KanbanSquare,
   XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -286,7 +286,7 @@ function SyncStatusCard({ sync }: { sync: IdeaSyncStatus }) {
       </h3>
       <div className="flex flex-col gap-2">
         <SyncRow
-          icon={<Trello className="h-3.5 w-3.5" aria-hidden="true" />}
+          icon={<KanbanSquare className="h-3.5 w-3.5" aria-hidden="true" />}
           name="Jira"
           state={sync.jira?.state ?? 'none'}
           {...(sync.jira?.ref !== undefined ? { ref: sync.jira.ref } : {})}

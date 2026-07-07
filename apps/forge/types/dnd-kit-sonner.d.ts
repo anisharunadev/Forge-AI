@@ -7,6 +7,11 @@ declare module '@dnd-kit/core' {
     children: React.ReactNode;
     sensors?: unknown[];
     collisionDetection?: unknown;
+    accessibility?: {
+      announcements?: unknown;
+      screenReaderInstructions?: unknown;
+      restoreFocus?: boolean;
+    };
     onDragEnd?: (e: DragEndEvent) => void;
     onDragOver?: (e: { over: { id: string | number } | null }) => void;
     onDragCancel?: () => void;
@@ -14,6 +19,15 @@ declare module '@dnd-kit/core' {
   export const PointerSensor: unknown;
   export const KeyboardSensor: unknown;
   export const closestCorners: unknown;
+  export const closestCenter: unknown;
+  // ponytail: Day 5 — restore accessibility defaults that IdeaKanban consumes.
+  export const defaultAnnouncements: unknown;
+  export const defaultScreenReaderInstructions: unknown;
+  export function useDroppable(opts: { id: string | number }): {
+    setNodeRef: (el: HTMLElement | null) => void;
+    isOver: boolean;
+    active: unknown;
+  };
   export function useSensor(sensor: unknown, opts?: unknown): unknown;
   export function useSensors(...args: unknown[]): unknown[];
 }
@@ -78,5 +92,5 @@ declare module 'framer-motion' {
     path: MotionComponent;
     section: MotionComponent;
   };
-  export const AnimatePresence: React.FC<{ children: React.ReactNode }>;
+  export const AnimatePresence: React.FC<Record<string, unknown>>;
 }

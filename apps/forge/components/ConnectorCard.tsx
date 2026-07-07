@@ -22,6 +22,7 @@
 
 import Link from "next/link";
 import type { Connector } from "@/lib/connectors/data"; // ponytail: aliased to Connector after refactor
+import { asScopeDetail } from "@/lib/connectors/data";
 import { ConnectorStatusPill } from "@/components/ConnectorStatusPill";
 
 export interface ConnectorCardProps {
@@ -40,6 +41,7 @@ function fmtMs(n: number | undefined): string {
 
 export function ConnectorCard({ connector }: ConnectorCardProps) {
   const c = connector;
+  const scope = asScopeDetail(c.scope);
   return (
     <li
       className="card space-y-3"
@@ -51,7 +53,7 @@ export function ConnectorCard({ connector }: ConnectorCardProps) {
       <header className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-wider text-forge-300">
-            Tier {c.tier} · {c.scope.roleBinding}
+            Tier {c.tier} · {scope.roleBinding}
           </p>
           <h3 className="text-lg font-semibold" id={`connector-${c.id}-h`}>
             {c.displayName}
@@ -84,7 +86,7 @@ export function ConnectorCard({ connector }: ConnectorCardProps) {
       <div className="flex flex-col gap-2" aria-label="Scope grant">
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="text-forge-300">Granted:</span>
-          {c.scope.grantedScopes.length === 0 ? (
+          {scope.grantedScopes.length === 0 ? (
             <span
               className="rounded-sm border border-forge-700 bg-forge-800 px-2 py-0.5 font-mono text-forge-300"
               data-testid="scope-granted-empty"
@@ -92,7 +94,7 @@ export function ConnectorCard({ connector }: ConnectorCardProps) {
               none
             </span>
           ) : (
-            c.scope.grantedScopes.map((s) => (
+            scope.grantedScopes.map((s) => (
               <span
                 key={`g-${s}`}
                 className="rounded-sm border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 font-mono text-emerald-200"
@@ -105,10 +107,10 @@ export function ConnectorCard({ connector }: ConnectorCardProps) {
             ))
           )}
         </div>
-        {c.scope.deniedScopes && c.scope.deniedScopes.length > 0 ? (
+        {scope.deniedScopes && scope.deniedScopes.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="text-forge-300">Denied:</span>
-            {c.scope.deniedScopes.map((s) => (
+            {scope.deniedScopes.map((s) => (
               <span
                 key={`d-${s}`}
                 className="rounded-sm border border-rose-500/40 bg-rose-500/10 px-2 py-0.5 font-mono text-rose-200"

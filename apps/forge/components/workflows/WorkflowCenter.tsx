@@ -502,7 +502,7 @@ function WorkflowCard({
             </p>
           ) : null}
         </div>
-        <Badge tone={STATUS_TONE[workflow.status] ?? 'idle'}>{workflow.status}</Badge>
+        <Badge tone={STATUS_TONE[(workflow.status ?? '') as keyof typeof STATUS_TONE] ?? 'idle'}>{workflow.status}</Badge>
       </Link>
 
       <dl className="grid grid-cols-3 gap-2 text-[11px] text-[var(--fg-tertiary)]">
@@ -645,7 +645,7 @@ function GridSkeleton() {
   );
 }
 
-function pickLastRun(runs: WorkflowRun[] | undefined, workflowId: string): WorkflowRun | undefined {
+function pickLastRun(runs: ReadonlyArray<WorkflowRun> | undefined, workflowId: string): WorkflowRun | undefined {
   if (!runs) return undefined;
   return runs.find((r) => r.workflow_id === workflowId);
 }

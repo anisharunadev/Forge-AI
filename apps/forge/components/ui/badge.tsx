@@ -25,9 +25,17 @@ const badgeVariants = cva(
 
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
+    VariantProps<typeof badgeVariants> {
+  // ponytail: Day 5 — back-compat for callers that pass `tone` instead of
+  // `variant`. Accepted but ignored at render time. New code should use variant.
+  tone?: string;
+  // ponytail: Day 5 — back-compat for callers that pass `size="sm"|"xs"|"lg"`.
+  // Accepted but ignored at render time; the design-system Badge has a fixed
+  // size. New code should not pass size.
+  size?: string;
+}
 
-function Badge({ className, variant, ...props }: BadgeProps) {
+function Badge({ className, variant, tone: _tone, size: _size, ...props }: BadgeProps) {
   return (
     <div className={cn(badgeVariants({ variant }), className)} {...props} />
   );

@@ -71,6 +71,12 @@ export interface Workflow {
   created_at: string;
   updated_at: string;
   latest_run_id?: string | null;
+  // ponytail: Day 5 — Workflow Center header/status badges read `status`.
+  // Real status lives on the latest run; consumers can derive it.
+  status?: WorkflowRunStatus | WorkflowVisibility;
+  // ponytail: short-label helper used by Workflow Center header.
+  descriptionShort?: string;
+  visibility?: WorkflowVisibility;
 }
 
 export interface WorkflowCreate {
@@ -95,6 +101,13 @@ export type WorkflowRunStatus =
   | 'cancelled'
   | 'paused'
   | 'waiting_approval';
+
+/**
+ * ponytail: authoring visibility (separate from run status). The Gallery tab
+ * filter (`drafts`/`shared`/`published`) uses this. Real APIs populate
+ * `Workflow.visibility`; consumers can fall back to `Workflow.status`.
+ */
+export type WorkflowVisibility = 'draft' | 'published' | 'shared' | 'archived';
 
 export type WorkflowStepStatus =
   | 'pending'
