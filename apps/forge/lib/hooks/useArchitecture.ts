@@ -97,6 +97,9 @@ import type {
   TraceabilityFilter,
   TraceabilityMatrix,
   ValidationResult,
+  C4Diagram,
+  C4DiagramListResponse,
+  DiagramFilter,
 } from '@/lib/architecture/types';
 
 // ---------------------------------------------------------------------------
@@ -979,6 +982,22 @@ export function useSecurityPosture(
     queryKey: archQueryKeys.security.posture(projectId),
     queryFn: () => getSecurityPosture(projectId),
     enabled: !!projectId,
+    staleTime: 60_000,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Architecture Diagrams (F-311) — Day 2 track H
+// ---------------------------------------------------------------------------
+
+export function useDiagrams(
+  filter?: DiagramFilter,
+): UseQueryResult<C4DiagramListResponse> {
+  return useQuery({
+    queryKey: [...archQueryKeys.all, 'diagrams', 'list', filter ?? {}] as const,
+    queryFn: () =>
+      api.get<C4DiagramListResponse>(`/architecture/diagrams${buildQuery(filter)}`),
+    enabled: !!filter?.project_id,
     staleTime: 60_000,
   });
 }

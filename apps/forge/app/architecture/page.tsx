@@ -113,6 +113,7 @@ import {
   useApprovals,
   useRequestApproval,
   useDecideApproval,
+  useDiagrams,
 } from '@/lib/hooks/useArchitecture';
 import { SecurityReportPanel } from '@/components/architecture/SecurityReportPanel';
 import { useArchitecturePipelineWS } from '@/lib/architecture/use-pipeline-ws';
@@ -2129,6 +2130,7 @@ export default function ArchitectureCenterPage() {
   // callback via prop.
   const versionsQuery = useArchitectureVersions(null);
   const traceabilityQuery = useTraceability({ project_id: projectId });
+  const diagramsQuery = useDiagrams({ project_id: projectId });
   // M5-G4 — Security Report hook. The posture query reads the cached
   // deployment posture aggregate (total_open / critical_open / score).
   // The reports list backs the Open Findings inner-tab.
@@ -2303,7 +2305,7 @@ export default function ArchitectureCenterPage() {
     trace: traceability.nodes.length,
     versions: versions.length,
     radar: 0,  // Day 1: no tech-radar endpoint yet
-    diagrams: 0,  // Day 1: no diagrams endpoint yet
+    diagrams: diagramsQuery.data?.items.length ?? 0,
     security: securityOpenCount ?? 0,
   };
 
@@ -2673,7 +2675,7 @@ export default function ArchitectureCenterPage() {
             {tab === 'diagrams' ? (
               <div className="flex flex-col gap-3">
                 <div className="self-end"><AIAssistantBadge tab="diagrams" onClick={() => toast.info('AI: regenerate diagrams from live system')} /></div>
-                <DiagramsExplorer diagrams={[]} />  // Day 1: no diagrams endpoint yet
+                <DiagramsExplorer diagrams={diagramsQuery.data?.items ?? []} />
               </div>
             ) : null}
 

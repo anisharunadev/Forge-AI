@@ -201,11 +201,102 @@ class ArchitectureVersionRow(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, Times
     )
 
 
+# ---------------------------------------------------------------------------
+# F-311 — Architecture Diagrams (C4 / data-flow / sequence) — Day 2 track H
+# ---------------------------------------------------------------------------
+
+
+class ArchitectureDiagram(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMixin):
+    """One architecture diagram (C4 Level 1-3, data-flow, sequence).
+
+    Replaces the previous frontend ``MOCK_DIAGRAMS`` fixture (3 C4
+    diagrams) with a real DB-backed row. Nodes and edges live in
+    their own tables so editors can append edges without rewriting
+    a JSONB blob.
+    """
+
+    __tablename__ = "architecture_diagrams"
+
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    # context | container | component | dataflow | sequence
+    level: Mapped[str] = mapped_column(String(32), nullable=False)
+    description: Mapped[str] = mapped_column(String(500), nullable=False, default="")
+
+    __table_args__ = (
+        Index(
+            "ix_architecture_diagrams_tenant_project_level",
+            "tenant_id",
+            "project_id",
+            "level",
+        ),
+    )
+
+
+class DiagramNodeRow(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    """One node inside an ``ArchitectureDiagram``.
+
+    ``tenant_id`` is intentionally absent — scoping for these rows
+    is driven by their parent diagram, and the service layer joins
+    through ``diagram_id`` to enforce Rule 2.
+    """
+
+    __tablename__ = "architecture_diagram_nodes"
+
+    diagram_id: Mapped[UUID] = mapped_column(
+        GUID(), ForeignKey("architecture_diagrams.id"), nullable=False
+    )
+    # String key the frontend uses for SVG edges ('user', 'gateway'…).
+    # Mirrors the MOCK fixture convention so the existing UI keeps
+    # working without an id-mapping adapter.
+    node_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    label: Mapped[str] = mapped_column(String(120), nullable=False)
+    layer: Mapped[str] = mapped_column(String(32), nullable=False)
+    x: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    y: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    details: Mapped[str] = mapped_column(String(500), nullable=False, default="")
+
+    __table_args__ = (
+        Index("ix_architecture_diagram_nodes_diagram", "diagram_id"),
+    )
+
+
+class DiagramEdgeRow(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    """One directed edge between two ``DiagramNodeRow``s.
+
+    Source/target are stored as FK UUIDs for query-time joins, plus
+    string ``source_node_key`` / ``target_node_key`` mirrors so the
+    frontend SVG renderer can keep using its existing key-based edge
+    lookups (same convention as the MOCK fixture).
+    """
+
+    __tablename__ = "architecture_diagram_edges"
+
+    diagram_id: Mapped[UUID] = mapped_column(
+        GUID(), ForeignKey("architecture_diagrams.id"), nullable=False
+    )
+    source_node_id: Mapped[UUID] = mapped_column(
+        GUID(), ForeignKey("architecture_diagram_nodes.id"), nullable=False
+    )
+    target_node_id: Mapped[UUID] = mapped_column(
+        GUID(), ForeignKey("architecture_diagram_nodes.id"), nullable=False
+    )
+    source_node_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    target_node_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    label: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+    __table_args__ = (
+        Index("ix_architecture_diagram_edges_diagram", "diagram_id"),
+    )
+
+
 __all__ = [
     "ADR",
     "APIContract",
     "ArchitectureApproval",
+    "ArchitectureDiagram",
     "ArchitectureVersionRow",
+    "DiagramEdgeRow",
+    "DiagramNodeRow",
     "RiskRegister",
     "TaskBreakdown",
 ]
