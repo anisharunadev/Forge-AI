@@ -592,6 +592,55 @@ export interface ArchitectureVersionDiffFilter {
 }
 
 // ---------------------------------------------------------------------------
+// Day 2 mock-removal track G — Tech Radar
+// ---------------------------------------------------------------------------
+
+/** Mirrors backend `TECH_RADAR_QUADRANTS`. */
+export type TechQuadrant = 'languages' | 'tools' | 'platforms' | 'techniques';
+
+/** Mirrors backend `TECH_RADAR_RINGS`. */
+export type TechRing = 'adopt' | 'trial' | 'assess' | 'hold';
+
+/** Mirrors `TechRadarEntryResponse`. */
+export interface TechBlip {
+  id: string;
+  name: string;
+  quadrant: TechQuadrant;
+  ring: TechRing;
+  description: string;
+  rationale: string;
+  owner: string;
+  prev_ring: TechRing | null;
+  tenant_id: string;
+  project_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Mirrors `TechRadarListResponse`. */
+export interface TechRadarListResponse {
+  items: TechBlip[];
+  total: number;
+}
+
+/** Mirrors `TechRadarCreateRequest`. */
+export interface TechRadarCreateInput {
+  project_id: string;
+  name: string;
+  quadrant: TechQuadrant;
+  ring: TechRing;
+  description?: string;
+  rationale?: string;
+  owner?: string;
+  prev_ring?: TechRing | null;
+}
+
+/** Query filter for `GET /architecture/tech-radar`. */
+export interface TechRadarFilter {
+  project_id?: string;
+}
+
+// ---------------------------------------------------------------------------
 // Security Report (M5-G4 — new surface)
 // ---------------------------------------------------------------------------
 

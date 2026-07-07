@@ -38,6 +38,7 @@ from app.db.models.architecture import (
     ArchitectureVersionRow,
     RiskRegister,
     TaskBreakdown,
+    TechRadarEntry,
 )
 from app.db.models.artifact import Artifact, ArtifactStatus
 from app.db.models.project import Project
@@ -426,6 +427,65 @@ SEED_ATTESTATIONS: list[dict[str, Any]] = [
 ]
 
 
+# Day 2 mock-removal track G — Tech Radar blips.
+# Mirrors the 8 entries that ``MOCK_TECH_RADAR`` filtered down to in
+# the Architecture Center page (all 4 quadrants × all 4 rings).
+SEED_TECH_RADAR: list[dict[str, Any]] = [
+    # languages
+    {"name": "React 19", "quadrant": "languages", "ring": "adopt",
+     "description": "UI framework",
+     "rationale": "Server components + form actions cover all centers",
+     "owner": "frontend-team", "prev_ring": "trial"},
+    {"name": "Next.js 16", "quadrant": "languages", "ring": "adopt",
+     "description": "Frontend framework",
+     "rationale": "App Router stable; RSC adoption complete",
+     "owner": "frontend-team"},
+    {"name": "FastAPI", "quadrant": "languages", "ring": "adopt",
+     "description": "Backend HTTP framework",
+     "rationale": "Pydantic v2 + async story is best in class",
+     "owner": "platform-team"},
+    {"name": "Remix", "quadrant": "languages", "ring": "hold",
+     "description": "Alternative frontend framework",
+     "rationale": "No migration plans; Next.js is the locked choice",
+     "owner": "frontend-team", "prev_ring": "assess"},
+    # tools
+    {"name": "LangGraph", "quadrant": "tools", "ring": "adopt",
+     "description": "Agent orchestration runtime",
+     "rationale": "Stateful graph primitives fit workflow model",
+     "owner": "agent-team"},
+    {"name": "pgvector", "quadrant": "tools", "ring": "adopt",
+     "description": "Postgres vector extension",
+     "rationale": "Hybrid retrieval without new infrastructure",
+     "owner": "knowledge-team", "prev_ring": "trial"},
+    {"name": "Sentry", "quadrant": "tools", "ring": "trial",
+     "description": "Error tracking",
+     "rationale": "POC successful; rollout to backend services next",
+     "owner": "platform-team"},
+    # platforms
+    {"name": "PostgreSQL 17", "quadrant": "platforms", "ring": "adopt",
+     "description": "Primary OLTP database",
+     "rationale": "RLS + pgvector + JSONB covers 95% of storage needs",
+     "owner": "data-team"},
+    {"name": "Keycloak", "quadrant": "platforms", "ring": "adopt",
+     "description": "Identity provider",
+     "rationale": "OIDC + SAML + RBAC in one server",
+     "owner": "security-team"},
+    # techniques
+    {"name": "Row-level security", "quadrant": "techniques", "ring": "adopt",
+     "description": "Tenant isolation pattern",
+     "rationale": "Cheaper than schema-per-tenant at our scale",
+     "owner": "platform-team", "prev_ring": "trial"},
+    {"name": "Model Context Protocol", "quadrant": "techniques", "ring": "trial",
+     "description": "Tool call interface standard",
+     "rationale": "Evaluating for connector framework parity",
+     "owner": "integration-team"},
+    {"name": "Event sourcing", "quadrant": "techniques", "ring": "assess",
+     "description": "Append-only audit log",
+     "rationale": "Useful for approval gate timeline; trade-offs unclear",
+     "owner": "governance-team"},
+]
+
+
 def _content_hash(payload: dict[str, Any]) -> str:
     """Stable content hash used by the Artifact table."""
     import json
@@ -683,6 +743,36 @@ async def seed() -> None:
         else:
             logger.info("  ↻ architecture versions already seeded; skipping")
 
+        # -----------------------------------------------------------------
+        # Tech Radar — 12 blips across the 4 quadrants × 4 rings.
+        # Idempotent: skipped if any blips already exist for this tenant.
+        # -----------------------------------------------------------------
+        existing_blips = (
+            await session.execute(
+                select(TechRadarEntry).where(
+                    TechRadarEntry.tenant_id == tenant.id
+                )
+            )
+        ).scalars().first()
+        if existing_blips is None:
+            for blip in SEED_TECH_RADAR:
+                session.add(
+                    TechRadarEntry(
+                        tenant_id=tenant.id,
+                        project_id=project_id,
+                        name=blip["name"],
+                        quadrant=blip["quadrant"],
+                        ring=blip["ring"],
+                        description=blip["description"],
+                        rationale=blip["rationale"],
+                        owner=blip["owner"],
+                        prev_ring=blip.get("prev_ring"),
+                    )
+                )
+            logger.info("  ✓ %d tech radar blips", len(SEED_TECH_RADAR))
+        else:
+            logger.info("  ↻ tech radar blips already seeded; skipping")
+
         await session.commit()
 
         logger.info("")
@@ -694,6 +784,7 @@ async def seed() -> None:
         logger.info("   - %d approvals", len(SEED_APPROVALS))
         logger.info("   - %d attestations (as Artifact rows)", len(SEED_ATTESTATIONS))
         logger.info("   - 3 architecture versions (stub ADR-001 snapshots)")
+        logger.info("   - %d tech radar blips", len(SEED_TECH_RADAR))
 
 
 if __name__ == "__main__":

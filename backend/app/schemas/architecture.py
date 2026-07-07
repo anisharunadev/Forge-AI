@@ -339,6 +339,16 @@ __all__ = [
     "TaskBreakdownResponse",
     "TaskUpdateRequest",
     "ADRSpec",
+    "TECH_RADAR_QUADRANTS",
+    "TECH_RADAR_RINGS",
+    "TechRadarCreateRequest",
+    "TechRadarEntryResponse",
+    "TechRadarListResponse",
+    "DIAGRAM_LEVELS",
+    "DiagramEdgeResponse",
+    "DiagramNodeResponse",
+    "C4DiagramResponse",
+    "C4DiagramListResponse",
 ]
 
 
@@ -543,6 +553,103 @@ class ArchitectureDiffResponse(ForgeBaseModel):
     added: list[Any] = Field(default_factory=list)
     removed: list[Any] = Field(default_factory=list)
     modified: list[Any] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# Day 2 mock-removal track G — Tech Radar
+# ---------------------------------------------------------------------------
+
+
+TECH_RADAR_QUADRANTS = {"languages", "tools", "platforms", "techniques"}
+TECH_RADAR_RINGS = {"adopt", "trial", "assess", "hold"}
+
+
+class TechRadarEntryResponse(ForgeBaseModel):
+    id: UUID
+    name: str
+    quadrant: str
+    ring: str
+    description: str = ""
+    rationale: str = ""
+    owner: str = ""
+    prev_ring: str | None = None
+    tenant_id: UUID
+    project_id: UUID
+    created_at: datetime
+    updated_at: datetime
+
+
+class TechRadarListResponse(ForgeBaseModel):
+    items: list[TechRadarEntryResponse] = Field(default_factory=list)
+    total: int = 0
+
+
+class TechRadarCreateRequest(ForgeBaseModel):
+    """Body for POST /architecture/tech-radar."""
+
+    project_id: UUID
+    name: str = Field(..., min_length=1, max_length=120)
+    quadrant: str = Field(..., pattern="^(languages|tools|platforms|techniques)$")
+    ring: str = Field(..., pattern="^(adopt|trial|assess|hold)$")
+    description: str = Field(default="", max_length=500)
+    rationale: str = Field(default="", max_length=500)
+    owner: str = Field(default="", max_length=64)
+    prev_ring: str | None = Field(default=None, pattern="^(adopt|trial|assess|hold)$")
+
+
+# ---------------------------------------------------------------------------
+# Day 2 mock-removal track H — Architecture Diagrams (F-311)
+# ---------------------------------------------------------------------------
+
+
+DIAGRAM_LEVELS = {"context", "container", "component", "dataflow", "sequence"}
+
+
+class DiagramNodeResponse(ForgeBaseModel):
+    """One node of a C4 / dataflow diagram (Day 2 track H)."""
+
+    id: UUID
+    node_key: str
+    label: str
+    layer: str
+    x: int = 0
+    y: int = 0
+    details: str = ""
+
+
+class DiagramEdgeResponse(ForgeBaseModel):
+    """One directed edge between two diagram nodes (Day 2 track H)."""
+
+    id: UUID
+    source_node_id: UUID
+    target_node_id: UUID
+    source_node_key: str
+    target_node_key: str
+    label: str | None = None
+
+
+class C4DiagramResponse(ForgeBaseModel):
+    """One C4 / dataflow diagram with its nodes + edges nested (track H).
+
+    Mirrors the previous frontend ``MOCK_DIAGRAMS`` shape so the UI can
+    drop the mock fixture without an adapter.
+    """
+
+    id: UUID
+    name: str
+    level: str
+    description: str = ""
+    tenant_id: UUID
+    project_id: UUID
+    nodes: list[DiagramNodeResponse] = Field(default_factory=list)
+    edges: list[DiagramEdgeResponse] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: datetime
+
+
+class C4DiagramListResponse(ForgeBaseModel):
+    items: list[C4DiagramResponse] = Field(default_factory=list)
+    total: int = 0
 
 
 # Re-export TenantScopedModel to keep the public surface explicit for
