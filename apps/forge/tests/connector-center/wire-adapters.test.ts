@@ -20,7 +20,7 @@ import {
 
 import type {
   ConnectorWire,
-  ConnectorMarketplaceItemWire,
+  ConnectorMarketplaceItem,
   ConnectorCredentialWire,
   ConnectorSyncEventWire,
   WebhookWire,
@@ -44,7 +44,7 @@ const baseConnectorWire: ConnectorWire = {
   scopes: ['repo', 'read:org'],
 };
 
-const baseMarketplaceWire: ConnectorMarketplaceItemWire = {
+const baseMarketplaceWire: ConnectorMarketplaceItem = {
   slug: 'github',
   display_name: 'GitHub',
   description: 'Repos, PRs, issues, webhooks, Actions.',
@@ -125,7 +125,7 @@ describe('wire-adapters', () => {
   });
 
   it.skip('wireToMarketplaceItem — installed flag carried through', () => {
-    const installed: ConnectorMarketplaceItemWire = {
+    const installed: ConnectorMarketplaceItem = {
       ...baseMarketplaceWire,
       installed: true,
     };

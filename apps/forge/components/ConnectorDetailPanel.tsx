@@ -29,7 +29,7 @@
  */
 
 import Link from "next/link";
-import type { McpConnector } from "@/lib/connectors/data";
+import type { Connector } from "@/lib/connectors/data"; // ponytail: aliased to Connector after refactor
 import { ConnectorStatusPill } from "@/components/ConnectorStatusPill";
 import type { AuditEntry } from "@/lib/connectors/audit-feed-types";
 
@@ -38,7 +38,7 @@ const AS_OF_ISO = "2026-06-20T17:21:00Z";
 const ROTATION_WINDOW_DAYS = 14;
 
 export interface ConnectorDetailPanelProps {
-  readonly connector: McpConnector;
+  readonly connector: Connector;
   readonly auditEntries: ReadonlyArray<AuditEntry>;
 }
 

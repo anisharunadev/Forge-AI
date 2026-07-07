@@ -21,11 +21,11 @@
  */
 
 import Link from "next/link";
-import type { McpConnector } from "@/lib/connectors/data";
+import type { Connector } from "@/lib/connectors/data"; // ponytail: aliased to Connector after refactor
 import { ConnectorStatusPill } from "@/components/ConnectorStatusPill";
 
 export interface ConnectorCardProps {
-  readonly connector: McpConnector;
+  readonly connector: Connector;
 }
 
 function fmtPct(n: number | undefined): string {
