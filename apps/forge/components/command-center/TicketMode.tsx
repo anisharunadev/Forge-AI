@@ -57,13 +57,15 @@ import {
   friendlyDuration,
 } from '@/lib/command-center/theme';
 import {
-  SAMPLE_TICKETS,
+  // ticketById kept as a tolerant ID-match helper for legacy callers
+  // (still indexed against the deprecated `SAMPLE_TICKETS`).
   ticketById,
   type Ticket,
   type LinkedEntity,
   type TicketSource,
 } from '@/lib/command-center/sample-data';
 import { useCommandCenter } from '@/lib/command-center/store';
+import { useTickets } from '@/lib/hooks/useForgeFixtures';
 
 const SOURCE_ICON: Record<TicketSource, React.ComponentType<{ className?: string }>> = {
   jira: () => (
@@ -534,9 +536,15 @@ export function TicketMode() {
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  // Track K (Day 2) — backed by the `useTickets` stub. Until the
+  // general `/v1/tickets` endpoint ships, the hook returns `[]` and
+  // the mode falls through to a "Backend integration pending" empty
+  // state (see Render below).
+  const { data: tickets } = useTickets();
+
   const ticket =
     (selectedTicketId ? ticketById(selectedTicketId) : undefined) ??
-    SAMPLE_TICKETS[0];
+    tickets[0];
 
   const submit = React.useCallback(() => {
     if (!ticketDraft.trim()) {
@@ -548,12 +556,19 @@ export function TicketMode() {
     setTimeout(() => {
       const trimmed = ticketDraft.trim();
       const found =
-        SAMPLE_TICKETS.find(
+        tickets.find(
           (t) =>
             t.id.toLowerCase() === trimmed.toLowerCase() ||
             trimmed.toLowerCase().includes(t.id.toLowerCase()),
-        ) ?? SAMPLE_TICKETS[0];
-      if (!found) return;
+        ) ?? tickets[0];
+      if (!found) {
+        // No tickets loaded yet — the backend endpoint is pending.
+        setSubmitting(false);
+        setError(
+          'No tickets loaded yet. Ticket ingestion backend is being wired up — paste a ticket URL above and the connector flow will pick it up.',
+        );
+        return;
+      }
       setSelectedTicketId(found.id);
       setTicketDraft('');
       setSubmitting(false);
@@ -568,12 +583,13 @@ export function TicketMode() {
     setTicketDraft,
     hasOnboarded,
     completeOnboarding,
+    tickets,
   ]);
 
   // Deliberately tolerant lookup so Jira/GitHub-style IDs all resolve.
   const onPickExample = (ex: string) => {
     setTicketDraft(ex);
-    const found = SAMPLE_TICKETS.find((t) =>
+    const found = tickets.find((t) =>
       ex.toLowerCase().includes(t.id.toLowerCase()),
     );
     if (found) {
@@ -582,11 +598,11 @@ export function TicketMode() {
     }
   };
 
-  if (!ticket && SAMPLE_TICKETS.length === 0) {
+  if (!ticket && tickets.length === 0) {
     return (
       <ErrorState
         title="No tickets available"
-        description="Connect a Jira, GitHub, or Linear source to load tickets."
+        description="Connect a Jira, GitHub, or Linear source to load tickets. The unified /v1/tickets endpoint lands in Day 3+ — for now tickets live in your connector history."
         backHref="/connector-center"
       />
     );
@@ -650,7 +666,7 @@ export function TicketMode() {
           <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--fg-tertiary)]">
             Examples
           </span>
-          {SAMPLE_TICKETS.slice(0, 4).map((t) => (
+          {tickets.slice(0, 4).map((t) => (
             <button
               key={t.id}
               type="button"
@@ -674,7 +690,7 @@ export function TicketMode() {
           </span>
         </div>
         <ul role="list" className="mt-2 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-          {SAMPLE_TICKETS.slice(0, 5).map((t) => {
+          {tickets.slice(0, 5).map((t) => {
             const source = TICKET_SOURCE_COLOR[t.source];
             const status = TICKET_STATUS_COLOR[t.status] ?? TICKET_STATUS_COLOR.todo;
             const isActive = t.id === selectedTicketId;

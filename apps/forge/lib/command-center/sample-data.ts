@@ -1,9 +1,15 @@
+// ponytail: still imported by tests/legacy — remove after Day 8 dead-code sweep
 /**
  * Sample data for the Command Center rebuild.
  *
  * Every fixture here is a typed artifact (Rule 4). No free-form blobs.
  * Real data will flow through Connectors (Step 31) and the project
  * intelligence layer; the shape stays stable so the swap is trivial.
+ *
+ * Track K (Day 2): these arrays are now `@deprecated` — consumers should
+ * use the equivalent TanStack Query hooks (`useLiveRuns`, `useTickets`,
+ * `useSpecs`). The shapes below stay identical to keep TypeScript happy
+ * in the few code-paths still consuming them.
  */
 
 import type { ForgePhase } from '../forge-core/manifest';
@@ -47,6 +53,12 @@ export interface Ticket {
   readonly lastTouchedAt: string;
 }
 
+/**
+ * @deprecated Track K (Day 2): use the `useTickets` hook in
+ * `lib/hooks/useForgeFixtures.ts` instead. The backend ticket endpoint
+ * does not yet exist (Day 3+); the hook returns `[]` and renders an
+ * explicit "Backend integration pending" empty state.
+ */
 export const SAMPLE_TICKETS: ReadonlyArray<Ticket> = [
   {
     id: 'ACME-123',
@@ -213,6 +225,12 @@ export interface Spec {
   readonly updatedAt: string;
 }
 
+/**
+ * @deprecated Track K (Day 2): use the `useSpecs` hook in
+ * `lib/hooks/useForgeFixtures.ts` instead. The backend specs endpoint
+ * does not yet exist (Day 3+); the hook returns `[]` and renders an
+ * explicit "Backend integration pending" empty state.
+ */
 export const SAMPLE_SPECS: ReadonlyArray<Spec> = [
   {
     id: 'SPEC-041',
@@ -339,6 +357,11 @@ export interface LiveRun {
   readonly actor: string;
 }
 
+/**
+ * @deprecated Track K (Day 2): use the `useLiveRuns` hook in
+ * `lib/hooks/useRuns.ts` instead (backed by the real
+ * `GET /api/v1/workflows/runs` endpoint — see `useWorkflowRunsIndex`).
+ */
 export const SAMPLE_LIVE_RUNS: ReadonlyArray<LiveRun> = [
   {
     id: 'run-9181',
@@ -392,6 +415,11 @@ export interface ApprovalItem {
   readonly blocking: boolean;
 }
 
+/**
+ * @deprecated Track K (Day 2): My Work drawer renders an explicit
+ * empty state for approvals; replace with `useIdeationApprovals()` once
+ * the column-card behaviour is wired up.
+ */
 export const SAMPLE_APPROVALS: ReadonlyArray<ApprovalItem> = [
   {
     id: 'apr-1',
@@ -419,6 +447,11 @@ export interface RecentArtifact {
   readonly at: string;
 }
 
+/**
+ * @deprecated Track K (Day 2): My Work drawer renders an empty state;
+ * replace with the audit-events adapter (`lib/architecture/adapters.ts`)
+ * once activity is wired up.
+ */
 export const SAMPLE_RECENT_ARTIFACTS: ReadonlyArray<RecentArtifact> = [
   {
     id: 'art-1',
@@ -456,6 +489,10 @@ export interface AISuggestion {
   readonly confidence: number; // 0-1
 }
 
+/**
+ * @deprecated Track K (Day 2): Spec side panel renders an empty state;
+ * AI suggestions come from the runtime orchestrator in a later step.
+ */
 export const SAMPLE_AI_SUGGESTIONS: ReadonlyArray<AISuggestion> = [
   {
     id: 'sug-1',

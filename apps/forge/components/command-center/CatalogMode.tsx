@@ -39,8 +39,8 @@ import {
   type ForgeSkill,
 } from '@/lib/forge-core/manifest';
 import { PHASE_ACCENT } from '@/lib/command-center/theme';
-import { SAMPLE_TICKETS } from '@/lib/command-center/sample-data';
 import { useCommandCenter } from '@/lib/command-center/store';
+import { useTickets } from '@/lib/hooks/useForgeFixtures';
 import { ForgeSkillCard } from './ForgeSkillCard';
 
 type CatalogFilter = ForgePhase | 'all';
@@ -113,6 +113,8 @@ export function CatalogMode() {
   const { catalogQuery, setCatalogQuery, setSelectedTicketId, setActivePhase } =
     useCommandCenter();
   const [filter, setFilter] = React.useState<CatalogFilter>('all');
+  // Track K (Day 2) — stub until `/v1/tickets` ships (Day 3+).
+  const { data: tickets } = useTickets();
 
   const visible = React.useMemo(() => {
     const base =
@@ -139,10 +141,12 @@ export function CatalogMode() {
   const onTriggerFromTicket = React.useCallback(
     (s: ForgeSkill) => {
       // Pick the first active ticket to seed the workflow with.
-      const t = SAMPLE_TICKETS.find((tk) => tk.status === 'in-progress') ??
-        SAMPLE_TICKETS[0];
+      const t =
+        tickets.find((tk) => tk.status === 'in-progress') ?? tickets[0];
       if (!t) {
-        toast.error('No ticket available to trigger this skill.');
+        toast.error(
+          'No ticket available to trigger this skill — backend integration pending (Day 3+).',
+        );
         return;
       }
       setSelectedTicketId(t.id);
@@ -151,7 +155,7 @@ export function CatalogMode() {
         description: 'Switched to Ticket mode automatically.',
       });
     },
-    [setSelectedTicketId, setActivePhase],
+    [setSelectedTicketId, setActivePhase, tickets],
   );
 
   const featured = featuredSkills(6);
