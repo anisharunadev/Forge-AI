@@ -338,6 +338,7 @@ __all__ = [
     "TaskBreakdownListResponse",
     "TaskBreakdownResponse",
     "TaskUpdateRequest",
+    "DecisionVelocityResponse",
     "ADRSpec",
 ]
 
@@ -478,6 +479,24 @@ class ValidationResultResponse(ForgeBaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Day 2 mock-removal track I — Decision Velocity metric
+# ---------------------------------------------------------------------------
+
+
+class DecisionVelocityResponse(ForgeBaseModel):
+    """Weekly accepted-ADR counts over the last ``weeks`` weeks.
+
+    ``weeks`` is the number of items in ``buckets`` (the array length is
+    authoritative for the UI sparkline).
+    """
+
+    tenant_id: UUID
+    project_id: UUID
+    weeks: int
+    buckets: list[int] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
 # F-306 — Traceability Matrix
 # ---------------------------------------------------------------------------
 
@@ -547,4 +566,64 @@ class ArchitectureDiffResponse(ForgeBaseModel):
 
 # Re-export TenantScopedModel to keep the public surface explicit for
 # downstream consumers that import the schema module directly.
+# ---------------------------------------------------------------------------
+# Day 2 mock-removal track H — Architecture Diagrams (F-311)
+# ---------------------------------------------------------------------------
+
+
+DIAGRAM_LEVELS = {"context", "container", "component", "dataflow", "sequence"}
+
+
+class DiagramNodeResponse(ForgeBaseModel):
+    """One node of a C4 / dataflow diagram (Day 2 track H).
+
+    Wire shape mirrors the previous ``MOCK_DIAGRAMS`` node so the
+    existing ``DiagramsExplorer`` component drops in unchanged:
+    ``id`` is the string key the SVG renderer uses to look up the
+    node and the source/target for edges.
+    """
+
+    id: str
+    label: str
+    layer: str
+    x: int = 0
+    y: int = 0
+    details: str = ""
+
+
+class DiagramEdgeResponse(ForgeBaseModel):
+    """One directed edge between two diagram nodes (Day 2 track H).
+
+    Wire shape mirrors the previous ``MOCK_DIAGRAMS`` edge so the
+    existing ``DiagramsExplorer`` component drops in unchanged —
+    ``source`` / ``target`` are the string keys of the connected
+    nodes (look up by ``DiagramNodeResponse.id``).
+    """
+
+    id: str
+    source: str
+    target: str
+    label: str | None = None
+
+
+class C4DiagramResponse(ForgeBaseModel):
+    """One C4 / dataflow diagram with its nodes + edges nested (track H)."""
+
+    id: str
+    name: str
+    level: str
+    description: str = ""
+    tenant_id: UUID
+    project_id: UUID
+    nodes: list[DiagramNodeResponse] = Field(default_factory=list)
+    edges: list[DiagramEdgeResponse] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: datetime
+
+
+class C4DiagramListResponse(ForgeBaseModel):
+    items: list[C4DiagramResponse] = Field(default_factory=list)
+    total: int = 0
+
+
 _ = TenantScopedModel

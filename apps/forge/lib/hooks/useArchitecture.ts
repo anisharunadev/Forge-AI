@@ -68,6 +68,7 @@ import type {
   ArchitectureVersionRollbackInput,
   ContractFilter,
   CoverageReport,
+  DecisionVelocityResponse,
   LineageFilter,
   LineageGraph,
   OrphansFilter,
@@ -97,6 +98,9 @@ import type {
   TraceabilityFilter,
   TraceabilityMatrix,
   ValidationResult,
+  C4Diagram,
+  C4DiagramListResponse,
+  DiagramFilter,
 } from '@/lib/architecture/types';
 
 // ---------------------------------------------------------------------------
@@ -195,6 +199,12 @@ export const archQueryKeys = {
     detail: (id: string) => [...archQueryKeys.security.all(), 'detail', id] as const,
     posture: (projectId?: string) =>
       [...archQueryKeys.security.all(), 'posture', projectId ?? ''] as const,
+  },
+  // Day 2 mock-removal track I — Decision Velocity metric
+  metrics: {
+    all: () => [...archQueryKeys.all, 'metrics'] as const,
+    decisionVelocity: (filter: { project_id: string; weeks?: number }) =>
+      [...archQueryKeys.metrics.all(), 'decision-velocity', filter] as const,
   },
 };
 
@@ -982,3 +992,119 @@ export function useSecurityPosture(
     staleTime: 60_000,
   });
 }
+
+// ---------------------------------------------------------------------------
+// Activity feed — Day 2 Track J.
+//
+// Wraps `useAuditEvents` (from the LiteLLM / governance hooks layer)
+// and maps each row through `toArchitectureActivity` so the page can
+// consume a tab-shaped payload instead of the verbose audit shape.
+// Rule R2: tenant scoping comes from the JWT inside the audit
+// endpoint itself; we still require `project_id` so consumers declare
+// their scope explicitly and the result is project-filtered.
+// ---------------------------------------------------------------------------
+
+import { useMemo } from 'react';
+
+import { useAuditEvents, type AuditEventEntry } from './useLiteLLM';
+import {
+  toArchitectureActivity,
+  type ArchitectureActivity,
+} from '@/lib/architecture/adapters';
+
+const ACTIVITY_DEFAULT_LIMIT = 50;
+
+export interface ArchitectureActivityQuery {
+  data: ReadonlyArray<ArchitectureActivity>;
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+}
+
+/**
+ * Architecture Center activity feed. Pure projection over
+ * `useAuditEvents` — same network call, same cache slot, but the
+ * payload is shaped for the Overview tab. When the audit log is
+ * empty (or the query is mid-flight) we return `[]` so the page can
+ * render the empty state without nil-checks. Capped at 50 events to
+ * keep the Overview tab fast.
+ */
+export function useArchitectureActivity(args: {
+  project_id: string;
+  limit?: number;
+}): ArchitectureActivityQuery {
+  const limit = Math.min(args.limit ?? ACTIVITY_DEFAULT_LIMIT, ACTIVITY_DEFAULT_LIMIT);
+  const audit = useAuditEvents(7, limit);
+  const data = useMemo<ReadonlyArray<ArchitectureActivity>>(() => {
+    const rows: ReadonlyArray<AuditEventEntry> = audit.data ?? [];
+    return rows
+      .filter(
+        (e) =>
+          !args.project_id ||
+          !e.project_id ||
+          e.project_id === args.project_id,
+      )
+      .slice(0, limit)
+      .map(toArchitectureActivity);
+  }, [audit.data, args.project_id, limit]);
+  return {
+    data,
+    isLoading: audit.isLoading,
+    isError: audit.isError,
+    error: audit.error,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Architecture Diagrams (F-311) — Day 2 track H
+// ---------------------------------------------------------------------------
+
+export function useDiagrams(
+  filter?: DiagramFilter,
+): UseQueryResult<C4DiagramListResponse> {
+  return useQuery({
+    queryKey: [...archQueryKeys.all, 'diagrams', 'list', filter ?? {}] as const,
+    queryFn: () =>
+      api.get<C4DiagramListResponse>(`/architecture/diagrams${buildQuery(filter)}`),
+    enabled: !!filter?.project_id,
+    staleTime: 60_000,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Metrics (Day 2 mock-removal track I)
+// ---------------------------------------------------------------------------
+
+export interface DecisionVelocityFilter {
+  project_id: string;
+  weeks?: number;
+}
+
+/**
+ * Weekly counts of ADRs accepted per week for the last ``weeks`` weeks
+ * (default 12). Replaces the previous `MOCK_DECISION_VELOCITY` array
+ * on the Architecture Center overview page.
+ */
+export function useDecisionVelocity(
+  filter: DecisionVelocityFilter | null | undefined,
+): UseQueryResult<DecisionVelocityResponse> {
+  const weeks = filter?.weeks ?? 12;
+  return useQuery({
+    queryKey: archQueryKeys.metrics.decisionVelocity({
+      project_id: filter?.project_id ?? '',
+      weeks,
+    }),
+    queryFn: () =>
+      api.get<DecisionVelocityResponse>(
+        `/architecture/metrics/decision-velocity${buildQuery({
+          project_id: filter?.project_id,
+          weeks,
+        })}`,
+      ),
+    enabled: !!filter?.project_id,
+    // Backend sets `Cache-Control: max-age=300`; mirror that here so
+    // the TanStack cache and the browser cache agree.
+    staleTime: 5 * 60_000,
+  });
+}
+

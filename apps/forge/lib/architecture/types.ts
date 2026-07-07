@@ -592,6 +592,18 @@ export interface ArchitectureVersionDiffFilter {
 }
 
 // ---------------------------------------------------------------------------
+// Decision Velocity metric (Day-2 mock-removal track I)
+// ---------------------------------------------------------------------------
+
+/** Mirrors `DecisionVelocityResponse` (buckets = weekly counts). */
+export interface DecisionVelocityResponse {
+  tenant_id: string;
+  project_id: string;
+  weeks: number;
+  buckets: number[];
+}
+
+// ---------------------------------------------------------------------------
 // Security Report (M5-G4 — new surface)
 // ---------------------------------------------------------------------------
 
@@ -683,4 +695,74 @@ export interface SecurityPosture {
   top_affected_services: ReadonlyArray<{ service: string; count: number }>;
   trend: ReadonlyArray<{ date: string; score: number }>;
   computed_at: string;
+}
+
+// ---------------------------------------------------------------------------
+// F-311 — Architecture Diagrams (C4 / dataflow / sequence) — Day 2 track H
+// ---------------------------------------------------------------------------
+
+/** Mirrors `C4DiagramResponse.level` (`DIAGRAM_LEVELS`). */
+export type C4DiagramLevel =
+  | 'context'
+  | 'container'
+  | 'component'
+  | 'dataflow'
+  | 'sequence';
+
+/** Mirrors `DiagramNodeResponse.layer`. */
+export type DiagramLayer =
+  | 'user'
+  | 'gateway'
+  | 'service'
+  | 'data'
+  | 'external';
+
+/**
+ * Mirrors `C4DiagramResponse` + nested nodes/edges from the backend.
+ *
+ * Shape deliberately mirrors the previous `MOCK_DIAGRAMS` fixture
+ * (`apps/forge/lib/architecture/mock-fixtures.ts:711`) so the existing
+ * `DiagramsExplorer` component — which still imports `C4Diagram` from
+ * the fixtures module for its prop type — can render the live API
+ * payload without an adapter.
+ */
+export interface DiagramNode {
+  id: string;
+  label: string;
+  layer: DiagramLayer | string;
+  x: number;
+  y: number;
+  details: string;
+}
+
+export interface DiagramEdge {
+  id: string;
+  /** Node key (look up by DiagramNode.id). */
+  source: string;
+  /** Node key (look up by DiagramNode.id). */
+  target: string;
+  label: string | null;
+}
+
+export interface C4Diagram {
+  id: string;
+  name: string;
+  level: C4DiagramLevel | string;
+  description: string;
+  tenant_id: string;
+  project_id: string;
+  nodes: ReadonlyArray<DiagramNode>;
+  edges: ReadonlyArray<DiagramEdge>;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Mirrors `C4DiagramListResponse`. */
+export interface C4DiagramListResponse {
+  items: C4Diagram[];
+  total: number;
+}
+
+export interface DiagramFilter {
+  project_id?: string;
 }
