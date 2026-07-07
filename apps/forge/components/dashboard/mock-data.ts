@@ -53,6 +53,12 @@ export interface DashboardSnapshot {
   quickActions: ReadonlyArray<QuickAction>;
 }
 
+/**
+ * @deprecated Day 2 mock-removal: real backend data flows through
+ * `useDashboardKPIs` / `useTeamActivity` / `useAlerts` / `useAIInsights`
+ * in `MissionControl.tsx`. Kept only because some tests still reference it.
+ * Do NOT call from production components.
+ */
 export function mockSnapshot(): DashboardSnapshot {
   const now = new Date();
   return {
