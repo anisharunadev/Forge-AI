@@ -68,12 +68,13 @@ export type IconName =
 
 /** Grouping used by Sidebar + MobileNav + CommandPalette.
  *
- * M15-4 — outcome-oriented nav (Rec #3 from the audit). The first
- * group users see is now what they can *do* (outcomes), not what
- * subsystem they're in (centers). Capabilities stay reachable
- * in a demoted secondary group + ⌘K.
+ * M15-4 — outcome-oriented nav (Rec #3 from the audit) was retired
+ * in Sprint 1.1: the OUTCOMES sidebar group duplicated existing
+ * entries (/project-onboarding, /ideation, /architecture, /audit,
+ * /knowledge-center). The workflow spine (`apps/forge/app/workflow/`)
+ * replaces it as the unifying surface.
  */
-export type NavGroup = 'outcomes' | 'workspace' | 'centers' | 'lifecycle';
+export type NavGroup = 'workspace' | 'centers' | 'lifecycle';
 
 /** A single primary-nav entry. */
 export interface NavItem {
@@ -111,55 +112,6 @@ export const ICONS: Record<IconName, LucideIcon> = {
   LineChart: LineChart,
   Sparkles: Sparkles,
 };
-
-/**
- * Outcome-oriented primary navigation (M15-4).
- *
- * Outcomes describe what the *user* wants to accomplish — not which
- * subsystem they end up in. Each outcome maps to one or more existing
- * routes via the same hrefs; the difference is *voice* and *rank*
- * (outcomes come first, capabilities come second).
- *
- * Refs: docs/product/positioning.md + Rec #3 (hide complexity) +
- * Rec #8 (outcomes over features).
- */
-export const OUTCOMES: ReadonlyArray<NavItem> = [
-  {
-    href: '/project-onboarding',
-    label: 'Start a new project',
-    iconName: 'Compass',
-    group: 'outcomes',
-    keywords: ['onboard', 'first run', 'wizard', 'sample data'],
-  },
-  {
-    href: '/ideation',
-    label: 'Capture an idea',
-    iconName: 'Lightbulb',
-    group: 'outcomes',
-    keywords: ['idea', 'prd', 'roadmap', 'intake'],
-  },
-  {
-    href: '/architecture',
-    label: 'Decide an architecture change',
-    iconName: 'Network',
-    group: 'outcomes',
-    keywords: ['adr', 'review', 'approval', 'task', 'breakdown'],
-  },
-  {
-    href: '/audit',
-    label: 'Review AI work',
-    iconName: 'Wrench',
-    group: 'outcomes',
-    keywords: ['timeline', 'log', 'audit', 'explainability'],
-  },
-  {
-    href: '/knowledge-center',
-    label: 'Browse knowledge',
-    iconName: 'Library',
-    group: 'outcomes',
-    keywords: ['kg', 'graph', 'knowledge', 'artifacts'],
-  },
-];
 
 /**
  * Primary navigation — verbatim copy of the array that used to live
@@ -215,15 +167,13 @@ export const NAV: ReadonlyArray<NavItem> = [
 
 /** Display labels for each group, in render order. */
 export const GROUP_LABELS: Record<NavGroup, string> = {
-  outcomes: 'Outcomes',
   workspace: 'Workspace',
   centers: 'Capabilities',
   lifecycle: 'Lifecycle',
 };
 
-/** Group order. Outcomes first (Rec #3, Rec #8). */
+/** Group order. Outcomes retired in Sprint 1.1. */
 const GROUP_ORDER: ReadonlyArray<NavGroup> = [
-  'outcomes',
   'workspace',
   'centers',
   'lifecycle',
@@ -238,15 +188,10 @@ export interface GroupedNav {
  * Return the NAV array grouped + ordered, ready to render.
  */
 export function groupedNav(): ReadonlyArray<GroupedNav> {
-  return GROUP_ORDER.map((group) => {
-    // Outcomes render separately (the OUTCOMES array, in order).
-    // Workspace/centers/lifecycle consume the NAV array. This keeps
-    // the existing renderer, CommandPalette, MobileNav unchanged.
-    if (group === 'outcomes') {
-      return { group, items: OUTCOMES };
-    }
-    return { group, items: NAV.filter((n) => n.group === group) };
-  });
+  return GROUP_ORDER.map((group) => ({
+    group,
+    items: NAV.filter((n) => n.group === group),
+  }));
 }
 
 /**
@@ -307,16 +252,6 @@ export function searchNav(
   const q = query.trim().toLowerCase();
   if (!q) return [];
   const matches: NavItem[] = [];
-  // M15-4 — search must include OUTCOMES so ⌘K finds the new outcome
-  // actions. Outcomes surface first (prefer user verbs over subsystem
-  // names in the palette results).
-  for (const item of OUTCOMES) {
-    const haystack = [item.label, ...(item.keywords ?? [])].join(' ').toLowerCase();
-    if (haystack.includes(q)) {
-      matches.push(item);
-      if (matches.length >= limit) break;
-    }
-  }
   for (const item of NAV) {
     if (matches.length >= limit) break;
     const haystack = [item.label, ...(item.keywords ?? [])].join(' ').toLowerCase();
