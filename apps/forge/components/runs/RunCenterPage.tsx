@@ -498,7 +498,7 @@ export function RunCenterPage() {
               label: 'Open Command Center',
               icon: <Zap className="h-4 w-4" aria-hidden="true" />,
               onClick: () => {
-                window.location.href = '/forge-command-center';
+                window.location.href = '/workflow';
               },
             }}
             secondaryAction={{

@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk grep -n \\\"request.log\\\\|request: {\\\" /home/arunachalam.v@knackforge.com/.paperclip/instances/default/projects/3fde3945-9dcb-4c43-95b3-4e4e9db6ffe9/bb09220b-5ed2-47b3-9c58-d3e05cefb413/...",
-  "error": "Exit code 2\nrg: regex parse error:\n    (?:request.log|request: {)\n                             ^\nerror: repetition quantifier expects a valid decimal\n0 matches for 'request.log\\|request: {'",
-  "timestamp": "2026-06-16T18:44:04.198Z",
-  "retry_count": 1
-}

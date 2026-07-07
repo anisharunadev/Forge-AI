@@ -148,7 +148,7 @@ export function useSidecarProbe(
     // The PTY sidecar runs `bin/terminal-server.mjs` and writes to its
     // own stdout. Until we have a real log stream endpoint, deep-link
     // to the terminal server log file under the agent-runs directory.
-    const url = `/forge-command-center?source=terminal-sidecar&ts=${Date.now()}`;
+    const url = `/workflow?source=terminal-sidecar&ts=${Date.now()}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   }, []);
 

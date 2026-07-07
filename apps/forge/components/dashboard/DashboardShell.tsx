@@ -33,7 +33,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
           </CardHeader>
           <CardContent>
             <Button asChild size="sm">
-              <Link href="/forge-command-center">
+              <Link href="/workflow">
                 Go to Command Center
                 <ArrowRight className="ml-1 h-4 w-4" aria-hidden="true" />
               </Link>

@@ -51,21 +51,30 @@ const nextConfig = {
       },
     ];
   },
-  // Step 44 — Stories moved from `/project-intelligence/stories` to its
-  // own top-level `/stories` route. These redirects preserve bookmarks
-  // + external links without forcing a server-rendered intermediate.
+  // M18 — Product transformation cut. The following routes were removed
+  // as part of collapsing the 12-center navigation to the single
+  // `/workflow` spine. Bookmarks + external links are preserved via
+  // redirects to the canonical replacement (or to `/workflow` when no
+  // equivalent exists).
   async redirects() {
     return [
-      {
-        source: '/project-intelligence/stories',
-        destination: '/stories',
-        permanent: true,
-      },
-      {
-        source: '/project-intelligence/stories/:id',
-        destination: '/stories/:id',
-        permanent: true,
-      },
+      // Legacy dashboard → workflow shell.
+      { source: '/dashboard', destination: '/workflow', permanent: true },
+      // Center pages removed in M18.
+      { source: '/forge-command-center', destination: '/workflow', permanent: true },
+      { source: '/stories', destination: '/workflow/idea', permanent: true },
+      { source: '/stories/:id', destination: '/workflow/idea', permanent: true },
+      { source: '/refactor', destination: '/workflow/develop', permanent: true },
+      { source: '/refactor/:path*', destination: '/workflow/develop', permanent: true },
+      { source: '/validator', destination: '/workflow/develop', permanent: true },
+      { source: '/validator/:path*', destination: '/workflow/develop', permanent: true },
+      { source: '/organization-knowledge', destination: '/workflow/idea', permanent: true },
+      { source: '/project-intelligence', destination: '/workflow/architecture', permanent: true },
+      { source: '/project-intelligence/:path*', destination: '/workflow/architecture', permanent: true },
+      { source: '/personas', destination: '/workflow', permanent: true },
+      { source: '/personas/:path*', destination: '/workflow', permanent: true },
+      { source: '/governance-center', destination: '/governance', permanent: true },
+      { source: '/governance-center/:path*', destination: '/governance', permanent: true },
     ];
   },
 };

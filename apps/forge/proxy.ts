@@ -11,8 +11,8 @@
  *   1. **OIDC gate** — close M1 G4. Unauthenticated requests for
  *      protected routes (`/dashboard`, `/ideation`, `/architecture`,
  *      `/runs`, `/audit`, `/knowledge-center`, `/connector-center`,
- *      `/copilot`, `/forge-terminal`, `/governance-center`,
- *      `/admin/*`, `/personas/*`) get 302'd to `/login`. The
+ *      `/copilot`, `/forge-terminal`,
+ *      `/admin/*`) get 302'd to `/login`. The
  *      shared evaluator lives in `lib/auth/oidc-gate.ts` so the
  *      legacy `middleware.ts` runs the SAME policy.
  *

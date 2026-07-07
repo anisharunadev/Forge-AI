@@ -81,7 +81,7 @@ export function FirstRunOnboarding({ onDismiss, className }: FirstRunOnboardingP
           icon={Play}
           title="Run a command"
           cta="Open Command Center"
-          href="/forge-command-center"
+          href="/workflow"
           color="var(--accent-cyan)"
           testId="onboard-step-run"
         />

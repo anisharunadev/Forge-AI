@@ -189,7 +189,7 @@ export function CommandCard({ command }: CommandCardProps) {
             size="sm"
             className="px-2 text-xs text-muted-foreground"
           >
-            <a href={`/forge-command-center?history=${command.name}`}>
+            <a href={`/workflow?action=${command.name}`}>
               View history
             </a>
           </Button>
