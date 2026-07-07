@@ -62,9 +62,11 @@ const SECTION_ICONS: Record<
 };
 
 // -----------------------------------------------------------------------------
-// Sample / static data — would normally come from a `useContextStore` / skill
-// registry. Kept inline for Step 36 (the rails are wireframe-grade); the
-// data hooks can be added when those stores land.
+// Type contracts — kept here so the panels below stay typed when the live
+// data hooks land (Day 4+). Empty-state UI is wired in Track O (Day 3);
+// the SAMPLE_* fixtures are retained ONLY for backwards-compat with any
+// external tester that imports them by name. They are NOT seeded into the
+// UI anymore.
 // -----------------------------------------------------------------------------
 
 interface ContextItem {
@@ -73,25 +75,11 @@ interface ContextItem {
   source: 'spec' | 'ticket' | 'adr' | 'doc';
 }
 
-const SAMPLE_CONTEXT: ReadonlyArray<ContextItem> = [
-  { id: 'ctx-spec-forge-ai',  name: 'spec/forge-ai.md',         source: 'spec' },
-  { id: 'ctx-adr-006',        name: 'ADR-006 · provider-layer', source: 'adr' },
-  { id: 'ctx-ticket-1234',    name: 'TICKET-1234 · auth-flow',  source: 'ticket' },
-];
-
 interface SkillEntry {
   id: string;
   name: string;
   description: string;
 }
-
-const SAMPLE_SKILLS: ReadonlyArray<SkillEntry> = [
-  { id: 'forge-plan-phase',    name: 'forge:plan-phase',    description: 'Plan a single GSD phase' },
-  { id: 'forge-execute-phase', name: 'forge:execute-phase', description: 'Run a planned phase' },
-  { id: 'forge-verify-work',   name: 'forge:verify-work',   description: 'Verify phase goal achievement' },
-  { id: 'forge-code-review',   name: 'forge:code-review',   description: 'Multi-lens code review' },
-  { id: 'forge-debug',         name: 'forge:debug',         description: 'Systematic debug harness' },
-];
 
 interface RecentCommand {
   id: string;
@@ -99,12 +87,28 @@ interface RecentCommand {
   hint: string;
 }
 
-const SAMPLE_COMMANDS: ReadonlyArray<RecentCommand> = [
-  { id: 'cmd-explore', label: 'forge:explore',         hint: 'Sweep the codebase' },
-  { id: 'cmd-plan',    label: 'forge:plan-phase',      hint: 'Plan a new phase' },
-  { id: 'cmd-exec',    label: 'forge:execute-phase',   hint: 'Execute the active plan' },
-  { id: 'cmd-vw',      label: 'forge:verify-work',     hint: 'Verify goal achievement' },
-];
+// ponytail: deliberately empty fixtures — Track O (Day 3) removed
+// SAMPLE_* seeding from the rail panels. These exports remain solely so
+// any tests or doc-imports that referenced them by name still resolve
+// to a typed empty array instead of an undeclared identifier.
+/**
+ * @deprecated Retained for backwards-compat only. Track O (Day 3) removed
+ *   seeding from the LeftRail; panels render explicit empty states. Drop
+ *   on Day 4+ once external callers migrate.
+ */
+export const SAMPLE_CONTEXT: ReadonlyArray<ContextItem> = [];
+
+/**
+ * @deprecated Retained for backwards-compat only. Track O (Day 3) removed
+ *   seeding from the LeftRail; the SkillsPanel renders an empty state.
+ */
+export const SAMPLE_SKILLS: ReadonlyArray<SkillEntry> = [];
+
+/**
+ * @deprecated Retained for backwards-compat only. Track O (Day 3) removed
+ *   seeding from the LeftRail; the CommandsPanel renders an empty state.
+ */
+export const SAMPLE_COMMANDS: ReadonlyArray<RecentCommand> = [];
 
 const CONTEXT_SOURCE_COLOR: Record<ContextItem['source'], string> = {
   spec:   'var(--accent-cyan)',
@@ -380,7 +384,10 @@ function sessionStatusColor(status: string): string {
 // -----------------------------------------------------------------------------
 
 function ContextPanel() {
-  const [items, setItems] = React.useState<ContextItem[]>([...SAMPLE_CONTEXT]);
+  // ponytail: skills/context/commands endpoints are pending; start empty
+  // (Track O — Day 3). The local "remove" reducer still wires through to
+  // an empty state without changes.
+  const [items, setItems] = React.useState<ContextItem[]>([]);
 
   const remove = (id: string) => setItems((xs) => xs.filter((x) => x.id !== id));
 
@@ -442,15 +449,19 @@ function ContextPanel() {
 function SkillsPanel() {
   const [query, setQuery] = React.useState('');
 
+  // ponytail: skills registry endpoint pending — empty source list.
+  // The filter logic is preserved so Day-4 wiring is a one-line change.
+  const source: ReadonlyArray<SkillEntry> = React.useMemo(() => [], []);
+
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return SAMPLE_SKILLS;
-    return SAMPLE_SKILLS.filter(
+    if (!q) return source;
+    return source.filter(
       (s) =>
         s.name.toLowerCase().includes(q) ||
         s.description.toLowerCase().includes(q),
     );
-  }, [query]);
+  }, [query, source]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -470,7 +481,7 @@ function SkillsPanel() {
       <ul className="flex-1 divide-y divide-[var(--border-subtle)]" data-testid="left-rail-skill-list">
         {filtered.length === 0 ? (
           <li className="px-4 py-6 text-center text-xs text-[var(--fg-tertiary)]">
-            No skills match.
+            No skills loaded yet — Skills registry pending.
           </li>
         ) : (
           filtered.map((skill) => (
@@ -520,9 +531,25 @@ function CommandsPanel() {
     );
   };
 
+  // ponytail: recent-commands endpoint pending — render an explicit empty
+  // state instead of seeding fixtures. The "run" callback stays wired so
+  // Day-4 wiring is a one-line change.
+  const commands: ReadonlyArray<RecentCommand> = [];
+
+  if (commands.length === 0) {
+    return (
+      <div
+        className="p-4 text-center text-xs text-[var(--fg-tertiary)]"
+        data-testid="left-rail-command-empty"
+      >
+        No recent commands yet — backend integration pending.
+      </div>
+    );
+  }
+
   return (
     <ul className="divide-y divide-[var(--border-subtle)]" data-testid="left-rail-command-list">
-      {SAMPLE_COMMANDS.map((cmd) => (
+      {commands.map((cmd) => (
         <li key={cmd.id}>
           <button
             type="button"

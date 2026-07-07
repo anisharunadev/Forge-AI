@@ -5,7 +5,7 @@
  *
  * Step 5 base + Step 28 additive panels:
  *   - SOURCE card: where the idea came from (Zendesk / Jira / GitHub / Manual / Market)
- *   - AI REASONING card (uses <ReasoningChain>)
+ *   - AI REASONING card (summary; full chain lands in Day 4+)
  *   - SYNC STATUS card: Jira + Confluence + IDE rows
  *   - PIPELINE BUTTONS footer: Generate PRD / Push to Jira / Confluence / ai agent
  *   - Big "🚀 Send to build pipeline" CTA when status === 'approved'
@@ -44,9 +44,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { ScoreBadge } from './ScoreBadge';
-import { ReasoningChain } from './ReasoningChain';
 import {
-  SAMPLE_REASONING,
   findEnrichment,
   type IdeaReasoningSummary,
   type IdeaSyncStatus,
@@ -367,8 +365,15 @@ export function IdeaDetailPanel({
                 <summary className="cursor-pointer list-none p-3">
                   <ReasoningSummaryCard reasoning={enrichment.reasoning} />
                 </summary>
-                <div className="border-t border-[var(--border-subtle)] p-3">
-                  <ReasoningChain chain={SAMPLE_REASONING} defaultOpen={false} />
+                <div className="flex flex-col gap-2 border-t border-[var(--border-subtle)] p-3 text-center">
+                  <p className="text-xs font-medium text-[var(--fg-secondary)]">
+                    Full reasoning chain pending
+                  </p>
+                  <p className="text-[10px] text-[var(--fg-tertiary)]">
+                    ponytail: Track O (Day 3) removed the SAMPLE_REASONING
+                    seed. Live chain lands with the ideation reasoning
+                    endpoint (Day 4+).
+                  </p>
                 </div>
               </details>
             ) : null}
