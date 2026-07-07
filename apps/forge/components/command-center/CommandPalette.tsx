@@ -19,7 +19,7 @@ import {
   type ForgeSkill,
 } from '@/lib/forge-core/manifest';
 import { PHASE_ACCENT } from '@/lib/command-center/theme';
-import { SAMPLE_SPECS, SAMPLE_TICKETS } from '@/lib/command-center/sample-data';
+import { useTickets, useSpecs } from '@/lib/hooks/useForgeFixtures';
 
 type PaletteItem =
   | { kind: 'skill'; skill: ForgeSkill }
@@ -32,6 +32,12 @@ export function CommandPalette() {
   const [query, setQuery] = React.useState('');
   const [highlight, setHighlight] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
+
+  // Track K (Day 2) — backed by stub hooks until Day 3+ ships
+  // `/v1/tickets` and `/v1/specs`. Until then the palette's ticket
+  // and spec rails are empty but the skill rail still works.
+  const { data: tickets } = useTickets();
+  const { data: specs } = useSpecs();
 
   React.useEffect(() => {
     if (commandPaletteOpen) {
@@ -49,12 +55,12 @@ export function CommandPalette() {
     if (!q) {
       return [
         ...FORGE_SKILLS.slice(0, 5).map((s) => ({ kind: 'skill' as const, skill: s })),
-        ...SAMPLE_TICKETS.slice(0, 3).map((t) => ({
+        ...tickets.slice(0, 3).map((t) => ({
           kind: 'ticket' as const,
           id: t.id,
           title: t.title,
         })),
-        ...SAMPLE_SPECS.slice(0, 3).map((s) => ({
+        ...specs.slice(0, 3).map((s) => ({
           kind: 'spec' as const,
           id: s.id,
           title: s.title,
@@ -72,7 +78,7 @@ export function CommandPalette() {
         if (out.length >= 8) break;
       }
     }
-    for (const t of SAMPLE_TICKETS) {
+    for (const t of tickets) {
       if (
         t.id.toLowerCase().includes(q) ||
         t.title.toLowerCase().includes(q)
@@ -81,7 +87,7 @@ export function CommandPalette() {
         if (out.length >= 12) break;
       }
     }
-    for (const s of SAMPLE_SPECS) {
+    for (const s of specs) {
       if (
         s.id.toLowerCase().includes(q) ||
         s.title.toLowerCase().includes(q)
@@ -91,7 +97,7 @@ export function CommandPalette() {
       }
     }
     return out;
-  }, [query]);
+  }, [query, tickets, specs]);
 
   const onKey = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {

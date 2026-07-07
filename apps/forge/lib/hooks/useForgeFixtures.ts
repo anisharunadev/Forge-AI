@@ -15,6 +15,8 @@
  * Query hooks (mirroring `useGuardrails` / `useStandards`).
  */
 
+import type { Ticket, Spec } from '@/lib/command-center/sample-data';
+
 // ---------------------------------------------------------------------------
 // Typed shapes (mirrors the historical lib/governance/data.ts exports)
 // ---------------------------------------------------------------------------
@@ -227,4 +229,41 @@ export function readBoardTokenForPersona(persona: string): RbacToken | undefined
 /** Returns a static Board token (legacy mock helper). */
 export function boardTokenPresent(): RbacToken {
   return { kind: 'board', displayName: 'Board', id: 'board-token' };
+}
+
+// ---------------------------------------------------------------------------
+// Track K (Day 2) — Command Center placeholder hooks
+// ---------------------------------------------------------------------------
+
+/**
+ * useTickets — placeholder hook for Command Center tickets.
+ *
+ * The general `/v1/tickets` endpoint does not exist yet (the audit
+ * flagged it as `NEEDS_BACKEND_IMPL`); tickets currently live under
+ * `/v1/connectors/{id}/history`. Returning `[]` keeps the existing
+ * UI contract intact and surfaces an explicit empty state with a
+ * "Backend integration pending" message.
+ *
+ * Once Day 3+ ships `GET /v1/tickets`, swap the body for a real
+ * TanStack `useQuery` against that endpoint and keep the return type.
+ */
+export function useTickets(_opts: { project_id?: string } = {}): {
+  data: ReadonlyArray<Ticket>;
+  isLoading: boolean;
+} {
+  // ponytail: returns empty array until tickets endpoint lands (Day 3+)
+  return { data: [], isLoading: false };
+}
+
+/**
+ * useSpecs — placeholder hook for Command Center specs.
+ *
+ * Same status as `useTickets` above. Day 3+ will add `GET /v1/specs`.
+ */
+export function useSpecs(_opts: { project_id?: string } = {}): {
+  data: ReadonlyArray<Spec>;
+  isLoading: boolean;
+} {
+  // ponytail: returns empty array until specs endpoint lands (Day 3+)
+  return { data: [], isLoading: false };
 }

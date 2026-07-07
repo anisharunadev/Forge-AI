@@ -44,12 +44,14 @@ import {
 } from '@/lib/forge-core/manifest';
 import { PHASE_ACCENT, SPEC_STATUS_COLOR } from '@/lib/command-center/theme';
 import {
-  SAMPLE_SPECS,
-  SAMPLE_AI_SUGGESTIONS,
+  // Spec/Ticket types re-used; the SAMPLE_* data is no longer read
+  // by this component — Track K (Day 2) swapped it for the
+  // `useSpecs` stub from `lib/hooks/useForgeFixtures.ts`.
   type Spec,
   type SpecStatus,
 } from '@/lib/command-center/sample-data';
 import { useCommandCenter } from '@/lib/command-center/store';
+import { useSpecs } from '@/lib/hooks/useForgeFixtures';
 
 const SPEC_FILTERS: ReadonlyArray<{ id: SpecStatus | 'all'; label: string }> = [
   { id: 'all', label: 'All' },
@@ -84,19 +86,21 @@ function ProgressBar({ value }: { value: number }) {
 }
 
 function SpecsList({
+  specs,
   selected,
   onSelect,
   filter,
   onFilter,
   onOpenTemplate,
 }: {
+  specs: ReadonlyArray<Spec>;
   selected: string;
   onSelect: (id: string) => void;
   filter: SpecStatus | 'all';
   onFilter: (f: SpecStatus | 'all') => void;
   onOpenTemplate: () => void;
 }) {
-  const filtered = SAMPLE_SPECS.filter((s) =>
+  const filtered = specs.filter((s) =>
     filter === 'all' ? true : s.status === filter,
   );
   return (
@@ -163,6 +167,18 @@ function SpecsList({
       </Button>
 
       <ul role="list" className="flex flex-col gap-2 overflow-y-auto">
+        {filtered.length === 0 ? (
+          <li className="rounded-[var(--radius-md)] border border-dashed border-[var(--border-subtle)] bg-[var(--bg-inset)] p-4 text-center">
+            <p className="text-xs font-medium text-[var(--fg-secondary)]">
+              No specs loaded yet
+            </p>
+            <p className="mt-1 text-[10px] text-[var(--fg-tertiary)]">
+              The unified <code className="font-mono">/v1/specs</code>{' '}
+              endpoint ships in Day 3+. For now, start a new spec from
+              a ticket or template.
+            </p>
+          </li>
+        ) : null}
         {filtered.map((s) => {
           const isActive = s.id === selected;
           const status = SPEC_STATUS_COLOR[s.status];
@@ -620,7 +636,17 @@ function SpecSidePanel({ spec }: { spec: Spec }) {
           AI suggestions
         </p>
         <ul role="list" className="mt-2 space-y-2">
-          {SAMPLE_AI_SUGGESTIONS.slice(0, 2).map((s) => (
+          {/* ponytail: AI suggestions backed by the runtime orchestrator
+              (Day 3+); Day 2 renders an empty state instead of seeding
+              mock data. */}
+          <li className="rounded-[var(--radius-md)] border border-dashed border-[var(--border-subtle)] bg-[var(--bg-inset)] p-3 text-center">
+            <p className="text-[11px] text-[var(--fg-tertiary)]">
+              AI suggestions will appear here once the orchestrator
+              suggestions feed lands. Backend integration pending.
+            </p>
+          </li>
+        </ul>
+      </section>
             <li
               key={s.id}
               className="rounded-[var(--radius-md)] border border-[var(--accent-violet)]/30 bg-[var(--accent-violet)]/5 p-3"
@@ -663,13 +689,42 @@ export function SpecMode() {
   const [editing, setEditing] = React.useState(false);
   const [templateOpen, setTemplateOpen] = React.useState(false);
 
-  const spec =
-    SAMPLE_SPECS.find((s) => s.id === selectedSpecId) ?? SAMPLE_SPECS[0];
+  // Track K (Day 2) — backed by the `useSpecs` stub. Returns `[]`
+  // until the unified `/v1/specs` endpoint ships (Day 3+); the
+  // component falls through to an explicit empty-state body.
+  const { data: specs } = useSpecs();
 
-  // spec is guaranteed non-null because SAMPLE_SPECS is never empty in the
-  // mock fixture; the runtime guard is here to satisfy noUncheckedIndexedAccess.
+  const spec = specs.find((s) => s.id === selectedSpecId) ?? specs[0];
+
   if (!spec) {
-    return null;
+    // ponytail: backend-pending empty state for the whole Spec mode.
+    return (
+      <div
+        className="flex w-full flex-col items-center justify-center gap-3 rounded-[var(--radius-lg)] border border-dashed border-[var(--border-subtle)] bg-[var(--bg-surface)] p-12 text-center"
+        data-testid="fcc-spec-empty"
+      >
+        <FileText className="h-8 w-8 text-[var(--fg-tertiary)]" aria-hidden />
+        <p className="text-md font-semibold text-[var(--fg-primary)]">
+          No specs loaded yet
+        </p>
+        <p className="max-w-md text-sm text-[var(--fg-tertiary)]">
+          The unified <code className="font-mono">/v1/specs</code>{' '}
+          endpoint is being wired up — it ships on Day 3+. Until then,
+          specs created in earlier sessions remain visible in your
+          project history.
+        </p>
+        <Button
+          size="sm"
+          variant="outline"
+          className="mt-2 border-[var(--border-subtle)] bg-[var(--bg-elevated)]"
+          onClick={() => setTemplateOpen(true)}
+          data-testid="fcc-spec-empty-template"
+        >
+          <FileText className="mr-1 h-3 w-3" aria-hidden />
+          Start from template
+        </Button>
+      </div>
+    );
   }
 
   React.useEffect(() => {
@@ -683,6 +738,7 @@ export function SpecMode() {
       data-testid="fcc-spec-mode"
     >
       <SpecsList
+        specs={specs}
         selected={spec.id}
         onSelect={setSelectedSpecId}
         filter={filter}

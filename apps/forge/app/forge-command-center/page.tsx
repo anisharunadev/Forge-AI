@@ -46,15 +46,8 @@ import { PhaseExecutionDrawerConnector } from '@/components/command-center/Phase
 import { FirstRunState } from '@/components/command-center/FirstRunState';
 import { useCommandCenter } from '@/lib/command-center/store';
 import { FORGE_PHASES } from '@/lib/forge-core/manifest';
-import { SAMPLE_LIVE_RUNS, SAMPLE_TICKETS } from '@/lib/command-center/sample-data';
-
-const ACTIVE_WORK_COUNT =
-  SAMPLE_LIVE_RUNS.length +
-  SAMPLE_TICKETS.filter(
-    (t) => t.status === 'in-progress' || t.status === 'in-review',
-  ).length;
-
-const NOTIFICATION_COUNT = 2;
+import { useLiveRuns } from '@/lib/hooks/useRuns';
+import { useTickets } from '@/lib/hooks/useForgeFixtures';
 
 export default function ForgeCommandCenterPage() {
   const {
@@ -70,6 +63,19 @@ export default function ForgeCommandCenterPage() {
     execution,
     executionOpen,
   } = useCommandCenter();
+
+  // Track K (Day 2) — wire to real workflows endpoint; tickets come
+  // back as `[]` until the backend ticket endpoint ships (Day 3+).
+  const { data: liveRuns } = useLiveRuns();
+  const { data: tickets } = useTickets();
+  const activeTicketCount = tickets.filter(
+    (t) => t.status === 'in-progress' || t.status === 'in-review',
+  ).length;
+
+  // ponytail: header count drives the badge; recomputed from the live
+  // hooks instead of fixture length.
+  const activeWorkCount = liveRuns.length + activeTicketCount;
+  const notificationCount = 2;
 
   /* ---------- Keyboard shortcuts ---------- */
 
@@ -210,8 +216,8 @@ export default function ForgeCommandCenterPage() {
       data-testid="forge-command-center"
     >
       <CommandCenterHeader
-        activeWorkCount={ACTIVE_WORK_COUNT}
-        notificationCount={NOTIFICATION_COUNT}
+        activeWorkCount={activeWorkCount}
+        notificationCount={notificationCount}
         onOpenMyWork={() => setMyWorkOpen(true)}
         onOpenCommandPalette={() => setCommandPaletteOpen(true)}
         onOpenShortcuts={() => setShortcutsOpen(true)}

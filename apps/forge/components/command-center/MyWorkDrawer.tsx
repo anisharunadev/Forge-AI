@@ -32,10 +32,8 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/lib/command-center/icons';
 import { cn } from '@/lib/utils';
 import {
-  SAMPLE_APPROVALS,
-  SAMPLE_LIVE_RUNS,
-  SAMPLE_RECENT_ARTIFACTS,
-  SAMPLE_TICKETS,
+  // Track K (Day 2) — SAMPLE_* fixtures were replaced by hooks. Type
+  // aliases below stay so the row components keep their strong types.
   type ApprovalItem,
   type LiveRun,
   type RecentArtifact,
@@ -44,6 +42,8 @@ import {
 import { PHASE_ACCENT, TICKET_STATUS_COLOR } from '@/lib/command-center/theme';
 import { skillById } from '@/lib/forge-core/manifest';
 import { useCommandCenter } from '@/lib/command-center/store';
+import { useLiveRuns } from '@/lib/hooks/useRuns';
+import { useTickets } from '@/lib/hooks/useForgeFixtures';
 
 function SectionHeader({
   icon: IconCmp,
@@ -227,6 +227,12 @@ export function MyWorkDrawer() {
   const { myWorkOpen, setMyWorkOpen } = useCommandCenter();
   const closeBtnRef = React.useRef<HTMLButtonElement>(null);
 
+  // Track K (Day 2) — wires the drawer to real hooks.
+  //   - liveRuns: backed by `GET /api/v1/workflows/runs`
+  //   - tickets: stub until `/v1/tickets` ships (Day 3+)
+  const { data: liveRuns } = useLiveRuns();
+  const { data: allTickets } = useTickets();
+
   React.useEffect(() => {
     if (!myWorkOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -238,7 +244,7 @@ export function MyWorkDrawer() {
     return () => window.removeEventListener('keydown', onKey);
   }, [myWorkOpen, setMyWorkOpen]);
 
-  const activeTickets = SAMPLE_TICKETS.filter(
+  const activeTickets = allTickets.filter(
     (t) => t.status === 'in-progress' || t.status === 'in-review',
   );
 
@@ -291,38 +297,48 @@ export function MyWorkDrawer() {
               </button>
             </header>
 
-            {/* Today's focus (AI) */}
-            <section className="space-y-2 rounded-[var(--radius-lg)] border border-[var(--accent-violet)]/30 bg-[var(--accent-violet)]/5 p-3">
-              <header className="flex items-center gap-2">
-                <Sparkles className="h-3 w-3 text-[var(--accent-violet)]" aria-hidden />
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--accent-violet)]">
-                  Today's focus
-                </span>
-              </header>
-              <p className="text-xs leading-relaxed text-[var(--fg-primary)]">
-                You have{' '}
-                <span className="font-semibold text-[var(--accent-cyan)]">
-                  ACME-123
-                </span>{' '}
-                in execution with{' '}
-                <span className="font-semibold text-[var(--accent-amber)]">
-                  2 pending approvals
-                </span>
-                . Spec{' '}
-                <span className="font-mono text-[var(--fg-primary)]">
-                  SPEC-041
-                </span>{' '}
-                is 64% through; 3 sub-tasks left in execution.
-              </p>
-              <Button
-                size="sm"
-                className="h-7 gap-1 bg-[var(--accent-violet)] text-white hover:opacity-90"
-                onClick={() => setMyWorkOpen(false)}
-              >
-                Resume ACME-123
-                <ArrowRight className="h-3 w-3" aria-hidden />
-              </Button>
-            </section>
+            {/* Today's focus (AI) — only renders when we have live
+                tickets to talk about; otherwise falls through to a
+                honest empty-state hint. */}
+            {activeTickets.length > 0 || liveRuns.length > 0 ? (
+              <section className="space-y-2 rounded-[var(--radius-lg)] border border-[var(--accent-violet)]/30 bg-[var(--accent-violet)]/5 p-3">
+                <header className="flex items-center gap-2">
+                  <Sparkles className="h-3 w-3 text-[var(--accent-violet)]" aria-hidden />
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--accent-violet)]">
+                    Today's focus
+                  </span>
+                </header>
+                <p className="text-xs leading-relaxed text-[var(--fg-primary)]">
+                  You have{' '}
+                  <span className="font-semibold text-[var(--accent-cyan)]">
+                    {activeTickets[0]?.id ?? '—'}
+                  </span>{' '}
+                  in execution with{' '}
+                  <span className="font-semibold text-[var(--accent-amber)]">
+                    {/* ponytail: approvals land in Day 3+; render 0 for now */}
+                    0 pending approvals
+                  </span>
+                  .
+                </p>
+                <Button
+                  size="sm"
+                  className="h-7 gap-1 bg-[var(--accent-violet)] text-white hover:opacity-90"
+                  onClick={() => setMyWorkOpen(false)}
+                  disabled={!activeTickets[0]}
+                >
+                  {activeTickets[0] ? `Resume ${activeTickets[0].id}` : 'Nothing to resume'}
+                  <ArrowRight className="h-3 w-3" aria-hidden />
+                </Button>
+              </section>
+            ) : (
+              <section className="space-y-2 rounded-[var(--radius-lg)] border border-dashed border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4 text-center">
+                <Sparkles className="mx-auto h-5 w-5 text-[var(--fg-tertiary)]" aria-hidden />
+                <p className="text-xs text-[var(--fg-secondary)]">
+                  Your "today's focus" will appear here once tickets and
+                  live runs sync from the workflows endpoint.
+                </p>
+              </section>
+            )}
 
             {/* Active tickets */}
             <section className="space-y-2">
@@ -331,13 +347,21 @@ export function MyWorkDrawer() {
                 label="Active tickets"
                 count={activeTickets.length}
               />
-              <ul role="list" className="space-y-2">
-                {activeTickets.map((t) => (
-                  <li key={t.id}>
-                    <TicketItem ticket={t} />
-                  </li>
-                ))}
-              </ul>
+              {activeTickets.length === 0 ? (
+                <p className="rounded-[var(--radius-md)] border border-dashed border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3 text-[11px] text-[var(--fg-tertiary)]">
+                  Backend integration pending — the unified{' '}
+                  <code className="font-mono">/v1/tickets</code> endpoint
+                  ships on Day 3+.
+                </p>
+              ) : (
+                <ul role="list" className="space-y-2">
+                  {activeTickets.map((t) => (
+                    <li key={t.id}>
+                      <TicketItem ticket={t} />
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
 
             {/* Active runs */}
@@ -345,13 +369,20 @@ export function MyWorkDrawer() {
               <SectionHeader
                 icon={PlayCircle}
                 label="Active runs"
-                count={SAMPLE_LIVE_RUNS.length}
+                count={liveRuns.length}
               />
-              <ul role="list" className="space-y-2">
-                {SAMPLE_LIVE_RUNS.map((r) => (
-                  <RunItem key={r.id} run={r} />
-                ))}
-              </ul>
+              {liveRuns.length === 0 ? (
+                <p className="rounded-[var(--radius-md)] border border-dashed border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3 text-[11px] text-[var(--fg-tertiary)]">
+                  No live workflow runs for this tenant yet. Trigger one
+                  from the Catalog mode to populate this list.
+                </p>
+              ) : (
+                <ul role="list" className="space-y-2">
+                  {liveRuns.map((r) => (
+                    <RunItem key={r.id} run={r} />
+                  ))}
+                </ul>
+              )}
             </section>
 
             {/* Pending approvals */}
@@ -359,13 +390,12 @@ export function MyWorkDrawer() {
               <SectionHeader
                 icon={ShieldCheck}
                 label="Pending approvals"
-                count={SAMPLE_APPROVALS.length}
+                count={0}
               />
-              <ul role="list" className="space-y-2">
-                {SAMPLE_APPROVALS.map((a) => (
-                  <ApprovalItemRow key={a.id} approval={a} />
-                ))}
-              </ul>
+              <p className="rounded-[var(--radius-md)] border border-dashed border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3 text-[11px] text-[var(--fg-tertiary)]">
+                Approval feed is being wired to the orchestrator — for
+                now, manage approvals in the Governance Center.
+              </p>
             </section>
 
             {/* Recent artifacts */}
@@ -373,13 +403,12 @@ export function MyWorkDrawer() {
               <SectionHeader
                 icon={History}
                 label="Recent artifacts"
-                count={SAMPLE_RECENT_ARTIFACTS.length}
+                count={0}
               />
-              <ul role="list" className="space-y-2">
-                {SAMPLE_RECENT_ARTIFACTS.map((a) => (
-                  <ArtifactItem key={a.id} artifact={a} />
-                ))}
-              </ul>
+              <p className="rounded-[var(--radius-md)] border border-dashed border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3 text-[11px] text-[var(--fg-tertiary)]">
+                Artifact feed comes from the audit timeline once the
+                activity adapter ships (Day 3+).
+              </p>
             </section>
 
             <footer className="mt-auto border-t border-[var(--border-subtle)] pt-3 text-[10px] text-[var(--fg-tertiary)]">

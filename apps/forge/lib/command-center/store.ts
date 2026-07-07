@@ -20,7 +20,10 @@ import type {
   Spec,
   Ticket,
 } from './sample-data';
-import { SAMPLE_SPECS, SAMPLE_TICKETS } from './sample-data';
+// Track K (Day 2) — store no longer reads SAMPLE_* for initial state.
+// The deprecated exports stay so any third-party imports keep
+// type-checking; selectors below intentionally return `undefined`
+// when no live IDs match.
 
 export type CommandCenterMode = 'ticket' | 'spec' | 'catalog';
 
@@ -120,18 +123,17 @@ export interface CommandCenterState {
   clearEvents: () => void;
 }
 
-/* Resolve the first spec/ticket up front so the UI has something
- * to show on first paint without an effect. */
-const INITIAL_SPEC = SAMPLE_SPECS[0];
-
+/* Track K (Day 2) — start with no selection. The Ticket / Spec
+ * surfaces set the id once a live item is picked; selectors below
+ * return `undefined` until the matching live item is loaded. */
 export const useCommandCenter = create<CommandCenterState>((set) => ({
   mode: 'ticket',
   setMode: (mode) => set({ mode }),
 
-  selectedTicketId: SAMPLE_TICKETS[0]?.id ?? null,
+  selectedTicketId: null,
   setSelectedTicketId: (selectedTicketId) => set({ selectedTicketId }),
 
-  selectedSpecId: INITIAL_SPEC?.id ?? 'SPEC-041',
+  selectedSpecId: '',
   setSelectedSpecId: (selectedSpecId) => set({ selectedSpecId }),
 
   activePhase: 'execution',
@@ -204,9 +206,14 @@ export const useCommandCenter = create<CommandCenterState>((set) => ({
 
 export function selectSelectedTicket(state: CommandCenterState): Ticket | undefined {
   if (!state.selectedTicketId) return undefined;
-  return SAMPLE_TICKETS.find((t) => t.id === state.selectedTicketId);
+  // ponytail: Day 2 returns undefined until the live ticket data
+  // lands — PhaseExecutionDrawer already handles the "no ticket"
+  // case via its `ticket?: Ticket` prop.
+  return undefined;
 }
 
 export function selectSelectedSpec(state: CommandCenterState): Spec | undefined {
-  return SAMPLE_SPECS.find((s) => s.id === state.selectedSpecId);
+  if (!state.selectedSpecId) return undefined;
+  // ponytail: same as above for the selected spec.
+  return undefined;
 }

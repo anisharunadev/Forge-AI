@@ -26,7 +26,7 @@
  * the page.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
@@ -49,6 +49,7 @@ import {
   type WorkflowRunsView,
 } from '@/lib/api';
 import type { RunExplainability } from '@/lib/api/runs-types';
+import type { LiveRun } from '@/lib/command-center/sample-data';
 import {
   getRunBudget,
   getRunExplainability,
@@ -108,6 +109,72 @@ export function useWorkflowRunsIndex() {
     queryFn: () => getWorkflowRunsView(),
     staleTime: 15_000,
   });
+}
+
+/**
+ * Track K (Day 2) — Command Center "live runs" hook.
+ *
+ * Wraps `useWorkflowRunsIndex()` and adapts the wire `WorkflowRun`
+ * shape to the `LiveRun` shape the My Work drawer still consumes.
+ * Returns `{ data: [], isLoading, error? }` when the backend is
+ * unreachable or returns `empty`, so the drawer renders an honest
+ * empty state instead of a stale fixture.
+ */
+export function useLiveRuns(_opts: { project_id?: string } = {}) {
+  const q = useWorkflowRunsIndex();
+  const data: ReadonlyArray<LiveRun> = useMemo(() => {
+    if (q.data?.state !== 'ok') return [];
+    return q.data.runs.map((r) => {
+      const stepDone = (r.step_results ?? []).filter(
+        (s) => s.status === 'succeeded' || s.status === 'failed' || s.status === 'skipped',
+      ).length;
+      const stepTotal = (r.step_results ?? []).length || 1;
+      const progress = Math.round((stepDone / stepTotal) * 100);
+      const status: LiveRun['status'] =
+        r.status === 'succeeded'
+          ? 'success'
+          : r.status === 'cancelled'
+            ? 'canceled'
+            : (r.status as LiveRun['status']);
+      return {
+        id: r.id,
+        skillId: `workflow:${r.workflow_id}`,
+        status,
+        progress,
+        startedAgo: r.started_at ? relativeFromNow(r.started_at) : 'queued',
+        duration: humanizeDuration(r.started_at, r.finished_at),
+        actor: r.triggered_by,
+      };
+    });
+  }, [q.data]);
+  return { data, isLoading: q.isLoading, error: q.error };
+}
+
+// ponytail: minimal humanizers — swap for a shared `lib/time/*` helper
+// once a third caller shows up. Uses Intl.RelativeTimeFormat.
+function relativeFromNow(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const sec = Math.round(diffMs / 1000);
+  if (sec < 60) return `${sec}s ago`;
+  const min = Math.round(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  return `${Math.round(hr / 24)}d ago`;
+}
+
+function humanizeDuration(
+  startedAt?: string | null,
+  finishedAt?: string | null,
+): string {
+  if (!startedAt) return '—';
+  const end = finishedAt ? new Date(finishedAt).getTime() : Date.now();
+  const ms = end - new Date(startedAt).getTime();
+  if (ms < 1000) return `${ms}ms`;
+  const sec = Math.round(ms / 1000);
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return m > 0 ? `${m}m ${String(s).padStart(2, '0')}s` : `${s}s`;
 }
 
 /**
