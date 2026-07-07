@@ -13,8 +13,9 @@
  *   - Zone 6: First-run onboarding overlay (when zero data)
  *
  * Data source is now `/api/v1/dashboard/*` (step-57). When the backend
- * is unreachable, the page falls back to `mockSnapshot()` so the
- * surface stays renderable during dev.
+ * is unreachable, the curated tiles render an explicit empty state and
+ * the `<ConnectivityBanner>` surfaces a "Backend unavailable" message —
+ * we no longer fall back to mock data in production.
  *
  * Skill influence:
  *   - `style` (Real-Time Monitoring, Data-Dense Dashboard)
@@ -29,7 +30,7 @@ import Link from 'next/link';
 import { Activity, Cpu, Sparkles } from 'lucide-react';
 
 import { useDashboardPrefs } from './preferences';
-import { mockSnapshot } from './mock-data';
+import type { DashboardSnapshot } from './mock-data';
 import {
   ConnectivityBanner,
   GreetingBar
@@ -66,6 +67,38 @@ import {
   useAIInsights,
 } from '@/lib/api/dashboard-hooks';
 
+// Empty snapshot used while the dashboard endpoints load or fail. Each
+// tile renders its own empty state from these zero values — no mock
+// data is rendered in production.
+const EMPTY_SNAPSHOT: DashboardSnapshot = {
+  generatedAt: '',
+  user: { firstName: '', email: '' },
+  tenant: { name: '', plan: '' },
+  online: false,
+  retryInSec: 0,
+  metrics: {
+    'active-agents': { value: 0, delta: 0, trend: [], accent: 'cyan', unit: '', label: '' },
+    'runs-today':    { value: 0, delta: 0, trend: [], accent: 'indigo', unit: '', label: '' },
+    'success-rate':  { value: 0, delta: 0, trend: [], accent: 'emerald', unit: '%', label: '' },
+    'avg-latency':   { value: 0, delta: 0, trend: [], accent: 'amber', unit: 'ms', label: '' },
+    'cost-today':    { value: 0, delta: 0, trend: [], accent: 'rose', unit: '$', label: '' },
+    'tokens-used':   { value: 0, delta: 0, trend: [], accent: 'violet', unit: '', label: '' },
+  },
+  agents: [],
+  activity: [],
+  runsToday: [],
+  cost: [],
+  runsOverTime: [],
+  topAgents: [],
+  approvals: [],
+  ideas: [],
+  insights: [],
+  team: [],
+  alerts: [],
+  pinnedCatalog: [],
+  quickActions: [],
+};
+
 export function MissionControl() {
   const { user, tenant } = useAuth();
   const { data: kpis, isError: kpisError } = useDashboardKPIs();
@@ -74,28 +107,28 @@ export function MissionControl() {
   const { data: insightsBackend } = useAIInsights();
 
   // The curated tiles still consume a DashboardSnapshot — when the
-  // backend is reachable we hydrate it from the real data; otherwise
-  // we fall back to mockSnapshot() so the surface never goes blank.
-  const snapshot = React.useMemo(() => {
+  // backend is reachable we hydrate it from the real data; otherwise we
+  // surface an empty snapshot so the tiles render their empty states and
+  // `<ConnectivityBanner>` (which keys off `snapshot.online`) can show the
+  // "Backend unavailable" message.
+  const snapshot = React.useMemo<DashboardSnapshot>(() => {
     if (kpis) {
       return {
-        ...mockSnapshot(),
+        ...EMPTY_SNAPSHOT,
         generatedAt: kpis.generated_at,
         user: {
-          firstName: user?.name?.split(' ')[0] ?? mockSnapshot().user.firstName,
-          email: user?.email ?? mockSnapshot().user.email,
+          firstName: user?.name?.split(' ')[0] ?? '',
+          email: user?.email ?? '',
         },
         tenant: {
-          name: tenant?.name ?? mockSnapshot().tenant.name,
-          plan: tenant?.plan ?? mockSnapshot().tenant.plan,
+          name: tenant?.name ?? '',
+          plan: tenant?.plan ?? '',
         },
         online: true,
       };
     }
-    if (kpisError) {
-      return mockSnapshot();
-    }
-    return mockSnapshot();
+    // Loading or error — keep `online: false` so the banner shows.
+    return EMPTY_SNAPSHOT;
   }, [kpis, kpisError, user, tenant]);
 
   const { prefs, mounted, togglePin, reorderWidgets } = useDashboardPrefs();
