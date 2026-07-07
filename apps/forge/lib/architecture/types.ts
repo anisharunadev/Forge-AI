@@ -638,6 +638,15 @@ export interface TechRadarCreateInput {
 /** Query filter for `GET /architecture/tech-radar`. */
 export interface TechRadarFilter {
   project_id?: string;
+// Decision Velocity metric (Day-2 mock-removal track I)
+// ---------------------------------------------------------------------------
+
+/** Mirrors `DecisionVelocityResponse` (buckets = weekly counts). */
+export interface DecisionVelocityResponse {
+  tenant_id: string;
+  project_id: string;
+  weeks: number;
+  buckets: number[];
 }
 
 // ---------------------------------------------------------------------------
@@ -735,6 +744,7 @@ export interface SecurityPosture {
 }
 
 
+
 // ---------------------------------------------------------------------------
 // F-311 — Architecture Diagrams (C4 / dataflow / sequence) — Day 2 track H
 // ---------------------------------------------------------------------------
@@ -767,6 +777,45 @@ export type {
   DiagramEdge,
   C4Diagram,
 } from '@/lib/architecture/mock-fixtures';
+/**
+ * Mirrors `C4DiagramResponse` + nested nodes/edges from the backend.
+ *
+ * Shape deliberately mirrors the previous `MOCK_DIAGRAMS` fixture
+ * (`apps/forge/lib/architecture/mock-fixtures.ts:711`) so the existing
+ * `DiagramsExplorer` component — which still imports `C4Diagram` from
+ * the fixtures module for its prop type — can render the live API
+ * payload without an adapter.
+ */
+export interface DiagramNode {
+  id: string;
+  label: string;
+  layer: DiagramLayer | string;
+  x: number;
+  y: number;
+  details: string;
+}
+
+export interface DiagramEdge {
+  id: string;
+  /** Node key (look up by DiagramNode.id). */
+  source: string;
+  /** Node key (look up by DiagramNode.id). */
+  target: string;
+  label: string | null;
+}
+
+export interface C4Diagram {
+  id: string;
+  name: string;
+  level: C4DiagramLevel | string;
+  description: string;
+  tenant_id: string;
+  project_id: string;
+  nodes: ReadonlyArray<DiagramNode>;
+  edges: ReadonlyArray<DiagramEdge>;
+  created_at: string;
+  updated_at: string;
+}
 
 /** Mirrors `C4DiagramListResponse`. */
 export interface C4DiagramListResponse {

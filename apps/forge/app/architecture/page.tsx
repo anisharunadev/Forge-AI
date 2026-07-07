@@ -115,6 +115,7 @@ import {
   useDecideApproval,
   useTechRadar,
   useDiagrams,
+  useDecisionVelocity,
 } from '@/lib/hooks/useArchitecture';
 import { SecurityReportPanel } from '@/components/architecture/SecurityReportPanel';
 import { useArchitecturePipelineWS } from '@/lib/architecture/use-pipeline-ws';
@@ -346,6 +347,15 @@ function OverviewTab({
   versions: ReadonlyArray<ArchitectureVersion>;
   activity: ReadonlyArray<ArchitectureActivity>;
 }) {
+  // Day 2 mock-removal track I — replaces `MOCK_DECISION_VELOCITY`
+  // with the real `/architecture/metrics/decision-velocity` aggregation.
+  const velocityQuery = useDecisionVelocity({
+    project_id:
+      process.env.NEXT_PUBLIC_FORGE_DEMO_PROJECT_ID ??
+      '22222222-2222-4222-8222-222222222222',
+  });
+  const velocity: ReadonlyArray<number> = velocityQuery.data?.buckets ?? [];
+
   const recentAdrs = [...adrs]
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 5);
@@ -645,18 +655,30 @@ function OverviewTab({
             <p className="text-xs text-[var(--fg-tertiary)]">ADRs accepted per week — last 12 weeks</p>
           </div>
           <span className="font-mono text-[10px] text-[var(--fg-tertiary)]">
-            peak: 0 in week 0
+            {(() => {
+              // ponytail: O(n) on a 12-int array; cheap inline loop wins
+              // over a `Math.max(...arr)` spread for short arrays. Compute
+              // the peak index only for the header; the Sparkline itself
+              // doesn't need it.
+              const buckets = velocity as ReadonlyArray<number>;
+              if (buckets.length === 0) {
+                return 'peak: —';
+              }
+              let peak = 0;
+              let peakIdx = 0;
+              for (let i = 0; i < buckets.length; i++) {
+                const v = buckets[i] ?? 0;
+                if (v > peak) {
+                  peak = v;
+                  peakIdx = i;
+                }
+              }
+              return `peak: ${peak} in week ${peakIdx + 1}`;
+            })()}
           </span>
         </header>
         <div className="h-32">
-          {(() => {
-            // Day 1 — Track G will add `/architecture/metrics/decision-velocity`.
-            // Until then we render a flat zero-line rather than fake numbers.
-            const data: ReadonlyArray<number> = [];
-            return (
-              <Sparkline data={data} color="var(--accent-primary)" height={120} />
-            );
-          })()}
+          <Sparkline data={velocity} color="var(--accent-primary)" height={120} />
         </div>
       </section>
 

@@ -209,6 +209,7 @@ api_router.include_router(architecture.risk_registers.router)
 api_router.include_router(architecture.task_breakdowns.router)
 api_router.include_router(architecture.traceability.router)
 api_router.include_router(architecture.versions.router)
+api_router.include_router(architecture.metrics.router)
 # M5 T-A3 — Security Report surface (5 endpoints under
 # /architecture/security-reports; see security_reports.py).
 api_router.include_router(architecture.security_reports.router)

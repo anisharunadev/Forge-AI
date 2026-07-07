@@ -8,6 +8,8 @@ from app.api.v1.architecture import (
     approvals,
     contracts,
     diagrams,
+
+    metrics,
     risk_registers,
     security_reports,
     standards,
@@ -23,6 +25,8 @@ __all__ = [
     "approvals",
     "contracts",
     "diagrams",
+
+    "metrics",
     "risk_registers",
     "security_reports",
     "standards",

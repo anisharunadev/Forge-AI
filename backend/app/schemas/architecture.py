@@ -338,6 +338,7 @@ __all__ = [
     "TaskBreakdownListResponse",
     "TaskBreakdownResponse",
     "TaskUpdateRequest",
+    "DecisionVelocityResponse",
     "ADRSpec",
     "TECH_RADAR_QUADRANTS",
     "TECH_RADAR_RINGS",
@@ -485,6 +486,24 @@ class ValidationResultResponse(ForgeBaseModel):
     matched_steps: list[str] = Field(default_factory=list)
     missing_steps: list[str] = Field(default_factory=list)
     notes: str = ""
+
+
+# ---------------------------------------------------------------------------
+# Day 2 mock-removal track I — Decision Velocity metric
+# ---------------------------------------------------------------------------
+
+
+class DecisionVelocityResponse(ForgeBaseModel):
+    """Weekly accepted-ADR counts over the last ``weeks`` weeks.
+
+    ``weeks`` is the number of items in ``buckets`` (the array length is
+    authoritative for the UI sparkline).
+    """
+
+    tenant_id: UUID
+    project_id: UUID
+    weeks: int
+    buckets: list[int] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -700,6 +719,7 @@ class C4DiagramResponse(ForgeBaseModel):
     Mirrors the previous frontend ``MOCK_DIAGRAMS`` shape so the UI
     can drop the mock fixture without an adapter.
     """
+    """One C4 / dataflow diagram with its nodes + edges nested (track H)."""
 
     id: str
     name: str
