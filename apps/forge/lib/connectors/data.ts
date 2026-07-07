@@ -326,6 +326,14 @@ const JIN  = { name: 'Jin Park', initials: 'JP' };
 const LEILA = { name: 'Leila Hassan', initials: 'LH' };
 const SAM = { name: 'Sam Okafor', initials: 'SO' };
 
+/**
+ * @deprecated Connector mock catalog. Backend integration is canonical;
+ * kept only as the intentional loading/error fallback in
+ * `LiveConnectorDataProvider` (three-state merge: loading → mocks,
+ * error → mocks, live → API). Removing this fallback would blank the UI
+ * on 5xx — worse UX than showing the curated catalog. Do not import from
+ * new code; route through the connector-centre hooks instead.
+ */
 export const CONNECTORS: ReadonlyArray<Connector> = [
   // ----- source-control -----
   {
