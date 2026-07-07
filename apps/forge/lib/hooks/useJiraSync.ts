@@ -23,7 +23,7 @@ import { useMutation } from '@tanstack/react-query';
 import { syncFromJira, type JiraSyncResult } from '@/lib/connectors/data';
 
 /** The Jira-backed Project Intelligence row that `Sync from Jira` targets. */
-export type JiraSyncTarget = 'epic' | 'story' | 'prd';
+export type JiraSyncTarget = { kind: 'org' } | { kind: 'project'; projectId: string };
 
 /** Variables passed to `useJiraSync(target).mutate(...)`. */
 export interface JiraSyncVariables {
@@ -34,7 +34,7 @@ export interface JiraSyncVariables {
 /** Stable query keys so the mutation cache survives HMR / route changes. */
 export const jiraSyncQueryKeys = {
   detail: (target: JiraSyncTarget, issueKey: string) =>
-    ['connectors', 'jira', 'sync', target, issueKey] as const,
+    ['connectors', 'jira', 'sync', JSON.stringify(target), issueKey] as const,
 };
 
 /**

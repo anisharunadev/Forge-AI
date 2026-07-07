@@ -49,7 +49,7 @@ function okState<T>(data: T): QueryState<T> {
   return { data, isPending: false, isError: false, isSuccess: true };
 }
 
-function errorState(): QueryState<undefined> {
+function errorState<T = undefined>(): QueryState<T> {
   return { data: undefined, isPending: false, isError: true, isSuccess: false };
 }
 
@@ -163,7 +163,7 @@ describe('<LiveConnectorDataProvider>', () => {
 
   it('case (b): useConnectors errors → exposes MOCK_CONNECTORS fallback', async () => {
     setApiState({
-      useConnectors: errorState(),
+      useConnectors: errorState<Connector[]>(),
       useMarketplace: emptyPendingState(),
       useCredentials: emptyPendingState(),
       useConnectorActivity: emptyPendingState(),

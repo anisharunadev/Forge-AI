@@ -109,7 +109,7 @@ export function MigrationGuide({ versions }: MigrationGuideProps) {
       return;
     }
     if (from.version === to.version) {
-      toast.warning('Pick two distinct versions');
+      toast.info('Pick two distinct versions');
       return;
     }
     const r = diffVersions(from, to);

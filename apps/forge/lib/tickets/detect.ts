@@ -32,25 +32,25 @@ export function detectTicket(input: string): DetectedTicket | null {
     /(https?:\/\/[^\s]+\.atlassian\.net\/browse\/[A-Z][A-Z0-9_]+-\d+)/i,
   );
   if (jiraUrl) {
-    const key = jiraUrl[1].split('/').pop()!.toUpperCase();
-    return { source: 'jira', key, url: jiraUrl[1], raw: jiraUrl[0] };
+    const key = jiraUrl[1]!.split('/').pop()!.toUpperCase();
+    return { source: 'jira', key, url: jiraUrl[1]!, raw: jiraUrl[0]! };
   }
   const jiraKey = trimmed.match(/\b([A-Z][A-Z0-9_]+-\d+)\b/);
   if (jiraKey) {
     return {
       source: 'jira',
-      key: jiraKey[1].toUpperCase(),
-      url: `https://example.atlassian.net/browse/${jiraKey[1].toUpperCase()}`,
-      raw: jiraKey[0],
+      key: jiraKey[1]!.toUpperCase(),
+      url: `https://example.atlassian.net/browse/${jiraKey[1]!.toUpperCase()}`,
+      raw: jiraKey[0]!,
     };
   }
 
   // GitHub — `github.com/org/repo#123` or `org/repo#123`.
   const ghUrl = trimmed.match(/(https?:\/\/github\.com\/[^\s]+\#\d+)/i);
   if (ghUrl) {
-    const m = ghUrl[1].match(/\#(\d+)/);
-    const num = m ? m[1] : '?';
-    return { source: 'github', key: `#${num}`, url: ghUrl[1], raw: ghUrl[0] };
+    const m = ghUrl[1]!.match(/\#(\d+)/);
+    const num = m ? m[1]! : '?';
+    return { source: 'github', key: `#${num}`, url: ghUrl[1]!, raw: ghUrl[0]! };
   }
   const ghKey = trimmed.match(/\b([\w.-]+\/[\w.-]+)#(\d+)\b/);
   if (ghKey) {
@@ -58,7 +58,7 @@ export function detectTicket(input: string): DetectedTicket | null {
       source: 'github',
       key: `${ghKey[1]}#${ghKey[2]}`,
       url: `https://github.com/${ghKey[1]}/issues/${ghKey[2]}`,
-      raw: ghKey[0],
+      raw: ghKey[0]!,
     };
   }
 
@@ -67,8 +67,8 @@ export function detectTicket(input: string): DetectedTicket | null {
     /(https?:\/\/linear\.app\/[^\s]+\/issue\/[A-Z][A-Z0-9]+-\d+)/i,
   );
   if (linUrl) {
-    const key = linUrl[1].split('/').pop()!.toUpperCase();
-    return { source: 'linear', key, url: linUrl[1], raw: linUrl[0] };
+    const key = linUrl[1]!.split('/').pop()!.toUpperCase();
+    return { source: 'linear', key, url: linUrl[1]!, raw: linUrl[0]! };
   }
 
   return null;

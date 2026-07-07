@@ -101,8 +101,8 @@ test.describe('Audit integrity (M7)', () => {
     // lives in `test_audit_invariant.py::test_chain_fails_on_tampered_payload`
     // on the backend; this Playwright spec ensures the surface stays
     // consistent.
-    expect(body).toHaveProperty('head_hash');
-    expect(body).toHaveProperty('length');
-    expect(typeof body.integrity_ok).toBe('boolean');
+    expect(baseline).toHaveProperty('head_hash');
+    expect(baseline).toHaveProperty('length');
+    expect(typeof baseline.integrity_ok).toBe('boolean');
   });
 });

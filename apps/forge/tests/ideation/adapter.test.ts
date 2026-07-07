@@ -13,7 +13,8 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { apiStatusToUi, uiStatusToApi, type ApiStatus } from '@/lib/ideation/adapter';
+import { apiStatusToUi, uiStatusToApi } from '@/lib/ideation/adapter';
+import type { IdeaStatus as ApiStatus } from '@/lib/api/ideation';
 
 const ALL_UI_STATUSES = ['intake', 'scoring', 'discovery', 'prd', 'approved', 'rejected', 'shipped'] as const;
 const ALL_API_STATUSES: ApiStatus[] = ['NEW', 'ANALYZING', 'SCORED', 'IN_ROADMAP', 'APPROVED', 'REJECTED', 'ARCHIVED'];

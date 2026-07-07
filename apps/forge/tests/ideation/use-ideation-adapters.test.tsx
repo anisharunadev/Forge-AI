@@ -96,7 +96,7 @@ describe('useIdeationAdapters', () => {
     defaultState.createIdea = { mutate, isPending: false, isError: false, data: undefined };
     const { result } = renderHook(() => useCreateIdeaAdapter());
     expect(typeof result.current.mutate).toBe('function');
-    result.current.mutate({ title: 'New', tenant_id: 't1', project_id: 'p1', source: 'manual' });
+    result.current.mutate({ input: { title: 'New', description: 'New idea body', project_id: 'p1', source: 'user' } });
     expect(mutate).toHaveBeenCalledTimes(1);
   });
 

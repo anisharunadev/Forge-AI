@@ -20,9 +20,18 @@ function connector(overrides: Partial<Connector> = {}): Connector {
     id: "jira",
     name: "jira",
     displayName: "Jira",
+    publisher: "Atlassian",
+    tagline: "Issue tracking",
+    description: "Jira connector",
+    category: "project-mgmt",
     tenantId: "acme-corp",
-    status: "success",
+    status: "healthy",
     tier: 1,
+    connectedAs: "acme@atlassian.net",
+    lastSyncAt: "2026-06-20T17:20:00Z",
+    nextSyncAt: "2026-06-20T18:20:00Z",
+    lastSuccessAt: "2026-06-20T17:20:00Z",
+    capabilities: [],
     health: {
       lastCallAt: "2026-06-20T17:20:00Z",
       p50Ms: 120,
@@ -31,44 +40,62 @@ function connector(overrides: Partial<Connector> = {}): Connector {
       callCount24h: 4321,
     },
     scope: {
+      binding: 'project',
       grantedScopes: ["read:jira-work", "write:jira-work"],
       deniedScopes: ["admin:jira-project"],
       roleBinding: "developer",
     },
     credential: {
-      secretRef: "tenants/acme-corp/secrets/jira_cred@latest",
-      redacted: true,
-      valueLen: 64,
+      id: 'cred-jira-1',
+      name: 'Jira PAT',
+      type: 'api_key',
+      status: 'active',
       fingerprint: "sha256:abcd1234ef56",
+      rotatedBy: 'admin@acme-corp.com',
+      owner: { name: 'admin@acme-corp.com', initials: 'AD' },
       lastRotatedAt: "2026-06-01T00:00:00Z",
       expiresAt: "2026-09-20T00:00:00Z",
+      redacted: true,
+      secretRef: "tenants/acme-corp/secrets/jira_cred@latest",
+      valueLen: 64,
+      scopes: ['read:jira-work'],
+      lengthChars: 64,
     },
-    lastUsedAt: "2026-06-20T17:20:00Z",
-    lastAuditEntryId: "audit-7",
+    usage: {
+      workflows: 0,
+      destinations: 0,
+      ideationSources: 0,
+      agentContexts: 0,
+      apiCallsToday: 0,
+    },
+    recentEvents: [],
+    usedIn: { workflows: [], destinations: [], agents: [], ideationSources: [] },
+    installed: true,
+    available: true,
     ...overrides,
-  };
+  } as Connector;
 }
 
 describe("<ConnectorCard>", () => {
   it("renders the status pill with the success tone", () => {
     render(<ConnectorCard connector={connector()} />);
     const pill = screen.getByTestId("connector-status-pill");
-    expect(pill.getAttribute("data-status")).toBe("success");
+    expect(pill.getAttribute("data-status")).toBe("healthy");
     expect(pill.textContent?.toLowerCase()).toContain("healthy");
   });
 
-  it("renders the degraded status pill when status === degraded", () => {
-    render(<ConnectorCard connector={connector({ status: "degraded" })} />);
+  it("renders the stale status pill when status === stale", () => {
+    render(<ConnectorCard connector={connector({ status: "stale" })} />);
     const pill = screen.getByTestId("connector-status-pill");
-    expect(pill.getAttribute("data-status")).toBe("degraded");
-    expect(pill.textContent?.toLowerCase()).toContain("degraded");
+    expect(pill.getAttribute("data-status")).toBe("stale");
+    expect(pill.textContent?.toLowerCase()).toContain("stale");
   });
 
-  it("renders the broken status pill when status === error", () => {
-    render(<ConnectorCard connector={connector({ status: "error" })} />);
+  it("renders the failed status pill when status === failed", () => {
+    render(<ConnectorCard connector={connector({ status: "failed" })} />);
     const pill = screen.getByTestId("connector-status-pill");
-    expect(pill.getAttribute("data-status")).toBe("error");
-    expect(pill.textContent?.toLowerCase()).toContain("broken");
+    expect(pill.getAttribute("data-status")).toBe("failed");
+    expect(pill.textContent?.toLowerCase()).toContain("failed");
   });
 
   it("renders health metrics (last call + error rate)", () => {
@@ -97,7 +124,7 @@ describe("<ConnectorCard>", () => {
     render(
       <ConnectorCard
         connector={connector({
-          scope: { grantedScopes: [], roleBinding: "developer" },
+          scope: { binding: 'project', grantedScopes: [], roleBinding: "developer" },
         })}
       />,
     );
@@ -127,7 +154,7 @@ describe("<ConnectorCard>", () => {
     const row = container.querySelector('[data-testid="connector-row"]');
     expect(row?.getAttribute("data-connector-id")).toBe("jira");
     expect(row?.getAttribute("data-connector-tier")).toBe("1");
-    expect(row?.getAttribute("data-connector-status")).toBe("success");
+    expect(row?.getAttribute("data-connector-status")).toBe("healthy");
   });
 
   it("groups scope chips under an aria-labelled region for screen readers", () => {
