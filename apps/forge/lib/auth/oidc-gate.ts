@@ -81,7 +81,7 @@ export const PROTECTED_PATHS: ReadonlyArray<string> = [
   '/connector-center',
   '/copilot',
   '/forge-terminal',
-  '/governance-center',
+
 ];
 
 /**
@@ -92,7 +92,7 @@ export const PROTECTED_PATHS: ReadonlyArray<string> = [
  */
 export const PROTECTED_PREFIXES: ReadonlyArray<string> = [
   '/admin',
-  '/personas',
+
 ];
 
 /**

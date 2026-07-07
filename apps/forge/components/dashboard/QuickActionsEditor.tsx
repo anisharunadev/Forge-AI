@@ -47,7 +47,7 @@ export function QuickActionsEditor({
       { id: 'qa-new-feature', label: 'Run "New feature"', icon: 'sparkles' as QuickActionIcon, shortcut: '⌘⇧N', color: 'indigo', href: '/copilot?prompt=Plan%20a%20new%20feature', category: 'forge' },
       { id: 'qa-fix-bug', label: 'Run "Fix bug"', icon: 'wrench' as QuickActionIcon, shortcut: '⌘⇧B', color: 'amber', href: '/copilot?prompt=Help%20me%20debug', category: 'forge' },
       { id: 'qa-terminal', label: 'Open Terminal', icon: 'terminal' as QuickActionIcon, shortcut: '⌘⇧T', color: 'emerald', href: '/forge-terminal', category: 'navigate' },
-      { id: 'qa-command-center', label: 'Open Command Center', icon: 'command' as QuickActionIcon, shortcut: '⌘⇧C', color: 'cyan', href: '/forge-command-center', category: 'navigate' },
+      { id: 'qa-command-center', label: 'Open Command Center', icon: 'command' as QuickActionIcon, shortcut: '⌘⇧C', color: 'cyan', href: '/workflow', category: 'navigate' },
       { id: 'qa-copilot', label: 'Open Co-pilot', icon: 'sparkles' as QuickActionIcon, shortcut: '⌘⇧P', color: 'violet', href: '/copilot', category: 'navigate' },
       { id: 'qa-code-reviewer', label: 'Talk to Code-Reviewer', icon: 'bot' as QuickActionIcon, shortcut: '⌘⇧R', color: 'cyan', href: '/copilot?prompt=Act%20as%20code%20reviewer', category: 'agents' },
       { id: 'qa-test-runner', label: 'Talk to Test-Runner', icon: 'flask' as QuickActionIcon, shortcut: '⌘⇧X', color: 'emerald', href: '/copilot?prompt=Run%20test%20suite', category: 'agents' },

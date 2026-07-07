@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -s -H \\\"Authorization: Bearer $PAPERCLIP_API_KEY\\\" \\\"http://127.0.0.1:3100/api/issues/557abf4f-4c70-4f38-b61c-832a954b65be\\\" | python3 -c 'import json, sys; d=json.load(sys.stdin)...",
-  "error": "Exit code 1\n  File \"<string>\", line 1\n    import json, sys; d=json.load(sys.stdin); print(f\"status={d[\\\"status\\\"]}  completedAt={d[\\\"completedAt\\\"]}  updatedAt={d[\\\"updatedAt\\\"]}\")\n                                                                 ^\nSyntaxError: unexpected character after line continuation character\n\nthread 'main' (1016776) panicked at /rustc/ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96/library/std/src/io/stdio.rs:1165:9:\nfailed printing to stdout: Broken pipe (os error 32)\nnote: run ...",
-  "timestamp": "2026-06-17T21:07:12.674Z",
-  "retry_count": 1
-}

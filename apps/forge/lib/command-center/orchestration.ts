@@ -54,7 +54,7 @@ export const PHASE_ORCHESTRATION: Record<ForgePhase, OrchestrationTrigger> = {
     events: [
       { kind: 'agent-invoked', body: 'Stories agent decomposed spec into tasks', delayMs: 500 },
       { kind: 'reasoning', body: 'Estimated 7 sub-tasks · 3 dependencies', delayMs: 1500 },
-      { kind: 'file-changed', body: 'SPEC-041 v0.3 — plan committed', delayMs: 3000, href: '/forge-command-center?mode=spec' },
+      { kind: 'file-changed', body: 'SPEC-041 v0.3 — plan committed', delayMs: 3000, href: '/workflow?action=spec' },
     ],
   },
   execution: {
@@ -107,7 +107,7 @@ export const PHASE_ORCHESTRATION: Record<ForgePhase, OrchestrationTrigger> = {
   maintenance: {
     phase: 'maintenance',
     targetModule: 'Doc generator',
-    targetHref: '/governance-center',
+    targetHref: '/governance',
     actor: 'doc-generator',
     events: [
       { kind: 'agent-invoked', body: 'Doc generator invoked', delayMs: 800 },

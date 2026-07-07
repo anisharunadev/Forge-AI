@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk grep -n \\\"^function\\\\|^export\\\" mcp-servers/github/test/mock-github.mjs\",\"description\":\"List function declarations in mock\"}",
-  "error": "Exit code 2\nrg: mcp-servers/github/test/mock-github.mjs: No such file or directory (os error 2)\n0 matches for '^function\\|^export'",
-  "timestamp": "2026-06-16T18:42:58.228Z",
-  "retry_count": 1
-}

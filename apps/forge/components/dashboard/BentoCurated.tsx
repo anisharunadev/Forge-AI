@@ -70,7 +70,7 @@ export function PendingApprovalsTile({ snapshot }: { snapshot: DashboardSnapshot
     <BentoTile
       title="Needs your attention"
       className="min-h-[240px] flex-1"
-      href="/governance-center"
+      href="/governance"
       clickable
       headerRight={
         count > 0 ? (

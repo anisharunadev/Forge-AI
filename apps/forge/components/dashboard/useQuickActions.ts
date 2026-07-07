@@ -63,7 +63,7 @@ const DEFAULT_QUICK_ACTIONS: ReadonlyArray<QuickActionItem> = [
   { id: 'qa-fix-bug', label: 'Run "Fix bug"', icon: 'wrench', shortcut: '⌘⇧B', color: 'amber', href: '/copilot?prompt=Help%20me%20debug', category: 'forge' },
   // Navigate (3)
   { id: 'qa-terminal', label: 'Open Terminal', icon: 'terminal', shortcut: '⌘⇧T', color: 'emerald', href: '/forge-terminal', category: 'navigate' },
-  { id: 'qa-command-center', label: 'Open Command Center', icon: 'command', shortcut: '⌘⇧C', color: 'cyan', href: '/forge-command-center', category: 'navigate' },
+  { id: 'qa-command-center', label: 'Open Command Center', icon: 'command', shortcut: '⌘⇧C', color: 'cyan', href: '/workflow', category: 'navigate' },
   { id: 'qa-copilot', label: 'Open Co-pilot', icon: 'sparkles', shortcut: '⌘⇧P', color: 'violet', href: '/copilot', category: 'navigate' },
   // Agents (2)
   { id: 'qa-code-reviewer', label: 'Talk to Code-Reviewer', icon: 'bot', shortcut: '⌘⇧R', color: 'cyan', href: '/copilot?prompt=Act%20as%20code%20reviewer', category: 'agents' },

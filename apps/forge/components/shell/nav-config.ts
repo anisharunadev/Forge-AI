@@ -154,12 +154,12 @@ export const NAV: ReadonlyArray<NavItem> = [
 
   // Lifecycle & governance
   { href: '/project-onboarding', label: 'Onboarding', iconName: 'ClipboardList', group: 'lifecycle', keywords: ['wizard', 'setup'] },
-  { href: '/governance-center', label: 'Governance', iconName: 'Shield', group: 'lifecycle', keywords: ['approval'] },
+  { href: '/governance', label: 'Governance', iconName: 'Shield', group: 'lifecycle', keywords: ['approval'] },
   { href: '/audit', label: 'Audit', iconName: 'Wrench', group: 'lifecycle', keywords: ['timeline', 'log'] },
   { href: '/analytics', label: 'Analytics', iconName: 'LineChart', group: 'lifecycle', keywords: ['cost', 'metrics'] },
   { href: '/forge-terminal', label: 'Terminal', iconName: 'TerminalSquare', group: 'lifecycle', legacy: true },
   { href: '/runs', label: 'Runs', iconName: 'Activity', group: 'lifecycle', legacy: true },
-  { href: '/forge-command-center', label: 'Command', iconName: 'Compass', group: 'lifecycle', legacy: true, keywords: ['catalog', 'dispatch'] },
+  { href: '/workflow', label: 'Command', iconName: 'Compass', group: 'lifecycle', legacy: true, keywords: ['catalog', 'dispatch'] },
 
   // Settings (footer)
   { href: '/admin', label: 'Settings', iconName: 'Settings', group: 'lifecycle' },

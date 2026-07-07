@@ -693,7 +693,7 @@ export default function AnalyticsCenterPage() {
               label: 'Run your first command',
               icon: <Play className="h-4 w-4" aria-hidden="true" />,
               onClick: () => {
-                window.location.href = '/forge-command-center';
+                window.location.href = '/workflow';
               },
             }}
             secondaryAction={{
@@ -971,7 +971,7 @@ export default function AnalyticsCenterPage() {
         <p className="text-[11px] text-[var(--fg-tertiary)]">
           All metrics are scoped to your active tenant and project.{' '}
           <Link
-            href="/governance-center"
+            href="/governance"
             className="text-[var(--accent-primary)] hover:underline"
           >
             Manage governance →

@@ -113,7 +113,7 @@ const ACTIONS: ReadonlyArray<PaletteAction> = [
     category: 'run',
     keywords: ['governance', 'pending', 'review'],
     run: ({ push, close }) => {
-      push('/governance-center');
+      push('/governance');
       close();
     },
   },
