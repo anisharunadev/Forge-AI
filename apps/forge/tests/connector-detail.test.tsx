@@ -26,10 +26,10 @@ import {
   ConnectorDetailPanel,
   isRotationDeadlineImminent,
 } from "../components/ConnectorDetailPanel";
-import type { McpConnector } from "../lib/connectors/data";
+import type { Connector } from "../lib/connectors/data"; // ponytail: aliased to Connector after refactor
 import type { AuditEntry } from "../lib/connectors/audit-feed-types";
 
-function connector(overrides: Partial<McpConnector> = {}): McpConnector {
+function connector(overrides: Partial<Connector> = {}): Connector {
   return {
     id: "jira",
     name: "jira",

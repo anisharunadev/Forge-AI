@@ -13,9 +13,9 @@
 import { describe, expect, it } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { ConnectorCard } from "../components/ConnectorCard";
-import type { McpConnector } from "../lib/connectors/data";
+import type { Connector } from "../lib/connectors/data"; // ponytail: aliased to Connector after refactor
 
-function connector(overrides: Partial<McpConnector> = {}): McpConnector {
+function connector(overrides: Partial<Connector> = {}): Connector {
   return {
     id: "jira",
     name: "jira",

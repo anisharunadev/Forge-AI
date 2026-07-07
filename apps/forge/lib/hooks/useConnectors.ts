@@ -306,7 +306,8 @@ export function useCreateCredential() {
  * 30s). The secret is never cached by React Query.
  */
 export function useRevealCredential() {
-  return useMutation<api.RevealCredentialResult, ConnectorApiError, string>({
+  // ponytail: RevealCredentialResult not re-exported from api namespace — inline the minimal shape
+  return useMutation<{ id: string; secret: string; expires_at: string }, ConnectorApiError, string>({
     mutationFn: (id) => api.revealCredential(id),
     onError: (err) => {
       toast({

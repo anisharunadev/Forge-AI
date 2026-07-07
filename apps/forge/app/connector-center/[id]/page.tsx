@@ -23,7 +23,7 @@
 
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import { getConnector, listConnectors, TIER_1_CONNECTORS, type ConnectorId } from "@/lib/connectors/data";
+import { getConnectorById } from "@/lib/connectors/data"; // ponytail: aliased after refactor (getConnector/listConnectors/ConnectorId no longer exist)
 import { getConnectorAuditFeed } from "@/lib/connectors/audit-feed";
 import { SEED_TENANT_ID, readPersonaFromCookieHeader } from "@/lib/auth";
 import {
@@ -107,11 +107,7 @@ export default async function ConnectorDetailPage({ params }: PageProps) {
   // Note: the typed-mock allows any string id to resolve; we explicitly
   // narrow against the ConnectorId closed enum so the page never
   // surfaces a misspelled URL.
-  if (!TIER_1_CONNECTORS.includes(id as ConnectorId) && !isMockTier2(id as ConnectorId)) {
-    notFound();
-  }
-
-  const connector = await getConnector(SEED_TENANT_ID, id);
+  const connector = getConnectorById(id);
   if (!connector) {
     notFound();
   }
@@ -132,13 +128,4 @@ export default async function ConnectorDetailPage({ params }: PageProps) {
       />
     </div>
   );
-}
-
-/**
- * Tier-2 connectors are not in TIER_1_CONNECTORS but exist in the
- * mock; allow them through too. The list page lists both tiers, so
- * the detail page must allow either.
- */
-function isMockTier2(id: string): boolean {
-  return id === "azdo" || id === "zendesk" || id === "databricks";
 }

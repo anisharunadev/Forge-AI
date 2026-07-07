@@ -55,8 +55,8 @@ import { canvasToWire } from '@/lib/workflows/adapter';
 import type { Workflow, WorkflowRun } from '@/lib/workflows/types';
 import {
   WORKFLOW_TEMPLATES,
-  type WorkflowTemplate,
 } from '@/lib/workflow/templates';
+import type { WorkflowTemplate } from '@/lib/workflow/types'; // ponytail: WorkflowTemplate lives in types.ts, not re-exported by templates.ts
 import { useWorkflowStore } from '@/components/workflow/store';
 
 type Tab = 'my' | 'templates' | 'shared' | 'drafts';

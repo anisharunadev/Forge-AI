@@ -37,7 +37,7 @@ import {
   DndContext,
   KeyboardSensor,
   PointerSensor,
-  closestCenter,
+  closestCorners, // ponytail: closestCorners is the right collision algo for fixed grid rows
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -267,7 +267,7 @@ function DrawerBody(props: DrawerBodyProps) {
       <div className="thin-scrollbar flex-1 space-y-6 overflow-y-auto p-4">
         {/* Widgets — drag-to-reorder (Fix 6) */}
         <Section title="Widgets" hint="Drag to reorder. Click name to jump.">
-          <DndContext sensors={useSensorsFn()} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, prefs, onReorder)}>
+          <DndContext sensors={useSensorsFn()} collisionDetection={closestCorners} onDragEnd={(e) => handleDragEnd(e, prefs, onReorder)}>
             <SortableContext items={prefs.widgetOrder as WidgetId[]} strategy={verticalListSortingStrategy}>
               <ul className="space-y-1" data-testid="customize-widget-list">
                 {prefs.widgetOrder.map((w) => (
