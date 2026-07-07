@@ -42,3 +42,6 @@ __pycache__/
 
 # Vitest coverage output (regenerated on every run; uploaded as CI artifact)
 **/coverage/
+
+# Claude worktrees (Day 2)
+.claude/worktrees/

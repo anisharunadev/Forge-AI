@@ -1037,6 +1037,7 @@ export function useSecurityPosture(
 
 // ---------------------------------------------------------------------------
 
+
 // Activity feed — Day 2 Track J.
 //
 // Wraps `useAuditEvents` (from the LiteLLM / governance hooks layer)
@@ -1045,6 +1046,7 @@ export function useSecurityPosture(
 // Rule R2: tenant scoping comes from the JWT inside the audit
 // endpoint itself; we still require `project_id` so consumers declare
 // their scope explicitly and the result is project-filtered.
+// their scope explicitly and the query can be `enabled`-gated.
 // ---------------------------------------------------------------------------
 
 import { useMemo } from 'react';
@@ -1054,6 +1056,8 @@ import {
   toArchitectureActivity,
   type ArchitectureActivity,
 } from '@/lib/architecture/adapters';
+import { toArchitectureActivity } from '@/lib/architecture/adapters';
+import type { ArchitectureActivity } from '@/lib/architecture/types';
 
 const ACTIVITY_DEFAULT_LIMIT = 50;
 
@@ -1071,6 +1075,7 @@ export interface ArchitectureActivityQuery {
  * empty (or the query is mid-flight) we return `[]` so the page can
  * render the empty state without nil-checks. Capped at 50 events to
  * keep the Overview tab fast.
+ * render the empty state without nil-checks.
  */
 export function useArchitectureActivity(args: {
   project_id: string;
@@ -1151,4 +1156,5 @@ export function useDecisionVelocity(
     staleTime: 5 * 60_000,
   });
 }
+
 
