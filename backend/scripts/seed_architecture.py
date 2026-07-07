@@ -56,6 +56,26 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 ACME_PLATFORM_PROJECT_ID = uuid.UUID("22222222-2222-4222-8222-222222222222")
 DEFAULT_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000999")
 
+# Mirror of the frontend mock-fixtures mapping so the ADRWithMeta
+# projection renders the same component/impact values the UI used to
+# display. ADR number → component bucket + impact score (1–10).
+ADR_COMPONENT_BY_NUMBER: dict[int, str] = {
+    1: "backend",
+    2: "infra",
+    3: "frontend",
+    4: "data",
+    5: "ai",
+    6: "backend",
+}
+ADR_IMPACT_BY_NUMBER: dict[int, int] = {
+    1: 9,
+    2: 7,
+    3: 5,
+    4: 8,
+    5: 10,
+    6: 4,
+}
+
 # Stable IDs so re-runs are idempotent.
 SEED_ADRS: list[dict[str, Any]] = [
     {
@@ -147,6 +167,14 @@ SEED_ADRS: list[dict[str, Any]] = [
         "generated_by": "human",
     },
 ]
+
+# Inject component + impact from the mapping so the frontend
+# ADRWithMeta projection renders the same values the mock-fixtures
+# used to display. Done after the list literal so SEED_ADRS stays
+# readable as data.
+for _row in SEED_ADRS:
+    _row["component"] = ADR_COMPONENT_BY_NUMBER.get(_row["number"], "backend")
+    _row["impact"] = ADR_IMPACT_BY_NUMBER.get(_row["number"], 5)
 
 
 SEED_CONTRACTS: list[dict[str, Any]] = [
@@ -458,7 +486,14 @@ async def seed() -> None:
                 )
             )
             adr_by_number[row["number"]] = row["id"]
-            logger.info("  ✓ ADR-%03d: %s (%s)", row["number"], row["title"], row["status"])
+            logger.info(
+                "  ✓ ADR-%03d: %s (%s) component=%s impact=%s",
+                row["number"],
+                row["title"],
+                row["status"],
+                row.get("component"),
+                row.get("impact"),
+            )
 
         await session.flush()
 
