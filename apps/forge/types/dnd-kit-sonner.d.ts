@@ -62,16 +62,11 @@ declare module '@axe-core/react' {
   export default axe;
 }
 declare module 'framer-motion' {
+  // ponytail: broad stub for `motion.<tag>` access (section/aside/article/li/...).
+  // Real framer-motion types in node_modules provide proper HTMLMotionComponents
+  // for every HTML element; this shim is kept loose so call sites don't break.
   export const motion: {
-    span: React.FC<{
-      layoutId?: string;
-      className?: string;
-      transition?: { type?: string; duration?: number; ease?: number[] };
-      children?: React.ReactNode;
-      animate?: Record<string, unknown>;
-      'aria-hidden'?: boolean | string;
-    }>;
-    div: React.FC<Record<string, unknown>>;
+    [tag: string]: React.FC<Record<string, unknown>>;
   };
   export const AnimatePresence: React.FC<{ children: React.ReactNode }>;
 }
