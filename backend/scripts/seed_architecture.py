@@ -35,6 +35,7 @@ from app.db.models.architecture import (
     ADR,
     APIContract,
     ArchitectureApproval,
+    ArchitectureVersionRow,
     RiskRegister,
     TaskBreakdown,
 )
@@ -605,11 +606,47 @@ async def seed() -> None:
             )
             logger.info("  ✓ Attestation: %s (%s)", spec["standard"], spec["status"])
 
-        # NOTE: ArchitectureVersion is intentionally NOT seeded — there
-        # is no SQLAlchemy model backing the versions table. The
-        # `GET /architecture/versions` endpoint will return [] until
-        # that lands.
-        logger.info("  ↺ Skipped ArchitectureVersion (no SQLA model).")
+        # -----------------------------------------------------------------
+        # Versions — 3 stub snapshots of the first ADR (ADR-001) so the
+        # `GET /architecture/versions` endpoint has data after re-seed.
+        # Idempotent: skipped if any versions already exist for this
+        # tenant (covers re-runs that landed ADRs via a prior seed).
+        # -----------------------------------------------------------------
+        first_adr_id = adr_by_number[1]
+        existing_versions = (
+            await session.execute(
+                select(ArchitectureVersionRow).where(
+                    ArchitectureVersionRow.tenant_id == tenant.id
+                )
+            )
+        ).scalars().first()
+        if existing_versions is None:
+            version_specs = [
+                (1, "initial", -10),
+                (2, "iter-1: added LiteLLM routing note", -5),
+                (3, "iter-2: tightened acceptance criteria", 0),
+            ]
+            for version_number, reason, offset_days in version_specs:
+                session.add(
+                    ArchitectureVersionRow(
+                        tenant_id=tenant.id,
+                        project_id=project_id,
+                        artifact_type="adr",
+                        artifact_id=first_adr_id,
+                        version_number=version_number,
+                        content_hash="",
+                        snapshot_reason=reason,
+                        actor_id=user_id,
+                    )
+                )
+                logger.info(
+                    "  ✓ Version ADR-001 v%d (%s, offset=%+dd)",
+                    version_number,
+                    reason,
+                    offset_days,
+                )
+        else:
+            logger.info("  ↻ architecture versions already seeded; skipping")
 
         await session.commit()
 
@@ -621,6 +658,7 @@ async def seed() -> None:
         logger.info("   - %d task breakdowns", len(SEED_TASK_BREAKDOWNS))
         logger.info("   - %d approvals", len(SEED_APPROVALS))
         logger.info("   - %d attestations (as Artifact rows)", len(SEED_ATTESTATIONS))
+        logger.info("   - 3 architecture versions (stub ADR-001 snapshots)")
 
 
 if __name__ == "__main__":
