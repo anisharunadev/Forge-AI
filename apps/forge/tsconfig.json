@@ -1,4 +1,6 @@
 {
+  // NOTE: ".next-build/dev/types/validator.ts" is excluded below — see
+  // the "_comment.validator_exclude" field at the bottom of this file.
   "compilerOptions": {
     "target": "ES2022",
     "lib": [
@@ -19,7 +21,10 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "types": ["vitest/globals", "@testing-library/jest-dom"],
+    "types": [
+      "vitest/globals",
+      "@testing-library/jest-dom"
+    ],
     "plugins": [
       {
         "name": "next"
@@ -43,6 +48,10 @@
   "exclude": [
     "node_modules",
     ".next",
-    "dist"
-  ]
+    "dist",
+    ".next-build/dev/types/validator.ts"
+  ],
+  "_comment": {
+    "validator_exclude": "Day 6: .next-build/dev/types/validator.ts is root-owned stale cache from M18 page deletes. Run `next dev` once as root to regenerate, then remove this exclude."
+  }
 }

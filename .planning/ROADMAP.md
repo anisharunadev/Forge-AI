@@ -16,7 +16,7 @@ The 5-phase cutover is driven by risk reduction: hygiene first (so plan-phase as
 **Mode:** mvp (Vertical MVP — one tenant, one workflow, full visualization)
 
 - [x] **Phase 0: Pre-Roadmap Hygiene** - Reconcile stack drift, refactor terminal-server, enforce Rule 1 grep gate, add startup guard
-- [ ] **Phase 1: Substrate Lock** - Code Validator, Merge Gate, Tool Bundles, Workflow Budget, Day-One Bootstrap, Refactor Agent, Steering Rules, ADR-009/010/011
+- [x] **Phase 1: Substrate Lock** - Code Validator, Merge Gate, Tool Bundles, Workflow Budget, Day-One Bootstrap, Refactor Agent, Steering Rules, ADR-009/010/011
 - [ ] **Phase 2: Pilot Cutover Hardening** - Pilot UI (wizard, KG, Audit, Approval, Constitution rulebook, Connector Marketplace, Terminal), blue/green deploy, cross-region audit, circuit-breakers, RBAC
 - [ ] **Phase 3: Pilot Volume Scaling** - Tune conflict budget, AGE plan observation, LiteLLM quota, audit chain anchors after 30 days of pilot traffic
 - [ ] **Phase 4: Expansion (Multi-Tenant Verification)** - Tenant-isolation smoke test, required tenant_id/project_id, multi-region LiteLLM, per-tenant CMK (deferred to tenant #3/#5)
@@ -77,11 +77,11 @@ Plans:
 - [x] 01-01: Approval gate decorator + frozen run-state (PITFALL-1)
 - [x] 01-02: Pre-call cost admission in `litellm_client.py` (PITFALL-2)
 - [x] 01-03: Audit/OTel default sink wiring (PITFALL-5)
-- [ ] 01-04: Approval timeout scheduler (PITFALL-6)
-- [ ] 01-05: Code Validator sub-graph (F-501)
-- [ ] 01-06: Merge Gate (F-503) + Tool Bundles (F-505)
-- [ ] 01-07: Workflow Budget (NFR-044) + Day-One Bootstrap (F-507)
-- [ ] 01-08: Refactor Agent (F-601) + Steering Rules (F-504)
+- [x] 01-04: Approval timeout scheduler (PITFALL-6)
+- [x] 01-05: Code Validator sub-graph (F-501)
+- [x] 01-06: Merge Gate (F-503) + Tool Bundles (F-505)
+- [x] 01-07: Workflow Budget (NFR-044) + Day-One Bootstrap (F-507)
+- [x] 01-08: Refactor Agent (F-601) + Steering Rules (F-504)
 - [x] 01-09: ADR-009 cost ledger + ADR-010 conflict schema + ADR-011 KMS
 
 ### Phase 2: Pilot Cutover Hardening
@@ -206,7 +206,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 0. Pre-Roadmap Hygiene | 4/4 | Complete | 2026-06-25 (HYG-01..04 closed) |
-| 1. Substrate Lock | 5/9 | In Progress | 2026-07-07 (01-01 PITFALL-1, 01-02 PITFALL-2, 01-03 PITFALL-5, 01-04 PITFALL-6, 01-09 ADR-009/010/011) |
+| 1. Substrate Lock | 9/9 | Complete | 2026-07-08 (all 01-01..01-09 plans shipped; verified Day 6) |
 | 2. Pilot Cutover Hardening | 0/15 | Not started | - |
 | 3. Pilot Volume Scaling | 0/4 | Not started | - |
 | 4. Expansion (Multi-Tenant Verification) | 0/5 | Not started | - |
