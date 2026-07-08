@@ -9,7 +9,7 @@ points at the new one.
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -23,7 +23,7 @@ from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 logger = get_logger(__name__)
 
 
-class ArtifactStatus(str, Enum):
+class ArtifactStatus(StrEnum):
     """Lifecycle state of an artifact version."""
 
     DRAFT = "draft"

@@ -268,7 +268,7 @@ async def main() -> int:
         )
         ok = res.status_code == 201
         print(
-            f"  {'✓' if ok else '✗'} POST  /model-providers                     → {res.status_code} (expected 201)"
+            f"  {'✓' if ok else '✗'} POST  /model-providers                     → {res.status_code} (expected 201)"  # noqa: E501
         )
         if ok:
             passed += 1
@@ -281,7 +281,7 @@ async def main() -> int:
             )
             ok = patch_res.status_code == 200 and patch_res.json().get("rate_limit_rpm") == 99
             print(
-                f"  {'✓' if ok else '✗'} PATCH /model-providers/{new_provider_id[:8]}...    → {patch_res.status_code}"
+                f"  {'✓' if ok else '✗'} PATCH /model-providers/{new_provider_id[:8]}...    → {patch_res.status_code}"  # noqa: E501
             )
             if ok:
                 passed += 1
@@ -295,7 +295,7 @@ async def main() -> int:
             )
             ok = del_res.status_code == 204
             print(
-                f"  {'✓' if ok else '✗'} DELETE /model-providers/{new_provider_id[:8]}...  → {del_res.status_code} (expected 204)"
+                f"  {'✓' if ok else '✗'} DELETE /model-providers/{new_provider_id[:8]}...  → {del_res.status_code} (expected 204)"  # noqa: E501
             )
             if ok:
                 passed += 1
@@ -330,7 +330,7 @@ async def main() -> int:
             )
             ok = res.status_code == 200
             print(
-                f"  {'✓' if ok else '✗'} POST  /runtimes/start                     → {res.status_code}"
+                f"  {'✓' if ok else '✗'} POST  /runtimes/start                     → {res.status_code}"  # noqa: E501
             )
             if ok:
                 passed += 1

@@ -52,9 +52,7 @@ def _serialize(row: TechRadarEntry) -> TechRadarEntryResponse:
     )
 
 
-def _resolve_project_id(
-    principal: AuthenticatedPrincipal, override: UUID | None
-) -> UUID:
+def _resolve_project_id(principal: AuthenticatedPrincipal, override: UUID | None) -> UUID:
     project_id = override or principal.project_id
     if project_id is None:
         raise HTTPException(status_code=400, detail="project_id_required")

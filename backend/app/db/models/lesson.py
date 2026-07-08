@@ -13,7 +13,7 @@ approval itself is the audit trail; curators compose later).
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -24,7 +24,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import GUID, JSONB, Base, UUIDPrimaryKeyMixin
 
 
-class LessonStatus(str, Enum):
+class LessonStatus(StrEnum):
     """Lifecycle of a LessonCandidate."""
 
     PENDING = "pending"
@@ -32,7 +32,7 @@ class LessonStatus(str, Enum):
     REJECTED = "rejected"
 
 
-class LessonSource(str, Enum):
+class LessonSource(StrEnum):
     """Which signal produced the candidate.
 
     Stored as a free-form ``source_event`` on the row, but the closed

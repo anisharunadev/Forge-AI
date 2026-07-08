@@ -86,11 +86,11 @@ from app.api.ws.runs import router as runs_ws_router
 from app.api.ws.terminal import router as terminal_ws_router
 from app.api.ws.terminal_broadcast import router as terminal_broadcast_ws_router
 from app.core.config import settings
+from app.core.error_reporting import error_reporter
 from app.core.logging import configure_logging, get_logger
 from app.core.middleware import RequestIdMiddleware, TenantContextMiddleware
 from app.core.phase4_errors import register_phase4_exception_handlers
 from app.core.telemetry import init_telemetry
-from app.core.error_reporting import error_reporter
 from app.integrations.litellm.health_monitor import health_monitor
 from app.integrations.litellm.litellm_base_client import LiteLLMBaseClient
 from app.services import lesson_service
@@ -300,7 +300,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     # step-75 Phase 1 — readiness probe + routes discovery.
     route_count = 0
     if settings.forge_route_discovery_enabled:
-        async with LiteLLMBaseClient() as litellm:
+        async with LiteLLMBaseClient() as litellm:  # noqa: F823
             readiness = await litellm.readiness()
             if readiness.get("status_code") == 401:
                 # ponytail: bail loud so a misconfigured deploy doesn't

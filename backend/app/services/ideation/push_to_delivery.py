@@ -74,7 +74,6 @@ class PushToDeliveryService:
         actor_id: UUID | str,
     ) -> PushResult:
         idea = await self._load_idea(idea_id, tenant_id=tenant_id)
-        effective_project_id = project_id or idea.project_id
         prd = await self._latest_prd(idea.id)
         try:
             external_ref, error = await self._perform_jira_push(
@@ -132,7 +131,6 @@ class PushToDeliveryService:
         actor_id: UUID | str,
     ) -> PushResult:
         idea = await self._load_idea(idea_id, tenant_id=tenant_id)
-        effective_project_id = project_id or idea.project_id
         prd = await self._latest_prd(idea.id)
         try:
             external_ref, error = await self._perform_confluence_push(

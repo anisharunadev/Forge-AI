@@ -8,7 +8,7 @@ through the real backend (the stub stays for dev).
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -19,7 +19,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class BoardConfirmationOutcome(str, Enum):
+class BoardConfirmationOutcome(StrEnum):
     PENDING = "pending"
     ACCEPTED = "accepted"
     DECLINED = "declined"

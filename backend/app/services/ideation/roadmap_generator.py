@@ -120,14 +120,14 @@ class RoadmapGenerator:
         by_theme: dict[str, list[RoadmapItemDraft]] = defaultdict(list)
         for d in drafts:
             by_theme[d.theme].append(d)
-        for theme_key in by_theme:
+        for theme_key in sorted(by_theme.keys()):
             by_theme[theme_key].sort(key=lambda x: x.total_score, reverse=True)
 
         items: list[dict[str, Any]] = []
         position = 0
         # Order themes by the highest-scoring item within each so that
         # the most impactful work appears first regardless of theme label.
-        for theme_key, drafts in sorted(
+        for _theme_key, drafts in sorted(
             by_theme.items(),
             key=lambda kv: max(d.total_score for d in kv[1]),
             reverse=True,
@@ -196,11 +196,11 @@ class RoadmapGenerator:
         by_theme: dict[str, list[RoadmapItemDraft]] = defaultdict(list)
         for d in drafts:
             by_theme[d.theme].append(d)
-        for theme_key in by_theme:
+        for theme_key in sorted(by_theme.keys()):
             by_theme[theme_key].sort(key=lambda x: x.total_score, reverse=True)
         items: list[dict[str, Any]] = []
         position = 0
-        for theme_key, drafts_in_theme in sorted(
+        for _theme_key, drafts_in_theme in sorted(
             by_theme.items(),
             key=lambda kv: max(d.total_score for d in kv[1]),
             reverse=True,

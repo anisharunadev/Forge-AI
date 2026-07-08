@@ -12,6 +12,7 @@ spend logs for the previous minute window, groups them by
 
 from __future__ import annotations
 
+import contextlib
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -89,10 +90,8 @@ async def aggregate_loop(
             await _aggregate_once(session_factory, litellm_client, redis)
         except Exception:  # noqa: BLE001
             log.exception("cost_aggregate_tick_failed")
-        try:
+        with contextlib.suppress(TimeoutError):
             await asyncio.wait_for(stop.wait(), timeout=interval_seconds)
-        except TimeoutError:
-            pass
 
 
 async def query_cost(

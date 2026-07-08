@@ -54,7 +54,7 @@ async def list_roles(
     )
     rows = result.scalars().all()
     # Sort: system roles first.
-    rows = sorted(rows, key=lambda r: (not (r.permissions == ["*"]), r.name))
+    rows = sorted(rows, key=lambda r: (r.permissions != ["*"], r.name))
     return [RoleRead.model_validate(r) for r in rows]
 
 

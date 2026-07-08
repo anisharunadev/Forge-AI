@@ -328,7 +328,7 @@ _default_client: SecretsManagerClient | None = None
 
 def get_default_client() -> SecretsManagerClient:
     """Return the process-wide :class:`SecretsManagerClient`."""
-    global _default_client
+    global _default_client  # noqa: PLW0603
     if _default_client is None:
         _default_client = SecretsManagerClient()
     return _default_client

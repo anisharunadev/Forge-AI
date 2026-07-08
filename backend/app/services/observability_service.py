@@ -758,7 +758,7 @@ class ObservabilityService:
             # ponytail: lazy import — see health_services comment.
             from app.integrations.litellm.litellm_base_client import LiteLLMBaseClient
 
-            client = LiteLLMBaseClient()
+            LiteLLMBaseClient()
             # ponytail: we don't model /spend/logs in the observability
             # client — use the existing spend module via forge_spend.
             # Fall back to 0 if not wired.

@@ -204,7 +204,7 @@ def test_q4_confidence_thresholds_escalate_below_70() -> None:
 
 def test_q5_counterfactual_includes_validator_fail() -> None:
     svc = _service()
-    summary = _service()._q2_from_data(validator_reports=[], audit_events=[])
+    _service()._q2_from_data(validator_reports=[], audit_events=[])
     # We need a real Summary here; using a stub with a summary attribute that
     # mimics the interface — counterfactual only reads `.decision` + summary.
     from app.schemas.validation_report import ValidationSummary
@@ -326,7 +326,7 @@ class _FakeManager:
 
     async def get_run(self, run_id: uuid.UUID) -> _FakeState | None:
         print(
-            f"DEBUG _FakeManager.get_run called run_id={run_id}, state.run_id={self._state.run_id if self._state else None}"
+            f"DEBUG _FakeManager.get_run called run_id={run_id}, state.run_id={self._state.run_id if self._state else None}"  # noqa: E501
         )
         if self._state is None or self._state.run_id != run_id:
             print("DEBUG _FakeManager returning None")

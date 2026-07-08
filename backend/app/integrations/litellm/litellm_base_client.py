@@ -227,15 +227,6 @@ class LiteLLMBaseClient:
         """
         return RAGClientGroup(self._require_client())
 
-    @property
-    def observability(self) -> ObservabilityClientGroup:
-        """F15 Observability method group — audit/health/compliance proxy.
-
-        Mirrors :attr:`rbac` exactly: stateless wrapper on the admin
-        client, rebuilt per access.
-        """
-        return ObservabilityClientGroup(self._require_client())
-
     def chat_client(
         self,
         api_key: str,

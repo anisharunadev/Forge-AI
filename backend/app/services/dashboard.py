@@ -192,7 +192,7 @@ class DashboardService:
                 )
             )
         ).scalar_one() or 0.0
-        cost_week = (
+        (
             await db.execute(
                 select(func.coalesce(func.sum(CostEntry.amount_usd), 0.0)).where(
                     and_(
@@ -411,7 +411,7 @@ class DashboardService:
                     id=str(row.target_id),
                     name=name,
                     runs=int(row.runs),
-                    success_rate=success_rate,  # Approximated — full per-agent success rate requires extra join.
+                    success_rate=success_rate,  # Approximated — full per-agent success rate requires extra join.  # noqa: E501
                 )
             )
 

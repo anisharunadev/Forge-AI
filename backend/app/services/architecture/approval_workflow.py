@@ -81,7 +81,7 @@ class ArchitectureApprovalWorkflow:
             raise ValueError(f"unsupported artifact_type: {artifact_type}")
 
         required = list(_REVIEWER_MATRIX[artifact_type])
-        if artifact_type == "api_contract":
+        if artifact_type == "api_contract":  # noqa: SIM102
             if await self._contract_is_security_sensitive(artifact_id):
                 required = sorted(set(required + [ROLE_SECURITY]))
 
@@ -388,7 +388,7 @@ class ArchitectureApprovalWorkflow:
         reviewer_id_str = str(reviewer_id)
         for row in rows:
             reviewers = _decode_reviewers(row.reason)
-            if any(r["status"] == "pending" for r in reviewers):
+            if any(r["status"] == "pending" for r in reviewers):  # noqa: SIM102
                 # We do not gate by user->role mapping at the data
                 # layer; callers decide whether the user actually holds
                 # the required role via RBAC. Returning all pending

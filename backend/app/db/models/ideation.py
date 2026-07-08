@@ -40,7 +40,7 @@ from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 # ---------------------------------------------------------------------------
 
 
-class IdeaSource(str, enum.Enum):
+class IdeaSource(enum.StrEnum):
     """How an idea entered the system."""
 
     USER = "user"
@@ -50,7 +50,7 @@ class IdeaSource(str, enum.Enum):
     FEEDBACK = "feedback"
 
 
-class IdeaStatus(str, enum.Enum):
+class IdeaStatus(enum.StrEnum):
     """Lifecycle of an Idea from intake to delivery."""
 
     NEW = "new"
@@ -62,7 +62,7 @@ class IdeaStatus(str, enum.Enum):
     ARCHIVED = "archived"
 
 
-class ScoreSource(str, enum.Enum):
+class ScoreSource(enum.StrEnum):
     """Who/what produced a score."""
 
     AI = "ai"
@@ -70,7 +70,7 @@ class ScoreSource(str, enum.Enum):
     HYBRID = "hybrid"
 
 
-class RoadmapHorizon(str, enum.Enum):
+class RoadmapHorizon(enum.StrEnum):
     """Time horizon for a roadmap bucket."""
 
     NOW = "now"
@@ -79,7 +79,7 @@ class RoadmapHorizon(str, enum.Enum):
     FUTURE = "future"
 
 
-class RoadmapStatus(str, enum.Enum):
+class RoadmapStatus(enum.StrEnum):
     """Roadmap lifecycle."""
 
     DRAFT = "draft"
@@ -89,7 +89,7 @@ class RoadmapStatus(str, enum.Enum):
     ARCHIVED = "archived"
 
 
-class PRDStatus(str, enum.Enum):
+class PRDStatus(enum.StrEnum):
     """PRD lifecycle."""
 
     DRAFT = "draft"
@@ -99,7 +99,7 @@ class PRDStatus(str, enum.Enum):
     ARCHIVED = "archived"
 
 
-class ApprovalItemType(str, enum.Enum):
+class ApprovalItemType(enum.StrEnum):
     """What kind of decision is queued for human review."""
 
     ROADMAP = "roadmap"
@@ -108,7 +108,7 @@ class ApprovalItemType(str, enum.Enum):
     PUSH_TO_DELIVERY = "push_to_delivery"
 
 
-class ApprovalItemStatus(str, enum.Enum):
+class ApprovalItemStatus(enum.StrEnum):
     """State of a queued approval."""
 
     PENDING = "pending"
@@ -119,7 +119,7 @@ class ApprovalItemStatus(str, enum.Enum):
     CANCELLED = "cancelled"
 
 
-class ApprovalDecision(str, enum.Enum):
+class ApprovalDecision(enum.StrEnum):
     """Decision verbs callers can submit."""
 
     APPROVE = "approve"
@@ -127,7 +127,7 @@ class ApprovalDecision(str, enum.Enum):
     REQUEST_CHANGES = "request_changes"
 
 
-class WorkflowSessionStatus(str, enum.Enum):
+class WorkflowSessionStatus(enum.StrEnum):
     """Real-time ideation workflow status."""
 
     PENDING = "pending"
@@ -138,7 +138,7 @@ class WorkflowSessionStatus(str, enum.Enum):
     CANCELLED = "cancelled"
 
 
-class WorkflowStepStatus(str, enum.Enum):
+class WorkflowStepStatus(enum.StrEnum):
     """Status of a single step within a workflow session."""
 
     PENDING = "pending"
@@ -148,7 +148,7 @@ class WorkflowStepStatus(str, enum.Enum):
     SKIPPED = "skipped"
 
 
-class PushTarget(str, enum.Enum):
+class PushTarget(enum.StrEnum):
     """Where a push can go."""
 
     JIRA = "jira"
@@ -156,7 +156,7 @@ class PushTarget(str, enum.Enum):
     ARCHITECTURE = "architecture"
 
 
-class PushStatus(str, enum.Enum):
+class PushStatus(enum.StrEnum):
     """Push record lifecycle."""
 
     SUCCESS = "success"

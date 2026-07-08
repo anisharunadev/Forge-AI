@@ -22,7 +22,7 @@ def test_render_substitutes_variables():
 
 def test_render_supports_if_and_for():
     """Acceptance #? — {% if %} / {% for %}."""
-    tmpl = "{% if items %}{{ items | length }}: {% for x in items %}{{ x }},{% endfor %}{% else %}empty{% endif %}"
+    tmpl = "{% if items %}{{ items | length }}: {% for x in items %}{{ x }},{% endfor %}{% else %}empty{% endif %}"  # noqa: E501
     assert _render_template(tmpl, {"items": ["a", "b"]}) == "2: a,b,"
     assert _render_template(tmpl, {"items": []}) == "empty"
 

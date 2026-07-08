@@ -476,7 +476,7 @@ def _normalize_risks(raw: list[Any]) -> list[dict[str, Any]]:
         if not isinstance(item, dict):
             continue
         if "id" not in item:
-            item = {**item, "id": f"RISK-{idx}"}
+            item = {**item, "id": f"RISK-{idx}"}  # noqa: PLW2901
         out.append(_normalize_risk(item, out))
     return out
 

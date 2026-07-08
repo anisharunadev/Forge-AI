@@ -426,7 +426,6 @@ async def _assert_b_cannot_see_or_mutate(
     async with factory() as session_b:
         b_filter = [table.tenant_id == str(tenant_b)]
         a_filter = [table.tenant_id == str(tenant_a)]
-        b_filter_kwargs: list[Any] = []
         if has_project_id:
             b_filter.append(table.project_id == str(project_b))
             a_filter.append(table.project_id == str(project_a))

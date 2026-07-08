@@ -423,7 +423,7 @@ class PromptService:
             payload=PromptRenderRequest(variables=payload.variables),
             version_number=version_number,
         )
-        model = payload.model_override or _version_model_default(rendered)
+        payload.model_override or _version_model_default(rendered)
         # ponytail: a real test path would route through
         # ``app.integrations.litellm.llm_client.chat_complete`` with
         # ``metadata={"forge_test": True}`` so spend reconciliation
@@ -614,7 +614,9 @@ def _parse_dotprompt(
         return (override_name or "imported-prompt", body.strip(), {}, [])
     fm, _, template = body.partition("---")
     fm_lines = [
-        l.strip() for l in fm.strip().splitlines() if l.strip() and not l.strip().startswith("#")
+        line.strip()
+        for line in fm.strip().splitlines()
+        if line.strip() and not line.strip().startswith("#")
     ]
     name = override_name or "imported-prompt"
     model_defaults: dict[str, Any] = {}

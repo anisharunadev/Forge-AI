@@ -137,10 +137,7 @@ class Synthesizer:
             return {"signals_seen": 0, "ideas_created": 0}
 
         clusters: list[list[IdeaSourceSignal]]
-        if budget_blocked:
-            clusters = [[s] for s in signals]
-        else:
-            clusters = self._cluster_by_keywords(signals)
+        clusters = [[s] for s in signals] if budget_blocked else self._cluster_by_keywords(signals)
 
         ideas_created = 0
         for cluster in clusters:

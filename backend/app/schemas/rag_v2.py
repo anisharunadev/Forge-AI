@@ -10,7 +10,7 @@ back the same payload the proxy returns, plus derived fields
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -23,19 +23,19 @@ from app.schemas.common import ForgeBaseModel
 # ---------------------------------------------------------------------------
 
 
-class VectorStoreStatus(str, Enum):
+class VectorStoreStatus(StrEnum):
     ACTIVE = "active"
     ARCHIVED = "archived"
 
 
-class ChunkingStrategy(str, Enum):
+class ChunkingStrategy(StrEnum):
     RECURSIVE = "recursive"
     SEMANTIC = "semantic"
     FIXED = "fixed"
     NONE = "none"
 
 
-class OCRMime(str, Enum):
+class OCRMime(StrEnum):
     PDF = "application/pdf"
     PNG = "image/png"
     JPEG = "image/jpeg"

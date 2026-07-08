@@ -116,7 +116,7 @@ async def _pick_least_loaded(
             )
             .group_by(CostEntry.workflow_id)
         )
-        rows = (await session.execute(stmt)).all()
+        (await session.execute(stmt)).all()
     # Without per-agent join tables yet, fall back to deterministic order
     # based on the agent id. The wiring for true load tracking is in
     # F-014 runtime metrics.

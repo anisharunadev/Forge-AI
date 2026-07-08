@@ -29,7 +29,6 @@ import pytest
 from app.agents.nodes.base import BasePhaseNode
 from app.agents.sdlc_state import SDLCPhase, SDLCState
 
-
 # ---------------------------------------------------------------------------
 # Helper — minimal DiscoveryNode instance is overkill; build a concrete
 # subclass inline so the test owns every field.
@@ -107,7 +106,7 @@ async def test_mutate_writes_audit_record():
 
 @pytest.mark.asyncio
 async def test_mutate_record_contains_rule6_fields():
-    """The audit payload carries every Rule 6 field (agent, model, prompt, tool, cost, artifact, timestamp, result)."""
+    """The audit payload carries every Rule 6 field (agent, model, prompt, tool, cost, artifact, timestamp, result)."""  # noqa: E501
     node = _ProbeNode()
     state = _make_state()
 

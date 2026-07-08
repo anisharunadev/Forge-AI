@@ -137,11 +137,8 @@ def _build_seccomp_filter_af_inet_block() -> bytes | None:
     # and arch-specific asm/unistd_64.h.
     import platform as _platform
 
-    if _platform.machine() == "aarch64":
-        SYS_SOCKET = 198
-    else:
-        # Default to x86_64 — covers all Linux dev/CI runners we ship.
-        SYS_SOCKET = 41
+    # Default to x86_64 — covers all Linux dev/CI runners we ship.
+    SYS_SOCKET = 198 if _platform.machine() == "aarch64" else 41
 
     BPF_LD_W_ABS = 0x20
     BPF_JMP_JEQ = 0x15
@@ -192,7 +189,7 @@ def _install_seccomp_filter() -> None:
     SECCOMP_MODE_FILTER = 2
 
     # prctl(unsigned long option, unsigned long arg2, unsigned long arg3, ...)
-    # Second arg is a pointer to the sock_fprog struct: { unsigned short len; struct sock_filter *filter; }
+    # Second arg is a pointer to the sock_fprog struct: { unsigned short len; struct sock_filter *filter; }  # noqa: E501
     class _SockFprog(ctypes.Structure):
         _fields_ = [("len", ctypes.c_ushort), ("filter", ctypes.c_char_p)]
 
@@ -298,7 +295,7 @@ class ScriptSandbox:
             "finally:\n"
             "    try:\n"
             "        import socket as _forge_socket\n"
-            "        _forge_s = _forge_socket.socket(_forge_socket.AF_INET, _forge_socket.SOCK_STREAM)\n"
+            "        _forge_s = _forge_socket.socket(_forge_socket.AF_INET, _forge_socket.SOCK_STREAM)\n"  # noqa: E501
             "        _forge_s.close()\n"
             "    except OSError as _forge_e:\n"
             "        if _forge_e.errno in (1, 13, 38):\n"

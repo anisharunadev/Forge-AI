@@ -14,7 +14,7 @@ the append-only audit trail of every key lifecycle event:
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from sqlalchemy import DateTime, Index, String, Text
@@ -23,7 +23,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import GUID, Base, UUIDPrimaryKeyMixin
 
 
-class LiteLLMKeyAction(str, Enum):
+class LiteLLMKeyAction(StrEnum):
     """Action performed on a Virtual Key."""
 
     MINTED = "minted"

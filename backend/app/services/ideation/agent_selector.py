@@ -215,7 +215,7 @@ class AgentSelector:
         score: OpportunityScore | None,
     ) -> str:
         bits = [
-            f"Picked {agent.name} ({agent.type.value if hasattr(agent.type, 'value') else agent.type}) for phase {phase}"
+            f"Picked {agent.name} ({agent.type.value if hasattr(agent.type, 'value') else agent.type}) for phase {phase}"  # noqa: E501
         ]
         if analysis is not None and analysis.target_users:
             bits.append(f"target users: {', '.join(analysis.target_users[:2])}")

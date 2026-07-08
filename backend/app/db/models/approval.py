@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -14,7 +14,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class ApprovalStatus(str, Enum):
+class ApprovalStatus(StrEnum):
     """Lifecycle of a request for human approval."""
 
     PENDING = "pending"

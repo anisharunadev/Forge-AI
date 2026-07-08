@@ -111,7 +111,7 @@ def _handler_is_audited(handler: ast.AsyncFunctionDef | ast.FunctionDef) -> bool
     """True if the handler is decorated with @audit(...) (anywhere in its decorator list)."""
     for decorator in handler.decorator_list:
         names = _decorator_names(decorator)
-        if names and names[-1] == _AUDIT_DECORATOR_NAME:
+        if names and names[-1] == _AUDIT_DECORATOR_NAME:  # noqa: SIM102
             # Exclude @router.<verb> — only count bare @audit(...) or @app.audit(...)
             if names[0] not in {"router", "app"}:
                 return True

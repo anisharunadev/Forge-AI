@@ -12,7 +12,7 @@ the F-010 registry stores and the API surfaces.
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -21,7 +21,7 @@ from pydantic import ConfigDict, Field, model_validator
 from app.schemas.common import ForgeBaseModel
 
 
-class MigrationPhaseStatus(str, Enum):
+class MigrationPhaseStatus(StrEnum):
     """Lifecycle state of a single :class:`MigrationPhase`."""
 
     PLANNED = "planned"

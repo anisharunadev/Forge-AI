@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from sqlalchemy import DateTime, Index, Numeric, String
@@ -20,7 +20,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import GUID, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class LiteLLMBudgetPeriod(str, Enum):
+class LiteLLMBudgetPeriod(StrEnum):
     """LiteLLM budget reset period."""
 
     DAILY = "daily"

@@ -32,9 +32,9 @@ from app.services.ideation.impact_graph import (
     ComparisonResult,
     GraphEdge,
     GraphNode,
-    ImpactEntry,
-    ImpactGraph,
-    ImpactGraphService,
+    ImpactEntry,  # noqa: F401
+    ImpactGraph,  # noqa: F401
+    ImpactGraphService,  # noqa: F401
     impact_graph_service,
 )
 from app.services.ideation.kg_integration import (
@@ -71,7 +71,7 @@ from app.services.ideation.roadmap_generator import (
     roadmap_generator,
 )
 from app.services.ideation.scoring import (
-    OpportunityScoringService,
+    OpportunityScoringService,  # noqa: F401
     ScoreComponents,
     opportunity_scoring_service,
 )

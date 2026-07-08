@@ -78,7 +78,7 @@ async def captured_events(event_bus):  # type: ignore[no-untyped-def]
     from app.services.event_bus import Event
 
     captured: list[Event] = []
-    event_bus.subscribe_all(lambda e: captured.append(e))
+    event_bus.subscribe_all(captured.append)
     return captured
 
 

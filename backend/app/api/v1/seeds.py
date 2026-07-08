@@ -226,7 +226,7 @@ async def reset_seed(
         perm = require_permission("seeds:reset:demo_only")
     # Resolve the dep inline — we can't use it as a default-value param
     # because the choice depends on the request body.
-    perm_check = await perm(principal=principal)  # type: ignore[arg-type]
+    await perm(principal=principal)  # type: ignore[arg-type]
 
     factory = db.get_bind()
     service = _service(factory)

@@ -100,7 +100,7 @@ async def captured_events(event_bus):  # type: ignore[no-untyped-def]
     from app.services.event_bus import Event
 
     captured: list[Event] = []
-    event_bus.subscribe_all(lambda e: captured.append(e))
+    event_bus.subscribe_all(captured.append)
     return captured
 
 
@@ -252,7 +252,7 @@ async def test_risk_register_score_calculation(sqlite_db, event_bus, captured_ev
     # Updating likelihood/impact should recompute score.
     target_id = register.risks[0]["id"]
     new_likelihood = register.risks[0]["likelihood"]
-    new_impact = register.risks[0]["impact"]
+    register.risks[0]["impact"]
     bumped = await svc.update_risk(
         register_id=register.id,
         risk_id=target_id,

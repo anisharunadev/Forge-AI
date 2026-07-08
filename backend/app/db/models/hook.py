@@ -12,7 +12,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import GUID, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class HookPhase(str, enum.Enum):
+class HookPhase(enum.StrEnum):
     """When a hook fires relative to the originating event."""
 
     PRE = "pre"

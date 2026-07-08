@@ -47,7 +47,7 @@ class VectorStore(Base, UUIDPrimaryKeyMixin, TenantScopedMixin):
         "metadata", JSONB, nullable=False, default=dict
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=lambda: datetime.utcnow()
+        DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
 
     __table_args__ = (
@@ -90,7 +90,7 @@ class RagChunk(Base, UUIDPrimaryKeyMixin, TenantScopedMixin):
     embedding: Mapped[list[float] | None] = mapped_column(JSONB, nullable=True)
     chunk_index: Mapped[int] = mapped_column(default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=lambda: datetime.utcnow()
+        DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
 
     __table_args__ = (

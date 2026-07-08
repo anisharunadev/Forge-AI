@@ -14,6 +14,7 @@ the artifact registry, not here.
 
 from __future__ import annotations
 
+import contextlib
 import re
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -62,10 +63,7 @@ def validate_idea(payload: IdeaCreate | dict[str, Any]) -> ValidationResult:
     pass here is for programmatic callers that bypass the schema.
     """
     data: dict[str, Any]
-    if isinstance(payload, IdeaCreate):
-        data = payload.model_dump()
-    else:
-        data = dict(payload)
+    data = payload.model_dump() if isinstance(payload, IdeaCreate) else dict(payload)
 
     errors: list[str] = []
 
@@ -384,10 +382,8 @@ class IdeaIntakeService:
                 if field_name in data and data[field_name] is not None:
                     setattr(idea, field_name, data[field_name])
             if "status" in data and data["status"] is not None:
-                try:
+                with contextlib.suppress(ValueError):
                     idea.status = IdeaStatus(data["status"])
-                except ValueError:
-                    pass
             await session.commit()
             await session.refresh(idea)
 

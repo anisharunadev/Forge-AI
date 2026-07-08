@@ -28,14 +28,14 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class WebhookDirection(str, enum.Enum):
+class WebhookDirection(enum.StrEnum):
     """Inbound (Forge receives) vs outbound (Forge sends)."""
 
     INBOUND = "inbound"
     OUTBOUND = "outbound"
 
 
-class WebhookAuthType(str, enum.Enum):
+class WebhookAuthType(enum.StrEnum):
     """How the webhook authenticates."""
 
     NONE = "none"
@@ -45,7 +45,7 @@ class WebhookAuthType(str, enum.Enum):
     SIGNATURE = "signature"
 
 
-class WebhookStatus(str, enum.Enum):
+class WebhookStatus(enum.StrEnum):
     """Lifecycle of a webhook subscription."""
 
     ACTIVE = "active"
@@ -53,7 +53,7 @@ class WebhookStatus(str, enum.Enum):
     FAILING = "failing"
 
 
-class WebhookDeliveryStatus(str, enum.Enum):
+class WebhookDeliveryStatus(enum.StrEnum):
     """Outcome of a single delivery attempt."""
 
     OK = "ok"

@@ -63,9 +63,7 @@ def _serialize(row: ArchitectureVersionRow) -> ArchitectureVersionResponse:
     )
 
 
-def _resolve_project_id(
-    principal: AuthenticatedPrincipal, override: UUID | None
-) -> UUID:
+def _resolve_project_id(principal: AuthenticatedPrincipal, override: UUID | None) -> UUID:
     project_id = override or principal.project_id
     if project_id is None:
         raise HTTPException(status_code=400, detail="project_id_required")
@@ -126,9 +124,7 @@ async def list_versions(
 async def diff_versions(
     version_a: UUID = Query(...),
     version_b: UUID = Query(...),
-    service: ArchitectureVersioningService = Depends(
-        ArchitectureVersioningService
-    ),
+    service: ArchitectureVersioningService = Depends(ArchitectureVersioningService),
 ):
     return await service.diff_versions(version_a, version_b)
 

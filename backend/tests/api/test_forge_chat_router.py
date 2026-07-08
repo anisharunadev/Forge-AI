@@ -30,14 +30,14 @@ import app.db.session as _sess
 _sess._engine = object()  # type: ignore[assignment]
 _sess._session_factory = object()  # type: ignore[assignment]
 
-import app.api.v1.forge_chat as forge_chat_router
-from app.main import app
-from app.schemas.forge_chat import (
+import app.api.v1.forge_chat as forge_chat_router  # noqa: E402
+from app.main import app  # noqa: E402
+from app.schemas.forge_chat import (  # noqa: E402
     ChatCancelResponse,
     ChatStreamChunk,
     ForgeRunStatus,
 )
-from app.services.forge_chat_errors import AuthenticationError
+from app.services.forge_chat_errors import AuthenticationError  # noqa: E402
 
 AGENT_ID = UUID("11111111-1111-1111-1111-111111111111")
 RUN_ID = UUID("22222222-2222-2222-2222-222222222222")

@@ -552,7 +552,7 @@ async def seed() -> None:
             logger.info("  ✓ idea: %s [%s]", spec["title"], spec["status"].value)
 
         # ----- Analyses (4) -----
-        for idea_id, spec in zip(idea_ids[:4], SEED_ANALYSES):
+        for idea_id, spec in zip(idea_ids[:4], SEED_ANALYSES, strict=False):
             analyzed_at = datetime.now(UTC) - timedelta(days=1)
             session.add(
                 IdeaAnalysis(
@@ -577,7 +577,7 @@ async def seed() -> None:
         logger.info("  ✓ analyses: 4")
 
         # ----- Scores (4) -----
-        for idea_id, spec in zip(idea_ids[:4], SEED_SCORES):
+        for idea_id, spec in zip(idea_ids[:4], SEED_SCORES, strict=False):
             scored_at = datetime.now(UTC) - timedelta(days=1)
             session.add(
                 OpportunityScore(

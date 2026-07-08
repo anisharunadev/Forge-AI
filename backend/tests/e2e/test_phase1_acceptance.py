@@ -29,7 +29,7 @@ import asyncio
 import json
 import logging
 import time
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -386,7 +386,6 @@ class TestP2ModelsRegistry:
         from app.integrations.litellm import litellm_base_client
         from app.services.forge_models import ModelsService
 
-        request_log: list[dict[str, Any]] = []
         caller_key = "sk-caller-P2A1"
 
         handlers = {
@@ -1275,10 +1274,8 @@ class TestP4VirtualKeyBroker:
         await broker.issue(agent)
         await broker.rotate(agent.id, reason="r")
         # Optionally rotate again if API permits.
-        try:
+        with suppress(Exception):
             await broker.rotate(agent.id, reason="r2")
-        except Exception:
-            pass
 
         async with factory() as s:
             rows = (

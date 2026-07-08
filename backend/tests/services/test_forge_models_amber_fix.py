@@ -40,7 +40,7 @@ class _StubSessionFactory:
         return _StubSession()
 
 
-_session_mod.get_session_factory = lambda: _StubSessionFactory()  # type: ignore[assignment]
+_session_mod.get_session_factory = _StubSessionFactory  # type: ignore[assignment]
 
 from app.services.forge_models import ModelsService  # noqa: E402
 

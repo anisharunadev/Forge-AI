@@ -119,10 +119,7 @@ def _render_refactor_prompt(state: RefactorAgentState) -> str:
     # required at runtime — the prompt is sent to the LLM as-is.
     rendered = template
     for k, v in payload.items():
-        if isinstance(v, (dict, list)):
-            replacement = json.dumps(v, default=str)
-        else:
-            replacement = str(v)
+        replacement = json.dumps(v, default=str) if isinstance(v, (dict, list)) else str(v)
         rendered = rendered.replace("{{ " + k + " }}", replacement)
         rendered = rendered.replace("{{ " + k + " | tojson }}", replacement)
     return rendered
@@ -792,5 +789,5 @@ __all__ = [
     "generate_phases_node",
     "risk_register_node",
     "push_to_jira_node",
-    "build_migration_plan",
+    "_build_migration_plan",
 ]

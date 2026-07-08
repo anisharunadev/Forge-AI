@@ -247,7 +247,7 @@ def _parse_mutate_marker(output: str) -> dict[str, Any] | None:
     import json
 
     for line in output.splitlines():
-        line = line.strip()
+        line = line.strip()  # noqa: PLW2901
         if line.startswith("__forge_mutate__:"):
             payload = line[len("__forge_mutate__:") :]
             try:

@@ -26,8 +26,8 @@ import app.db.session as _sess
 _sess._engine = object()  # type: ignore[assignment]
 _sess._session_factory = object()  # type: ignore[assignment]
 
-from app.main import app
-from app.schemas.forge import ForgeHealth
+from app.main import app  # noqa: E402
+from app.schemas.forge import ForgeHealth  # noqa: E402
 
 
 def _mock_response(status_code: int, body: dict | None = None) -> MagicMock:

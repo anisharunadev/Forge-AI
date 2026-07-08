@@ -8,14 +8,14 @@ from app.db.models.artifact import Artifact
 from app.db.models.audit import AuditEvent
 from app.db.models.board_confirmation import BoardConfirmation, BoardConfirmationOutcome
 from app.db.models.connector import Connector, ConnectorSyncHistory
-from app.db.models.connector_activity import ConnectorActivity
+from app.db.models.connector_activity import ConnectorActivity  # noqa: F401
 from app.db.models.connector_credential import (
     ConnectorCredential,
     CredentialScope,
     CredentialType,
 )
 from app.db.models.cost import CostEntry
-from app.db.models.cost_rollup import CostMinuteRollup
+from app.db.models.cost_rollup import CostMinuteRollup  # noqa: F401
 from app.db.models.customer import Customer
 from app.db.models.dashboard import (
     AIInsight,
@@ -59,26 +59,26 @@ from app.db.models.organization import Organization
 
 # step-80 — Phase 4 (cache, sessions, identity, credentials, finops).
 from app.db.models.phase4 import (
-    Phase4A2ADelegation,
-    Phase4CacheKey,
-    Phase4Credential,
-    Phase4FinopsExport,
-    Phase4FinopsSettings,
-    Phase4JwtSigningKey,
-    Phase4OAuthClient,
-    Phase4RealtimeClientSecret,
-    Phase4ScimToken,
-    Phase4Session,
-    Phase4SessionEvent,
-    Phase4SsoConfig,
-    Phase4VaultConfig,
+    Phase4A2ADelegation,  # noqa: F401
+    Phase4CacheKey,  # noqa: F401
+    Phase4Credential,  # noqa: F401
+    Phase4FinopsExport,  # noqa: F401
+    Phase4FinopsSettings,  # noqa: F401
+    Phase4JwtSigningKey,  # noqa: F401
+    Phase4OAuthClient,  # noqa: F401
+    Phase4RealtimeClientSecret,  # noqa: F401
+    Phase4ScimToken,  # noqa: F401
+    Phase4Session,  # noqa: F401
+    Phase4SessionEvent,  # noqa: F401
+    Phase4SsoConfig,  # noqa: F401
+    Phase4VaultConfig,  # noqa: F401
 )
 from app.db.models.policy import Policy
 from app.db.models.project import Project
 from app.db.models.project_invitation import ProjectInvitation
 from app.db.models.project_member import ProjectMember
-from app.db.models.prompt import Prompt, PromptVersion
-from app.db.models.rag import RagChunk, VectorStore
+from app.db.models.prompt import Prompt, PromptVersion  # noqa: F401
+from app.db.models.rag import RagChunk, VectorStore  # noqa: F401
 from app.db.models.repo_ingestion import (
     IngestionArtifact,
     IngestionArtifactType,
@@ -96,7 +96,7 @@ from app.db.models.team import Team
 from app.db.models.team_member import TeamMember
 from app.db.models.template import Template
 from app.db.models.tenant import Tenant
-from app.db.models.tenant_settings import TenantSettings
+from app.db.models.tenant_settings import TenantSettings  # noqa: F401
 from app.db.models.terminal_cost import TerminalSessionCost
 from app.db.models.user import User
 from app.db.models.user_session import UserApiToken, UserSession

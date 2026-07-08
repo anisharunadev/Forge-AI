@@ -220,7 +220,7 @@ class AWSTransformClient:
         if client is None:
             return cached
 
-        for attempt in range(self._max_polls):
+        for _attempt in range(self._max_polls):
             try:
                 response = client.describe_transform_job(transformJobId=job_id)
             except Exception as exc:  # noqa: BLE001
@@ -262,7 +262,7 @@ _default_client: AWSTransformClient | None = None
 
 def get_default_client() -> AWSTransformClient:
     """Return the process-wide :class:`AWSTransformClient`."""
-    global _default_client
+    global _default_client  # noqa: PLW0603
     if _default_client is None:
         _default_client = AWSTransformClient()
     return _default_client

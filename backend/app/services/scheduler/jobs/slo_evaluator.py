@@ -9,6 +9,7 @@ the scheduler.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 
 from app.services.observability import slo_alerts
@@ -24,10 +25,8 @@ async def _loop(stop: asyncio.Event, interval_seconds: int = 60) -> None:
             await slo_alerts.evaluate_all(metrics)
         except Exception:  # noqa: BLE001
             log.exception("slo_evaluator_tick_failed")
-        try:
+        with contextlib.suppress(TimeoutError):
             await asyncio.wait_for(stop.wait(), timeout=interval_seconds)
-        except TimeoutError:
-            pass
 
 
 def start() -> asyncio.Task:

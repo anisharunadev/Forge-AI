@@ -34,15 +34,19 @@ class TechRadarService:
         if self._session is None:
             return []
         rows = (
-            await self._session.execute(
-                select(TechRadarEntry)
-                .where(
-                    TechRadarEntry.tenant_id == tenant_id,
-                    TechRadarEntry.project_id == project_id,
+            (
+                await self._session.execute(
+                    select(TechRadarEntry)
+                    .where(
+                        TechRadarEntry.tenant_id == tenant_id,
+                        TechRadarEntry.project_id == project_id,
+                    )
+                    .order_by(TechRadarEntry.quadrant, TechRadarEntry.ring, TechRadarEntry.name)
                 )
-                .order_by(TechRadarEntry.quadrant, TechRadarEntry.ring, TechRadarEntry.name)
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return list(rows)
 
     async def create_entry(

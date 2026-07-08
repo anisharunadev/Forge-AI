@@ -41,8 +41,8 @@ os.environ.setdefault("JWT_SECRET", "test-secret")
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("FORGE_ROUTE_DISCOVERY_ENABLED", "false")
 
-import pytest
-import structlog
+import pytest  # noqa: E402
+import structlog  # noqa: E402
 
 # Stub get_session_factory BEFORE app.* imports trigger it via usage_query.
 # The real impl tries to build a SQLAlchemy AsyncEngine with pool kwargs

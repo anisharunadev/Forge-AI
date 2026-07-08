@@ -402,7 +402,7 @@ async def create_jwt_key(
             kid=kid,
             algorithm="RS256",
             public_jwk=jwk,
-            private_pem_path=f"inline://{kid}",  # DB stores reference; real impl would write to vault
+            private_pem_path=f"inline://{kid}",  # DB stores reference; real impl would write to vault  # noqa: E501
             status="active",
             created_at=datetime.now(UTC),
         )

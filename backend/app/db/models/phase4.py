@@ -74,7 +74,7 @@ class Phase4Session(Base, UUIDPrimaryKeyMixin, TenantScopedMixin):
         Index("ix_phase4_sessions_status", "status"),
         Index("ix_phase4_sessions_expires_at", "expires_at"),
         CheckConstraint(
-            "session_type IN ('realtime','a2a','background','eval','interaction','assistant','thread')",
+            "session_type IN ('realtime','a2a','background','eval','interaction','assistant','thread')",  # noqa: E501
             name="session_type",
         ),
         CheckConstraint(

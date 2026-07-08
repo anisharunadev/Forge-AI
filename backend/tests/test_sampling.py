@@ -50,7 +50,7 @@ def test_low_rate_uses_ratio():
         Decision,
     )
 
-    sampler = TenantSampler(cache=None)
+    TenantSampler(cache=None)
     mod._LOCAL["t-low"] = (10**9, 0.0, False)
     tok = tenant_id_ctx.set("t-low")
     try:

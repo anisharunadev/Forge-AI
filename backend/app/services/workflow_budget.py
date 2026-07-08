@@ -14,7 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -54,7 +54,7 @@ from app.services.event_bus import bus as default_bus
 logger = get_logger(__name__)
 
 
-class Decision(str, Enum):
+class Decision(StrEnum):
     """Outcome of an admission check.
 
     ALLOWED: the projected cost fits within remaining headroom.

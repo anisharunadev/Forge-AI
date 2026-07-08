@@ -240,7 +240,7 @@ class SkillsService:
         for key in ("name", "description", "prompt_template", "tools", "config", "metadata"):
             value = getattr(body, key)
             if value is not None:
-                if isinstance(value, SkillMetadata) or isinstance(value, SkillConfig):
+                if isinstance(value, (SkillMetadata, SkillConfig)):
                     merged[key] = value.model_dump(exclude_none=True)
                 elif isinstance(value, list):
                     merged[key] = [v.model_dump() if isinstance(v, ToolRef) else v for v in value]

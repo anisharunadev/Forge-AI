@@ -167,7 +167,7 @@ async def main() -> int:
             print(f"  (returned {len(idea_items)} ideas)")
         elif ok:
             print(
-                f"  ✗ expected >= 5 ideas, got {len(idea_items) if isinstance(idea_items, list) else 0}"
+                f"  ✗ expected >= 5 ideas, got {len(idea_items) if isinstance(idea_items, list) else 0}"  # noqa: E501
             )
             failed += 1
             passed -= 1

@@ -90,21 +90,16 @@ class TTFSService:
 
         factory = get_session_factory()
         async with factory() as session:
-            stmt = (
-                select(
-                    AuditEvent.actor_id,
-                    AuditEvent.project_id,
-                    AuditEvent.action,
-                    AuditEvent.occurred_at,
-                )
-                .where(
-                    AuditEvent.tenant_id == tenant_uuid,
-                    AuditEvent.occurred_at >= start,
-                    AuditEvent.occurred_at <= end,
-                    AuditEvent.action.in_(
-                        list(self.START_ACTIONS) + list(self.FIRST_ARTIFACT_ACTIONS)
-                    ),
-                )
+            stmt = select(
+                AuditEvent.actor_id,
+                AuditEvent.project_id,
+                AuditEvent.action,
+                AuditEvent.occurred_at,
+            ).where(
+                AuditEvent.tenant_id == tenant_uuid,
+                AuditEvent.occurred_at >= start,
+                AuditEvent.occurred_at <= end,
+                AuditEvent.action.in_(list(self.START_ACTIONS) + list(self.FIRST_ARTIFACT_ACTIONS)),
             )
             if project_id is not None:
                 stmt = stmt.where(AuditEvent.project_id == str(project_id))

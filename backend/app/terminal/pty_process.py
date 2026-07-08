@@ -9,6 +9,7 @@ blocks on the OS but yields bytes back to the asyncio loop.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import errno
 import fcntl
 import os
@@ -141,19 +142,13 @@ class PTYProcess:
     def _kill_blocking(self) -> None:
         if self.pid is None or self.fd is None:
             return
-        try:
+        with contextlib.suppress(ProcessLookupError):
             os.kill(self.pid, signal.SIGTERM)
-        except ProcessLookupError:
-            pass
-        try:
+        with contextlib.suppress(ChildProcessError):
             os.waitpid(self.pid, os.WNOHANG)
-        except ChildProcessError:
-            pass
         # Force-close the master fd so read() returns immediately.
-        try:
+        with contextlib.suppress(OSError):
             os.close(self.fd)
-        except OSError:
-            pass
         self._closed = True
 
     @property

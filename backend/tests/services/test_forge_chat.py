@@ -32,7 +32,7 @@ from __future__ import annotations
 import asyncio
 import json
 import time
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -409,10 +409,8 @@ async def test_first_token_within_300ms(monkeypatch):
     assert elapsed_ms < 300, f"first token took {elapsed_ms:.1f}ms (>= 300ms)"
 
     # Drain remaining (none expected — single chunk).
-    try:
+    with suppress(TimeoutError, StopAsyncIteration):
         await asyncio.wait_for(gen.__anext__(), timeout=0.5)
-    except (TimeoutError, StopAsyncIteration):
-        pass
 
 
 # ---------------------------------------------------------------------------
@@ -546,7 +544,7 @@ async def test_metadata_injected_on_every_call(monkeypatch):
     req = _request()
 
     # Consume the stream to completion.
-    chunks = [c async for c in chat_mod.stream_chat(principal, agent_id, req)]
+    [c async for c in chat_mod.stream_chat(principal, agent_id, req)]
 
     assert len(captured_bodies) == 1, "expected exactly one upstream call"
     body = captured_bodies[0]

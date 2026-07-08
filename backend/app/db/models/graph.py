@@ -8,7 +8,7 @@ between entities appear as edges. The spec calls for ~200 nodes and
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -27,7 +27,7 @@ from app.db.base import (
 )
 
 
-class GraphNodeKind(str, Enum):
+class GraphNodeKind(StrEnum):
     """Discriminator for node types in the graph."""
 
     ADR = "adr"
@@ -45,7 +45,7 @@ class GraphNodeKind(str, Enum):
     DOC = "doc"
 
 
-class GraphEdgeKind(str, Enum):
+class GraphEdgeKind(StrEnum):
     """Discriminator for edge types in the graph."""
 
     SUPERSEDES = "supersedes"

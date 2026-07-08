@@ -95,7 +95,7 @@ def _audit_chain(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     chain: list[dict[str, Any]] = []
     prev = genesis
     for record in records:
-        record = dict(record)
+        record = dict(record)  # noqa: PLW2901
         record.pop("hash", None)
         record.pop("prev_hash", None)
         canonical = _canonical({"prev_hash": prev, **record})
@@ -109,7 +109,7 @@ def verify_audit_hash_chain(chain: list[dict[str, Any]]) -> bool:
     """Recompute the chain from a serialized form; return True iff valid."""
     prev = "0" * 64
     for record in chain:
-        record = dict(record)
+        record = dict(record)  # noqa: PLW2901
         declared = record.pop("hash", None)
         declared_prev = record.pop("prev_hash", None)
         if declared_prev != prev:
@@ -232,7 +232,7 @@ class SessionExporter:
             "",
             "=" * 80,
         ]
-        for idx, rec in enumerate(records):
+        for _idx, rec in enumerate(records):
             ts = rec["occurred_at"]
             ts_str = ts.isoformat() if hasattr(ts, "isoformat") else str(ts)
             lines.append(f"[{ts_str}] $ {rec['command']}")
@@ -407,8 +407,17 @@ class SessionExporter:
         body = f"""<!doctype html>
 <html><head><meta charset="utf-8"><title>Forge Session {html.escape(session.id)}</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css"/>
-<style>body{{margin:0;background:#1e1e1e;color:#fff;font-family:system-ui}}.h{{padding:8px 16px;border-bottom:1px solid #333}}#t{{padding:8px 16px}}</style>
-</head><body><div class="h"><strong>Forge Terminal Session</strong> {html.escape(session.id)}<br/>agent={html.escape(session.agent_type.value)} workspace={html.escape(session.workspace_path)}</div><div id="t"></div>
+<style>
+body{{margin:0;background:#1e1e1e;color:#fff;font-family:system-ui}}
+.h{{padding:8px 16px;border-bottom:1px solid #333}}
+#t{{padding:8px 16px}}
+</style>
+</head><body>
+<div class="h"><strong>Forge Terminal Session</strong>
+  {html.escape(session.id)}<br/>
+  agent={html.escape(session.agent_type.value)} workspace={html.escape(session.workspace_path)}
+</div>
+<div id="t"></div>
 <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
 <script>
 const FRAMES = {frames_json};

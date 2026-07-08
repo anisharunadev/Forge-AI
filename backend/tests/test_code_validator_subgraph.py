@@ -24,6 +24,7 @@ All tool calls are stubbed via the injectable ``_runner`` /
 ``_audit_record`` params so the tests run hermetically without
 ``ruff`` / ``mypy`` / ``bandit`` / a real DB.
 """
+
 from __future__ import annotations
 
 import json
@@ -49,7 +50,6 @@ from agents.code_validator.nodes import (
     security_scan_node,
     typecheck_node,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -286,6 +286,5 @@ def test_subgraph_independent_of_sdlc_supervisor() -> None:
         if bad_pattern.search(text):
             bad.append(str(path))
     assert not bad, (
-        f"agents.code_validator must NOT reference the SDLC supervisor; "
-        f"offending files: {bad}"
+        f"agents.code_validator must NOT reference the SDLC supervisor; offending files: {bad}"
     )

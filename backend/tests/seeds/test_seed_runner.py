@@ -52,7 +52,7 @@ def _session_factory_mock() -> MagicMock:
     def _open() -> _Ctx:
         return _Ctx()
 
-    factory.side_effect = lambda: _Ctx()
+    factory.side_effect = _Ctx
     factory.return_value = _Ctx()
     return factory
 

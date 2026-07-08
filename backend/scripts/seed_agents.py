@@ -119,7 +119,7 @@ SEED_AGENTS: list[dict[str, Any]] = [
             "languages": ["python", "typescript", "go"],
             "tools": ["shell", "git", "github"],
             "actions": ["code-review", "pr-analysis", "security-scan"],
-            "description": "Reviews PRs automatically, flags issues, suggests fixes. Saves ~3h/week per dev.",
+            "description": "Reviews PRs automatically, flags issues, suggests fixes. Saves ~3h/week per dev.",  # noqa: E501
         },
         "status": AgentStatus.ENABLED,
     },
@@ -136,7 +136,7 @@ SEED_AGENTS: list[dict[str, Any]] = [
             "languages": ["python", "typescript"],
             "tools": ["shell", "git"],
             "actions": ["refactor", "code-transformation", "test-generation"],
-            "description": "Tackles large refactors across the codebase. Auto-generates PRs with tests.",
+            "description": "Tackles large refactors across the codebase. Auto-generates PRs with tests.",  # noqa: E501
         },
         "status": AgentStatus.ENABLED,
     },
@@ -152,7 +152,7 @@ SEED_AGENTS: list[dict[str, Any]] = [
             "runtime": "custom",
             "tools": ["webhook", "rest"],
             "actions": ["data-sync", "webhook-handler", "event-routing"],
-            "description": "Syncs data between Jira, GitHub, Slack, and Forge. Keeps everyone in the loop.",
+            "description": "Syncs data between Jira, GitHub, Slack, and Forge. Keeps everyone in the loop.",  # noqa: E501
         },
         "status": AgentStatus.ENABLED,
     },
@@ -169,7 +169,7 @@ SEED_AGENTS: list[dict[str, Any]] = [
             "languages": ["python", "typescript", "go"],
             "tools": ["shell", "pytest", "vitest"],
             "actions": ["test-generation", "test-execution", "coverage-analysis"],
-            "description": "Writes tests, runs them, reports coverage. Increases test coverage by 20% in a sprint.",
+            "description": "Writes tests, runs them, reports coverage. Increases test coverage by 20% in a sprint.",  # noqa: E501
         },
         "status": AgentStatus.ENABLED,
     },
@@ -201,7 +201,7 @@ SEED_AGENTS: list[dict[str, Any]] = [
             "runtime": "kiro",
             "tools": ["shell", "static-analysis"],
             "actions": ["security-scan", "vulnerability-detection", "compliance-check"],
-            "description": "Scans for security issues, suggests fixes. Runs nightly on the main branch.",
+            "description": "Scans for security issues, suggests fixes. Runs nightly on the main branch.",  # noqa: E501
         },
         "status": AgentStatus.ENABLED,
     },

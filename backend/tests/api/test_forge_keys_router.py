@@ -29,9 +29,9 @@ import app.db.session as _sess
 _sess._engine = object()  # type: ignore[assignment]
 _sess._session_factory = object()  # type: ignore[assignment]
 
-import app.api.v1.forge_keys as forge_keys_router
-from app.main import app
-from app.schemas.forge_keys import (
+import app.api.v1.forge_keys as forge_keys_router  # noqa: E402
+from app.main import app  # noqa: E402
+from app.schemas.forge_keys import (  # noqa: E402
     ForgeKeyIssueResponse,
     ForgeKeyRevokeResponse,
     ForgeKeyRotateResponse,

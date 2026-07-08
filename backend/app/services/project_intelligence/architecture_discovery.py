@@ -368,7 +368,7 @@ def _detect_components(tree: dict[str, str]) -> list[dict[str, Any]]:
     components: list[dict[str, Any]] = []
     for path in tree:
         base = os.path.basename(path)
-        if base in {"Dockerfile", "docker-compose.yml"} or base.endswith(".yaml"):
+        if base in {"Dockerfile", "docker-compose.yml"} or base.endswith(".yaml"):  # noqa: SIM102
             if "k8s" in path or "kubernetes" in path or base == "Dockerfile":
                 components.append({"name": base, "path": path, "kind": "deployable"})
     return components[:50]
@@ -405,7 +405,7 @@ def _parse_package_json(content: str) -> list[DependencyNode]:
 def _parse_requirements(content: str) -> list[DependencyNode]:
     deps: list[DependencyNode] = []
     for line in content.splitlines():
-        line = line.strip()
+        line = line.strip()  # noqa: PLW2901
         if not line or line.startswith("#"):
             continue
         if "==" in line:
@@ -431,7 +431,7 @@ def _parse_go_mod(content: str) -> list[DependencyNode]:
     deps: list[DependencyNode] = []
     in_block = False
     for line in content.splitlines():
-        line = line.strip()
+        line = line.strip()  # noqa: PLW2901
         if not line:
             continue
         if line.startswith("require ("):

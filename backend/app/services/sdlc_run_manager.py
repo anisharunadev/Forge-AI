@@ -219,7 +219,7 @@ class SDLCRunManager:
             state = await gate.record_response(state, approval_response)
             self._states[run_id] = state
             await self._broker.publish(run_id, state)
-        if state.current_phase == SDLCPhase.DONE or state.current_phase == SDLCPhase.FAILED:
+        if state.current_phase in (SDLCPhase.DONE, SDLCPhase.FAILED):
             return state
         if run_id in self._tasks and not self._tasks[run_id].done():
             # Already driving — the new state will be picked up next tick.
@@ -455,14 +455,14 @@ _default_manager: SDLCRunManager | None = None
 
 
 def get_default_manager() -> SDLCRunManager:
-    global _default_manager
+    global _default_manager  # noqa: PLW0603
     if _default_manager is None:
         _default_manager = SDLCRunManager()
     return _default_manager
 
 
 def set_default_manager(manager: SDLCRunManager) -> None:
-    global _default_manager
+    global _default_manager  # noqa: PLW0603
     _default_manager = manager
 
 

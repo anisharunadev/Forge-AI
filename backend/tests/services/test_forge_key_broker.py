@@ -46,6 +46,8 @@ def _passthrough_factory() -> Any:
 
 _session_mod.get_session_factory = _passthrough_factory  # type: ignore[assignment]
 
+import contextlib  # noqa: E402
+
 from app.core.crypto import decrypt  # noqa: E402
 from app.services.forge_key_broker import (  # noqa: E402
     AgentVirtualKey,
@@ -221,10 +223,8 @@ async def test_plaintext_key_never_logged(sqlite_db, monkeypatch):
 
     class _Capture(logging.Handler):
         def emit(self, record: logging.LogRecord) -> None:
-            try:
+            with contextlib.suppress(Exception):
                 captured.append(record.getMessage())
-            except Exception:
-                pass
 
     handler = _Capture()
     root = logging.getLogger()

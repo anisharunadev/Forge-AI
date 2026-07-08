@@ -29,9 +29,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_session_factory
 
 _session_factory = get_session_factory()
-from app.db.models.tenant import Tenant
-from app.db.models.user import User
-from app.db.models.workflow import Workflow, WorkflowRun
+from app.db.models.tenant import Tenant  # noqa: E402
+from app.db.models.user import User  # noqa: E402
+from app.db.models.workflow import Workflow, WorkflowRun  # noqa: E402
 
 SEED_WORKFLOWS = [
     {

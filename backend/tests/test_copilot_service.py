@@ -75,15 +75,15 @@ def _stub_get_session_factory() -> _StubSessionFactory:
 _session_mod.get_session_factory = _stub_get_session_factory  # type: ignore[assignment]
 
 
-from app.db.models import copilot as _copilot_models  # noqa: E401,F401
-from app.db.models.copilot import CopilotConversation, CopilotMessage
-from app.schemas.copilot import (
+from app.db.models import copilot as _copilot_models  # noqa: E401,E402,F401
+from app.db.models.copilot import CopilotConversation, CopilotMessage  # noqa: E402
+from app.schemas.copilot import (  # noqa: E402
     CopilotChatRequest,
     CopilotFeedbackRequest,
     CopilotPageContext,
 )
-from app.services._litellm_tools import ToolCall, ToolResult
-from app.services.copilot_service import (
+from app.services._litellm_tools import ToolCall, ToolResult  # noqa: E402
+from app.services.copilot_service import (  # noqa: E402
     CopilotBudgetBlocked,
     CopilotService,
 )
@@ -130,7 +130,7 @@ def _tool_response_with_call(
     cost_usd: float = 0.001,
 ) -> tuple[dict[str, Any], list[ToolCall], list[ToolResult]]:
     """Return a canned ``(response, calls, results)`` triplet."""
-    tool_payload = [
+    [
         {
             "id": call_id,
             "type": "function",

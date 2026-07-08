@@ -20,7 +20,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class IngestionStatus(str, enum.Enum):
+class IngestionStatus(enum.StrEnum):
     """Lifecycle of an ingestion run."""
 
     PENDING = "pending"
@@ -34,7 +34,7 @@ class IngestionStatus(str, enum.Enum):
     CANCELLED = "cancelled"
 
 
-class IngestionArtifactType(str, enum.Enum):
+class IngestionArtifactType(enum.StrEnum):
     """Closed set of artifacts produced by an ingestion run."""
 
     REPO_TARBALL = "repo_tarball"

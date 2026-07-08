@@ -34,7 +34,6 @@ import pytest
 
 from app.agents.sdlc_state import (
     ApprovalRequest,
-    SDLCPhase,
     SDLCState,
 )
 from app.core.config import settings
@@ -44,7 +43,6 @@ from app.scheduler.approval_expiry import (
     effective_timeout_hours,
 )
 from app.services.event_bus import EventType as EventTypeCanonical
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -131,12 +129,13 @@ async def test_scan_once_publishes_for_expired() -> None:
         # (it builds a fresh instance every tick), and patch the
         # module-level bus the scan publishes to.
         publish_mock = AsyncMock()
-        with patch(
-            "app.services.sdlc_run_manager.SDLCRunManager",
-            return_value=stub,
-        ), patch(
-            "app.services.scheduler.jobs.approval_timeout_scan.bus"
-        ) as module_bus:
+        with (
+            patch(
+                "app.services.sdlc_run_manager.SDLCRunManager",
+                return_value=stub,
+            ),
+            patch("app.services.scheduler.jobs.approval_timeout_scan.bus") as module_bus,
+        ):
             module_bus.publish = publish_mock
             await service.scan_once()
         # At least one publish should have fired with our event type
@@ -144,9 +143,7 @@ async def test_scan_once_publishes_for_expired() -> None:
         # shipped EventType.APPROVAL_EXPIRED to be emitted; the exact
         # call count is implementation-detail (one per row).
         assert publish_mock.call_count >= 1
-        types_emitted = [
-            call.args[0] for call in publish_mock.call_args_list
-        ]
+        types_emitted = [call.args[0] for call in publish_mock.call_args_list]
         assert EventType.APPROVAL_EXPIRED in types_emitted
         # At least one publish call must carry tenant_id + project_id
         # (Rule 2). Inspect args/kwargs of the first matching call.
@@ -189,12 +186,13 @@ async def test_scan_once_skips_fresh() -> None:
     _register_run_in_manager(stub, state)
     try:
         service = ApprovalExpiryService()
-        with patch(
-            "app.services.sdlc_run_manager.SDLCRunManager",
-            return_value=stub,
-        ), patch(
-            "app.services.scheduler.jobs.approval_timeout_scan.bus"
-        ) as module_bus:
+        with (
+            patch(
+                "app.services.sdlc_run_manager.SDLCRunManager",
+                return_value=stub,
+            ),
+            patch("app.services.scheduler.jobs.approval_timeout_scan.bus") as module_bus,
+        ):
             module_bus.publish = AsyncMock()
             await service.scan_once()
             # Fresh row → no publish on the underlying bus.
@@ -214,23 +212,14 @@ def test_effective_timeout_tenant_override_wins(
 ) -> None:
     """When BOTH tenant and phase overrides are set, tenant wins."""
     tenant_uuid = str(uuid.uuid4())
-    monkeypatch.setitem(
-        settings.approval_timeout_overrides, tenant_uuid, 1
-    )
-    monkeypatch.setitem(
-        settings.approval_timeout_overrides_per_phase, "architecture", 48
-    )
+    monkeypatch.setitem(settings.approval_timeout_overrides, tenant_uuid, 1)
+    monkeypatch.setitem(settings.approval_timeout_overrides_per_phase, "architecture", 48)
     try:
         result = effective_timeout_hours("architecture", tenant_uuid)
-        assert result == 1, (
-            f"expected tenant override (1h) to win over phase (48h); "
-            f"got {result}"
-        )
+        assert result == 1, f"expected tenant override (1h) to win over phase (48h); got {result}"
     finally:
         settings.approval_timeout_overrides.pop(tenant_uuid, None)
-        settings.approval_timeout_overrides_per_phase.pop(
-            "architecture", None
-        )
+        settings.approval_timeout_overrides_per_phase.pop("architecture", None)
 
 
 # ---------------------------------------------------------------------------
@@ -244,16 +233,12 @@ def test_effective_timeout_phase_override_used_when_no_tenant(
     """Per-phase override is consulted when no tenant override is set."""
     tenant_uuid = str(uuid.uuid4())
     # No tenant override — but a phase override exists.
-    monkeypatch.setitem(
-        settings.approval_timeout_overrides_per_phase, "architecture", 48
-    )
+    monkeypatch.setitem(settings.approval_timeout_overrides_per_phase, "architecture", 48)
     try:
         result = effective_timeout_hours("architecture", tenant_uuid)
         assert result == 48
     finally:
-        settings.approval_timeout_overrides_per_phase.pop(
-            "architecture", None
-        )
+        settings.approval_timeout_overrides_per_phase.pop("architecture", None)
 
 
 # ---------------------------------------------------------------------------

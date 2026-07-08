@@ -36,9 +36,7 @@ class DiagramService:
     def __init__(self, session=None):
         self._session = session
 
-    async def list_diagrams(
-        self, tenant_id: UUID, project_id: UUID
-    ) -> list[dict]:
+    async def list_diagrams(self, tenant_id: UUID, project_id: UUID) -> list[dict]:
         """List every diagram for a tenant+project with nested nodes/edges.
 
         Returns a list of dicts shaped to match ``C4DiagramResponse``
@@ -63,21 +61,25 @@ class DiagramService:
             edges_by_diagram: dict[UUID, list[DiagramEdgeRow]] = {d.id: [] for d in diagrams}
             if diagram_ids:
                 rows = (
-                    await session.execute(
-                        select(DiagramNodeRow).where(
-                            DiagramNodeRow.diagram_id.in_(diagram_ids)
+                    (
+                        await session.execute(
+                            select(DiagramNodeRow).where(DiagramNodeRow.diagram_id.in_(diagram_ids))
                         )
                     )
-                ).scalars().all()
+                    .scalars()
+                    .all()
+                )
                 for n in rows:
                     nodes_by_diagram.setdefault(n.diagram_id, []).append(n)
                 edge_rows = (
-                    await session.execute(
-                        select(DiagramEdgeRow).where(
-                            DiagramEdgeRow.diagram_id.in_(diagram_ids)
+                    (
+                        await session.execute(
+                            select(DiagramEdgeRow).where(DiagramEdgeRow.diagram_id.in_(diagram_ids))
                         )
                     )
-                ).scalars().all()
+                    .scalars()
+                    .all()
+                )
                 for e in edge_rows:
                     edges_by_diagram.setdefault(e.diagram_id, []).append(e)
 

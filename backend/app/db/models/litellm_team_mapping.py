@@ -9,7 +9,7 @@ the tenant is archived. The actual LiteLLM Team is also deleted via
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -19,7 +19,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class LiteLLMTeamStatus(str, Enum):
+class LiteLLMTeamStatus(StrEnum):
     """Lifecycle of a tenant's LiteLLM Team mapping.
 
     ACTIVE: team exists in LiteLLM; sync is up to date.

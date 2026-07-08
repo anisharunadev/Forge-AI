@@ -13,10 +13,6 @@ Three invariants per the M14 spec:
 
 from __future__ import annotations
 
-import json
-from datetime import datetime
-
-import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -52,7 +48,6 @@ def test_phase4_fallback_handler_does_not_swallow_phase4_envelope() -> None:
     """The Phase4Error handler still wins for typed errors."""
     from app.core.phase4_errors import (
         PassThroughDisabled,
-        Phase4Error,
         register_phase4_exception_handlers,
     )
 
@@ -93,7 +88,7 @@ def test_phase4_fallback_handler_handles_validation_error() -> None:
 
 
 def test_phase4_handler_registration_idempotent() -> None:
-    """Calling register_phase4_exception_handlers twice replaces the handlers (no duplicate registration errors)."""
+    """Calling register_phase4_exception_handlers twice replaces the handlers (no duplicate registration errors)."""  # noqa: E501
     from app.core.phase4_errors import register_phase4_exception_handlers
 
     app = FastAPI()

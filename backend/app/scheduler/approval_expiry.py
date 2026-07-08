@@ -35,12 +35,12 @@ from __future__ import annotations
 from typing import Any
 
 from app.core.config import settings
-from app.services.event_bus import EventType, bus
-from app.services.scheduler.jobs.approval_timeout_scan import (
-    approval_timeout_scan,
-)
+from app.services.event_bus import EventType
 from app.services.scheduler.jobs.approval_timeout_scan import (
     _resolve_timeout_hours as _resolve,
+)
+from app.services.scheduler.jobs.approval_timeout_scan import (
+    approval_timeout_scan,
 )
 from app.services.scheduler.service import Scheduler
 

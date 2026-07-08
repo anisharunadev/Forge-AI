@@ -8,10 +8,10 @@ All events follow ``forge.{domain}.{action}`` per Rule 6.
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 
-class Phase4AuditAction(str, Enum):
+class Phase4AuditAction(StrEnum):
     # ── F16 Pass-through + Media ─────────────────────────────────────
     PROVIDER_ENABLED = "forge.providers.enabled"
     PROVIDER_DISABLED = "forge.providers.disabled"

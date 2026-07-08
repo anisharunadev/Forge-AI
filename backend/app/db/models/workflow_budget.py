@@ -8,7 +8,7 @@ push the run past its declared ceiling.
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -19,7 +19,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class WorkflowBudgetStatus(str, Enum):
+class WorkflowBudgetStatus(StrEnum):
     """Lifecycle of a workflow budget.
 
     ACTIVE: spend is below ceiling, calls admitted.

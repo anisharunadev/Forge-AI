@@ -195,7 +195,7 @@ async def evaluate_all(metrics: dict[tuple[str, str], float]) -> list[SLOBreach]
     ``metrics`` is keyed by ``(surface, metric)``. Missing keys are
     skipped -- an alert with no data cannot be breached.
     """
-    global _ALERTS
+    global _ALERTS  # noqa: PLW0603
     if not _ALERTS:
         _ALERTS = install_default_alerts()
     now = time.time()
