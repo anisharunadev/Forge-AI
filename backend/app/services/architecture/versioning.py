@@ -138,17 +138,21 @@ class ArchitectureVersioningService:
             return []
 
         rows = (
-            await self._session.execute(
-                select(ArchitectureVersionRow)
-                .where(
-                    ArchitectureVersionRow.tenant_id == tenant_id,
-                    ArchitectureVersionRow.project_id == project_id,
-                    ArchitectureVersionRow.artifact_type == artifact_type,
-                    ArchitectureVersionRow.artifact_id == artifact_id,
+            (
+                await self._session.execute(
+                    select(ArchitectureVersionRow)
+                    .where(
+                        ArchitectureVersionRow.tenant_id == tenant_id,
+                        ArchitectureVersionRow.project_id == project_id,
+                        ArchitectureVersionRow.artifact_type == artifact_type,
+                        ArchitectureVersionRow.artifact_id == artifact_id,
+                    )
+                    .order_by(ArchitectureVersionRow.version_number.desc())
                 )
-                .order_by(ArchitectureVersionRow.version_number.desc())
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return [
             ArchitectureVersion(
                 version_id=r.id,

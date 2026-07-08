@@ -206,7 +206,7 @@ def parse_front_matter(text: str) -> tuple[dict[str, Any], str]:
         key, _, value = line.partition(":")
         key = key.strip()
         value = value.strip()
-        if value == "" or value == "|":
+        if value in {"", "|"}:
             pending_key = key
             pending_list = []
             continue
@@ -502,10 +502,7 @@ class SteeringEngine:
             return {}
         out: dict[str, list[str]] = {}
         target_stages: Iterable[str]
-        if stage:
-            target_stages = [stage]
-        else:
-            target_stages = catalog.all_stages() or set(STEERING_STAGES)
+        target_stages = [stage] if stage else catalog.all_stages() or set(STEERING_STAGES)
         for s in target_stages:
             matches = catalog.rules_for_stage(s)
             if not matches:
@@ -922,7 +919,7 @@ async def _maybe_tenant_context(
     production and in unit tests that run against SQLite.
     """
     bind = session.bind
-    if bind is not None and getattr(bind, "dialect", None) is not None:
+    if bind is not None and getattr(bind, "dialect", None) is not None:  # noqa: SIM102
         if bind.dialect.name == "postgresql":
             async with tenant_context(session, tenant_id, project_id):
                 yield session

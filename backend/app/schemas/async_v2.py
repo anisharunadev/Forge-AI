@@ -11,7 +11,7 @@ it on top of the upstream response.
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import Field
@@ -23,7 +23,7 @@ from app.schemas.common import ForgeBaseModel
 # ---------------------------------------------------------------------------
 
 
-class FilePurpose(str, Enum):
+class FilePurpose(StrEnum):
     ASSISTANTS = "assistants"
     BATCH = "batch"
     FINE_TUNE = "fine-tune"
@@ -32,7 +32,7 @@ class FilePurpose(str, Enum):
     EVALS = "evals"
 
 
-class BatchStatus(str, Enum):
+class BatchStatus(StrEnum):
     VALIDATING = "validating"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -41,7 +41,7 @@ class BatchStatus(str, Enum):
     FAILED = "failed"
 
 
-class FineTuneStatus(str, Enum):
+class FineTuneStatus(StrEnum):
     VALIDATING_FILES = "validating_files"
     QUEUED = "queued"
     RUNNING = "running"
@@ -51,7 +51,7 @@ class FineTuneStatus(str, Enum):
     FAILED = "failed"
 
 
-class ResponseStatus(str, Enum):
+class ResponseStatus(StrEnum):
     QUEUED = "queued"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"

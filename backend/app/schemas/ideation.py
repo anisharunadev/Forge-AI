@@ -7,7 +7,7 @@ ORM models where appropriate. Pydantic v2 only.
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -350,7 +350,7 @@ class OutputBundleRead(TenantScopedModel):
     storage_ref: str | None = None
 
 
-class OutputBundleExportFormat(str, Enum):
+class OutputBundleExportFormat(StrEnum):
     """Supported export formats."""
 
     ZIP = "zip"

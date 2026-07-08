@@ -27,7 +27,6 @@ Acceptance per the M15-1 contract:
 
 from __future__ import annotations
 
-import uuid
 from typing import Any
 
 import pytest
@@ -130,10 +129,10 @@ async def test_golden_workflow_end_to_end(client: Any, sqlite_db: Any) -> None:
     factory = sqlite_db
     async with factory() as session:
         rows = (
-            await session.execute(
-                select(AuditEvent).where(AuditEvent.tenant_id == TENANT_ID)
-            )
-        ).scalars().all()
+            (await session.execute(select(AuditEvent).where(AuditEvent.tenant_id == TENANT_ID)))
+            .scalars()
+            .all()
+        )
 
     actions = {r.action for r in rows}
     # Each step emits at least one of these actions (from @audit decorator

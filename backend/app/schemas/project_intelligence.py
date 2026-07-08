@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -17,7 +17,7 @@ from app.schemas.common import ForgeBaseModel, TenantScopedModel
 # ---------------------------------------------------------------------------
 
 
-class RepoProvider(str, Enum):
+class RepoProvider(StrEnum):
     GITHUB = "github"
     GITLAB = "gitlab"
     BITBUCKET = "bitbucket"
@@ -25,7 +25,7 @@ class RepoProvider(str, Enum):
     OTHER = "other"
 
 
-class KGNodeType(str, Enum):
+class KGNodeType(StrEnum):
     SERVICE = "service"
     MODULE = "module"
     FILE = "file"
@@ -39,7 +39,7 @@ class KGNodeType(str, Enum):
     COMPONENT = "component"
 
 
-class QASourceKind(str, Enum):
+class QASourceKind(StrEnum):
     NODE = "node"
     EDGE = "edge"
     DOCUMENT = "document"

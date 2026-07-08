@@ -282,9 +282,7 @@ class DiagramNodeRow(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     y: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     details: Mapped[str] = mapped_column(String(500), nullable=False, default="")
 
-    __table_args__ = (
-        Index("ix_architecture_diagram_nodes_diagram", "diagram_id"),
-    )
+    __table_args__ = (Index("ix_architecture_diagram_nodes_diagram", "diagram_id"),)
 
 
 class DiagramEdgeRow(Base, UUIDPrimaryKeyMixin, TimestampMixin):
@@ -311,9 +309,7 @@ class DiagramEdgeRow(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     target_node_key: Mapped[str] = mapped_column(String(64), nullable=False)
     label: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
-    __table_args__ = (
-        Index("ix_architecture_diagram_edges_diagram", "diagram_id"),
-    )
+    __table_args__ = (Index("ix_architecture_diagram_edges_diagram", "diagram_id"),)
 
 
 __all__ = [

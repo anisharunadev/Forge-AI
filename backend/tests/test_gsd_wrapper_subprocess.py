@@ -88,7 +88,7 @@ async def test_dispatch_invokes_forge_run_capability_invoke():
     assert exec_mock.await_count == 1
     args, kwargs = exec_mock.call_args
 
-    # Positional args: forge_run, capability, invoke, --capability, <id>, --args, <json>, --json-errors
+    # Positional args: forge_run, capability, invoke, --capability, <id>, --args, <json>, --json-errors  # noqa: E501
     pos = list(args)
     assert pos[0].endswith("forge_run"), pos
     assert tuple(pos[1:5]) == ("capability", "invoke", "--capability", "gsd:phase:discovery")
@@ -158,7 +158,7 @@ async def test_dispatch_returns_error_on_subprocess_failure():
     fake = _fake_proc(
         returncode=2,
         stdout=b"",
-        stderr=b'{"ok":false,"reason":"unknown_capability","message":"gsd:ideate:brainstorm not registered"}',
+        stderr=b'{"ok":false,"reason":"unknown_capability","message":"gsd:ideate:brainstorm not registered"}',  # noqa: E501
     )
 
     with patch(

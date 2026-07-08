@@ -710,8 +710,17 @@ async def _percentile_latencies(
             sql_text(
                 """
                 SELECT
-                    COALESCE(percentile_cont(0.5) WITHIN GROUP (ORDER BY (payload->>'duration_ms')::float), 0) AS p50,
-                    COALESCE(percentile_cont(0.95) WITHIN GROUP (ORDER BY (payload->>'duration_ms')::float), 0) AS p95
+                    COALESCE(
+                        percentile_cont(0.5)
+                            WITHIN GROUP (ORDER BY (payload->>'duration_ms')::float),
+                        0
+                    ) AS p50,
+                    # noqa: E501
+                    COALESCE(
+                        percentile_cont(0.95)
+                            WITHIN GROUP (ORDER BY (payload->>'duration_ms')::float),
+                        0
+                    ) AS p95
                 FROM audit_events
                 WHERE tenant_id = :tid
                   AND action LIKE 'forge.rag.%'

@@ -179,9 +179,9 @@ class SessionBroadcaster:
             opened_at=datetime.now(UTC),
         )
 
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
         send_q: asyncio.Queue[tuple[bytes, str]] = asyncio.Queue(maxsize=512)
-        drop_q: asyncio.Queue[None] = asyncio.Queue()
+        asyncio.Queue()
 
         async def send_fn(data: bytes, msg_type: str = "o") -> None:
             try:

@@ -9,7 +9,7 @@ on the wire (R4 — typed artifacts, no free-form dicts).
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -33,20 +33,20 @@ class _CamelModel(ForgeBaseModel):
 # ---------------------------------------------------------------------------
 
 
-class PolicyStatus(str, Enum):
+class PolicyStatus(StrEnum):
     ACTIVE = "active"
     ARCHIVED = "archived"
     DRAFT = "draft"
 
 
-class PolicySeverity(str, Enum):
+class PolicySeverity(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
 
 
-class PolicyCategory(str, Enum):
+class PolicyCategory(StrEnum):
     SECURITY = "security"
     COMPLIANCE = "compliance"
     COST = "cost"
@@ -74,14 +74,14 @@ class PolicyAcceptRequest(_CamelModel):
 # ---------------------------------------------------------------------------
 
 
-class ApprovalState(str, Enum):
+class ApprovalState(StrEnum):
     PENDING = "pending"
     ACCEPTED = "accepted"
     DECLINED = "declined"
     EXPIRED = "expired"
 
 
-class ApprovalKind(str, Enum):
+class ApprovalKind(StrEnum):
     REQUEST_CONFIRMATION = "request_confirmation"
     REQUEST_CHECKBOX_CONFIRMATION = "request_checkbox_confirmation"
     ASK_USER_QUESTIONS = "ask_user_questions"
@@ -131,7 +131,7 @@ class RbacRoleRead(_CamelModel):
 # ---------------------------------------------------------------------------
 
 
-class BoardConfirmationOutcome(str, Enum):
+class BoardConfirmationOutcome(StrEnum):
     PENDING = "pending"
     ACCEPTED = "accepted"
     DECLINED = "declined"

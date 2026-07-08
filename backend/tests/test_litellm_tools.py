@@ -47,12 +47,12 @@ def _stub_get_session_factory() -> _StubSessionFactory:
 _session_mod.get_session_factory = _stub_get_session_factory  # type: ignore[assignment]
 
 
-from app.services._litellm_tools import (
+from app.services._litellm_tools import (  # noqa: E402
     ToolCall,
     ToolLoopExhausted,
     ToolResult,
 )
-from app.services.workflow_budget import (
+from app.services.workflow_budget import (  # noqa: E402
     BudgetExceeded,
     Decision,
 )

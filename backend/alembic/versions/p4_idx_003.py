@@ -60,5 +60,5 @@ def downgrade() -> None:
     if bind.dialect.name != "postgresql":
         return
     with op.get_context().autocommit_block():
-        for table, ix_name in reversed(_INDEXES):
+        for _table, ix_name in reversed(_INDEXES):
             op.execute(f'DROP INDEX CONCURRENTLY IF EXISTS "{ix_name}"')

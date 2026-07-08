@@ -9,7 +9,7 @@ or ``forge-dev-migrate``. The acme-corp demo seeds 50 historical runs.
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -28,7 +28,7 @@ from app.db.base import (
 )
 
 
-class CommandRunStatus(str, Enum):
+class CommandRunStatus(StrEnum):
     QUEUED = "queued"
     RUNNING = "running"
     SUCCEEDED = "succeeded"

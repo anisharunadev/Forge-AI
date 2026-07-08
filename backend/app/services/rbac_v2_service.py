@@ -512,7 +512,7 @@ class RBACv2Service:
         if team_id is not None:
             stmt = stmt.where(
                 Project.id == team_id
-            )  # ponytail: team filter via join if/when ProjectTeam junction exists; for now filter by id-or-team_id through ProjectMember — kept simple
+            )  # ponytail: team filter via join if/when ProjectTeam junction exists; for now filter by id-or-team_id through ProjectMember — kept simple  # noqa: E501
         stmt = stmt.order_by(Project.created_at.desc())
         result = await db.execute(stmt)
         return list(result.scalars().all())

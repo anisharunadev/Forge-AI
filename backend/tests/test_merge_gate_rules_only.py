@@ -19,16 +19,15 @@ These tests enforce that invariant in two ways:
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 
 from app.schemas.merge_gate_decision import MergeGateBlocker, MergeGateDecision
 from app.services import merge_gate as merge_gate_module
 from app.services.merge_gate import MergeGateEngine
-
 
 # ---------------------------------------------------------------------------
 # Helpers — build ValidationReport-shaped stubs without depending on the
@@ -69,14 +68,12 @@ class _StubCostLedger:
 async def test_no_llm_call(monkeypatch):
     """The Merge Gate NEVER calls litellm_client.completion."""
     fake_completion = MagicMock()
-    monkeypatch.setattr(
-        merge_gate_module, "LiteLLMClient", SimpleNamespace, raising=False
-    )
+    monkeypatch.setattr(merge_gate_module, "LiteLLMClient", SimpleNamespace, raising=False)
     # Patch the literal import path that the production module would
     # hit. The engine does NOT import litellm_client directly, so the
     # patch is a guard rail — if anyone adds that import, the mock
     # catches the regression immediately.
-    import app.services.litellm_client as litellm_client
+    from app.services import litellm_client
 
     monkeypatch.setattr(litellm_client, "completion", fake_completion, raising=False)
 

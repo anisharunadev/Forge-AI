@@ -21,6 +21,7 @@ the same logical value in two different namespaces; ``decision`` is
 the legacy uppercase form and ``verdict`` is the new lowercase form
 preferred by the React Flow KG renderer.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -122,9 +123,12 @@ def aggregate_summary(
 try:
     from agents.code_validator.state import (  # noqa: F401
         LintFinding as _LintFinding,
+    )
+    from agents.code_validator.state import (
         SecurityFinding as _SecurityFinding,
+    )
+    from agents.code_validator.state import (
         TypeCheckFinding as _TypeCheckFinding,
-        ValidationReport as _SubgraphValidationReport,
     )
 
     LintFinding = _LintFinding

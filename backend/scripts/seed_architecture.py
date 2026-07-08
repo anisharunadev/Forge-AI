@@ -87,8 +87,8 @@ SEED_ADRS: list[dict[str, Any]] = [
         "number": 1,
         "title": "Use LangGraph for SDLC orchestration",
         "status": "accepted",
-        "context": "We need a robust orchestration substrate for multi-agent SDLC runs. Options evaluated: LangGraph, custom state machine, Temporal, AWS Step Functions.",
-        "decision": "Adopt LangGraph as the primary orchestration substrate. It gives us graph-based state, checkpointing, and a Python-native API that matches our backend stack.",
+        "context": "We need a robust orchestration substrate for multi-agent SDLC runs. Options evaluated: LangGraph, custom state machine, Temporal, AWS Step Functions.",  # noqa: E501
+        "decision": "Adopt LangGraph as the primary orchestration substrate. It gives us graph-based state, checkpointing, and a Python-native API that matches our backend stack.",  # noqa: E501
         "consequences": {
             "positive": ["Rich state primitives", "Built-in checkpointing", "Strong typing"],
             "negative": [
@@ -108,8 +108,8 @@ SEED_ADRS: list[dict[str, Any]] = [
         "number": 2,
         "title": "Route all LLM traffic through LiteLLM proxy",
         "status": "accepted",
-        "context": "We need provider-agnostic LLM access for cost control, fallback, and observability. Direct SDK calls fragment our observability.",
-        "decision": "All LLM traffic MUST go through the LiteLLM proxy. Direct SDK imports are forbidden by Rule 1.",
+        "context": "We need provider-agnostic LLM access for cost control, fallback, and observability. Direct SDK calls fragment our observability.",  # noqa: E501
+        "decision": "All LLM traffic MUST go through the LiteLLM proxy. Direct SDK imports are forbidden by Rule 1.",  # noqa: E501
         "consequences": {
             "positive": ["Single observability point", "Provider fallback", "Cost controls"],
             "negative": ["Extra hop (negligible latency)"],
@@ -122,8 +122,8 @@ SEED_ADRS: list[dict[str, Any]] = [
         "number": 3,
         "title": "Adopt TanStack Query for client state",
         "status": "accepted",
-        "context": "Our React app needs a consistent data-fetching pattern. SWR and Apollo were alternatives.",
-        "decision": "Adopt TanStack Query as the canonical client-side data layer. All fetches go through useQuery / useMutation hooks.",
+        "context": "Our React app needs a consistent data-fetching pattern. SWR and Apollo were alternatives.",  # noqa: E501
+        "decision": "Adopt TanStack Query as the canonical client-side data layer. All fetches go through useQuery / useMutation hooks.",  # noqa: E501
         "consequences": {
             "positive": ["Cache invalidation rules", "Polling/refetch primitives", "Devtools"],
             "negative": ["Bundle size (small)"],
@@ -136,8 +136,8 @@ SEED_ADRS: list[dict[str, Any]] = [
         "number": 4,
         "title": "forge-core as canonical source for skills",
         "status": "accepted",
-        "context": "Skills, agents, and commands were duplicated across packages. We needed a single source of truth.",
-        "decision": "Fork forge-core from open-gsd and treat it as canonical. forge-pi and forge-browser may import from it but not duplicate.",
+        "context": "Skills, agents, and commands were duplicated across packages. We needed a single source of truth.",  # noqa: E501
+        "decision": "Fork forge-core from open-gsd and treat it as canonical. forge-pi and forge-browser may import from it but not duplicate.",  # noqa: E501
         "consequences": {
             "positive": ["No drift between packages", "Easier onboarding"],
             "negative": ["Upstream pull-rebases needed"],
@@ -150,7 +150,7 @@ SEED_ADRS: list[dict[str, Any]] = [
         "number": 5,
         "title": "Adopt D3-force for knowledge graph layout",
         "status": "proposed",
-        "context": "The Knowledge Center needs a layout algorithm that handles 1000+ nodes gracefully.",
+        "context": "The Knowledge Center needs a layout algorithm that handles 1000+ nodes gracefully.",  # noqa: E501
         "decision": "Adopt D3-force as the default layout. Cytoscape.js evaluated as alternative.",
         "consequences": {
             "positive": ["Excellent performance at scale", "Smooth transitions"],
@@ -164,7 +164,7 @@ SEED_ADRS: list[dict[str, Any]] = [
         "number": 6,
         "title": "Replace hardcoded model providers with LiteLLM catalog",
         "status": "proposed",
-        "context": "Current /providers list is hardcoded. Need dynamic catalog synced from LiteLLM.",
+        "context": "Current /providers list is hardcoded. Need dynamic catalog synced from LiteLLM.",  # noqa: E501
         "decision": "TBD — see forge-pi idea list.",
         "consequences": {},
         "alternatives": [],
@@ -291,13 +291,13 @@ SEED_RISK_DATA: list[dict[str, Any]] = [
         "title": "Multi-tenant data leakage",
         "level": "high",
         "category": "security",
-        "mitigation": "Every query MUST filter by tenant_id. Add an integration test suite that exercises cross-tenant access.",
+        "mitigation": "Every query MUST filter by tenant_id. Add an integration test suite that exercises cross-tenant access.",  # noqa: E501
     },
     {
         "title": "LiteLLM proxy outage",
         "level": "high",
         "category": "availability",
-        "mitigation": "Runbook: detect outage via /health, route to fallback provider, page on-call.",
+        "mitigation": "Runbook: detect outage via /health, route to fallback provider, page on-call.",  # noqa: E501
     },
     {
         "title": "Runaway LLM cost",
@@ -435,57 +435,109 @@ SEED_ATTESTATIONS: list[dict[str, Any]] = [
 # the Architecture Center page (all 4 quadrants × all 4 rings).
 SEED_TECH_RADAR: list[dict[str, Any]] = [
     # languages
-    {"name": "React 19", "quadrant": "languages", "ring": "adopt",
-     "description": "UI framework",
-     "rationale": "Server components + form actions cover all centers",
-     "owner": "frontend-team", "prev_ring": "trial"},
-    {"name": "Next.js 16", "quadrant": "languages", "ring": "adopt",
-     "description": "Frontend framework",
-     "rationale": "App Router stable; RSC adoption complete",
-     "owner": "frontend-team"},
-    {"name": "FastAPI", "quadrant": "languages", "ring": "adopt",
-     "description": "Backend HTTP framework",
-     "rationale": "Pydantic v2 + async story is best in class",
-     "owner": "platform-team"},
-    {"name": "Remix", "quadrant": "languages", "ring": "hold",
-     "description": "Alternative frontend framework",
-     "rationale": "No migration plans; Next.js is the locked choice",
-     "owner": "frontend-team", "prev_ring": "assess"},
+    {
+        "name": "React 19",
+        "quadrant": "languages",
+        "ring": "adopt",
+        "description": "UI framework",
+        "rationale": "Server components + form actions cover all centers",
+        "owner": "frontend-team",
+        "prev_ring": "trial",
+    },
+    {
+        "name": "Next.js 16",
+        "quadrant": "languages",
+        "ring": "adopt",
+        "description": "Frontend framework",
+        "rationale": "App Router stable; RSC adoption complete",
+        "owner": "frontend-team",
+    },
+    {
+        "name": "FastAPI",
+        "quadrant": "languages",
+        "ring": "adopt",
+        "description": "Backend HTTP framework",
+        "rationale": "Pydantic v2 + async story is best in class",
+        "owner": "platform-team",
+    },
+    {
+        "name": "Remix",
+        "quadrant": "languages",
+        "ring": "hold",
+        "description": "Alternative frontend framework",
+        "rationale": "No migration plans; Next.js is the locked choice",
+        "owner": "frontend-team",
+        "prev_ring": "assess",
+    },
     # tools
-    {"name": "LangGraph", "quadrant": "tools", "ring": "adopt",
-     "description": "Agent orchestration runtime",
-     "rationale": "Stateful graph primitives fit workflow model",
-     "owner": "agent-team"},
-    {"name": "pgvector", "quadrant": "tools", "ring": "adopt",
-     "description": "Postgres vector extension",
-     "rationale": "Hybrid retrieval without new infrastructure",
-     "owner": "knowledge-team", "prev_ring": "trial"},
-    {"name": "Sentry", "quadrant": "tools", "ring": "trial",
-     "description": "Error tracking",
-     "rationale": "POC successful; rollout to backend services next",
-     "owner": "platform-team"},
+    {
+        "name": "LangGraph",
+        "quadrant": "tools",
+        "ring": "adopt",
+        "description": "Agent orchestration runtime",
+        "rationale": "Stateful graph primitives fit workflow model",
+        "owner": "agent-team",
+    },
+    {
+        "name": "pgvector",
+        "quadrant": "tools",
+        "ring": "adopt",
+        "description": "Postgres vector extension",
+        "rationale": "Hybrid retrieval without new infrastructure",
+        "owner": "knowledge-team",
+        "prev_ring": "trial",
+    },
+    {
+        "name": "Sentry",
+        "quadrant": "tools",
+        "ring": "trial",
+        "description": "Error tracking",
+        "rationale": "POC successful; rollout to backend services next",
+        "owner": "platform-team",
+    },
     # platforms
-    {"name": "PostgreSQL 17", "quadrant": "platforms", "ring": "adopt",
-     "description": "Primary OLTP database",
-     "rationale": "RLS + pgvector + JSONB covers 95% of storage needs",
-     "owner": "data-team"},
-    {"name": "Keycloak", "quadrant": "platforms", "ring": "adopt",
-     "description": "Identity provider",
-     "rationale": "OIDC + SAML + RBAC in one server",
-     "owner": "security-team"},
+    {
+        "name": "PostgreSQL 17",
+        "quadrant": "platforms",
+        "ring": "adopt",
+        "description": "Primary OLTP database",
+        "rationale": "RLS + pgvector + JSONB covers 95% of storage needs",
+        "owner": "data-team",
+    },
+    {
+        "name": "Keycloak",
+        "quadrant": "platforms",
+        "ring": "adopt",
+        "description": "Identity provider",
+        "rationale": "OIDC + SAML + RBAC in one server",
+        "owner": "security-team",
+    },
     # techniques
-    {"name": "Row-level security", "quadrant": "techniques", "ring": "adopt",
-     "description": "Tenant isolation pattern",
-     "rationale": "Cheaper than schema-per-tenant at our scale",
-     "owner": "platform-team", "prev_ring": "trial"},
-    {"name": "Model Context Protocol", "quadrant": "techniques", "ring": "trial",
-     "description": "Tool call interface standard",
-     "rationale": "Evaluating for connector framework parity",
-     "owner": "integration-team"},
-    {"name": "Event sourcing", "quadrant": "techniques", "ring": "assess",
-     "description": "Append-only audit log",
-     "rationale": "Useful for approval gate timeline; trade-offs unclear",
-     "owner": "governance-team"},
+    {
+        "name": "Row-level security",
+        "quadrant": "techniques",
+        "ring": "adopt",
+        "description": "Tenant isolation pattern",
+        "rationale": "Cheaper than schema-per-tenant at our scale",
+        "owner": "platform-team",
+        "prev_ring": "trial",
+    },
+    {
+        "name": "Model Context Protocol",
+        "quadrant": "techniques",
+        "ring": "trial",
+        "description": "Tool call interface standard",
+        "rationale": "Evaluating for connector framework parity",
+        "owner": "integration-team",
+    },
+    {
+        "name": "Event sourcing",
+        "quadrant": "techniques",
+        "ring": "assess",
+        "description": "Append-only audit log",
+        "rationale": "Useful for approval gate timeline; trade-offs unclear",
+        "owner": "governance-team",
+    },
 ]
 
 
@@ -499,7 +551,14 @@ SEED_DIAGRAMS: list[dict[str, Any]] = [
         "level": "context",
         "description": "How users and external systems interact with Forge OS.",
         "nodes": [
-            ("user", "Engineering Lead", "user", 100, 180, "Primary user — defines ADRs, approves gates."),
+            (
+                "user",
+                "Engineering Lead",
+                "user",
+                100,
+                180,
+                "Primary user — defines ADRs, approves gates.",
+            ),
             ("gateway", "Forge Gateway", "gateway", 320, 180, "OIDC SSO, rate limiting, audit."),
             ("pal", "Forge OS", "service", 540, 180, "Workflow orchestration + knowledge graph."),
             ("github", "GitHub", "external", 760, 100, "Connector — code, PRs, webhooks."),
@@ -518,11 +577,46 @@ SEED_DIAGRAMS: list[dict[str, Any]] = [
         "level": "container",
         "description": "Forge OS decomposed into deployable containers.",
         "nodes": [
-            ("dashboard", "Next.js Dashboard", "user", 80, 80, "apps/forge — React 19 + TanStack Query."),
-            ("api", "FastAPI Backend", "service", 80, 220, "Python 3.13 + Pydantic v2 + SQLAlchemy 2.x."),
-            ("orchestrator", "Workflow Orchestrator", "service", 80, 360, "LangGraph + step state machines."),
-            ("pal", "Provider Abstraction Layer", "service", 360, 360, "Adapters for OpenAI, Anthropic, Bedrock, vLLM."),
-            ("kg", "Knowledge Graph Service", "service", 360, 220, "pgvector + hybrid lexical/semantic retrieval."),
+            (
+                "dashboard",
+                "Next.js Dashboard",
+                "user",
+                80,
+                80,
+                "apps/forge — React 19 + TanStack Query.",
+            ),
+            (
+                "api",
+                "FastAPI Backend",
+                "service",
+                80,
+                220,
+                "Python 3.13 + Pydantic v2 + SQLAlchemy 2.x.",
+            ),
+            (
+                "orchestrator",
+                "Workflow Orchestrator",
+                "service",
+                80,
+                360,
+                "LangGraph + step state machines.",
+            ),
+            (
+                "pal",
+                "Provider Abstraction Layer",
+                "service",
+                360,
+                360,
+                "Adapters for OpenAI, Anthropic, Bedrock, vLLM.",
+            ),
+            (
+                "kg",
+                "Knowledge Graph Service",
+                "service",
+                360,
+                220,
+                "pgvector + hybrid lexical/semantic retrieval.",
+            ),
             ("postgres", "PostgreSQL 17", "data", 600, 220, "RLS + pgvector + JSONB."),
             ("redis", "Redis", "data", 600, 360, "Pub/Sub for workflow events; semantic cache."),
         ],
@@ -543,8 +637,22 @@ SEED_DIAGRAMS: list[dict[str, Any]] = [
         "description": "What happens when the user opens /architecture.",
         "nodes": [
             ("page", "page.tsx", "user", 80, 180, "Client component — fetches via /api/proxy."),
-            ("proxy", "/api/proxy/[...path]", "gateway", 280, 180, "Forwards to orchestrator stub."),
-            ("stub", "Orchestrator Stub", "service", 480, 180, "bin/orchestrator-stub.py — returns 6 ADRs + fixtures."),
+            (
+                "proxy",
+                "/api/proxy/[...path]",
+                "gateway",
+                280,
+                180,
+                "Forwards to orchestrator stub.",
+            ),
+            (
+                "stub",
+                "Orchestrator Stub",
+                "service",
+                480,
+                180,
+                "bin/orchestrator-stub.py — returns 6 ADRs + fixtures.",
+            ),
             ("cache", "Redis", "data", 680, 100, "Caches ADR list (5min TTL)."),
             ("pg", "Postgres", "data", 680, 260, "Source of truth for ADRs (RLS scoped)."),
         ],
@@ -781,12 +889,16 @@ async def seed() -> None:
         # -----------------------------------------------------------------
         first_adr_id = adr_by_number[1]
         existing_versions = (
-            await session.execute(
-                select(ArchitectureVersionRow).where(
-                    ArchitectureVersionRow.tenant_id == tenant.id
+            (
+                await session.execute(
+                    select(ArchitectureVersionRow).where(
+                        ArchitectureVersionRow.tenant_id == tenant.id
+                    )
                 )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         if existing_versions is None:
             version_specs = [
                 (1, "initial", -10),
@@ -820,12 +932,14 @@ async def seed() -> None:
         # Idempotent: skipped if any blips already exist for this tenant.
         # -----------------------------------------------------------------
         existing_blips = (
-            await session.execute(
-                select(TechRadarEntry).where(
-                    TechRadarEntry.tenant_id == tenant.id
+            (
+                await session.execute(
+                    select(TechRadarEntry).where(TechRadarEntry.tenant_id == tenant.id)
                 )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         if existing_blips is None:
             for blip in SEED_TECH_RADAR:
                 session.add(
@@ -848,12 +962,14 @@ async def seed() -> None:
         # diagram rows already exist for this tenant.
         # -----------------------------------------------------------------
         existing_diagrams = (
-            await session.execute(
-                select(ArchitectureDiagram).where(
-                    ArchitectureDiagram.tenant_id == tenant.id
+            (
+                await session.execute(
+                    select(ArchitectureDiagram).where(ArchitectureDiagram.tenant_id == tenant.id)
                 )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         total_nodes = total_edges = 0
         if existing_diagrams is None:
             for spec in SEED_DIAGRAMS:

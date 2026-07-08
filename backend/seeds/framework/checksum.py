@@ -28,7 +28,7 @@ def compute_checksum(data_files: list[Path]) -> str:
     raise ``FileNotFoundError`` so a typo is caught loudly.
     """
     resolved = [Path(p) for p in data_files]
-    sorted_paths = sorted(resolved, key=lambda p: str(p))
+    sorted_paths = sorted(resolved, key=str)
     digest = hashlib.sha256()
     for p in sorted_paths:
         if not p.exists():

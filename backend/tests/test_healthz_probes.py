@@ -27,7 +27,6 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
-
 # ---------------------------------------------------------------------------
 # App + fixture scaffold — mirrors test_healthz.py so the two files
 # can co-exist without leaking state.
@@ -81,9 +80,7 @@ def _green_mocks() -> list:
             return _fake_connect()
 
     from app.api.healthz import (
-        LiteLLMBaseClient,
         _otel_initialized,
-        _probe_otel_exporter,
     )
 
     redis_client = AsyncMock()
@@ -116,7 +113,12 @@ def _green_mocks() -> list:
         patch("app.api.healthz.aioredis.from_url", return_value=redis_client),
         patch("app.api.healthz.httpx.AsyncClient", return_value=mock_client),
         patch("app.api.healthz.LiteLLMBaseClient", return_value=litellm_instance),
-        patch.object(_otel_initialized if isinstance(_otel_initialized, bool) else type("_", (), {"__bool__": lambda self: True})(), "__bool__"),
+        patch.object(
+            _otel_initialized
+            if isinstance(_otel_initialized, bool)
+            else type("_", (), {"__bool__": lambda self: True})(),
+            "__bool__",
+        ),
         patch("app.api.healthz._probe_otel_exporter", return_value=("ok", 0.0)),
         patch("app.api.healthz.urllib.request.urlopen", return_value=floci_resp_cm),
     ]
@@ -272,9 +274,7 @@ async def test_healthz_returns_otel_probe(app, phase4_flag_on, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_healthz_503_when_audit_disabled_in_prod(
-    app, phase4_flag_on, monkeypatch
-):
+async def test_healthz_503_when_audit_disabled_in_prod(app, phase4_flag_on, monkeypatch):
     """Production env + audit_sink leg down -> 503.
 
     PITFALL-5 G19 closure: an operator cannot accidentally cutover
@@ -304,9 +304,7 @@ async def test_healthz_503_when_audit_disabled_in_prod(
 
 
 @pytest.mark.asyncio
-async def test_healthz_503_when_otel_not_configured_in_prod(
-    app, phase4_flag_on, monkeypatch
-):
+async def test_healthz_503_when_otel_not_configured_in_prod(app, phase4_flag_on, monkeypatch):
     """Production env + otel_exporter_configured down -> 503."""
     import app.api.healthz as h
 

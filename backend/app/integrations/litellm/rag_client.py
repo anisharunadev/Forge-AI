@@ -1,8 +1,8 @@
 """F13 RAG — thin LiteLLM proxy method group for embeddings / vector stores / RAG.
 
 Phase 3 Feature 13 (step-78 §"Feature 13 — Embeddings + Vector Stores + RAG").
-
-Endpoint coverage (one method per LiteLLM endpoint family from step-78 §"LiteLLM endpoints used", F13):
+Endpoint coverage (one method per LiteLLM endpoint family from
+step-78 §"LiteLLM endpoints used", F13):
   - /v1/embeddings
   - /v1/vector_stores: create, list, get, delete, files_attach, search
   - /v1/rag/ingest, /rag/query
@@ -141,7 +141,7 @@ class RAGClientGroup:
         chunk_size: int | None = None,
         chunk_overlap: int | None = None,
     ) -> dict[str, Any]:
-        """POST /v1/rag/ingest — chunk + embed + store. Returns chunks_created/tokens_used/cost_usd/latency_ms."""
+        """POST /v1/rag/ingest — chunk + embed + store. Returns chunks_created/tokens_used/cost_usd/latency_ms."""  # noqa: E501
         body: dict[str, Any] = {
             "file_id": file_id,
             "vector_store_id": vector_store_id,

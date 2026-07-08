@@ -20,7 +20,7 @@ purposes.
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -46,7 +46,7 @@ from app.db.base import (
 )
 
 
-class SeedOperation(str, Enum):
+class SeedOperation(StrEnum):
     """Lifecycle operations the runner can perform."""
 
     APPLY = "apply"
@@ -56,7 +56,7 @@ class SeedOperation(str, Enum):
     DIFF = "diff"
 
 
-class SeedRunStatus(str, Enum):
+class SeedRunStatus(StrEnum):
     """Outcome state for a seed run."""
 
     RUNNING = "running"
@@ -66,7 +66,7 @@ class SeedRunStatus(str, Enum):
     DRIFT_DETECTED = "drift_detected"
 
 
-class SeedTenantType(str, Enum):
+class SeedTenantType(StrEnum):
     """The spec's three tenant types (manifest.tenant_type)."""
 
     DEMO = "demo"

@@ -52,9 +52,7 @@ def _resolve_timeout_hours(tenant_id: str, phase: str | None = None) -> int:
     if tenant_id in overrides:
         return int(overrides[tenant_id])
     if phase is not None:
-        phase_overrides = (
-            getattr(settings, "approval_timeout_overrides_per_phase", None) or {}
-        )
+        phase_overrides = getattr(settings, "approval_timeout_overrides_per_phase", None) or {}
         if phase in phase_overrides:
             return int(phase_overrides[phase])
     return int(getattr(settings, "approval_timeout_hours", _DEFAULT_TIMEOUT_HOURS))

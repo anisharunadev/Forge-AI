@@ -14,7 +14,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class ConnectorType(str, enum.Enum):
+class ConnectorType(enum.StrEnum):
     """Closed set of supported connector kinds."""
 
     GITHUB = "github"
@@ -31,7 +31,7 @@ class ConnectorType(str, enum.Enum):
     SECRETS = "secrets"
 
 
-class ConnectorStatus(str, enum.Enum):
+class ConnectorStatus(enum.StrEnum):
     """Connector lifecycle — mirrors connector_states.ConnectorState."""
 
     PENDING = "pending"
@@ -43,7 +43,7 @@ class ConnectorStatus(str, enum.Enum):
     DISCONNECTED = "disconnected"
 
 
-class SyncStatus(str, enum.Enum):
+class SyncStatus(enum.StrEnum):
     """Outcome of a single sync attempt."""
 
     STARTED = "started"

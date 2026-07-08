@@ -10,7 +10,7 @@ policy engine, ideation intake) consume as their starting baseline.
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -19,7 +19,7 @@ from pydantic import Field
 from app.schemas.common import ForgeBaseModel, TenantScopedModel
 
 
-class BootstrapStatus(str, Enum):
+class BootstrapStatus(StrEnum):
     """Lifecycle of the bootstrap for a project."""
 
     NOT_STARTED = "not_started"
@@ -42,7 +42,7 @@ class Standard(ForgeBaseModel):
     status: str = "active"
     source: str = Field(
         default="baseline",
-        description="Where the standard came from: 'baseline' (F-001) or 'overlay' (customer override).",
+        description="Where the standard came from: 'baseline' (F-001) or 'overlay' (customer override).",  # noqa: E501
     )
     metadata: dict[str, Any] = Field(default_factory=dict)
 

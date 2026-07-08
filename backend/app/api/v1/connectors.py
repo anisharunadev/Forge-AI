@@ -82,9 +82,7 @@ async def update_connector(
     _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:update")),
 ) -> ConnectorRead:
     try:
-        connector = await connector_manager.get_connector(
-            connector_id, tenant_id=principal.tenant_id
-        )
+        await connector_manager.get_connector(connector_id, tenant_id=principal.tenant_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     updated = await connector_manager.update_connector(
@@ -111,9 +109,7 @@ async def delete_connector(
     _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:delete")),
 ):
     try:
-        existing = await connector_manager.get_connector(
-            connector_id, tenant_id=principal.tenant_id
-        )
+        await connector_manager.get_connector(connector_id, tenant_id=principal.tenant_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     quarantined = await connector_manager.delete_connector(connector_id, actor_id=principal.user_id)
@@ -129,9 +125,7 @@ async def trigger_sync(
     _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:sync")),
 ) -> ConnectorSyncHistoryRead:
     try:
-        existing = await connector_manager.get_connector(
-            connector_id, tenant_id=principal.tenant_id
-        )
+        await connector_manager.get_connector(connector_id, tenant_id=principal.tenant_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     history = await connector_manager.trigger_sync(connector_id, actor_id=principal.user_id)
@@ -147,9 +141,7 @@ async def get_history(
     _perm: AuthenticatedPrincipal = Depends(require_permission("connectors:read")),
 ) -> list[ConnectorSyncHistoryRead]:
     try:
-        existing = await connector_manager.get_connector(
-            connector_id, tenant_id=principal.tenant_id
-        )
+        await connector_manager.get_connector(connector_id, tenant_id=principal.tenant_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     history = await connector_manager.get_sync_history(connector_id, limit=limit)

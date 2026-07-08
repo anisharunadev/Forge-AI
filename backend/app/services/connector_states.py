@@ -20,7 +20,7 @@ from app.services.event_bus import bus as default_bus
 logger = get_logger(__name__)
 
 
-class ConnectorState(str, enum.Enum):
+class ConnectorState(enum.StrEnum):
     """Connector lifecycle states."""
 
     PENDING = "pending"

@@ -83,10 +83,7 @@ def encode_session(
     env: dict[str, str] | None = None,
 ) -> str:
     """Serialize an entire session as a .cast string."""
-    if timestamp is None:
-        ts = datetime.now(UTC).timestamp()
-    else:
-        ts = float(timestamp)
+    ts = datetime.now(UTC).timestamp() if timestamp is None else float(timestamp)
     lines = [encode_header(width=width, height=height, title=title, timestamp=ts, env=env)]
     for f in frames:
         lines.append(encode_frame(f.t, f.type, f.data))
@@ -116,10 +113,7 @@ def validate_audit_chain(
             raise CastValidationError(f"record {idx}: duplicate command {command!r}")
         seen.add(command)
         output = cmd.get("output", b"")
-        if isinstance(output, bytes):
-            output_present = len(output) > 0
-        else:
-            output_present = bool(output)
+        output_present = len(output) > 0 if isinstance(output, bytes) else bool(output)
         if require_output and not output_present and not cmd.get("output_hash"):
             raise CastValidationError(f"record {idx}: command {command!r} missing output bytes")
 

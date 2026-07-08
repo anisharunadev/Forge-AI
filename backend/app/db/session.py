@@ -26,7 +26,7 @@ _session_factory: async_sessionmaker[AsyncSession] | None = None
 
 def get_engine() -> AsyncEngine:
     """Lazy engine singleton."""
-    global _engine
+    global _engine  # noqa: PLW0603
     if _engine is None:
         logger.info("db.engine.create", url=_safe_url())
         # SQLite (used in tests) is single-connection; pool_size/max_overflow
@@ -43,7 +43,7 @@ def get_engine() -> AsyncEngine:
 
 def get_session_factory() -> async_sessionmaker[AsyncSession]:
     """Lazy session factory singleton."""
-    global _session_factory
+    global _session_factory  # noqa: PLW0603
     if _session_factory is None:
         _session_factory = async_sessionmaker(
             bind=get_engine(),

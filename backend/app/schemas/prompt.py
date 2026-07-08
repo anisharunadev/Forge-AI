@@ -8,7 +8,7 @@ input contract for the UI's auto-generated form (acceptance #8).
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 from uuid import UUID
 
@@ -47,7 +47,7 @@ class VariableSpec(ForgeBaseModel):
 # ---------------------------------------------------------------------------
 
 
-class PromptVersionStatus(str, Enum):
+class PromptVersionStatus(StrEnum):
     DRAFT = "draft"
     ACTIVE = "active"
     ARCHIVED = "archived"

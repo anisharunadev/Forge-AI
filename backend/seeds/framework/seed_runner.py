@@ -263,7 +263,7 @@ class SeedRunner:
             try:
                 data_files = sorted(manifest["data_files"], key=lambda d: int(d["order"]))
                 all_paths = [package_dir / "data" / d["file"] for d in data_files]
-                for df, path in zip(data_files, all_paths):
+                for df, path in zip(data_files, all_paths, strict=False):
                     await self._check_schema(session, df["table"], df["idempotency_key"])
                     rows = self._load_data_file(path, resolve_map)
                     inserted = await self._apply_data_file(
@@ -682,7 +682,7 @@ class SeedRunner:
         columns: list[str] = []
         seen = set()
         for row in rows:
-            for k in row.keys():
+            for k in row:
                 if k in seen or k.endswith("_ref"):
                     continue
                 seen.add(k)

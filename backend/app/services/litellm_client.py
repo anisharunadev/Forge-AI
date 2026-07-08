@@ -1065,8 +1065,6 @@ class LiteLLMClient:
 
 __all__ = [
     "LiteLLMClient",
-    "chat_with_tools",
-    "agent_loop",
     "ToolCall",
     "ToolResult",
     "ToolSpec",

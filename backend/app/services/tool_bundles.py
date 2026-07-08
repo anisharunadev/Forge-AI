@@ -329,9 +329,8 @@ tool_bundles = ToolBundleRegistry()
 # ---------------------------------------------------------------------------
 
 
-from app.schemas.tool_bundle import ToolBundle as _AgentToolBundle
-from app.schemas.tool_bundle import ToolBundlesRegistry as _AgentToolBundlesRegistry
-
+from app.schemas.tool_bundle import ToolBundle as _AgentToolBundle  # noqa: E402
+from app.schemas.tool_bundle import ToolBundlesRegistry as _AgentToolBundlesRegistry  # noqa: E402
 
 _DEFAULT_AGENT_BUNDLES: dict[str, _AgentToolBundle] = {
     "code_validator": _AgentToolBundle(
@@ -430,5 +429,5 @@ __all__ = [
     "ToolBundleViolation",
     "tool_bundles",
     "default_registry",  # plan 01-06
-    "is_tool_allowed",   # plan 01-06
+    "is_tool_allowed",  # plan 01-06
 ]

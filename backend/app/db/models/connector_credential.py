@@ -28,7 +28,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class CredentialType(str, enum.Enum):
+class CredentialType(enum.StrEnum):
     """Closed set of credential kinds."""
 
     API_KEY = "api-key"
@@ -38,7 +38,7 @@ class CredentialType(str, enum.Enum):
     SERVICE_ACCOUNT = "service-account"
 
 
-class CredentialScope(str, enum.Enum):
+class CredentialScope(enum.StrEnum):
     """Visibility of a credential inside the tenant."""
 
     ORG = "org"

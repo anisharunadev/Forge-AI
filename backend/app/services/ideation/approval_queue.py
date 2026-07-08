@@ -11,6 +11,7 @@ keep the existing approvals API untouched.
 
 from __future__ import annotations
 
+import contextlib
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
@@ -120,15 +121,11 @@ class ApprovalQueueService:
                     | (ApprovalItem.reviewer_id.is_(None))
                 )
             if status is not None:
-                try:
+                with contextlib.suppress(ValueError):
                     stmt = stmt.where(ApprovalItem.status == ApprovalItemStatus(status))
-                except ValueError:
-                    pass
             if request_type is not None:
-                try:
+                with contextlib.suppress(ValueError):
                     stmt = stmt.where(ApprovalItem.request_type == ApprovalItemType(request_type))
-                except ValueError:
-                    pass
             stmt = stmt.order_by(ApprovalItem.created_at.desc()).limit(max(1, min(limit, 500)))
             return list((await session.execute(stmt)).scalars().all())
 

@@ -35,7 +35,7 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-class EventType(str, enum.Enum):
+class EventType(enum.StrEnum):
     """Closed set of domain event types (DL-027).
 
     Adding a new event type? Add a Python enum member here FIRST, then

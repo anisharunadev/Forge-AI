@@ -157,7 +157,7 @@ async def _hourly_buckets(tenant_id: str, window_start: datetime, now: datetime)
     for cost, recorded_at in rows:
         if recorded_at is None:
             continue
-        recorded_at = (
+        recorded_at = (  # noqa: PLW2901
             recorded_at.astimezone(UTC) if hasattr(recorded_at, "astimezone") else recorded_at
         )
         idx = int((recorded_at - window_start).total_seconds() // 3600)

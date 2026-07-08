@@ -12,6 +12,8 @@ Behavior:
 
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 
 
@@ -84,9 +86,7 @@ async def test_unhealthy_state_after_3_failures(
     for _ in range(3):
         # Swallow any exception raised from the individual ping —
         # the contract under test is the cached health state.
-        try:
+        with contextlib.suppress(ConnectionError):
             await ping_method()
-        except ConnectionError:
-            pass
 
     assert monitor.is_healthy() is False

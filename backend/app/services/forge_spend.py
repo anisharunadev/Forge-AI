@@ -280,7 +280,7 @@ class SpendService:
             )
             if row is None:  # pragma: no cover — race condition
                 raise RuntimeError(
-                    f"spend_records insert returned no row for litellm_request_id={litellm_request_id!r}"
+                    f"spend_records insert returned no row for litellm_request_id={litellm_request_id!r}"  # noqa: E501
                 )
             out = SpendRecordOut.from_row(row)
 

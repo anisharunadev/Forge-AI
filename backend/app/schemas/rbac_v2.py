@@ -17,7 +17,7 @@ Role inheritance rules (step-78 §"RBAC model" / §"Inheritance"):
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -26,7 +26,7 @@ from pydantic import Field
 from app.schemas.common import ForgeBaseModel, TenantScopedModel
 
 
-class RoleEnum(str, Enum):
+class RoleEnum(StrEnum):
     """Hierarchical role names from step-78 §"RBAC model"."""
 
     SUPER_ADMIN = "super_admin"

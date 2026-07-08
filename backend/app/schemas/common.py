@@ -3,12 +3,9 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Generic, TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
-
-T = TypeVar("T")
 
 
 class ForgeBaseModel(BaseModel):
@@ -17,7 +14,7 @@ class ForgeBaseModel(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
-class Page(ForgeBaseModel, Generic[T]):
+class Page[T](ForgeBaseModel):
     """Cursor/page envelope for list endpoints."""
 
     items: list[T]

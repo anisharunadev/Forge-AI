@@ -8,7 +8,7 @@ deployment-prod-gated, ideation-propose, refactor-execute).
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from sqlalchemy import Boolean, Index, String, Text, UniqueConstraint
@@ -25,7 +25,7 @@ from app.db.base import (
 )
 
 
-class ToolBundleTier(str, Enum):
+class ToolBundleTier(StrEnum):
     READ_ONLY = "read_only"
     PROPOSE = "propose"
     WRITE = "write"

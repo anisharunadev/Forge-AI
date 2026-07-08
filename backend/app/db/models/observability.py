@@ -9,7 +9,7 @@ for TTTD dashboards and other trend lines.
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -28,7 +28,7 @@ from app.db.base import (
 )
 
 
-class PulseEventKind(str, Enum):
+class PulseEventKind(StrEnum):
     AGENT_RUN = "agent_run"
     APPROVAL = "approval"
     CONFLICT = "conflict"

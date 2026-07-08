@@ -156,7 +156,7 @@ async def test_check_budget_blocks_when_exceeded(
 
     # Decision enum value is "blocked" (lowercase string per spec).
     decision_value = getattr(decision, "value", decision)
-    assert decision_value == "blocked" or decision_value == mod.BudgetDecision.BLOCKED
+    assert decision_value in ("blocked", mod.BudgetDecision.BLOCKED)
 
     # Sanity: the GET went to /budget/info with the tenant in the path or query.
     mock_litellm_admin.get.assert_awaited_once()

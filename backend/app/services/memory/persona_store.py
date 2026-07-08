@@ -28,6 +28,7 @@ repo convention.
 
 from __future__ import annotations
 
+import contextlib
 import os
 import tempfile
 import uuid
@@ -212,10 +213,8 @@ class PersonaMemoryStore:
                         fh.write(body)
                     os.replace(tmp_path, path)
                 except Exception:
-                    try:
+                    with contextlib.suppress(OSError):
                         os.unlink(tmp_path)
-                    except OSError:
-                        pass
                     raise
             except OSError as exc:  # noqa: BLE001
                 logger.warning(

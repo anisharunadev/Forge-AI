@@ -13,7 +13,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class ModelProviderType(str, enum.Enum):
+class ModelProviderType(enum.StrEnum):
     """The set of supported model providers."""
 
     ANTHROPIC = "anthropic"

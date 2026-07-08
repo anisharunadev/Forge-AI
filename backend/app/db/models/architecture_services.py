@@ -14,7 +14,7 @@ The acme-corp demo seeds 12 services, 24 APIs, 8 databases.
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -33,7 +33,7 @@ from app.db.base import (
 )
 
 
-class ServiceLifecycle(str, Enum):
+class ServiceLifecycle(StrEnum):
     PLANNED = "planned"
     DEVELOPMENT = "development"
     ACTIVE = "active"
@@ -41,7 +41,7 @@ class ServiceLifecycle(str, Enum):
     SUNSET = "sunset"
 
 
-class ApiSurface(str, Enum):
+class ApiSurface(StrEnum):
     REST = "rest"
     GRAPHQL = "graphql"
     GRPC = "grpc"
@@ -49,7 +49,7 @@ class ApiSurface(str, Enum):
     INTERNAL = "internal"
 
 
-class DatabaseEngine(str, Enum):
+class DatabaseEngine(StrEnum):
     POSTGRES = "postgres"
     REDIS = "redis"
     MONGODB = "mongodb"

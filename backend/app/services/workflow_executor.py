@@ -86,7 +86,7 @@ _executor = None
 
 
 def get_executor() -> WorkflowExecutor:
-    global _executor
+    global _executor  # noqa: PLW0603
     if _executor is None:
         _executor = WorkflowExecutor()
     return _executor
@@ -535,7 +535,7 @@ class WorkflowExecutor:
 
     @staticmethod
     def _topological_sort(definition: WorkflowDefinition) -> list[str]:
-        """Kahn's algorithm. Raises WorkflowExecutorError on cycle (defensive — save-time validation already rejected cycles)."""
+        """Kahn's algorithm. Raises WorkflowExecutorError on cycle (defensive — save-time validation already rejected cycles)."""  # noqa: E501
         adj: dict[str, list[str]] = defaultdict(list)
         in_degree: dict[str, int] = {n.id: 0 for n in definition.nodes}
         for e in definition.edges:

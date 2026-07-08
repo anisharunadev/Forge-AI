@@ -20,7 +20,7 @@ from app.db.base import (
 )
 
 
-class StoryStatus(str, enum.Enum):
+class StoryStatus(enum.StrEnum):
     BACKLOG = "BACKLOG"
     TODO = "TODO"
     IN_PROGRESS = "IN_PROGRESS"
@@ -30,14 +30,14 @@ class StoryStatus(str, enum.Enum):
     BLOCKED = "BLOCKED"
 
 
-class StoryPriority(str, enum.Enum):
+class StoryPriority(enum.StrEnum):
     P0 = "P0"
     P1 = "P1"
     P2 = "P2"
     P3 = "P3"
 
 
-class StoryEstimate(str, enum.Enum):
+class StoryEstimate(enum.StrEnum):
     XS = "XS"
     S = "S"
     M = "M"
@@ -45,7 +45,7 @@ class StoryEstimate(str, enum.Enum):
     XL = "XL"
 
 
-class StorySource(str, enum.Enum):
+class StorySource(enum.StrEnum):
     MANUAL = "MANUAL"
     JIRA = "JIRA"
     GITHUB = "GITHUB"
@@ -55,7 +55,7 @@ class StorySource(str, enum.Enum):
     AUTO = "AUTO"
 
 
-class JiraSyncStatus(str, enum.Enum):
+class JiraSyncStatus(enum.StrEnum):
     SYNCED = "SYNCED"
     PENDING = "PENDING"
     CONFLICT = "CONFLICT"
@@ -63,13 +63,13 @@ class JiraSyncStatus(str, enum.Enum):
     DISCONNECTED = "DISCONNECTED"
 
 
-class SprintStatus(str, enum.Enum):
+class SprintStatus(enum.StrEnum):
     PLANNING = "PLANNING"
     ACTIVE = "ACTIVE"
     COMPLETED = "COMPLETED"
 
 
-class EpicStatus(str, enum.Enum):
+class EpicStatus(enum.StrEnum):
     PLANNING = "PLANNING"
     IN_PROGRESS = "IN_PROGRESS"
     ON_TRACK = "ON_TRACK"

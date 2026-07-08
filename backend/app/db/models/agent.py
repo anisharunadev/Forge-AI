@@ -13,7 +13,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class AgentType(str, enum.Enum):
+class AgentType(enum.StrEnum):
     """The set of supported agent runtimes."""
 
     CLAUDE_CODE = "claude_code"
@@ -22,7 +22,7 @@ class AgentType(str, enum.Enum):
     CUSTOM = "custom"
 
 
-class AgentStatus(str, enum.Enum):
+class AgentStatus(enum.StrEnum):
     """Registration state of an agent profile."""
 
     ENABLED = "enabled"

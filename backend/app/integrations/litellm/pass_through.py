@@ -62,7 +62,7 @@ def _filter_forwarded_headers(
         lk = k.lower()
         if lk == "authorization":
             continue  # injected by us, not forwarded
-        if lk == "host" or lk == "content-length":
+        if lk in {"host", "content-length"}:
             continue  # httpx sets these
         # Allow if exact match OR if it has an allowlisted prefix
         if lk in _PROVIDER_PASSTHROUGH_HEADER_ALLOWLIST or any(

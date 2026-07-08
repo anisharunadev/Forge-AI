@@ -104,7 +104,7 @@ async def main() -> int:
         if isinstance(body, list) and body:
             first_id = body[0].get("id")
             print(
-                f"      (returned {len(body)} stories; first id={first_id[:8] if first_id else 'n/a'}...)"
+                f"      (returned {len(body)} stories; first id={first_id[:8] if first_id else 'n/a'}...)"  # noqa: E501
             )
 
         if first_id:

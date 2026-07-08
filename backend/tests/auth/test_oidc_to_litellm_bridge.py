@@ -62,7 +62,7 @@ def patch_redis(monkeypatch: pytest.MonkeyPatch) -> dict[str, str]:
         async def aclose(self) -> None:
             return None
 
-    monkeypatch.setattr(proxy_token_cache, "_redis", lambda: _FakeClient())
+    monkeypatch.setattr(proxy_token_cache, "_redis", _FakeClient)
     return store
 
 

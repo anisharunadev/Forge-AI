@@ -6,7 +6,7 @@
 # Without ``from __future__ import annotations`` the type annotations stay
 # as live objects so FastAPI can read the Depends from them.
 
-from typing import Annotated, Optional
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
@@ -331,7 +331,7 @@ async def list_sprints(
     return [SprintRead.model_validate(s) for s in rows]
 
 
-@sprints_router.get("/current", response_model=Optional[SprintRead])
+@sprints_router.get("/current", response_model=SprintRead | None)
 @audit(action="sprints.current", target_type="sprint")
 async def current_sprint(
     principal: Annotated[AuthenticatedPrincipal, Depends(get_current_principal)],

@@ -10,9 +10,12 @@ The ``definition`` JSONB column carries the editor's payload:
     {
       "nodes": [
         {"id": "trig",   "type": "trigger",  "position": {"x": 0,   "y": 0}, "data": {}},
-        {"id": "cmd-1",  "type": "command",  "position": {"x": 200, "y": 0}, "data": {"commandName": "forge-dev-refactor", "args": {}}},
-        {"id": "appr-1", "type": "approval", "position": {"x": 400, "y": 0}, "data": {"label": "Security review", "approverRole": "security-lead"}},
-        {"id": "scr-1",  "type": "script",   "position": {"x": 600, "y": 0}, "data": {"language": "python", "source": "print('hi')"}}
+        {"id": "cmd-1", "type": "command", "position": {"x": 200, "y": 0},
+          "data": {"commandName": "forge-dev-refactor", "args": {}}},
+        {"id": "appr-1", "type": "approval", "position": {"x": 400, "y": 0},
+          "data": {"label": "Security review", "approverRole": "security-lead"}},
+        {"id": "scr-1", "type": "script", "position": {"x": 600, "y": 0},
+          "data": {"language": "python", "source": "print('hi')"}}
       ],
       "edges": [
         {"id": "e1", "source": "trig",   "target": "cmd-1"},
@@ -28,7 +31,9 @@ The ``state`` JSONB on :class:`WorkflowRun` holds per-step results:
 
     {
       "stepResults": {
-        "cmd-1": {"status": "succeeded", "output": {"ok": true}, "startedAt": "...", "finishedAt": "...", "durationMs": 1234},
+      # noqa: E501
+        "cmd-1": {"status": "succeeded", "output": {"ok": true},
+          "startedAt": "...", "finishedAt": "...", "durationMs": 1234},
         "appr-1": {"status": "waiting_approval", "approvalId": "..."}
       }
     }
@@ -41,7 +46,7 @@ Rule 6 (auditability) — every transition emits a ``WORKFLOW_*`` event on the b
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -61,7 +66,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class WorkflowRunStatus(str, Enum):
+class WorkflowRunStatus(StrEnum):
     """Lifecycle of a single execution of a :class:`Workflow`."""
 
     PENDING = "pending"
@@ -73,7 +78,7 @@ class WorkflowRunStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
-class WorkflowStepStatus(str, Enum):
+class WorkflowStepStatus(StrEnum):
     """Lifecycle of an individual node within a run."""
 
     PENDING = "pending"

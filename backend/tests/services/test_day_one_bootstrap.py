@@ -297,7 +297,7 @@ async def test_project_not_active_until_bootstrap_completes(sqlite_db):
         tenant_id=tenant_id, project_id=project_id, user_id=user_id
     )
     sid = state.id
-    for idx, step in enumerate(STEP_ORDER[:-1]):
+    for idx, _step in enumerate(STEP_ORDER[:-1]):
         state = await onboarding_wizard.advance(
             sid,
             type(

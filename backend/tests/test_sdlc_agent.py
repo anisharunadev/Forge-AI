@@ -14,6 +14,7 @@ Coverage
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import uuid
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
@@ -372,8 +373,7 @@ async def test_run_state_persists_in_checkpoint():
     saver = MemorySaver()
     graph = build_sdlc_graph(checkpointer=saver)
     state = _state()
-    thread_id = str(state.run_id)
-    config = {"configurable": {"thread_id": thread_id}}
+    str(state.run_id)
     # We don't run the full graph — we only assert the graph compiles
     # and that the saver accepts a snapshot.
     snapshot = state.model_dump(mode="json")
@@ -394,10 +394,8 @@ async def test_run_resume_uses_existing_thread_id(event_bus):
         initial_context={"repo_path": "/tmp"},
     )
     manager._tasks[state.run_id].cancel()
-    try:
+    with contextlib.suppress(asyncio.CancelledError, Exception):
         await manager._tasks[state.run_id]
-    except (asyncio.CancelledError, Exception):
-        pass
     # Resume with no approval — manager must not crash.
     resumed = await manager.resume_run(state.run_id)
     assert resumed.run_id == state.run_id

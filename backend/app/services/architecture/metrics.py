@@ -69,9 +69,8 @@ class MetricsService:
 
         counts: dict[datetime, int] = {row.week: int(row.n) for row in rows}
         now = datetime.now(UTC)
-        current_week_start = (
-            now.replace(hour=0, minute=0, second=0, microsecond=0)
-            - timedelta(days=now.weekday())
+        current_week_start = now.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(
+            days=now.weekday()
         )
 
         result: list[int] = []

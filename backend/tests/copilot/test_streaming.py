@@ -122,7 +122,7 @@ async def test_chat_stream_emits_sse_events(
     body = response.text
     events: list[dict[str, Any]] = []
     for line in body.split("\n"):
-        line = line.strip()
+        line = line.strip()  # noqa: PLW2901
         if not line.startswith("data:"):
             continue
         try:
@@ -193,7 +193,7 @@ async def test_chat_stream_emits_error_event_on_llm_failure(
     body = response.text
     error_events: list[dict[str, Any]] = []
     for line in body.split("\n"):
-        line = line.strip()
+        line = line.strip()  # noqa: PLW2901
         if not line.startswith("data:"):
             continue
         try:

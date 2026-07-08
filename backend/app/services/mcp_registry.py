@@ -17,10 +17,10 @@ the servers itself.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
-class MCPCategory(str, Enum):
+class MCPCategory(StrEnum):
     VERSION_CONTROL = "version_control"
     PROJECT_MANAGEMENT = "project_management"
     DOCUMENTATION = "documentation"
@@ -32,7 +32,7 @@ class MCPCategory(str, Enum):
     SUPPORT = "support"
 
 
-class MCPHealth(str, Enum):
+class MCPHealth(StrEnum):
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNKNOWN = "unknown"

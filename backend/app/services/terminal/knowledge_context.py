@@ -108,7 +108,7 @@ def _cosine(a: list[float], b: list[float]) -> float:
     """Standard cosine similarity with a 1e-12 floor to avoid 0/0."""
     if not a or not b or len(a) != len(b):
         return 0.0
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=False))
     na = math.sqrt(sum(x * x for x in a))
     nb = math.sqrt(sum(x * x for x in b))
     if na < 1e-12 or nb < 1e-12:
@@ -165,7 +165,7 @@ class KnowledgeContextService:
             if entry is not None and entry.expires_at > datetime.now(UTC):
                 return entry.items
 
-        session = await command_integration._buffer_for(session_id)  # type: ignore[attr-defined]
+        await command_integration._buffer_for(session_id)  # type: ignore[attr-defined]
         # We don't need the buffer itself, just want to confirm session exists.
         # The CommandIntegration holds session metadata via session_manager; pull from there.
         from app.terminal.session_manager import session_manager

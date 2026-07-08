@@ -23,9 +23,9 @@ import app.db.session as _sess
 _sess._engine = object()  # type: ignore[assignment]
 _sess._session_factory = object()  # type: ignore[assignment]
 
-import app.api.v1.forge_models as forge_models_router
-from app.main import app
-from app.schemas.forge_models import (
+import app.api.v1.forge_models as forge_models_router  # noqa: E402
+from app.main import app  # noqa: E402
+from app.schemas.forge_models import (  # noqa: E402
     ModelDescriptor,
     ModelGroup,
     ModelsGroupedResponse,

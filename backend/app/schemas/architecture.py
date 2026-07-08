@@ -655,6 +655,7 @@ class C4DiagramResponse(ForgeBaseModel):
     Mirrors the previous frontend ``MOCK_DIAGRAMS`` shape so the UI
     can drop the mock fixture without an adapter.
     """
+
     """One C4 / dataflow diagram with its nodes + edges nested (track H)."""
 
     id: str

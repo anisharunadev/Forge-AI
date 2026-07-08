@@ -681,7 +681,7 @@ class MergeGateEngine:
         ─────────────────────────────────────────
         empty                     → "pass"
         any with category ≠ high  → "warn"
-        any with category validation / cost_cap / approval_missing / bundle_violation / policy → "fail"
+        any category validation/cost_cap/approval_missing/bundle_violation/policy → "fail"
 
     The class is locked rules-only: no LLM call anywhere. Tests assert
     this by patching :func:`app.services.litellm_client.completion` and
@@ -709,7 +709,7 @@ class MergeGateEngine:
         project_id: UUID,
         run_id: UUID,
         files: list[str],
-    ) -> "MergeGateDecision":  # type: ignore[name-defined]  # noqa: F821
+    ) -> MergeGateDecision:  # type: ignore[name-defined]  # noqa: F821
         """Run the rules-only gate and return a typed decision.
 
         Parameters
@@ -728,7 +728,7 @@ class MergeGateEngine:
             Typed Pydantic v2 artifact with verdict + blockers.
         """
         MergeGateBlocker, MergeGateDecision = _import_merge_gate_decision_schema()
-        ValidationReport = _import_validation_report()
+        _import_validation_report()
 
         blockers: list[Any] = []
 
@@ -763,10 +763,7 @@ class MergeGateEngine:
                 blockers.append(
                     MergeGateBlocker(
                         category="cost_cap",
-                        message=(
-                            f"run spend {spent:.4f} USD exceeds cap "
-                            f"{cap:.4f} USD"
-                        ),
+                        message=(f"run spend {spent:.4f} USD exceeds cap {cap:.4f} USD"),
                         evidence_ref=f"run:{run_id}",
                     )
                 )

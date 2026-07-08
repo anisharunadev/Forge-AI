@@ -23,7 +23,7 @@ import json
 import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 from uuid import UUID
 
@@ -34,7 +34,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 # ---------------------------------------------------------------------------
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     """Severity scale used by every scanner.
 
     Ordered from least to most severe. The aggregate node converts

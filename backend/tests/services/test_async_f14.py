@@ -49,7 +49,7 @@ def _routes_for(relpath: str):  # type: ignore[no-untyped-def]
     for node in tree.body:
         if isinstance(node, ast.Assign):
             for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == "router":
+                if isinstance(target, ast.Name) and target.id == "router":  # noqa: SIM102
                     if isinstance(node.value, ast.Call):
                         for kw in node.value.keywords:
                             if kw.arg == "prefix" and isinstance(kw.value, ast.Constant):

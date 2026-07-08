@@ -47,12 +47,11 @@ def configure_otel(endpoint: str | None = None) -> bool:
     :func:`is_otel_configured` can answer the readiness probe
     without re-reading settings on every call.
     """
-    global _configured
+    global _configured  # noqa: PLW0603
     resolved = (
         endpoint
         if endpoint is not None
-        else os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
-        or settings.otlp_endpoint
+        else os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT") or settings.otlp_endpoint
     )
     _configured = bool(resolved and str(resolved).strip())
     return _configured
@@ -73,17 +72,14 @@ def init_telemetry() -> None:
 
     Idempotent: safe to call from FastAPI startup and from tests.
     """
-    global _initialized
+    global _initialized  # noqa: PLW0603
     if _initialized:
         return
 
     # Resolve the OTLP endpoint once and cache the boolean for the
     # /healthz otel_exporter_configured probe. Done up front so the
     # probe can answer without re-reading env every request.
-    endpoint = (
-        os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
-        or settings.otlp_endpoint
-    )
+    endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT") or settings.otlp_endpoint
     configure_otel(endpoint)
 
     resource = Resource.create(

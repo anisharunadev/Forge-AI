@@ -42,9 +42,7 @@ def _integration_targets_present() -> bool:
         return False
     if not os.getenv("LITELLM_ADMIN_URL"):
         return False
-    if not (os.getenv("AWS_ACCESS_KEY_ID") or os.getenv("AWS_PROFILE")):
-        return False
-    return True
+    return os.getenv("AWS_ACCESS_KEY_ID") or os.getenv("AWS_PROFILE")
 
 
 pytestmark = [
@@ -89,9 +87,9 @@ async def test_full_tenant_lifecycle(
     tenant_sync_mod = pytest.importorskip("app.integrations.litellm.tenant_sync")
     key_mgr_mod = pytest.importorskip("app.integrations.litellm.key_manager")
     llm_client_mod = pytest.importorskip("app.integrations.litellm.llm_client")
-    budget_sync_mod = pytest.importorskip("app.integrations.litellm.budget_sync")
+    pytest.importorskip("app.integrations.litellm.budget_sync")
     trace_corr_mod = pytest.importorskip("app.integrations.litellm.trace_correlator")
-    health_mon_mod = pytest.importorskip("app.integrations.litellm.health_monitor")
+    pytest.importorskip("app.integrations.litellm.health_monitor")
 
     # The detailed wiring of these mocks is intentionally a sketch —
     # the contract under test is the E2E flow shape, not the exact
@@ -188,7 +186,6 @@ async def test_full_tenant_lifecycle(
     # archive, no further network calls are expected on the create
     # or provision paths.
     pre_count_post = admin_client.post.await_count
-    pre_count_delete = admin_client.delete.await_count
 
     await tenant_sync.create_team(
         tenant_id=tenant_id,

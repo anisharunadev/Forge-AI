@@ -95,14 +95,14 @@ async def get_session_cost(
         team_id=principal.tenant_id,
         limit=1000,
     )
-    session_logs = [l for l in logs if l.get("metadata", {}).get("session_id") == session_id]
+    session_logs = [l for l in logs if l.get("metadata", {}).get("session_id") == session_id]  # noqa: E741
 
     now = datetime.now(UTC)
-    total_cost = float(sum(l.get("spend", 0) for l in session_logs))
+    total_cost = float(sum(l.get("spend", 0) for l in session_logs))  # noqa: E741
     breakdown: dict[str, float] = {}
     prompt_tokens = 0
     completion_tokens = 0
-    for l in session_logs:
+    for l in session_logs:  # noqa: E741
         model = l.get("model") or "unknown"
         breakdown[model] = breakdown.get(model, 0.0) + float(l.get("spend", 0))
         prompt_tokens += int(l.get("prompt_tokens", 0) or 0)
@@ -193,14 +193,14 @@ async def list_session_costs(
     # Group by session_id (from metadata) so the response keeps the
     # existing ``list[CostSummaryResponse]`` shape that callers expect.
     by_session: dict[str, list[dict[str, Any]]] = {}
-    for l in logs:
+    for l in logs:  # noqa: E741
         sid = l.get("metadata", {}).get("session_id") or "_unscoped"
         by_session.setdefault(str(sid), []).append(l)
 
     out: list[CostSummaryResponse] = []
     for sid, session_logs in by_session.items():
         last_activity_raw = max(
-            (l.get("startTime") for l in session_logs if l.get("startTime")),
+            (l.get("startTime") for l in session_logs if l.get("startTime")),  # noqa: E741
             default=cutoff.isoformat(),
         )
         try:
@@ -211,7 +211,7 @@ async def list_session_costs(
         breakdown: dict[str, float] = {}
         prompt_tokens = 0
         completion_tokens = 0
-        for l in session_logs:
+        for l in session_logs:  # noqa: E741
             model = l.get("model") or "unknown"
             breakdown[model] = breakdown.get(model, 0.0) + float(l.get("spend", 0))
             prompt_tokens += int(l.get("prompt_tokens", 0) or 0)
@@ -220,7 +220,7 @@ async def list_session_costs(
         out.append(
             CostSummaryResponse(
                 session_id=sid,
-                total_cost_usd=float(sum(l.get("spend", 0) for l in session_logs)),
+                total_cost_usd=float(sum(l.get("spend", 0) for l in session_logs)),  # noqa: E741
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
                 breakdown_by_model=breakdown,

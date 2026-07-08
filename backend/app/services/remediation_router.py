@@ -190,9 +190,9 @@ class RemediationRouter:
         project_key: str | None = None,
     ) -> RemediationTicket:
         findings = list(getattr(report, "findings", []) or [])
-        decision = str(getattr(report, "decision", "FAIL") or "FAIL").upper()
-        report_id = getattr(report, "report_id", None)
-        validator_version = getattr(report, "validator_version", "unknown")
+        str(getattr(report, "decision", "FAIL") or "FAIL").upper()
+        getattr(report, "report_id", None)
+        getattr(report, "validator_version", "unknown")
 
         priority = _highest_priority(findings)
         body = self._render_body(

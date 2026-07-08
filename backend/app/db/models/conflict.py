@@ -9,7 +9,7 @@ intentional conflicts for the demo flow.
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -28,14 +28,14 @@ from app.db.base import (
 )
 
 
-class ConflictSeverity(str, Enum):
+class ConflictSeverity(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
 
 
-class ConflictStatus(str, Enum):
+class ConflictStatus(StrEnum):
     OPEN = "open"
     RESOLVED = "resolved"
     DEFERRED = "deferred"

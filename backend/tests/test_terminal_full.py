@@ -134,7 +134,7 @@ async def test_cost_tracker_burn_rate_calculation() -> None:
     """Cost over a 1h window projects to USD/hour."""
     from app.services.terminal import cost_tracker as ct_mod
 
-    handle = await ct_mod.cost_tracker.start_session_tracking(
+    await ct_mod.cost_tracker.start_session_tracking(
         "sess-burn",
         model="gpt-4o-mini",
         tenant_id="t-burn",
@@ -161,7 +161,7 @@ async def test_cost_tracker_burn_rate_calculation() -> None:
             return _StubSession()
 
     ct_mod.cost_tracker.burn_rate_window_seconds = 3600  # 1h window
-    with patch.object(ct_mod, "get_session_factory", lambda: _StubFactory()):
+    with patch.object(ct_mod, "get_session_factory", _StubFactory):
         rate = await ct_mod.cost_tracker.get_burn_rate("t-burn")
     assert rate == pytest.approx(0.05, rel=1e-3)
 
@@ -392,7 +392,7 @@ async def test_export_session_asciinema_cast() -> None:
     assert header["version"] == 2
     assert header["title"].startswith("forge-session-")
     # One 'i' frame and one 'o' frame per command.
-    body = [json.loads(l) for l in lines[1:]]
+    body = [json.loads(l) for l in lines[1:]]  # noqa: E741
     types = [frame[1] for frame in body]
     assert "i" in types and "o" in types
 

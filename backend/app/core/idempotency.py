@@ -19,7 +19,7 @@ _client: redis.Redis | None = None
 
 
 def _get_client() -> redis.Redis:
-    global _client
+    global _client  # noqa: PLW0603
     if _client is None:
         _client = redis.from_url(settings.redis_url, decode_responses=True)
     return _client

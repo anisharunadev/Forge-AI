@@ -186,7 +186,7 @@ _KNACKFORGE_BASELINE: dict[str, list[dict[str, Any]]] = {
     "steering_rules": [
         {
             "name": "KFG-RULE-001: Prefer Postgres",
-            "description": "All new persistence MUST target Postgres 17 unless an exception is recorded.",
+            "description": "All new persistence MUST target Postgres 17 unless an exception is recorded.",  # noqa: E501
             "applies_to": "*",
             "expression": {
                 "all": [{"in": [{"var": "artifact.db_engine"}, ["postgres", "postgresql", None]]}]

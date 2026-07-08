@@ -24,7 +24,6 @@ __all__ = [
     "approvals",
     "contracts",
     "diagrams",
-
     "metrics",
     "risk_registers",
     "security_reports",

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import Field
@@ -11,7 +11,7 @@ from pydantic import Field
 from app.schemas.common import ForgeBaseModel, TenantScopedModel
 
 
-class RuntimeState(str, Enum):
+class RuntimeState(StrEnum):
     """Lifecycle of a runtime handle."""
 
     STARTING = "starting"
@@ -21,7 +21,7 @@ class RuntimeState(str, Enum):
     UNKNOWN = "unknown"
 
 
-class RuntimeKind(str, Enum):
+class RuntimeKind(StrEnum):
     """Where the agent is hosted."""
 
     LOCAL_SUBPROCESS = "local_subprocess"

@@ -84,7 +84,7 @@ class KGEdge(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 # ---------------------------------------------------------------------------
 
 
-class GraphStatus(str, enum.Enum):
+class GraphStatus(enum.StrEnum):
     """Ingestion lifecycle of a knowledge graph node."""
 
     OK = "ok"

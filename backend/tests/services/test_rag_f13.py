@@ -44,7 +44,7 @@ def _routes_for(relpath: str):  # type: ignore[no-untyped-def]
     for node in tree.body:
         if isinstance(node, ast.Assign):
             for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == "router":
+                if isinstance(target, ast.Name) and target.id == "router":  # noqa: SIM102
                     if isinstance(node.value, ast.Call):
                         for kw in node.value.keywords:
                             if kw.arg == "prefix" and isinstance(kw.value, ast.Constant):
@@ -152,13 +152,13 @@ def test_c_router_exposes_13_routes():
     assert not missing, f"missing routes: {missing}\nactual={sorted(routes)}"
     # also confirm rerank was added since spec mentions /v2/rerank
     # (not strictly required by spec lines 435-448 but a free add)
-    extra = routes - expected
+    routes - expected
     # Allow extras but warn that the 13 endpoints are present
     assert len(expected & routes) == len(expected), "all 13 spec routes present"
 
 
 def test_d_rag_query_response_chunks_shape():
-    """d) RagQueryResponse.chunks accepts list[{text, score, source_file_id, source_chunk_id, metadata}]."""
+    """d) RagQueryResponse.chunks accepts list[{text, score, source_file_id, source_chunk_id, metadata}]."""  # noqa: E501
     from app.schemas.rag_v2 import RagChunk, RagQueryResponse
 
     chunk = RagChunk(
@@ -199,11 +199,7 @@ def test_f_ocr_short_circuits_on_text_mime():
     service_src = open(
         os.path.join(_BACKEND, "app/services/rag_service.py"), encoding="utf-8"
     ).read()
-    rag_client_src = open(
-        os.path.join(_BACKEND, "app/integrations/litellm/rag_client.py"), encoding="utf-8"
-    ).read()
-
-    namespace: dict = {}
+    open(os.path.join(_BACKEND, "app/integrations/litellm/rag_client.py"), encoding="utf-8").read()
 
     # Build a minimal in-memory stand-in for AsyncSession (RagService.ocr_file
     # only calls ``_record_audit`` which is best-effort and tolerates failure).
@@ -306,7 +302,7 @@ def test_f_ocr_short_circuits_on_text_mime():
     RagService = ns["RagService"]
     svc = RagService.__new__(RagService)
     # bind _client to return our stand-in
-    svc.__dict__["_client"] = lambda: _ShouldNotCallOCR()  # type: ignore[assignment]
+    svc.__dict__["_client"] = _ShouldNotCallOCR  # type: ignore[assignment]
 
     # Build an OCRRequest-shaped stub with a text/* mime
     from app.schemas.rag_v2 import OCRRequest
@@ -344,7 +340,7 @@ def test_g_stats_signature_accepts_db_and_tenant():
             assert "tenant_id" in kwonly, f"stats missing kw-only `tenant_id` (got {kwonly})"
             # Verify the annotation looks like AsyncSession (best-effort)
             for a in args.kwonlyargs:
-                ann = (
+                (
                     ast.unparse(args.kwonly_annotations[kwonly.index(a)])
                     if hasattr(args, "kwonly_annotations")
                     else None

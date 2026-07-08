@@ -10,7 +10,7 @@ import json
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -22,7 +22,7 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-class AgentType(str, Enum):
+class AgentType(StrEnum):
     """Which CLI is running inside the PTY."""
 
     CLAUDE_CODE = "claude_code"
@@ -31,7 +31,7 @@ class AgentType(str, Enum):
     CUSTOM = "custom"
 
 
-class SessionStatus(str, Enum):
+class SessionStatus(StrEnum):
     ACTIVE = "active"
     IDLE = "idle"
     CLOSED = "closed"

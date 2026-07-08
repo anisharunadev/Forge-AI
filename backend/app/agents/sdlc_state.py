@@ -25,14 +25,14 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-class SDLCPhase(str, Enum):
+class SDLCPhase(StrEnum):
     """The full SDLC phase enum, plus terminal/blocking states."""
 
     DISCOVERY = "discovery"

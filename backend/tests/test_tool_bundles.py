@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from app.services.tool_bundles import default_registry, is_tool_allowed
 
-
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------

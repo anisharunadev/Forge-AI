@@ -75,7 +75,7 @@ class Permission:
 
     def matches(self, other: Permission) -> bool:
         return self.resource == other.resource and (
-            self.action == other.action or self.action == "*" or other.action == "*"
+            self.action in (other.action, "*") or other.action == "*"
         )
 
 

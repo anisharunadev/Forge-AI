@@ -14,7 +14,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import GUID, JSONB, Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class OnboardingStatus(str, enum.Enum):
+class OnboardingStatus(enum.StrEnum):
     """Lifecycle of a wizard session."""
 
     ACTIVE = "active"
@@ -22,7 +22,7 @@ class OnboardingStatus(str, enum.Enum):
     CANCELLED = "cancelled"
 
 
-class OnboardingStepStatus(str, enum.Enum):
+class OnboardingStepStatus(enum.StrEnum):
     """Outcome of a single wizard step."""
 
     PENDING = "pending"
