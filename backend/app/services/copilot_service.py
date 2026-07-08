@@ -69,6 +69,18 @@ from app.services.event_bus import bus as default_bus
 from app.services.workflow_budget import BudgetExceeded
 
 logger = get_logger(__name__)
+
+
+# Phase 4 — prompt_hash is a deterministic SHA-256 of the user message
+# content. We salt with the conversation id so identical prompts
+# across conversations don't collide in the audit log.
+import hashlib
+
+
+def _hash_prompt(content: str, *, salt: str | None = None) -> str:
+    """Return the SHA-256 digest of a prompt, optionally salted."""
+    payload = (salt + "\x00" + content) if salt else content
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 _tracer = get_tracer("forge.copilot")
 
 
@@ -170,6 +182,7 @@ class CopilotService:
             user_message = CopilotMessage(
                 conversation_id=conversation.id,
                 tenant_id=conversation.tenant_id,
+                user_id=conversation.user_id,
                 role="user",
                 content=request.message,
             )
@@ -205,6 +218,11 @@ class CopilotService:
                         tools=tool_specs,
                         tool_executor=_tool_executor,
                         max_turns=self._settings.copilot_tool_call_max,
+                        # Phase 3 — UI model picker reaches LiteLLM.
+                        # ``auto``/None fall through to the tenant
+                        # default; explicit labels are routed by the
+                        # LiteLLM registry.
+                        model=request.model,
                         tenant_id=self._principal.tenant_id,
                         project_id=conversation.project_id,
                         workflow_id=workflow_id,
@@ -246,7 +264,7 @@ class CopilotService:
                 citations=self._extract_citations(tool_results),
                 suggested_actions=self._extract_suggested_actions(tool_results),
                 confidence=self._infer_confidence(tool_results, assistant_text),
-                model=self._settings.litellm_default_model,
+                model=request.model or self._settings.litellm_default_model,
                 cost_usd=cost_usd,
                 tokens_in=tokens_in,
                 tokens_out=tokens_out,
@@ -273,20 +291,31 @@ class CopilotService:
                 project_id=conversation.project_id,
                 event_type=EventType.COPILOT_MESSAGE_RECORDED,
             )
-            if cost_usd > 0:
-                await self._audit_and_emit(
-                    action="copilot.cost.incurred",
-                    target_type="copilot_conversation",
-                    target_id=str(conversation.id),
-                    payload={
-                        "message_id": str(assistant_message.id),
-                        "cost_usd": float(cost_usd),
-                        "tokens_in": tokens_in,
-                        "tokens_out": tokens_out,
-                    },
-                    project_id=conversation.project_id,
-                    event_type=EventType.COPILOT_COST_INCURRED,
-                )
+            # Phase 4 — emit the cost audit row unconditionally. $0 turns
+            # are still observable (cache hit, free model, etc); trace
+            # presence > trace value.
+            # Phase 4 — Rule 6 columns. ``model`` reflects the actual
+            # model used by LiteLLM (request.model or tenant default);
+            # ``prompt_hash`` is the user message content digest; cost
+            # is mirrored in a typed column for cost dashboards; the
+            # artifact_ref points at the assistant message id.
+            await self._audit_and_emit(
+                action="copilot.cost.incurred",
+                target_type="copilot_conversation",
+                target_id=str(conversation.id),
+                payload={
+                    "message_id": str(assistant_message.id),
+                    "cost_usd": float(cost_usd),
+                    "tokens_in": tokens_in,
+                    "tokens_out": tokens_out,
+                },
+                project_id=conversation.project_id,
+                event_type=EventType.COPILOT_COST_INCURRED,
+                model=self._settings.litellm_default_model,
+                prompt_hash=_hash_prompt(user_message.content, salt=str(conversation.id)),
+                cost_usd=float(cost_usd),
+                artifact_ref=str(assistant_message.id),
+            )
 
             latency_ms = int((time.perf_counter() - start) * 1000)
             turn_span.set_attribute("tool_count", len(tool_call_records))
@@ -310,7 +339,7 @@ class CopilotService:
                 cost_usd=Decimal(str(cost_usd)),
                 tokens_in=tokens_in,
                 tokens_out=tokens_out,
-                model=self._settings.litellm_default_model,
+                model=request.model or self._settings.litellm_default_model,
                 latency_ms=latency_ms,
             )
 
@@ -361,6 +390,7 @@ class CopilotService:
             user_message = CopilotMessage(
                 conversation_id=conversation.id,
                 tenant_id=conversation.tenant_id,
+                user_id=conversation.user_id,
                 role="user",
                 content=request.message,
             )
@@ -403,6 +433,7 @@ class CopilotService:
                             project_id=conversation.project_id,
                             workflow_id=workflow_id,
                             actor_id=self._principal.user_id,
+                            model=request.model,
                         )
 
                         calls = _extract_tool_calls(aggregated)
@@ -461,7 +492,7 @@ class CopilotService:
                 citations=self._extract_citations(accumulated_results),
                 suggested_actions=self._extract_suggested_actions(accumulated_results),
                 confidence=self._infer_confidence(accumulated_results, assistant_text),
-                model=self._settings.litellm_default_model,
+                model=request.model or self._settings.litellm_default_model,
                 cost_usd=cost_usd,
                 tokens_in=tokens_in,
                 tokens_out=tokens_out,
@@ -488,20 +519,31 @@ class CopilotService:
                 project_id=conversation.project_id,
                 event_type=EventType.COPILOT_MESSAGE_RECORDED,
             )
-            if cost_usd > 0:
-                await self._audit_and_emit(
-                    action="copilot.cost.incurred",
-                    target_type="copilot_conversation",
-                    target_id=str(conversation.id),
-                    payload={
-                        "message_id": str(assistant_message.id),
-                        "cost_usd": float(cost_usd),
-                        "tokens_in": tokens_in,
-                        "tokens_out": tokens_out,
-                    },
-                    project_id=conversation.project_id,
-                    event_type=EventType.COPILOT_COST_INCURRED,
-                )
+            # Phase 4 — emit the cost audit row unconditionally. $0 turns
+            # are still observable (cache hit, free model, etc); trace
+            # presence > trace value.
+            # Phase 4 — Rule 6 columns. ``model`` reflects the actual
+            # model used by LiteLLM (request.model or tenant default);
+            # ``prompt_hash`` is the user message content digest; cost
+            # is mirrored in a typed column for cost dashboards; the
+            # artifact_ref points at the assistant message id.
+            await self._audit_and_emit(
+                action="copilot.cost.incurred",
+                target_type="copilot_conversation",
+                target_id=str(conversation.id),
+                payload={
+                    "message_id": str(assistant_message.id),
+                    "cost_usd": float(cost_usd),
+                    "tokens_in": tokens_in,
+                    "tokens_out": tokens_out,
+                },
+                project_id=conversation.project_id,
+                event_type=EventType.COPILOT_COST_INCURRED,
+                model=self._settings.litellm_default_model,
+                prompt_hash=_hash_prompt(user_message.content, salt=str(conversation.id)),
+                cost_usd=float(cost_usd),
+                artifact_ref=str(assistant_message.id),
+            )
 
             latency_ms = int((time.perf_counter() - start) * 1000)
             turn_span.set_attribute("tool_count", len(tool_call_records))
@@ -524,7 +566,7 @@ class CopilotService:
                     cost_usd=Decimal(str(cost_usd)),
                     tokens_in=tokens_in,
                     tokens_out=tokens_out,
-                    model=self._settings.litellm_default_model,
+                    model=request.model or self._settings.litellm_default_model,
                     latency_ms=latency_ms,
                 ).model_dump(mode="json"),
             }
@@ -539,6 +581,9 @@ class CopilotService:
         project_id: Any,
         workflow_id: Any,
         actor_id: Any,
+        # Phase 3 — model picker reaches the streaming path. ``None``
+        # falls through to the tenant default at the LiteLLM layer.
+        model: str | None = None,
     ) -> tuple[dict[str, Any], list[str]]:
         """Run one streaming LLM turn.
 
@@ -564,6 +609,7 @@ class CopilotService:
 
         stream_iter = await client.chat(
             working_messages,
+            model=model,
             tenant_id=tenant_id,
             project_id=project_id,
             workflow_id=workflow_id,
@@ -1102,6 +1148,12 @@ class CopilotService:
         payload: dict[str, Any],
         project_id: UUID | None,
         event_type: EventType,
+        # Phase 4 — Rule 6 audit columns. Optional so existing call
+        # sites stay green; the cost-incurred audit populates them.
+        model: str | None = None,
+        prompt_hash: str | None = None,
+        cost_usd: float | None = None,
+        artifact_ref: str | None = None,
     ) -> None:
         """Best-effort audit + event publish — never fails the caller."""
         try:
@@ -1113,6 +1165,10 @@ class CopilotService:
                 target_type=target_type,
                 target_id=target_id,
                 payload=payload,
+                model=model,
+                prompt_hash=prompt_hash,
+                cost_usd=cost_usd,
+                artifact_ref=artifact_ref,
             )
         except Exception as exc:  # noqa: BLE001
             logger.warning(

@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * StageErrorFallback — renders an `ErrorEnvelope` from the backend.
  *
@@ -20,7 +22,6 @@
  * if all else fails.
  */
 
-import * as React from 'react';
 import { useState } from 'react';
 
 import { AlertTriangle } from 'lucide-react';

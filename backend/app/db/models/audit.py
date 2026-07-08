@@ -88,6 +88,14 @@ class AuditEvent(Base, UUIDPrimaryKeyMixin):
     # populated on every new write by ``AuditService.record`` via a
     # raw-SQL UPDATE that bypasses the ``before_update`` listener.
     hash_chain_ref: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    # Phase 4 — Rule 6 audit columns. All nullable so existing rows
+    # backfill cleanly; the copilot write path populates them via
+    # ``copilot_service._audit_and_emit``. Indexes only on the
+    # columns the cost-attribution dashboard actually filters by.
+    model: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    prompt_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    cost_usd: Mapped[float | None] = mapped_column(nullable=True)
+    artifact_ref: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
     __table_args__ = (Index("ix_audit_events_tenant_project", "tenant_id", "project_id"),)
 

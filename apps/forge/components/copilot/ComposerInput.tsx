@@ -49,7 +49,6 @@ import {
   Check,
   ChevronDown,
   Loader2,
-  Mic,
   Paperclip,
   Square,
   X,
@@ -172,7 +171,6 @@ export function ComposerInput() {
   const [slashQuery, setSlashQuery] = React.useState('');
   const [attachments, setAttachments] = React.useState<Attachment[]>([]);
   const [dragActive, setDragActive] = React.useState(false);
-  const [listening, setListening] = React.useState(false);
   const dragCounter = React.useRef(0);
 
   const selectedModel = MODELS.find((m) => m.id === modelId) ?? MODELS[1]!;
@@ -207,10 +205,15 @@ export function ComposerInput() {
     setSlashOpen(false);
     clearDraft();
 
+    // Phase 2 — project_id stays null until `useCurrentProject()` lands.
+    // Phase 3 — forward the persisted model choice so the backend's
+    // LiteLLM routing layer can pick the concrete provider; the
+    // backend falls back to the tenant default when null.
     sendStream({
       conversation_id: activeConversationId,
       project_id: null,
       message: trimmed,
+      model: modelId === 'auto' ? null : modelId,
       context: {
         current_page: pathname,
         current_center: null,
@@ -225,6 +228,7 @@ export function ComposerInput() {
     activeConversationId,
     pathname,
     clearDraft,
+    modelId,
   ]);
 
   // Translate structured lastError into the existing toast events.
@@ -363,12 +367,7 @@ export function ComposerInput() {
     [],
   );
 
-  // ── Voice input — stub ───────────────────────────────────────
-  const handleVoiceClick = React.useCallback(() => {
-    // Real implementation would wire MediaRecorder; we toggle a
-    // visible "Listening…" affordance so the contract is in place.
-    setListening((v) => !v);
-  }, []);
+
 
   // Close popovers when the user clicks outside.
   React.useEffect(() => {
@@ -556,22 +555,10 @@ export function ComposerInput() {
           >
             <Paperclip className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className={cn(
-              'h-7 w-7',
-              listening && 'bg-[var(--accent-rose)]/15 text-[var(--accent-rose)]',
-            )}
-            onClick={handleVoiceClick}
-            aria-label={listening ? 'Stop voice input' : 'Start voice input'}
-            title={listening ? 'Listening… click to stop' : 'Voice input'}
-            data-testid="copilot-voice-button"
-            data-listening={listening ? 'true' : 'false'}
-          >
-            <Mic className="h-3.5 w-3.5" aria-hidden="true" />
-          </Button>
+          {/* Phase 5 — voice stub removed per Ponytail (delete wins
+              over stub). Add back when MediaRecorder + /api/copilot/transcribe
+              land together. */}
+          
         </div>
       </div>
 

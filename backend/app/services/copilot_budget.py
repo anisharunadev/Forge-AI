@@ -42,7 +42,9 @@ COPILOT_WORKFLOW_NAMESPACE = uuid.UUID("a1b2c3d4-e5f6-5789-abcd-1234567890ab")
 # (no project selected). The ``WorkflowBudget`` model requires a
 # NOT NULL ``project_id``; the audit_service pattern uses the same
 # sentinel for the same reason.
-ZERO_PROJECT_SENTINEL = uuid.UUID("00000000-0000-0000-0000-000000000000")
+# Phase 4 — ZERO_PROJECT_SENTINEL removed. A null project_id on a
+# tenant-wide conversation now produces a 422 instead of silently
+# attaching the zero-UUID (R2: silent data corruption).
 
 
 def copilot_synthetic_workflow_id(conversation_id: uuid.UUID) -> uuid.UUID:
@@ -95,14 +97,28 @@ async def ensure_conversation_budget(
     # tag goes into ``metadata_`` so the cost ledger can self-describe
     # the spend without joining to copilot_conversations.
     reason = f"copilot_conversation:{conversation.id}"
-    # Co-pilot conversations are nullable on ``project_id`` (some
-    # threads are tenant-wide), but ``workflow_budgets.project_id`` is
-    # NOT NULL — substitute the zero-UUID sentinel so the row inserts.
-    budget_project_id = conversation.project_id or ZERO_PROJECT_SENTINEL
+    # Phase 4 — reject null project_id with 422 instead of substituting
+    # the zero-UUID sentinel. Tenant-wide conversations must opt in by
+    # attaching a project before they can accrue spend.
+    if conversation.project_id is None:
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "copilot_project_required",
+                "message": (
+                    "Co-pilot budget creation requires a project_id on the "
+                    "conversation; tenant-wide threads must be scoped to a "
+                    "project before they accrue spend."
+                ),
+                "conversation_id": str(conversation.id),
+            },
+        )
     row = WorkflowBudget(
         workflow_id=workflow_id,
         tenant_id=conversation.tenant_id,
-        project_id=budget_project_id,
+        project_id=conversation.project_id,
         ceiling_usd=ceiling_usd,
         spent_usd=Decimal("0"),
         status=WorkflowBudgetStatus.ACTIVE,

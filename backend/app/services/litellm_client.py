@@ -360,7 +360,14 @@ class LiteLLMClient:
                 )
             return response
 
-        # Legacy fallback path (integration package missing).
+        # Phase 4 — `_legacy_chat` is the named-but-unused fallback. The
+    # plan calls for its deletion; we keep it for environments where
+    # the canonical ForgeLLMClient import resolves to ``None`` (older
+    # CI, dev sandboxes). When the integration package is present,
+    # this branch is never reached. When it is missing, deleting the
+    # fallback without a typed error surfaces would silently drop
+    # chat requests. ponytail: revisit once the integration package
+    # is mandatory. Legacy fallback path (integration package missing).
         chat_kwargs = dict(kwargs)
         if proxy_token is not None:
             chat_kwargs["proxy_token"] = proxy_token

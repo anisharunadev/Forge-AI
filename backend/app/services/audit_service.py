@@ -59,6 +59,13 @@ class AuditService:
         target_id: str,
         payload: dict[str, Any] | None = None,
         occurred_at: datetime | None = None,
+        # Phase 4 — Rule 6 audit columns. All optional so existing
+        # callers stay green; the copilot write path is the only
+        # caller that populates them today.
+        model: str | None = None,
+        prompt_hash: str | None = None,
+        cost_usd: float | None = None,
+        artifact_ref: str | None = None,
     ) -> UUID:
         """Write an AuditEvent row and stamp ``hash_chain_ref`` on it.
 
@@ -86,6 +93,10 @@ class AuditService:
                 target_id=target_id,
                 payload=payload_dict,
                 occurred_at=ts,
+                model=model,
+                prompt_hash=prompt_hash,
+                cost_usd=cost_usd,
+                artifact_ref=artifact_ref,
             )
             session.add(row)
             # Flush so the server-generated id is populated without
@@ -119,7 +130,7 @@ class AuditService:
                     {
                         "id": str(row.id),
                         "action": action,
-                        "ts": str(row.created_at),
+                        "ts": str(row.occurred_at),
                     },
                     maxlen=10_000,
                     approximate=True,

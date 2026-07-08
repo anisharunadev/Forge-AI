@@ -28,6 +28,16 @@ export interface MessageListProps {
   className?: string;
   /** True while the latest assistant message is streaming. */
   streaming?: boolean;
+  /** Phase 1 — live streaming bubble rendered above the persisted list
+   *  while SSE tokens arrive. The store sets this to a non-null value
+   *  on `start` and clears it on `finish`/`error`. */
+  streamingMessage?: {
+    id: string;
+    conversationId: string;
+    content: string;
+    reasoning: string;
+    toolCalls: Array<{ tool: string; args: Record<string, unknown> }>;
+  } | null;
 }
 
 const STICK_THRESHOLD_PX = 64;
@@ -50,7 +60,7 @@ function formatDayHeader(ts: number): string {
   });
 }
 
-export function MessageList({ messages, className, streaming }: MessageListProps) {
+export function MessageList({ messages, className, streaming, streamingMessage }: MessageListProps) {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const stickToBottomRef = React.useRef(true);
   const lastLengthRef = React.useRef(messages.length);
@@ -124,6 +134,39 @@ export function MessageList({ messages, className, streaming }: MessageListProps
     );
   });
 
+  // Phase 1 — render the streaming bubble as a synthetic message so
+  // tokens appear inline with the rest of the conversation.
+  const streamingBubble = streamingMessage ? (
+    <div key={`streaming-${streamingMessage.id}`} className="group">
+      <MessageBubble
+        message={{
+          id: streamingMessage.id,
+          conversation_id: streamingMessage.conversationId,
+          role: 'assistant',
+          content: streamingMessage.content,
+          citations: [],
+          tool_calls: streamingMessage.toolCalls.map((c) => ({
+            tool: c.tool,
+            args: c.args,
+            result_status: 'success',
+            duration_ms: 0,
+            error: null,
+          })),
+          suggested_actions: [],
+          confidence: null,
+          feedback_rating: null,
+          model: null,
+          cost_usd: 0,
+          tokens_in: 0,
+          tokens_out: 0,
+          latency_ms: 0,
+          created_at: new Date().toISOString(),
+        }}
+        streaming={true}
+      />
+    </div>
+  ) : null;
+
   return (
     <div
       ref={containerRef}
@@ -136,6 +179,7 @@ export function MessageList({ messages, className, streaming }: MessageListProps
       data-streaming={streaming ? 'true' : 'false'}
     >
       {rendered}
+      {streamingBubble}
     </div>
   );
 }

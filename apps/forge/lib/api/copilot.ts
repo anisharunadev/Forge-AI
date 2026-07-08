@@ -15,10 +15,9 @@
  * If you change one side, change the other.
  */
 
-import { api, FORGE_API_BASE_URL, ForgeApiError } from '@/lib/api/client';
+import { api, ForgeApiError } from '@/lib/api/client';
 // ponytail: streamMessage uses the same bearer+tenant plumbing as the JSON
 // client via `api.postStream`. The fetch below is the SSE consumer only.
-import { SEED_TENANT_ID } from '@/lib/auth';
 
 // ---------------------------------------------------------------------------
 // Types — mirror CopilotCitation / ToolCall / SuggestedAction / etc.
@@ -106,6 +105,12 @@ export interface CopilotChatRequest {
   project_id: string | null;
   message: string;
   context: CopilotPageContext;
+  /** Phase 3 — model picker reaches the backend. Sent through to
+   *  LiteLLM as the `model` field; backend falls back to the tenant
+   *  default when null. We forward the UI label verbatim (e.g.
+   *  "sonnet", "gpt4o") so the LiteLLM routing layer maps it to the
+   *  concrete provider. */
+  model?: string | null;
 }
 
 export interface CopilotChatResponse {
@@ -159,7 +164,7 @@ export { ForgeApiError };
  * `GET /api/v1/copilot/conversations` — list summaries for the current user.
  */
 export async function listConversations(
-  tenantId: string = SEED_TENANT_ID,
+  tenantId?: string | null,
 ): Promise<CopilotConversationSummary[]> {
   return api.get<CopilotConversationSummary[]>('/copilot/conversations', {
     tenantId
@@ -171,7 +176,7 @@ export async function listConversations(
  */
 export async function getConversation(
   id: string,
-  tenantId: string = SEED_TENANT_ID,
+  tenantId?: string | null,
 ): Promise<CopilotConversationRead> {
   return api.get<CopilotConversationRead>(`/copilot/conversations/${encodeURIComponent(id)}`, { tenantId });
 }
@@ -182,7 +187,7 @@ export async function getConversation(
  */
 export async function sendMessage(
   req: CopilotChatRequest,
-  tenantId: string = SEED_TENANT_ID,
+  tenantId?: string | null,
 ): Promise<CopilotChatResponse> {
   return api.post<CopilotChatResponse>('/copilot/conversations', req, {
     tenantId,
@@ -212,8 +217,8 @@ export interface StreamMessageHandle {
 export function streamMessage(
   req: CopilotChatRequest,
   onEvent: (event: CopilotStreamEvent) => void,
-  tenantId: string = SEED_TENANT_ID,
-  externalSignal?: AbortSignal,
+  externalSignal: AbortSignal | undefined,
+  tenantId?: string | null,
 ): StreamMessageHandle {
   // Use the canonical client so Authorization + x-forge-tenant-id are
   // attached by the same code path as every other call. Caller passes
@@ -228,10 +233,12 @@ export function streamMessage(
   void (async () => {
     let res: Response;
     try {
+      // Pass `null` when no tenant is bound so the client fails loud in
+      // production rather than silently attaching the demo seed.
       res = await api.postStream(
         "/copilot/conversations:stream",
         req,
-        { tenantId, signal: controller.signal },
+        { tenantId: tenantId ?? null, signal: controller.signal },
       );
     } catch (err) {
       onEvent({
@@ -297,7 +304,7 @@ export function streamMessage(
  */
 export async function deleteConversation(
   id: string,
-  tenantId: string = SEED_TENANT_ID,
+  tenantId?: string | null,
 ): Promise<void> {
   await api.delete<void>(`/copilot/conversations/${encodeURIComponent(id)}`, { tenantId });
 }
@@ -309,8 +316,8 @@ export async function deleteConversation(
 export async function submitFeedback(
   messageId: string,
   rating: CopilotFeedbackRating,
+  tenantId?: string | null,
   comment?: string,
-  tenantId: string = SEED_TENANT_ID,
 ): Promise<void> {
   const body: CopilotFeedbackRequest = comment
     ? { rating, comment }
@@ -323,7 +330,7 @@ export async function submitFeedback(
  */
 export async function getCost(
   conversationId: string,
-  tenantId: string = SEED_TENANT_ID,
+  tenantId?: string | null,
 ): Promise<CopilotCostRead> {
   return api.get<CopilotCostRead>(`/copilot/conversations/${encodeURIComponent(conversationId)}/cost`, { tenantId });
 }
@@ -332,7 +339,7 @@ export async function getCost(
  * `GET /api/v1/copilot/tools` — Steward-only list of registered tools.
  */
 export async function listTools(
-  tenantId: string = SEED_TENANT_ID,
+  tenantId?: string | null,
 ): Promise<CopilotToolRead[]> {
   return api.get<CopilotToolRead[]>('/copilot/tools', { tenantId });
 }

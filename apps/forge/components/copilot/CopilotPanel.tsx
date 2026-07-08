@@ -47,6 +47,7 @@ import {
   useCopilotStore,
   useHydrateCopilotFlags,
 } from '@/lib/store/copilot';
+import { useSendMessageStream } from '@/hooks/use-copilot-mutations';
 import type { CopilotSuggestedAction } from '@/lib/api/copilot';
 import { cn } from '@/lib/utils';
 
@@ -87,10 +88,13 @@ export function CopilotPanel({ mode = 'panel', backHref = '/dashboard' }: Copilo
   const open = useCopilotStore((s) => s.open);
   const streamingFromStore = useCopilotStore((s) => s.streaming);
   const streamingMessage = useCopilotStore((s) => s.streamingMessage);
+
+
   const setOpen = useCopilotStore((s) => s.setOpen);
   const activeConversationId = useCopilotStore((s) => s.activeConversationId);
   const permissionDenied = useCopilotStore((s) => s.permissionDenied);
   const setPermissionDenied = useCopilotStore((s) => s.setPermissionDenied);
+
 
   // Close handler used by the fullscreen X button.
   const handleFullscreenClose = React.useCallback(() => {
@@ -111,6 +115,38 @@ export function CopilotPanel({ mode = 'panel', backHref = '/dashboard' }: Copilo
   // is being addressed (Step 37 FIX 1).
   const conversations = useConversations();
   const conversation = useConversation(activeConversationId);
+
+  // Phase 5 — wire the regenerate listener. The MessageBubble action
+  // dispatches `copilot:regenerate` with the assistant messageId; we
+  // find the prior user message and re-send it through the streaming
+  // path so the response replaces the last bubble in place.
+  const { send: sendStream } = useSendMessageStream();
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    function onRegenerate(event: Event) {
+      const custom = event as CustomEvent<{ messageId?: string }>;
+      const targetId = custom.detail?.messageId;
+      if (!targetId) return;
+      const messages = conversation.data?.messages ?? [];
+      const assistantIdx = messages.findIndex((m) => m.id === targetId);
+      if (assistantIdx <= 0) return;
+      const priorUser = messages[assistantIdx - 1];
+      if (!priorUser || priorUser.role !== 'user') return;
+      sendStream({
+        conversation_id: activeConversationId,
+        project_id: null,
+        message: priorUser.content,
+        context: {
+          current_page: pathname,
+          current_center: null,
+          current_artifact_id: null,
+          recent_actions: ['regenerate'],
+        },
+      });
+    }
+    window.addEventListener('copilot:regenerate', onRegenerate);
+    return () => window.removeEventListener('copilot:regenerate', onRegenerate);
+  }, [conversation.data, activeConversationId, pathname, sendStream]);
 
   React.useEffect(() => {
     if (

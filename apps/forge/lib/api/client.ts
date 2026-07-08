@@ -181,10 +181,15 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   // Tenant header — Rule 2. Falls back to the demo tenant seed when no
   // auth store / no tenant selected yet (matches the existing
   // orchestrator client behaviour so the page renders during dev).
+  // Resolve tenant from: caller override → auth accessor → dev seed.
+  // The dev seed is gated by NODE_ENV so a misconfigured production
+  // deployment fails loud (no header → backend 401) instead of
+  // silently attaching the demo tenant and crossing data.
+  const devFallback = process.env.NODE_ENV !== 'production' ? SEED_TENANT_ID : null;
   const resolvedTenant =
     tenantId ??
     authAccessor?.getTenantId() ??
-    SEED_TENANT_ID;
+    devFallback;
   if (resolvedTenant) {
     finalHeaders.set('x-forge-tenant-id', resolvedTenant);
   }
@@ -288,10 +293,15 @@ async function requestStream(
     }
   }
 
+  // Resolve tenant from: caller override → auth accessor → dev seed.
+  // The dev seed is gated by NODE_ENV so a misconfigured production
+  // deployment fails loud (no header → backend 401) instead of
+  // silently attaching the demo tenant and crossing data.
+  const devFallback = process.env.NODE_ENV !== 'production' ? SEED_TENANT_ID : null;
   const resolvedTenant =
     tenantId ??
     authAccessor?.getTenantId() ??
-    SEED_TENANT_ID;
+    devFallback;
   if (resolvedTenant) {
     finalHeaders.set('x-forge-tenant-id', resolvedTenant);
   }

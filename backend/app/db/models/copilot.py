@@ -97,6 +97,14 @@ class CopilotMessage(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         index=True,
     )
     tenant_id: Mapped[UUID] = mapped_column(GUID(), nullable=False, index=True)
+    # Phase 4 — RLS denormalization. Symmetric with
+    # ``CopilotConversation.user_id`` so the RLS predicate filters
+    # messages without joining through the parent. Nullable at the
+    # model level so existing SQLite test fixtures (which don't run
+    # the Alembic migration) keep compiling; the production
+    # migration flips this to NOT NULL after backfilling from
+    # ``copilot_conversations.user_id``.
+    user_id: Mapped[UUID | None] = mapped_column(GUID(), nullable=True, index=True)
     role: Mapped[str] = mapped_column(String(20), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     citations: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)

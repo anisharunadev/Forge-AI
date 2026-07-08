@@ -58,6 +58,16 @@ class CopilotChatRequest(ForgeBaseModel):
     project_id: UUID | None = Field(default=None)
     message: str = Field(..., min_length=1, max_length=8000)
     context: CopilotPageContext
+    # Phase 3 — model picker reaches the backend. The frontend
+    # persists the user's choice (auto / sonnet / opus / gpt4o) and
+    # forwards it here. ``auto`` and ``None`` both fall back to the
+    # tenant default from forge-core; explicit labels are routed by
+    # the LiteLLM registry.
+    model: str | None = Field(
+        default=None,
+        max_length=64,
+        description="UI model label (auto / sonnet / opus / gpt4o). Null = tenant default.",
+    )
 
 
 class CopilotFeedbackRequest(ForgeBaseModel):

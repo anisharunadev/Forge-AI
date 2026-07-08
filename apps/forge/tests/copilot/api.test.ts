@@ -167,7 +167,7 @@ describe('deleteConversation', () => {
 describe('submitFeedback', () => {
   it('POSTs feedback body without a comment', async () => {
     mockedGet.mockResolvedValueOnce(undefined);
-    await submitFeedback('m-1', 'up', undefined, TENANT);
+    await submitFeedback('m-1', 'up', TENANT);
 
     expect(mockedGet).toHaveBeenCalledWith(
       '/copilot/messages/m-1/feedback',
@@ -181,7 +181,7 @@ describe('submitFeedback', () => {
 
   it('POSTs feedback body with a comment when provided', async () => {
     mockedGet.mockResolvedValueOnce(undefined);
-    await submitFeedback('m-1', 'down', 'not quite right', TENANT);
+    await submitFeedback('m-1', 'down', TENANT, 'not quite right');
 
     expect(mockedGet).toHaveBeenCalledWith(
       '/copilot/messages/m-1/feedback',

@@ -354,9 +354,13 @@ async def test_conversation_budget_blocks_after_ceiling(sqlite_db):
 
         async with sqlite_db() as db:
             service = CopilotService(db=db, principal=principal)
+            # Phase 4 — null project_id now raises 422 (R2). Give the
+            # budget-ceiling test a project_id so it exercises the
+            # budget gate, not the project validation gate.
+            test_project_id = uuid.uuid4()
             req = CopilotChatRequest(
                 conversation_id=None,
-                project_id=None,
+                project_id=test_project_id,
                 message="x",
                 context=CopilotPageContext(
                     current_page="/x",

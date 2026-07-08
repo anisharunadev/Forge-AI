@@ -31,7 +31,7 @@ import { ComposerInput } from '@/components/copilot/ComposerInput';
 import { EmptyState } from '@/components/copilot/EmptyState';
 import { MessageList } from '@/components/copilot/MessageList';
 import { PermissionDeniedBanner } from '@/components/copilot/PermissionDeniedBanner';
-import { useConversation } from '@/hooks/use-copilot';
+import { useConversation, useCost} from '@/hooks/use-copilot';
 import { useCopilotStore } from '@/lib/store/copilot';
 import { cn } from '@/lib/utils';
 
@@ -41,9 +41,6 @@ import { DraftReviewModal } from '@/components/copilot/DraftReviewModal';
 import type { CopilotSuggestedAction } from '@/lib/api/copilot';
 
 export default function CopilotRoutePage() {
-  const streamingFromStore = useCopilotStore((s) => s.streaming);
-  const streamingMessage = useCopilotStore((s) => s.streamingMessage);
-
   return (
     <main
       id="main-content"
@@ -59,6 +56,8 @@ export default function CopilotRoutePage() {
 
 function CopilotFullscreenLayout() {
   const router = useRouter();
+  const streamingFromStore = useCopilotStore((s) => s.streaming);
+  const streamingMessage = useCopilotStore((s) => s.streamingMessage);
   const activeConversationId = useCopilotStore((s) => s.activeConversationId);
   const setActiveConversation = useCopilotStore((s) => s.setActiveConversation);
   const clearDraft = useCopilotStore((s) => s.clearDraft);
@@ -248,7 +247,8 @@ function CopilotFullscreenLayout() {
               ) : (
                 <MessageList
                   messages={conversation.data?.messages ?? []}
-                  streaming={useCopilotStore.getState().streaming}
+                  streaming={streamingFromStore}
+                  streamingMessage={streamingMessage}
                 />
               )
             ) : (
@@ -292,10 +292,20 @@ function RightPane({
   conversation,
 }: {
   conversationTitle: string | null;
+  // Phase 5 — RightPane reads the conversation id for the cost
+  // query. We type the minimum shape we actually use rather than
+  // pulling in the full `CopilotConversationRead` so the component
+  // stays decoupled from the schema.
   conversation: {
+    id: string;
     messages: { tool_calls: unknown[] }[];
   } | null;
 }) {
+
+  // Phase 5 — live cost + token count. Polls every 5s while a
+  // conversation is active so the right pane stays in sync with the
+  // cost badge the composer invalidates on stream completion.
+  const cost = useCost(conversation?.id ?? null);
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
       <header className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--border-subtle)] px-4">
@@ -346,7 +356,32 @@ function RightPane({
         </Section>
 
         <Section title="Tokens + cost">
-          <p className="text-[var(--fg-tertiary)]">No usage yet.</p>
+          {cost.data ? (
+            <dl className="grid grid-cols-2 gap-y-1 text-[11px]" data-testid="copilot-cost-pane">
+              <dt className="text-[var(--fg-tertiary)]">Total cost</dt>
+              <dd className="text-right tabular-nums">
+                ${cost.data.total_cost_usd.toFixed(4)}
+              </dd>
+              <dt className="text-[var(--fg-tertiary)]">Tokens in</dt>
+              <dd className="text-right tabular-nums">{cost.data.total_tokens_in}</dd>
+              <dt className="text-[var(--fg-tertiary)]">Tokens out</dt>
+              <dd className="text-right tabular-nums">{cost.data.total_tokens_out}</dd>
+              {cost.data.budget_status ? (
+                <>
+                  <dt className="text-[var(--fg-tertiary)]">Budget</dt>
+                  <dd className="text-right">
+                    {cost.data.budget_remaining_usd !== null
+                      ? `$${cost.data.budget_remaining_usd.toFixed(2)} remaining`
+                      : cost.data.budget_status}
+                  </dd>
+                </>
+              ) : null}
+            </dl>
+          ) : cost.isLoading ? (
+            <p className="text-[var(--fg-tertiary)]">Loading usage…</p>
+          ) : (
+            <p className="text-[var(--fg-tertiary)]">No usage yet.</p>
+          )}
         </Section>
 
         <Section title="Export">

@@ -668,6 +668,17 @@ class ForgeLLMClient:
 
             if terminal_chunk is not None:
                 latency_ms = int((time.monotonic() - started) * 1000)
+                # Phase 4 — single guardrail pipeline. The streaming
+                # path used to skip post_call_output entirely; collect
+                # the full response text from the terminal chunk and
+                # scan it once, mirroring the non-streaming path.
+                await self._enforce_post_call_guardrails(
+                    response_body=terminal_chunk,
+                    tenant_id=tenant_id,
+                    project_id=project_id,
+                    actor_id=actor_id,
+                    forge_trace_id=forge_trace_id,
+                )
                 await self._record_successful_call(
                     tenant_id=tenant_id,
                     project_id=project_id,

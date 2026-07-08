@@ -45,8 +45,9 @@ export function useSendMessage(): UseMutationResult<
   CopilotChatRequest
 > {
   const queryClient = useQueryClient();
+  const tenantId = useTenantId();
   return useMutation({
-    mutationFn: (req: CopilotChatRequest) => sendMessage(req),
+    mutationFn: (req: CopilotChatRequest) => sendMessage(req, tenantId),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['copilot', 'conversations'] });
       queryClient.invalidateQueries({
@@ -169,6 +170,7 @@ export function useSendMessageStream(): UseSendMessageStreamResult {
           // the invalidated `copilot.cost` query once the conversation
           // settles (single source of truth on the cost badge).
         },
+        undefined,
         tenantId,
       );
       handleRef.current = handle;
@@ -226,9 +228,10 @@ export function useSubmitFeedback(): UseMutationResult<
   SubmitFeedbackArgs
 > {
   const queryClient = useQueryClient();
+  const tenantId = useTenantId();
   return useMutation({
     mutationFn: ({ messageId, rating, comment }: SubmitFeedbackArgs) =>
-      submitFeedback(messageId, rating, comment),
+      submitFeedback(messageId, rating, tenantId, comment),
     onSuccess: (_, { conversationId }) => {
       if (conversationId) {
         queryClient.invalidateQueries({
@@ -251,8 +254,9 @@ export function useDeleteConversation(): UseMutationResult<
 > {
   const queryClient = useQueryClient();
   const setActiveConversation = useCopilotStore((s) => s.setActiveConversation);
+  const tenantId = useTenantId();
   return useMutation({
-    mutationFn: (id: string) => deleteConversation(id),
+    mutationFn: (id: string) => deleteConversation(id, tenantId),
     onSuccess: (_void, id) => {
       queryClient.invalidateQueries({ queryKey: ['copilot', 'conversations'] });
       queryClient.invalidateQueries({

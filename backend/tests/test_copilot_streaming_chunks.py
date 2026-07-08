@@ -152,9 +152,11 @@ def _principal(*, permissions=None, tenant_id=None, user_id=None) -> Any:
 def _chat_request(*, message: str = "say something") -> Any:
     from app.schemas.copilot import CopilotChatRequest, CopilotPageContext
 
+    # Phase 4 — null project_id now raises 422 (R2). Give the streaming
+    # test fixture a project_id so it reaches the streaming path.
     return CopilotChatRequest(
         conversation_id=None,
-        project_id=None,
+        project_id=uuid.uuid4(),
         message=message,
         context=CopilotPageContext(
             current_page="/copilot",
